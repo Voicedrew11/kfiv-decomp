@@ -174,7 +174,7 @@ void Wobble_DrawRippledModel(ModelInstance *model, int unk1, int unk2, int unk3,
                             out->flags |= 0x8000;
                         }
                         flags = (flags << 1) & 7;
-                        out->flags |= vertex->unk0E;
+                        out->flags |= vertex->flags;
                         vertex++;
                         out->tex_s = (f32)(screen[0] - 0x6C00) / 10240.0f;
                         out->tex_t = (f32)(screen[1] - 0x7200) / 7168.0f;
@@ -199,7 +199,7 @@ void Wobble_DrawRippledModel(ModelInstance *model, int unk1, int unk2, int unk3,
                         out->flags |= 0x8000;
                     }
                     flags = (flags << 1) & 7;
-                    out->flags |= vertex->unk0E;
+                    out->flags |= vertex->flags;
                     vertex++;
                     out->tex_q = 1.0f;
                     out->tex_s = (f32)(screens[0][0] - 0x6C00) / 10240.0f;

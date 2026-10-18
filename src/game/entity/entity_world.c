@@ -72,7 +72,7 @@ void EntityAi_SetUpdate(char *, s32);
    No handlers. */
 void Entity_InitInert(Entity *entity) {
     Motion_Start(entity, 0, 0, 0, 0);
-    memset(&entity->unkE0, 0, ENTITY_WORK_AREA_SIZE);
+    memset(&entity->ai_state, 0, ENTITY_WORK_AREA_SIZE);
     ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit24 = TRUE;
@@ -233,9 +233,9 @@ void Entity_ResetToSpawn(Entity *entity) {
     widest = (scale.z < scale.x) ? scale.x : scale.z;
     entity->collision_radius = (f32)entity->params->map_collision_radius * widest;
     entity->collision_height = (f32)entity->params->map_collision_height * scale.y;
-    entity->radius = (f32)entity->params->body_radius * widest;
+    entity->radius = (f32)entity->params->radius * widest;
     entity->height = (f32)entity->params->body_height * scale.y;
-    entity->body_radius = (f32)entity->params->unk04 * widest;
+    entity->body_radius = (f32)entity->params->body_radius * widest;
     entity->knockback_damping = (f32)entity->params->body_volume * scale.x * scale.y * scale.z;
     entity->knockback_damping = ABS(entity->knockback_damping);
     entity->model->radius = (entity->collision_radius < entity->collision_height) ? entity->collision_height : entity->collision_radius;

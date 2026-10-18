@@ -110,7 +110,7 @@ extern MenuItem *castable_spell_page_mark[];
     first = NULL;                                                                                        \
     for (i = 0; i < (item_count); i++) {                                                                 \
         if (item_counts[(item_base) + i] != 0 && (item_name_defs[(item_base) + i].state & 1) &&               \
-            (records)[(record_base) + i].unk18 == 0) {                                                   \
+            (records)[(record_base) + i].in_smith_rings == 0) {                                                   \
             LINK_ITEM(&(nodes)[i])                                                                       \
         }                                                                                                \
     }                                                                                                    \
@@ -797,15 +797,15 @@ static void Menu_BuildItemRings(void) {
     count = 0;
     for (i = 1; i < 380; i++) {
         if (item_counts[i] != 0 && !(item_name_defs[i].state & 2)) {
-            if ((i >= 0 && i < 150) || (i >= 150 && i < 220 && weapon_level_records[i - 150].unk18 == 0) ||
-                (i >= 220 && i < 250 && worn_item_level_records[i - 220].unk18 == 0) ||
-                (i >= 250 && i < 275 && worn_item_level_records[i - 220].unk18 == 0) ||
-                (i >= 275 && i < 300 && worn_item_level_records[i - 220].unk18 == 0) ||
-                (i >= 300 && i < 325 && worn_item_level_records[i - 220].unk18 == 0) ||
-                (i >= 325 && i < 350 && worn_item_level_records[i - 220].unk18 == 0) ||
-                (i >= 350 && i < 360 && worn_item_level_records[i - 220].unk18 == 0) ||
-                (i >= 360 && i < 370 && worn_item_level_records[i - 220].unk18 == 0) ||
-                (i >= 370 && worn_item_level_records[i - 220].unk18 == 0)) {
+            if ((i >= 0 && i < 150) || (i >= 150 && i < 220 && weapon_level_records[i - 150].in_smith_rings == 0) ||
+                (i >= 220 && i < 250 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
+                (i >= 250 && i < 275 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
+                (i >= 275 && i < 300 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
+                (i >= 300 && i < 325 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
+                (i >= 325 && i < 350 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
+                (i >= 350 && i < 360 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
+                (i >= 360 && i < 370 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
+                (i >= 370 && worn_item_level_records[i - 220].in_smith_rings == 0)) {
                 count++;
                 if (count == 7) {
                     owned_list_page_mark[0] = &all_item_entries[i];
@@ -875,7 +875,7 @@ static void Menu_BuildItemRings(void) {
     last = NULL;
     first = NULL;
     for (i = 0; i < 70; i++) {
-        if (item_counts[150 + i] != 0 && (item_name_defs[150 + i].state & 1) && weapon_level_records[i].unk18 == 0) {
+        if (item_counts[150 + i] != 0 && (item_name_defs[150 + i].state & 1) && weapon_level_records[i].in_smith_rings == 0) {
             LINK_ITEM(&weapon_entries[i])
         }
     }
@@ -934,7 +934,7 @@ void Menu_StepModelLoads(int unused) {
     LinkNode *node = model_load_chain;
 
     if (node != NULL) {
-        if (node->unk20 == 0 && node->callback != NULL) {
+        if (node->done == 0 && node->callback != NULL) {
             ((void (*)(LinkNode *))node->callback)(node); // match: the callback gets its node
         } else {
             model_load_chain = node->next;
@@ -950,9 +950,9 @@ static void Menu_MoveLoadToSpare(void) {
     if (node != NULL && node->callback == (void (*)(void))Menu_StepModelLoad && node != &model_load_spare) {
         model_load_spare = *node;
         Menu_TakeLoadBuffer(model_load_chain);
-        model_load_chain->unk08 = -1;
-        model_load_chain->unk20 = 0;
-        model_load_chain->unk1C = 0;
+        model_load_chain->file_handle = -1;
+        model_load_chain->done = 0;
+        model_load_chain->stage = 0;
         model_load_chain = &model_load_spare;
         if (model_load_spare.next != NULL && model_load_spare.next->callback == (void (*)(void))Menu_StepModelLoad) {
             model_load_spare.next = NULL;
@@ -971,9 +971,9 @@ static void Menu_CopyLoadToSpare(void) {
         if (node->callback == (void (*)(void))Menu_StepModelLoad) {
             if (node != &model_load_spare) {
                 model_load_spare = *node;
-                node->unk20 = 0;
-                node->unk1C = 0;
-                model_load_spare.unk10 = node;
+                node->done = 0;
+                node->stage = 0;
+                model_load_spare.target_node = node;
                 model_load_chain = &model_load_spare;
                 if (model_load_spare.next != NULL && model_load_spare.next->callback == (void (*)(void))Menu_StepModelLoad) {
                     model_load_spare.next = NULL;
@@ -1002,28 +1002,28 @@ static void Menu_ShiftEquipModelsNextList(int value, void *unused_data) {
     Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_down);
     model_load_down = model_load_shown;
     model_load_down.next = NULL;
-    if (model_load_down.unk20 == 0) {
+    if (model_load_down.done == 0) {
         pending = &model_load_down;
     }
     model_load_shown = model_load_up;
     model_load_shown.next = NULL;
-    if (model_load_shown.unk20 == 0) {
+    if (model_load_shown.done == 0) {
         pending = &model_load_shown;
     }
     Menu_TakeLoadBuffer(&model_load_up);
     if (pending == NULL) {
         pending = &model_load_up;
     }
-    model_load_up.unk20 = 0;
-    model_load_up.unk1C = 0;
-    model_load_up.unk08 = -1;
-    model_load_right.unk20 = 0;
-    model_load_right.unk1C = 0;
-    model_load_right.unk08 = -1;
+    model_load_up.done = 0;
+    model_load_up.stage = 0;
+    model_load_up.file_handle = -1;
+    model_load_right.done = 0;
+    model_load_right.stage = 0;
+    model_load_right.file_handle = -1;
     model_load_right.next = NULL;
-    model_load_left.unk20 = 0;
-    model_load_left.unk1C = 0;
-    model_load_left.unk08 = -1;
+    model_load_left.done = 0;
+    model_load_left.stage = 0;
+    model_load_left.file_handle = -1;
     model_load_up.next = NULL;
     current = model_load_chain;
     if (current != NULL) {
@@ -1057,28 +1057,28 @@ static void Menu_ShiftEquipModelsPrevList(int arg, void *unused_data) {
     Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_up);
     model_load_up = model_load_shown;
     model_load_up.next = NULL;
-    if (model_load_up.unk20 == 0) {
+    if (model_load_up.done == 0) {
         pending = &model_load_up;
     }
     model_load_shown = model_load_down;
     model_load_shown.next = NULL;
-    if (model_load_shown.unk20 == 0) {
+    if (model_load_shown.done == 0) {
         pending = &model_load_shown;
     }
     Menu_TakeLoadBuffer(&model_load_down);
     if (pending == NULL) {
         pending = &model_load_down;
     }
-    model_load_down.unk20 = 0;
-    model_load_down.unk1C = 0;
-    model_load_down.unk08 = -1;
-    model_load_right.unk20 = 0;
-    model_load_right.unk1C = 0;
-    model_load_right.unk08 = -1;
+    model_load_down.done = 0;
+    model_load_down.stage = 0;
+    model_load_down.file_handle = -1;
+    model_load_right.done = 0;
+    model_load_right.stage = 0;
+    model_load_right.file_handle = -1;
     model_load_right.next = NULL;
-    model_load_left.unk20 = 0;
-    model_load_left.unk1C = 0;
-    model_load_left.unk08 = -1;
+    model_load_left.done = 0;
+    model_load_left.stage = 0;
+    model_load_left.file_handle = -1;
     model_load_down.next = NULL;
     current = model_load_chain;
     if (current != NULL) {
@@ -1112,12 +1112,12 @@ static void Menu_ShiftEquipModelsPrevItem(int unused, void *unused_data) {
     Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_left);
     model_load_left = model_load_shown;
     model_load_left.next = NULL;
-    if (model_load_left.unk20 == 0) {
+    if (model_load_left.done == 0) {
         pending = &model_load_left;
     }
     model_load_shown = model_load_right;
     model_load_shown.next = NULL;
-    if (model_load_shown.unk20 == 0) {
+    if (model_load_shown.done == 0) {
         pending = &model_load_shown;
     }
     Menu_TakeLoadBuffer(&model_load_right);
@@ -1126,10 +1126,10 @@ static void Menu_ShiftEquipModelsPrevItem(int unused, void *unused_data) {
     }
     model_load_up.next = NULL;
     model_load_down.next = NULL;
-    model_load_right.unk20 = 0;
-    model_load_right.unk1C = 0;
+    model_load_right.done = 0;
+    model_load_right.stage = 0;
     model_load_right.next = NULL;
-    model_load_right.unk08 = -1;
+    model_load_right.file_handle = -1;
     current = model_load_chain;
     if (current != NULL) {
         if (current->next != NULL) {
@@ -1164,7 +1164,7 @@ static void Menu_ShiftEquipModelsNextItem(int unused, void *unused_data) {
     Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_right);
     model_load_right = model_load_shown;
     node = &model_load_right;
-    done = node->unk20;
+    done = node->done;
     node->next = NULL;
     pending = node;
     node = &model_load_left; // match: unused, but keeps the address in its own register for the two lines above
@@ -1172,7 +1172,7 @@ static void Menu_ShiftEquipModelsNextItem(int unused, void *unused_data) {
         pending = NULL;
     }
     model_load_shown = model_load_left;
-    done = model_load_shown.unk20;
+    done = model_load_shown.done;
     model_load_shown.next = NULL;
     if (done == 0) {
         pending = &model_load_shown;
@@ -1183,10 +1183,10 @@ static void Menu_ShiftEquipModelsNextItem(int unused, void *unused_data) {
     }
     model_load_up.next = NULL;
     model_load_down.next = NULL;
-    model_load_left.unk20 = 0;
-    model_load_left.unk1C = 0;
+    model_load_left.done = 0;
+    model_load_left.stage = 0;
     model_load_left.next = NULL;
-    model_load_left.unk08 = -1;
+    model_load_left.file_handle = -1;
     current = model_load_chain;
     if (current != NULL) {
         if (current->next != NULL) {
@@ -1210,12 +1210,12 @@ static void Menu_OpenModelFile(ChunkUpload *upload) {
     s32 file_handle;
 
     file_handle = File_OpenUnflagged(upload->name, 1, 1);
-    upload->unk08 = file_handle;
+    upload->file_handle = file_handle;
     if (file_handle < 0) {
-        upload->unk08 = File_Open("menu/select2/i0000.mod", 1, 1);
+        upload->file_handle = File_Open("menu/select2/i0000.mod", 1, 1);
     }
-    File_Read(upload->unk08, upload->pool_node->buffer, 0x25800);
-    model_read_file = upload->unk08;
+    File_Read(upload->file_handle, upload->pool_node->buffer, 0x25800);
+    model_read_file = upload->file_handle;
     upload->stage++;
 }
 
@@ -1223,13 +1223,13 @@ static void Menu_OpenModelFile(ChunkUpload *upload) {
 static void Menu_WaitModelRead(ChunkUpload *upload) {
     s32 status;
 
-    status = File_Sync(upload->unk08, 1);
+    status = File_Sync(upload->file_handle, 1);
     if (status == 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         model_read_file = -1;
         upload->stage++;
     } else if (status < 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         upload->done = upload->stage = 0;
         model_read_file = -1;
     }
@@ -1244,7 +1244,7 @@ static void Menu_FinishModelLoad(ChunkUpload *upload) {
     FlushCache(0);
     upload->done = 1;
     upload->stage = 0;
-    upload->unk08 = -1;
+    upload->file_handle = -1;
 }
 
 /* the stages of a menu model's load: open, wait for the read, hand the model over */
@@ -1258,8 +1258,8 @@ static const ChunkUploadStages model_load_stages = { {
 void Menu_StepModelLoad(LinkNode *node) {
     ChunkUploadStages stages = model_load_stages;
 
-    if (node->unk20 == 0) {
-        stages.stage[node->unk1C](node);
+    if (node->done == 0) {
+        stages.stage[node->stage](node);
     }
 }
 
@@ -1268,38 +1268,38 @@ void Menu_StepModelLoad(LinkNode *node) {
 static void Menu_OpenWornModelFile(LinkNode *node) {
     s32 file_handle;
 
-    file_handle = File_OpenUnflagged(node->unk10->name, 1, 1);
-    node->unk08 = file_handle;
+    file_handle = File_OpenUnflagged(node->target_node->name, 1, 1);
+    node->file_handle = file_handle;
     if (file_handle < 0) {
         LinkNode *next;
 
-        node->unk08 = -1;
-        node->unk1C = 0;
-        next = node->unk10->next;
+        node->file_handle = -1;
+        node->stage = 0;
+        next = node->target_node->next;
         worn_model_loading = 0;
         if (next != NULL) {
-            node->unk10 = next;
+            node->target_node = next;
             return;
         }
-        node->unk20 = 1;
+        node->done = 1;
         return;
     }
     File_Read(file_handle, ((ChunkPoolNode *)node->pool_node)->buffer, 0x25800);
-    model_read_file = node->unk08;
-    node->unk1C += 1;
+    model_read_file = node->file_handle;
+    node->stage += 1;
 }
 
 /* Stage 1 of an equipment model's load: as Stage 1 of a menu model's, and an error also frees the screen's input. */
 static void Menu_WaitWornModelRead(ChunkUpload *upload) {
     s32 status;
 
-    status = File_Sync(upload->unk08, 1);
+    status = File_Sync(upload->file_handle, 1);
     if (status == 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         model_read_file = -1;
         upload->stage++;
     } else if (status < 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         upload->done = upload->stage = 0;
         model_read_file = -1;
         worn_model_loading = 0;
@@ -1313,36 +1313,36 @@ static const LinkSlotValues slot_pool_groups = { { 4, 0xFF, 5, 2, 1, 3, 0, 6, 7,
    the node it was loaded for and goes on to the next waiting node. */
 static void Menu_FinishWornModelLoad(LinkNode *node) {
     LinkSlotValues values = slot_pool_groups;
-    LinkNode *target = node->unk10;
+    LinkNode *target = node->target_node;
     LinkNode *loaded;
     LinkNode *next;
     LinkFile *file;
     void *pool_node;
 
     if ((u8)target->slot >= 13) {
-        node->unk10 = NULL;
-        node->unk20 = 1;
+        node->target_node = NULL;
+        node->done = 1;
         return;
     }
     file = ((ChunkPoolNode *)node->pool_node)->buffer;
     pool_part_sources[target->slot]->texture = (char *)file + file->second_offset;
     pool_part_sources[target->slot]->file = (PoolPartFile *)((char *)file + file->first_offset);
     PoolPartFile_Relocate((char *)pool_part_sources[target->slot]->file);
-    pool_node = node->unk10->pool_node;
-    node->unk10->pool_node = node->pool_node;
+    pool_node = node->target_node->pool_node;
+    node->target_node->pool_node = node->pool_node;
     node->pool_node = pool_node;
-    PoolSlot_LoadGroup(pool_part_sources[node->unk10->slot], values.value[node->unk10->slot]);
-    loaded = node->unk10;
-    node->unk1C = 0;
-    node->unk08 = -1;
-    loaded->unk20 = 1;
+    PoolSlot_LoadGroup(pool_part_sources[node->target_node->slot], values.value[node->target_node->slot]);
+    loaded = node->target_node;
+    node->stage = 0;
+    node->file_handle = -1;
+    loaded->done = 1;
     worn_model_loading = 0;
     next = loaded->next;
     if (next != NULL) {
-        node->unk10 = next;
+        node->target_node = next;
     } else {
-        node->unk20 = 1;
-        node->unk10 = NULL;
+        node->done = 1;
+        node->target_node = NULL;
     }
     loaded->next = NULL;
 }
@@ -1368,14 +1368,14 @@ static void Menu_OpenPackageFile(ChunkUpload *upload) {
     s32 file_handle;
 
     file_handle = File_OpenUnflagged(upload->name, 1, 1);
-    upload->unk08 = file_handle;
+    upload->file_handle = file_handle;
     if (file_handle < 0) {
         upload->stage = 0;
         upload->done = 0;
         upload = NULL; // match: retail goes on to read through this null pointer
     }
-    File_Read(upload->unk08, upload->pool_node->buffer, 0x1A2000);
-    model_read_file = upload->unk08;
+    File_Read(upload->file_handle, upload->pool_node->buffer, 0x1A2000);
+    model_read_file = upload->file_handle;
     upload->stage++;
 }
 
@@ -1383,13 +1383,13 @@ static void Menu_OpenPackageFile(ChunkUpload *upload) {
 static void Menu_WaitPackageRead(ChunkUpload *upload) {
     s32 status;
 
-    status = File_Sync(upload->unk08, 1);
+    status = File_Sync(upload->file_handle, 1);
     if (status == 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         model_read_file = -1;
         upload->stage++;
     } else if (status < 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         upload->done = upload->stage = 0;
         model_read_file = -1;
     }
@@ -1412,7 +1412,7 @@ static void Menu_FinishPackageLoad(ChunkUpload *upload) {
     FlushCache(0);
     upload->done = 1;
     upload->stage = 0;
-    upload->unk08 = -1;
+    upload->file_handle = -1;
 }
 
 /* the stages of a package's load: open, wait for the read, hand every chunk over */
@@ -1465,25 +1465,25 @@ void Menu_ResetLoadBuffers(void) {
         model_load_spare = *loading;
         model_load_chain = &model_load_spare;
         model_load_spare.next = NULL;
-        if (model_load_spare.unk10 != NULL) {
-            model_load_spare.unk10->slot = -1;
+        if (model_load_spare.target_node != NULL) {
+            model_load_spare.target_node->slot = -1;
         }
     }
 }
 
 /* Writes the model file name of a menu item that has a definition (its LevelDef's file number). */
 static void Menu_WriteItemModelName(char *buffer, MenuItem *item) {
-    sprintf(buffer, "menu/select2/i%04d.mod", item_name_defs[item->unk0C].file_number);
+    sprintf(buffer, "menu/select2/i%04d.mod", item_name_defs[item->item_number].file_number);
 }
 
 /* Writes the model file name of a spell (group 1): its own number. */
 static void Menu_WriteSpellModelName(char *buffer, MenuItem *item) {
-    sprintf(buffer, "menu/select/m%04d.mod", item->unk0C);
+    sprintf(buffer, "menu/select/m%04d.mod", item->item_number);
 }
 
 /* A copy of Menu_WriteItemModelName, the entry of group 10 in item_model_name_writers; no item has that group. */
 static void Menu_WriteGroup10ModelName(char *buffer, MenuItem *item) {
-    sprintf(buffer, "menu/select2/i%04d.mod", item_name_defs[item->unk0C].file_number);
+    sprintf(buffer, "menu/select2/i%04d.mod", item_name_defs[item->item_number].file_number);
 }
 
 /* per MenuItem.group, the function that writes the item's model file name */
@@ -1531,7 +1531,7 @@ static void Menu_SetWornModelNames(void) {
     sprintf(ring_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_RING] + ITEM_WORN_FIRST].file_number);
     sprintf(bracelet_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST].file_number);
     sprintf(amulet_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST].file_number);
-    worn_model_loader.unk20 = 0;
+    worn_model_loader.done = 0;
 }
 
 /* Sets up the loads of the player's equipment models (nine nodes behind worn_model_loader) and of the five
@@ -1568,20 +1568,20 @@ static void Menu_ChainEquipModels(void) {
     bracelet_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
     amulet_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
     weapon_model_load.slot = 0;
-    weapon_model_load.unk1C = 0;
-    shield_model_load.unk1C = 0;
-    armor_model_load.unk1C = 0;
-    helm_model_load.unk1C = 0;
-    gauntlet_model_load.unk1C = 0;
-    boot_model_load.unk1C = 0;
-    ring_model_load.unk1C = 0;
-    bracelet_model_load.unk1C = 0;
-    amulet_model_load.unk1C = 0;
-    worn_model_loader.unk10 = &shield_model_load;
+    weapon_model_load.stage = 0;
+    shield_model_load.stage = 0;
+    armor_model_load.stage = 0;
+    helm_model_load.stage = 0;
+    gauntlet_model_load.stage = 0;
+    boot_model_load.stage = 0;
+    ring_model_load.stage = 0;
+    bracelet_model_load.stage = 0;
+    amulet_model_load.stage = 0;
+    worn_model_loader.target_node = &shield_model_load;
     shield_model_load.next = &weapon_model_load;
     weapon_model_load.next = &armor_model_load;
-    worn_model_loader.unk1C = 0;
-    worn_model_loader.unk20 = 0;
+    worn_model_loader.stage = 0;
+    worn_model_loader.done = 0;
     armor_model_load.next = &helm_model_load;
     helm_model_load.next = &gauntlet_model_load;
     gauntlet_model_load.next = &boot_model_load;
@@ -1605,15 +1605,15 @@ static void Menu_ChainEquipModels(void) {
     model_load_left.callback = (void (*)(void))Menu_StepModelLoad;
     model_load_right.next = NULL;
     model_load_right.callback = (void (*)(void))Menu_StepModelLoad;
-    model_load_shown.unk20 = 0;
-    model_load_up.unk20 = 0;
-    model_load_down.unk20 = 0;
-    model_load_left.unk20 = 0;
-    model_load_right.unk20 = 0;
-    model_load_up.unk1C = 0;
-    model_load_down.unk1C = 0;
-    model_load_left.unk1C = 0;
-    model_load_shown.unk1C = model_load_right.unk1C = 0;
+    model_load_shown.done = 0;
+    model_load_up.done = 0;
+    model_load_down.done = 0;
+    model_load_left.done = 0;
+    model_load_right.done = 0;
+    model_load_up.stage = 0;
+    model_load_down.stage = 0;
+    model_load_left.stage = 0;
+    model_load_shown.stage = model_load_right.stage = 0;
     model_load_chain = &worn_model_loader;
     worn_model_loader.next = &model_load_shown;
 }
@@ -1649,11 +1649,11 @@ static void Menu_SetAllItemsModelNames(void) {
     } else {
         ahead = behind = owned_list_first;
     }
-    sprintf(model_name_shown, "menu/select2/i%04d.mod", item_name_defs[owned_list_current[0]->unk0C].file_number);
-    sprintf(model_name_down, "menu/select2/i%04d.mod", item_name_defs[owned_list_current[0]->prev->unk0C].file_number);
-    sprintf(model_name_up, "menu/select2/i%04d.mod", item_name_defs[owned_list_current[0]->next->unk0C].file_number);
-    sprintf(model_name_left, "menu/select2/i%04d.mod", item_name_defs[ahead->unk0C].file_number);
-    sprintf(model_name_right, "menu/select2/i%04d.mod", item_name_defs[behind->unk0C].file_number);
+    sprintf(model_name_shown, "menu/select2/i%04d.mod", item_name_defs[owned_list_current[0]->item_number].file_number);
+    sprintf(model_name_down, "menu/select2/i%04d.mod", item_name_defs[owned_list_current[0]->prev->item_number].file_number);
+    sprintf(model_name_up, "menu/select2/i%04d.mod", item_name_defs[owned_list_current[0]->next->item_number].file_number);
+    sprintf(model_name_left, "menu/select2/i%04d.mod", item_name_defs[ahead->item_number].file_number);
+    sprintf(model_name_right, "menu/select2/i%04d.mod", item_name_defs[behind->item_number].file_number);
 }
 
 /* Opens main menu line 5: names the five models of the list of everything owned and chains their loads. */
@@ -1667,32 +1667,32 @@ static void Menu_ChainAllItemsModels(void) {
         Menu_TakeLoadBuffer(&model_load_right);
         model_load_shown.next = &model_load_up;
         model_load_shown.callback = (void (*)(void))Menu_StepModelLoad;
-        model_load_shown.unk20 = 0;
+        model_load_shown.done = 0;
         model_load_up.next = &model_load_down;
         model_load_up.callback = (void (*)(void))Menu_StepModelLoad;
-        model_load_up.unk20 = 0;
-        model_load_up.unk1C = 0;
+        model_load_up.done = 0;
+        model_load_up.stage = 0;
         model_load_down.next = &model_load_left;
         model_load_down.callback = (void (*)(void))Menu_StepModelLoad;
-        model_load_down.unk20 = 0;
-        model_load_down.unk1C = 0;
+        model_load_down.done = 0;
+        model_load_down.stage = 0;
         model_load_left.next = &model_load_right;
         model_load_left.callback = (void (*)(void))Menu_StepModelLoad;
-        model_load_left.unk20 = 0;
-        model_load_left.unk1C = 0;
+        model_load_left.done = 0;
+        model_load_left.stage = 0;
         model_load_right.next = NULL;
         model_load_right.callback = (void (*)(void))Menu_StepModelLoad;
-        model_load_right.unk20 = 0;
-        model_load_shown.unk1C = model_load_right.unk1C = 0;
+        model_load_right.done = 0;
+        model_load_shown.stage = model_load_right.stage = 0;
         model_load_chain = &model_load_shown;
     }
 }
 
 /* Writes the model file names of the three spells on show: the one the cursor is on and its two neighbours. */
 static void Menu_SetSpellModelNames(void) {
-    sprintf(model_name_shown, "menu/select/m%04d.mod", castable_spell_cursor[0]->unk0C);
-    sprintf(model_name_down, "menu/select/m%04d.mod", castable_spell_cursor[0]->prev->unk0C);
-    sprintf(model_name_up, "menu/select/m%04d.mod", castable_spell_cursor[0]->next->unk0C);
+    sprintf(model_name_shown, "menu/select/m%04d.mod", castable_spell_cursor[0]->item_number);
+    sprintf(model_name_down, "menu/select/m%04d.mod", castable_spell_cursor[0]->prev->item_number);
+    sprintf(model_name_up, "menu/select/m%04d.mod", castable_spell_cursor[0]->next->item_number);
 }
 
 /* Opens main menu line 1: names the three spell models and chains the load nodes (nodes 3 and 4 apart, unused). */
@@ -1713,15 +1713,15 @@ static void Menu_ChainSpellModels(void) {
     model_load_left.callback = (void (*)(void))Menu_StepModelLoad;
     model_load_right.next = NULL;
     model_load_right.callback = (void (*)(void))Menu_StepModelLoad;
-    model_load_shown.unk20 = 0;
-    model_load_up.unk20 = 0;
-    model_load_down.unk20 = 0;
-    model_load_left.unk20 = 0;
-    model_load_right.unk20 = 0;
-    model_load_up.unk1C = 0;
-    model_load_down.unk1C = 0;
-    model_load_left.unk1C = 0;
-    model_load_shown.unk1C = model_load_right.unk1C = 0;
+    model_load_shown.done = 0;
+    model_load_up.done = 0;
+    model_load_down.done = 0;
+    model_load_left.done = 0;
+    model_load_right.done = 0;
+    model_load_up.stage = 0;
+    model_load_down.stage = 0;
+    model_load_left.stage = 0;
+    model_load_shown.stage = model_load_right.stage = 0;
     model_load_chain = &model_load_shown;
 }
 
@@ -1740,8 +1740,8 @@ static void Menu_ChainKeyItemModels(void) {
     for (i = 0; i < 12; i++) {
         Menu_TakeLoadBuffer(&key_item_model_loads[i]);
         key_item_model_loads[i].callback = (void (*)(void))Menu_StepModelLoad;
-        key_item_model_loads[i].unk1C = 0;
-        key_item_model_loads[i].unk20 = 0;
+        key_item_model_loads[i].stage = 0;
+        key_item_model_loads[i].done = 0;
         if (item_counts[numbers.number[i]] != 0) {
             sprintf(key_item_model_loads[i].name, "menu/select/i%04d.mod", item_name_defs[numbers.number[i]].file_number);
         } else {
@@ -1775,7 +1775,7 @@ static void Menu_ShiftSpellModelsNext(int unused) {
     Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_down);
     model_load_down = model_load_shown;
     node = &model_load_down;
-    done = node->unk20;
+    done = node->done;
     node->next = NULL;
     pending = node;
     node = &model_load_up; // match: unused, but keeps the address in its own register for the two lines above
@@ -1783,7 +1783,7 @@ static void Menu_ShiftSpellModelsNext(int unused) {
         pending = NULL;
     }
     model_load_shown = model_load_up;
-    done = model_load_shown.unk20;
+    done = model_load_shown.done;
     model_load_shown.next = NULL;
     if (done == 0) {
         pending = &model_load_shown;
@@ -1792,10 +1792,10 @@ static void Menu_ShiftSpellModelsNext(int unused) {
     if (pending == NULL) {
         pending = &model_load_up;
     }
-    model_load_up.unk08 = -1;
-    model_load_up.unk1C = 0;
+    model_load_up.file_handle = -1;
+    model_load_up.stage = 0;
     model_load_up.next = NULL;
-    model_load_up.unk20 = 0;
+    model_load_up.done = 0;
     current = model_load_chain;
     if (current != NULL) {
         current->next = pending;
@@ -1823,7 +1823,7 @@ static void Menu_ShiftSpellModelsPrev(int unused) {
     Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_up);
     model_load_up = model_load_shown;
     node = &model_load_up;
-    done = node->unk20;
+    done = node->done;
     node->next = NULL;
     pending = node;
     node = &model_load_down; // match: unused, but keeps the address in its own register for the two lines above
@@ -1831,7 +1831,7 @@ static void Menu_ShiftSpellModelsPrev(int unused) {
         pending = NULL;
     }
     model_load_shown = model_load_down;
-    done = model_load_shown.unk20;
+    done = model_load_shown.done;
     model_load_shown.next = NULL;
     if (done == 0) {
         pending = &model_load_shown;
@@ -1840,10 +1840,10 @@ static void Menu_ShiftSpellModelsPrev(int unused) {
     if (pending == NULL) {
         pending = &model_load_down;
     }
-    model_load_down.unk08 = -1;
-    model_load_down.unk1C = 0;
+    model_load_down.file_handle = -1;
+    model_load_down.stage = 0;
     model_load_down.next = NULL;
-    model_load_down.unk20 = 0;
+    model_load_down.done = 0;
     current = model_load_chain;
     if (current != NULL) {
         current->next = pending;
@@ -1958,140 +1958,140 @@ void Menu_Init(void) {
         PoolNodeFile_Relocate((RelocFile *)equip_weapon_motions[i]);
     }
     for (i = 0; i < 150; i++) {
-        shortcut_entries[i].unk0C = i;
-        shortcut_entries[i].unk00 = (int)&item_common_defs[i];
+        shortcut_entries[i].item_number = i;
+        shortcut_entries[i].definition = (int)&item_common_defs[i];
         shortcut_entries[i].group = 11;
     }
     for (i = 150; i < 241; i++) {
-        shortcut_entries[i].unk00 = (int)&fx_table[i - 150];
-        shortcut_entries[i].unk0C = i - 150;
+        shortcut_entries[i].definition = (int)&fx_table[i - 150];
+        shortcut_entries[i].item_number = i - 150;
         shortcut_entries[i].group = 1;
     }
     number = 0;
     for (i = 0; i < 150; i++) {
-        all_item_entries[number].unk00 = (int)&item_common_defs[i];
-        all_item_entries[number].unk0C = number;
+        all_item_entries[number].definition = (int)&item_common_defs[i];
+        all_item_entries[number].item_number = number;
         all_item_entries[number].group = 12;
         number++;
     }
     for (i = 0; i < 70; i++) {
-        all_item_entries[number].unk00 = (int)&weapon_defs[i];
-        all_item_entries[number].unk0C = number;
+        all_item_entries[number].definition = (int)&weapon_defs[i];
+        all_item_entries[number].item_number = number;
         all_item_entries[number].group = 0;
         number++;
     }
     for (i = 0; i < 30; i++) {
-        all_item_entries[number].unk00 = (int)&worn_defs[i];
-        all_item_entries[number].unk0C = number;
+        all_item_entries[number].definition = (int)&worn_defs[i];
+        all_item_entries[number].item_number = number;
         all_item_entries[number].group = 2;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        all_item_entries[number].unk00 = (int)&worn_defs[i + 30];
-        all_item_entries[number].unk0C = number;
+        all_item_entries[number].definition = (int)&worn_defs[i + 30];
+        all_item_entries[number].item_number = number;
         all_item_entries[number].group = 3;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        all_item_entries[number].unk00 = (int)&worn_defs[i + 55];
-        all_item_entries[number].unk0C = number;
+        all_item_entries[number].definition = (int)&worn_defs[i + 55];
+        all_item_entries[number].item_number = number;
         all_item_entries[number].group = 4;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        all_item_entries[number].unk00 = (int)&worn_defs[i + 80];
-        all_item_entries[number].unk0C = number;
+        all_item_entries[number].definition = (int)&worn_defs[i + 80];
+        all_item_entries[number].item_number = number;
         all_item_entries[number].group = 5;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        all_item_entries[number].unk00 = (int)&worn_defs[i + 105];
-        all_item_entries[number].unk0C = number;
+        all_item_entries[number].definition = (int)&worn_defs[i + 105];
+        all_item_entries[number].item_number = number;
         all_item_entries[number].group = 6;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        all_item_entries[number].unk00 = (int)&worn_defs[i + 130];
-        all_item_entries[number].unk0C = number;
+        all_item_entries[number].definition = (int)&worn_defs[i + 130];
+        all_item_entries[number].item_number = number;
         all_item_entries[number].group = 7;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        all_item_entries[number].unk00 = (int)&worn_defs[i + 140];
-        all_item_entries[number].unk0C = number;
+        all_item_entries[number].definition = (int)&worn_defs[i + 140];
+        all_item_entries[number].item_number = number;
         all_item_entries[number].group = 8;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        all_item_entries[number].unk00 = (int)&worn_defs[i + 130];
-        all_item_entries[number].unk0C = number;
+        all_item_entries[number].definition = (int)&worn_defs[i + 130];
+        all_item_entries[number].item_number = number;
         all_item_entries[number].group = 9;
         number++;
     }
     number = 0;
     for (i = 0; i < 150; i++) {
-        common_item_entries[i].unk00 = (int)&item_common_defs[i];
-        common_item_entries[i].unk0C = number;
+        common_item_entries[i].definition = (int)&item_common_defs[i];
+        common_item_entries[i].item_number = number;
         common_item_entries[i].group = 11;
         number++;
     }
     for (i = 0; i < 70; i++) {
-        weapon_entries[i].unk00 = (int)&weapon_defs[i];
-        weapon_entries[i].unk0C = number;
+        weapon_entries[i].definition = (int)&weapon_defs[i];
+        weapon_entries[i].item_number = number;
         weapon_entries[i].group = 0;
         number++;
     }
     for (i = 0; i < 30; i++) {
-        shield_entries[i].unk00 = (int)&worn_defs[i];
-        shield_entries[i].unk0C = number;
+        shield_entries[i].definition = (int)&worn_defs[i];
+        shield_entries[i].item_number = number;
         shield_entries[i].group = 2;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        helm_entries[i].unk00 = (int)&worn_defs[i + 30];
-        helm_entries[i].unk0C = number;
+        helm_entries[i].definition = (int)&worn_defs[i + 30];
+        helm_entries[i].item_number = number;
         helm_entries[i].group = 3;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        armor_entries[i].unk00 = (int)&worn_defs[i + 55];
-        armor_entries[i].unk0C = number;
+        armor_entries[i].definition = (int)&worn_defs[i + 55];
+        armor_entries[i].item_number = number;
         armor_entries[i].group = 4;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        gauntlet_entries[i].unk00 = (int)&worn_defs[i + 80];
-        gauntlet_entries[i].unk0C = number;
+        gauntlet_entries[i].definition = (int)&worn_defs[i + 80];
+        gauntlet_entries[i].item_number = number;
         gauntlet_entries[i].group = 5;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        boot_entries[i].unk00 = (int)&worn_defs[i + 105];
-        boot_entries[i].unk0C = number;
+        boot_entries[i].definition = (int)&worn_defs[i + 105];
+        boot_entries[i].item_number = number;
         boot_entries[i].group = 6;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        ring_entries[i].unk00 = (int)&worn_defs[i + 130];
-        ring_entries[i].unk0C = number;
+        ring_entries[i].definition = (int)&worn_defs[i + 130];
+        ring_entries[i].item_number = number;
         ring_entries[i].group = 7;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        bracelet_entries[i].unk00 = (int)&worn_defs[i + 140];
-        bracelet_entries[i].unk0C = number;
+        bracelet_entries[i].definition = (int)&worn_defs[i + 140];
+        bracelet_entries[i].item_number = number;
         bracelet_entries[i].group = 8;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        amulet_entries[i].unk00 = (int)&worn_defs[i + 130];
-        amulet_entries[i].unk0C = number;
+        amulet_entries[i].definition = (int)&worn_defs[i + 130];
+        amulet_entries[i].item_number = number;
         amulet_entries[i].group = 9;
         number++;
     }
     for (i = 0; i < 91; i++) {
-        spell_entries[i].unk0C = i;
-        spell_entries[i].unk00 = (int)&fx_table[i];
+        spell_entries[i].item_number = i;
+        spell_entries[i].definition = (int)&fx_table[i];
         spell_entries[i].group = 1;
     }
     use_item_list.group = 11;
@@ -2921,15 +2921,15 @@ static s32 Menu_CutModelChain(void) {
             equip_ring_list.item = equipped_ring.item;
             equip_bracelet_list.item = equipped_bracelet.item;
             equip_amulet_list.item = equipped_amulet.item;
-            Sound_LoadMgBank(equipped_spell.item->unk0C);
+            Sound_LoadMgBank(equipped_spell.item->item_number);
             File_Close(model_read_file);
             menu_step = 0;
             main_menu_line = 0;
             return FALSE;
         }
         node->next = NULL;
-        if (node->unk10 != NULL) {
-            node->unk10->next = NULL;
+        if (node->target_node != NULL) {
+            node->target_node->next = NULL;
         }
         return TRUE;
     case 1:
@@ -3033,8 +3033,8 @@ static void Menu_UpdateMain(HandlerContext *context) {
                         }
                         if (Menu_KnowsCastableSpell() != 0 || main_menu_line != 1) {
                             menu_screen_handler = (void *)Menu_OpenChosenScreen;
-                            context->unk04 = main_menu_line;
-                            switch (context->unk04) {
+                            context->active_list = main_menu_line;
+                            switch (context->active_list) {
                             case 0:
                                 ((void (*)(s32))Menu_ChainItemListModels)(0); // match: the callee takes nothing
                                 break;
@@ -3058,7 +3058,7 @@ static void Menu_UpdateMain(HandlerContext *context) {
                             }
                         }
                     } else if (main_menu_state == 3) {
-                        context->unk04 = 0;
+                        context->active_list = 0;
                         main_menu_line = 0;
                         menu_step++;
                     }
@@ -3073,7 +3073,7 @@ static void Menu_UpdateMain(HandlerContext *context) {
 
 /* Makes the screen of the main menu line chosen (context->unk04) the current handler and clears the line. */
 static void Menu_OpenChosenScreen(HandlerContext *context) {
-    int *line = &context->unk04;
+    int *line = &context->active_list;
 
     pulse_sprite_alpha = 128.0f;
     menu_screen_handler = main_menu_screens[*line];
@@ -3148,7 +3148,7 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         Menu_MoveItemListCursor(context, menu_input_enabled == 0);
     }
     if (item_list_cursor[0] != NULL) {
-        D_00446DF4 = item_counts[item_list_cursor[0]->unk0C];
+        D_00446DF4 = item_counts[item_list_cursor[0]->item_number];
     } else {
         D_00446DF4 = 0;
     }
@@ -3197,7 +3197,7 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         item = item_list_top[0];
         MenuText_SetColor(menu_draw_color);
         for (row = 0; row < 7; row++, item = item->prev) {
-            text = (s32)&item_name_defs[item->unk0C];
+            text = (s32)&item_name_defs[item->item_number];
             MenuText_SetPen(word);
             ((s32 (*)(s32, s32))MenuText_DrawWrapped)(text, 0x1A); // match: called as if it took and returned a number
             word.f.mid16 += 0xB0;
@@ -3208,7 +3208,7 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         }
         item = item_list_cursor[0];
         table = Message_GetFontText(menu_heap);
-        slot = item->unk0C + MSG_ITEM_TEXT_FIRST + 1;
+        slot = item->item_number + MSG_ITEM_TEXT_FIRST + 1;
         entry = ((s32 *)table)[slot];
         word.raw = 0x000A875083207080;
         MenuText_SetPen(word);
@@ -3219,10 +3219,10 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         }
     }
     if ((menu_buttons & PAD_CROSS) && menu_input_enabled != 0 && item_list_cursor[0] != NULL) {
-        if (item_list_cursor[0]->unk0C < ITEM_ARROW || item_list_cursor[0]->unk0C > ITEM_WIDDAS_ARROW) {
+        if (item_list_cursor[0]->item_number < ITEM_ARROW || item_list_cursor[0]->item_number > ITEM_WIDDAS_ARROW) {
             Sound_PlayMenu(0);
             game_status.bit6 = TRUE;
-            game_status.item_to_use = item_list_cursor[0]->unk0C;
+            game_status.item_to_use = item_list_cursor[0]->item_number;
             use_item_state = 2;
             menu_input_enabled = 0;
             if (model_load_chain != NULL) {
@@ -3357,7 +3357,7 @@ static void Menu_UpdateCastSpell(s32 context) {
     pitch.raw = 0xB00140;
     MenuText_SetGlyphSize(pitch);
     i = 0;
-    number = castable_spell_cursor[0]->unk0C; /* the selected magic's number */
+    number = castable_spell_cursor[0]->item_number; /* the selected magic's number */
     page = (number - 1) / 15;
     D_00446DF4 = fx_table[number].mp_cost;
     D_00446DF8 = (number - 1) % 3 + 1;
@@ -3389,7 +3389,7 @@ static void Menu_UpdateCastSpell(s32 context) {
     item = castable_spell_top[0];
     MenuText_SetColor(menu_draw_color);
     for (row = 0; row < 7; row++, item = item->prev) {
-        MenuText_DrawLine((u16 *)&fx_table[item->unk0C], 0x1A);
+        MenuText_DrawLine((u16 *)&fx_table[item->item_number], 0x1A);
         word.f.mid16 += 0xB0; // match: dead, left over from the item menu (Menu_UpdateUseItem), which sets the row's place here
         word.f.lo16 = 0x7080; // match: dead as well; without the two lines the loop is compiled differently
         if (castable_spell_page_mark[0]->prev == item) {
@@ -3398,7 +3398,7 @@ static void Menu_UpdateCastSpell(s32 context) {
     }
     selected = castable_spell_cursor[0];
     table = Message_GetFontText(menu_heap);
-    slot = selected->unk0C + MSG_MAGIC_TEXT_FIRST + 1;
+    slot = selected->item_number + MSG_MAGIC_TEXT_FIRST + 1;
     entry = ((s32 *)table)[slot];
     word.raw = 0x000A875082E07000;
     MenuText_SetPen(word);
@@ -3426,9 +3426,9 @@ static void Menu_UpdateCastSpell(s32 context) {
     *D2_CHCR = D_CHCR_STR;
     DRAW_NODE_MODEL(&model_load_shown, local, menu_draw_color);
     if ((menu_buttons & PAD_CROSS) && menu_input_enabled != 0) {
-        if (player_state.mp_now >= ((FxTableEntry *)castable_spell_cursor[0]->unk00)->mp_cost && player_state.magic_gauge >= 5000) {
+        if (player_state.mp_now >= ((FxTableEntry *)castable_spell_cursor[0]->definition)->mp_cost && player_state.magic_gauge >= 5000) {
             Sound_PlayMenu(0);
-            game_status.magic_to_cast = castable_spell_cursor[0]->unk0C;
+            game_status.magic_to_cast = castable_spell_cursor[0]->item_number;
             cast_spell_state = 2;
             menu_input_enabled = 0;
             if (model_load_chain != NULL) {
@@ -3592,16 +3592,16 @@ static void Menu_UpdateEquip(void) {
     } else if (equip_group_shown < 0) {
         equip_group_shown = 10;
     }
-    index = CURRENT_ITEM->unk0C - bases.first_item[CURRENT_ITEM->group];
+    index = CURRENT_ITEM->item_number - bases.first_item[CURRENT_ITEM->group];
     if (CURRENT_ITEM->group == 0) {
-        D_00446E30 = weapon_level_records[index].unk14 + 1;
+        D_00446E30 = weapon_level_records[index].level_index + 1;
     } else if (CURRENT_ITEM->group == 1) {
         D_00446E30 = (index - 1) % 3 + 1;
     }
     for (i = 0; i < equip_part_count; i++) {
         kind = equip_parts[i].handler_index;
         SET_BLEND(equip_parts[i].blend_mode);
-        if (Menu_IsEquipped(equip_group_shown, CURRENT_ITEM->group, CURRENT_ITEM->unk0C)) {
+        if (Menu_IsEquipped(equip_group_shown, CURRENT_ITEM->group, CURRENT_ITEM->item_number)) {
             MenuSprite_Draw((int)&equip_parts[i], kind + 1000, 0, (int)screen_part_alphas[i]);
         } else {
             MenuSprite_Draw((int)&equip_parts[i], kind + 1000, 1, (int)screen_part_alphas[i]);
@@ -3640,11 +3640,11 @@ static void Menu_UpdateEquip(void) {
     sceVu0RotMatrixY(weapon_matrix, unit, equip_weapon_model_angle);
     sceVu0TransMatrix(weapon_matrix, weapon_matrix, equip_weapon_model_position);
     node.pool_node = &D_004472B8;
-    node.unk20 = 1;
+    node.done = 1;
     node.unk00 = 0;
     D_00446ACC = weapon_defs[player_state.weapon].equip_menu_motion;
     if (weapon_defs[player_state.weapon].action_handler_index == 0) {
-        D_00446ACC += worn_defs[player_state.equipment[EQUIP_SHIELD]].unk3F;
+        D_00446ACC += worn_defs[player_state.equipment[EQUIP_SHIELD]].equip_menu_motion_offset;
     }
     PoolNode_Pose((RelocEntry *)equip_weapon_motions[D_00446ACC]->frames, pool_slots, weapon_matrix, equip_weapon_motion_frame);
     equip_weapon_motion_frame++;
@@ -3708,7 +3708,7 @@ static void Menu_UpdateEquip(void) {
     packet[11] = 0;
     GIF_SEND(packet, 3);
     if (CURRENT_ITEM->group == 1) {
-        if (equip_state != 2 && model_load_shown.unk20 != 0) {
+        if (equip_state != 2 && model_load_shown.done != 0) {
             equip_model_shown = 1;
             screen_part_alphas[254] += 12.8f;
             if (screen_part_alphas[254] > 128.0f) {
@@ -3719,7 +3719,7 @@ static void Menu_UpdateEquip(void) {
         sceVu0TransMatrix(item_matrix, scale, equip_item_model_position);
         DRAW_ITEM_MODEL(item_matrix);
     } else {
-        if (equip_state != 2 && model_load_shown.unk20 != 0) {
+        if (equip_state != 2 && model_load_shown.done != 0) {
             equip_model_shown = 1;
             screen_part_alphas[254] += 12.8f;
             if (screen_part_alphas[254] > 128.0f) {
@@ -3735,25 +3735,25 @@ static void Menu_UpdateEquip(void) {
     }
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 1.0f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
     if (CURRENT_ITEM->group == 1) {
-        definition = &fx_table[CURRENT_ITEM->unk0C];
+        definition = &fx_table[CURRENT_ITEM->item_number];
     } else {
-        definition = &item_name_defs[CURRENT_ITEM->unk0C];
+        definition = &item_name_defs[CURRENT_ITEM->item_number];
     }
     if (detail_panel_open != 0) {
         switch (CURRENT_ITEM->group) {
         case 0:
-            D_00446DF4 = (weapon_level_records[index].unk00[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[0]) * weapon_level_records[index].level / 100;
-            D_00446DF8 = (weapon_level_records[index].unk00[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[1]) * weapon_level_records[index].level / 100;
-            D_00446DFC = (weapon_level_records[index].unk00[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[2]) * weapon_level_records[index].level / 100;
-            D_00446E00 = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[3] * weapon_level_records[index].level / 100;
-            D_00446E04 = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[4] * weapon_level_records[index].level / 100;
-            D_00446E08 = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[5] * weapon_level_records[index].level / 100;
-            D_00446E0C = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[6] * weapon_level_records[index].level / 100;
-            D_00446E10 = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[7] * weapon_level_records[index].level / 100;
-            D_00446E14 = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[8] * weapon_level_records[index].level / 100;
+            D_00446DF4 = (weapon_level_records[index].gained_values[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[0]) * weapon_level_records[index].level / 100;
+            D_00446DF8 = (weapon_level_records[index].gained_values[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[1]) * weapon_level_records[index].level / 100;
+            D_00446DFC = (weapon_level_records[index].gained_values[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[2]) * weapon_level_records[index].level / 100;
+            D_00446E00 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[3] * weapon_level_records[index].level / 100;
+            D_00446E04 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[4] * weapon_level_records[index].level / 100;
+            D_00446E08 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[5] * weapon_level_records[index].level / 100;
+            D_00446E0C = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
+            D_00446E10 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
+            D_00446E14 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
             D_00446E1C = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
             D_00446E20 = weapon_level_records[index].level;
-            D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].weight_tenths_of_pound;
+            D_00446E18 = item_name_defs[CURRENT_ITEM->item_number].weight_tenths_of_pound;
             D_00446E24 = 100;
             D_00446E28 = player_weapon[EQUIP_LIST->group];
             if (equip_panel_state == 1) {
@@ -3772,7 +3772,7 @@ static void Menu_UpdateEquip(void) {
             count = equip_a_part_count;
             break;
         case 1:
-            if (fx_table[CURRENT_ITEM->unk0C].item_menu_magic == 0) {
+            if (fx_table[CURRENT_ITEM->item_number].item_menu_magic == 0) {
                 magic = &fx_table[index];
                 D_00446DF4 = magic->hit_checks[0].strengths.unk00[0];
                 D_00446DF8 = magic->hit_checks[0].strengths.unk00[1];
@@ -3841,16 +3841,16 @@ static void Menu_UpdateEquip(void) {
         case 4:
         case 5:
         case 6:
-            D_00446DF4 = (worn_item_level_records[index].unk00[0] + worn_defs[index].unk00[0]) * worn_item_level_records[index].level / 100;
-            D_00446DF8 = (worn_item_level_records[index].unk00[1] + worn_defs[index].unk00[1]) * worn_item_level_records[index].level / 100;
-            D_00446DFC = (worn_item_level_records[index].unk00[2] + worn_defs[index].unk00[2]) * worn_item_level_records[index].level / 100;
-            D_00446E00 = worn_defs[index].unk00[3] * worn_item_level_records[index].level / 100;
-            D_00446E04 = worn_defs[index].unk00[4] * worn_item_level_records[index].level / 100;
-            D_00446E08 = worn_defs[index].unk00[5] * worn_item_level_records[index].level / 100;
-            D_00446E0C = worn_defs[index].unk00[6] * worn_item_level_records[index].level / 100;
-            D_00446E10 = worn_defs[index].unk00[7] * worn_item_level_records[index].level / 100;
-            D_00446E14 = worn_defs[index].unk00[8] * worn_item_level_records[index].level / 100;
-            D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].weight_tenths_of_pound;
+            D_00446DF4 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
+            D_00446DF8 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
+            D_00446DFC = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
+            D_00446E00 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
+            D_00446E04 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
+            D_00446E08 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
+            D_00446E0C = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
+            D_00446E10 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
+            D_00446E14 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
+            D_00446E18 = item_name_defs[CURRENT_ITEM->item_number].weight_tenths_of_pound;
             D_00446E1C = player_weapon[EQUIP_LIST->group];
             D_00446E20 = worn_item_level_records[index].level;
             D_00446E24 = 100;
@@ -3872,16 +3872,16 @@ static void Menu_UpdateEquip(void) {
         case 7:
         case 8:
         case 9:
-            D_00446DF4 = (worn_item_level_records[index].unk00[0] + worn_defs[index].unk00[0]) * worn_item_level_records[index].level / 100;
-            D_00446DF8 = (worn_item_level_records[index].unk00[1] + worn_defs[index].unk00[1]) * worn_item_level_records[index].level / 100;
-            D_00446DFC = (worn_item_level_records[index].unk00[2] + worn_defs[index].unk00[2]) * worn_item_level_records[index].level / 100;
-            D_00446E00 = worn_defs[index].unk00[3] * worn_item_level_records[index].level / 100;
-            D_00446E04 = worn_defs[index].unk00[4] * worn_item_level_records[index].level / 100;
-            D_00446E08 = worn_defs[index].unk00[5] * worn_item_level_records[index].level / 100;
-            D_00446E0C = worn_defs[index].unk00[6] * worn_item_level_records[index].level / 100;
-            D_00446E10 = worn_defs[index].unk00[7] * worn_item_level_records[index].level / 100;
-            D_00446E14 = worn_defs[index].unk00[8] * worn_item_level_records[index].level / 100;
-            D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].weight_tenths_of_pound;
+            D_00446DF4 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
+            D_00446DF8 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
+            D_00446DFC = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
+            D_00446E00 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
+            D_00446E04 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
+            D_00446E08 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
+            D_00446E0C = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
+            D_00446E10 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
+            D_00446E14 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
+            D_00446E18 = item_name_defs[CURRENT_ITEM->item_number].weight_tenths_of_pound;
             D_00446E1C = player_weapon[EQUIP_LIST->group];
             if (index != 130 && index != 140 && index != 150) {
                 if (detail_panel_sound_pending != 0) {
@@ -4008,15 +4008,15 @@ static void Menu_UpdateEquip(void) {
         }
         for (i = 0; i < 11; i++) {
             if (i == 1) {
-                listed = &fx_table[(*equipped_item_refs[1])->unk0C];
+                listed = &fx_table[(*equipped_item_refs[1])->item_number];
             } else if (i == 10) {
                 if ((*equipped_item_refs[10])->group == 1) {
-                    listed = &fx_table[(*equipped_item_refs[10])->unk0C];
+                    listed = &fx_table[(*equipped_item_refs[10])->item_number];
                 } else {
-                    listed = &item_name_defs[(*equipped_item_refs[10])->unk0C];
+                    listed = &item_name_defs[(*equipped_item_refs[10])->item_number];
                 }
             } else {
-                listed = &item_name_defs[(*equipped_item_refs[i])->unk0C];
+                listed = &item_name_defs[(*equipped_item_refs[i])->item_number];
             }
             MenuText_SetPen(word);
             MenuText_SetColor(panel_text_color);
@@ -4049,7 +4049,7 @@ player_state.weapon = 0;
 pool_slots[15].part = NULL;
             }
             if (EQUIP_LIST->group == 10) {
-                if (CURRENT_ITEM->unk0C != 0) {
+                if (CURRENT_ITEM->item_number != 0) {
                     switch (CURRENT_ITEM->group) {
                     case 11:
                         player_state.shortcut_type = 1;
@@ -4074,12 +4074,12 @@ pool_slots[15].part = NULL;
             }
             if (CURRENT_ITEM->group != 1 && CURRENT_ITEM->group != 11) {
                 Menu_SetWornModelNames();
-                equip_model_loads[EQUIP_LIST->group]->unk20 = 0;
-                if (worn_model_loader.unk10 != NULL) {
-                    equip_model_loads[EQUIP_LIST->group]->next = worn_model_loader.unk10->next;
-                    worn_model_loader.unk10->next = equip_model_loads[EQUIP_LIST->group];
+                equip_model_loads[EQUIP_LIST->group]->done = 0;
+                if (worn_model_loader.target_node != NULL) {
+                    equip_model_loads[EQUIP_LIST->group]->next = worn_model_loader.target_node->next;
+                    worn_model_loader.target_node->next = equip_model_loads[EQUIP_LIST->group];
                 } else {
-                    worn_model_loader.unk10 = equip_model_loads[EQUIP_LIST->group];
+                    worn_model_loader.target_node = equip_model_loads[EQUIP_LIST->group];
                 }
                 if (model_load_chain != NULL) {
                     worn_model_loader.next = model_load_chain->next;
@@ -4349,10 +4349,10 @@ static void Menu_UpdateKeyItems(void) {
             TEXTURE_HEADER_BITS(texture)->tex0.f.cbp = clut_pages.base[i];
             pool_slots[31].part = part;
             // match: both words are read through unions, which keeps the two NULL stores below them
-            pool_slots[31].unk58 = TEXTURE_HEADER_BITS(texture)->tex0.raw;
+            pool_slots[31].tex0 = TEXTURE_HEADER_BITS(texture)->tex0.raw;
             pool_slots[31].unk60 = TEXTURE_HEADER_BITS(texture)->unk18.raw;
-            pool_slots[31].unk48 = NULL;
-            pool_slots[31].unk40 = NULL;
+            pool_slots[31].part_record = NULL;
+            pool_slots[31].parent = NULL;
             MenuTexture_Upload(texture, NULL);
             sceVu0TransMatrix((f32 *)&pool_slots[31], view, positions.position[i]);
             PoolSlot_Draw((RenderSlot *)&pool_slots[31], slot_arg); // match: slot_arg is never set
@@ -4578,7 +4578,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
         for (i = 0; i < recollection_page; i++) {
             chunk = (PackageChunk *)((char *)chunk + chunk->unk0C + chunk->unk08);
         }
-        if (equip_state != 2 && equip_state != 3 && model_load_shown.unk20 != 0) {
+        if (equip_state != 2 && equip_state != 3 && model_load_shown.done != 0) {
             screen_part_alphas[254] += 12.8f;
             if (screen_part_alphas[254] > 128.0f) {
                 screen_part_alphas[254] = 128.0f;
@@ -4586,7 +4586,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
             model_draw_color.alpha = (s32)screen_part_alphas[254];
         }
         model_load_shown.pool_node = &node; // match: a local of this function; the node keeps the address after it returns
-        model_load_shown.unk20 = 1;
+        model_load_shown.done = 1;
         node.buffer = chunk;
         DRAW_NODE_MODEL(&model_load_shown, local, model_draw_color);
     }
@@ -4647,7 +4647,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
     if ((menu_buttons & PAD_CROSS) && recollection_state == 1 && menu_input_enabled != 0) {
         Sound_PlayMenu(0);
         menu_screen_handler = (void *)Menu_UpdateRecollectionPage;
-        context->unk04 = recollection_page * LIST_PAGES + rows[recollection_cursor] + MSG_RECOLLECTION_FIRST;
+        context->active_list = recollection_page * LIST_PAGES + rows[recollection_cursor] + MSG_RECOLLECTION_FIRST;
         menu_input_enabled = 0;
     } else if ((menu_buttons & PAD_CIRCLE) && recollection_state == 1 && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
@@ -4738,7 +4738,7 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
     s32 entry;
     u8 kind;
 
-    page = (context->unk04 - 3000) / 50;
+    page = (context->active_list - 3000) / 50;
     for (i = 0; i < image_part_count; i++) {
         kind = image_parts[i].handler_index;
         Menu_SetBlendMode(image_parts[i].blend_mode);
@@ -4773,7 +4773,7 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
             chunk = (PackageChunk *)((char *)chunk + chunk->unk0C + chunk->unk08);
         }
         model_load_shown.pool_node = &model_node; // match: a local of this function; the node keeps the address after it returns
-        model_load_shown.unk20 = 1;
+        model_load_shown.done = 1;
         model_node.buffer = chunk;
         DRAW_NODE_MODEL(&model_load_shown, local, menu_draw_color);
     }
@@ -4793,7 +4793,7 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
     }
     word.raw = 0x000AAE607C307F80;
     MenuText_SetPen(word);
-    entry = ((s32 *)table)[context->unk04 + 1];
+    entry = ((s32 *)table)[context->active_list + 1];
     if (entry != 0) {
         if (page == 0) {
             MenuText_DrawWrappedLong((u16 *)(table + entry), 0x1B);
@@ -4803,7 +4803,7 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
     }
     if (menu_buttons & PAD_CIRCLE) {
         Sound_PlayMenu(2);
-        context->unk04 = 0;
+        context->active_list = 0;
         menu_screen_handler = (void *)Menu_UpdateRecollection;
         menu_input_enabled = 1;
     }
@@ -4856,12 +4856,12 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     if ((menu_buttons & PAD_CROSS) && menu_input_enabled != 0) {
         {
             // match: the value read first is used only to set the bit; the test and the clearing read the field again
-            u8 state = item_name_defs[selected->unk0C].state;
-            item_name_defs[selected->unk0C].state =
-                (item_name_defs[selected->unk0C].state & 1) ? item_name_defs[selected->unk0C].state & ~1 : state | 1;
+            u8 state = item_name_defs[selected->item_number].state;
+            item_name_defs[selected->item_number].state =
+                (item_name_defs[selected->item_number].state & 1) ? item_name_defs[selected->item_number].state & ~1 : state | 1;
         }
         Sound_PlayMenu(0);
-        number = selected->unk0C;
+        number = selected->item_number;
         if (number == player_state.weapon + ITEM_WEAPON_FIRST) {
             player_state.weapon = 0;
         } else if (number == player_state.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST) {
@@ -4899,10 +4899,10 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         visible_bar_top = item;
     }
 
-    record = owned_list_current[0]->unk0C - bases.first_item[owned_list_current[0]->group];
-    D_00446DF4 = item_counts[owned_list_current[0]->unk0C];
+    record = owned_list_current[0]->item_number - bases.first_item[owned_list_current[0]->group];
+    D_00446DF4 = item_counts[owned_list_current[0]->item_number];
     if (owned_list_current[0]->group == 0) {
-        D_00446E30 = weapon_level_records[record].unk14 + 1;
+        D_00446E30 = weapon_level_records[record].level_index + 1;
     }
     for (i = 0; i < recol_part_count; i++) {
         kind = recol_parts[i].handler_index;
@@ -4916,7 +4916,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     }
 
     for (i = 0; i < 7; i++, item = item->prev) {
-        if (item_name_defs[item->unk0C].state & 1) {
+        if (item_name_defs[item->item_number].state & 1) {
             worn_mask |= 1 << worn_bit;
         }
         worn_bit++;
@@ -4951,7 +4951,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         visible_names_top = node;
     }
     for (row = 0; row < 7; row++, node = node->prev) {
-        def = &item_name_defs[node->unk0C];
+        def = &item_name_defs[node->item_number];
         MenuText_SetPen(position);
         MenuText_SetColor(menu_draw_color);
         MenuText_DrawLine((u16 *)def, 0x1A);
@@ -4969,7 +4969,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     }
     texts = Message_GetFontText(menu_heap);
     position.raw = 0x000A875083207080;
-    text_index = node->unk0C + MSG_ITEM_TEXT_FIRST + 1;
+    text_index = node->item_number + MSG_ITEM_TEXT_FIRST + 1;
     text_offset = ((s32 *)texts)[text_index];
     MenuText_SetPen(position);
     if (text_offset != 0) {
@@ -5023,18 +5023,18 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         case 4:
         case 5:
         case 6:
-            D_00446DF8 = ScaleValue(worn_item_level_records[record].unk00[0] + worn_defs[record].unk00[0], worn_item_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(worn_item_level_records[record].unk00[1] + worn_defs[record].unk00[1], worn_item_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(worn_item_level_records[record].unk00[2] + worn_defs[record].unk00[2], worn_item_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(worn_defs[record].unk00[3], worn_item_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(worn_defs[record].unk00[4], worn_item_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(worn_defs[record].unk00[5], worn_item_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(worn_defs[record].unk00[6], worn_item_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(worn_defs[record].unk00[7], worn_item_level_records[record].level, 100);
-            D_00446E18 = ScaleValue(worn_defs[record].unk00[8], worn_item_level_records[record].level, 100);
+            D_00446DF8 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
+            D_00446DFC = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
+            D_00446E00 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
+            D_00446E04 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
+            D_00446E08 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
+            D_00446E0C = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
+            D_00446E10 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
+            D_00446E14 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
+            D_00446E18 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
             D_00446E24 = worn_item_level_records[record].level;
             D_00446E28 = 100;
-            D_00446E1C = item_name_defs[owned_list_current[0]->unk0C].weight_tenths_of_pound;
+            D_00446E1C = item_name_defs[owned_list_current[0]->item_number].weight_tenths_of_pound;
             if (visible_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, recol_g_parts, recol_g_part_count)
             }
@@ -5045,16 +5045,16 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         case 7:
         case 8:
         case 9:
-            D_00446DF8 = ScaleValue(worn_item_level_records[record].unk00[0] + worn_defs[record].unk00[0], worn_item_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(worn_item_level_records[record].unk00[1] + worn_defs[record].unk00[1], worn_item_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(worn_item_level_records[record].unk00[2] + worn_defs[record].unk00[2], worn_item_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(worn_defs[record].unk00[3], worn_item_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(worn_defs[record].unk00[4], worn_item_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(worn_defs[record].unk00[5], worn_item_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(worn_defs[record].unk00[6], worn_item_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(worn_defs[record].unk00[7], worn_item_level_records[record].level, 100);
-            D_00446E18 = ScaleValue(worn_defs[record].unk00[8], worn_item_level_records[record].level, 100);
-            D_00446E1C = item_name_defs[owned_list_current[0]->unk0C].weight_tenths_of_pound;
+            D_00446DF8 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
+            D_00446DFC = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
+            D_00446E00 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
+            D_00446E04 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
+            D_00446E08 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
+            D_00446E0C = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
+            D_00446E10 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
+            D_00446E14 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
+            D_00446E18 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
+            D_00446E1C = item_name_defs[owned_list_current[0]->item_number].weight_tenths_of_pound;
             if (visible_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, recol_g2_parts, recol_g2_part_count)
             }
@@ -5063,18 +5063,18 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             count = recol_g2_part_count;
             break;
         case 0:
-            D_00446DF8 = ScaleValue(weapon_level_records[record].unk00[0] + weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[0], weapon_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(weapon_level_records[record].unk00[1] + weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[1], weapon_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(weapon_level_records[record].unk00[2] + weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[2], weapon_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[3], weapon_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[4], weapon_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[5], weapon_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[6], weapon_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[7], weapon_level_records[record].level, 100);
-            D_00446E18 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[8], weapon_level_records[record].level, 100);
+            D_00446DF8 = ScaleValue(weapon_level_records[record].gained_values[0] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[0], weapon_level_records[record].level, 100);
+            D_00446DFC = ScaleValue(weapon_level_records[record].gained_values[1] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[1], weapon_level_records[record].level, 100);
+            D_00446E00 = ScaleValue(weapon_level_records[record].gained_values[2] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[2], weapon_level_records[record].level, 100);
+            D_00446E04 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[3], weapon_level_records[record].level, 100);
+            D_00446E08 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[4], weapon_level_records[record].level, 100);
+            D_00446E0C = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[5], weapon_level_records[record].level, 100);
+            D_00446E10 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
+            D_00446E14 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
+            D_00446E18 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
             D_00446E20 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
             D_00446E24 = weapon_level_records[record].level;
-            D_00446E1C = item_name_defs[owned_list_current[0]->unk0C].weight_tenths_of_pound;
+            D_00446E1C = item_name_defs[owned_list_current[0]->item_number].weight_tenths_of_pound;
             D_00446E28 = player_weapon[owned_list_current[0]->group];
             D_00446E2C = 100;
             if (visible_panel_state == 1) {
@@ -5320,7 +5320,7 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
     }
 
     if (game_status.bit9) {
-        context->unk04 = 0;
+        context->selection = 0;
         system_menu_line = 0;
         menu_screen_handler = (void *)Menu_OpenMain;
     }
@@ -5380,12 +5380,12 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
                             Menu_ReadButtonSettings();
                         }
                     } else if (system_screen_state == 3) {
-                        context->unk04 = 0;
+                        context->selection = 0;
                         system_menu_line = 0;
                         menu_screen_handler = (void *)Menu_OpenMain;
                     } else if (system_screen_state == 5) {
                         menu_step++;
-                        context->unk04 = 0;
+                        context->selection = 0;
                         system_menu_line = 0;
                         game_status.bit9 = 1;
                     }
@@ -6279,16 +6279,16 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
     u32 full_alpha;
 
     if ((menu_buttons & PAD_UP) && menu_input_enabled != 0) {
-        context->unk04--;
+        context->selection--;
         Sound_PlayMenu(1);
     } else if ((menu_buttons & PAD_DOWN) && menu_input_enabled != 0) {
-        context->unk04++;
+        context->selection++;
         Sound_PlayMenu(1);
     }
-    context->unk04 += 7;
-    context->unk04 %= 7;
+    context->selection += 7;
+    context->selection %= 7;
 
-    switch (context->unk04) {
+    switch (context->selection) {
     case 0:
         if ((menu_buttons & (PAD_LEFT | PAD_RIGHT)) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
@@ -6372,7 +6372,7 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
     for (i = 0; i < option_part_count; i++) {
         kind = option_parts[i].handler_index;
         Menu_SetBlendMode(option_parts[i].blend_mode);
-        MenuSprite_Draw((int)&option_parts[i], kind + 1000, context->unk04, (int)screen_part_alphas[i]);
+        MenuSprite_Draw((int)&option_parts[i], kind + 1000, context->selection, (int)screen_part_alphas[i]);
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
@@ -6419,7 +6419,7 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
                 if (options_leave_steps == 2) {
                     options_leave_steps = 0;
                     system_screen_state = 0;
-                    context->unk04 = 0;
+                    context->selection = 0;
                     if (sound_mode_change == 1) {
                         if (game_options[0] == 0) {
                             if (sound_mode_before != 0) {
@@ -7104,7 +7104,7 @@ static int Menu_DrawEquipItemText(s32 index) {
 
     node = (DataNode *)equip_list_shown[0]->item;
     table = Message_GetFontText(menu_heap);
-    slot = node->unk0C + 1;
+    slot = node->table_row + 1;
     entry = ((s32 *)table)[index + slot];
     word.raw = 0x000A87507E9080C0;
     MenuText_SetPen(word);
@@ -7125,23 +7125,23 @@ void Menu_ChainItemListModels(void) {
         Menu_TakeLoadBuffer(&model_load_right);
         model_load_shown.next = &model_load_up;
         model_load_shown.callback = (void (*)(void))Menu_StepModelLoad;
-        model_load_shown.unk20 = 0;
+        model_load_shown.done = 0;
         model_load_up.next = &model_load_down;
         model_load_up.callback = (void (*)(void))Menu_StepModelLoad;
-        model_load_up.unk20 = 0;
-        model_load_up.unk1C = 0;
+        model_load_up.done = 0;
+        model_load_up.stage = 0;
         model_load_down.next = &model_load_left;
         model_load_down.callback = (void (*)(void))Menu_StepModelLoad;
-        model_load_down.unk20 = 0;
-        model_load_down.unk1C = 0;
+        model_load_down.done = 0;
+        model_load_down.stage = 0;
         model_load_left.next = &model_load_right;
         model_load_left.callback = (void (*)(void))Menu_StepModelLoad;
-        model_load_left.unk20 = 0;
-        model_load_left.unk1C = 0;
+        model_load_left.done = 0;
+        model_load_left.stage = 0;
         model_load_right.next = NULL;
         model_load_right.callback = (void (*)(void))Menu_StepModelLoad;
-        model_load_right.unk20 = 0;
-        model_load_shown.unk1C = model_load_right.unk1C = 0;
+        model_load_right.done = 0;
+        model_load_shown.stage = model_load_right.stage = 0;
         model_load_chain = &model_load_shown;
     }
 }
@@ -7174,11 +7174,11 @@ static void Menu_SetItemListModelNames(void) {
     } else {
         forward = backward = item_list_first;
     }
-    sprintf(model_name_shown, "menu/select2/i%04d.mod", item_name_defs[item_list_cursor[0]->unk0C].file_number);
-    sprintf(model_name_down, "menu/select2/i%04d.mod", item_name_defs[item_list_cursor[0]->prev->unk0C].file_number);
-    sprintf(model_name_up, "menu/select2/i%04d.mod", item_name_defs[item_list_cursor[0]->next->unk0C].file_number);
-    sprintf(model_name_left, "menu/select2/i%04d.mod", item_name_defs[forward->unk0C].file_number);
-    sprintf(model_name_right, "menu/select2/i%04d.mod", item_name_defs[backward->unk0C].file_number);
+    sprintf(model_name_shown, "menu/select2/i%04d.mod", item_name_defs[item_list_cursor[0]->item_number].file_number);
+    sprintf(model_name_down, "menu/select2/i%04d.mod", item_name_defs[item_list_cursor[0]->prev->item_number].file_number);
+    sprintf(model_name_up, "menu/select2/i%04d.mod", item_name_defs[item_list_cursor[0]->next->item_number].file_number);
+    sprintf(model_name_left, "menu/select2/i%04d.mod", item_name_defs[forward->item_number].file_number);
+    sprintf(model_name_right, "menu/select2/i%04d.mod", item_name_defs[backward->item_number].file_number);
 }
 
 /* A list cursor went on one row: the model shown moves to node 2, node 1's becomes the one shown, nodes 1, 3
@@ -7194,29 +7194,29 @@ void Menu_ShiftListModelsNext(s32 value) {
     Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_down);
     model_load_down = model_load_shown;
     model_load_down.next = NULL;
-    if (model_load_down.unk20 == 0) {
+    if (model_load_down.done == 0) {
         pending = &model_load_down;
     }
     model_load_shown = model_load_up;
     model_load_shown.next = NULL;
-    if (model_load_shown.unk20 == 0) {
+    if (model_load_shown.done == 0) {
         pending = &model_load_shown;
     }
     Menu_TakeLoadBuffer(&model_load_up);
-    model_load_up.unk20 = 0;
-    model_load_up.unk1C = 0;
-    model_load_up.unk08 = -1;
+    model_load_up.done = 0;
+    model_load_up.stage = 0;
+    model_load_up.file_handle = -1;
     model_load_up.next = NULL;
     if (pending == NULL) {
         pending = &model_load_up;
     }
-    model_load_right.unk20 = 0;
-    model_load_right.unk1C = 0;
-    model_load_right.unk08 = -1;
+    model_load_right.done = 0;
+    model_load_right.stage = 0;
+    model_load_right.file_handle = -1;
     model_load_right.next = NULL;
-    model_load_left.unk20 = 0;
-    model_load_left.unk1C = 0;
-    model_load_left.unk08 = -1;
+    model_load_left.done = 0;
+    model_load_left.stage = 0;
+    model_load_left.file_handle = -1;
     model_load_left.next = NULL;
     if (model_load_chain != NULL) {
         model_load_chain->next = pending;
@@ -7243,29 +7243,29 @@ void Menu_ShiftListModelsPrev(s32 value) {
     Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_up);
     model_load_up = model_load_shown;
     model_load_up.next = NULL;
-    if (model_load_up.unk20 == 0) {
+    if (model_load_up.done == 0) {
         pending = &model_load_up;
     }
     model_load_shown = model_load_down;
     model_load_shown.next = NULL;
-    if (model_load_shown.unk20 == 0) {
+    if (model_load_shown.done == 0) {
         pending = &model_load_shown;
     }
     Menu_TakeLoadBuffer(&model_load_down);
-    model_load_down.unk20 = 0;
-    model_load_down.unk1C = 0;
-    model_load_down.unk08 = -1;
+    model_load_down.done = 0;
+    model_load_down.stage = 0;
+    model_load_down.file_handle = -1;
     model_load_down.next = NULL;
     if (pending == NULL) {
         pending = &model_load_down;
     }
-    model_load_right.unk20 = 0;
-    model_load_right.unk1C = 0;
-    model_load_right.unk08 = -1;
+    model_load_right.done = 0;
+    model_load_right.stage = 0;
+    model_load_right.file_handle = -1;
     model_load_right.next = NULL;
-    model_load_left.unk20 = 0;
-    model_load_left.unk1C = 0;
-    model_load_left.unk08 = -1;
+    model_load_left.done = 0;
+    model_load_left.stage = 0;
+    model_load_left.file_handle = -1;
     model_load_left.next = NULL;
     if (model_load_chain != NULL) {
         model_load_chain->next = pending;
@@ -7292,25 +7292,25 @@ void Menu_ShiftListModelsPageUp(s32 value) {
     Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_shown);
     model_load_shown = model_load_right;
     model_load_shown.next = NULL;
-    if (model_load_shown.unk20 == 0) {
+    if (model_load_shown.done == 0) {
         pending = &model_load_shown;
     }
-    model_load_up.unk20 = 0;
-    model_load_up.unk1C = 0;
-    model_load_up.unk08 = -1;
+    model_load_up.done = 0;
+    model_load_up.stage = 0;
+    model_load_up.file_handle = -1;
     model_load_up.next = NULL;
-    model_load_down.unk20 = 0;
-    model_load_down.unk1C = 0;
-    model_load_down.unk08 = -1;
+    model_load_down.done = 0;
+    model_load_down.stage = 0;
+    model_load_down.file_handle = -1;
     model_load_down.next = NULL;
     Menu_TakeLoadBuffer(&model_load_right);
-    model_load_right.unk20 = 0;
-    model_load_right.unk1C = 0;
-    model_load_right.unk08 = -1;
+    model_load_right.done = 0;
+    model_load_right.stage = 0;
+    model_load_right.file_handle = -1;
     model_load_right.next = NULL;
-    model_load_left.unk20 = 0;
-    model_load_left.unk1C = 0;
-    model_load_left.unk08 = -1;
+    model_load_left.done = 0;
+    model_load_left.stage = 0;
+    model_load_left.file_handle = -1;
     model_load_left.next = NULL;
     if (pending == NULL) {
         pending = &model_load_left;
@@ -7340,25 +7340,25 @@ void Menu_ShiftListModelsPageDown(s32 value) {
     Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_shown);
     model_load_shown = model_load_left;
     model_load_shown.next = NULL;
-    if (model_load_shown.unk20 == 0) {
+    if (model_load_shown.done == 0) {
         pending = &model_load_shown;
     }
-    model_load_up.unk20 = 0;
-    model_load_up.unk1C = 0;
-    model_load_up.unk08 = -1;
+    model_load_up.done = 0;
+    model_load_up.stage = 0;
+    model_load_up.file_handle = -1;
     model_load_up.next = NULL;
-    model_load_down.unk20 = 0;
-    model_load_down.unk1C = 0;
-    model_load_down.unk08 = -1;
+    model_load_down.done = 0;
+    model_load_down.stage = 0;
+    model_load_down.file_handle = -1;
     model_load_down.next = NULL;
-    model_load_right.unk20 = 0;
-    model_load_right.unk1C = 0;
-    model_load_right.unk08 = -1;
+    model_load_right.done = 0;
+    model_load_right.stage = 0;
+    model_load_right.file_handle = -1;
     model_load_right.next = NULL;
     Menu_TakeLoadBuffer(&model_load_left);
-    model_load_left.unk20 = 0;
-    model_load_left.unk1C = 0;
-    model_load_left.unk08 = -1;
+    model_load_left.done = 0;
+    model_load_left.stage = 0;
+    model_load_left.file_handle = -1;
     model_load_left.next = NULL;
     if (pending == NULL) {
         pending = &model_load_down;

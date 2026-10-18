@@ -1,4 +1,4 @@
-/* Fadin: the behaviour of entity type 80 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* Fadin: the behaviour of entity type 80 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Fadin. The game names no monsters;
    these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by hit points
    and experience, with resistances and drops where two monsters share those. */
@@ -34,19 +34,19 @@ static void Fadin_Think(Entity *entity, s32 unknown);
 
 /* Set-up of a type 80 entity: clears its work area and installs the type's handlers. */
 void Fadin_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     s32 i;
 
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = Fadin_Think;
-    unkE0->animate = EntityAi_Animate;
-    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
-    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
-    unkE0->death = (void (*)(void))EntityAi_Death;
-    unkE0->move = NULL;
+    ai_state->think = Fadin_Think;
+    ai_state->animate = EntityAi_Animate;
+    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
+    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
+    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->move = NULL;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -56,11 +56,11 @@ void Fadin_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit28 = 1;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -71,7 +71,7 @@ void Fadin_Init(Entity *entity) {
    type 32's; one launch in three is shot EntityParams.pitch_limit_deg, the others shot 0xCD. Starts the
    death action once master_fadin_killed[0] is set. */
 static void Fadin_Think(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 angles[4];
     f32 target[4];
     f32 *from;
@@ -83,7 +83,7 @@ static void Fadin_Think(Entity *entity, s32 unknown) {
     f32 yaw;
 
     if (master_fadin_killed[0] != 0) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->death, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->death, 0);
         return;
     }
     if (entity->action_timer == 0) {
@@ -109,18 +109,18 @@ static void Fadin_Think(Entity *entity, s32 unknown) {
         yaw = EntityMath_AngleXZ(from, (char *)target);
         angles[0] = EntityMath_Approach(angles[0], pitch, entity->params->near_distance);
         angles[1] = EntityMath_Approach(angles[1], yaw, entity->params->far_distance);
-        if (unkE0->step_index % 3 == entity->spawn_index % 3U) {
+        if (ai_state->step_index % 3 == entity->spawn_index % 3U) {
             EntityAi_LaunchShot(entity, entity->params->pitch_limit_deg, from, angles);
         } else {
             EntityAi_LaunchShot(entity, 0xCD, from, angles);
         }
-        unkE0->step_index++;
-        if (unkE0->step_index < 0) {
-            unkE0->step_index = 0;
+        ai_state->step_index++;
+        if (ai_state->step_index < 0) {
+            ai_state->step_index = 0;
         }
-        EntityEvent_StartCue(entity, entity->params->unk43A, entity->params->unk43C, entity->params->unk43E);
+        EntityEvent_StartCue(entity, entity->params->type_param_0, entity->params->type_param_1, entity->params->type_param_2);
         entity->action_timer = entity->params->action_frames + rand() % 3;
     }
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }

@@ -25,28 +25,28 @@ MotionData *ModelMotion_Load(MotionData *data, ModelInstance *model, int unused)
         channel = MODEL_CHANNEL(model);
         i = 0;
         limit = channel->limit;
-        channel->word = 0x100;
-        channel->index = limit;
+        channel->frame_step = 0x100;
+        channel->motion_index = limit;
         channel->limit = limit + 1;
-        channel->param = 0;
-        channel->param_shifted = 0;
-        channel->value = 0;
+        channel->frame = 0;
+        channel->frame_fixed = 0;
+        channel->blend_left = 0;
         model->model_flags |= 1;
-        channel->tables[channel->index] = motion->parts;
+        channel->tables[channel->motion_index] = motion->parts;
         motion->vectors = (MotionVector *)((char *)motion + motion->vectors_offset);
     } while (0);
     model->part_count = motion->part_count;
     // match: the parameter is reused as a cursor nothing reads (cleared, stepped per part, set to the end below)
     for (data = NULL; i < model->part_count; i++, data++) {
         model->parts[i].level = 0;
-        if (channel->tables[channel->index][i].keys_offset != 0 &&
-            channel->tables[channel->index][i].thresholds == NULL) {
-            channel->tables[channel->index][i].thresholds =
-                (u16 *)((char *)motion + channel->tables[channel->index][i].keys_offset);
+        if (channel->tables[channel->motion_index][i].keys_offset != 0 &&
+            channel->tables[channel->motion_index][i].thresholds == NULL) {
+            channel->tables[channel->motion_index][i].thresholds =
+                (u16 *)((char *)motion + channel->tables[channel->motion_index][i].keys_offset);
         }
         parts = model->parts;
         vectors = motion->vectors;
-        key = (MotionKey *)channel->tables[channel->index][i].thresholds;
+        key = (MotionKey *)channel->tables[channel->motion_index][i].thresholds;
         vector = &vectors[key->position];
         parts[i].position[0] = vector->x;
         parts[i].position[1] = vector->y;
@@ -61,18 +61,18 @@ MotionData *ModelMotion_Load(MotionData *data, ModelInstance *model, int unused)
         parts[i].scale[0] = vector->x;
         parts[i].scale[1] = vector->y;
         parts[i].scale[2] = vector->z;
-        if (channel->tables[channel->index][i].child != 0) {
-            parts[i].child = &parts[channel->tables[channel->index][i].child];
+        if (channel->tables[channel->motion_index][i].child != 0) {
+            parts[i].child = &parts[channel->tables[channel->motion_index][i].child];
         } else {
             parts[i].child = NULL;
         }
-        if (channel->tables[channel->index][i].sibling != 0) {
-            parts[i].sibling = &parts[channel->tables[channel->index][i].sibling];
+        if (channel->tables[channel->motion_index][i].sibling != 0) {
+            parts[i].sibling = &parts[channel->tables[channel->motion_index][i].sibling];
         } else {
             parts[i].sibling = NULL;
         }
         // match: indexing level_tables as an array swaps the addu operands
-        parts[i].part_flags = (*(ModelPartLevels **)((char *)model->level_tables + (channel->index << 2)))[i].unk02;
+        parts[i].part_flags = (*(ModelPartLevels **)((char *)model->level_tables + (channel->motion_index << 2)))[i].part_flags;
     }
     data = (MotionData *)((char *)motion + motion->size);
     return data;
@@ -100,9 +100,9 @@ MotionData *ModelMotion_LoadFile(MotionFile *file, ModelChannel **alloc, ModelIn
 void ModelMotion_Select(ModelInstance *model, int index) {
     int i;
 
-    MODEL_CHANNEL(model)->index = index;
-    MODEL_CHANNEL(model)->param = 0;
-    MODEL_CHANNEL(model)->param_shifted = 0;
+    MODEL_CHANNEL(model)->motion_index = index;
+    MODEL_CHANNEL(model)->frame = 0;
+    MODEL_CHANNEL(model)->frame_fixed = 0;
     for (i = 0; i < model->part_count; i++) {
         model->parts[i].level = 0;
     }
@@ -112,14 +112,14 @@ void ModelMotion_Select(ModelInstance *model, int index) {
 int ModelMotion_IsAtEnd(ModelInstance *model) {
     ModelChannel *channel = MODEL_CHANNEL(model);
 
-    return channel->param >= ((ModelTableHeader *)channel->tables[channel->index] - 1)->unk00;
+    return channel->frame >= ((ModelTableHeader *)channel->tables[channel->motion_index] - 1)->frame_count;
 }
 
 /* Whether the model's motion stepped onto the given frame on its last step. */
 int ModelMotion_JustReachedFrame(ModelInstance *model, int frame) {
     ModelChannel *channel = MODEL_CHANNEL(model);
 
-    return channel->unk8E != 0 && channel->param == frame;
+    return channel->frame_changed != 0 && channel->frame == frame;
 }
 
 /* Plays one frame of the model's current motion: every part is posed between the two keys around the frame. */
@@ -145,14 +145,14 @@ void ModelMotion_Step(void *model_arg) {
 
     if (MODEL_UNK100_BITS(model)->has_motion) {
         channel = MODEL_CHANNEL(model);
-        if (channel->value != 0) {
+        if (channel->blend_left != 0) {
             ModelMotion_StepBlend(model);
             return;
         }
         // match: two steps (the MotionData header is as long as one ModelPartLevels)
-        motion = (MotionData *)channel->tables[channel->index];
+        motion = (MotionData *)channel->tables[channel->motion_index];
         motion = (MotionData *)((ModelPartLevels *)motion - 1);
-        record = channel->tables[channel->index];
+        record = channel->tables[channel->motion_index];
         vectors = motion->vectors;
         for (i = 0; i < model->part_count; i++, record++) {
             part = &model->parts[i];
@@ -160,7 +160,7 @@ void ModelMotion_Step(void *model_arg) {
                 // match: the level is read twice, as a shift and mask of the whole doubleword
                 key = (MotionKey *)record->thresholds + ((u32)(MODEL_PART_WORD(part) >> 39) & 0x7F);
                 level = (u32)(MODEL_PART_WORD(part) >> 39) & 0x7F;
-                while (level < record->count && channel->param >= key->frame) {
+                while (level < record->count && channel->frame >= key->frame) {
                     level++;
                     key++;
                 }
@@ -173,7 +173,7 @@ void ModelMotion_Step(void *model_arg) {
                     // match: both values are read first and scaled afterwards
                     elapsed = key->frame;
                     length = key->length;
-                    elapsed = channel->param_shifted - (elapsed << 8);
+                    elapsed = channel->frame_fixed - (elapsed << 8);
                     length <<= 8;
                     ratio = (f32)elapsed / (f32)length;
 
@@ -202,13 +202,13 @@ void ModelMotion_Step(void *model_arg) {
                 }
             }
         }
-        old_frame = channel->param;
-        channel->param_shifted += channel->word;
-        channel->param = channel->param_shifted >> 8;
-        channel->unk8E = old_frame != channel->param;
-        if (motion->frame_count < channel->param) {
-            channel->param = 0;
-            channel->param_shifted = 0;
+        old_frame = channel->frame;
+        channel->frame_fixed += channel->frame_step;
+        channel->frame = channel->frame_fixed >> 8;
+        channel->frame_changed = old_frame != channel->frame;
+        if (motion->frame_count < channel->frame) {
+            channel->frame = 0;
+            channel->frame_fixed = 0;
             for (i = 0; i < model->part_count; i++) {
                 model->parts[i].level = 0;
             }
@@ -220,7 +220,7 @@ void ModelMotion_Step(void *model_arg) {
    returns 0. */
 int ModelMotion_BlendInto(ModelInstance *model, u8 index, u16 speed) {
     ModelMotion_Select(model, index);
-    MODEL_CHANNEL(model)->value = speed << 8;
+    MODEL_CHANNEL(model)->blend_left = speed << 8;
     return 0;
 }
 
@@ -229,7 +229,7 @@ u16 ModelMotion_GetLastFrame(char *model_arg) {
     ModelInstance *model = (ModelInstance *)model_arg;
     ModelChannel *channel = MODEL_CHANNEL(model);
 
-    return ((ModelTableHeader *)channel->tables[channel->index] - 1)->unk00;
+    return ((ModelTableHeader *)channel->tables[channel->motion_index] - 1)->frame_count;
 }
 
 /* Hermite interpolation: hands the four basis weights for the ratio to Vector_WeightedSum4. */
@@ -259,16 +259,16 @@ void ModelMotion_StepBlend(ModelInstance *model) {
     int i;
 
     // match: two steps, as in ModelMotion_Step (the MotionData header is as long as one ModelPartLevels)
-    motion = (MotionData *)channel->tables[channel->index];
+    motion = (MotionData *)channel->tables[channel->motion_index];
     motion = (MotionData *)((ModelPartLevels *)motion - 1);
-    record = channel->tables[channel->index];
+    record = channel->tables[channel->motion_index];
     vectors = motion->vectors;
-    if (channel->word >= channel->value) {
+    if (channel->frame_step >= channel->blend_left) {
         divisor = 1.0f;
-    } else if (channel->unk8F == 0) {
-        divisor = (f32)channel->value / (f32)channel->word;
+    } else if (channel->blend_speed == 0) {
+        divisor = (f32)channel->blend_left / (f32)channel->frame_step;
     } else {
-        divisor = 255.0f / (f32)channel->unk8F;
+        divisor = 255.0f / (f32)channel->blend_speed;
     }
     part = model->parts;
     for (i = 0; i < model->part_count; i++, record++, part++) {
@@ -285,9 +285,9 @@ void ModelMotion_StepBlend(ModelInstance *model) {
             part->scale[2] += (vectors[key->scale].z - part->scale[2]) / divisor;
         }
     }
-    if (channel->word >= channel->value) {
-        channel->value = 0;
+    if (channel->frame_step >= channel->blend_left) {
+        channel->blend_left = 0;
     } else {
-        channel->value -= channel->word;
+        channel->blend_left -= channel->frame_step;
     }
 }

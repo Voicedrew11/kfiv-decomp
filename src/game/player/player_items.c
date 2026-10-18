@@ -115,7 +115,7 @@ void Player_UseItem(void) {
                 return;
             }
             object = view_ray_status.current;
-            if (object != NULL && object->source->item_use_script != 0 && (MAP_OBJECT_BYTES(object)->unk00 & 1) == current_map_slot) {
+            if (object != NULL && object->source->item_use_script != 0 && (MAP_OBJECT_BYTES(object)->map_slot & 1) == current_map_slot) {
                 if (object->source->use_script != 0 && Script_IsRunning(object->source->use_script) != 0) {
                     return;
                 }
@@ -133,7 +133,7 @@ void Player_UseItem(void) {
                 if (player_state.mp_now > player_state.mp_max) {
                     player_state.mp_now = player_state.mp_max;
                 }
-                timed = def->unk08;
+                timed = def->timed_flags;
                 if (timed & 1) {
                     player_state.timed_flags[0] = 0;
                     player_state.flag_timers[0] = 60;
@@ -196,7 +196,7 @@ void Player_UseItem(void) {
                 break;
             case 2:
                 item_counts[item]--;
-                item_counts[def->unk02]++;
+                item_counts[def->item]++;
                 break;
             }
         }

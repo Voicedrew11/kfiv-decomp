@@ -1,4 +1,4 @@
-/* Spider: the behaviour of entity type 3 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* Spider: the behaviour of entity type 3 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Spider, Blue Spider. The game names
    no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records
    by hit points and experience, with resistances and drops where two monsters share those. */
@@ -70,14 +70,14 @@ static void Spider_LevelOut(Entity *entity);
 /* Set-up of a type 3 entity: clears its work area and installs the type's handlers (one handler table when it
    starts with its action, another when it starts asleep). */
 void Spider_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
     u8 *unkC0 = entity->attack_weights;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->unkE0;
+        u8 *dest = (u8 *)&entity->ai_state;
 
         dest[i] = 0;
     }
@@ -91,23 +91,23 @@ void Spider_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        unkE0->think = Spider_Think;
-        unkE0->animate = (void (*)(void))Spider_Animate;
-        unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
-        unkE0->move = (void (*)(void))EntityAi_Move;
-        unkE0->dormant = (void (*)(void))Spider_Dormant;
-        unkE0->death = (void (*)(void))EntityAi_Death;
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        ai_state->think = Spider_Think;
+        ai_state->animate = (void (*)(void))Spider_Animate;
+        ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
+        ai_state->move = (void (*)(void))EntityAi_Move;
+        ai_state->dormant = (void (*)(void))Spider_Dormant;
+        ai_state->death = (void (*)(void))EntityAi_Death;
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        unkE0->think = Spider_Think;
-        unkE0->animate = (void (*)(void))Spider_Animate;
-        unkE0->on_hit = (void (*)(void))Spider_OnHit;
-        unkE0->move = (void (*)(void))EntityAi_Move;
-        unkE0->dormant = (void (*)(void))Spider_Dormant;
-        unkE0->death = (void (*)(void))Spider_Death;
+        ai_state->think = Spider_Think;
+        ai_state->animate = (void (*)(void))Spider_Animate;
+        ai_state->on_hit = (void (*)(void))Spider_OnHit;
+        ai_state->move = (void (*)(void))EntityAi_Move;
+        ai_state->dormant = (void (*)(void))Spider_Dormant;
+        ai_state->death = (void (*)(void))Spider_Death;
         EntityAi_StartAction(entity, Spider_DropToFloor, 1);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -120,19 +120,19 @@ void Spider_Init(Entity *entity) {
 static void Spider_Animate(Entity *entity) {
     u32 blend_frames; // match: converted to float as unsigned
     s64 flags;
-    EntityUnkE0 *unkE0;
+    EntityAiState *ai_state;
 
     flags = entity->flags;
-    unkE0 = &entity->unkE0;
+    ai_state = &entity->ai_state;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
-        blend_frames = entity->model->level_tables->unk88;
+        blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
     }
-    if (unkE0->step_index != 0) {
+    if (ai_state->step_index != 0) {
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             entity->turn_delta_yaw = -entity->turn_delta_yaw;
         }
@@ -144,7 +144,7 @@ static void Spider_Animate(Entity *entity) {
    Before that, while work byte unk7A is set (Spider_DropToFloor sets it), it clears it and starts
    Spider_LevelOut once the player is within EntityParams.yaw_limit_deg. */
 static void Spider_Think(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
@@ -152,8 +152,8 @@ static void Spider_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags != 0) {
         return;
     }
-    if (unkE0->step_index != 0 && entity->distance_to_player < (float)entity->params->yaw_limit_deg) {
-        unkE0->step_index = 0;
+    if (ai_state->step_index != 0 && entity->distance_to_player < (float)entity->params->yaw_limit_deg) {
+        ai_state->step_index = 0;
         EntityAi_StartAction(entity, Spider_LevelOut, 1);
         return;
     }
@@ -173,7 +173,7 @@ static void Spider_Think(Entity *entity, s32 unknown) {
    target, takes the command of EntityAi_MoveCommand towards it (or the turn away from a push,
    EntityAi_TurnFromPush) and starts the move action. */
 static void Spider_ThinkWander(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 turn;
 
@@ -184,8 +184,8 @@ static void Spider_ThinkWander(Entity *entity, s32 unknown) {
     }
     if (entity->action_timer == 0) {
         if (rand() % 100 > 40) {
-            EntityPoint_PickNear(entity->spawn_info->wander_radius, unkE0->target_point, entity->spawn_info, entity->model->position);
-            entity->target = unkE0->target_point;
+            EntityPoint_PickNear(entity->spawn_info->wander_radius, ai_state->target_point, entity->spawn_info, entity->model->position);
+            entity->target = ai_state->target_point;
             entity->action_timer = rand() % 60 + 120;
         } else {
             entity->target = NULL;
@@ -200,7 +200,7 @@ static void Spider_ThinkWander(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand(50.0f, entity, 0);
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* The think function of state 2 (called under `entity->state == 2`, not from a switch): as
@@ -208,7 +208,7 @@ static void Spider_ThinkWander(Entity *entity, s32 unknown) {
    follow. It closes in on the player only while the player is within EntitySpawnInfo.wander_radius of the
    spawn point; otherwise it goes for a point near the spawn point. */
 static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
     s32 side;
@@ -247,20 +247,20 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
             if (EntityMath_DistanceXZ(&player_state, entity->spawn_info) < (f32)entity->spawn_info->wander_radius) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 120;
-                unkE0->move_choice = 0;
+                ai_state->move_choice = 0;
             } else {
-                EntityPoint_PickNear(entity->spawn_info->wander_radius, unkE0->target_point, entity->spawn_info, entity->model->position);
-                entity->target = unkE0->target_point;
+                EntityPoint_PickNear(entity->spawn_info->wander_radius, ai_state->target_point, entity->spawn_info, entity->model->position);
+                entity->target = ai_state->target_point;
                 entity->action_timer = rand() % 60 + 120;
-                unkE0->move_choice = 1;
+                ai_state->move_choice = 1;
             }
             break;
         case 2:
             entity->action_timer = rand() % 30 + 30;
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         default:
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         }
     }
@@ -268,19 +268,19 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-            if (unkE0->turn_in_place == 0) {
-                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
-                if (unkE0->turn_in_place == 0) {
+            if (ai_state->turn_in_place == 0) {
+                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                if (ai_state->turn_in_place == 0) {
                     goto done;
                 }
             }
             entity->move_command = EntityAi_TurnCommand(entity);
             if (entity->move_command == 0) {
-                unkE0->turn_in_place = 0;
+                ai_state->turn_in_place = 0;
             }
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
-            switch (unkE0->move_choice) {
+            switch (ai_state->move_choice) {
             case 0:
                 if (turn > 0) {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
@@ -302,13 +302,13 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, the shots turned towards a point 30
    below the player (EntityShot_LaunchAimed). */
 static void Spider_RangedAttack(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     s32 kind = (s32)(entity->flags >> 58) & 3;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
     f32 direction[4];
@@ -326,24 +326,24 @@ static void Spider_RangedAttack(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
+        if (unk3D8->turn_frames != 0) {
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->unk82) {
-            EntityAi_TurnToHeading(entity, &entity->unkE0.turn_rate, entity->heading_to_player);
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
+            EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
         } else {
-            unkE0->turn_rate = 0.0f;
+            ai_state->turn_rate = 0.0f;
         }
-        elapsed = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(direction, &player_state);
         direction[1] -= 30.0f;
-        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->unk82, direction, 0.7853982f, 0.17453294f);
-        if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
+        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction, 0.7853982f, 0.17453294f);
+        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
@@ -352,11 +352,11 @@ static void Spider_RangedAttack(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -367,7 +367,7 @@ static void Spider_RangedAttack(Entity *entity) {
    when the spawn has flag bit 58: plays animation 3 until the entity is EntityParams.pitch_limit_deg or more
    from its spawn point (EntityMath_DistanceXZ), then thinks. It does not wait for the player. */
 static void Spider_Dormant(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
@@ -392,9 +392,9 @@ static void Spider_Dormant(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -439,7 +439,7 @@ static void Spider_Death(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit24 = FALSE;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
@@ -470,7 +470,7 @@ static void Spider_Death(Entity *entity) {
    (EntityCollision_RayProps). On result 1 it stands there with the shared on_hit and death; on result 2 or 3 it
    clings there (work byte unk7A, Spider_OnHit and Spider_Death installed). Then it thinks. */
 static void Spider_DropToFloor(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 landing[4];
     f32 direction[4];
     f32 matrix[16];
@@ -500,34 +500,34 @@ static void Spider_DropToFloor(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit24 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-        unkE0->step_index = 0;
-        unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
-        unkE0->death = (void (*)(void))EntityAi_Death;
+        ai_state->step_index = 0;
+        ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
+        ai_state->death = (void (*)(void))EntityAi_Death;
         entity->busy_flags = 0;
         entity->move_command = 0;
         entity->action_timer = 0;
         if (ENTITY_FLAG_BITS(entity)->bit5) {
-            unkE0->think(entity, 1);
+            ai_state->think(entity, 1);
         } else {
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
         }
     } else if (hit == 2 || hit == 3) {
         Vector_Copy(entity->model->position, landing);
-        unkE0->part_angle_x = landing[0];
-        unkE0->part_angle_y = landing[1];
-        unkE0->part_angle_z = landing[2];
+        ai_state->part_angle_x = landing[0];
+        ai_state->part_angle_y = landing[1];
+        ai_state->part_angle_z = landing[2];
         ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
-        unkE0->step_index = 1;
-        unkE0->on_hit = (void (*)(void))Spider_OnHit;
-        unkE0->death = (void (*)(void))Spider_Death;
+        ai_state->step_index = 1;
+        ai_state->on_hit = (void (*)(void))Spider_OnHit;
+        ai_state->death = (void (*)(void))Spider_Death;
         entity->busy_flags = 0;
         entity->move_command = 0;
         entity->action_timer = 0;
         if (ENTITY_FLAG_BITS(entity)->bit5) {
-            unkE0->think(entity, 1);
+            ai_state->think(entity, 1);
         } else {
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
         }
     } else {
         Vector_Scale(direction, direction, 20.0f);
@@ -538,7 +538,7 @@ static void Spider_DropToFloor(Entity *entity) {
 /* An action (busy bit 0x2000): eases the model's pitch and roll back to 0; once both are there and flag bit 44
    or 50 is set, it puts back the shared on_hit and death and starts the move action. */
 static void Spider_LevelOut(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 pitch_left;
     f32 roll_left;
 
@@ -563,9 +563,9 @@ static void Spider_LevelOut(Entity *entity) {
             entity->action_timer = 0;
             ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
-            unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
-            unkE0->death = (void (*)(void))EntityAi_Death;
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+            ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
+            ai_state->death = (void (*)(void))EntityAi_Death;
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
         }
     }
 }

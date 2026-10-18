@@ -20,9 +20,9 @@ extern u32 frame_counter;
 void MapObject_StartSinkingPlatform(MapTrigger *trigger) {
     MapTriggerShotKind121660 *shot = (MapTriggerShotKind121660 *)&trigger->shot;
 
-    shot->unk00 = 0.0f;
-    shot->unk08 = 0;
-    shot->unk0C = 0;
+    shot->speed = 0.0f;
+    shot->player_on = 0;
+    shot->player_was_on = 0;
     trigger->type = 1;
 }
 
@@ -35,38 +35,38 @@ void MapObject_UpdateSinkingPlatform(MapObject *object) {
     ModelInstance *model;
     f32 top;
 
-    shot->unk0C = shot->unk08;
-    shot->unk08 = object_under_player[0] == object;
-    if (shot->unk08 != shot->unk0C) {
-        shot->unk04 = MAP_OBJECT_WORDS(object)->kind_param_5;
+    shot->player_was_on = shot->player_on;
+    shot->player_on = object_under_player[0] == object;
+    if (shot->player_on != shot->player_was_on) {
+        shot->frames_to_wait = MAP_OBJECT_WORDS(object)->kind_param_5;
     }
-    switch (shot->unk08) {
+    switch (shot->player_on) {
         case 0:
             source = MAP_OBJECT_WORDS(object);
             if (source->kind_param_4 == 0) {
-                ((MapTriggerShotKind121660 *)object->work)->unk00 = source->kind_param_2;
+                ((MapTriggerShotKind121660 *)object->work)->speed = source->kind_param_2;
             } else {
-                ((MapTriggerShotKind121660 *)object->work)->unk00 -= source->kind_param_2;
+                ((MapTriggerShotKind121660 *)object->work)->speed -= source->kind_param_2;
             }
             model = object->model;
-            model->position.y -= shot->unk00;
+            model->position.y -= shot->speed;
             if (model->position.y < object->source->position.y) {
                 model->position.y = object->source->position.y;
             }
             break;
         case 1:
-            if (shot->unk04 > 0) {
-                shot->unk04--;
+            if (shot->frames_to_wait > 0) {
+                shot->frames_to_wait--;
                 return;
             }
             source = MAP_OBJECT_WORDS(object);
             if (source->kind_param_3 == 0) {
-                ((MapTriggerShotKind121660 *)object->work)->unk00 = source->kind_param_1;
+                ((MapTriggerShotKind121660 *)object->work)->speed = source->kind_param_1;
             } else {
-                ((MapTriggerShotKind121660 *)object->work)->unk00 += source->kind_param_1;
+                ((MapTriggerShotKind121660 *)object->work)->speed += source->kind_param_1;
             }
             model = object->model;
-            model->position.y += shot->unk00;
+            model->position.y += shot->speed;
             top = object->source->position.y + source->kind_param_0;
             if (top < model->position.y) {
                 model->position.y = top;
@@ -201,7 +201,7 @@ void MapObject_UpdateOpeningPitfall(MapObject *object) {
             object->work[0] = delay - 1;
         }
     } else {
-        if (MODEL_CHANNEL(object->model)->param != 0) {
+        if (MODEL_CHANNEL(object->model)->frame != 0) {
             MapObject_StepAnim(object);
         } else {
             MapObject_StartAnim(object, 5);
@@ -226,7 +226,7 @@ void MapObject_UpdateClosingPitfall(MapObject *object) {
         if (MAP_OBJECT_WORDS(object)->kind_param_1 > 0) {
             object->work[0]--;
         }
-    } else if (MODEL_CHANNEL(object->model)->param != 0) {
+    } else if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
     } else {
         MapObject_StartAnim(object, 4);

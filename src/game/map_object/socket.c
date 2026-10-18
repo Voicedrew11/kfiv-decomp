@@ -102,7 +102,7 @@ void MapObject_SettlePedestalItem(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (MODEL_CHANNEL(object->model)->param != 0) {
+    if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
         return;
     }
@@ -152,7 +152,7 @@ void MapObject_LiftPedestalItem(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (MODEL_CHANNEL(object->model)->param != 0) {
+    if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
         return;
     }

@@ -1,4 +1,4 @@
-/* WiddaQueen: the behaviour of entity type 46 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* WiddaQueen: the behaviour of entity type 46 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Widda Queen. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -55,7 +55,7 @@ static void WiddaQueen_Death(Entity *entity);
 
 /* Set-up of a type 46 entity: clears its work area and installs the type's handlers. */
 void WiddaQueen_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
     u8 *unkC0 = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
@@ -63,17 +63,17 @@ void WiddaQueen_Init(Entity *entity) {
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->unkE0;
+        u8 *dest = (u8 *)&entity->ai_state;
 
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = WiddaQueen_Think;
-    unkE0->animate = (void (*)(void))WiddaQueen_Animate;
-    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
-    unkE0->move = (void (*)(void))WiddaQueen_Move;
-    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
-    unkE0->death = (void (*)(void))WiddaQueen_Death;
+    ai_state->think = WiddaQueen_Think;
+    ai_state->animate = (void (*)(void))WiddaQueen_Animate;
+    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
+    ai_state->move = (void (*)(void))WiddaQueen_Move;
+    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
+    ai_state->death = (void (*)(void))WiddaQueen_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -83,14 +83,14 @@ void WiddaQueen_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
+        Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -103,27 +103,27 @@ static void WiddaQueen_Animate(Entity *entity) {
     f32 limits[4];
     s32 look_at_target;
     u32 blend_frames; // match: converted to float as unsigned
-    EntityUnkE0 *unkE0;
+    EntityAiState *ai_state;
 
-    unkE0 = &entity->unkE0;
+    ai_state = &entity->ai_state;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
-        blend_frames = entity->model->level_tables->unk88;
+        blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
         }
-        WiddaQueen_TurnPart9ToPlayer(entity, unkE0->step_index);
+        WiddaQueen_TurnPart9ToPlayer(entity, ai_state->step_index);
         look_at_target = ENTITY_FLAG_BITS(entity)->bit9;
         limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
         limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
         limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
         limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
         if (look_at_target) {
-            EntityAi_LookAtPlayer(entity, unkE0->look_part_angles, look_at_target, limits, 12.0f);
+            EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, look_at_target, limits, 12.0f);
         } else {
-            EntityAi_LookAtPlayer(entity, unkE0->look_part_angles, 0, NULL, 8.0f);
+            EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, 0, NULL, 8.0f);
         }
     }
 }
@@ -132,12 +132,12 @@ static void WiddaQueen_Animate(Entity *entity) {
    degrees to either side, at the rate EntityParams.near_distance; in mode 2 holds it; else puts the angle
    (work float unk48) back to 0. The mode is work byte unk7A. */
 static void WiddaQueen_TurnPart9ToPlayer(Entity *entity, s32 mode) {
-    EntityUnkE0 *unkE0;
+    EntityAiState *ai_state;
     EntityModelPart80 *part;
     f32 rate;
     f32 angle;
 
-    unkE0 = &entity->unkE0;
+    ai_state = &entity->ai_state;
     rate = (f32)entity->params->near_distance;
     part = &((EntityModelPart80 *)entity->model->parts)[9];
     if (entity->ailment_3_frames != 0) {
@@ -151,12 +151,12 @@ static void WiddaQueen_TurnPart9ToPlayer(Entity *entity, s32 mode) {
         angle = -1.5707964f;
     }
     if (mode == 1) {
-        EntityMath_EaseAngleToward(&unkE0->part_angle_x, angle, rate);
-        part->unk50[1] = unkE0->part_angle_x;
+        EntityMath_EaseAngleToward(&ai_state->part_angle_x, angle, rate);
+        part->unk50[1] = ai_state->part_angle_x;
     } else if (mode == 2) {
-        part->unk50[1] = unkE0->part_angle_x;
+        part->unk50[1] = ai_state->part_angle_x;
     } else {
-        unkE0->part_angle_x = 0.0f;
+        ai_state->part_angle_x = 0.0f;
     }
 }
 
@@ -179,16 +179,16 @@ static void WiddaQueen_Think(Entity *entity, s32 unknown) {
    (WiddaQueen_CanAttack) starts the one WiddaQueen_PickAttack draws; else starts the move
    action. */
 static void WiddaQueen_ThinkDecide(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     if (EntityAi_ShouldGuard(entity, 300.0f, 3.1415927f)) {
         // match: called as returning int; only then is the 2 below loaded into $3
         ((int (*)(char *, void (*)(void), int))EntityAi_StartAction)((char *)entity, (void (*)(void))EntityAi_Guard, 1);
-        unkE0->step_index = 2;
+        ai_state->step_index = 2;
         return;
     }
-    unkE0->step_index = 1;
+    ai_state->step_index = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
     if (entity->attack_delay_frames == 0 && !(s32)(entity->flags >> 63) && WiddaQueen_CanAttack(entity)) {
         if (WiddaQueen_PickAttack(entity)) {
@@ -206,13 +206,13 @@ static void WiddaQueen_ThinkDecide(Entity *entity, s32 unknown) {
         }
         return;
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* The melee attack with record 0 (busy bit 1): animation 20, its hits checked along the heading of
    the turned part (work float unk48). */
 static void WiddaQueen_MeleeAttack0(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[0];
     s32 frame;
 
@@ -227,30 +227,30 @@ static void WiddaQueen_MeleeAttack0(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         if (unk240->hit_start_frame != 0) {
-            unkE0->step_index = 1;
+            ai_state->step_index = 1;
         }
         break;
     case 2:
-        if (unk240->hit_start_frame >= entity->model->level_tables->unk82) {
-            unkE0->step_index = 1;
+        if (unk240->hit_start_frame >= entity->model->level_tables->frame) {
+            ai_state->step_index = 1;
         } else {
-            unkE0->step_index = 2;
+            ai_state->step_index = 2;
         }
-        frame = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->unk82, EntityMath_WrapAngle(entity->model->rotation[1] + unkE0->part_angle_x));
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + ai_state->part_angle_x));
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->unk82, EntityMath_WrapAngle(entity->model->rotation[1] + unkE0->part_angle_x));
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + ai_state->part_angle_x));
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->level_tables->unk82, EntityMath_WrapAngle(entity->model->rotation[1] + unkE0->part_angle_x));
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + ai_state->part_angle_x));
         }
-        if (entity->model->level_tables->unk82 > 0 && unk240->hit_end_frame >= entity->model->level_tables->unk82) {
+        if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
@@ -261,9 +261,9 @@ static void WiddaQueen_MeleeAttack0(Entity *entity) {
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk240->attack_delay);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -273,7 +273,7 @@ static void WiddaQueen_MeleeAttack0(Entity *entity) {
 /* The melee attack with record 1 (busy bit 1): animation 21 from frame 10; parts 0 and 1 are
    checked 45 degrees to either side; it ends at frame 61. */
 static void WiddaQueen_MeleeAttack1(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[1];
     s32 frame;
 
@@ -282,39 +282,39 @@ static void WiddaQueen_MeleeAttack1(Entity *entity) {
     case 0:
         Motion_Start(entity, 0x15, 10, (s16)entity->params->action_frames, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
-        unkE0->step_index = 0;
+        ai_state->step_index = 0;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
         ENTITY_FLAG_BITS(entity)->bit56 = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        frame = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->unk82, entity->model->rotation[1] - 0.7853982f);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->frame, entity->model->rotation[1] - 0.7853982f);
             if (!ENTITY_FLAG_BITS(entity)->bit54) {
-                ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->unk82, entity->model->rotation[1] + 0.7853982f);
+                ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, entity->model->rotation[1] + 0.7853982f);
             }
         }
-        if (entity->model->level_tables->unk82 > 0 && unk240->hit_end_frame >= entity->model->level_tables->unk82) {
+        if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
         }
-        if (entity->model->level_tables->unk82 >= 0x3D) {
+        if (entity->model->level_tables->frame >= 0x3D) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk240->attack_delay);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -324,7 +324,7 @@ static void WiddaQueen_MeleeAttack1(Entity *entity) {
 /* The ranged attack with record 0 (busy bit 1): animation 23, its shots aimed at the player
    (EntityShot_LaunchAimed); calls EntityEvent_StartEffectAtPoint with 0x373 on frame 22. */
 static void WiddaQueen_RangedAttack0(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk3D8Full *unk3D8 = (EntityParamsUnk3D8Full *)&entity->params->ranged_attacks[0];
     f32 target[4];
     s32 elapsed;
@@ -337,28 +337,28 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
-            unkE0->step_index = 1;
+        if (unk3D8->turn_frames != 0) {
+            ai_state->step_index = 1;
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->unk82) {
-            unkE0->step_index = 1;
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
+            ai_state->step_index = 1;
         } else {
-            unkE0->step_index = 2;
+            ai_state->step_index = 2;
         }
-        if (entity->model->level_tables->unk82 == 0x16 && (entity->ailment_4_frames == 0 || unk3D8->unk0C != 0)) {
+        if (entity->model->level_tables->frame == 0x16 && (entity->ailment_4_frames == 0 || unk3D8->unk0C != 0)) {
             EntityEvent_StartEffectAtPoint((char **)entity, 0x373, 4, (int)entity->model->rotation);
             EntityEvent_StartEffectAtPoint((char **)entity, 0x373, 8, (int)entity->model->rotation);
         }
-        elapsed = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(target, player_state.position);
         target[1] -= 190.0f;
-        EntityShot_LaunchAimed(entity, (EntityParamsUnk3D8 *)unk3D8, elapsed, entity->model->level_tables->unk82, target, 1.5707964f, 1.5707964f);
-        if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
+        EntityShot_LaunchAimed(entity, (EntityParamsUnk3D8 *)unk3D8, elapsed, entity->model->level_tables->frame, target, 1.5707964f, 1.5707964f);
+        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
@@ -367,11 +367,11 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -379,9 +379,9 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
 }
 
 /* The ranged attack with record 1 (busy bit 1): animation 24; from frame EntityParams.far_distance to
-   unk43A launches the record's shots on two frames in three. */
+   type_param_0 launches the record's shots on two frames in three. */
 static void WiddaQueen_RangedAttack1(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, 1);
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
@@ -392,25 +392,25 @@ static void WiddaQueen_RangedAttack1(Entity *entity) {
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
-            unkE0->step_index = 1;
+        if (unk3D8->turn_frames != 0) {
+            ai_state->step_index = 1;
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->unk82) {
-            unkE0->step_index = 1;
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
+            ai_state->step_index = 1;
         } else {
-            unkE0->step_index = 2;
+            ai_state->step_index = 2;
         }
-        if (entity->model->level_tables->unk82 >= entity->params->far_distance && entity->model->level_tables->unk82 <= entity->params->unk43A) {
+        if (entity->model->level_tables->frame >= entity->params->far_distance && entity->model->level_tables->frame <= entity->params->type_param_0) {
             if (frame_counter % 3U != 0) {
-                EntityAi_LaunchShots(entity, unk3D8, entity->params->far_distance, entity->params->unk43A);
+                EntityAi_LaunchShots(entity, unk3D8, entity->params->far_distance, entity->params->type_param_0);
             }
         }
-        if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
@@ -419,11 +419,11 @@ static void WiddaQueen_RangedAttack1(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -438,7 +438,7 @@ static void WiddaQueen_Move(Entity *entity) {
 /* Whether the player is in reach of any of the six attack records (EntityAi_CanUseMeleeFacing for the melee
    ones, EntityAi_CanUseRangedFacing for the ranged). */
 static s32 WiddaQueen_CanAttack(Entity *entity) {
-    f32 heading = EntityMath_WrapAngle(entity->model->rotation[1] + entity->unkE0.part_angle_x);
+    f32 heading = EntityMath_WrapAngle(entity->model->rotation[1] + entity->ai_state.part_angle_x);
 
     if (EntityAi_CanUseMeleeFacing(entity, heading, 0)) {
         return TRUE;
@@ -471,7 +471,7 @@ static s32 WiddaQueen_PickAttack(Entity *entity) {
     s32 sum;
     f32 angle;
 
-    angle = EntityMath_WrapAngle(entity->model->rotation[1] + entity->unkE0.part_angle_x);
+    angle = EntityMath_WrapAngle(entity->model->rotation[1] + entity->ai_state.part_angle_x);
     chance = EntityAi_CanUseMeleeFacing(entity, angle, 0) ? (entity->attack_weights[0] * entity->params->melee_attacks[0].attack_weight) >> 6 : 0;
     chances[0] = chance;
     total += chance;
@@ -528,7 +528,7 @@ static void WiddaQueen_Death(Entity *entity) {
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;

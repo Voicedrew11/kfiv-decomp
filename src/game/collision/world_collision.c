@@ -306,7 +306,7 @@ int Collision_FindFloorBelow(f32 reach, void *point_arg) {
                         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest &&
                             point[1] <= COLLISION_RESULT->point[1] && COLLISION_RESULT->point[1] <= point[1] + reach) {
                             found = TRUE;
-                            COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                            COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                             best = *COLLISION_RESULT_COPY;
                             lowest = COLLISION_RESULT->point[1];
                         }
@@ -379,7 +379,7 @@ int Collision_FindWaterBelow(f32 reach, void *point_arg) {
                         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest &&
                             point[1] <= COLLISION_RESULT->point[1] && COLLISION_RESULT->point[1] <= point[1] + reach) {
                             found = TRUE;
-                            COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                            COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                             best = *COLLISION_RESULT_COPY;
                             lowest = COLLISION_RESULT->point[1];
                         }
@@ -484,7 +484,7 @@ void Collision_CastRayAtMap(f32 scale, void *position_arg, void *direction) {
                             forward ^= 1;
                             if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->distance < best.result.distance) {
                                 best = *COLLISION_RESULT_COPY;
-                                best.result.unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                                best.result.floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                             }
                             strip_point++;
                         } while (--points_left != 0);
@@ -589,7 +589,7 @@ void Collision_CastRayAtMapLists(f32 scale, void *position_arg, void *direction,
                             forward ^= 1;
                             if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->distance < best.result.distance) {
                                 best = *COLLISION_RESULT_COPY;
-                                best.result.unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                                best.result.floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                             }
                             strip_point++;
                         } while (--points_left != 0);
@@ -695,7 +695,7 @@ void Collision_CastSegmentAtMap(f32 *position, f32 *target) {
                             forward ^= 1;
                             if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->distance < best.distance) {
                                 best = *COLLISION_RESULT_ALIGNED;
-                                best.unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                                best.floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                             }
                             strip_point++;
                         } while (--points_left != 0);
@@ -748,7 +748,7 @@ void Collision_HitSphereObj(MapObject *object, f32 *point, f32 reach) {
     f32 delta_z;
     f32 object_reach;
 
-    COLLISION_RESULT->unk18 = 6;
+    COLLISION_RESULT->floor_material = 6;
     COLLISION_RESULT->hit = 0;
     delta_x = ABS(model->position.x - point[0]);
     object_reach = object->reach_radius;
@@ -1208,7 +1208,7 @@ void Collision_HitRayDoubleDoorObj(void *target, int from, int direction, float 
     if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
         return;
     }
-    if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->param == 1) {
+    if (MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->frame == 1) {
         corner0 = (f32 *)object->model->get_point(object->model, 0);
         top = (f32 *)object->model->get_point(object->model, 0x1F);
         height = corner0[1] - top[1];
@@ -1441,7 +1441,7 @@ void Collision_HitRayPitfallObj(void *target, int from, int direction, float dis
 
 /* Tests a point (with a reach) against every triangle of the strips of a map object's collision mesh, if the
    object is in use and the mesh has 4 points or more. At the first hit it stops and notes the floor material
-   in COLLISION_RESULT->unk18. */
+   in COLLISION_RESULT->floor_material. */
 void Collision_HitSphereMeshObj(CollisionOwner *owner, int mode, float factor) {
     ModelStripList *list;
     Strip *strip;
@@ -1460,7 +1460,7 @@ void Collision_HitSphereMeshObj(CollisionOwner *owner, int mode, float factor) {
                 do {
                     Collision_PointTriangle(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, mode, factor);
                     if (COLLISION_RESULT->hit != 0) {
-                        COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(vertex->unk04, vertex->unk08, vertex->unk0C);
+                        COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(vertex->x, vertex->y, vertex->z);
                         return;
                     }
                     vertex++;
@@ -1547,7 +1547,7 @@ int Collision_HitSphereDoubleDoorObj(MapObject *object, f32 *point, f32 reach) {
     if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
         return;
     }
-    if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->param < 2) {
+    if (MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->frame < 2) {
         corner0 = (f32 *)object->model->get_point(object->model, 0);
         if (corner0 == NULL) {
             return;
@@ -1713,7 +1713,7 @@ void Collision_HitSpherePitfallObj(MapObject *object, f32 *point, f32 reach) {
                 do {
                     Collision_PointTriangle(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, (int)point, reach);
                     if (COLLISION_RESULT->hit != 0) {
-                        COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(vertex->unk04, vertex->unk08, vertex->unk0C);
+                        COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(vertex->x, vertex->y, vertex->z);
                         return;
                     }
                     vertex++;
@@ -1755,7 +1755,7 @@ void Collision_HitSpherePitfallObj(MapObject *object, f32 *point, f32 reach) {
 
 /* Tests an upright capsule (`centre`, `radius`, `height`) against every triangle of the strips of the object's
    model, if the object has MAP_OBJECT_IN_USE and the mesh unk0C is 4 or more. At the first hit it stops and puts
-   Collision_GetFloorMaterial of the hit point's three words in COLLISION_RESULT->unk18. */
+   Collision_GetFloorMaterial of the hit point's three words in COLLISION_RESULT->floor_material. */
 void Collision_HitCapsuleMeshObj(MapObject *object, f32 *centre, f32 height, f32 radius) {
     CollisionMesh *mesh;
     CollisionStrip *strip;
@@ -1776,7 +1776,7 @@ void Collision_HitCapsuleMeshObj(MapObject *object, f32 *centre, f32 height, f32
                     Collision_CapsuleTriangle(point[0].position, point[1].position, point[2].position, centre, radius,
                                               height);
                     if (COLLISION_RESULT->hit != 0) {
-                        COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(point->unk04, point->unk08, point->unk0C);
+                        COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(point->material_first, point->material_second, point->material_third);
                         return;
                     }
                     point++;
@@ -1871,7 +1871,7 @@ void Collision_HitCapsuleDoubleDoorObj(MapObject *object, f32 *centre, f32 radiu
     f32 height;
 
     if (object->state_flags & MAP_OBJECT_IN_USE) {
-        if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->param < 2) {
+        if (MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->frame < 2) {
             point0 = (f32 *)object->model->get_point(object->model, 0);
             if (point0 == NULL) {
                 return;
@@ -2030,7 +2030,7 @@ void Collision_HitFanMeshObj(MapObject *object, Vector4 *origin, f32 radius, f32
                         Collision_CapsuleTriangle((int)point[-2U].position, (int)point[-1U].position, (int)point->position,
                                       (int)origin, push, radius);
                         if (COLLISION_RESULT->hit != 0) {
-                            COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(point->unk04, point->unk08, point->unk0C);
+                            COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(point->material_first, point->material_second, point->material_third);
                             return;
                         }
                     }
@@ -2118,7 +2118,7 @@ void Collision_HitFanDoubleDoorObj(MapObject *object, Vector4 *origin, f32 radiu
     CollisionResult *result = COLLISION_RESULT; // match: one pointer, so the hit flag is reloaded only after a call
 
     if (object->state_flags & MAP_OBJECT_IN_USE) {
-        if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->param < 2) {
+        if (MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->frame < 2) {
             point0 = (Vector4 *)object->model->get_point(object->model, 0);
             if (point0 == NULL) {
                 return;
@@ -2483,7 +2483,7 @@ void Collision_PushOutOfDoubleDoorObj(MapObject *object, f32 *centre, f32 radius
 
     if (object->state_flags & MAP_OBJECT_IN_USE) {
         object->model->update_bone_points(object->model);
-        if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->param == 1) {
+        if (MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->frame == 1) {
             point0 = (f32 *)object->model->get_point(object->model, 0);
             if (point0 == NULL) {
                 return;
@@ -2554,8 +2554,8 @@ void Collision_PushOutOfDoubleDoorObj(MapObject *object, f32 *centre, f32 radius
             delta_x = point3[0] - point4[0];
             delta_z = point3[2] - point4[2];
             second_gap = sqrtf(delta_x * delta_x + delta_z * delta_z);
-            if (!(MODEL_CHANNEL(object->model)->index == object->definition->anims[5].anim &&
-                  MODEL_CHANNEL(object->model)->param == 1) &&
+            if (!(MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[5].anim &&
+                  MODEL_CHANNEL(object->model)->frame == 1) &&
                 gap_is_closed(object, centre, push, first_gap, second_gap)) {
                 Collision_CylinderEdge(point2, point5, height, centre, radius, push);
                 if (COLLISION_RESULT->hit != 0) {
@@ -2827,8 +2827,8 @@ s32 Collision_StandOnPitfallObj(MapObject *object, f32 *position, f32 radius) {
     f32 lowest;
 
     if (object->state_flags & MAP_OBJECT_IN_USE) {
-        if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim
-            && MODEL_CHANNEL(object->model)->param < 2) {
+        if (MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[4].anim
+            && MODEL_CHANNEL(object->model)->frame < 2) {
             return drop_on_floor_strips(object, position, radius);
         }
         Vector_Copy(centre, position);

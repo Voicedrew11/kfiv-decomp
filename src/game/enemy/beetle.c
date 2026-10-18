@@ -1,4 +1,4 @@
-/* Beetle: the behaviour of entity type 5 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* Beetle: the behaviour of entity type 5 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Beetle Small, Beetle Very Large,
    Beetle White, Beetle Medium. The game names no monsters; these names are from
    https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by hit points and experience, with
@@ -57,24 +57,24 @@ static void Beetle_RangedAttack0(Entity *entity);
 
 /* Set-up of a type 5 entity: clears its work area and installs the type's handlers. */
 void Beetle_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
     u8 *unkC0 = entity->attack_weights;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->unkE0;
+        u8 *dest = (u8 *)&entity->ai_state;
 
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = Beetle_Think;
-    unkE0->animate = (void (*)(void))Beetle_Animate;
-    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
-    unkE0->move = (void (*)(void))EntityAi_Move;
-    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
-    unkE0->death = (void (*)(void))EntityAi_Death;
+    ai_state->think = Beetle_Think;
+    ai_state->animate = (void (*)(void))Beetle_Animate;
+    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
+    ai_state->move = (void (*)(void))EntityAi_Move;
+    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
+    ai_state->death = (void (*)(void))EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -84,11 +84,11 @@ void Beetle_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -101,14 +101,14 @@ void Beetle_Init(Entity *entity) {
 static void Beetle_Animate(Entity *entity) {
     u32 blend_frames; // match: converted to float as unsigned
     s64 flags;
-    EntityUnkE0 *unkE0;
+    EntityAiState *ai_state;
 
     flags = entity->flags;
-    unkE0 = &entity->unkE0;
+    ai_state = &entity->ai_state;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
-        blend_frames = entity->model->level_tables->unk88;
+        blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -155,15 +155,15 @@ static void Beetle_Think(Entity *entity, s32 unknown) {
    179 frames) or no target (60 to 89 frames), takes the command of EntityAi_MoveCommand towards it (or the
    turn away from a push, EntityAi_TurnFromPush) and starts the move action. */
 static void Beetle_ThinkWander(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     if (entity->action_timer == 0) {
         if (rand() % 100 > 20) {
-            EntityPoint_PickNear(entity->spawn_info->wander_radius, unkE0->target_point, entity->spawn_info, entity->model->position);
-            entity->target = unkE0->target_point;
+            EntityPoint_PickNear(entity->spawn_info->wander_radius, ai_state->target_point, entity->spawn_info, entity->model->position);
+            entity->target = ai_state->target_point;
             entity->action_timer = rand() % 60 + 120;
         } else {
             entity->target = NULL;
@@ -178,14 +178,14 @@ static void Beetle_ThinkWander(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand(50.0f, entity, 0);
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat with Beetle_RangedAttack0 as the
    ranged attack; it leaves flag bits 9 and 10 as they are, and closes in with command bit 0x40
    (EntityAi_MoveCommand with range 0, far marked). */
 static void Beetle_ThinkCombat(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
     s32 side;
@@ -219,30 +219,30 @@ static void Beetle_ThinkCombat(Entity *entity, s32 unknown) {
         case 1:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
-            unkE0->move_choice = 0;
+            ai_state->move_choice = 0;
             break;
         case 2:
             entity->action_timer = rand() % 30 + 30;
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         default:
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         }
     }
-    if (unkE0->move_choice == 0) {
+    if (ai_state->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-            if (unkE0->turn_in_place == 0) {
-                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
-                if (unkE0->turn_in_place == 0) {
+            if (ai_state->turn_in_place == 0) {
+                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                if (ai_state->turn_in_place == 0) {
                     goto done;
                 }
             }
             entity->move_command = EntityAi_TurnCommand(entity);
             if (entity->move_command == 0) {
-                unkE0->turn_in_place = 0;
+                ai_state->turn_in_place = 0;
             }
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
@@ -256,14 +256,14 @@ static void Beetle_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* Helper of Beetle_Animate: eases work float unk48 towards 20 degrees on the side the command
    turns to (0 with no turn bit) and puts half of it in angle unk50[1] of model parts 7 and 12. */
 static void Beetle_TurnParts7And12(void *entity_arg) {
     Entity *entity = entity_arg;
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     EntityModelPart80 *part;
     f32 angle;
     f32 limit;
@@ -283,11 +283,11 @@ static void Beetle_TurnParts7And12(void *entity_arg) {
     } else if (angle < -limit) {
         angle = -limit;
     }
-    EntityMath_EaseAngleToward(&unkE0->part_angle_x, angle, 10.0f);
+    EntityMath_EaseAngleToward(&ai_state->part_angle_x, angle, 10.0f);
     part = (EntityModelPart80 *)entity->model->parts;
     for (i = 0; i < ENTITY_MODEL(entity)->part_count; i++) {
         if (i == 7 || i == 12) {
-            part->unk50[1] = unkE0->part_angle_x * 0.5f;
+            part->unk50[1] = ai_state->part_angle_x * 0.5f;
         }
         part++;
     }
@@ -299,7 +299,7 @@ static void Beetle_TurnParts7And12(void *entity_arg) {
 static void Beetle_TurnParts23To32(Entity *entity) {
     f32 limit;
     f32 lean;
-    EntityUnkE0 *unkE0;
+    EntityAiState *ai_state;
     EntityModelPart80 *part;
     u16 command;
     u16 part_count;
@@ -308,7 +308,7 @@ static void Beetle_TurnParts23To32(Entity *entity) {
     f32 limit2;
     limit = 0.34906584f;
     command = entity->move_command;
-    unkE0 = &entity->unkE0;
+    ai_state = &entity->ai_state;
     if (command & MOVE_COMMAND_TURN_RIGHT) {
         lean = limit;
     } else {
@@ -318,12 +318,12 @@ static void Beetle_TurnParts23To32(Entity *entity) {
     if (limit2 < lean || (limit2 = -limit2, lean < limit2)) {
         lean = limit2;
     }
-    EntityMath_EaseAngleToward(&unkE0->part_angle_y, lean, 20.0f);
+    EntityMath_EaseAngleToward(&ai_state->part_angle_y, lean, 20.0f);
     part_count = ENTITY_MODEL(entity)->part_count;
     part = (EntityModelPart80 *)entity->model->parts;
     for (i = 0; i < part_count; i++) {
         if (i == 0x17 || i == 0x1C || i == 0x1F || i == 0x20) {
-            part->unk50[1] = -unkE0->part_angle_y * 0.5f;
+            part->unk50[1] = -ai_state->part_angle_y * 0.5f;
         }
         part++;
     }
@@ -333,7 +333,7 @@ static void Beetle_TurnParts23To32(Entity *entity) {
    unk432 it launches the record's shots on every frame whose number is not a multiple of
    EntityParams.action_frames. */
 static void Beetle_RangedAttack0(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
@@ -344,21 +344,21 @@ static void Beetle_RangedAttack0(Entity *entity) {
         ENTITY_FLAGS(entity) &= ~0x200;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
+        if (unk3D8->turn_frames != 0) {
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->unk82) {
-            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->turn_rate = 0.0f;
+            ai_state->turn_rate = 0.0f;
         }
-        if (entity->model->level_tables->unk82 >= entity->params->pitch_limit_deg
-            && entity->model->level_tables->unk82 <= entity->params->yaw_limit_deg) {
+        if (entity->model->level_tables->frame >= entity->params->pitch_limit_deg
+            && entity->model->level_tables->frame <= entity->params->yaw_limit_deg) {
             if (ENTITY_CONTROLLER(entity)->action_frames == 0) {
                 ENTITY_CONTROLLER(entity)->action_frames++;
             }
@@ -366,7 +366,7 @@ static void Beetle_RangedAttack0(Entity *entity) {
                 EntityAi_LaunchShots(entity, unk3D8, entity->params->pitch_limit_deg, entity->params->yaw_limit_deg);
             }
         }
-        if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
@@ -375,11 +375,11 @@ static void Beetle_RangedAttack0(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;

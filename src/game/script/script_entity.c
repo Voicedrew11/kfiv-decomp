@@ -275,7 +275,7 @@ int ScriptCmd_BlendEntityMotion(ScriptMotionBlendCommand *command) {
     entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL && (entity->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE | ENTITY_FLAG_DYING_MASK)) == 3 && entity->hit_points != 0) {
         entity_model = entity->model;
-        if (entity_model->level_tables->unk88 != 0) {
+        if (entity_model->level_tables->blend_left != 0) {
             return Motion_BlendToPose(command->weight.value, entity_model);
         }
     }

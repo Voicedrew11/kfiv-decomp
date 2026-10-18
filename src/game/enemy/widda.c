@@ -1,4 +1,4 @@
-/* Widda: the behaviour of entity type 19 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* Widda: the behaviour of entity type 19 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Widda Large, Widda. The game names
    no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records
    by hit points and experience, with resistances and drops where two monsters share those. */
@@ -57,7 +57,7 @@ static void Widda_Move(Entity *entity);
 
 /* Set-up of a type 19 entity: clears its work area and installs the type's handlers. */
 void Widda_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
     u8 *unkC0 = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
@@ -65,17 +65,17 @@ void Widda_Init(Entity *entity) {
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->unkE0;
+        u8 *dest = (u8 *)&entity->ai_state;
 
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = Widda_Think;
-    unkE0->animate = (void (*)(void))Widda_Animate;
-    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
-    unkE0->move = (void (*)(void))Widda_Move;
-    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
-    unkE0->death = (void (*)(void))EntityAi_Death;
+    ai_state->think = Widda_Think;
+    ai_state->animate = (void (*)(void))Widda_Animate;
+    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
+    ai_state->move = (void (*)(void))Widda_Move;
+    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
+    ai_state->death = (void (*)(void))EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -85,14 +85,14 @@ void Widda_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
+        Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -106,14 +106,14 @@ static void Widda_Animate(Entity *entity) {
     s32 look_at_target;
     u32 blend_frames; // match: converted to float as unsigned
     s64 flags;
-    EntityUnkE0 *unkE0;
+    EntityAiState *ai_state;
 
     flags = entity->flags;
-    unkE0 = &entity->unkE0;
+    ai_state = &entity->ai_state;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
-        blend_frames = entity->model->level_tables->unk88;
+        blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -124,9 +124,9 @@ static void Widda_Animate(Entity *entity) {
         limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
         limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
         if (look_at_target) {
-            EntityAi_LookAtPlayer(entity, unkE0->look_part_angles, look_at_target, limits, 12.0f);
+            EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, look_at_target, limits, 12.0f);
         } else {
-            EntityAi_LookAtPlayer(entity, unkE0->look_part_angles, 0, NULL, 8.0f);
+            EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, 0, NULL, 8.0f);
         }
     }
 }
@@ -136,7 +136,7 @@ static void Widda_Animate(Entity *entity) {
    (at most 40), each part by half of it; the angles are work floats unk48 to unk54. Without a
    target or while the entity is busy it only reads the parts' angles into them. */
 static void Widda_AimPartsAtTarget(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     EntityModelPart80 *parts = (EntityModelPart80 *)entity->model->parts;
     s32 first = entity->params->near_distance;
     s32 second = entity->params->far_distance;
@@ -145,10 +145,10 @@ static void Widda_AimPartsAtTarget(Entity *entity) {
     f32 limit;
 
     if (entity->target == NULL || entity->busy_flags != 0) {
-        unkE0->part_angle_x = parts[first].unk50[0];
-        unkE0->part_angle_y = parts[first].unk50[1];
-        unkE0->part_angle_z = parts[second].unk50[0];
-        unkE0->pitch_speed = parts[second].unk50[1];
+        ai_state->part_angle_x = parts[first].unk50[0];
+        ai_state->part_angle_y = parts[first].unk50[1];
+        ai_state->part_angle_z = parts[second].unk50[0];
+        ai_state->pitch_speed = parts[second].unk50[1];
     } else {
         angle = atan2f(player_state.position[1] - entity->model->position[1], entity->distance_to_player);
         limit = 0.5235988f;
@@ -157,10 +157,10 @@ static void Widda_AimPartsAtTarget(Entity *entity) {
         } else if (angle < -limit) {
             angle = -limit;
         }
-        EntityMath_EaseAngleToward(&unkE0->part_angle_x, angle * 0.5f, 10.0f);
-        EntityMath_EaseAngleToward(&unkE0->part_angle_z, angle * 0.5f, 10.0f);
-        parts[first].unk50[0] = unkE0->part_angle_x;
-        parts[second].unk50[0] = unkE0->part_angle_z;
+        EntityMath_EaseAngleToward(&ai_state->part_angle_x, angle * 0.5f, 10.0f);
+        EntityMath_EaseAngleToward(&ai_state->part_angle_z, angle * 0.5f, 10.0f);
+        parts[first].unk50[0] = ai_state->part_angle_x;
+        parts[second].unk50[0] = ai_state->part_angle_z;
         bearing = EntityMath_HeadingTo(entity->model->position, entity->target);
         angle = EntityMath_AngleDifference(entity->model->rotation[1], bearing);
         limit = 0.6981317f;
@@ -169,20 +169,20 @@ static void Widda_AimPartsAtTarget(Entity *entity) {
         } else if (angle < -limit) {
             angle = -limit;
         }
-        EntityMath_EaseAngleToward(&unkE0->part_angle_y, angle * 0.5f, 10.0f);
-        EntityMath_EaseAngleToward(&unkE0->pitch_speed, angle * 0.5f, 10.0f);
-        parts[first].unk50[1] = unkE0->part_angle_y;
-        parts[second].unk50[1] = unkE0->pitch_speed;
+        EntityMath_EaseAngleToward(&ai_state->part_angle_y, angle * 0.5f, 10.0f);
+        EntityMath_EaseAngleToward(&ai_state->pitch_speed, angle * 0.5f, 10.0f);
+        parts[first].unk50[1] = ai_state->part_angle_y;
+        parts[second].unk50[1] = ai_state->pitch_speed;
     }
 }
 
 /* The think handler: as EntityAi_Think, with Widda_ThinkCombat for state 2. Sets work byte
    unk7A when flag bit 45, 47 or 48 is set during a dodge (busy bit 8). */
 static void Widda_Think(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     if ((entity->busy_flags & ENTITY_BUSY_DODGE) && (entity->flags & (ENTITY_FLAG_WALL_PUSH | ENTITY_FLAG_OBJECT_PUSH | ENTITY_FLAG_ENTITY_PUSH))) {
-        unkE0->step_index = 1;
+        ai_state->step_index = 1;
     }
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
@@ -216,7 +216,7 @@ static void Widda_Think(Entity *entity, s32 unknown) {
    EntityParams.action_frames in 100 makes it start EntityAi_Dodge when the player is 40 to 90 degrees off
    its heading, or close in at the run when the player is farther off or work byte unk7A is set. */
 static void Widda_ThinkCombat(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
     s32 side;
@@ -253,18 +253,18 @@ static void Widda_ThinkCombat(Entity *entity, s32 unknown) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (entity->distance_to_player > 900.0f && ABS(angle) < 0.6981317f) {
                 entity->action_timer = 300;
-                unkE0->move_choice = 1;
+                ai_state->move_choice = 1;
             } else {
                 entity->action_timer = rand() % 60 + 120;
-                unkE0->move_choice = 0;
+                ai_state->move_choice = 0;
             }
             break;
         case 2:
             entity->action_timer = rand() % 30 + 30;
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         default:
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         }
     }
@@ -272,10 +272,10 @@ static void Widda_ThinkCombat(Entity *entity, s32 unknown) {
     if (entity->distance_to_player_3d - entity->radius - 100.0f < 200.0f && ABS(angle) < 0.6981317f
         && frame_counter % 10U == entity->spawn_index % 10U && rand() % 100 < ENTITY_CONTROLLER(entity)->action_frames) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-        if (unkE0->step_index == 0) {
+        if (ai_state->step_index == 0) {
             if (ABS(angle) > 0.6981317f && ABS(angle) < 1.5707964f) {
                 EntityAi_StartAction(entity, EntityAi_Dodge, 1);
-                unkE0->step_index = 0;
+                ai_state->step_index = 0;
                 return;
             }
             if (!(ABS(angle) >= 1.5707964f)) {
@@ -285,27 +285,27 @@ static void Widda_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->target = &player_state;
         entity->action_timer = 300;
-        unkE0->move_choice = entity->combat_choice = 1;
-        unkE0->step_index = 0;
+        ai_state->move_choice = entity->combat_choice = 1;
+        ai_state->step_index = 0;
     }
 skip:
     if (entity->combat_choice == 1) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-            if (unkE0->turn_in_place == 0) {
-                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
-                if (unkE0->turn_in_place == 0) {
+            if (ai_state->turn_in_place == 0) {
+                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                if (ai_state->turn_in_place == 0) {
                     goto done;
                 }
             }
             entity->move_command = EntityAi_TurnCommand(entity);
             if (entity->move_command == 0) {
-                unkE0->turn_in_place = 0;
+                ai_state->turn_in_place = 0;
             }
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
-            switch (unkE0->move_choice) {
+            switch (ai_state->move_choice) {
             case 0:
                 if (turn > 0) {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
@@ -317,7 +317,7 @@ skip:
                 angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
                 if (entity->distance_to_player > 900.0f && ABS(angle) < 0.6981317f) {
                     entity->action_timer = 300;
-                    unkE0->move_choice = 1;
+                    ai_state->move_choice = 1;
                 }
                 break;
             case 1:
@@ -333,32 +333,32 @@ skip:
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* The move handler: as EntityAi_Move, but it only turns the entity (twice as fast for command bits
    0x40 and 0x400) and picks the animation; it does not move it. */
 static void Widda_Move(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 turn;
 
     if (entity == (Entity *)entity_under_player[0] && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
         entity->move_command = 0;
     }
     if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
-        unkE0->turn_rate -= entity->params->turn_step_per_frame;
-        if (unkE0->turn_rate < -entity->params->turn_limit) {
-            unkE0->turn_rate = -entity->params->turn_limit;
+        ai_state->turn_rate -= entity->params->turn_step_per_frame;
+        if (ai_state->turn_rate < -entity->params->turn_limit) {
+            ai_state->turn_rate = -entity->params->turn_limit;
         }
     } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
-        unkE0->turn_rate += entity->params->turn_step_per_frame;
-        if (unkE0->turn_rate > entity->params->turn_limit) {
-            unkE0->turn_rate = entity->params->turn_limit;
+        ai_state->turn_rate += entity->params->turn_step_per_frame;
+        if (ai_state->turn_rate > entity->params->turn_limit) {
+            ai_state->turn_rate = entity->params->turn_limit;
         }
     } else {
-        unkE0->turn_rate = 0.0f;
+        ai_state->turn_rate = 0.0f;
     }
-    turn = unkE0->turn_rate;
+    turn = ai_state->turn_rate;
     if (entity->move_command & (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST)) {
         turn += turn;
     }

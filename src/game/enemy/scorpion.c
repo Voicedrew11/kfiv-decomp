@@ -1,4 +1,4 @@
-/* Scorpion: the behaviour of entity type 16 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* Scorpion: the behaviour of entity type 16 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Scorpion. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -58,24 +58,24 @@ static void Scorpion_Move(Entity *entity);
 
 /* Set-up of a type 16 entity: clears its work area and installs the type's handlers. */
 void Scorpion_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
     u8 *unkC0 = entity->attack_weights;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->unkE0;
+        u8 *dest = (u8 *)&entity->ai_state;
 
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = (void (*)(Entity *, s32))Scorpion_Think;
-    unkE0->animate = (void (*)(void))Scorpion_Animate;
-    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
-    unkE0->move = (void (*)(void))Scorpion_Move;
-    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
-    unkE0->death = (void (*)(void))EntityAi_Death;
+    ai_state->think = (void (*)(Entity *, s32))Scorpion_Think;
+    ai_state->animate = (void (*)(void))Scorpion_Animate;
+    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
+    ai_state->move = (void (*)(void))Scorpion_Move;
+    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
+    ai_state->death = (void (*)(void))EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -85,11 +85,11 @@ void Scorpion_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -101,14 +101,14 @@ void Scorpion_Init(Entity *entity) {
 static void Scorpion_Animate(Entity *entity) {
     u32 blend_frames; // match: converted to float as unsigned
     s64 flags;
-    EntityUnkE0 *unkE0;
+    EntityAiState *ai_state;
 
     flags = entity->flags;
-    unkE0 = &entity->unkE0;
+    ai_state = &entity->ai_state;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
-        blend_frames = entity->model->level_tables->unk88;
+        blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -149,7 +149,7 @@ static void Scorpion_Think(Entity *entity, s32 unknown) {
    89 frames) or no target (120 to 179 frames), takes the command of EntityAi_MoveCommand towards it (or
    the turn away from a push, EntityAi_TurnFromPush) and starts the move action. */
 static int Scorpion_ThinkWander(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 turn;
 
@@ -160,8 +160,8 @@ static int Scorpion_ThinkWander(Entity *entity, s32 unknown) {
     }
     if (entity->action_timer == 0) {
         if (rand() % 100 <= 20) {
-            EntityPoint_PickNear(entity->spawn_info->wander_radius, unkE0->target_point, entity->spawn_info, entity->model->position);
-            entity->target = unkE0->target_point;
+            EntityPoint_PickNear(entity->spawn_info->wander_radius, ai_state->target_point, entity->spawn_info, entity->model->position);
+            entity->target = ai_state->target_point;
             entity->action_timer = rand() % 30 + 60;
         } else {
             entity->target = NULL;
@@ -176,7 +176,7 @@ static int Scorpion_ThinkWander(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand(50.0f, entity, 0);
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* The think function of state 2: guard, dodge and the choice among attacking, closing in and
@@ -186,7 +186,7 @@ static int Scorpion_ThinkWander(Entity *entity, s32 unknown) {
    the player's facing the entity is on, work byte unk7A) until flag bit 45, 47 or 48 is set, which
    puts it on way 1. */
 static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 heading;
     f32 angle;
     s32 side;
@@ -227,31 +227,31 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
             if (ABS(angle) > 0.17453292f) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 60;
-                unkE0->move_choice = 0;
+                ai_state->move_choice = 0;
             } else {
                 heading = EntityMath_AngleXZ(player_state.position, (char *)entity->model->position) - player_state.heading;
                 heading = EntityMath_WrapAngle(heading);
                 if (ABS(heading) > 0.7853982f || rand() % 100 < entity->params->pitch_limit_deg) {
                     entity->target = &player_state;
                     entity->action_timer = rand() % 60 + 120;
-                    unkE0->move_choice = 1;
+                    ai_state->move_choice = 1;
                 } else {
                     if (heading >= 0.0f) {
-                        unkE0->step_index = 0;
+                        ai_state->step_index = 0;
                     } else {
-                        unkE0->step_index = 1;
+                        ai_state->step_index = 1;
                     }
                     entity->action_timer = rand() % 30 + 60;
-                    unkE0->move_choice = 2;
+                    ai_state->move_choice = 2;
                 }
             }
             break;
         case 2:
             entity->action_timer = 30;
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         default:
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         }
     }
@@ -260,19 +260,19 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-            if (unkE0->turn_in_place == 0) {
-                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
-                if (unkE0->turn_in_place == 0) {
+            if (ai_state->turn_in_place == 0) {
+                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                if (ai_state->turn_in_place == 0) {
                     goto done;
                 }
             }
             entity->move_command = EntityAi_TurnCommand(entity);
             if (entity->move_command == 0) {
-                unkE0->turn_in_place = 0;
+                ai_state->turn_in_place = 0;
             }
         } else {
             turn = EntityAi_TurnFromPush(entity, &heading);
-            switch (unkE0->move_choice) {
+            switch (ai_state->move_choice) {
             case 0:
                 angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
                 if (ABS(angle) > entity->params->turn_limit) {
@@ -306,8 +306,8 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
                     }
                 }
                 if (entity->flags & (ENTITY_FLAG_WALL_PUSH | ENTITY_FLAG_OBJECT_PUSH | ENTITY_FLAG_ENTITY_PUSH)) {
-                    unkE0->move_choice = 1;
-                } else if (unkE0->step_index != 0) {
+                    ai_state->move_choice = 1;
+                } else if (ai_state->step_index != 0) {
                     entity->move_command |= MOVE_COMMAND_STEP_RIGHT;
                 } else {
                     entity->move_command |= MOVE_COMMAND_STEP_LEFT;
@@ -317,13 +317,13 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* The move handler: as EntityAi_Move, but it turns the heading only while the command has more than
    the two turn bits, and a turn alone gets animation 11 or 12. */
 static void Scorpion_Move(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 *vector;
     f32 turn;
     f32 amount;
@@ -337,20 +337,20 @@ static void Scorpion_Move(Entity *entity) {
     first_command = ENTITY_COMMAND(entity);
     if (first_command & ~MOVE_COMMAND_TURNS) {
         if (first_command & MOVE_COMMAND_TURN_LEFT) {
-            unkE0->turn_rate -= entity->params->turn_step_per_frame;
-            if (unkE0->turn_rate < -entity->params->turn_limit) {
-                unkE0->turn_rate = -entity->params->turn_limit;
+            ai_state->turn_rate -= entity->params->turn_step_per_frame;
+            if (ai_state->turn_rate < -entity->params->turn_limit) {
+                ai_state->turn_rate = -entity->params->turn_limit;
             }
         } else if (first_command & MOVE_COMMAND_TURN_RIGHT) {
-            unkE0->turn_rate += entity->params->turn_step_per_frame;
-            if (entity->params->turn_limit < unkE0->turn_rate) {
-                unkE0->turn_rate = entity->params->turn_limit;
+            ai_state->turn_rate += entity->params->turn_step_per_frame;
+            if (entity->params->turn_limit < ai_state->turn_rate) {
+                ai_state->turn_rate = entity->params->turn_limit;
             }
         } else {
-            unkE0->turn_rate = 0.0f;
+            ai_state->turn_rate = 0.0f;
         }
         command = entity->move_command;
-        turn = unkE0->turn_rate;
+        turn = ai_state->turn_rate;
         if (command & MOVE_COMMAND_TURN_FAST) {
             turn += turn;
         }
@@ -389,8 +389,8 @@ static void Scorpion_Move(Entity *entity) {
             vector[1] += amount;
         }
         if (command & MOVE_COMMAND_DIRECTIONS) {
-            unkE0->move_speed = EntityAi_Accelerate(entity, unkE0->move_speed);
-            amount = unkE0->move_speed;
+            ai_state->move_speed = EntityAi_Accelerate(entity, ai_state->move_speed);
+            amount = ai_state->move_speed;
             if (entity->move_command & MOVE_COMMAND_RUN) {
                 amount += amount;
             }
@@ -405,10 +405,10 @@ static void Scorpion_Move(Entity *entity) {
             entity->move_delta_y += ENTITY_SCRATCH_VECTOR[1];
             entity->move_delta_z += ENTITY_SCRATCH_VECTOR[2];
         } else {
-            unkE0->move_speed = 0.0f;
+            ai_state->move_speed = 0.0f;
         }
     } else {
-        unkE0->move_speed = 0.0f;
+        ai_state->move_speed = 0.0f;
     }
     if (command & MOVE_COMMAND_FORWARD) {
         if (command & MOVE_COMMAND_RUN) {

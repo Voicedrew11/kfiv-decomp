@@ -40,7 +40,7 @@ void MapObject_StartMarker(MapObject *object) {
     work->fired = 0;
     item = 0;
     if (object->state_flags & MAP_OBJECT_ON) {
-        item = Game_GetTriggerItem(map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1].tag, object->source->spawn_flags.bytes[2]);
+        item = Game_GetTriggerItem(map_slots[MAP_OBJECT_BYTES(object)->map_slot & 1].tag, object->source->spawn_flags.bytes[2]);
         if (item <= 0) {
             object->state_flags &= ~MAP_OBJECT_ON;
         }
@@ -122,7 +122,7 @@ void MapObject_SettleMarkerStone(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (MODEL_CHANNEL(object->model)->param != 0) {
+    if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
     } else {
         MapObject_StartAnim(object, 5);
@@ -137,7 +137,7 @@ void MapObject_SettleMarkerStone(MapObject *object) {
 void MapObject_UpdateFilledMarker(MapObject *object) {
     MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;
     u8 timer = work->timer;
-    u8 tag = map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1].tag;
+    u8 tag = map_slots[MAP_OBJECT_BYTES(object)->map_slot & 1].tag;
     int item;
 
     if (work->timer > 0) {
@@ -170,7 +170,7 @@ void MapObject_LiftMarkerStone(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (MODEL_CHANNEL(object->model)->param != 0) {
+    if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
         return;
     }
@@ -225,10 +225,10 @@ int MapObject_PlaceStoneOnMarker(MapTrigger *trigger, int type_index) {
     MapTriggerShot *shot = &trigger->shot;
 
     type = item_common_defs[type_index].type;
-    slot = &map_slots[trigger->unk10 & 1];
+    slot = &map_slots[trigger->flags & 1];
     tag = slot->tag;
     if (trigger->type == 1 && shot->fired == 0 && type == trigger->type &&
-        Game_AddTriggerItem(tag, (u8)trigger->unk08[0x3A], type_index)) {
+        Game_AddTriggerItem(tag, (u8)trigger->source[0x3A], type_index)) {
         MapObject_ShowMarkerStone((MapObject *)trigger, type_index);
         shot->fired = type;
         return TRUE;

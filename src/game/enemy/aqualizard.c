@@ -1,4 +1,4 @@
-/* Aqualizard: the behaviour of entity type 57 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* Aqualizard: the behaviour of entity type 57 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Aqualizard. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -56,7 +56,7 @@ static void Aqualizard_MeleeAttack2(Entity *entity);
 
 /* Set-up of a type 57 entity: clears its work area and installs the type's handlers. */
 void Aqualizard_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
     u8 *unkC0 = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
@@ -64,17 +64,17 @@ void Aqualizard_Init(Entity *entity) {
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->unkE0;
+        u8 *dest = (u8 *)&entity->ai_state;
 
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = Aqualizard_Think;
-    unkE0->animate = EntityAi_Animate;
-    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
-    unkE0->move = (void (*)(void))EntityAi_Move;
-    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
-    unkE0->death = (void (*)(void))EntityAi_Death;
+    ai_state->think = Aqualizard_Think;
+    ai_state->animate = EntityAi_Animate;
+    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
+    ai_state->move = (void (*)(void))EntityAi_Move;
+    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
+    ai_state->death = (void (*)(void))EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -84,14 +84,14 @@ void Aqualizard_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
+        Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -130,7 +130,7 @@ static void Aqualizard_Think(Entity *entity, s32 unknown) {
    Aqualizard_MeleeAttack2 and closing in adds command bits 0x440 when EntityParams.action_frames is set.
    */
 static void Aqualizard_ThinkCombat(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
     s32 side;
@@ -171,30 +171,30 @@ static void Aqualizard_ThinkCombat(Entity *entity, s32 unknown) {
         case 1:
             entity->target = player_state;
             entity->action_timer = rand() % 60 + 120;
-            unkE0->move_choice = 0;
+            ai_state->move_choice = 0;
             break;
         case 2:
             entity->action_timer = rand() % 30 + 30;
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         default:
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         }
     }
-    if (unkE0->move_choice == 0) {
+    if (ai_state->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-            if (unkE0->turn_in_place == 0) {
-                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
-                if (unkE0->turn_in_place == 0) {
+            if (ai_state->turn_in_place == 0) {
+                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                if (ai_state->turn_in_place == 0) {
                     goto done;
                 }
             }
             entity->move_command = EntityAi_TurnCommand(entity);
             if (entity->move_command == 0) {
-                unkE0->turn_in_place = 0;
+                ai_state->turn_in_place = 0;
             }
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
@@ -211,14 +211,14 @@ static void Aqualizard_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* The melee attack with record 2 (EntityParams.melee_attack_third; busy bit 1): animation 22, one part checked.
    Once flag bit 41 was set during it, frames 27 to 31 clear player_can_walk[0] and move the player 30 a
    frame along the line between the two while they are more than the radius plus 150 apart. */
 static void Aqualizard_MeleeAttack2(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk240 *unk240 = (EntityParamsUnk240 *)entity->params->melee_attack_third;
     s32 frame;
 
@@ -229,35 +229,35 @@ static void Aqualizard_MeleeAttack2(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
-        unkE0->step_index = 0;
+        ai_state->step_index = 0;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         if (unk240->hit_start_frame != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk240->hit_start_frame >= entity->model->level_tables->unk82) {
-            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
+        if (unk240->hit_start_frame >= entity->model->level_tables->frame) {
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->turn_rate = 0.0f;
+            ai_state->turn_rate = 0.0f;
         }
-        frame = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->level_tables->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->level_tables->frame);
         }
-        if (entity->model->level_tables->unk82 > 0 && unk240->hit_end_frame >= entity->model->level_tables->unk82) {
+        if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
         }
         if (ENTITY_FLAG_BITS(entity)->bit41 == 1) {
-            unkE0->step_index = 1;
+            ai_state->step_index = 1;
         }
-        if (entity->model->level_tables->unk82 >= 0x1B && entity->model->level_tables->unk82 <= 0x1F && unkE0->step_index == 1) {
+        if (entity->model->level_tables->frame >= 0x1B && entity->model->level_tables->frame <= 0x1F && ai_state->step_index == 1) {
             player_can_walk[0] = 0;
             if (entity->radius + 50.0f + 100.0f < entity->distance_to_player) {
                 player_state[0] -= sinf(EntityMath_WrapAngle(EntityMath_AngleXZ(entity->model->position, (char *)player_state))) * 30.0f;
@@ -270,9 +270,9 @@ static void Aqualizard_MeleeAttack2(Entity *entity) {
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk240->attack_delay);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;

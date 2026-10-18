@@ -259,7 +259,7 @@ void Effect_TransformAll(void *transform) {
             live_left--;
             model_position = &effect->model->position;
             Vector_Add(model_position, transform, model_position);
-            Vector_Add(&effect->unk70, transform, &effect->unk70);
+            Vector_Add(&effect->saved_position, transform, &effect->saved_position);
             if (live_left <= 0) {
                 break;
             }
@@ -297,26 +297,26 @@ int Effect_StartSpawner(int effect_id, void *position, void *rotation, void *own
     slot->flags |= EFFECT_SLOT_LIVE;
     effect_slot_count++;
     EFFECT_SLOT_FLAG_PARTS(slot)->level = def->max_level;
-    EFFECT_SLOT_FLAG_PARTS(slot)->unk27 = def->spawn_start_delay;
+    EFFECT_SLOT_FLAG_PARTS(slot)->start_delay_frames = def->spawn_start_delay;
     slot->owner_entity = owner_entity;
     EFFECT_SLOT_FLAG_PARTS(slot)->def = def;
-    EFFECT_SLOT_FLAG_PARTS(slot)->unk26 = 0;
+    EFFECT_SLOT_FLAG_PARTS(slot)->frames_to_firing = 0;
     slot->owner_effect = NULL;
-    slot->unk30 = NULL;
-    slot->unk34 = NULL;
+    slot->start_position = NULL;
+    slot->start_rotation = NULL;
     placement = EFFECT_DEF_FLAG_WORD(def) & 0x600000;
     if (placement == 0 || placement == 0x600000) {
         Vector_Copy(&slot->position, position);
-        Vector_Copy(&slot->unk10, rotation);
+        Vector_Copy(&slot->rotation, rotation);
         if (EFFECT_DEF_FLAGS(def) & 0x10000) {
-            slot->unk30 = position;
-            slot->unk34 = rotation;
+            slot->start_position = position;
+            slot->start_rotation = rotation;
         }
     } else {
         Vector_Copy(&slot->position, &origin_point);
-        Vector_Copy(&slot->unk10, &origin_point);
+        Vector_Copy(&slot->rotation, &origin_point);
         if (EFFECT_DEF_FLAGS(def) & 0x10000) {
-            slot->unk34 = slot->unk30 = &origin_point;
+            slot->start_rotation = slot->start_position = &origin_point;
         }
     }
     slot->flags &= ~(EFFECT_SLOT_LIVE << 1);
@@ -339,7 +339,7 @@ int Effect_Spawn(int effect_id, Vector4 *position, Vector4 *rotation, Entity *ow
 }
 
 /* Runs the spawner slots and the effects for one frame. While the game status has bit 0x400
-   set, only those of the owner in unk40 and of the kinds 0x280, 0x282 and 0x284 run. */
+   set, only those of the owner and of the kinds 0x280, 0x282 and 0x284 run. */
 void Effect_UpdateAll(void) {
     Vector4 unused[2]; /* unused, but retail reserves the bytes */
     EffectDef *kind_280 = &effect_table.defs[0x280];
@@ -371,20 +371,20 @@ void Effect_UpdateAll(void) {
     effect = effect_pool;
     for (i = 0; i < EFFECT_COUNT; i++, effect++) {
         if (!(effect->flags & EFFECT_FLAG_LIVE)) {
-            if (effect->unk90 > 0) {
-                effect->unk90--;
+            if (effect->reserved_frames > 0) {
+                effect->reserved_frames--;
             }
         } else if (only_owner == NULL || only_owner == effect->owner_entity || effect->def == kind_280 ||
                    effect->def == kind_282 || effect->def == kind_284) {
-            Vector_Copy(&effect->unk70, &effect->model->position);
+            Vector_Copy(&effect->saved_position, &effect->model->position);
         }
     }
     effect = effect_pool;
     for (i = 0; i < EFFECT_COUNT; i++, effect++) {
         if (effect->flags & EFFECT_FLAG_LIVE) {
             if (only_owner == NULL || only_owner == effect->owner_entity || effect->def == kind_280 || effect->def == kind_282 || effect->def == kind_284) {
-                if (EFFECT_FLAG_PARTS(effect)->unk40 > 0) {
-                    EFFECT_FLAG_PARTS(effect)->unk40--;
+                if (EFFECT_FLAG_PARTS(effect)->frames_left > 0) {
+                    EFFECT_FLAG_PARTS(effect)->frames_left--;
                 }
                 for (key = 0; key < 3; key++) {
                     if (effect->def->frame_spawn_frames[key] == effect->frame) {
@@ -439,13 +439,13 @@ void Effect_DrawAll(int pass) {
         model = effect->model;
         if (placement == 0 || placement == 0x600000) {
             // match: the margin is set up before the node, so the call passes it first
-            if (((int (*)(f32 *, f32, AreaNode *))Map_IsPointInRecord)((f32 *)&model->position, 0.0f, (AreaNode *)effect->unk58) == 0) {
-                effect->unk58 = (char *)Map_FindRecordAt((f32 *)&effect->model->position, 0.0f);
+            if (((int (*)(f32 *, f32, AreaNode *))Map_IsPointInRecord)((f32 *)&model->position, 0.0f, (AreaNode *)effect->map_record) == 0) {
+                effect->map_record = (char *)Map_FindRecordAt((f32 *)&effect->model->position, 0.0f);
             }
-            if (effect->unk58 == NULL && effect->owner_entity == (Entity *)&player_state && ((PlayerState *)effect->owner_entity)->map_index != 0xFFFF) {
-                effect->unk58 = map_slots[current_map_slot].records + (((PlayerState *)effect->owner_entity)->map_index << 7);
+            if (effect->map_record == NULL && effect->owner_entity == (Entity *)&player_state && ((PlayerState *)effect->owner_entity)->map_index != 0xFFFF) {
+                effect->map_record = map_slots[current_map_slot].records + (((PlayerState *)effect->owner_entity)->map_index << 7);
             }
-            if (pass == 0 && effect->unk58 == NULL) {
+            if (pass == 0 && effect->map_record == NULL) {
                 if (effect->frame >= effect->def->keyframe_end) {
                     Effect_Free(effect);
                 }
@@ -510,18 +510,18 @@ static void Effect_RunSpawner(EffectSlot *slot) {
     int made;
     s64 placement;
 
-    if (EFFECT_SLOT_VIEW(slot)->unk27 != 0) {
-        EFFECT_SLOT_VIEW(slot)->unk27--;
+    if (EFFECT_SLOT_VIEW(slot)->start_delay_frames != 0) {
+        EFFECT_SLOT_VIEW(slot)->start_delay_frames--;
         return;
     }
     def = EFFECT_SLOT_VIEW(slot)->def;
     if (def->spawn_interval != 0) {
-        u8 timer = EFFECT_SLOT_VIEW(slot)->unk26--;
+        u8 timer = EFFECT_SLOT_VIEW(slot)->frames_to_firing--;
 
         if (timer != 0) {
             return;
         }
-        EFFECT_SLOT_VIEW(slot)->unk26 = def->spawn_interval;
+        EFFECT_SLOT_VIEW(slot)->frames_to_firing = def->spawn_interval;
     }
     if (effect_count >= EFFECT_COUNT) {
         if (--EFFECT_SLOT_VIEW(slot)->level == 0) {
@@ -532,7 +532,7 @@ static void Effect_RunSpawner(EffectSlot *slot) {
     for (made = 0; made < def->spawn_batch_count; made++) {
         effect = effect_pool;
         for (index = 0; index < EFFECT_COUNT; index++, effect++) {
-            if (!(effect->flags & EFFECT_FLAG_LIVE) && effect->unk90 == 0) {
+            if (!(effect->flags & EFFECT_FLAG_LIVE) && effect->reserved_frames == 0) {
                 break;
             }
         }
@@ -543,7 +543,7 @@ static void Effect_RunSpawner(EffectSlot *slot) {
         Memory_ClearWords(effect, sizeof(EffectActor) / 4);
         EFFECT_FLAG_BITS(effect)->live = TRUE;
         effect->frame = 0;
-        effect->start_position = slot->unk30;
+        effect->start_position = slot->start_position;
         effect->model = &effect_models[index];
         effect->def = EFFECT_SLOT_VIEW(slot)->def;
         effect->owner_entity = slot->owner_entity;
@@ -551,23 +551,23 @@ static void Effect_RunSpawner(EffectSlot *slot) {
         effect->effect_param = slot->effect_param;
         effect->owner = slot->owner;
         effect->start_rotation = EFFECT_SLOT_VIEW(slot)->start_rotation;
-        EFFECT_FLAG_PARTS(effect)->unk44 = -1;
-        effect->unk90 = 4; /* frames the actor stays reserved once it is freed */
-        effect->unk6C = 0;
+        EFFECT_FLAG_PARTS(effect)->linked_point_index = -1;
+        effect->reserved_frames = 4; /* frames the actor stays reserved once it is freed */
+        effect->target_entity = 0;
         Effect_SetupModel(index);
         effect_kind_handlers[effect->def->kind_index][0](effect, slot);
         EFFECT_FLAG_BITS(effect)->bit59 = effect->def->sound_id != 0;
         if (fx_table[effect->effect_param].item_menu_magic != 0) {
-            EFFECT_FLAG_PARTS(effect)->unk46 = Sound_PlayTrackedKind(EFFECT_FLAG_BITS(effect)->bit59, effect->def->sound_id, 0, (int)&player_state, EFFECT_FLAG_PARTS(effect)->unk46);
+            EFFECT_FLAG_PARTS(effect)->sound_track = Sound_PlayTrackedKind(EFFECT_FLAG_BITS(effect)->bit59, effect->def->sound_id, 0, (int)&player_state, EFFECT_FLAG_PARTS(effect)->sound_track);
         } else if (EFFECT_FLAG_BITS(effect)->bit59 || effect->effect_param == player_state.equipped_magic) {
-            EFFECT_FLAG_PARTS(effect)->unk46 = Sound_PlayTrackedKind(EFFECT_FLAG_BITS(effect)->bit59, effect->def->sound_id, 0, (int)&effect->model->position, EFFECT_FLAG_PARTS(effect)->unk46);
+            EFFECT_FLAG_PARTS(effect)->sound_track = Sound_PlayTrackedKind(EFFECT_FLAG_BITS(effect)->bit59, effect->def->sound_id, 0, (int)&effect->model->position, EFFECT_FLAG_PARTS(effect)->sound_track);
         }
-        if (EFFECT_FLAG_PARTS(effect)->unk46 > 0) {
+        if (EFFECT_FLAG_PARTS(effect)->sound_track > 0) {
             effect_sound_count++;
         }
         placement = EFFECT_DEF_FLAGS(effect->def) & 0x600000;
         if (placement == 0 || placement == 0x600000) {
-            effect->unk58 = (char *)Map_FindRecordAt((f32 *)&effect->model->position, 0.0f);
+            effect->map_record = (char *)Map_FindRecordAt((f32 *)&effect->model->position, 0.0f);
         }
         def = EFFECT_SLOT_VIEW(slot)->def;
     }
@@ -617,15 +617,15 @@ int Effect_SpawnFromEffectAt(int effect_id, EffectActor *effect, Vector4 *positi
 /* Frees an effect, then the spawner slots and effects that it owns or targets. */
 void Effect_Free(EffectActor *effect) {
     EFFECT_FLAG_BITS(effect)->live = 0;
-    effect->unk90 = 4;
+    effect->reserved_frames = 4;
     effect_count--;
-    if (EFFECT_FLAG_PARTS(effect)->unk46 > 0) {
+    if (EFFECT_FLAG_PARTS(effect)->sound_track > 0) {
         effect_sound_count--;
     }
-    Sound_StopTracked(EFFECT_FLAG_PARTS(effect)->unk46);
-    EFFECT_FLAG_PARTS(effect)->unk46 = -1;
-    if (EFFECT_FLAG_PARTS(effect)->unk44 != -1) {
-        LinkedPoint_ReleaseIndex(EFFECT_FLAG_PARTS(effect)->unk44);
+    Sound_StopTracked(EFFECT_FLAG_PARTS(effect)->sound_track);
+    EFFECT_FLAG_PARTS(effect)->sound_track = -1;
+    if (EFFECT_FLAG_PARTS(effect)->linked_point_index != -1) {
+        LinkedPoint_ReleaseIndex(EFFECT_FLAG_PARTS(effect)->linked_point_index);
     }
     if (effect->flags & EFFECT_FLAG_HAS_SLOTS) {
         Effect_FreeSpawnersOf(effect);
@@ -779,7 +779,7 @@ void Effect_OffsetAll(void *offset) {
             if (effect->flags & EFFECT_FLAG_LIVE) {
                 if (!(EFFECT_DEF_FLAGS(effect->def) & 0x600000)) {
                     Vector_Add(&effect->model->position, &effect->model->position, offset);
-                    Vector_Add(&effect->unk70, &effect->unk70, offset);
+                    Vector_Add(&effect->saved_position, &effect->saved_position, offset);
                 }
             }
         }
@@ -825,12 +825,12 @@ void Effect_FreeForMap(int map) {
     effect = effect_pool;
     for (i = 0; i < EFFECT_COUNT && effects_left > 0; i++, effect++) {
         if (effect->flags & EFFECT_FLAG_LIVE) {
-            if (effect->unk6C != 0 && ((Entity *)effect->unk6C)->group_id == map) {
-                effect->unk6C = 0;
+            if (effect->target_entity != 0 && ((Entity *)effect->target_entity)->group_id == map) {
+                effect->target_entity = 0;
             }
             // match: last_record is one past the last record of the map, and the test still includes it
-            if (effect->unk58 != NULL && effect->unk58 >= first_record && effect->unk58 <= last_record) {
-                effect->unk58 = NULL;
+            if (effect->map_record != NULL && effect->map_record >= first_record && effect->map_record <= last_record) {
+                effect->map_record = NULL;
             }
         }
     }

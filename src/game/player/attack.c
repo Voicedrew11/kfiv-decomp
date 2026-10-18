@@ -113,7 +113,7 @@ FxTableEntry fx_table[256] = { 0 };
 /* Runs an attack request against the world, by the request's shape (0 to 3). Only shapes
    0 and 3 do anything. */
 s32 Attack_Run(Unk1B1470Request *request, Unk1B1470Extra *extra) {
-    COLLISION_RESULT->unk18 = 6;
+    COLLISION_RESULT->floor_material = 6;
     switch ((u8)((Unk1B1470RequestWord *)request)->flags & 3) {
     case 0:
         return Attack_RunSphere(request, extra);
@@ -222,13 +222,13 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                     }
                     point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->unk00.point);
                     if (!(body->unk00.flags & ENTITY_BODY_ROUND)) {
-                        Collision_SphereCylinder(point, request, body->unk04 * scale, body->unk06 * ENTITY_MODEL(entity)->scale_y,
+                        Collision_SphereCylinder(point, request, body->radius * scale, body->height * ENTITY_MODEL(entity)->scale_y,
                                       request->radius);
                     } else {
-                        Collision_SphereSphere(point, request, body->unk04 * scale, request->radius);
+                        Collision_SphereSphere(point, request, body->radius * scale, request->radius);
                     }
                     if (COLLISION_RESULT->hit != 0) {
-                        Attack_HitEntity(request, extra, entity, body->unk08);
+                        Attack_HitEntity(request, extra, entity, body->hit_multiplier);
                         return 2;
                     }
                 }
@@ -384,24 +384,24 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                     point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->unk00.point);
                     if (!(body->unk00.flags & ENTITY_BODY_ROUND)) {
                         if (IS_PLAYER(request->owner)) {
-                            Collision_CylinderArcPitch(point, request, body->unk04 * width_scale, body->unk06 * ENTITY_MODEL(entity)->scale_y,
+                            Collision_CylinderArcPitch(point, request, body->radius * width_scale, body->height * ENTITY_MODEL(entity)->scale_y,
                                           request->radius, request->lowest_y, request->highest_y, request->half_angle, request->facing,
                                           request->half_pitch, request->pitch);
                         } else {
-                            Collision_CylinderArc(point, request, body->unk04 * width_scale, body->unk06 * ENTITY_MODEL(entity)->scale_y,
+                            Collision_CylinderArc(point, request, body->radius * width_scale, body->height * ENTITY_MODEL(entity)->scale_y,
                                           request->radius, request->height, request->half_angle, request->facing);
                         }
                     } else {
                         if (IS_PLAYER(request->owner)) {
-                            Collision_BallSwingPitch(point, request, body->unk04 * scale, request->radius, request->lowest_y, request->highest_y,
+                            Collision_BallSwingPitch(point, request, body->radius * scale, request->radius, request->lowest_y, request->highest_y,
                                           request->half_angle, request->facing, request->half_pitch, request->pitch);
                         } else {
-                            Collision_BallSwing(point, request, body->unk04 * scale, request->radius, request->height,
+                            Collision_BallSwing(point, request, body->radius * scale, request->radius, request->height,
                                           request->half_angle, request->facing);
                         }
                     }
                     if (COLLISION_RESULT->hit != 0) {
-                        Attack_HitEntity(request, extra, entity, body->unk08);
+                        Attack_HitEntity(request, extra, entity, body->hit_multiplier);
                         return 2;
                     }
                 }
@@ -539,7 +539,7 @@ int Attack_TestMapModel(ModelInstance *model, void *request, f32 reach) {
             do {
                 Collision_PointTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, (int)request, reach);
                 if (COLLISION_RESULT->hit != 0) {
-                    COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                    COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                     return lists.lists[list];
                 }
                 strip_point++;
@@ -632,7 +632,7 @@ int Attack_TestMapModelFloors(ModelInstance *model, void *request, f32 reach) {
             do {
                 Collision_PointTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, (int)request, reach);
                 if (COLLISION_RESULT->hit != 0) {
-                    COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                    COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                     return 1;
                 }
                 strip_point++;
@@ -726,7 +726,7 @@ int Attack_TestMapModelWalls(ModelInstance *model, void *request, f32 reach) {
             do {
                 Collision_PointTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, (int)request, reach);
                 if (COLLISION_RESULT->hit != 0) {
-                    COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                    COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                     return 0;
                 }
                 strip_point++;
@@ -774,15 +774,15 @@ void Attack_HitPlayer(Unk1B1470Request *request, Unk1B1470Extra *extra) {
         percent += 20;
     }
     Attack_GetEffectiveStrengths(&attack, request, extra); // match: attack is filled here and never read; the terms below use request->unk50
-    damage = Attack_StrengthDamageToPlayer(request->unk50.unk00[0], player_state.unk90.values[1], player_state.power); // match: values[1] here and on the next line; values[0] is never used
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[1], player_state.unk90.values[1], player_state.power); // match: values[1] a second time
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[2], player_state.unk90.values[2], player_state.power);
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[3], player_state.unk90.values[3], player_state.magic) * percent / 100;
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[4], player_state.unk90.values[4], player_state.magic);
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[5], player_state.unk90.values[5], player_state.magic);
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[6], player_state.unk90.values[6], player_state.magic);
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[7], player_state.unk90.values[7], player_state.magic);
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[8], player_state.unk90.values[8], player_state.magic);
+    damage = Attack_StrengthDamageToPlayer(request->unk50.unk00[0], player_state.defence_stats.values[1], player_state.power); // match: values[1] here and on the next line; values[0] is never used
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[1], player_state.defence_stats.values[1], player_state.power); // match: values[1] a second time
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[2], player_state.defence_stats.values[2], player_state.power);
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[3], player_state.defence_stats.values[3], player_state.magic) * percent / 100;
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[4], player_state.defence_stats.values[4], player_state.magic);
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[5], player_state.defence_stats.values[5], player_state.magic);
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[6], player_state.defence_stats.values[6], player_state.magic);
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[7], player_state.defence_stats.values[7], player_state.magic);
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[8], player_state.defence_stats.values[8], player_state.magic);
     request->landed_on_player = 1;
     if (damage <= blocked) { // match: blocked is request->unk72, which is known to be 0 here
         damage = 1;
@@ -1481,18 +1481,18 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
         memset(&request, 0, sizeof(request));
         switch (check->shape) {
         case 0:
-            position = &effect->unk70;
-            request.radius = check->unk1E;
+            position = &effect->saved_position;
+            request.radius = check->radius;
             request.shape = 0;
             break;
         case 1:
-            position = &effect->unk70;
-            request.radius = check->unk1E;
+            position = &effect->saved_position;
+            request.radius = check->radius;
             request.shape = 1;
-            request.height = check->unk20;
+            request.height = check->height;
             break;
         case 2:
-            position = &effect->unk70;
+            position = &effect->saved_position;
             request.shape = 2;
             Vector_Copy(request.second_point, position);
             break;
@@ -1507,39 +1507,39 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
     request.owner = effect->owner_entity;
     request.unk4C_2 = 0;
     request.target_mask = 0;
-    if (check->unk23 & 1) {
+    if (check->target_mask & 1) {
         request.target_mask = 1;
     }
-    if (check->unk23 & 2) {
+    if (check->target_mask & 2) {
         request.target_mask |= 2;
     }
-    if (check->unk23 & 4) {
+    if (check->target_mask & 4) {
         request.target_mask |= 4;
     }
-    if (check->unk23 & 8) {
+    if (check->target_mask & 8) {
         request.target_mask |= 8;
     }
-    if (check->unk23 & 0x10) {
+    if (check->target_mask & 0x10) {
         request.target_mask |= 0x10;
     }
-    if (check->unk23 & 0x20) {
+    if (check->target_mask & 0x20) {
         request.target_mask |= 0x20;
     }
-    if (check->unk23 & 0x80) {
+    if (check->target_mask & 0x80) {
         request.target_mask |= 0x80;
     }
     shot = effect->owner;
     if (shot->attack_request == 0) {
         request.unk50 = check->strengths;
         request.unk62 = check->unk12;
-        request.knockback = check->unk26 != 0;
-        request.stun_frames = check->unk25;
-        request.instant_kill_chance_percent = check->unk27;
-        request.player_hit_cooldown = EFFECT_FLAG_PARTS(effect)->unk40;
+        request.knockback = check->knockback != 0;
+        request.stun_frames = check->stun_frames;
+        request.instant_kill_chance_percent = check->instant_kill_chance_percent;
+        request.player_hit_cooldown = EFFECT_FLAG_PARTS(effect)->frames_left;
         request.double_hit_chance_percent = 0;
         hits = Attack_Run(&request, shot);
-        if (hits != 0 && (s8)request.landed_on_player != 0 && EFFECT_FLAG_PARTS(effect)->unk40 == 0) {
-            EFFECT_FLAG_PARTS(effect)->unk40 = check->unk24;
+        if (hits != 0 && (s8)request.landed_on_player != 0 && EFFECT_FLAG_PARTS(effect)->frames_left == 0) {
+            EFFECT_FLAG_PARTS(effect)->frames_left = check->frames_left_on_hit;
         }
     } else {
         request.unk50 = SHOT_REQUEST->unk50;

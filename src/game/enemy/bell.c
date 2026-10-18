@@ -1,4 +1,4 @@
-/* Bell: the behaviour of entity type 38 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* Bell: the behaviour of entity type 38 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: chr.prm record 60, model c0060
    (a bell), 65,535 hit points, one spawn in 007.map. Struck, it calls one of the falloff_sound_players handlers
    (Sound_PlayFalloff), then waits EntityParams.action_frames frames before it answers another hit. Prima's
@@ -24,7 +24,7 @@ static void Bell_Think(Entity *entity);
 
 /* Set-up of a type 38 entity: clears its work area and installs the type's handlers. */
 void Bell_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
@@ -32,12 +32,12 @@ void Bell_Init(Entity *entity) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = (void (*)(Entity *, s32))Bell_Think;
-    unkE0->animate = (void (*)(void))Bell_Animate;
-    unkE0->on_hit = NULL;
-    unkE0->move = NULL;
-    unkE0->dormant = NULL;
-    unkE0->death = NULL;
+    ai_state->think = (void (*)(Entity *, s32))Bell_Think;
+    ai_state->animate = (void (*)(void))Bell_Animate;
+    ai_state->on_hit = NULL;
+    ai_state->move = NULL;
+    ai_state->dormant = NULL;
+    ai_state->death = NULL;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -50,14 +50,14 @@ void Bell_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit16 = 1;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
+        Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);

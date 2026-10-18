@@ -1,4 +1,4 @@
-/* DarkSorcerer: the behaviour of entity type 53 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* DarkSorcerer: the behaviour of entity type 53 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Dark Sorcerer. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -85,7 +85,7 @@ static void DarkSorcerer_StartMapScripts(Entity *entity);
 
 /* Set-up of a type 53 entity: clears its work area and installs the type's handlers. */
 void DarkSorcerer_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
     u8 *unkC0 = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
@@ -94,17 +94,17 @@ void DarkSorcerer_Init(Entity *entity) {
     // match: the three fills name their target inside the loop; unkBC and unkC0 above are
     // otherwise unused but retail computes them up front and copies them before each loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *work_area = (u8 *)&entity->unkE0;
+        u8 *work_area = (u8 *)&entity->ai_state;
 
         work_area[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = DarkSorcerer_Think;
-    unkE0->animate = EntityAi_Animate;
-    unkE0->on_hit = (void (*)(void))DarkSorcerer_OnHit;
-    unkE0->move = (void (*)(void))DarkSorcerer_Move;
-    unkE0->dormant = (void (*)(void))DarkSorcerer_Dormant;
-    unkE0->death = (void (*)(void))DarkSorcerer_Death;
+    ai_state->think = DarkSorcerer_Think;
+    ai_state->animate = EntityAi_Animate;
+    ai_state->on_hit = (void (*)(void))DarkSorcerer_OnHit;
+    ai_state->move = (void (*)(void))DarkSorcerer_Move;
+    ai_state->dormant = (void (*)(void))DarkSorcerer_Dormant;
+    ai_state->death = (void (*)(void))DarkSorcerer_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -113,11 +113,11 @@ void DarkSorcerer_Init(Entity *entity) {
     }
     entity->target = NULL;
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
+        Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
 }
@@ -146,11 +146,11 @@ static void DarkSorcerer_OnHit(Entity *entity) {
 /* The think handler: no states. While the entity is not busy it calls EntityAi_ThinkReturn when
    flag bit 53 is set, else DarkSorcerer_ThinkDecide. After that it keeps flag bit 28 set except in
    the death action; while the bit is set it adds command bit 0x20 or 0x10 by the height
-   EntityCollision_DistanceToPropFloor reads (work byte unk7A: set above EntityParams.unk43C or when there is no reading,
-   cleared below unk43E); and it calls DarkSorcerer_ApplyMoveCommand while the entity is not busy or is in a hit
+   EntityCollision_DistanceToPropFloor reads (work byte unk7A: set above EntityParams.type_param_1 or when there is no reading,
+   cleared below type_param_2); and it calls DarkSorcerer_ApplyMoveCommand while the entity is not busy or is in a hit
    reaction. Counts down work word unk6A. */
 static void DarkSorcerer_Think(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 height;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -173,17 +173,17 @@ static void DarkSorcerer_Think(Entity *entity, s32 unknown) {
     if ((s32)(entity->flags >> 28) & 1) {
         height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
         if (height != D_00446830[0]) {
-            if (!((f32)entity->params->unk43C < height)) {
-                if (height < (f32)entity->params->unk43E) {
-                    unkE0->step_index = 0;
+            if (!((f32)entity->params->type_param_1 < height)) {
+                if (height < (f32)entity->params->type_param_2) {
+                    ai_state->step_index = 0;
                 }
             } else {
-                unkE0->step_index = 1;
+                ai_state->step_index = 1;
             }
         } else {
-            unkE0->step_index = 1;
+            ai_state->step_index = 1;
         }
-        if (unkE0->step_index != 0) {
+        if (ai_state->step_index != 0) {
             entity->move_command |= MOVE_COMMAND_UP;
         } else {
             entity->move_command |= MOVE_COMMAND_DOWN;
@@ -192,8 +192,8 @@ static void DarkSorcerer_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags == 0 || (entity->busy_flags & (ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY))) {
          DarkSorcerer_ApplyMoveCommand(entity);
     }
-    if (unkE0->sub_timer > 0) {
-        unkE0->sub_timer--;
+    if (ai_state->sub_timer > 0) {
+        ai_state->sub_timer--;
     }
 }
 
@@ -204,7 +204,7 @@ static void DarkSorcerer_Think(Entity *entity, s32 unknown) {
    of closing in kept in work byte unk78 (0 forward, 1 backwards, 2 and 3 sideways with command bits
    4 and 8, 4 turning only) and starts the move action. */
 static void DarkSorcerer_ThinkDecide(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 side;
     s32 turn;
@@ -238,31 +238,31 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 unknown) {
         case 1:
             entity->target = &player_state;
             if ((f32)entity->params->far_distance < entity->distance_to_player) {
-                unkE0->move_choice = 0;
+                ai_state->move_choice = 0;
             } else if (entity->distance_to_player < (f32)entity->params->near_distance) {
-                unkE0->move_choice = 1;
+                ai_state->move_choice = 1;
             } else if (EntityMath_AngleDifference(player_state.heading,
                                      EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) > 0.0f) {
-                unkE0->move_choice = 2;
+                ai_state->move_choice = 2;
             } else {
-                unkE0->move_choice = 3;
+                ai_state->move_choice = 3;
             }
-            entity->action_timer = entity->params->unk43A;
+            entity->action_timer = entity->params->type_param_0;
             break;
         case 2:
             entity->target = &player_state;
             entity->action_timer = rand() % 30 + 30;
-            unkE0->move_choice = 4;
+            ai_state->move_choice = 4;
             break;
         default:
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         }
     }
     if (DarkSorcerer_PickAction(entity)) {
         return;
     }
-    switch (unkE0->move_choice) {
+    switch (ai_state->move_choice) {
     case 0:
         turn = EntityAi_TurnFromPush(entity, direction);
         if (turn > 0) {
@@ -275,7 +275,7 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 unknown) {
         break;
     case 1:
         if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f))) {
-            unkE0->move_choice = rand() % 3 + 2;
+            ai_state->move_choice = rand() % 3 + 2;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
             entity->move_command |= MOVE_COMMAND_BACK;
@@ -303,7 +303,7 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 unknown) {
         entity->move_command |= EntityAi_TurnCommand(entity);
         break;
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* The move handler: only picks the animation, 6 or 7 for command bits 4 and 8, 3 forward, 5
@@ -335,29 +335,29 @@ static void DarkSorcerer_Move(Entity *entity) {
    EntityParams.speed_step_per_frame a frame up to unk54 (work floats unk44, unk48 and unk4C; in y half the step
    and four fifths of the limit), twice as fast for command bit 0x40. */
 static void DarkSorcerer_ApplyMoveCommand(Entity *entity) {
-    EntityUnkE0Kind16BF98 *unkE0 = (EntityUnkE0Kind16BF98 *)&entity->unkE0;
+    EntityAiStateKind16BF98 *ai_state = (EntityAiStateKind16BF98 *)&entity->ai_state;
     f32 turn = 0.0f;
     f32 step;
     f32 limit;
 
     if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
-        unkE0->unk1C -= entity->params->turn_step_per_frame;
-        if (unkE0->unk1C < -entity->params->turn_limit) {
-            unkE0->unk1C = -entity->params->turn_limit;
+        ai_state->turn_rate -= entity->params->turn_step_per_frame;
+        if (ai_state->turn_rate < -entity->params->turn_limit) {
+            ai_state->turn_rate = -entity->params->turn_limit;
         }
     } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
-        unkE0->unk1C += entity->params->turn_step_per_frame;
-        if (entity->params->turn_limit < unkE0->unk1C) {
-            unkE0->unk1C = entity->params->turn_limit;
+        ai_state->turn_rate += entity->params->turn_step_per_frame;
+        if (entity->params->turn_limit < ai_state->turn_rate) {
+            ai_state->turn_rate = entity->params->turn_limit;
         }
-    } else if (entity->params->turn_step_per_frame < unkE0->unk1C) {
-        unkE0->unk1C -= entity->params->turn_step_per_frame;
-    } else if (unkE0->unk1C < -entity->params->turn_step_per_frame) {
-        unkE0->unk1C += entity->params->turn_step_per_frame;
+    } else if (entity->params->turn_step_per_frame < ai_state->turn_rate) {
+        ai_state->turn_rate -= entity->params->turn_step_per_frame;
+    } else if (ai_state->turn_rate < -entity->params->turn_step_per_frame) {
+        ai_state->turn_rate += entity->params->turn_step_per_frame;
     } else {
-        unkE0->unk1C = 0.0f;
+        ai_state->turn_rate = 0.0f;
     }
-    turn = unkE0->unk1C;
+    turn = ai_state->turn_rate;
     if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
@@ -366,59 +366,59 @@ static void DarkSorcerer_ApplyMoveCommand(Entity *entity) {
     step = entity->params->speed_step_per_frame * 0.5f;
     limit = entity->params->max_speed * 0.8f;
     if (entity->move_command & MOVE_COMMAND_FORWARD) {
-        unkE0->unk4C -= entity->params->speed_step_per_frame;
-        if (unkE0->unk4C < -entity->params->max_speed) {
-            unkE0->unk4C = -entity->params->max_speed;
+        ai_state->forward_speed -= entity->params->speed_step_per_frame;
+        if (ai_state->forward_speed < -entity->params->max_speed) {
+            ai_state->forward_speed = -entity->params->max_speed;
         }
     } else if (entity->move_command & MOVE_COMMAND_BACK) {
-        unkE0->unk4C += entity->params->speed_step_per_frame;
-        if (entity->params->max_speed < unkE0->unk4C) {
-            unkE0->unk4C = entity->params->max_speed;
+        ai_state->forward_speed += entity->params->speed_step_per_frame;
+        if (entity->params->max_speed < ai_state->forward_speed) {
+            ai_state->forward_speed = entity->params->max_speed;
         }
-    } else if (entity->params->speed_step_per_frame < unkE0->unk4C) {
-        unkE0->unk4C -= entity->params->speed_step_per_frame;
-    } else if (unkE0->unk4C < -entity->params->speed_step_per_frame) {
-        unkE0->unk4C += entity->params->speed_step_per_frame;
+    } else if (entity->params->speed_step_per_frame < ai_state->forward_speed) {
+        ai_state->forward_speed -= entity->params->speed_step_per_frame;
+    } else if (ai_state->forward_speed < -entity->params->speed_step_per_frame) {
+        ai_state->forward_speed += entity->params->speed_step_per_frame;
     } else {
-        unkE0->unk4C = 0.0f;
+        ai_state->forward_speed = 0.0f;
     }
     if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
-        unkE0->unk44 += entity->params->speed_step_per_frame;
-        if (entity->params->max_speed < unkE0->unk44) {
-            unkE0->unk44 = entity->params->max_speed;
+        ai_state->move_speed += entity->params->speed_step_per_frame;
+        if (entity->params->max_speed < ai_state->move_speed) {
+            ai_state->move_speed = entity->params->max_speed;
         }
     } else if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
-        unkE0->unk44 -= entity->params->speed_step_per_frame;
-        if (unkE0->unk44 < -entity->params->max_speed) {
-            unkE0->unk44 = -entity->params->max_speed;
+        ai_state->move_speed -= entity->params->speed_step_per_frame;
+        if (ai_state->move_speed < -entity->params->max_speed) {
+            ai_state->move_speed = -entity->params->max_speed;
         }
-    } else if (entity->params->speed_step_per_frame < unkE0->unk44) {
-        unkE0->unk44 -= entity->params->speed_step_per_frame;
-    } else if (unkE0->unk44 < -entity->params->speed_step_per_frame) {
-        unkE0->unk44 += entity->params->speed_step_per_frame;
+    } else if (entity->params->speed_step_per_frame < ai_state->move_speed) {
+        ai_state->move_speed -= entity->params->speed_step_per_frame;
+    } else if (ai_state->move_speed < -entity->params->speed_step_per_frame) {
+        ai_state->move_speed += entity->params->speed_step_per_frame;
     } else {
-        unkE0->unk44 = 0.0f;
+        ai_state->move_speed = 0.0f;
     }
     if (entity->move_command & MOVE_COMMAND_DOWN) {
-        unkE0->unk48 -= step;
-        if (unkE0->unk48 < -limit) {
-            unkE0->unk48 = -limit;
+        ai_state->vertical_speed -= step;
+        if (ai_state->vertical_speed < -limit) {
+            ai_state->vertical_speed = -limit;
         }
     } else if (entity->move_command & MOVE_COMMAND_UP) {
-        unkE0->unk48 += step;
-        if (limit < unkE0->unk48) {
-            unkE0->unk48 = limit;
+        ai_state->vertical_speed += step;
+        if (limit < ai_state->vertical_speed) {
+            ai_state->vertical_speed = limit;
         }
-    } else if (step < unkE0->unk48) {
-        unkE0->unk48 -= step;
-    } else if (unkE0->unk48 < -step) {
-        unkE0->unk48 += step;
+    } else if (step < ai_state->vertical_speed) {
+        ai_state->vertical_speed -= step;
+    } else if (ai_state->vertical_speed < -step) {
+        ai_state->vertical_speed += step;
     } else {
-        unkE0->unk48 = 0.0f;
+        ai_state->vertical_speed = 0.0f;
     }
-    ENTITY_SCRATCH_VECTOR[0] = unkE0->unk44;
-    ENTITY_SCRATCH_VECTOR[1] = unkE0->unk48;
-    ENTITY_SCRATCH_VECTOR[2] = unkE0->unk4C;
+    ENTITY_SCRATCH_VECTOR[0] = ai_state->move_speed;
+    ENTITY_SCRATCH_VECTOR[1] = ai_state->vertical_speed;
+    ENTITY_SCRATCH_VECTOR[2] = ai_state->forward_speed;
     sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->rotation[2]);
     sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[0]);
     sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[1]);
@@ -436,7 +436,7 @@ static void DarkSorcerer_ApplyMoveCommand(Entity *entity) {
    unkD6 up to 0x80 over 20 frames (counted in work byte unk7B), clears the three bits and thinks.
    */
 static void DarkSorcerer_Dormant(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
@@ -448,7 +448,7 @@ static void DarkSorcerer_Dormant(Entity *entity) {
         entity->flags |= ENTITY_FLAG_40000;
         entity->model_alpha = 0x20;
         entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
-        unkE0->action_flags = 0;
+        ai_state->action_flags = 0;
         entity->action_step++;
     case 1:
         if (dark_sorcerer_fight_started[0] != 0) {
@@ -456,9 +456,9 @@ static void DarkSorcerer_Dormant(Entity *entity) {
         }
         break;
     case 2:
-        entity->model_alpha = unkE0->action_flags * 0x60 / 20 + 0x20;
-        unkE0->action_flags++;
-        if (unkE0->action_flags > 20) {
+        entity->model_alpha = ai_state->action_flags * 0x60 / 20 + 0x20;
+        ai_state->action_flags++;
+        if (ai_state->action_flags > 20) {
             entity->flags &= ~ENTITY_FLAG_200000;
             entity->flags &= ~ENTITY_FLAG_100000;
             entity->flags &= ~ENTITY_FLAG_40000;
@@ -466,9 +466,9 @@ static void DarkSorcerer_Dormant(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -479,7 +479,7 @@ static void DarkSorcerer_Dormant(Entity *entity) {
 /* The melee attack (busy bit 1): as EntityAi_MeleeAttack, but it turns by adding the command of
    EntityAi_TurnCommand, and calls DarkSorcerer_ApplyMoveCommand every frame. */
 static void DarkSorcerer_MeleeAttack(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     s32 kind = (s32)(entity->flags >> 58) & 3;
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[kind];
     s32 elapsed;
@@ -499,7 +499,7 @@ static void DarkSorcerer_MeleeAttack(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         if (unk240->hit_start_frame != 0) {
@@ -507,20 +507,20 @@ static void DarkSorcerer_MeleeAttack(Entity *entity) {
         }
         break;
     case 2:
-        if (unk240->hit_start_frame >= entity->model->level_tables->unk82) {
+        if (unk240->hit_start_frame >= entity->model->level_tables->frame) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
-        elapsed = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         if (!((s32)(entity->flags >> 54) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, elapsed, entity->model->level_tables->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, elapsed, entity->model->level_tables->frame);
         }
         if (!((s32)(entity->flags >> 55) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, elapsed, entity->model->level_tables->unk82);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, elapsed, entity->model->level_tables->frame);
         }
         if (!((s32)(entity->flags >> 56) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->level_tables->unk82);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->level_tables->frame);
         }
-        if (entity->model->level_tables->unk82 > 0 && unk240->hit_end_frame >= entity->model->level_tables->unk82) {
+        if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
@@ -531,10 +531,10 @@ static void DarkSorcerer_MeleeAttack(Entity *entity) {
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk240->attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
                 return;
             }
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             return;
         }
         break;
@@ -546,7 +546,7 @@ static void DarkSorcerer_MeleeAttack(Entity *entity) {
    point 190 below the player (EntityShot_LaunchAimed); it turns and moves as DarkSorcerer_MeleeAttack does.
    */
 static void DarkSorcerer_RangedAttack(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     s32 kind = (s32)(ENTITY_FLAG_WORD(entity->flags) >> 58) & 3;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
     f32 target[4];
@@ -564,22 +564,22 @@ static void DarkSorcerer_RangedAttack(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
+        if (unk3D8->turn_frames != 0) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->unk82) {
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
-        elapsed = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(target, &player_state);
         target[1] -= 190.0f;
-        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->unk82, target, 0.7853982f, 0.0f);
-        if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
+        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, 0.7853982f, 0.0f);
+        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
@@ -588,11 +588,11 @@ static void DarkSorcerer_RangedAttack(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
             return;
         }
@@ -605,7 +605,7 @@ static void DarkSorcerer_RangedAttack(Entity *entity) {
    calls EntityEvent_OnDeath and fades the model out over the rest of the motion (the frames left, kept in
    work word unk68), then removes the entity when the motion has ended. */
 static void DarkSorcerer_Death(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
@@ -621,13 +621,13 @@ static void DarkSorcerer_Death(Entity *entity) {
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        if ((s16)entity->params->action_frames < entity->model->level_tables->unk82) {
-            entity->action_timer = unkE0->pause_timer = EntityAi_AnimationFrameCount(entity, entity->animation_index) - entity->model->level_tables->unk82;
+        if ((s16)entity->params->action_frames < entity->model->level_tables->frame) {
+            entity->action_timer = ai_state->pause_timer = EntityAi_AnimationFrameCount(entity, entity->animation_index) - entity->model->level_tables->frame;
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = 1;
             EntityEvent_OnDeath(entity);
@@ -635,7 +635,7 @@ static void DarkSorcerer_Death(Entity *entity) {
         }
         break;
     case 3:
-        entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / (f32)unkE0->pause_timer;
+        entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / (f32)ai_state->pause_timer;
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             ENTITY_FLAG_BITS(entity)->bit14 = 0;
             ENTITY_FLAG_BITS(entity)->bits2 = 3;
@@ -657,7 +657,7 @@ static s32 DarkSorcerer_PickAction(Entity *entity) {
     s32 roll;
     s32 sum;
 
-    if (entity->unkE0.sub_timer > 0) {
+    if (entity->ai_state.sub_timer > 0) {
         return FALSE;
     }
     if (player_state.position[0] < -16900.0f || player_state.position[0] > -16500.0f || player_state.position[2] < 2500.0f
@@ -689,7 +689,7 @@ static s32 DarkSorcerer_PickAction(Entity *entity) {
    end; at frame 40 it calls DarkSorcerer_LaunchShotsAtFixedPoints and sets the pause, work word unk6A, to
    90. Calls DarkSorcerer_ApplyMoveCommand every frame. */
 static void DarkSorcerer_PlayAnim17AndShoot(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
@@ -699,14 +699,14 @@ static void DarkSorcerer_PlayAnim17AndShoot(Entity *entity) {
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        if (entity->model->level_tables->unk82 >= 0x28) {
+        if (entity->model->level_tables->frame >= 0x28) {
             DarkSorcerer_LaunchShotsAtFixedPoints(entity);
-            unkE0->sub_timer = 0x5A;
+            ai_state->sub_timer = 0x5A;
             entity->action_step++;
         }
         break;
@@ -716,10 +716,10 @@ static void DarkSorcerer_PlayAnim17AndShoot(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
                 return;
             }
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             return;
         }
         break;
@@ -818,7 +818,7 @@ static void DarkSorcerer_LaunchShotsAtFixedPoints(Entity *entity) {
    end; at frame 16 it launches shot 0xC9 from the entity's position along the model's angles
    (EntityAi_LaunchShot) and sets the pause, work word unk6A, to 90. Calls DarkSorcerer_ApplyMoveCommand every frame. */
 static void DarkSorcerer_PlayAnim18AndShoot(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
@@ -828,14 +828,14 @@ static void DarkSorcerer_PlayAnim18AndShoot(Entity *entity) {
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        if (entity->model->level_tables->unk82 >= 0x10) {
+        if (entity->model->level_tables->frame >= 0x10) {
             EntityAi_LaunchShot(entity, 0xC9, entity->model->position, entity->model->rotation);
-            unkE0->sub_timer = 0x5A;
+            ai_state->sub_timer = 0x5A;
             entity->action_step++;
         }
         break;
@@ -845,10 +845,10 @@ static void DarkSorcerer_PlayAnim18AndShoot(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
                 return;
             }
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             return;
         }
         break;
@@ -860,7 +860,7 @@ static void DarkSorcerer_PlayAnim18AndShoot(Entity *entity) {
    end; at frame 24 it calls DarkSorcerer_StartMapScripts and sets the pause, work word unk6A, to
    90. Calls DarkSorcerer_ApplyMoveCommand every frame. */
 static void DarkSorcerer_PlayAnim19StartScripts(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_4000;
     switch (entity->action_step) {
@@ -870,14 +870,14 @@ static void DarkSorcerer_PlayAnim19StartScripts(Entity *entity) {
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        if (entity->model->level_tables->unk82 >= 0x18) {
+        if (entity->model->level_tables->frame >= 0x18) {
             DarkSorcerer_StartMapScripts(entity);
-            unkE0->sub_timer = 0x5A;
+            ai_state->sub_timer = 0x5A;
             entity->action_step++;
         }
         break;
@@ -887,10 +887,10 @@ static void DarkSorcerer_PlayAnim19StartScripts(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
                 return;
             }
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             return;
         }
         break;

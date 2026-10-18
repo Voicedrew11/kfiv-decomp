@@ -92,7 +92,7 @@ typedef struct {
 typedef struct {
     s64 tag;                        /* 0x00 */
     s64 unk08;                      /* 0x08 */
-    s32 unk10;                      /* 0x10 */
+    s32 prim;                       /* 0x10 GS PRIM: a textured, alpha-blended sprite (0x156) */
     u8 red;                         /* 0x14 */
     u8 green;                       /* 0x15 */
     u8 blue;                        /* 0x16 */
@@ -150,10 +150,10 @@ typedef struct {
 
 /* 32 bytes of GS data: offscreen_square_corners, two (x, y, z, 0) word vectors */
 typedef struct {
-    s64 unk00;                      /* 0x00 */
-    s64 unk08;                      /* 0x08 */
-    s64 unk10;                      /* 0x10 */
-    s64 unk18;                      /* 0x18 */
+    s64 corner0_xy;                 /* 0x00 the first corner's x and y, 12.4 fixed point */
+    s64 corner0_z;                  /* 0x08 the first corner's z, then a zero word */
+    s64 corner1_xy;                 /* 0x10 the second corner's x and y */
+    s64 corner1_z;                  /* 0x18 the second corner's z, then a zero word */
 } GsDataBlock;
 
 /* the local frame DrawEnv_PutOffscreenAndBack and DrawEnv_PutOffscreen build: a cleared header, a data block, the packet */

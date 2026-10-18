@@ -106,7 +106,7 @@ void MapObject_UpdatePivotSwitchOff(MapObject *object) {
 
 /* Update handler of a switch turning on: runs the animation, then it is on. */
 void MapObject_TurnPivotSwitchOn(MapObject *object) {
-    if (MODEL_CHANNEL(object->model)->param != 0) {
+    if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
     } else {
         MapObject_StartAnim(object, 5);
@@ -126,7 +126,7 @@ void MapObject_UpdatePivotSwitchOn(MapObject *object) {
 
 /* Update handler of a switch turning off: runs the animation, then it is off. */
 void MapObject_TurnPivotSwitchOff(MapObject *object) {
-    if (MODEL_CHANNEL(object->model)->param != 0) {
+    if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
     } else {
         MapObject_StartAnim(object, 4);
@@ -205,11 +205,11 @@ void MapObject_StartFadeObject(MapTrigger *trigger) {
 
     Model_SetPrimBits(trigger->model, 0x40, 0x40);
     Model_SetAlphaBlend(trigger->model, 0x44);
-    shot->unk00[0] = 0.0f;
-    shot->unk00[1] = -700.0f;
-    shot->unk00[2] = 0.0f;
-    shot->unk00[3] = 0.0f;
-    shot->unk10 = 0.0f;
+    shot->fade_vector[0] = 0.0f;
+    shot->fade_vector[1] = -700.0f;
+    shot->fade_vector[2] = 0.0f;
+    shot->fade_vector[3] = 0.0f;
+    shot->fade_progress = 0.0f;
     if (!(MAP_TRIGGER_FLAGS(trigger)->word & MAP_TRIGGER_FLAG_20000)) {
         trigger->type = 1;
         Model_SetVertexColour(trigger->model, -1, -1, -1, 0);
@@ -236,12 +236,12 @@ void MapObject_FadeInObject(MapTrigger *trigger) {
     targets[3] = 0x80;
     memset(steps, 0, 0x10);
     steps[3] = 8;
-    if (shot->unk10 < 100000.0f) {
-        shot->unk10 += 6.6666f;
+    if (shot->fade_progress < 100000.0f) {
+        shot->fade_progress += 6.6666f;
     }
-    if (Model_FadeVertexColoursNear((int)trigger->model, shot, steps, targets, shot->unk10) == 0) {
+    if (Model_FadeVertexColoursNear((int)trigger->model, shot, steps, targets, shot->fade_progress) == 0) {
         trigger->type = 3;
-        shot->unk10 = 0.0f;
+        shot->fade_progress = 0.0f;
     }
 }
 
@@ -261,12 +261,12 @@ void MapObject_FadeOutObject(MapTrigger *trigger) {
     memset(targets, 0, 0x10);
     memset(steps, 0, 0x10);
     steps[3] = -8;
-    if (shot->unk10 < 2000.0f) {
-        shot->unk10 += 4.0f;
+    if (shot->fade_progress < 2000.0f) {
+        shot->fade_progress += 4.0f;
     }
-    if (Model_FadeVertexColoursNear((int)trigger->model, shot, steps, targets, shot->unk10) == 0) {
+    if (Model_FadeVertexColoursNear((int)trigger->model, shot, steps, targets, shot->fade_progress) == 0) {
         trigger->type = 1;
-        shot->unk10 = 0.0f;
+        shot->fade_progress = 0.0f;
     }
 }
 

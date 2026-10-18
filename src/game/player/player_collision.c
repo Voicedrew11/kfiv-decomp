@@ -49,7 +49,7 @@ extern FxTableEntry fx_table[];
 int Player_CollideWithMap(void) {
     // match: the scratchpad points through pointers (retail forms each address anew), and the order of these
     // declarations decides which stack slot each value that does not fit a register gets
-    Vector4 *wall_point = &COLLISION_SCRATCH->unk90;
+    Vector4 *wall_point = &COLLISION_SCRATCH->wall_point;
     Vector4 *floor_point = &COLLISION_SCRATCH->point;
     Vector4 raised_point;
     s32 step_bit;
@@ -129,7 +129,7 @@ int Player_CollideWithMap(void) {
                                           &player_state.position);
                             if (COLLISION_RESULT->hit != 0 && player_state.position.y - 230.0f <= COLLISION_RESULT->point[1]
                                 && COLLISION_RESULT->point[1] <= player_state.position.y) {
-                                surface = Collision_GetSurfaceEffect(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                                surface = Collision_GetSurfaceEffect(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                                 if (surface != 0) {
                                     player_state.ground_effect_kind = surface;
                                     player_state.ground_effect_active = 1;
@@ -149,15 +149,15 @@ int Player_CollideWithMap(void) {
                     points_left = strip->point_count - 2;
                     do {
                         Collision_CapsuleTriangle((f32 *)strip_point[0].position, (f32 *)strip_point[1].position,
-                                      (f32 *)strip_point[2].position, (f32 *)&COLLISION_SCRATCH->unk90, 100.0f, 230.0f);
+                                      (f32 *)strip_point[2].position, (f32 *)&COLLISION_SCRATCH->wall_point, 100.0f, 230.0f);
                         if (COLLISION_RESULT->hit != 0) {
-                            COLLISION_SCRATCH->push.x = COLLISION_SCRATCH->unk90.x - COLLISION_RESULT->point[0];
+                            COLLISION_SCRATCH->push.x = COLLISION_SCRATCH->wall_point.x - COLLISION_RESULT->point[0];
                             COLLISION_SCRATCH->push.y = 0.0f;
-                            COLLISION_SCRATCH->push.z = COLLISION_SCRATCH->unk90.z - COLLISION_RESULT->point[2];
+                            COLLISION_SCRATCH->push.z = COLLISION_SCRATCH->wall_point.z - COLLISION_RESULT->point[2];
                             Vector_Normalize(&COLLISION_SCRATCH->push, &COLLISION_SCRATCH->push);
                             Vector_Scale(&COLLISION_SCRATCH->push, &COLLISION_SCRATCH->push, 100.0f);
-                            COLLISION_SCRATCH->unk90.x = COLLISION_RESULT->point[0] + COLLISION_SCRATCH->push.x;
-                            COLLISION_SCRATCH->unk90.z = COLLISION_RESULT->point[2] + COLLISION_SCRATCH->push.z;
+                            COLLISION_SCRATCH->wall_point.x = COLLISION_RESULT->point[0] + COLLISION_SCRATCH->push.x;
+                            COLLISION_SCRATCH->wall_point.z = COLLISION_RESULT->point[2] + COLLISION_SCRATCH->push.z;
                         }
                         strip_point++;
                     } while (--points_left != 0);
@@ -208,7 +208,7 @@ int Player_CollideWithMap(void) {
                             floor_height = COLLISION_RESULT->point[1];
                             player_state.record_flag_block = record->flag_block_bit;
                             player_state.map_index = i;
-                            player_state.floor_material = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                            player_state.floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                             floor_map = current_map_slot != map;
                         }
                         strip_point++;
@@ -372,7 +372,7 @@ void Player_FindFloorMaterial(void) {
                                       &COLLISION_SCRATCH->point, 10.0f);
                         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest) {
                             lowest = COLLISION_RESULT->point[1];
-                            player_state.floor_material = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                            player_state.floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                         }
                         strip_point++;
                     } while (--points_left != 0);
@@ -507,10 +507,10 @@ void Player_CollideWithEntities(int climb) {
                 point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->unk00.point);
                 Vector_Copy(position, point);
                 if (!(body->unk00.flags & ENTITY_BODY_ROUND)) {
-                    radius = body->unk04 * ENTITY_MODEL(entity)->scale_x;
-                    height = body->unk06 * ENTITY_MODEL(entity)->scale_y;
+                    radius = body->radius * ENTITY_MODEL(entity)->scale_x;
+                    height = body->height * ENTITY_MODEL(entity)->scale_y;
                 } else {
-                    radius = body->unk04 * ENTITY_MODEL(entity)->scale_x;
+                    radius = body->radius * ENTITY_MODEL(entity)->scale_x;
                     position[1] += radius;
                     height = radius + radius;
                 }

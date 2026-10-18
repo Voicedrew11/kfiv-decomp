@@ -101,7 +101,7 @@ static void Texture_BuildPacketTable(char **textures, char **packets) {
     source_entry = (TextureTableEntry *)source_cursor;
     source_cursor += source->entry_count * sizeof(TextureTableEntry);
     target = (TextureTableHeader *)target_cursor;
-    target->unk00 = 0;
+    target->packet_size = 0;
     target_cursor += sizeof(TextureTableHeader);
     target_entry = (TextureTableEntry *)target_cursor;
     target->entry_count = source->entry_count;
@@ -111,12 +111,12 @@ static void Texture_BuildPacketTable(char **textures, char **packets) {
     for (i = 0; i < source->entry_count; i++) {
         source_cursor = *textures + source_entry[i].offset;
         target_entry[i].offset = target_cursor - *packets;
-        target_entry[i].unk0C = 0;
+        target_entry[i].disabled = 0;
         target_entry[i].unk08 = 0;
         target_entry[i].unk04 = 0;
         Texture_BuildPacket(&source_cursor, &target_cursor);
     }
-    target->unk00 = target_cursor - *packets;
+    target->packet_size = target_cursor - *packets;
     *packets = target_cursor;
 }
 

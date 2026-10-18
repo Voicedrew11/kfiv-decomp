@@ -95,7 +95,7 @@ int Motion_SeekSlotKeys(ModelInstance *model, int slot, int table_index, int val
 
 /* Plays one of the entity's motion slots a step on and, for a slot that moves the entity, turns what the root
    part moved by into the entity's own movement; returns whether the motion ended. */
-s32 Motion_StepSlot(Entity *entity, EntityUnkE0SlotBits *slot_bits, s32 type, s32 mode) {
+s32 Motion_StepSlot(Entity *entity, EntityAiMotionSlotBits *slot_bits, s32 type, s32 mode) {
     EntityMotionSlot *slot = (EntityMotionSlot *)slot_bits;
     f32 moved[4];
     f32 turned[4];
@@ -544,17 +544,17 @@ int Motion_Start(Entity *entity, int animation, int frame, u32 blend_frames, int
     }
     entity->prev_motion_id = motion;
     entity->animation_index = animation;
-    MODEL_CHANNEL(ENTITY_MODEL(entity))->word = params->motion_speeds[animation];
+    MODEL_CHANNEL(ENTITY_MODEL(entity))->frame_step = params->motion_speeds[animation];
     if (motion >= MODEL_CHANNEL(ENTITY_MODEL(entity))->limit) {
         motion = 0;
     }
-    MODEL_CHANNEL(ENTITY_MODEL(entity))->index = motion;
-    MODEL_CHANNEL(ENTITY_MODEL(entity))->param = frame;
-    MODEL_CHANNEL(ENTITY_MODEL(entity))->param_shifted = frame << 8;
+    MODEL_CHANNEL(ENTITY_MODEL(entity))->motion_index = motion;
+    MODEL_CHANNEL(ENTITY_MODEL(entity))->frame = frame;
+    MODEL_CHANNEL(ENTITY_MODEL(entity))->frame_fixed = frame << 8;
     if (entity->ailment_3_frames != 0 && (entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY)) == 0) {
-        MODEL_CHANNEL(ENTITY_MODEL(entity))->value = (f32)(s32)blend_frames + (f32)(s32)blend_frames * 0.75f;
+        MODEL_CHANNEL(ENTITY_MODEL(entity))->blend_left = (f32)(s32)blend_frames + (f32)(s32)blend_frames * 0.75f;
     } else {
-        MODEL_CHANNEL(ENTITY_MODEL(entity))->value = blend_frames;
+        MODEL_CHANNEL(ENTITY_MODEL(entity))->blend_left = blend_frames;
     }
     ENTITY_MODEL(entity)->root_part->position[0] = ENTITY_MODEL(entity)->root_part->position[1] =
         ENTITY_MODEL(entity)->root_part->position[2] = 0.0f;
@@ -607,26 +607,26 @@ s32 Motion_Step(Entity *entity, s32 mode) {
     f32 cosine;
 
     channel = MODEL_CHANNEL(ENTITY_MODEL(entity));
-    motion = (MotionData *)channel->tables[channel->index];
+    motion = (MotionData *)channel->tables[channel->motion_index];
     motion = (MotionData *)((ModelPartLevels *)motion - 1);
     if (entity->ailment_3_frames != 0 && (entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY)) == 0) {
         step = (f32)entity->params->motion_speeds[entity->animation_index] * 0.75f;
     } else {
         step = entity->params->motion_speeds[entity->animation_index];
     }
-    frame_from = channel->param_shifted;
+    frame_from = channel->frame_fixed;
     /* a motion standing on its first frame is stepped once more than the others */
     // match: one if with both tests joined by a ternary lays the branches out differently
     if (ENTITY_FLAG_BITS(entity)->bit15) {
-        if (channel->param == motion->frame_count) {
+        if (channel->frame == motion->frame_count) {
             Motion_StepModel(ENTITY_MODEL(entity), step, ENTITY_FLAG_BITS(entity)->bit15);
         }
-    } else if (channel->param == 0) {
+    } else if (channel->frame == 0) {
         Motion_StepModel(ENTITY_MODEL(entity), step, ENTITY_FLAG_BITS(entity)->bit15);
     }
     if (mode == 0) {
         Motion_StepModel(ENTITY_MODEL(entity), step, ENTITY_FLAG_BITS(entity)->bit15);
-        frame_to = channel->param_shifted;
+        frame_to = channel->frame_fixed;
         swapped = frame_to;
         if (ENTITY_FLAG_BITS(entity)->bit15) {
             frame_to = frame_from;
@@ -637,7 +637,7 @@ s32 Motion_Step(Entity *entity, s32 mode) {
         }
         EntityEvent_StartFrameEffects(entity, entity->animation_index, frame_from, frame_to);
         EntityEvent_StartFrameCues(entity, entity->animation_index, frame_from, frame_to);
-        return ENTITY_FLAG_BITS(entity)->bit15 ? channel->param == motion->frame_count : channel->param == 0;
+        return ENTITY_FLAG_BITS(entity)->bit15 ? channel->frame == motion->frame_count : channel->frame == 0;
     }
     root = ENTITY_MODEL(entity)->root_part;
     turned[0] = 0.0f;
@@ -680,7 +680,7 @@ s32 Motion_Step(Entity *entity, s32 mode) {
     } else if (mode == 3) {
         entity->turn_delta_yaw += turned[1];
     }
-    frame_to = channel->param_shifted;
+    frame_to = channel->frame_fixed;
     swapped = frame_to;
     if (ENTITY_FLAG_BITS(entity)->bit15) {
         frame_to = frame_from;
@@ -691,7 +691,7 @@ s32 Motion_Step(Entity *entity, s32 mode) {
     }
     EntityEvent_StartFrameEffects(entity, entity->animation_index, frame_from, frame_to);
     EntityEvent_StartFrameCues(entity, entity->animation_index, frame_from, frame_to);
-    return ENTITY_FLAG_BITS(entity)->bit15 ? channel->param == motion->frame_count : channel->param == 0;
+    return ENTITY_FLAG_BITS(entity)->bit15 ? channel->frame == motion->frame_count : channel->frame == 0;
 }
 
 /* Poses every part between the motion keys around the model's playback position, steps the position and
@@ -720,22 +720,22 @@ s32 Motion_StepModel(ModelInstance *model, s32 step, s32 backwards) {
     s32 target;
 
     channel = MODEL_CHANNEL(model);
-    old_param = channel->param;
-    motion = (MotionData *)channel->tables[channel->index];
+    old_param = channel->frame;
+    motion = (MotionData *)channel->tables[channel->motion_index];
     record = (ModelPartLevels *)motion;
     motion = (MotionData *)((ModelPartLevels *)motion - 1);
     vectors = motion->vectors;
     if (backwards != 0) {
-        channel->param_shifted -= step;
-        target = channel->param_shifted;
+        channel->frame_fixed -= step;
+        target = channel->frame_fixed;
         if (target < 0) {
-            channel->param = motion->frame_count;
-            channel->param_shifted = motion->frame_count << 8;
+            channel->frame = motion->frame_count;
+            channel->frame_fixed = motion->frame_count << 8;
         } else {
-            channel->param = target >> 8;
+            channel->frame = target >> 8;
         }
     } else {
-        target = channel->param_shifted + step;
+        target = channel->frame_fixed + step;
     }
     for (i = 0; i < model->part_count; i++, record++) {
         part = &model->parts[i];
@@ -748,7 +748,7 @@ s32 Motion_StepModel(ModelInstance *model, s32 step, s32 backwards) {
             }
             key = (MotionKey *)record->thresholds + ((u32)(MODEL_PART_WORD(part) >> 39) & 0x7F);
             level = (u32)(MODEL_PART_WORD(part) >> 39) & 0x7F;
-            while (level < record->count && channel->param >= key->frame) {
+            while (level < record->count && channel->frame >= key->frame) {
                 level++;
                 key++;
             }
@@ -764,7 +764,7 @@ s32 Motion_StepModel(ModelInstance *model, s32 step, s32 backwards) {
             key = next - 1;
             elapsed = key->frame;
             length = key->length;
-            elapsed = channel->param_shifted - (elapsed << 8);
+            elapsed = channel->frame_fixed - (elapsed << 8);
             length <<= 8;
             ratio = (f32)elapsed / (f32)length;
 
@@ -817,18 +817,18 @@ s32 Motion_StepModel(ModelInstance *model, s32 step, s32 backwards) {
         }
     }
     if (backwards == 0) {
-        channel->param_shifted += step;
-        channel->param = channel->param_shifted >> 8;
-        if (motion->frame_count < channel->param) {
-            channel->param = 0;
-            channel->param_shifted = 0;
+        channel->frame_fixed += step;
+        channel->frame = channel->frame_fixed >> 8;
+        if (motion->frame_count < channel->frame) {
+            channel->frame = 0;
+            channel->frame_fixed = 0;
         }
     }
-    channel->unk8E = old_param != channel->param;
+    channel->frame_changed = old_param != channel->frame;
     if (backwards != 0) {
-        return channel->param == motion->frame_count;
+        return channel->frame == motion->frame_count;
     }
-    return channel->param == 0;
+    return channel->frame == 0;
 }
 
 /* As Motion_StepModel, blending the pose with the current one by `weight`. Nothing calls it. */
@@ -856,22 +856,22 @@ s32 Motion_StepModelBlended(ModelInstance *model, s32 step, s32 backwards, f32 w
     u32 length;
 
     channel = MODEL_CHANNEL(model);
-    old_param = channel->param;
-    motion = (MotionData *)channel->tables[channel->index];
+    old_param = channel->frame;
+    motion = (MotionData *)channel->tables[channel->motion_index];
     motion = (MotionData *)((ModelPartLevels *)motion - 1);
-    record = channel->tables[channel->index];
+    record = channel->tables[channel->motion_index];
     vectors = motion->vectors;
     if (backwards != 0) {
-        channel->param_shifted -= step;
-        target = channel->param_shifted;
+        channel->frame_fixed -= step;
+        target = channel->frame_fixed;
         if (target < 0) {
-            channel->param = motion->frame_count;
-            channel->param_shifted = motion->frame_count << 8;
+            channel->frame = motion->frame_count;
+            channel->frame_fixed = motion->frame_count << 8;
         } else {
-            channel->param = target >> 8;
+            channel->frame = target >> 8;
         }
     } else {
-        target = channel->param_shifted + step;
+        target = channel->frame_fixed + step;
     }
     for (i = 0; i < model->part_count; i++, record++) {
         part = &model->parts[i];
@@ -884,7 +884,7 @@ s32 Motion_StepModelBlended(ModelInstance *model, s32 step, s32 backwards, f32 w
             }
             key = (MotionKey *)record->thresholds + ((u32)(MODEL_PART_WORD(part) >> 39) & 0x7F);
             level = (u32)(MODEL_PART_WORD(part) >> 39) & 0x7F;
-            while (level < record->count && channel->param >= key->frame) {
+            while (level < record->count && channel->frame >= key->frame) {
                 level++;
                 key++;
             }
@@ -900,7 +900,7 @@ s32 Motion_StepModelBlended(ModelInstance *model, s32 step, s32 backwards, f32 w
             key = next - 1;
             elapsed = key->frame;
             length = key->length;
-            elapsed = channel->param_shifted - (elapsed << 8);
+            elapsed = channel->frame_fixed - (elapsed << 8);
             length <<= 8;
             ratio = (f32)elapsed / (f32)length;
 
@@ -986,15 +986,15 @@ s32 Motion_StepModelBlended(ModelInstance *model, s32 step, s32 backwards, f32 w
         }
     }
     if (backwards == 0) {
-        channel->param_shifted += step;
-        channel->param = channel->param_shifted >> 8;
-        if (motion->frame_count < channel->param) {
-            channel->param = 0;
-            channel->param_shifted = 0;
+        channel->frame_fixed += step;
+        channel->frame = channel->frame_fixed >> 8;
+        if (motion->frame_count < channel->frame) {
+            channel->frame = 0;
+            channel->frame_fixed = 0;
         }
     }
-    channel->unk8E = old_param != channel->param;
-    return channel->param == (backwards == 0 ? 0 : motion->frame_count);
+    channel->frame_changed = old_param != channel->frame;
+    return channel->frame == (backwards == 0 ? 0 : motion->frame_count);
 }
 
 /* Eases every part toward the pose between the motion keys around the channel's frame, then counts the blend
@@ -1020,16 +1020,16 @@ void Motion_BlendToPose(ModelInstance *model, f32 weight) {
     f32 angle_y;
 
     channel = MODEL_CHANNEL(model);
-    motion = (MotionData *)channel->tables[channel->index];
+    motion = (MotionData *)channel->tables[channel->motion_index];
     motion = (MotionData *)((ModelPartLevels *)motion - 1);
-    record = channel->tables[channel->index];
+    record = channel->tables[channel->motion_index];
     vectors = motion->vectors;
     for (i = 0; i < model->part_count; i++, record++) {
         part = &model->parts[i];
         if (record->thresholds != NULL && record->count != 0) {
             key = (MotionKey *)record->thresholds + ((u32)(MODEL_PART_WORD(part) >> 39) & 0x7F);
             level = (u32)(MODEL_PART_WORD(part) >> 39) & 0x7F;
-            while (level < record->count && channel->param >= key->frame) {
+            while (level < record->count && channel->frame >= key->frame) {
                 level++;
                 key++;
             }
@@ -1039,7 +1039,7 @@ void Motion_BlendToPose(ModelInstance *model, f32 weight) {
                 part->level = level - 1;
                 next = key;
                 key = next - 1;
-                ratio = (f32)(channel->param - key->frame) / (f32)key->length;
+                ratio = (f32)(channel->frame - key->frame) / (f32)key->length;
 
                 *(MotionVector *)point0 = vectors[key->rotation];
                 point0->w = 1.0f;
@@ -1117,7 +1117,7 @@ void Motion_BlendToPose(ModelInstance *model, f32 weight) {
             }
         }
     }
-    channel->value--;
+    channel->blend_left--;
 }
 
 /* Poses every part between the first keys of two motions: ratio 0 gives the first motion's, 1 the second's.

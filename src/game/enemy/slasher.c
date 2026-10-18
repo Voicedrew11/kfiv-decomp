@@ -1,4 +1,4 @@
-/* Slasher: the behaviour of entity type 26 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* Slasher: the behaviour of entity type 26 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Slasher. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -42,7 +42,7 @@ static void Slasher_AlertSameKind(Entity *entity);
 
 /* Set-up of a type 26 entity: clears its work area and installs the type's handlers. */
 void Slasher_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
     u8 *unkC0 = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
@@ -50,17 +50,17 @@ void Slasher_Init(Entity *entity) {
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->unkE0;
+        u8 *dest = (u8 *)&entity->ai_state;
 
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = Slasher_Think;
-    unkE0->animate = EntityAi_Animate;
-    unkE0->on_hit = (void (*)(void))Slasher_OnHit;
-    unkE0->move = (void (*)(void))EntityAi_Move;
-    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
-    unkE0->death = (void (*)(void))EntityAi_Death;
+    ai_state->think = Slasher_Think;
+    ai_state->animate = EntityAi_Animate;
+    ai_state->on_hit = (void (*)(void))Slasher_OnHit;
+    ai_state->move = (void (*)(void))EntityAi_Move;
+    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
+    ai_state->death = (void (*)(void))EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -70,14 +70,14 @@ void Slasher_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
         EntityAi_StartAction(entity, Slasher_WaitForPlayerNear, 1);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
+        Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -88,7 +88,7 @@ void Slasher_Init(Entity *entity) {
    (EntityAi_ReactionRewind while flag bit 19 is set); it then sets work byte unk7A and flag bits 32
    and 33 and calls Slasher_AlertSameKind. */
 static void Slasher_OnHit(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u64 flags;
     u64 hit_strength;
 
@@ -107,7 +107,7 @@ static void Slasher_OnHit(Entity *entity) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
-    unkE0->step_index = 1;
+    ai_state->step_index = 1;
     ENTITY_FLAG_BITS(entity)->bit32 = 1;
     ENTITY_FLAG_BITS(entity)->bit33 = 1;
     Slasher_AlertSameKind(entity);
@@ -115,9 +115,9 @@ static void Slasher_OnHit(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, but states 1 and 2 both have EntityAi_ThinkCombat (and
    clear work byte unk7A) and state 0 starts Slasher_WaitForPlayerNear. Every frame it starts effect
-   EntityParams.unk43A at the points Model_GetSkinnedBonePoint gives for 30 and 31. */
+   EntityParams.type_param_0 at the points Model_GetSkinnedBonePoint gives for 30 and 31. */
 static void Slasher_Think(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     char *part;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -133,7 +133,7 @@ static void Slasher_Think(Entity *entity, s32 unknown) {
             case 1:
             case 2:
                 EntityAi_ThinkCombat(entity, unknown);
-                unkE0->step_index = 0;
+                ai_state->step_index = 0;
                 break;
             case 0:
             default:
@@ -143,9 +143,9 @@ static void Slasher_Think(Entity *entity, s32 unknown) {
         }
     }
     part = Model_GetSkinnedBonePoint((char *)entity->model, 0x1E);
-    Effect_StartSpawner(entity->params->unk43A, part, entity->model->rotation, entity);
+    Effect_StartSpawner(entity->params->type_param_0, part, entity->model->rotation, entity);
     part = Model_GetSkinnedBonePoint((char *)entity->model, 0x1F);
-    Effect_StartSpawner(entity->params->unk43A, part, entity->model->rotation, entity);
+    Effect_StartSpawner(entity->params->type_param_0, part, entity->model->rotation, entity);
 }
 
 /* A think function nothing refers to: gives no movement command, lets the head follow the target (flag 9) and
@@ -154,31 +154,31 @@ static void Slasher_ThinkStandStill(Entity *entity, s32 unknown) {
     entity->move_command = 0;
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
-    EntityAi_StartAction(entity, (void (*)(Entity *))entity->unkE0.move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))entity->ai_state.move, unknown);
 }
 
 /* An action (busy bit 0x1000) that the set-up function and state 0 of Slasher_Think start:
    keeps animation 0 until the player is within EntityParams.near_distance or work byte unk7A is set; then
    it sets flag bits 32 and 33 and unk7A, calls Slasher_AlertSameKind and thinks. */
 static void Slasher_WaitForPlayerNear(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
-    if (entity->distance_to_player < entity->params->near_distance || unkE0->step_index != 0) {
+    if (entity->distance_to_player < entity->params->near_distance || ai_state->step_index != 0) {
         ENTITY_FLAG_BITS(entity)->bit32 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit33 = TRUE;
-        unkE0->step_index = 1;
+        ai_state->step_index = 1;
         Slasher_AlertSameKind(entity);
         entity->busy_flags = 0;
         entity->move_command = 0;
         entity->action_timer = 0;
         if (ENTITY_FLAG_BITS(entity)->bit5) {
-            unkE0->think(entity, 0);
+            ai_state->think(entity, 0);
         } else {
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
         }
     }
 }
@@ -193,7 +193,7 @@ static void Slasher_AlertSameKind(Entity *entity) {
                 u64 other_flags = other_entity->flags;
                 if (((int)(other_flags >> 1) & 1) && !((int)(other_flags >> 2) & 3) &&
                     other_entity != entity) {
-                    EntityUnkE0 *other_unkE0 = &other_entity->unkE0;
+                    EntityAiState *other_unkE0 = &other_entity->ai_state;
                     if (other_unkE0->step_index == 0 &&
                         EntityMath_DistanceXZ(entity->model->position, other_entity->model->position) <
                             (float)entity->params->far_distance) {

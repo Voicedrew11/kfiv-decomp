@@ -42,7 +42,7 @@ typedef struct {
     char pad01[0x01];
     u16 strength_gauge;             /* 0x02 PlayerState.power_gauge */
     void *attack_request;           /* 0x04 the Unk1B1470Request (entity/entity.h) of a weapon's shot, in bow_shot_requests */
-    PlayerShotStats unk08;          /* 0x08 PlayerState.unk7E */
+    PlayerShotStats worn_item_stats; /* 0x08 PlayerState.worn_item_stats */
     char pad1A[0x06];
     u16 player_power;               /* 0x20 PlayerState.power */
     u16 player_magic;               /* 0x22 PlayerState.magic */
@@ -72,10 +72,10 @@ typedef struct {
     s32 level;                      /* 0x54 ini "level"; saved */
     s32 hp_max;                     /* 0x58 the most hp_now can be: hp_base with what is worn (the Widda's Ring adds a fifth) */
     s32 mp_max;                     /* 0x5C the most mp_now can be */
-    PlayerShotStats unk60;          /* 0x60 unk60 to unkA3 and unkDC are worked out by Player_RecomputeStats */
-    PlayerItemRates unk72;          /* 0x72 at most 100 each */
-    PlayerShotStats unk7E;          /* 0x7E copied into the shot a cast magic launches (Player_CastMagic) */
-    PlayerShotStats unk90;          /* 0x90 */
+    PlayerShotStats attack_stats;   /* 0x60 attack values: physical then magic, from Player_RecomputeStats */
+    PlayerItemRates ailment_attack_rates; /* 0x72 ailment rates of the weapon in hand, at most 100 each */
+    PlayerShotStats worn_item_stats; /* 0x7E the worn items' values, copied into the shot a cast magic launches (Player_CastMagic) */
+    PlayerShotStats defence_stats;  /* 0x90 defence values: physical then magic, from the worn items and defence bonuses */
     char padA2[0x02];
     s32 weight;                     /* 0xA4 the weight of what is held and worn (item_name_defs unk3E, in pounds) */
     s32 max_weight;                 /* 0xA8 the most the player may carry; weight above it slows him */
@@ -157,7 +157,7 @@ typedef struct {
     s32 view_tilt_frames;           /* 0x234 frames unk238 and unk23C keep growing */
     f32 view_tilt_pitch;            /* 0x238 pitch a hit threw the view by */
     f32 view_tilt_roll;             /* 0x23C second view tilt of a hit, grown with the pitch */
-    Vector4 unk240;                 /* 0x240 a velocity added to the position every frame: the push of the floor (MapRecord.push_acceleration) */
+    Vector4 floor_push;             /* 0x240 a velocity added to the position every frame: the push of the floor (MapRecord.push_acceleration) */
     u8 record_flag_block;           /* 0x250 0xFF after a map change */
     char pad251[0x01];
     u16 map_index;                  /* 0x252 picks the MapSlot record */
@@ -179,14 +179,14 @@ typedef struct {
     u8 swing_ended;                 /* 0x263 nonzero: the swing's hits are over (map change, pause) */
     u8 charging_magic;              /* 0x264 set from equipped_magic, shortcut or the PlayerItemDef after a menu (GameLoop_OpenRequestedMenu) */
     char pad265[0x03];
-    PlayerShot unk268;              /* 0x268 the swing of the weapon in hand, passed to Attack_Run (Player_SwingWeapon) */
+    PlayerShot swing_shot;          /* 0x268 the swing of the weapon in hand, passed to Attack_Run (Player_SwingWeapon) */
     u8 draw_motion_complete;        /* 0x298 nonzero: the draw motion reached the frame that looses the shot */
     char pad299[0x03];
     s32 mp_drain_tint;              /* 0x29C nonzero: the screen is tinted by it (GameLoop_DrawFrame) */
     s32 pending_mp_drain;           /* 0x2A0 a total Attack_DrainPlayerMp adds to */
-    char pad2A4[0x04];
+    s32 fade_area;                  /* 0x2A4 the area byte (map record 0x4C) under the player, last frame; the fade starts when it drops */
     f32 screen_fade;                /* 0x2A8 fade amount: > 0 toward white, < 0 toward black */
-    char pad2AC[0x04];
+    s32 screen_fade_step;           /* 0x2AC added to screen_fade, halved each frame; -0x30 when the area drops */
     s32 hp_step_remaining;          /* 0x2B0 moved one toward 0 every unk2B4 frames; hp moves with it */
     s32 hp_step_period;             /* 0x2B4 frames per step of hp_step_remaining; cleared when unk2B0 reaches 0 */
     u16 flag_timers[6];             /* 0x2B8 frames left, one per timed_flags entry */
@@ -199,7 +199,7 @@ typedef struct {
     s32 ailment0_slow_timer;        /* 0x2DC above 0: Player_TakeDamageNoRumble(3) runs every 90 frames, not every 30 */
     s32 light_spell_timer;          /* 0x2E0 frames magic 0x3D to 0x3F last */
     s32 intimidate_timer;           /* 0x2E4 above 0: unk2E8 counts (EntityAi_PickMeleeAttack) */
-    f32 intimidate_range;           /* 0x2E8 enemies whose unk60 is below it attack from half as far */
+    f32 intimidate_range;           /* 0x2E8 enemies whose attack_stats is below it attack from half as far */
     s32 rage_timer;                 /* 0x2EC frames magic 0x52 to 0x54 last */
     s32 rage_power_bonus;           /* 0x2F0 10, 20 or 30 for magic 0x52, 0x53, 0x54 */
     char pad2F4[0x0C];              /* the block is 0x300 bytes (Player_ResetForNewGame clears and copies that many) */
@@ -280,35 +280,35 @@ typedef struct {
 
 /* worn_defs[160]: param/item_pct.prm (Map_LoadParamFiles), a row per item from ITEM_WORN_FIRST, one per LevelRecord of worn_item_level_records */
 typedef struct {
-    s16 unk00[9];                   /* 0x00 the base of the nine values; LevelRecord.unk00 is added (Player_AddWornItemValues) */
-    u16 unk12[6];                   /* 0x12 added to PlayerState.ailment_defence while the item is worn (Player_AddItemBonuses) */
+    s16 base_values[9];             /* 0x00 the base of the nine values; LevelRecord.gained_values is added (Player_AddWornItemValues) */
+    u16 worn_ailment_defence[6];    /* 0x12 added to PlayerState.ailment_defence while the item is worn (Player_AddItemBonuses) */
     char pad1E[0x01];
     u8 bonus_kinds[2];              /* 0x1F what wearing the item does, 0: nothing (the switch of Player_AddItemBonuses) */
     u8 bonus_amounts[2];            /* 0x21 */
     char pad23[0x1C];
-    u8 unk3F;                       /* 0x3F added to PlayerItemDef.equip_menu_motion for the shield in hand (Menu_UpdateEquip) */
+    u8 equip_menu_motion_offset;    /* 0x3F added to PlayerItemDef.equip_menu_motion for the shield in hand (Menu_UpdateEquip) */
 } LevelRecordDef;
 
 /* worn_item_level_records[160]: what has been gained per item (0x22 bytes each) */
 typedef struct {
-    s16 unk00[9];                   /* 0x00 added to the PlayerItemDef's row (Player_RecomputeStats) */
+    s16 gained_values[9];           /* 0x00 added per level to the PlayerItemDef's row (Player_RecomputeStats) */
     u8 level;                       /* 0x12 */
     u8 exp;                         /* 0x13 */
-    u8 unk14;                       /* 0x14 */
+    u8 level_index;                 /* 0x14 0 to 2: the row of attack_by_level the item uses, raised by use_count */
     char pad15[0x01];
-    s16 unk16;                      /* 0x16 ini "item_": the third number times 20, 0 to 480 (Ini_SetItem) */
-    u8 unk18;                       /* 0x18 nonzero: Smith_BuildItemRings lists the item among those whose time unk19 counts */
+    s16 use_count;                  /* 0x16 uses of the item (Player_CountWeaponUse); ini "item_": the third number times 20 */
+    u8 in_smith_rings;              /* 0x18 nonzero: Smith_BuildItemRings lists the item among those whose time last_upgraded counts */
     union {
         char bytes[8];              /* 0x19 stored through this view (Smith_UpdateUpgradeConfirm, Smith_UpdateListWithConfirm) */
         ClockTime time;             /* 0x19 when it was last upgraded; not aligned */
-    } unk19;
+    } last_upgraded;
     char pad21[0x01];
 } LevelRecord;
 
 /* weapon_defs[70]: param/item_wpn.prm (Map_LoadParamFiles), 0x90 bytes per weapon from ITEM_WEAPON_FIRST; PlayerState.weapon picks one */
 typedef struct {
-    PlayerShotStats attack_by_level[3]; /* 0x00 one row per LevelRecord.unk14 */
-    PlayerItemRates unk36;          /* 0x36 */
+    PlayerShotStats attack_by_level[3]; /* 0x00 one row per LevelRecord.level_index */
+    PlayerItemRates ailment_attack_rates; /* 0x36 ailment rates the item gives, copied to PlayerState.ailment_attack_rates */
     u16 first_magic_id;             /* 0x42 0xFFFF: none */
     u16 first_magic_cast_frame;     /* 0x44 the swing's motion frame on which magic unk42 is cast (Player_SwingWeapon) */
     u16 unk46;                      /* 0x46 0xFFFF: none */
@@ -377,7 +377,7 @@ typedef struct {
     u32 state : 2;                  /* 0x32 bits 2-3: 0 is set to 1 when the table is reset */
     u32 upgrade_material_kind : 12; /* which smith material upgrades the item: bone, scale or claw */
     char pad34[0x02];
-    u8 upgrade_wait_minutes;        /* 0x36 minutes that must pass since LevelRecord.unk19 (Smith_BuildItemRings) */
+    u8 upgrade_wait_minutes;        /* 0x36 minutes that must pass since LevelRecord.last_upgraded (Smith_BuildItemRings) */
     u8 exp_per_level;               /* 0x37 */
     char pad38[0x04];
     u8 unk3C;                       /* 0x3C */

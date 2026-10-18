@@ -269,13 +269,13 @@ void ItemEffect_Update(void) {
         return;
     }
     if (item_effect_pending_effects != 0 && item_effect_model != NULL &&
-        MODEL_CHANNEL(item_effect_model)->param >= item_effect_def->unk08) {
-        Effect_StartSpawner(item_effect_def->unk0C, &origin, &origin, item_effect_model);
+        MODEL_CHANNEL(item_effect_model)->frame >= item_effect_def->spawn_frame) {
+        Effect_StartSpawner(item_effect_def->effect_number, &origin, &origin, item_effect_model);
         Effect_StartSpawner(0x26A, &player_state.position, &player_state.rotation, item_effect_model);
         def = &weapon_defs[player_state.weapon];
         item_effect_pending_effects = 0;
         if (player_state.equipped_magic != 0 || def->first_magic_id != 0xFFFF ||
-            (def->second_magic_id != 0xFFFF && weapon_level_records[player_state.weapon].unk14 + 1 >= 3) || Player_KnowsItemMenuMagic() != 0) {
+            (def->second_magic_id != 0xFFFF && weapon_level_records[player_state.weapon].level_index + 1 >= 3) || Player_KnowsItemMenuMagic() != 0) {
             player_state.magic_gauge = 5000;
         }
         if (item_effect_marked != 0) {
@@ -317,7 +317,7 @@ void ItemEffect_StepWaitOverlay(void) {
 /* Item-effect step 2: advances the model motion until the kind's first frame. */
 void ItemEffect_StepPlayMotion(void) {
     ModelMotion_Step(item_effect_model);
-    if (MODEL_CHANNEL(item_effect_model)->param >= item_effect_def->unk00) {
+    if (MODEL_CHANNEL(item_effect_model)->frame >= item_effect_def->next_step_frame) {
         item_effect_step++;
     }
 }
@@ -326,7 +326,7 @@ void ItemEffect_StepPlayMotion(void) {
 void ItemEffect_StepFadeOut(void) {
     int brightness;
 
-    if (MODEL_CHANNEL(item_effect_model)->param <= 0 && item_effect_brightness <= 0) {
+    if (MODEL_CHANNEL(item_effect_model)->frame <= 0 && item_effect_brightness <= 0) {
         int *status_words = (int *)&game_status; // match: field stores get scheduled in the other order
 
         item_effect_active = 0;
@@ -338,11 +338,11 @@ void ItemEffect_StepFadeOut(void) {
         item_effect_def = NULL;
         return;
     }
-    if (MODEL_CHANNEL(item_effect_model)->param > 0) {
+    if (MODEL_CHANNEL(item_effect_model)->frame > 0) {
         ModelMotion_Step(item_effect_model);
     }
     if (item_effect_brightness > 0) {
-        brightness = item_effect_brightness - item_effect_def->unk04;
+        brightness = item_effect_brightness - item_effect_def->fade_per_frame;
         item_effect_brightness = brightness;
         if (brightness < 0) {
             item_effect_brightness = 0;

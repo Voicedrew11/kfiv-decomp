@@ -120,8 +120,8 @@ void Gold_InitMap(int map) {
         source = (int)map_gold_model;
         Model_SetUpSkinned(model, &source, &work);
         copy_matrix((ModelMatrixQwords *)matrix, (ModelMatrixQwords *)identity_matrix);
-        model->light_block = (s32)&map_draw_state.unkC0;
-        model->fog_block = &map_draw_state.unkA0;
+        model->light_block = (s32)&map_draw_state.current_light_block;
+        model->fog_block = &map_draw_state.current_fog_block;
         model->texture_data = (int)map_gold_texture;
         model->texture_slot = 2;
         model->draw = (void (*)(ModelInstance *))Gold_PrepareFadedDraw;
@@ -130,12 +130,12 @@ void Gold_InitMap(int map) {
     marks = map_object_marks[tag];
     memset(&map_object_marks[tag], 0, sizeof(ObjectMarkRow));
     for (i = 0; i < MAP_ACTOR_COUNT; i++) {
-        if (marks.marks[i].unk08 != 0) {
+        if (marks.marks[i].amount != 0) {
             position[0] = marks.marks[i].x;
             position[1] = marks.marks[i].y;
             position[2] = marks.marks[i].z;
             rotation[1] = marks.marks[i].radius * 0.0625f;
-            Gold_Drop((Vector4 *)position, (Vector4 *)rotation, map, marks.marks[i].unk08, marks.marks[i].unk07,
+            Gold_Drop((Vector4 *)position, (Vector4 *)rotation, map, marks.marks[i].amount, marks.marks[i].object_id,
                          FALSE, FALSE);
         }
     }
@@ -162,7 +162,7 @@ void Gold_MoveMap(int slot, f32 *offset) {
     for (i = MAP_ACTOR_COUNT - 1; i >= 0; i--) {
         if (actor->flags & 1) {
             Vector_Add(&actor->body->position, &actor->body->position, offset);
-            actor->unk14 += offset[1];
+            actor->position_y += offset[1];
         }
         actor++;
     }
@@ -283,7 +283,7 @@ int Gold_Drop(Vector4 *position, Vector4 *rotation, int map, int amount, int obj
     actor->fade_timer = 15;
     actor->step = 0;
     // match: read even when on_ground is not set and no test was made: then it is whatever the last test left
-    actor->unk14 = *&COLLISION_RESULT->point[1];
+    actor->position_y = *&COLLISION_RESULT->point[1];
     MAP_ACTOR_WORDS(actor)->amount = amount;
     Vector_Copy(&actor->body->position, position);
     Vector_Copy(&actor->body->rotation, rotation);
@@ -292,7 +292,7 @@ int Gold_Drop(Vector4 *position, Vector4 *rotation, int map, int amount, int obj
     actor->body->scale_x = 1.5f;
     actor->body->scale_w = 1.0f;
     if (on_ground) {
-        actor->body->position.y = actor->unk14;
+        actor->body->position.y = actor->position_y;
     }
     Gold_LinkInUse(actor);
     if (map == current_map_slot) {
@@ -418,8 +418,8 @@ void Gold_SaveMark(MapActor *actor) {
     mark->y = actor->body->position.y;
     mark->z = actor->body->position.z;
     mark->radius = actor->body->rotation.y * 16.0f;
-    mark->unk08 = MAP_ACTOR_WORDS(actor)->amount;
-    mark->unk07 = actor->unk24;
+    mark->amount = MAP_ACTOR_WORDS(actor)->amount;
+    mark->object_id = actor->unk24;
 }
 
 /* Clears the ObjectMark for a map actor slot. */

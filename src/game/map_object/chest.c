@@ -37,7 +37,7 @@ void MapObject_UpdateItemHolder(MapObject *object) {
         if (object->source->kind_param_0 != 0 && !(object->state_flags & MAP_OBJECT_EMPTIED)) {
             object->model->update_bone_points(object->model);
             MapItem_StartPickup((ModelNode *)MapItem_PutOutForObject(
-                MAP_OBJECT_BYTES(object)->unk00 & 1, object->source->kind_param_0, (void *)object->model->get_point(object->model, 0),
+                MAP_OBJECT_BYTES(object)->map_slot & 1, object->source->kind_param_0, (void *)object->model->get_point(object->model, 0),
                 &object->model->rotation, &unk_value, object));
         } else if (work[0] <= 0) {
             Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->definition->definition_flags);
@@ -155,14 +155,14 @@ void MapObject_UpdateClosedChest(void *arg, int unused) {
             position.x = object->model->position.x;
             position.y = object->model->position.y - 25.0f;
             position.z = object->model->position.z;
-            MapItem_PutOutForObject(MAP_OBJECT_BYTES(object)->unk00 & 1, source->kind_param_0, &position, &object->model->rotation, &unk_value, object);
+            MapItem_PutOutForObject(MAP_OBJECT_BYTES(object)->map_slot & 1, source->kind_param_0, &position, &object->model->rotation, &unk_value, object);
             MAP_OBJECT_BITS(object)->bit18 = FALSE;
         } else if (((MapObjectUnk08Words *)source)->kind_param_2 > 0) {
             position.x = object->model->position.x;
             position.y = object->model->position.y - 25.0f;
             position.z = object->model->position.z;
             turn.y = object->model->rotation.y;
-            Gold_Drop(&position, &turn, MAP_OBJECT_BYTES(object)->unk00 & 1, ((MapObjectUnk08Words *)source)->kind_param_2, source->spawn_flags.bytes[2], 0, 1);
+            Gold_Drop(&position, &turn, MAP_OBJECT_BYTES(object)->map_slot & 1, ((MapObjectUnk08Words *)source)->kind_param_2, source->spawn_flags.bytes[2], 0, 1);
             MAP_OBJECT_BITS(object)->bit18 = FALSE;
         }
     }
@@ -171,7 +171,7 @@ void MapObject_UpdateClosedChest(void *arg, int unused) {
 /* Step 2 of a chest: runs the opening animation; at its end the chest is open (animation 5, step 3, work[0]
    set to 90). Then the open-chest update. */
 void MapObject_UpdateOpeningChest(MapObject *object) {
-    if (MODEL_CHANNEL(object->model)->param != 0) {
+    if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
     } else {
         MapObject_StartAnim(object, 5);

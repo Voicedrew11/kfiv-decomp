@@ -16,24 +16,24 @@ MapDrawStateMirror map_draw_state = { 0 };
 /* 0x38A218 MapDrawState.hud_shown on: the HUD is drawn (ui/hud.c) */
 s32 hud_visible[0xE] = { 0 };
 
-/* 0x38A250 MapDrawState.unkA0: the current map's first block (player/held_weapon.c) */
-MapSlotUnk0C current_fog_block = { { 0 } };
+/* 0x38A250 MapDrawState.current_fog_block: the current map's first block (player/held_weapon.c) */
+MapFogBlock current_fog_block = { { 0 } };
 
-/* 0x38A270 MapDrawState.unkC0: the block as the eight vectors it holds, in two halves */
-MapSlotUnk10Half current_light_block = { { 0 } };
-MapSlotUnk10Half current_map_light_colors = { { 0 } };     /* its second half: the colours of the lights */
+/* 0x38A270 MapDrawState.current_light_block: the block as the eight vectors it holds, in two halves */
+MapLightBlockHalf current_light_block = { { 0 } };
+MapLightBlockHalf current_map_light_colors = { { 0 } };     /* its second half: the colours of the lights */
 
 /* 0x38A2F0 MapDrawState.pad140 */
 u8 D_0038A2F0[0x140] = { 0 };
 
-/* 0x38A430 MapDrawState.unk280: the current map's fog colour */
+/* 0x38A430 MapDrawState.current_fog_color: the current map's fog colour */
 MapFogColor current_map_fog_color = { 0 };
 
 /* 0x38A440 MapDrawState.fog_blocks: each map slot's 0x20 blocks (a model's unk14C points at one) */
-MapSlotUnk0C map_draw_slot_blocks[2][0x20] = { 0 };
+MapFogBlock map_draw_slot_blocks[2][0x20] = { 0 };
 
 /* 0x38AC40 MapDrawState.light_blocks: each map slot's 0x20 0x80-byte blocks (a model's unk148) */
-MapSlotUnk10Words map_draw_slot_draw_blocks[2][0x20] = { 0 };
+MapLightBlock map_draw_slot_draw_blocks[2][0x20] = { 0 };
 
 /* 0x38CC40 MapDrawState.screen_tint_amount to unk2A98: the screen tint, 0 to 0.25, and its padding */
 f32 map_draw_screen_tint[4] = { 0 };

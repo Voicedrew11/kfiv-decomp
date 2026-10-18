@@ -145,7 +145,7 @@ extern LevelDef item_name_defs[0x17C];
         player_state.timed_flags[index] = 0; \
     }
 /* one of the nine values: the item's row for its level plus what it gained, scaled by LevelRecord.level in percent */
-#define SET_SCALED(n)     player_state.unk60.values[n] = (item_def->attack_by_level[record->unk14].values[n] + record->unk00[n]) * record->level / 100
+#define SET_SCALED(n)     player_state.attack_stats.values[n] = (item_def->attack_by_level[record->level_index].values[n] + record->gained_values[n]) * record->level / 100
 
 /* Sets the player up for a new game. */
 void Player_ResetForNewGame(void) {
@@ -756,7 +756,7 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
     Unk1B1470Request request;
     LevelRecord *record = &weapon_level_records[player_state.weapon];
     PlayerItemDef *def = &weapon_defs[player_state.weapon];
-    s32 level = record->unk14;
+    s32 level = record->level_index;
     PlayerShot *shot;
 
     if (player_state.item_action_step == 0) {
@@ -772,7 +772,7 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
         }
         player_state.magic2_armed = level >= 2 && def->second_magic_id != 0 && def->second_magic_id != 0xFFFF;
         if (attack_button & pressed) {
-            shot = &player_state.unk268;
+            shot = &player_state.swing_shot;
             memset(shot, 0, sizeof(PlayerShot));
             shot->is_magic_shot = 0;
             shot->player_power = player_state.power;
@@ -813,14 +813,14 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
                 swing_magic_frames = 0;
             }
         }
-        if (MODEL_CHANNEL(WEAPON_MODEL)->param_shifted <= 0) {
+        if (MODEL_CHANNEL(WEAPON_MODEL)->frame_fixed <= 0) {
             player_state.item_action_step = 0;
             return;
         }
         if (player_state.swing_ended != 0) {
             return;
         }
-        if (MODEL_CHANNEL(WEAPON_MODEL)->param >= def->draw_ready_frame && MODEL_CHANNEL(WEAPON_MODEL)->param <= def->draw_last_frame && swing_magic_frames == 0) {
+        if (MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->draw_ready_frame && MODEL_CHANNEL(WEAPON_MODEL)->frame <= def->draw_last_frame && swing_magic_frames == 0) {
             memset(&request, 0, sizeof(request));
             Vector_Copy(request.position, &player_state);
             request.owner = (Entity *)&player_state;
@@ -833,41 +833,41 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             request.pitch = player_state.rotation.x;
             request.half_pitch = def->swing_pitch_arc_degrees * 0.5f * 0.017453292f;
             request.target_mask = 0x3E;
-            *(PlayerShotStats *)&request.unk50 = player_state.unk60;
-            *(PlayerItemRates *)&request.unk62 = player_state.unk72;
+            *(PlayerShotStats *)&request.unk50 = player_state.attack_stats;
+            *(PlayerItemRates *)&request.unk62 = player_state.ailment_attack_rates;
             request.map_object_damage_multiplier = def->map_object_damage_multiplier;
             request.double_hit_chance_percent = def->double_hit_chance_percent;
             request.lowest_y = player_state.position.y - 230.0f - 50.0f;
             request.highest_y = player_state.position.y + 50.0f;
-            Attack_Run(&request, (Unk1B1470Extra *)&player_state.unk268);
+            Attack_Run(&request, (Unk1B1470Extra *)&player_state.swing_shot);
         }
-        if (!player_state.draw_sound_played && def->draw_sound_id != 0xFFFF && MODEL_CHANNEL(WEAPON_MODEL)->param >= def->draw_sound_frame) {
+        if (!player_state.draw_sound_played && def->draw_sound_id != 0xFFFF && MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->draw_sound_frame) {
             ((int (*)(int))Sound_PlaySw)(def->draw_sound_id); // match: called as if it returned a value
             player_state.draw_sound_played = 1;
         }
         if (magic_button & pressed) {
             if (player_state.magic1_window != 0 && player_state.magic1_state == 0 && def->first_magic_id != 0xFFFF &&
-                MODEL_CHANNEL(WEAPON_MODEL)->param >= def->first_magic_window_start_frame && MODEL_CHANNEL(WEAPON_MODEL)->param <= def->first_magic_window_end_frame) {
+                MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->first_magic_window_start_frame && MODEL_CHANNEL(WEAPON_MODEL)->frame <= def->first_magic_window_end_frame) {
                 player_state.magic2_armed = 0;
                 player_state.magic1_asked = 1;
                 player_state.magic1_state = 1;
             }
             if (player_state.magic2_armed != 0 && player_state.magic2_asked == 0 && def->second_magic_id != 0xFFFF &&
-                MODEL_CHANNEL(WEAPON_MODEL)->param >= def->second_magic_window_start_frame && MODEL_CHANNEL(WEAPON_MODEL)->param <= def->second_magic_window_end_frame) {
+                MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->second_magic_window_start_frame && MODEL_CHANNEL(WEAPON_MODEL)->frame <= def->second_magic_window_end_frame) {
                 player_state.magic2_asked = 1;
                 player_state.magic2_state = 1;
             }
             player_state.magic1_window = 0;
             player_state.magic2_armed = 0;
         }
-        if (player_state.magic1_state == 1 && MODEL_CHANNEL(WEAPON_MODEL)->param >= def->first_magic_cast_frame) {
+        if (player_state.magic1_state == 1 && MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->first_magic_cast_frame) {
             player_state.magic1_state = 2;
             if (Player_CastMagic(def->first_magic_id)) {
                 swing_magic_id = def->first_magic_id;
                 swing_magic_frames = def->first_magic_effect_frames;
             }
         }
-        if (player_state.magic2_state == 1 && MODEL_CHANNEL(WEAPON_MODEL)->param >= def->second_magic_cast_frame) {
+        if (player_state.magic2_state == 1 && MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->second_magic_cast_frame) {
             player_state.magic2_state = 2;
             if (Player_CastMagic(def->second_magic_id)) {
                 swing_magic_id = def->second_magic_id;
@@ -875,16 +875,16 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             }
         }
         if (player_state.magic1_state != 0 && !player_state.magic1_motion_reached && def->unk46 != 0xFFFF &&
-            MODEL_CHANNEL(WEAPON_MODEL)->param >= def->first_magic_latch_frame) {
+            MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->first_magic_latch_frame) {
             player_state.magic1_motion_reached = 1;
         }
         if (player_state.magic2_state != 0 && !player_state.magic2_motion_reached && def->unk56 != 0xFFFF &&
-            MODEL_CHANNEL(WEAPON_MODEL)->param >= def->second_magic_latch_frame) {
+            MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->second_magic_latch_frame) {
             player_state.magic1_motion_reached = 1; // match: bit 1 again, though bit 2 was tested
         }
     } else {
         ModelMotion_Step(WEAPON_MODEL);
-        if (MODEL_CHANNEL(WEAPON_MODEL)->value == 0) {
+        if (MODEL_CHANNEL(WEAPON_MODEL)->blend_left == 0) {
             player_state.item_action_step = 0;
         }
     }
@@ -903,8 +903,8 @@ void Player_FireProjectile(u16 held, u16 pressed) {
 
     if ((attack_button & pressed) && !((s32)(player_state.status_bits >> 39) & 1) && item_counts[def->ammo_item_index] != 0) {
         ModelMotion_Select(WEAPON_MODEL, 0);
-        MODEL_CHANNEL(WEAPON_MODEL)->param = 0;
-        MODEL_CHANNEL(WEAPON_MODEL)->param_shifted = 0;
+        MODEL_CHANNEL(WEAPON_MODEL)->frame = 0;
+        MODEL_CHANNEL(WEAPON_MODEL)->frame_fixed = 0;
         ModelMotion_Step(WEAPON_MODEL);
         ((int (*)(ModelInstance *))WEAPON_MODEL->update_bone_points)(WEAPON_MODEL); // match: called as if it returned a value
         player_state.draw_sound_played = 0;
@@ -937,14 +937,14 @@ void Player_DrawBow(u16 held, u16 pressed) {
     s32 frame;
     s32 speed;
 
-    if (MODEL_CHANNEL(WEAPON_MODEL)->param != 0 && MODEL_CHANNEL(WEAPON_MODEL)->param < def->draw_last_frame) {
+    if (MODEL_CHANNEL(WEAPON_MODEL)->frame != 0 && MODEL_CHANNEL(WEAPON_MODEL)->frame < def->draw_last_frame) {
         ModelMotion_Step(WEAPON_MODEL);
     }
     if (player_state.draw_motion_complete == 0) {
-        player_state.draw_motion_complete = MODEL_CHANNEL(WEAPON_MODEL)->param >= def->draw_ready_frame;
+        player_state.draw_motion_complete = MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->draw_ready_frame;
     }
     if (player_state.swing_ended == 0 && !((s32)(player_state.status_bits >> 39) & 1) && Player_CanFireAtAim()) {
-        if (!player_state.draw_sound_played && def->draw_sound_id != 0xFFFF && MODEL_CHANNEL(WEAPON_MODEL)->param >= def->draw_sound_frame) {
+        if (!player_state.draw_sound_played && def->draw_sound_id != 0xFFFF && MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->draw_sound_frame) {
             ((int (*)(int))Sound_PlaySw)(0); // match: called as if it returned a value
             player_state.draw_sound_played = 1;
         }
@@ -968,12 +968,12 @@ void Player_DrawBow(u16 held, u16 pressed) {
             item_shot->attack_request = &bow_shot_requests[bow_request_ring_index];
             bow_request_ring_index = (bow_request_ring_index + 1) % 32;
             memset(item_shot->attack_request, 0, sizeof(Unk1B1470Request));
-            *(PlayerShotStats *)&SHOT_REQUEST->unk50 = player_state.unk60;
-            *(PlayerItemRates *)&SHOT_REQUEST->unk62 = player_state.unk72;
+            *(PlayerShotStats *)&SHOT_REQUEST->unk50 = player_state.attack_stats;
+            *(PlayerItemRates *)&SHOT_REQUEST->unk62 = player_state.ailment_attack_rates;
             SHOT_REQUEST->map_object_damage_multiplier = def->map_object_damage_multiplier;
             SHOT_REQUEST->double_hit_chance_percent = def->double_hit_chance_percent;
-            if (MODEL_CHANNEL(WEAPON_MODEL)->param != 0) {
-                frame = MODEL_CHANNEL(WEAPON_MODEL)->param;
+            if (MODEL_CHANNEL(WEAPON_MODEL)->frame != 0) {
+                frame = MODEL_CHANNEL(WEAPON_MODEL)->frame;
             } else {
                 frame = def->draw_last_frame;
             }
@@ -982,14 +982,14 @@ void Player_DrawBow(u16 held, u16 pressed) {
                 speed = 1;
             }
             ModelMotion_BlendInto(WEAPON_MODEL, 1, speed);
-            MODEL_CHANNEL(WEAPON_MODEL)->unk8F = 0;
+            MODEL_CHANNEL(WEAPON_MODEL)->blend_speed = 0;
             player_state.item_action_step++;
             item_counts[def->ammo_item_index]--;
             return;
         }
     }
     ModelMotion_BlendInto(WEAPON_MODEL, 0, 0xF);
-    MODEL_CHANNEL(WEAPON_MODEL)->unk8F = 0;
+    MODEL_CHANNEL(WEAPON_MODEL)->blend_speed = 0;
     player_state.draw_motion_complete = 0;
     player_state.power_gauge = 0;
     player_state.item_action_step += 3;
@@ -1002,12 +1002,12 @@ void Player_PlayEquipSound(void) {
 }
 
 void Player_FinishWeaponMotion(void) {
-    if (MODEL_CHANNEL(WEAPON_MODEL)->value != 0) {
+    if (MODEL_CHANNEL(WEAPON_MODEL)->blend_left != 0) {
         ModelMotion_Step(WEAPON_MODEL);
-        if (MODEL_CHANNEL(WEAPON_MODEL)->value == 0) {
+        if (MODEL_CHANNEL(WEAPON_MODEL)->blend_left == 0) {
             ModelMotion_Step(WEAPON_MODEL);
         }
-    } else if (MODEL_CHANNEL(WEAPON_MODEL)->param_shifted > 0) {
+    } else if (MODEL_CHANNEL(WEAPON_MODEL)->frame_fixed > 0) {
         ModelMotion_Step(WEAPON_MODEL);
     } else {
         player_state.item_action_step = 0;
@@ -1017,7 +1017,7 @@ void Player_FinishWeaponMotion(void) {
 
 void Player_HolsterWeapon(void) {
     ModelMotion_Step(WEAPON_MODEL);
-    if (MODEL_CHANNEL(WEAPON_MODEL)->value == 0) {
+    if (MODEL_CHANNEL(WEAPON_MODEL)->blend_left == 0) {
         Effect_FreePlayerWeaponKinds();
         player_weapon_step[0] = 0;
     }
@@ -1126,7 +1126,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
         Vector_Add(&player_state, &platform->model->position, &delta);
         player_state.rotation.y += platform->model->rotation.y - platform->last_rotation_y;
     }
-    Vector_Add(&player_state, &player_state, &player_state.unk240);
+    Vector_Add(&player_state, &player_state, &player_state.floor_push);
 
     if (player_previous.ground_effect_active != 0 && player_previous.ground_effect_kind == 4) {
         row = 4;
@@ -1464,18 +1464,18 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
         } else {
             record = NULL;
         }
-        speed = sqrtf(player_state.unk240.x * player_state.unk240.x + player_state.unk240.y * player_state.unk240.y
-                      + player_state.unk240.z * player_state.unk240.z);
+        speed = sqrtf(player_state.floor_push.x * player_state.floor_push.x + player_state.floor_push.y * player_state.floor_push.y
+                      + player_state.floor_push.z * player_state.floor_push.z);
         if (record != NULL && record->push_acceleration != 0 && record->push_max_speed != 0) {
-            velocity = &player_state.unk240;
+            velocity = &player_state.floor_push;
             if (speed < (f32)record->push_max_speed) {
                 delta.x = sinf(record->push_heading) * (f32)record->push_acceleration;
                 delta.y = 0.0f;
                 delta.z = cosf(record->push_heading) * (f32)record->push_acceleration;
                 delta.w = 0.0f;
                 Vector_Add(velocity, velocity, &delta);
-                speed = sqrtf(player_state.unk240.x * player_state.unk240.x + player_state.unk240.y * player_state.unk240.y
-                              + player_state.unk240.z * player_state.unk240.z);
+                speed = sqrtf(player_state.floor_push.x * player_state.floor_push.x + player_state.floor_push.y * player_state.floor_push.y
+                              + player_state.floor_push.z * player_state.floor_push.z);
                 if (speed > (f32)record->push_max_speed) {
                     Vector_Normalize(velocity, velocity);
                     Vector_Scale((f32 *)velocity, (f32 *)velocity, (f32)record->push_max_speed);
@@ -1484,19 +1484,19 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
                 Vector_Normalize(&delta, velocity);
                 Vector_Scale((f32 *)&delta, (f32 *)&delta, -speed_loss);
                 Vector_Add(velocity, velocity, &delta);
-                speed = sqrtf(player_state.unk240.x * player_state.unk240.x + player_state.unk240.y * player_state.unk240.y
-                              + player_state.unk240.z * player_state.unk240.z);
+                speed = sqrtf(player_state.floor_push.x * player_state.floor_push.x + player_state.floor_push.y * player_state.floor_push.y
+                              + player_state.floor_push.z * player_state.floor_push.z);
                 if (speed > (f32)record->push_max_speed) {
                     Vector_Normalize(velocity, velocity);
                     Vector_Scale((f32 *)velocity, (f32 *)velocity, (f32)record->push_max_speed);
                 }
             }
         } else if (speed > speed_loss) {
-            Vector_Normalize(&delta, &player_state.unk240);
+            Vector_Normalize(&delta, &player_state.floor_push);
             Vector_Scale((f32 *)&delta, (f32 *)&delta, -speed_loss);
-            Vector_Add(&player_state.unk240, &player_state.unk240, &delta);
+            Vector_Add(&player_state.floor_push, &player_state.floor_push, &delta);
         } else {
-            player_state.unk240.x = player_state.unk240.y = player_state.unk240.z = 0.0f;
+            player_state.floor_push.x = player_state.floor_push.y = player_state.floor_push.z = 0.0f;
         }
     }
 
@@ -1881,7 +1881,7 @@ void Player_UpdateStatus(void) {
         }
     }
     if (player_state.equipped_magic == 0 && item_def->first_magic_id == 0xFFFF
-        && (item_def->second_magic_id == 0xFFFF || (weapon_level_records + player_state.weapon)->unk14 + 1 < 3) && Player_KnowsItemMenuMagic() == 0) {
+        && (item_def->second_magic_id == 0xFFFF || (weapon_level_records + player_state.weapon)->level_index + 1 < 3) && Player_KnowsItemMenuMagic() == 0) {
         player_state.magic_gauge = 0;
         player_state.charging_magic = 0;
     }
@@ -1984,49 +1984,49 @@ void Player_RecomputeStats(void) {
     SET_SCALED(6);
     SET_SCALED(7);
     SET_SCALED(8);
-    player_state.unk60.values[0] += player_state.physical_strength_bonus[0];
-    player_state.unk60.values[1] += player_state.physical_strength_bonus[1];
-    player_state.unk60.values[2] += player_state.physical_strength_bonus[2];
-    player_state.unk60.values[3] += player_state.magic_strength_bonus[0];
-    player_state.unk60.values[4] += player_state.magic_strength_bonus[1];
-    player_state.unk60.values[5] += player_state.magic_strength_bonus[2];
-    player_state.unk60.values[6] += player_state.magic_strength_bonus[3];
-    player_state.unk60.values[7] += player_state.magic_strength_bonus[4];
-    player_state.unk60.values[8] += player_state.magic_strength_bonus[5];
-    player_state.unk72 = item_def->unk36;
-    player_state.unk72.values[0] += player_state.ailment_attack_bonus[0];
-    player_state.unk72.values[1] += player_state.ailment_attack_bonus[1];
-    player_state.unk72.values[2] += player_state.ailment_attack_bonus[2];
-    player_state.unk72.values[3] += player_state.ailment_attack_bonus[3];
-    player_state.unk72.values[4] += player_state.ailment_attack_bonus[4];
-    player_state.unk72.values[5] += player_state.ailment_attack_bonus[5];
-    memset(&player_state.unk7E, 0, sizeof(PlayerShotStats));
-    Player_AddWornItemValues((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_SHIELD]);
-    Player_AddWornItemValues((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_HELM]);
-    Player_AddWornItemValues((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_ARMOR]);
-    Player_AddWornItemValues((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_GAUNTLET]);
-    Player_AddWornItemValues((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_BOOT]);
-    Player_AddWornItemValues((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_RING]);
-    Player_AddWornItemValues((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_BRACELET]);
-    Player_AddWornItemValues((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_AMULET]);
-    memset(&player_state.unk90, 0, sizeof(PlayerShotStats));
-    Player_AddWornItemValues((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_SHIELD]);
-    Player_AddWornItemValues((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_HELM]);
-    Player_AddWornItemValues((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_ARMOR]);
-    Player_AddWornItemValues((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_GAUNTLET]);
-    Player_AddWornItemValues((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_BOOT]);
-    Player_AddWornItemValues((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_RING]);
-    Player_AddWornItemValues((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_BRACELET]);
-    Player_AddWornItemValues((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_AMULET]);
-    player_state.unk90.values[0] += player_state.physical_defence_bonus[0];
-    player_state.unk90.values[1] += player_state.physical_defence_bonus[1];
-    player_state.unk90.values[2] += player_state.physical_defence_bonus[2];
-    player_state.unk90.values[3] += player_state.magic_defence_bonus[0];
-    player_state.unk90.values[4] += player_state.magic_defence_bonus[1];
-    player_state.unk90.values[5] += player_state.magic_defence_bonus[2];
-    player_state.unk90.values[6] += player_state.magic_defence_bonus[3];
-    player_state.unk90.values[7] += player_state.magic_defence_bonus[4];
-    player_state.unk90.values[8] += player_state.magic_defence_bonus[5];
+    player_state.attack_stats.values[0] += player_state.physical_strength_bonus[0];
+    player_state.attack_stats.values[1] += player_state.physical_strength_bonus[1];
+    player_state.attack_stats.values[2] += player_state.physical_strength_bonus[2];
+    player_state.attack_stats.values[3] += player_state.magic_strength_bonus[0];
+    player_state.attack_stats.values[4] += player_state.magic_strength_bonus[1];
+    player_state.attack_stats.values[5] += player_state.magic_strength_bonus[2];
+    player_state.attack_stats.values[6] += player_state.magic_strength_bonus[3];
+    player_state.attack_stats.values[7] += player_state.magic_strength_bonus[4];
+    player_state.attack_stats.values[8] += player_state.magic_strength_bonus[5];
+    player_state.ailment_attack_rates = item_def->ailment_attack_rates;
+    player_state.ailment_attack_rates.values[0] += player_state.ailment_attack_bonus[0];
+    player_state.ailment_attack_rates.values[1] += player_state.ailment_attack_bonus[1];
+    player_state.ailment_attack_rates.values[2] += player_state.ailment_attack_bonus[2];
+    player_state.ailment_attack_rates.values[3] += player_state.ailment_attack_bonus[3];
+    player_state.ailment_attack_rates.values[4] += player_state.ailment_attack_bonus[4];
+    player_state.ailment_attack_rates.values[5] += player_state.ailment_attack_bonus[5];
+    memset(&player_state.worn_item_stats, 0, sizeof(PlayerShotStats));
+    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_SHIELD]);
+    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_HELM]);
+    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_ARMOR]);
+    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_GAUNTLET]);
+    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_BOOT]);
+    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_RING]);
+    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_BRACELET]);
+    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_AMULET]);
+    memset(&player_state.defence_stats, 0, sizeof(PlayerShotStats));
+    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_SHIELD]);
+    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_HELM]);
+    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_ARMOR]);
+    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_GAUNTLET]);
+    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_BOOT]);
+    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_RING]);
+    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_BRACELET]);
+    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_AMULET]);
+    player_state.defence_stats.values[0] += player_state.physical_defence_bonus[0];
+    player_state.defence_stats.values[1] += player_state.physical_defence_bonus[1];
+    player_state.defence_stats.values[2] += player_state.physical_defence_bonus[2];
+    player_state.defence_stats.values[3] += player_state.magic_defence_bonus[0];
+    player_state.defence_stats.values[4] += player_state.magic_defence_bonus[1];
+    player_state.defence_stats.values[5] += player_state.magic_defence_bonus[2];
+    player_state.defence_stats.values[6] += player_state.magic_defence_bonus[3];
+    player_state.defence_stats.values[7] += player_state.magic_defence_bonus[4];
+    player_state.defence_stats.values[8] += player_state.magic_defence_bonus[5];
     player_state.ailment_defence[0] += player_state.ailment_defence_bonus[0];
     player_state.ailment_defence[1] += player_state.ailment_defence_bonus[1];
     player_state.ailment_defence[2] += player_state.ailment_defence_bonus[2];
@@ -2063,32 +2063,32 @@ void Player_RecomputeStats(void) {
         player_state.weight -= item_weight / 4;
     }
     if (player_state.equipment[EQUIP_GAUNTLET] == ITEM_WORN_INDEX(ITEM_SILVERY_GLOVES)) {
-        player_state.unk60.values[0] += player_state.unk60.values[0] / 10;
-        player_state.unk60.values[1] += player_state.unk60.values[1] / 10;
-        player_state.unk60.values[2] += player_state.unk60.values[2] / 10;
+        player_state.attack_stats.values[0] += player_state.attack_stats.values[0] / 10;
+        player_state.attack_stats.values[1] += player_state.attack_stats.values[1] / 10;
+        player_state.attack_stats.values[2] += player_state.attack_stats.values[2] / 10;
     }
     if (player_state.equipment[EQUIP_GAUNTLET] == ITEM_WORN_INDEX(ITEM_VENOM_GLOVES)) {
-        player_state.unk72.values[0] += 70;
+        player_state.ailment_attack_rates.values[0] += 70;
     }
     if (player_state.equipment[EQUIP_RING] == ITEM_WORN_INDEX(ITEM_WIDDAS_RING)) {
         player_state.hp_max += player_state.hp_max / 5;
     }
     if (player_state.equipment[EQUIP_RING] == ITEM_WORN_INDEX(ITEM_RING_OF_FIRE)) {
-        player_state.unk60.values[3] += 20;
+        player_state.attack_stats.values[3] += 20;
     }
     if (player_state.equipment[EQUIP_RING] == ITEM_WORN_INDEX(ITEM_RING_OF_EARTH)) {
-        player_state.unk60.values[4] += 20;
+        player_state.attack_stats.values[4] += 20;
     }
     if (player_state.equipment[EQUIP_RING] == ITEM_WORN_INDEX(ITEM_RING_OF_WIND)) {
-        player_state.unk60.values[5] += 20;
+        player_state.attack_stats.values[5] += 20;
     }
     if (player_state.equipment[EQUIP_RING] == ITEM_WORN_INDEX(ITEM_RING_OF_WATER)) {
-        player_state.unk60.values[6] += 20;
+        player_state.attack_stats.values[6] += 20;
     }
     if (player_state.equipment[EQUIP_BRACELET] == ITEM_WORN_INDEX(ITEM_POWER_BRACELET)) {
-        player_state.unk60.values[0] += player_state.unk60.values[0] / 10;
-        player_state.unk60.values[1] += player_state.unk60.values[1] / 10;
-        player_state.unk60.values[2] += player_state.unk60.values[2] / 10;
+        player_state.attack_stats.values[0] += player_state.attack_stats.values[0] / 10;
+        player_state.attack_stats.values[1] += player_state.attack_stats.values[1] / 10;
+        player_state.attack_stats.values[2] += player_state.attack_stats.values[2] / 10;
     }
     if (player_state.equipment[EQUIP_BRACELET] == ITEM_WORN_INDEX(ITEM_FEATHER_BRACELET)) {
         player_state.weight = player_state.weight * 3 / 4;
@@ -2105,23 +2105,23 @@ void Player_RecomputeStats(void) {
     if (player_state.mp_max >= 1000) {
         player_state.mp_max = 999;
     }
-    if (player_state.unk72.values[0] > 100) {
-        player_state.unk72.values[0] = 100;
+    if (player_state.ailment_attack_rates.values[0] > 100) {
+        player_state.ailment_attack_rates.values[0] = 100;
     }
-    if (player_state.unk72.values[1] > 100) {
-        player_state.unk72.values[1] = 100;
+    if (player_state.ailment_attack_rates.values[1] > 100) {
+        player_state.ailment_attack_rates.values[1] = 100;
     }
-    if (player_state.unk72.values[2] > 100) {
-        player_state.unk72.values[2] = 100;
+    if (player_state.ailment_attack_rates.values[2] > 100) {
+        player_state.ailment_attack_rates.values[2] = 100;
     }
-    if (player_state.unk72.values[3] > 100) {
-        player_state.unk72.values[3] = 100;
+    if (player_state.ailment_attack_rates.values[3] > 100) {
+        player_state.ailment_attack_rates.values[3] = 100;
     }
-    if (player_state.unk72.values[4] > 100) {
-        player_state.unk72.values[4] = 100;
+    if (player_state.ailment_attack_rates.values[4] > 100) {
+        player_state.ailment_attack_rates.values[4] = 100;
     }
-    if (player_state.unk72.values[5] > 100) {
-        player_state.unk72.values[5] = 100;
+    if (player_state.ailment_attack_rates.values[5] > 100) {
+        player_state.ailment_attack_rates.values[5] = 100;
     }
     if (player_state.ailment_defence[0] > 100) {
         player_state.ailment_defence[0] = 100;

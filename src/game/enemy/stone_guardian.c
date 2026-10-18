@@ -1,4 +1,4 @@
-/* StoneGuardian: the behaviour of entity type 23 (Entity.params->unk02, the index into entity_type_handlers): its
+/* StoneGuardian: the behaviour of entity type 23 (EntityParams.entity_type, the index into entity_type_handlers): its
    set-up function, which the table names, and the handlers it installs. Used by: Stone Guardian. The game
    names no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm
    records by hit points and experience, with resistances and drops where two monsters share those. */
@@ -75,39 +75,39 @@ static s32 StoneGuardian_Mode6IsNearestWaiting(Entity *entity, f32 limit);
 
 /* Set-up of a type 23 entity: clears its work area and installs the type's handlers. */
 void StoneGuardian_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
     u8 *unkC0 = entity->attack_weights;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->unkE0;
+        u8 *dest = (u8 *)&entity->ai_state;
 
         dest[i] = 0;
     }
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->animate = (void (*)(void))StoneGuardian_Animate;
-    unkE0->on_hit = (void (*)(void))StoneGuardian_OnHit;
-    unkE0->move = (void (*)(void))StoneGuardian_Move;
-    unkE0->death = (void (*)(void))EntityAi_Death;
-    unkE0->dormant = NULL;
+    ai_state->animate = (void (*)(void))StoneGuardian_Animate;
+    ai_state->on_hit = (void (*)(void))StoneGuardian_OnHit;
+    ai_state->move = (void (*)(void))StoneGuardian_Move;
+    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->dormant = NULL;
     if (entity->spawn_info->spawn_mode == 1) {
-        unkE0->move = NULL;
-        unkE0->think = StoneGuardian_ThinkHoldAnim17;
+        ai_state->move = NULL;
+        ai_state->think = StoneGuardian_ThinkHoldAnim17;
     } else if (entity->spawn_info->spawn_mode == 2) {
-        unkE0->think = StoneGuardian_ThinkMode2StayInBounds;
+        ai_state->think = StoneGuardian_ThinkMode2StayInBounds;
     } else if (entity->spawn_info->spawn_mode == 3) {
-        unkE0->think = StoneGuardian_ThinkMode3StayInBounds;
+        ai_state->think = StoneGuardian_ThinkMode3StayInBounds;
     } else if (entity->spawn_info->spawn_mode == 4) {
-        unkE0->think = StoneGuardian_ThinkMode4StayInBounds;
+        ai_state->think = StoneGuardian_ThinkMode4StayInBounds;
     } else if (entity->spawn_info->spawn_mode == 5) {
-        unkE0->think = StoneGuardian_ThinkMode5StayInBounds;
+        ai_state->think = StoneGuardian_ThinkMode5StayInBounds;
     } else if (entity->spawn_info->spawn_mode == 6) {
-        unkE0->think = StoneGuardian_ThinkMode6HideSequence;
-        unkE0->move = (void (*)(void))EntityAi_Move;
+        ai_state->think = StoneGuardian_ThinkMode6HideSequence;
+        ai_state->move = (void (*)(void))EntityAi_Move;
         entity->model->position[0] = -16200.0f;
         entity->model->position[1] = 3030.0f;
         entity->model->position[2] = 4900.0f;
@@ -116,10 +116,10 @@ void StoneGuardian_Init(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
-        unkE0->step_index = 1;
+        ai_state->step_index = 1;
     } else {
-        unkE0->think = EntityAi_Think;
-        unkE0->move = (void (*)(void))EntityAi_Move;
+        ai_state->think = EntityAi_Think;
+        ai_state->move = (void (*)(void))EntityAi_Move;
     }
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
@@ -129,27 +129,27 @@ void StoneGuardian_Init(Entity *entity) {
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
-    unkE0->pose_blend_weight = 0.5f;
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+    ai_state->pose_blend_weight = 0.5f;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
-    unkE0->part_angle_x = entity->spawn_info->spawn_x;
-    unkE0->part_angle_y = entity->spawn_info->spawn_y;
-    unkE0->part_angle_z = entity->spawn_info->spawn_z;
+    ai_state->part_angle_x = entity->spawn_info->spawn_x;
+    ai_state->part_angle_y = entity->spawn_info->spawn_y;
+    ai_state->part_angle_z = entity->spawn_info->spawn_z;
 }
 
 /* The animate handler: as EntityAi_Animate without the head turn. */
 static void StoneGuardian_Animate(Entity *entity) {
     u32 blend_frames; // match: converted to float as unsigned
     s64 flags;
-    EntityUnkE0 *unkE0;
+    EntityAiState *ai_state;
 
     flags = entity->flags;
-    unkE0 = &entity->unkE0;
+    ai_state = &entity->ai_state;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
-        blend_frames = entity->model->level_tables->unk88;
+        blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -170,27 +170,27 @@ static void StoneGuardian_OnHit(Entity *entity) {
 /* The move handler: turns only while the command also walks or runs; picks animation 3 or 4
    walking, 11 or 12 for a turn on the spot, else 0; then clears the busy bits and the command. */
 static void StoneGuardian_Move(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 turn = 0.0f;
 
     if (entity->move_command & (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN)) {
         if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
-            unkE0->turn_rate -= entity->params->turn_step_per_frame;
-            if (unkE0->turn_rate < -entity->params->turn_limit) {
-                unkE0->turn_rate = -entity->params->turn_limit;
+            ai_state->turn_rate -= entity->params->turn_step_per_frame;
+            if (ai_state->turn_rate < -entity->params->turn_limit) {
+                ai_state->turn_rate = -entity->params->turn_limit;
             }
         } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
-            unkE0->turn_rate += entity->params->turn_step_per_frame;
-            if (unkE0->turn_rate > entity->params->turn_limit) {
-                unkE0->turn_rate = entity->params->turn_limit;
+            ai_state->turn_rate += entity->params->turn_step_per_frame;
+            if (ai_state->turn_rate > entity->params->turn_limit) {
+                ai_state->turn_rate = entity->params->turn_limit;
             }
         } else {
-            unkE0->turn_rate = turn;
+            ai_state->turn_rate = turn;
         }
     } else {
-        unkE0->turn_rate = turn;
+        ai_state->turn_rate = turn;
     }
-    turn = unkE0->turn_rate;
+    turn = ai_state->turn_rate;
     if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
@@ -204,10 +204,10 @@ static void StoneGuardian_Move(Entity *entity) {
             }
         } else if (entity->move_command & MOVE_COMMAND_RUN) {
             entity->animation_index = 4;
-            entity->model->level_tables->unk8C = entity->params->motion_speeds[entity->animation_index];
+            entity->model->level_tables->frame_step = entity->params->motion_speeds[entity->animation_index];
         } else {
             entity->animation_index = 3;
-            entity->model->level_tables->unk8C = entity->params->motion_speeds[entity->animation_index];
+            entity->model->level_tables->frame_step = entity->params->motion_speeds[entity->animation_index];
         }
     } else if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         Motion_Start(entity, 0xB, 0, entity->params->motion_blend_frames, 0);
@@ -224,7 +224,7 @@ static void StoneGuardian_Move(Entity *entity) {
 /* An action (busy bit 0x1000): turns on the spot (animation 12 or 11) to the heading the entity
    spawned with, EntitySpawnInfo.spawn_rotation_y, then goes to state 0 and thinks. */
 static void StoneGuardian_TurnToSpawnHeading(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     s32 frames;
 
     entity->busy_flags = ENTITY_BUSY_1000;
@@ -239,7 +239,7 @@ static void StoneGuardian_TurnToSpawnHeading(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             frames = EntityAi_AnimationFrameCount(entity, entity->animation_index);
             entity->action_timer = frames;
             if (entity->ailment_3_frames != 0) {
@@ -254,12 +254,12 @@ static void StoneGuardian_TurnToSpawnHeading(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            unkE0->part_angle_x = entity->model->position[0];
-            unkE0->part_angle_y = entity->model->position[1];
-            unkE0->part_angle_z = entity->model->position[2];
+            ai_state->part_angle_x = entity->model->position[0];
+            ai_state->part_angle_y = entity->model->position[1];
+            ai_state->part_angle_z = entity->model->position[2];
             entity->prev_state = entity->state;
             entity->state = 0;
-            unkE0->think(entity, 1);
+            ai_state->think(entity, 1);
         }
         break;
     }
@@ -267,10 +267,10 @@ static void StoneGuardian_TurnToSpawnHeading(Entity *entity) {
 
 /* The action of state 0 in modes 2 to 5: stands in animation 1 with flag bit 18 set. */
 static void StoneGuardian_HoldAnim1(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     Motion_Start(entity, 1, 0, entity->params->motion_blend_frames, 0);
-    unkE0->turn_rate = 0.0f;
+    ai_state->turn_rate = 0.0f;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
 }
 
@@ -298,7 +298,7 @@ static void StoneGuardian_ThinkHoldAnim17(Entity *entity, s32 unknown) {
    3 until the entity is back at its place, then 0. Every frame it clamps the entity's position to
    fixed bounds. */
 static void StoneGuardian_ThinkMode2StayInBounds(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     MapObject *map_object;
     s32 is_open;
     s32 player_in_zone;
@@ -333,22 +333,22 @@ static void StoneGuardian_ThinkMode2StayInBounds(Entity *entity, s32 unknown) {
         switch (entity->state) {
         case 0:
             EntityAi_StartAction(entity, StoneGuardian_HoldAnim1, unknown);
-            unkE0->pause_timer = entity->params->pitch_limit_deg;
+            ai_state->pause_timer = entity->params->pitch_limit_deg;
             break;
         case 1:
-            if (unkE0->pause_timer == 0) {
+            if (ai_state->pause_timer == 0) {
                 EntityAi_StartAction(entity, StoneGuardian_Mode2WalkToPost, unknown);
-                unkE0->sub_timer = entity->params->yaw_limit_deg;
+                ai_state->sub_timer = entity->params->yaw_limit_deg;
             }
             break;
         case 2:
-            if (unkE0->pause_timer == 0) {
+            if (ai_state->pause_timer == 0) {
                 EntityAi_StartAction(entity, StoneGuardian_Mode2ChaseInBounds, unknown);
-                unkE0->sub_timer = entity->params->yaw_limit_deg;
+                ai_state->sub_timer = entity->params->yaw_limit_deg;
             }
             break;
         case 3:
-            if (unkE0->pause_timer == 0) {
+            if (ai_state->pause_timer == 0) {
                 EntityAi_StartAction(entity, StoneGuardian_Mode2ReturnToSpawn, unknown);
             }
             break;
@@ -356,11 +356,11 @@ static void StoneGuardian_ThinkMode2StayInBounds(Entity *entity, s32 unknown) {
             entity->state = 0;
             break;
         }
-        if (unkE0->pause_timer > 0) {
-            unkE0->pause_timer--;
+        if (ai_state->pause_timer > 0) {
+            ai_state->pause_timer--;
         }
-        if (unkE0->sub_timer > 0) {
-            unkE0->sub_timer--;
+        if (ai_state->sub_timer > 0) {
+            ai_state->sub_timer--;
         }
     }
     if (entity->model->position[0] < -8400.0f) {
@@ -382,7 +382,7 @@ static void StoneGuardian_ThinkMode2StayInBounds(Entity *entity, s32 unknown) {
 /* The action of state 1 in mode 2: attacks when EntityAi_CanAttack says so; else goes to a post picked
    by where the player is and turns to a fixed heading there. */
 static void StoneGuardian_Mode2WalkToPost(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 post[4];
     f32 facing;
     f32 angle;
@@ -423,11 +423,11 @@ static void StoneGuardian_Mode2WalkToPost(Entity *entity) {
         facing = 3.1415927f;
     }
     if (entity->model->position[2] < -4800.0f) {
-        unkE0->target_point[0] = entity->spawn_info->spawn_x;
-        unkE0->target_point[1] = entity->spawn_info->spawn_y;
-        unkE0->target_point[3] = 0.0f;
-        unkE0->target_point[2] = -4200.0f;
-        entity->target = unkE0->target_point;
+        ai_state->target_point[0] = entity->spawn_info->spawn_x;
+        ai_state->target_point[1] = entity->spawn_info->spawn_y;
+        ai_state->target_point[3] = 0.0f;
+        ai_state->target_point[2] = -4200.0f;
+        entity->target = ai_state->target_point;
         entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f);
     } else if (EntityMath_DistanceXZ(entity->model->position, post) < 100.0f) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], facing);
@@ -439,17 +439,17 @@ static void StoneGuardian_Mode2WalkToPost(Entity *entity) {
             }
         }
     } else {
-        Vector_Copy(unkE0->target_point, post);
-        entity->target = unkE0->target_point;
+        Vector_Copy(ai_state->target_point, post);
+        entity->target = ai_state->target_point;
         entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f) | MOVE_COMMAND_TURN_FAST;
     }
-    ((void (*)(Entity *))unkE0->move)(entity);
+    ((void (*)(Entity *))ai_state->move)(entity);
 }
 
 /* The action of state 2 in mode 2: attacks when EntityAi_CanAttack says so; else goes for the player,
    stopping at the edge of its bounds and turning to the player there. */
 static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction;
     f32 angle;
     f32 range;
@@ -466,12 +466,12 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
     }
     range = 100.0f;
     if (player_state.position[0] < -8400.0f) {
-        unkE0->target_point[0] = entity->collision_radius + -8400.0f;
-        unkE0->target_point[1] = entity->spawn_info->spawn_y;
-        unkE0->target_point[3] = 0.0f;
-        unkE0->target_point[2] = -4400.0f;
-        if (EntityMath_DistanceXZ(entity->model->position, unkE0->target_point) > range) {
-            entity->target = unkE0->target_point;
+        ai_state->target_point[0] = entity->collision_radius + -8400.0f;
+        ai_state->target_point[1] = entity->spawn_info->spawn_y;
+        ai_state->target_point[3] = 0.0f;
+        ai_state->target_point[2] = -4400.0f;
+        if (EntityMath_DistanceXZ(entity->model->position, ai_state->target_point) > range) {
+            entity->target = ai_state->target_point;
             entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
             entity->target = &player_state;
@@ -486,12 +486,12 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
             }
         }
     } else if (player_state.position[0] > -1950.0f) {
-        unkE0->target_point[0] = -1950.0f - entity->collision_radius;
-        unkE0->target_point[1] = entity->spawn_info->spawn_y;
-        unkE0->target_point[3] = 0.0f;
-        unkE0->target_point[2] = -4400.0f;
-        if (EntityMath_DistanceXZ(entity->model->position, unkE0->target_point) > range) {
-            entity->target = unkE0->target_point;
+        ai_state->target_point[0] = -1950.0f - entity->collision_radius;
+        ai_state->target_point[1] = entity->spawn_info->spawn_y;
+        ai_state->target_point[3] = 0.0f;
+        ai_state->target_point[2] = -4400.0f;
+        if (EntityMath_DistanceXZ(entity->model->position, ai_state->target_point) > range) {
+            entity->target = ai_state->target_point;
             entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
             entity->target = &player_state;
@@ -506,12 +506,12 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
             }
         }
     } else if (player_state.position[2] > -4000.0f) {
-        unkE0->target_point[0] = -5200.0f;
-        unkE0->target_point[1] = entity->spawn_info->spawn_y;
-        unkE0->target_point[2] = -4000.0f - entity->collision_radius;
-        unkE0->target_point[3] = 0.0f;
-        if (EntityMath_DistanceXZ(entity->model->position, unkE0->target_point) > range) {
-            entity->target = unkE0->target_point;
+        ai_state->target_point[0] = -5200.0f;
+        ai_state->target_point[1] = entity->spawn_info->spawn_y;
+        ai_state->target_point[2] = -4000.0f - entity->collision_radius;
+        ai_state->target_point[3] = 0.0f;
+        if (EntityMath_DistanceXZ(entity->model->position, ai_state->target_point) > range) {
+            entity->target = ai_state->target_point;
             entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
             entity->target = &player_state;
@@ -527,12 +527,12 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
         }
     } else if (player_state.position[2] < -4800.0f && player_state.position[0] > -5600.0f &&
                player_state.position[0] < -4800.0f) {
-        unkE0->target_point[0] = -5200.0f;
-        unkE0->target_point[1] = entity->spawn_info->spawn_y;
-        unkE0->target_point[2] = entity->collision_radius + -4800.0f;
-        unkE0->target_point[3] = 0.0f;
-        if (EntityMath_DistanceXZ(entity->model->position, unkE0->target_point) > range) {
-            entity->target = unkE0->target_point;
+        ai_state->target_point[0] = -5200.0f;
+        ai_state->target_point[1] = entity->spawn_info->spawn_y;
+        ai_state->target_point[2] = entity->collision_radius + -4800.0f;
+        ai_state->target_point[3] = 0.0f;
+        if (EntityMath_DistanceXZ(entity->model->position, ai_state->target_point) > range) {
+            entity->target = ai_state->target_point;
             entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
             entity->target = &player_state;
@@ -550,18 +550,18 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
         entity->target = &player_state;
         entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
     }
-    ((void (*)(Entity *))unkE0->move)(entity);
+    ((void (*)(Entity *))ai_state->move)(entity);
 }
 
 /* The action of state 3 in mode 2: after the pause in work word unk6A goes back to its spawn point,
    turns to its spawn heading (StoneGuardian_TurnToSpawnHeading) and goes to state 0; still attacks when
    EntityAi_CanAttack says so. */
 static void StoneGuardian_Mode2ReturnToSpawn(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 angle;
 
-    if (unkE0->sub_timer > 0) {
-        unkE0->move();
+    if (ai_state->sub_timer > 0) {
+        ai_state->move();
         return;
     }
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
@@ -575,11 +575,11 @@ static void StoneGuardian_Mode2ReturnToSpawn(Entity *entity) {
         return;
     }
     if (entity->model->position[0] < -3150.0f) {
-        unkE0->target_point[0] = entity->spawn_info->spawn_x;
-        entity->target = unkE0->target_point;
-        unkE0->target_point[1] = entity->spawn_info->spawn_y;
-        unkE0->target_point[3] = 0.0f;
-        unkE0->target_point[2] = -4200.0f;
+        ai_state->target_point[0] = entity->spawn_info->spawn_x;
+        entity->target = ai_state->target_point;
+        ai_state->target_point[1] = entity->spawn_info->spawn_y;
+        ai_state->target_point[3] = 0.0f;
+        ai_state->target_point[2] = -4200.0f;
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     } else if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) < 100.0f) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->spawn_info->spawn_rotation_y);
@@ -594,14 +594,14 @@ static void StoneGuardian_Mode2ReturnToSpawn(Entity *entity) {
         entity->target = entity->spawn_info;
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
-    ((void (*)(Entity *))unkE0->move)(entity);
+    ((void (*)(Entity *))ai_state->move)(entity);
 }
 
 /* The think handler of mode 3: as StoneGuardian_ThinkMode2StayInBounds with its own rectangle,
    bounds and actions (StoneGuardian_Mode3WalkToPost, StoneGuardian_Mode3ChaseInBounds,
    StoneGuardian_Mode3ReturnToSpawn). */
 static void StoneGuardian_ThinkMode3StayInBounds(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     MapObject *map_object;
     s32 is_open;
     s32 player_in_zone;
@@ -636,11 +636,11 @@ static void StoneGuardian_ThinkMode3StayInBounds(Entity *entity, s32 unknown) {
             break;
         case 1:
             EntityAi_StartAction(entity, StoneGuardian_Mode3WalkToPost, unknown);
-            unkE0->sub_timer = entity->params->yaw_limit_deg;
+            ai_state->sub_timer = entity->params->yaw_limit_deg;
             break;
         case 2:
             EntityAi_StartAction(entity, StoneGuardian_Mode3ChaseInBounds, unknown);
-            unkE0->sub_timer = entity->params->yaw_limit_deg;
+            ai_state->sub_timer = entity->params->yaw_limit_deg;
             break;
         case 3:
             EntityAi_StartAction(entity, StoneGuardian_Mode3ReturnToSpawn, unknown);
@@ -649,8 +649,8 @@ static void StoneGuardian_ThinkMode3StayInBounds(Entity *entity, s32 unknown) {
             entity->state = 0;
             break;
         }
-        if (unkE0->sub_timer > 0) {
-            unkE0->sub_timer--;
+        if (ai_state->sub_timer > 0) {
+            ai_state->sub_timer--;
         }
     }
     if (entity->model->position[0] < 4800.0f) {
@@ -667,7 +667,7 @@ static void StoneGuardian_ThinkMode3StayInBounds(Entity *entity, s32 unknown) {
 /* The action of state 1 in mode 3: attacks when EntityAi_CanAttack says so; else goes to a fixed post
    and turns to a fixed heading there. */
 static void StoneGuardian_Mode3WalkToPost(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 home[4];
     f32 angle;
     f32 range;
@@ -697,17 +697,17 @@ static void StoneGuardian_Mode3WalkToPost(Entity *entity) {
             }
         }
     } else {
-        Vector_Copy(unkE0->target_point, home);
-        entity->target = unkE0->target_point;
+        Vector_Copy(ai_state->target_point, home);
+        entity->target = ai_state->target_point;
         entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f) | MOVE_COMMAND_TURN_FAST;
     }
-    ((void (*)(Entity *))unkE0->move)(entity);
+    ((void (*)(Entity *))ai_state->move)(entity);
 }
 
 /* The action of state 2 in mode 3: attacks when EntityAi_CanAttack says so; else goes for the player,
    stopping at the edge of its bounds and turning to the player there. */
 static void StoneGuardian_Mode3ChaseInBounds(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction;
     f32 angle;
     f32 range;
@@ -724,12 +724,12 @@ static void StoneGuardian_Mode3ChaseInBounds(Entity *entity) {
     }
     range = 100.0f;
     if (player_state.position[0] < 4800.0f) {
-        unkE0->target_point[0] = 4800.0f;
-        unkE0->target_point[1] = entity->spawn_info->spawn_y;
-        unkE0->target_point[3] = 0.0f;
-        unkE0->target_point[2] = -4400.0f;
-        if (EntityMath_DistanceXZ(entity->model->position, unkE0->target_point) > range) {
-            entity->target = unkE0->target_point;
+        ai_state->target_point[0] = 4800.0f;
+        ai_state->target_point[1] = entity->spawn_info->spawn_y;
+        ai_state->target_point[3] = 0.0f;
+        ai_state->target_point[2] = -4400.0f;
+        if (EntityMath_DistanceXZ(entity->model->position, ai_state->target_point) > range) {
+            entity->target = ai_state->target_point;
             entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
             entity->target = &player_state;
@@ -744,12 +744,12 @@ static void StoneGuardian_Mode3ChaseInBounds(Entity *entity) {
             }
         }
     } else if (player_state.position[0] > 6650.0f) {
-        unkE0->target_point[0] = 6650.0f - entity->collision_radius;
-        unkE0->target_point[1] = entity->spawn_info->spawn_y;
-        unkE0->target_point[3] = 0.0f;
-        unkE0->target_point[2] = -4400.0f;
-        if (EntityMath_DistanceXZ(entity->model->position, unkE0->target_point) > range) {
-            entity->target = unkE0->target_point;
+        ai_state->target_point[0] = 6650.0f - entity->collision_radius;
+        ai_state->target_point[1] = entity->spawn_info->spawn_y;
+        ai_state->target_point[3] = 0.0f;
+        ai_state->target_point[2] = -4400.0f;
+        if (EntityMath_DistanceXZ(entity->model->position, ai_state->target_point) > range) {
+            entity->target = ai_state->target_point;
             entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
             entity->target = &player_state;
@@ -767,18 +767,18 @@ static void StoneGuardian_Mode3ChaseInBounds(Entity *entity) {
         entity->target = &player_state;
         entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + range + 30.0f);
     }
-    ((void (*)(Entity *))unkE0->move)(entity);
+    ((void (*)(Entity *))ai_state->move)(entity);
 }
 
 /* The action of state 3 in mode 3: after the pause in work word unk6A goes back to its spawn point,
    turns to its spawn heading (StoneGuardian_TurnToSpawnHeading) and goes to state 0; still attacks when
    EntityAi_CanAttack says so. */
 static void StoneGuardian_Mode3ReturnToSpawn(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 angle;
 
-    if (unkE0->sub_timer > 0) {
-        unkE0->move();
+    if (ai_state->sub_timer > 0) {
+        ai_state->move();
         return;
     }
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
@@ -792,11 +792,11 @@ static void StoneGuardian_Mode3ReturnToSpawn(Entity *entity) {
         return;
     }
     if (entity->model->position[0] < 5450.0f || entity->model->position[0] > 6150.0f) {
-        unkE0->target_point[0] = entity->spawn_info->spawn_x;
-        entity->target = unkE0->target_point;
-        unkE0->target_point[1] = entity->spawn_info->spawn_y;
-        unkE0->target_point[3] = 0.0f;
-        unkE0->target_point[2] = -4200.0f;
+        ai_state->target_point[0] = entity->spawn_info->spawn_x;
+        entity->target = ai_state->target_point;
+        ai_state->target_point[1] = entity->spawn_info->spawn_y;
+        ai_state->target_point[3] = 0.0f;
+        ai_state->target_point[2] = -4200.0f;
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     } else if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) < 100.0f) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->spawn_info->spawn_rotation_y);
@@ -811,14 +811,14 @@ static void StoneGuardian_Mode3ReturnToSpawn(Entity *entity) {
         entity->target = entity->spawn_info;
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
-    ((void (*)(Entity *))unkE0->move)(entity);
+    ((void (*)(Entity *))ai_state->move)(entity);
 }
 
 /* The think handler of mode 4: as StoneGuardian_ThinkMode3StayInBounds with its own rectangle,
    bounds and actions (StoneGuardian_Mode4WalkToPost, StoneGuardian_Mode4ChaseInBounds,
    StoneGuardian_Mode4ReturnToSpawn). */
 static void StoneGuardian_ThinkMode4StayInBounds(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     MapObject *map_object;
     s32 is_open;
     s32 player_in_zone;
@@ -853,11 +853,11 @@ static void StoneGuardian_ThinkMode4StayInBounds(Entity *entity, s32 unknown) {
             break;
         case 1:
             EntityAi_StartAction(entity, StoneGuardian_Mode4WalkToPost, unknown);
-            unkE0->sub_timer = entity->params->yaw_limit_deg;
+            ai_state->sub_timer = entity->params->yaw_limit_deg;
             break;
         case 2:
             EntityAi_StartAction(entity, StoneGuardian_Mode4ChaseInBounds, unknown);
-            unkE0->sub_timer = entity->params->yaw_limit_deg;
+            ai_state->sub_timer = entity->params->yaw_limit_deg;
             break;
         case 3:
             EntityAi_StartAction(entity, StoneGuardian_Mode4ReturnToSpawn, unknown);
@@ -866,8 +866,8 @@ static void StoneGuardian_ThinkMode4StayInBounds(Entity *entity, s32 unknown) {
             entity->state = 0;
             break;
         }
-        if (unkE0->sub_timer > 0) {
-            unkE0->sub_timer--;
+        if (ai_state->sub_timer > 0) {
+            ai_state->sub_timer--;
         }
     }
     if (entity->model->position[0] < entity->collision_radius + 6150.0f) {
@@ -883,7 +883,7 @@ static void StoneGuardian_ThinkMode4StayInBounds(Entity *entity, s32 unknown) {
 
 /* The action of state 1 in mode 4: the same as StoneGuardian_Mode3WalkToPost. */
 static void StoneGuardian_Mode4WalkToPost(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 home[4];
     f32 angle;
     f32 range;
@@ -913,16 +913,16 @@ static void StoneGuardian_Mode4WalkToPost(Entity *entity) {
             }
         }
     } else {
-        Vector_Copy(unkE0->target_point, home);
-        entity->target = unkE0->target_point;
+        Vector_Copy(ai_state->target_point, home);
+        entity->target = ai_state->target_point;
         entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f) | MOVE_COMMAND_TURN_FAST;
     }
-    ((void (*)(Entity *))unkE0->move)(entity);
+    ((void (*)(Entity *))ai_state->move)(entity);
 }
 
 /* The action of state 2 in mode 4: as StoneGuardian_Mode3ChaseInBounds with its own bounds. */
 static void StoneGuardian_Mode4ChaseInBounds(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction;
     f32 angle;
     f32 range;
@@ -939,12 +939,12 @@ static void StoneGuardian_Mode4ChaseInBounds(Entity *entity) {
     }
     range = 100.0f;
     if (player_state.position[0] < 6150.0f) {
-        unkE0->target_point[0] = entity->collision_radius + 6150.0f;
-        unkE0->target_point[1] = entity->spawn_info->spawn_y;
-        unkE0->target_point[3] = 0.0f;
-        unkE0->target_point[2] = -4400.0f;
-        if (EntityMath_DistanceXZ(entity->model->position, unkE0->target_point) > range) {
-            entity->target = unkE0->target_point;
+        ai_state->target_point[0] = entity->collision_radius + 6150.0f;
+        ai_state->target_point[1] = entity->spawn_info->spawn_y;
+        ai_state->target_point[3] = 0.0f;
+        ai_state->target_point[2] = -4400.0f;
+        if (EntityMath_DistanceXZ(entity->model->position, ai_state->target_point) > range) {
+            entity->target = ai_state->target_point;
             entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
             entity->target = &player_state;
@@ -959,12 +959,12 @@ static void StoneGuardian_Mode4ChaseInBounds(Entity *entity) {
             }
         }
     } else if (player_state.position[0] > 8000.0f) {
-        unkE0->target_point[0] = 8000.0f;
-        unkE0->target_point[1] = entity->spawn_info->spawn_y;
-        unkE0->target_point[3] = 0.0f;
-        unkE0->target_point[2] = -4400.0f;
-        if (EntityMath_DistanceXZ(entity->model->position, unkE0->target_point) > range) {
-            entity->target = unkE0->target_point;
+        ai_state->target_point[0] = 8000.0f;
+        ai_state->target_point[1] = entity->spawn_info->spawn_y;
+        ai_state->target_point[3] = 0.0f;
+        ai_state->target_point[2] = -4400.0f;
+        if (EntityMath_DistanceXZ(entity->model->position, ai_state->target_point) > range) {
+            entity->target = ai_state->target_point;
             entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
             entity->target = &player_state;
@@ -982,16 +982,16 @@ static void StoneGuardian_Mode4ChaseInBounds(Entity *entity) {
         entity->target = &player_state;
         entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + range + 30.0f);
     }
-    ((void (*)(Entity *))unkE0->move)(entity);
+    ((void (*)(Entity *))ai_state->move)(entity);
 }
 
 /* The action of state 3 in mode 4: as StoneGuardian_Mode3ReturnToSpawn with its own bounds. */
 static void StoneGuardian_Mode4ReturnToSpawn(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 angle;
 
-    if (unkE0->sub_timer > 0) {
-        unkE0->move();
+    if (ai_state->sub_timer > 0) {
+        ai_state->move();
         return;
     }
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
@@ -1005,11 +1005,11 @@ static void StoneGuardian_Mode4ReturnToSpawn(Entity *entity) {
         return;
     }
     if (entity->model->position[0] < 6650.0f || entity->model->position[0] > 7350.0f) {
-        unkE0->target_point[0] = entity->spawn_info->spawn_x;
-        entity->target = unkE0->target_point;
-        unkE0->target_point[1] = entity->spawn_info->spawn_y;
-        unkE0->target_point[3] = 0.0f;
-        unkE0->target_point[2] = -4200.0f;
+        ai_state->target_point[0] = entity->spawn_info->spawn_x;
+        entity->target = ai_state->target_point;
+        ai_state->target_point[1] = entity->spawn_info->spawn_y;
+        ai_state->target_point[3] = 0.0f;
+        ai_state->target_point[2] = -4200.0f;
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     } else if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) < 100.0f) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->spawn_info->spawn_rotation_y);
@@ -1024,14 +1024,14 @@ static void StoneGuardian_Mode4ReturnToSpawn(Entity *entity) {
         entity->target = entity->spawn_info;
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
-    ((void (*)(Entity *))unkE0->move)(entity);
+    ((void (*)(Entity *))ai_state->move)(entity);
 }
 
 /* The think handler of mode 5: as StoneGuardian_ThinkMode3StayInBounds with its own rectangle,
    bounds and actions (StoneGuardian_Mode5WalkToPost, StoneGuardian_Mode5ChaseInBounds,
    StoneGuardian_Mode5ReturnToSpawn). */
 static void StoneGuardian_ThinkMode5StayInBounds(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     MapObject *map_object;
     s32 is_open;
     s32 player_in_zone;
@@ -1067,11 +1067,11 @@ static void StoneGuardian_ThinkMode5StayInBounds(Entity *entity, s32 unknown) {
             break;
         case 1:
             EntityAi_StartAction(entity, StoneGuardian_Mode5WalkToPost, unknown);
-            unkE0->sub_timer = entity->params->yaw_limit_deg;
+            ai_state->sub_timer = entity->params->yaw_limit_deg;
             break;
         case 2:
             EntityAi_StartAction(entity, StoneGuardian_Mode5ChaseInBounds, unknown);
-            unkE0->sub_timer = entity->params->yaw_limit_deg;
+            ai_state->sub_timer = entity->params->yaw_limit_deg;
             break;
         case 3:
             EntityAi_StartAction(entity, StoneGuardian_Mode5ReturnToSpawn, unknown);
@@ -1080,8 +1080,8 @@ static void StoneGuardian_ThinkMode5StayInBounds(Entity *entity, s32 unknown) {
             entity->state = 0;
             break;
         }
-        if (unkE0->sub_timer > 0) {
-            unkE0->sub_timer--;
+        if (ai_state->sub_timer > 0) {
+            ai_state->sub_timer--;
         }
     }
     if (entity->model->position[0] < -18300.0f) {
@@ -1097,7 +1097,7 @@ static void StoneGuardian_ThinkMode5StayInBounds(Entity *entity, s32 unknown) {
 
 /* The action of state 1 in mode 5: as StoneGuardian_Mode3WalkToPost with its own post and heading. */
 static void StoneGuardian_Mode5WalkToPost(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 home[4];
     f32 angle;
     f32 range;
@@ -1127,16 +1127,16 @@ static void StoneGuardian_Mode5WalkToPost(Entity *entity) {
             }
         }
     } else {
-        Vector_Copy(unkE0->target_point, home);
-        entity->target = unkE0->target_point;
+        Vector_Copy(ai_state->target_point, home);
+        entity->target = ai_state->target_point;
         entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f) | MOVE_COMMAND_TURN_FAST;
     }
-    ((void (*)(Entity *))unkE0->move)(entity);
+    ((void (*)(Entity *))ai_state->move)(entity);
 }
 
 /* The action of state 2 in mode 5: as StoneGuardian_Mode3ChaseInBounds with its own bounds. */
 static void StoneGuardian_Mode5ChaseInBounds(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction;
     f32 angle;
     f32 range;
@@ -1153,12 +1153,12 @@ static void StoneGuardian_Mode5ChaseInBounds(Entity *entity) {
     }
     range = 100.0f;
     if (player_state.position[0] < -18300.0f) {
-        unkE0->target_point[0] = -18300.0f;
-        unkE0->target_point[1] = entity->model->position[1];
-        unkE0->target_point[3] = 0.0f;
-        unkE0->target_point[2] = 600.0f;
-        if (EntityMath_DistanceXZ(entity->model->position, unkE0->target_point) > range) {
-            entity->target = unkE0->target_point;
+        ai_state->target_point[0] = -18300.0f;
+        ai_state->target_point[1] = entity->model->position[1];
+        ai_state->target_point[3] = 0.0f;
+        ai_state->target_point[2] = 600.0f;
+        if (EntityMath_DistanceXZ(entity->model->position, ai_state->target_point) > range) {
+            entity->target = ai_state->target_point;
             entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
             entity->target = &player_state;
@@ -1173,12 +1173,12 @@ static void StoneGuardian_Mode5ChaseInBounds(Entity *entity) {
             }
         }
     } else if (player_state.position[0] > -16050.0f) {
-        unkE0->target_point[0] = -16050.0f;
-        unkE0->target_point[1] = entity->model->position[1];
-        unkE0->target_point[3] = 0.0f;
-        unkE0->target_point[2] = 600.0f;
-        if (EntityMath_DistanceXZ(entity->model->position, unkE0->target_point) > range) {
-            entity->target = unkE0->target_point;
+        ai_state->target_point[0] = -16050.0f;
+        ai_state->target_point[1] = entity->model->position[1];
+        ai_state->target_point[3] = 0.0f;
+        ai_state->target_point[2] = 600.0f;
+        if (EntityMath_DistanceXZ(entity->model->position, ai_state->target_point) > range) {
+            entity->target = ai_state->target_point;
             entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
             entity->target = &player_state;
@@ -1196,16 +1196,16 @@ static void StoneGuardian_Mode5ChaseInBounds(Entity *entity) {
         entity->target = &player_state;
         entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + range + 30.0f);
     }
-    ((void (*)(Entity *))unkE0->move)(entity);
+    ((void (*)(Entity *))ai_state->move)(entity);
 }
 
 /* The action of state 3 in mode 5: as StoneGuardian_Mode3ReturnToSpawn with its own bounds. */
 static void StoneGuardian_Mode5ReturnToSpawn(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 angle;
 
-    if (unkE0->sub_timer > 0) {
-        unkE0->move();
+    if (ai_state->sub_timer > 0) {
+        ai_state->move();
         return;
     }
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
@@ -1219,11 +1219,11 @@ static void StoneGuardian_Mode5ReturnToSpawn(Entity *entity) {
         return;
     }
     if (entity->model->position[0] < -17900.0f || entity->model->position[0] > -17200.0f) {
-        unkE0->target_point[0] = entity->spawn_info->spawn_x;
-        entity->target = unkE0->target_point;
-        unkE0->target_point[1] = entity->model->position[1];
-        unkE0->target_point[3] = 0.0f;
-        unkE0->target_point[2] = 600.0f;
+        ai_state->target_point[0] = entity->spawn_info->spawn_x;
+        entity->target = ai_state->target_point;
+        ai_state->target_point[1] = entity->model->position[1];
+        ai_state->target_point[3] = 0.0f;
+        ai_state->target_point[2] = 600.0f;
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     } else if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) < 100.0f) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->spawn_info->spawn_rotation_y);
@@ -1238,7 +1238,7 @@ static void StoneGuardian_Mode5ReturnToSpawn(Entity *entity) {
         entity->target = entity->spawn_info;
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
-    ((void (*)(Entity *))unkE0->move)(entity);
+    ((void (*)(Entity *))ai_state->move)(entity);
 }
 
 /* The think handler of mode 6: a sequence kept in work byte unk7A (1 to 7; at 0 it is
@@ -1248,7 +1248,7 @@ static void StoneGuardian_Mode5ReturnToSpawn(Entity *entity) {
    StoneGuardian_PlayAnim9, then 0); when both are set again it goes back the same way (steps 4 to 7,
    StoneGuardian_PlayAnim8). The functions named Mode6... do the work of a step. */
 static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 post[4];
     MapObject *map_object;
     s32 first_open;
@@ -1269,17 +1269,17 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 unknown) {
     if (entity->busy_flags != 0) {
         return;
     }
-    if (!both_open && unkE0->step_index != 0) {
+    if (!both_open && ai_state->step_index != 0) {
         if (EntityMath_DistanceXZ(entity->spawn_info, &player_state) > 5400.0f) {
             Vector_Copy(entity->model->position, entity->spawn_info);
-            unkE0->step_index = 0;
+            ai_state->step_index = 0;
         }
     }
-    switch (unkE0->step_index) {
+    switch (ai_state->step_index) {
     case 1:
         if (!both_open) {
-            unkE0->step_index++;
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+            ai_state->step_index++;
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
         } else {
             StoneGuardian_Mode6StayHidden(entity, unknown);
         }
@@ -1289,54 +1289,54 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 unknown) {
             if (!StoneGuardian_Mode6IsStepFree(entity, 3) || !StoneGuardian_Mode6IsStepFree(entity, 6) || !StoneGuardian_Mode6IsStepFree(entity, 7)) {
                 StoneGuardian_Mode6WaitTurnHidden(entity, unknown);
             } else {
-                unkE0->step_index++;
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+                ai_state->step_index++;
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
             }
         } else {
-            unkE0->step_index = 1;
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+            ai_state->step_index = 1;
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
         }
         break;
     case 3:
         if (!both_open) {
             StoneGuardian_Mode6LeaveHiding(entity, unknown);
         } else {
-            unkE0->step_index = 7;
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+            ai_state->step_index = 7;
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
         }
         break;
     case 4:
         post[0] = -18450.0f;
         post[1] = 3190.0f;
         post[2] = 4900.0f;
-        unkE0->pitch_speed = EntityMath_DistanceXZ(entity->model->position, post);
-        unkE0->step_index++;
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+        ai_state->pitch_speed = EntityMath_DistanceXZ(entity->model->position, post);
+        ai_state->step_index++;
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
         break;
     case 5:
         if (!both_open) {
-            unkE0->step_index = 0;
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+            ai_state->step_index = 0;
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
         } else if (StoneGuardian_Mode6IsStepFree(entity, 3) && StoneGuardian_Mode6IsStepFree(entity, 6) && StoneGuardian_Mode6IsStepFree(entity, 7) &&
-                   StoneGuardian_Mode6IsNearestWaiting(entity, unkE0->pitch_speed)) {
-            unkE0->step_index++;
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+                   StoneGuardian_Mode6IsNearestWaiting(entity, ai_state->pitch_speed)) {
+            ai_state->step_index++;
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
         } else {
             StoneGuardian_Mode6WaitTurnShown(entity, unknown);
         }
         break;
     case 6:
         if (!both_open) {
-            unkE0->step_index = 0;
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+            ai_state->step_index = 0;
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
         } else {
             StoneGuardian_Mode6ReturnToHiding(entity, unknown);
         }
         break;
     case 7:
         if (!both_open) {
-            unkE0->step_index = 3;
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+            ai_state->step_index = 3;
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
         } else {
             StoneGuardian_Mode6WalkToHidePoint(entity, unknown);
         }
@@ -1351,8 +1351,8 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 unknown) {
         ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
         entity->model_alpha = 0x80;
         if (both_open) {
-            unkE0->step_index = 4;
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+            ai_state->step_index = 4;
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
         } else {
             EntityAi_Think(entity, unknown);
         }
@@ -1379,7 +1379,7 @@ static void StoneGuardian_Mode6StayHidden(Entity *entity, s32 unknown) {
     model->position[2] = 4900.0f;
     model->rotation[1] = 1.5707964f;
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    EntityAi_StartAction(entity, (void (*)(Entity *))entity->unkE0.move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))entity->ai_state.move, unknown);
 }
 
 /* Step 2 of StoneGuardian_ThinkMode6HideSequence: the same as StoneGuardian_Mode6StayHidden. What
@@ -1401,13 +1401,13 @@ static void StoneGuardian_Mode6WaitTurnHidden(Entity *entity, s32 unknown) {
     model->position[2] = 4900.0f;
     model->rotation[1] = 1.5707964f;
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    EntityAi_StartAction(entity, (void (*)(Entity *))entity->unkE0.move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))entity->ai_state.move, unknown);
 }
 
 /* Step 3 of StoneGuardian_ThinkMode6HideSequence: shows the entity, walks it to a second fixed point, turns it
    to heading 90 degrees and starts StoneGuardian_PlayAnim9. */
 static void StoneGuardian_Mode6LeaveHiding(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 *point;
     f32 angle;
     f32 range = 50.0f;
@@ -1421,15 +1421,15 @@ static void StoneGuardian_Mode6LeaveHiding(Entity *entity, s32 unknown) {
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     entity->model_alpha = 0x80;
-    unkE0->target_point[0] = -18050.0f;
-    unkE0->target_point[1] = 3030.0f;
-    unkE0->target_point[2] = 4900.0f;
+    ai_state->target_point[0] = -18050.0f;
+    ai_state->target_point[1] = 3030.0f;
+    ai_state->target_point[2] = 4900.0f;
     if (entity->model->position[1] > 3031.0f) {
-        unkE0->step_index = 0;
+        ai_state->step_index = 0;
         ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit26 = FALSE;
     } else {
-        point = unkE0->target_point;
+        point = ai_state->target_point;
         if (EntityMath_DistanceXZ(entity->model->position, point) < range) {
             ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
             angle = EntityMath_AngleDifference(entity->model->rotation[1], 1.5707964f);
@@ -1449,14 +1449,14 @@ static void StoneGuardian_Mode6LeaveHiding(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand(entity, 0, range);
         }
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* An action (busy bit 0x1000) of mode 6, which StoneGuardian_Mode6LeaveHiding starts: plays
    animation 9 to its end with Entity.model_alpha at 0x80, then puts the sequence at 0 (from there the
    think handler is EntityAi_Think) and thinks. */
 static void StoneGuardian_PlayAnim9(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
@@ -1473,13 +1473,13 @@ static void StoneGuardian_PlayAnim9(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            unkE0->step_index = 0;
+            ai_state->step_index = 0;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit26 = FALSE;
@@ -1489,9 +1489,9 @@ static void StoneGuardian_PlayAnim9(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -1513,13 +1513,13 @@ static void StoneGuardian_Mode6WaitTurnShown(Entity *entity, s32 unknown) {
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     entity->model_alpha = 0x80;
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    EntityAi_StartAction(entity, (void (*)(Entity *))entity->unkE0.move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))entity->ai_state.move, unknown);
 }
 
 /* Step 6 of StoneGuardian_ThinkMode6HideSequence: walks the entity to a third fixed point, turns it to heading
    -90 degrees and starts StoneGuardian_PlayAnim8. */
 static void StoneGuardian_Mode6ReturnToHiding(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 *point;
     f32 angle;
     f32 range = 50.0f;
@@ -1533,13 +1533,13 @@ static void StoneGuardian_Mode6ReturnToHiding(Entity *entity, s32 unknown) {
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     entity->model_alpha = 0x80;
-    unkE0->target_point[0] = -18450.0f;
-    unkE0->target_point[1] = 3190.0f;
-    unkE0->target_point[2] = 4900.0f;
+    ai_state->target_point[0] = -18450.0f;
+    ai_state->target_point[1] = 3190.0f;
+    ai_state->target_point[2] = 4900.0f;
     if (entity->model->position[1] <= 3030.0f) {
-        unkE0->step_index = 7;
+        ai_state->step_index = 7;
     } else {
-        point = unkE0->target_point;
+        point = ai_state->target_point;
         if (EntityMath_DistanceXZ(entity->model->position, point) < range) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], -1.5707964f);
             if (ABS(angle) > 0.17453292f) {
@@ -1558,14 +1558,14 @@ static void StoneGuardian_Mode6ReturnToHiding(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand(entity, 0, range);
         }
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* An action (busy bit 0x1000) of mode 6, which StoneGuardian_Mode6ReturnToHiding starts: plays
    animation 8 to its end, then puts the sequence at 7 (StoneGuardian_Mode6WalkToHidePoint) and
    thinks. */
 static void StoneGuardian_PlayAnim8(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
@@ -1582,13 +1582,13 @@ static void StoneGuardian_PlayAnim8(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            unkE0->step_index = 7;
+            ai_state->step_index = 7;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
@@ -1597,9 +1597,9 @@ static void StoneGuardian_PlayAnim8(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -1609,8 +1609,8 @@ static void StoneGuardian_PlayAnim8(Entity *entity) {
 /* Step 7 of StoneGuardian_ThinkMode6HideSequence: walks the entity back to the first fixed point, then puts the
    sequence at 1. */
 static void StoneGuardian_Mode6WalkToHidePoint(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
-    f32 *point = unkE0->target_point;
+    EntityAiState *ai_state = &entity->ai_state;
+    f32 *point = ai_state->target_point;
     f32 range = 50.0f;
 
     ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
@@ -1621,17 +1621,17 @@ static void StoneGuardian_Mode6WalkToHidePoint(Entity *entity, s32 unknown) {
     ENTITY_FLAG_BITS(entity)->bit21 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     entity->model_alpha = 0x80;
-    unkE0->target_point[0] = -16200.0f;
-    unkE0->target_point[1] = 3030.0f;
-    unkE0->target_point[2] = 4900.0f;
+    ai_state->target_point[0] = -16200.0f;
+    ai_state->target_point[1] = 3030.0f;
+    ai_state->target_point[2] = 4900.0f;
     if (EntityMath_DistanceXZ(entity->model->position, point) < range) {
-        unkE0->step_index = 1;
+        ai_state->step_index = 1;
     } else {
         entity->target = point;
         entity->move_command = EntityAi_MoveCommand(entity, 0, range);
     }
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* Helper of StoneGuardian_ThinkMode6HideSequence: whether none of the other live entities among the five in
@@ -1643,7 +1643,7 @@ static s32 StoneGuardian_Mode6IsStepFree(Entity *entity, s32 value) {
 
     for (i = 0; i < 5; i++) {
         other = Entity_GetBySpawnId(table.ids[i]);
-        if (other != NULL && (other->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_DYING_MASK)) == 1 && other != entity && other->unkE0.step_index == value) {
+        if (other != NULL && (other->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_DYING_MASK)) == 1 && other != entity && other->ai_state.step_index == value) {
             return FALSE;
         }
     }
@@ -1658,12 +1658,12 @@ static s32 StoneGuardian_Mode6IsNearestWaiting(Entity *entity, f32 limit) {
     EntityIdTable table = stone_guardian_spawn_ids;
     s32 i;
     Entity *other;
-    EntityUnkE0 *other_unkE0;
+    EntityAiState *other_unkE0;
 
     for (i = 0; i < 5; i++) {
         other = Entity_GetBySpawnId(table.ids[i]);
         if (other != NULL && (other->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_DYING_MASK)) == 1 && other != entity) {
-            other_unkE0 = &other->unkE0;
+            other_unkE0 = &other->ai_state;
             if (other_unkE0->step_index == 5 && other_unkE0->pitch_speed < limit) {
                 return FALSE;
             }

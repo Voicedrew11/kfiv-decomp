@@ -167,7 +167,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
     for (i = 0; i < file->part_count; i++, part++, file_part++) {
         part->data_count = file_part->data_count;
         part->data_addr = *file_cursor + file_part->data_offset;
-        part->pad78_46 = file_part->unk07;
+        part->pad78_46 = file_part->parent;
         MODEL_PART_FLAG_BITS(part)->bit41 = TRUE;
         // match: retail keeps only the empty loop; a walk whose result nothing uses is deleted like this one
         data = (ModelPartData *)(u32)part->data_addr;
@@ -180,8 +180,8 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
         part->rotation_x = part->rotation_y = part->rotation_z = 0.0f;
         part->rotation_w = 1.0f;
         part->scale[0] = part->scale[1] = part->scale[2] = 1.0f;
-        if (file_part->unk06 >= 1 && file_part->unk06 <= 3) {
-            MODEL_SLOT_PARTS(model)[file_part->unk06 - 1] = part;
+        if (file_part->slot >= 1 && file_part->slot <= 3) {
+            MODEL_SLOT_PARTS(model)[file_part->slot - 1] = part;
         }
     }
     model->draw_parts = Model_DrawSkinned;
@@ -202,9 +202,9 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
         data = (ModelPartData *)(u32)part->data_addr;
         for (j = 0; j < part->data_count; j++) {
             length = data->length;
-            if (first && data->unk30.unk37 != 0) {
+            if (first && data->texture_word.clut_base != 0) {
                 first = FALSE;
-                data->unk30.unk61 = 2;
+                data->texture_word.unk61 = 2;
             }
             data = (ModelPartData *)((char *)data + length * 16);
         }
@@ -218,7 +218,7 @@ static inline f32 wrap_angle(f32 angle) {
 }
 
 /* Draws a model (the draw function Model_SetUpSkinned installs): works out a turn from the block at
-   unk148 and the model's rotation, queues a packet with the model's two matrices, its MapSlotUnk0C
+   unk148 and the model's rotation, queues a packet with the model's two matrices, its MapFogBlock
    block, its lights and the vectors at unk160 and unk150, then for every part that is switched on
    and not scaled to nothing its two matrices, its parent's two and a reference to each of its data
    blocks. */
@@ -275,7 +275,7 @@ void Model_DrawSkinned(ModelInstance *model) {
     packet += 2;
     *(u64 *)packet = 0xE;
     packet += 2;
-    *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
+    *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
     packet += 2;
     *packet++ = 0x3D;
     *packet++ = 0;
@@ -412,7 +412,7 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
     packet += 2;
     *(u64 *)packet = 0xE;
     packet += 2;
-    *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
+    *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
     packet += 2;
     *packet++ = 0x3D;
     *packet++ = 0;
@@ -634,7 +634,7 @@ void Model_SetUvsFromScreen(void *model_arg) {
             s32 vertex_count;
             ModelWideVertex *vertex;
 
-            cursor = &block->unk90;
+            cursor = &block->vertex_count;
             vertex_count = *cursor & 0x7FFF;
             vertex = block->vertices;
             for (; k < vertex_count; k++, vertex++) {
@@ -683,7 +683,7 @@ s64 *Model_SaveGsWordsAndUvs(ModelInstance *model, s64 *save) {
 
             cursor += 6;
             *out++ = *cursor;
-            vertex_count = ((ModelWideData *)block)->unk90 & 0x7FFF;
+            vertex_count = ((ModelWideData *)block)->vertex_count & 0x7FFF;
             vertex_words = (s64 *)((ModelWideData *)block)->vertices;
             cursor += 2;
             *out++ = *cursor;
@@ -723,7 +723,7 @@ void Model_RestoreGsWordsAndUvs(ModelInstance *model) {
 
             cursor += 0x30;
             *(s64 *)cursor = *saved++;
-            vertex_count = ((ModelWideData *)block)->unk90 & 0x7FFF;
+            vertex_count = ((ModelWideData *)block)->vertex_count & 0x7FFF;
             vertex = ((ModelWideData *)block)->vertices;
             cursor += 0x10;
             *(s64 *)cursor = *saved++;
@@ -790,7 +790,7 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
                 data = (ModelPartData *)(u32)part->data_addr;
                 for (j = 0; j < count; j++) {
                     length = data->length;
-                    if (((ModelPartDataBits30 *)&data->tex0)->unk37 != 0) {
+                    if (((ModelPartDataBits30 *)&data->tex0)->clut_base != 0) {
                         ((ModelPartDataBits30 *)&data->tex0)->unk61 = 2;
                         first = FALSE;
                         break;
@@ -829,7 +829,7 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
 }
 
 /* Draws a model (ModelInstance.draw_parts of the models Model_SetUpPosed sets up): queues a packet with
-   its two matrices, its MapSlotUnk0C block, its lights and, when it has one, its own colour, then
+   its two matrices, its MapFogBlock block, its lights and, when it has one, its own colour, then
    for every part that is switched on a packet with the part's matrix and a reference to each of
    its data blocks. */
 void Model_DrawPosed(ModelInstance *model) {
@@ -872,7 +872,7 @@ void Model_DrawPosed(ModelInstance *model) {
         packet += 2;
         *(u64 *)packet = 0xE;
         packet += 2;
-        *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
+        *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
         packet += 2;
         *packet++ = 0x3D;
         *packet++ = 0;
@@ -974,7 +974,7 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
         packet += 2;
         *(u64 *)packet = 0xE;
         packet += 2;
-        *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
+        *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
         packet += 2;
         *packet++ = 0x3D;
         *packet++ = 0;
@@ -1077,7 +1077,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
         packet += 2;
         *(u64 *)packet = 0xE;
         packet += 2;
-        *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
+        *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
         packet += 2;
         *packet++ = 0x3D;
         *packet++ = 0;
@@ -1147,7 +1147,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
     }
 }
 
-/* Draws a model: queues a packet with its two matrices, its MapSlotUnk0C block and its lights,
+/* Draws a model: queues a packet with its two matrices, its MapFogBlock block and its lights,
    then for every part that is switched on and not scaled to nothing the GS state and a packet
    with the part's matrix and a reference to each of its data blocks. */
 void Model_DrawPosedWithAlpha(ModelInstance *model) {
@@ -1190,7 +1190,7 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
         packet += 2;
         *(u64 *)packet = 0xE;
         packet += 2;
-        *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
+        *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
         packet += 2;
         *packet++ = 0x3D;
         *packet++ = 0;
@@ -1231,7 +1231,7 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
                 Packet_AddGsRegister(0x1A, 0);
                 Packet_AddGsRegister(0x1B, 0x278);
                 data = (ModelPartData *)(u32)part->data_addr;
-                Packet_AddGsRegister(0x15, *(s64 *)&data->unk30);
+                Packet_AddGsRegister(0x15, *(s64 *)&data->texture_word);
                 Packet_AddGsRegister(0x07, data->tex0);
                 Packet_AddGsRegister(GS_REG_ALPHA_2,
                               (s32)((GsAlphaReg *)&data->blend)->f.a_source | ((s32)((GsAlphaReg *)&data->blend)->f.b_source << 2) | 0x20 |
@@ -1359,7 +1359,7 @@ void Model_SetTexture(ModelInstance *model, u64 unk40, s64 unk30) {
         for (j = 0; j < count; j++) {
             block = data;
             length = block->length;
-            *(s64 *)&block->unk30 = unk30;
+            *(s64 *)&block->texture_word = unk30;
             block->tex0 = unk40;
             if (first) {
                 ((ModelPartDataBits30 *)&block->tex0)->unk61 = 2;
@@ -1557,10 +1557,10 @@ void Model_SetTextureBase(ModelInstance *model, int texture_base, int clut_base)
 
             cursor = block + 0x40;
             if (texture_base != 0) {
-                ((ModelPartDataBits30 *)cursor)->unk00 = texture_base;
+                ((ModelPartDataBits30 *)cursor)->texture_base = texture_base;
             }
             if (clut_base != 0) {
-                ((ModelPartDataBits30 *)cursor)->unk37 = clut_base;
+                ((ModelPartDataBits30 *)cursor)->clut_base = clut_base;
             }
             if (first) {
                 first = 0;

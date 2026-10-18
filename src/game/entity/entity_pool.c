@@ -137,8 +137,8 @@ void Entity_ResetAllLists(void) {
         block->head.fields.kind = ENTITY_POOL_FREE;
         block->head.fields.unk2 = 0xFFFF;
         block_address += ENTITY_POOL_BLOCK_SIZE;
-        block->unk4 = 0;
-        block->unk6 = 0;
+        block->entity_count = 0;
+        block->reuse_delay = 0;
         block->age = 0;
         block++;
     } while (blocks_left >= 0);
@@ -388,12 +388,12 @@ static void EntityPool_StepLoads(void) {
             busy = TRUE;
             break;
         case ENTITY_POOL_READY:
-            if (slot->unk4 > 0) {
+            if (slot->entity_count > 0) {
                 break;
             }
         case ENTITY_POOL_6:
-            if (slot->unk6 != 0) {
-                slot->unk6--;
+            if (slot->reuse_delay != 0) {
+                slot->reuse_delay--;
             }
             break;
         case ENTITY_POOL_EXTENSION:
@@ -458,12 +458,12 @@ static int Entity_TryActivate(Entity *entity) {
     }
     data_address = slot->base_address + (int)data->motion_offset;
     ModelMotion_LoadFile(data_address, &work_address, ENTITY_MODEL(entity), 1);
-    data_address = slot->base_address + data->unk0C;
+    data_address = slot->base_address + data->texture_data;
     ENTITY_MODEL(entity)->texture_data = data_address;
     ENTITY_MODEL(entity)->texture_slot = 0;
     ENTITY_MODEL(entity)->texture_packet_3 = (int)Map_GetSlotPacket(entity->group_id, 3);
     ENTITY_MODEL(entity)->texture_packet_5 = (int)Map_GetSlotPacket(entity->group_id, 5);
-    entity->sound_bank = slot->unk7;
+    entity->sound_bank = slot->sound_bank;
     EntityPool_AddUser(entity->pool_slot_index);
     ((void (*)(Entity *))Entity_ResetToSpawn)(entity); // match: declared without its argument elsewhere
     return TRUE;
@@ -503,8 +503,8 @@ static int EntityPool_ClaimBlock(void) {
         if ((slot->head.word >> 8) & 1) { continue; }
         if (slot->head.fields.kind == 0) { return i; }
         if (slot->head.fields.kind != 4) { continue; }
-        if (slot->unk4 != 0) { continue; }
-        if (slot->unk6 != 0) { continue; }
+        if (slot->entity_count != 0) { continue; }
+        if (slot->reuse_delay != 0) { continue; }
         if (best == -1 || (u32)slot->age < (u32)entity_pool_slots[best].age) {
             best = i;
         }
@@ -545,16 +545,16 @@ static int EntityPool_ClaimBlockPair(void) {
         if (entity_pool_slots[pair + 1].head.bits.flag_100) { continue; }
         if (entity_pool_slots[pair].head.fields.kind != ENTITY_POOL_FREE) {
             if (entity_pool_slots[pair].head.fields.kind != ENTITY_POOL_READY) { continue; }
-            if (entity_pool_slots[pair].unk4 != 0) { continue; }
-            if (entity_pool_slots[pair].unk6 != 0) { continue; }
+            if (entity_pool_slots[pair].entity_count != 0) { continue; }
+            if (entity_pool_slots[pair].reuse_delay != 0) { continue; }
         }
         if (entity_pool_slots[pair + 1].head.fields.kind == ENTITY_POOL_FREE || entity_pool_slots[pair + 1].head.fields.kind == ENTITY_POOL_EXTENSION) {
             best = pair;
             break;
         }
         if (entity_pool_slots[pair + 1].head.fields.kind != ENTITY_POOL_READY) { continue; }
-        if (entity_pool_slots[pair + 1].unk4 != 0) { continue; }
-        if (entity_pool_slots[pair + 1].unk6 != 0) { continue; }
+        if (entity_pool_slots[pair + 1].entity_count != 0) { continue; }
+        if (entity_pool_slots[pair + 1].reuse_delay != 0) { continue; }
         best = pair;
         break;
     }
@@ -580,13 +580,13 @@ static int EntityPool_ClaimFixedBlock(int idx) {
         return idx;
     }
     // match: unk4 and unk6 are tested as one word
-    if (slot->head.fields.kind == ENTITY_POOL_READY && !(*(int *)&slot->unk4 & 0xFFFFFF)) {
+    if (slot->head.fields.kind == ENTITY_POOL_READY && !(*(int *)&slot->entity_count & 0xFFFFFF)) {
         EntityPool_EmptyBlock(idx);
         if (idx < 4 && slot[1].head.fields.kind == ENTITY_POOL_EXTENSION) {
             slot++;
             slot->head.fields.unk2 = 0xFFFF;
             slot->head.fields.kind = ENTITY_POOL_FREE;
-            slot->unk4 = 0;
+            slot->entity_count = 0;
             slot->head.bits.flag_100 = 0;
         }
         return idx;
@@ -610,7 +610,7 @@ static int EntityPool_ClaimFixedBlockPair(int pool_size) {
         return -1;
     }
     if (slot->head.fields.kind == ENTITY_POOL_FREE ||
-        (slot->head.fields.kind == ENTITY_POOL_READY && slot->unk4 == 0 && slot->unk6 == 0)) {
+        (slot->head.fields.kind == ENTITY_POOL_READY && slot->entity_count == 0 && slot->reuse_delay == 0)) {
         first_free = TRUE;
     } else {
         first_free = !EntityPool_HasFixedUser(pool_size);
@@ -637,10 +637,10 @@ static int EntityPool_ClaimFixedBlockPair(int pool_size) {
     EntityPool_EvictBlockUsers(pool_size);
     EntityPool_EvictBlockUsers(pool_size + 1);
     slot->head.fields.unk2 = 0xFFFF;
-    slot->unk4 = 0;
+    slot->entity_count = 0;
     slot->head.bits.flag_100 = TRUE;
     next->head.fields.unk2 = 0xFFFF;
-    next->unk4 = 0;
+    next->entity_count = 0;
     next->head.bits.flag_100 = TRUE;
     return pool_size;
 }
@@ -767,7 +767,7 @@ static void EntityPool_EmptyBlock(int slot_index) {
         }
     }
 
-    slot->unk4 = 0;
+    slot->entity_count = 0;
     slot->head.fields.unk2 = 0xFFFF;
     slot->head.word |= ENTITY_POOL_FLAG_100;
 }
@@ -778,15 +778,15 @@ static void EntityPool_QueueLoad(int slot_index, int type_id, int two_blocks) {
 
     slot->head.fields.kind = ENTITY_POOL_QUEUED;
     slot->head.fields.unk2 = type_id;
-    slot->unk4 = 0;
-    slot->unk6 = 0;
+    slot->entity_count = 0;
+    slot->reuse_delay = 0;
     slot->age = 0;
     if (two_blocks) {
         slot++;
         slot->head.fields.kind = ENTITY_POOL_EXTENSION;
         slot->head.fields.unk2 = 0xFFFF;
-        slot->unk4 = 0;
-        slot->unk6 = 0;
+        slot->entity_count = 0;
+        slot->reuse_delay = 0;
         slot->age = 0;
     }
 }
@@ -794,7 +794,7 @@ static void EntityPool_QueueLoad(int slot_index, int type_id, int two_blocks) {
 /* Adds a user to a pool block and clears its flags; a two-block type's second block gets the same flag clear. */
 static void EntityPool_AddUser(int slot_index) {
     entity_pool_slots[slot_index].head.bits.flag_100 = 0;
-    entity_pool_slots[slot_index].unk4++;
+    entity_pool_slots[slot_index].entity_count++;
     entity_pool_slots[slot_index].head.bits.flag_200 = 0;
     if (slot_index < 4 && entity_pool_slots[slot_index + 1].head.fields.kind == ENTITY_POOL_EXTENSION) {
         entity_pool_slots[slot_index + 1].head.bits.flag_100 = 0;
@@ -807,10 +807,10 @@ static void EntityPool_RemoveUser(int slot_index) {
     EntityPoolSlot *slot;
 
     slot = &entity_pool_slots[slot_index];
-    if (--slot->unk4 <= 0) {
-        slot->unk6 = 2;
+    if (--slot->entity_count <= 0) {
+        slot->reuse_delay = 2;
         slot->age = frame_counter;
-        slot->unk4 = 0;
+        slot->entity_count = 0;
     }
 }
 

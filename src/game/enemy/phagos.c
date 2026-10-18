@@ -1,4 +1,4 @@
-/* Phagos: the behaviour of entity type 14 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* Phagos: the behaviour of entity type 14 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Phagos. The game names no monsters;
    these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by hit points
    and experience, with resistances and drops where two monsters share those. */
@@ -39,19 +39,19 @@ static void Phagos_RunAwayAndRemove(Entity *entity);
 
 /* Set-up of a type 14 entity: clears its work area and installs the type's handlers. */
 void Phagos_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     s32 i;
 
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = Phagos_Think;
-    unkE0->animate = (void (*)(void))Phagos_Animate;
-    unkE0->on_hit = (void (*)(void))Phagos_OnHit;
-    unkE0->move = (void (*)(void))EntityAi_Move;
-    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
-    unkE0->death = (void (*)(void))EntityAi_Death;
+    ai_state->think = Phagos_Think;
+    ai_state->animate = (void (*)(void))Phagos_Animate;
+    ai_state->on_hit = (void (*)(void))Phagos_OnHit;
+    ai_state->move = (void (*)(void))EntityAi_Move;
+    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
+    ai_state->death = (void (*)(void))EntityAi_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -61,11 +61,11 @@ void Phagos_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -77,14 +77,14 @@ void Phagos_Init(Entity *entity) {
 static void Phagos_Animate(Entity *entity) {
     u32 blend_frames; // match: converted to float as unsigned
     s64 flags;
-    EntityUnkE0 *unkE0;
+    EntityAiState *ai_state;
 
     flags = entity->flags;
-    unkE0 = &entity->unkE0;
+    ai_state = &entity->ai_state;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
-        blend_frames = entity->model->level_tables->unk88;
+        blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -121,7 +121,7 @@ static void Phagos_Think(Entity *entity, s32 unknown) {
    radius it starts the same effect, sets flag bit 28, and removes the entity once it is more than
    four radii from that place. */
 static void Phagos_RunAwayAndRemove(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 bounds[4];
     f32 direction[4];
     f32 heading;
@@ -135,15 +135,15 @@ static void Phagos_RunAwayAndRemove(Entity *entity) {
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = 1;
         }
-        unkE0->part_angle_x = entity->heading_to_player + 1.5707964f + (f32)(rand() % 180) * 0.017453292f;
-        unkE0->part_angle_x = EntityMath_WrapAngle(unkE0->part_angle_x);
+        ai_state->part_angle_x = entity->heading_to_player + 1.5707964f + (f32)(rand() % 180) * 0.017453292f;
+        ai_state->part_angle_x = EntityMath_WrapAngle(ai_state->part_angle_x);
         ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
         entity->action_step++;
         break;
     case 1:
         heading = entity->model->rotation[1];
-        EntityMath_EaseAngleToward(&heading, unkE0->part_angle_x, 10.0f);
+        EntityMath_EaseAngleToward(&heading, ai_state->part_angle_x, 10.0f);
         entity->turn_delta_yaw += heading - entity->model->rotation[1];
         bounds[0] = entity->model->position[0] - entity->radius;
         bounds[1] = entity->model->position[0] + entity->radius;
@@ -157,14 +157,14 @@ static void Phagos_RunAwayAndRemove(Entity *entity) {
             EntityEvent_StartEffectAtPoint((char **)entity, entity->params->pitch_limit_deg, 0xFF, (int)entity->model->rotation);
             entity->action_step = 3;
         } else if (EntityCollision_RayHitsPropWall(entity->model->position, direction, entity->radius, bounds)) {
-            Vector_Copy(unkE0->target_point, entity->model->position);
+            Vector_Copy(ai_state->target_point, entity->model->position);
             ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
             EntityEvent_StartEffectAtPoint((char **)entity, entity->params->pitch_limit_deg, 0xFF, (int)entity->model->rotation);
             entity->action_step++;
         }
         break;
     case 2:
-        if (EntityMath_DistanceXZ(entity->model->position, unkE0->target_point) > entity->radius * 4.0f) {
+        if (EntityMath_DistanceXZ(entity->model->position, ai_state->target_point) > entity->radius * 4.0f) {
             ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
         }
         break;

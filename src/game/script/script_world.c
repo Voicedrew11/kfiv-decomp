@@ -350,7 +350,7 @@ void ScriptCmd_WaitMapObjectMotion(ScriptObjectCommand *command) {
 
     object = MapObject_GetById(current_map_slot, command->object_id.value);
     if (object == NULL || !(object->model->model_flags & 1) || (object->state_flags & MAP_OBJECT_FLAG_400000) ||
-        MODEL_CHANNEL(object->model)->param == 0) {
+        MODEL_CHANNEL(object->model)->frame == 0) {
         command->active = 0;
     }
 }
@@ -361,7 +361,7 @@ void ScriptCmd_IsMapObjectMotionDone(ScriptCallCommand *command) {
     MapObject *object = MapObject_GetById(current_map_slot, command->target_id.value);
 
     if (object != NULL && (object->model->model_flags & 1) && !(object->state_flags & MAP_OBJECT_FLAG_400000)) {
-        Script_StoreResult(&command->first, MODEL_CHANNEL(object->model)->param < 1);
+        Script_StoreResult(&command->first, MODEL_CHANNEL(object->model)->frame < 1);
     } else {
         Script_StoreResult(&command->first, -1);
     }
@@ -1018,7 +1018,7 @@ void ScriptCmd_GetPropRotation(ScriptMoveCommand *command) {
 void ScriptCmd_SetMapFog(ScriptFogCommand *command) {
     u32 block_index;
     MapSlot *slot;
-    MapSlotUnk0CValues *block;
+    MapFogBlockValues *block;
     f32 near_value;
     f32 far_value;
     f32 near;
@@ -1040,7 +1040,7 @@ void ScriptCmd_SetMapFog(ScriptFogCommand *command) {
     if (block_index < 0x20) {
         span = far - near;
         // match: the block's offset is added to the address as a number
-        block = (MapSlotUnk0CValues *)((block_index << 5) + (u32)slot->fog_blocks);
+        block = (MapFogBlockValues *)((block_index << 5) + (u32)slot->fog_blocks);
         block->unk10 = (s64)((blue << 16) + (green << 8) + red);
         block->unk00 = block->unk04 = 0.0f;
         block->unk0C = far * near * (far_value - near_value) / span;
@@ -1054,11 +1054,11 @@ void ScriptCmd_SetMapFog(ScriptFogCommand *command) {
 void ScriptCmd_SetMapLight(ScriptLightCommand *command) {
     MapSlot *slot = &map_slots[current_map_slot];
     VuVector4 direction = (VuVector4){ command->dir_x.value, command->dir_y.value, command->dir_z.value };
-    MapSlotUnk10Lights *lights;
+    MapLightBlockLights *lights;
 
     if ((u32)command->block.value < 0x20 && command->light.value >= 0 && command->light.value < 3) {
         // match: the block's offset is added to the address as a number; indexing the blocks swaps two registers
-        lights = (MapSlotUnk10Lights *)(command->block.value * sizeof(MapSlotUnk10Lights) + (u32)slot->light_blocks);
+        lights = (MapLightBlockLights *)(command->block.value * sizeof(MapLightBlockLights) + (u32)slot->light_blocks);
         lights->directions[0][command->light.value] = command->dir_x.value;
         lights->directions[1][command->light.value] = command->dir_y.value;
         lights->directions[2][command->light.value] = command->dir_z.value;
@@ -1073,14 +1073,14 @@ void ScriptCmd_SetMapLight(ScriptLightCommand *command) {
    the three lights' colours (the ambient light, it seems), then finishes. */
 void ScriptCmd_SetMapAmbientLight(ScriptColorCommand *command) {
     u32 block_index;
-    MapSlotUnk10Lights *lights;
+    MapLightBlockLights *lights;
     MapSlot *slot;
 
     slot = &map_slots[current_map_slot];
     block_index = command->block.value;
     if (block_index < 0x20) {
         // match: the block's offset is added to the address as a number
-        lights = (MapSlotUnk10Lights *)((block_index << 7) + (u32)slot->light_blocks);
+        lights = (MapLightBlockLights *)((block_index << 7) + (u32)slot->light_blocks);
         lights->colors[3].x = (f32)command->red.value / 255.0f;
         lights->colors[3].y = (f32)command->green.value / 255.0f;
         lights->colors[3].z = (f32)command->blue.value / 255.0f;

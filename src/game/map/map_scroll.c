@@ -79,22 +79,22 @@ void MapScroll_UpdateCopy(int map, int mode) {
                 format = texture->format;
                 height = texture->height;
                 buffer_width = width / 64;
-                pair->unk00 += (s8)texture->step_x;
-                pair->unk02 += (s8)texture->step_y;
-                if (pair->unk00 < 0) {
-                    pair->unk00 += width;
+                pair->scroll_x += (s8)texture->step_x;
+                pair->scroll_y += (s8)texture->step_y;
+                if (pair->scroll_x < 0) {
+                    pair->scroll_x += width;
                 }
-                if (pair->unk00 >= width) {
-                    pair->unk00 -= width;
+                if (pair->scroll_x >= width) {
+                    pair->scroll_x -= width;
                 }
-                if (pair->unk02 < 0) {
-                    pair->unk02 += height;
+                if (pair->scroll_y < 0) {
+                    pair->scroll_y += height;
                 }
-                if (pair->unk02 >= height) {
-                    pair->unk02 -= height;
+                if (pair->scroll_y >= height) {
+                    pair->scroll_y -= height;
                 }
-                shift_x = pair->unk00;
-                shift_y = pair->unk02;
+                shift_x = pair->scroll_x;
+                shift_y = pair->scroll_y;
                 if (shift_x != 0 || shift_y != 0) {
                     count = 0;
                     if (shift_x != 0) {
@@ -202,21 +202,21 @@ void MapScroll_UpdateDraw(int map, int mode) {
                 height = texture->height << 4;
                 if (texture->period == 0 || frame_counter % texture->period == 0) {
                     if (texture->step_x != 0) {
-                        pair->unk00 += texture->step_x;
-                        if (pair->unk00 < 0) {
-                            pair->unk00 += width;
+                        pair->scroll_x += texture->step_x;
+                        if (pair->scroll_x < 0) {
+                            pair->scroll_x += width;
                         }
-                        if (pair->unk00 >= width) {
-                            pair->unk00 -= width;
+                        if (pair->scroll_x >= width) {
+                            pair->scroll_x -= width;
                         }
                     }
                     if (texture->step_y != 0) {
-                        pair->unk02 += texture->step_y;
-                        if (pair->unk02 < 0) {
-                            pair->unk02 += height;
+                        pair->scroll_y += texture->step_y;
+                        if (pair->scroll_y < 0) {
+                            pair->scroll_y += height;
                         }
-                        if (pair->unk02 >= height) {
-                            pair->unk02 -= height;
+                        if (pair->scroll_y >= height) {
+                            pair->scroll_y -= height;
                         }
                     }
                 }
@@ -244,7 +244,7 @@ void MapScroll_UpdateDraw(int map, int mode) {
                            ((s64)width_log << 26) | ((s64)height_log << 30) | (1L << 34) |
                            ((s64)texture->clut_base << 37) | ((s64)texture->clut_format << 51) | (4L << 61);
                 quad.unk08 = 0x60;
-                quad.unk10 = 0x156;
+                quad.prim = 0x156;
                 half = texture->target_width >> 1;
                 quad.red = texture->red;
                 quad.green = texture->green;
@@ -258,10 +258,10 @@ void MapScroll_UpdateDraw(int map, int mode) {
                 quad.second_z = 0xFFFFFFFF;
                 quad.second_u = width * texture->scale_x;
                 quad.second_v = height * texture->scale_y;
-                quad.first_u += pair->unk00;
-                quad.first_v += pair->unk02;
-                quad.second_u += pair->unk00;
-                quad.second_v += pair->unk02;
+                quad.first_u += pair->scroll_x;
+                quad.first_v += pair->scroll_y;
+                quad.second_u += pair->scroll_x;
+                quad.second_v += pair->scroll_y;
                 GsDraw_QueueTexturedSprite(&quad);
                 GsDraw_QueueFlush();
                 GsDraw_QueueTexFlush();

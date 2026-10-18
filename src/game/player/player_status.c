@@ -7,7 +7,7 @@
 #include "gfx/screen.h"
 
 /* one of the nine values: the item's base plus what it gained, scaled by LevelRecord.level in percent */
-#define ADD_SCALED(n) totals[n] += (def->unk00[n] + record->unk00[n]) * record->level / 100
+#define ADD_SCALED(n) totals[n] += (def->base_values[n] + record->gained_values[n]) * record->level / 100
 
 void Vector_Normalize(void *dst, void *src);
 void Input_StartRumble(u8, u8, u8);
@@ -151,7 +151,7 @@ void Player_AddItemBonuses(int index) {
         }
     }
     if (index >= ITEM_WORN_FIRST) {
-        rates = worn_defs[ITEM_WORN_INDEX(index)].unk12;
+        rates = worn_defs[ITEM_WORN_INDEX(index)].worn_ailment_defence;
         player_state.ailment_defence[0] += rates[0];
         player_state.ailment_defence[1] += rates[1];
         player_state.ailment_defence[2] += rates[2];
@@ -307,7 +307,7 @@ void Player_PickChargingMagic(void) {
             return;
         }
         // match: the pointer form puts the sum in the index register
-        if (def->second_magic_id != 0xFFFF && (weapon_level_records + player_state.weapon)->unk14 >= 2) {
+        if (def->second_magic_id != 0xFFFF && (weapon_level_records + player_state.weapon)->level_index >= 2) {
             player_state.charging_magic = def->second_magic_id;
             return;
         }
@@ -369,14 +369,14 @@ void Player_UpdateScreenFade(void) {
     slot = &map_slots[current_map_slot];
     player = &player_state;
     area = *(char *)((player->map_index << 7) + (int)slot->records + 0x4C); // match: summed as integers, index first
-    *(s32 *)player->pad2A4 = area;
+    player->fade_area = area;
     if (area - player_previous_fade_level[0] < 0) {
-        *(s32 *)player->pad2AC = -0x30;
+        player->screen_fade_step = -0x30;
     }
-    step = *(s32 *)player->pad2AC;
+    step = player->screen_fade_step;
     if (step != 0) {
         next = player->screen_fade + (float)step;
-        *(s32 *)player->pad2AC = step / 2;
+        player->screen_fade_step = step / 2;
         player->screen_fade = next;
         return;
     }
@@ -396,7 +396,7 @@ void Player_UpdateScreenFade(void) {
     }
 }
 
-/* Fades the screen toward white (player_state.unk2A8 > 0) or black (< 0) by that amount. */
+/* Fades the screen toward white (player_state.screen_fade > 0) or black (< 0) by that amount. */
 void Player_DrawScreenFade(void) {
     if (player_state.screen_fade != 0.0f) {
         Packet_BeginGsRegisters();
@@ -492,13 +492,13 @@ void Player_CountWeaponUse(int weapon) {
     int count;
     PlayerState *player;
 
-    uses = *(u16 *)&record->unk16; // match: read as unsigned
+    uses = *(u16 *)&record->use_count; // match: read as unsigned
     if (uses < 0x1E0) {
         new_uses = uses + 1;
-        record->unk16 = new_uses;
+        record->use_count = new_uses;
         if ((u16)new_uses == 0xB4 || (u16)new_uses == 0x1E0) {
-            if (record->unk14 < 2) {
-                record->unk14++;
+            if (record->level_index < 2) {
+                record->level_index++;
                 Message_ShowNotice(0, 0, 0, 0, 0x2D, MSG_WEAPON_LEVEL_UP);
             }
         }

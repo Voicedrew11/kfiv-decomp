@@ -132,15 +132,15 @@ int EntityShot_LaunchAimed(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame
         return 0;
     }
     for (i = 0; i < 3; i++) {
-        if (record->unk10[i].unk02 != 0 && frame_from < record->unk10[i].unk02 && record->unk10[i].unk02 <= frame_to) {
+        if (record->launches[i].frame != 0 && frame_from < record->launches[i].frame && record->launches[i].frame <= frame_to) {
             shot = Shot_Alloc();
             shot->unk22 = shot->unk20 = 0;
             shot->unk00 = 1;
             shot->unk28 = entity->params->unk238;
-            from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01);
-            tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01 + 1);
+            from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone);
+            tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone + 1);
             if (from != NULL && tip != NULL) {
-                if (record->unk10[i].unk01 != 0xFF) {
+                if (record->launches[i].bone != 0xFF) {
                     delta_x = tip[0] - from[0];
                     delta_y = tip[1] - from[1];
                     delta_z = tip[2] - from[2];
@@ -157,7 +157,7 @@ int EntityShot_LaunchAimed(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame
                     angles[0] = approach_angle(angles[0], pitch, pitch_rate);
                     angles[1] = approach_angle(angles[1], yaw, yaw_rate);
                 }
-                Attack_LaunchMagicEffect(record->unk10[i].unk00, shot, from, angles, entity);
+                Attack_LaunchMagicEffect(record->launches[i].magic_effect, shot, from, angles, entity);
             }
         }
     }
@@ -176,15 +176,15 @@ int EntityShot_Launch(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame_from
         return 0;
     }
     for (i = 0; i < 3; i++) {
-        if (record->unk10[i].unk02 != 0 && frame_from < record->unk10[i].unk02 && record->unk10[i].unk02 <= frame_to) {
+        if (record->launches[i].frame != 0 && frame_from < record->launches[i].frame && record->launches[i].frame <= frame_to) {
             shot = Shot_Alloc();
             shot->unk00 = 1;
             shot->unk20 = 0;
             shot->unk22 = 0;
             shot->unk28 = entity->params->unk238;
-            origin = Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01);
+            origin = Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone);
             if (origin != NULL) {
-                Attack_LaunchMagicEffect(record->unk10[i].unk00, shot, origin, direction, entity);
+                Attack_LaunchMagicEffect(record->launches[i].magic_effect, shot, origin, direction, entity);
             }
         }
     }
@@ -231,8 +231,8 @@ void EntityEvent_StartFrameEffects(Entity *entity, s32 animation, s32 frame_from
         return;
     }
     for (i = 0; i < count; i++, record++) {
-        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk04);
-        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk04 + 1);
+        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->bone);
+        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->bone + 1);
         if (from != NULL && tip != NULL) {
             delta_x = tip[0] - from[0];
             delta_y = tip[1] - from[1];
@@ -240,17 +240,17 @@ void EntityEvent_StartFrameEffects(Entity *entity, s32 animation, s32 frame_from
             angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
             angles[1] = wrap_angle(-atan2f(delta_z, delta_x) + 1.5707964f);
             angles[2] = angles[3] = 0.0f;
-            frame = record->unk02 << 8;
+            frame = record->frame << 8;
             if (frame < frame_from) {
                 continue;
             }
             if (frame >= frame_to) {
                 continue;
             }
-            if (record->unk05 != 0) {
+            if (record->use_variant != 0) {
                 Effect_StartSpawner(entity->params->variant_effect_ids[(s32)(entity->flags >> 60) & 7], from, angles, entity);
             } else {
-                Effect_StartSpawner(record->unk00, from, angles, entity);
+                Effect_StartSpawner(record->effect_id, from, angles, entity);
             }
         }
     }
@@ -276,17 +276,17 @@ void EntityEvent_StartFrameCues(Entity *entity, s32 animation, s32 frame_from, s
             angle += 6.2831855f;
         }
         for (i = 0; i < count; i++, record++) {
-            frame = record->unk02 << 8;
+            frame = record->frame << 8;
             if (frame < frame_from) {
                 continue;
             }
             if (frame >= frame_to) {
                 continue;
             }
-            if (entity->ailment_4_frames != 0 && record->unk04 != 0) {
+            if (entity->ailment_4_frames != 0 && record->skip_while_ailing != 0) {
                 continue;
             }
-            Sound_PlayFalloff(entity->params->sound_id, record->unk00, record->unk01, entity->sound_bank, entity->distance_to_player_3d, angle);
+            Sound_PlayFalloff(entity->params->sound_id, record->sound, record->kind, entity->sound_bank, entity->distance_to_player_3d, angle);
         }
     }
 }

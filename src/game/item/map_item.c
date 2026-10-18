@@ -273,12 +273,12 @@ void MapItem_MoveMap(int map, f32 *offset) {
             // match: the same lines twice (one copy in the binary) give `offset` its saved register
             if (node->record != NULL) {
                 Vector_Add(&node->model->position, &node->model->position, offset);
-                node->unk28 += offset[1];
-                node->unk2C += offset[1];
-            } else if (node->unk08 != 0) {
+                node->floor_y += offset[1];
+                node->position_y += offset[1];
+            } else if (node->map_object != 0) {
                 Vector_Add(&node->model->position, &node->model->position, offset);
-                node->unk28 += offset[1];
-                node->unk2C += offset[1];
+                node->floor_y += offset[1];
+                node->position_y += offset[1];
             }
         }
     }
@@ -443,9 +443,9 @@ s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f3
     Vector_Copy(&node->model->rotation, rotation);
     Vector_Copy(&node->model->scale_x, scale);
     ITEM_NODE_BITS(node)->bit2 = TRUE;
-    node->unk2C = position[1];
-    node->unk28 = floor_y;
-    node->unk30 = 0.0f;
+    node->position_y = position[1];
+    node->floor_y = floor_y;
+    node->fall_speed = 0.0f;
     model_data = source->model_data;
     buffer = dropped_item_model_data[map][index];
     Model_SetUpPosed(node->model, &model_data, &buffer);
@@ -495,12 +495,12 @@ ItemNode *MapItem_PutOutForObject(int map, int item, void *position, void *rotat
     }
     node = object_items[map];
     for (i = 0; i < 32; i++, node++) {
-        if ((void *)node->unk08 == object) {
+        if ((void *)node->map_object == object) {
             return NULL;
         }
     }
     node = object_items[map];
-    for (i = 0; i < 32 && node->unk08 != 0; i++, node++) {
+    for (i = 0; i < 32 && node->map_object != 0; i++, node++) {
     }
     if (i >= 32) {
         return NULL;
@@ -512,7 +512,7 @@ ItemNode *MapItem_PutOutForObject(int map, int item, void *position, void *rotat
     model = &object_item_models[map][i];
     ITEM_NODE_MAP_BIT(node)->map = map;
     node->item = item;
-    node->unk08 = (s32)object;
+    node->map_object = (s32)object;
     node->model = model;
     Vector_Copy(&model->position, position);
     Vector_Copy(&node->model->rotation, rotation);
@@ -534,7 +534,7 @@ ItemNode *MapItem_FindForObject(int object) {
     ItemNode *node;
 
     for (node = lying_items; node != NULL; node = node->next) {
-        if (node->unk08 == object) {
+        if (node->map_object == object) {
             return node;
         }
     }
@@ -554,17 +554,17 @@ void MapItem_UpdateFalling(void) {
             if (node->record != 0) {
                 flags = node->flags;
                 if (((u32)flags >> 2) & 1) {
-                    height = node->unk2C + node->unk30;
-                    node->unk2C = height;
-                    if (node->unk28 <= height) {
+                    height = node->position_y + node->fall_speed;
+                    node->position_y = height;
+                    if (node->floor_y <= height) {
                         // match: the model is read before the flags are stored, as retail schedules it
                         ModelInstance *model = node->model;
                         node->flags = flags & -5;
                         do { } while (0); // match: keeps the model load ahead of the flag store
-                        model->position.y = node->unk28;
+                        model->position.y = node->floor_y;
                     } else {
                         node->model->position.y = height;
-                        node->unk30 += 1.0f;
+                        node->fall_speed += 1.0f;
                     }
                 }
             }
@@ -601,7 +601,7 @@ void MapItem_DrawAll(int with_picked) {
         for (i = 0; i < count; i++, part++) {
             ModelMatrix_BuildPartLocal(node->model, part, part);
         }
-        node->model->light_block = (s32)&map_draw_state.light_blocks[node->flags & 1][map_slots[node->flags & 1].header->unk71];
+        node->model->light_block = (s32)&map_draw_state.light_blocks[node->flags & 1][map_slots[node->flags & 1].header->light_block];
         node->model->fog_block = &map_draw_state.fog_blocks[node->flags & 1][((MapRecordInfo *)node->map_record)->draw_block_index];
         LinkedPoint_FindHitsForModel(node->model);
         ModelTexture_SendForModel(node->model);
@@ -654,7 +654,7 @@ void MapItem_DrawPicked(int hidden) {
         sceVu0RotMatrixY((f32 *)part, (f32 *)part, wrap_angle(turn[1]));
         sceVu0TransMatrix((f32 *)part, (f32 *)part, offset);
     }
-    node->model->light_block = (s32)&map_draw_state.light_blocks[node->flags & 1][map_slots[node->flags & 1].header->unk71];
+    node->model->light_block = (s32)&map_draw_state.light_blocks[node->flags & 1][map_slots[node->flags & 1].header->light_block];
     node->model->fog_block = &map_draw_state.fog_blocks[node->flags & 1][((MapRecordInfo *)node->map_record)->draw_block_index];
     LinkedPoint_FindHitsForModel(node->model);
     ModelTexture_SendForModel(node->model);
@@ -690,7 +690,7 @@ int MapItem_IsPickable(ItemNode *node) {
     if ((head != node) && (node->prev == 0) && (node->next == 0)) {
         return 0;
     }
-    object = (MapObject *)node->unk08;
+    object = (MapObject *)node->map_object;
     result = 1;
     if (object != 0) {
         result = MAP_OBJECT_DEF_KIND(object->definition) != 4;
@@ -818,8 +818,8 @@ void MapItem_PickupTake(void) {
     Player_AddItem((s16)node->item);
     if (node->def != NULL && node->def->required_flag != 0) {
         map_item_pickup_counts[map_slots[node->flags & 1].tag][node->index]++;
-    } else if (node->unk08 != 0) {
-        MapObject_MarkEmptied((MapObject *)node->unk08);
+    } else if (node->map_object != 0) {
+        MapObject_MarkEmptied((MapObject *)node->map_object);
     } else if (node->record != NULL) {
         memset(node->record, 0, sizeof(DroppedItemRecord));
     }
@@ -845,7 +845,7 @@ void MapItem_PickupPutBack(void) {
     }
     Vector_Copy(&pickup_item->model->position, pickup_start_position);
     Vector_Copy(&pickup_item->model->rotation, pickup_start_rotation);
-    object = (MapObject *)pickup_item->unk08;
+    object = (MapObject *)pickup_item->map_object;
     if (object != NULL && (object->state_flags & MAP_OBJECT_IN_USE) && object->definition->kind == 3) {
         MapItem_Unlink(pickup_item);
     }
@@ -923,7 +923,7 @@ ItemNode *MapItem_Unlink(ItemNode *node) {
     }
     node->prev = NULL;
     node->next = NULL;
-    node->unk08 = 0;
+    node->map_object = 0;
     node->record = NULL;
     return next;
 }

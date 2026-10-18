@@ -123,7 +123,7 @@ typedef struct {
 /* the viewers MapViewer_Run runs, indexed by picked_viewer (ui/map_viewer.c), 0xC bytes each */
 typedef struct {
     void (*run)(void);              /* 0x00 loops until the viewer is left */
-    int unk04;                      /* 0x04 */
+    int locate_player_fn;           /* 0x04 the function that finds the player's marker on the picture */
     int count;                      /* 0x08 the number of pictures; viewer_picture stays below it */
 } ViewerEntry;
 
@@ -291,13 +291,13 @@ typedef struct ListNode {
    pool_slot_free_list holds the head */
 typedef struct PoolSlot {
     char pad00[0x40];
-    struct PoolSlot *unk40;         /* 0x40 another slot, picked by a byte of the part's record (PoolSlot_LoadGroup) */
+    struct PoolSlot *parent;        /* 0x40 the parent slot, whose matrix this slot's model follows */
     struct PoolPart *part;          /* 0x44 the 0x50-byte part this slot shows, NULL: none */
-    struct PoolPartRecord *unk48;   /* 0x48 */
+    struct PoolPartRecord *part_record; /* 0x48 the record of the part this slot shows; NULL: no parent */
     char pad4C[0x04];
     struct PoolSlot *next;          /* 0x50 */
     s32 key_index;                  /* 0x54 the key of its node's animation that PoolNode_Pose is at */
-    u64 unk58;                      /* 0x58 copied from the texture header's tex0 */
+    u64 tex0;                       /* 0x58 GS TEX0 copied from the texture header */
     u64 unk60;                      /* 0x60 */
     char pad68[0x08];
 } PoolSlot;
@@ -308,7 +308,7 @@ typedef struct {
     u64 unk08;                      /* 0x08 */
 } PoolSlotRegisters;
 
-/* a PoolSlot with unk58 and unk60 as the one member they are copied as */
+/* a PoolSlot with tex0 and unk60 as the one member they are copied as */
 typedef struct {
     char pad00[0x58];
     PoolSlotRegisters registers;    /* 0x58 */
@@ -330,10 +330,10 @@ typedef struct {
     u16 layer_count;                /* 0x02 */
     u16 slot;                       /* 0x04 the PoolSlot the node poses (PoolNode_Pose) */
     char pad06[0x2A];
-    void *unk30;                    /* 0x30 a file offset until PoolNodeFile_Relocate has run, like the next three */
+    void *keys;                     /* 0x30 the animation keys, 0x80 bytes each */
     RelocLayer *layers;             /* 0x34 */
-    void *unk38;                    /* 0x38 */
-    void *unk3C;                    /* 0x3C */
+    void *child;                    /* 0x38 the child node, posed by this node's slot */
+    void *sibling;                  /* 0x3C the next sibling node, posed by the parent matrix */
 } RelocEntry;
 
 /* a file whose offsets PoolNodeFile_Relocate turns into pointers: a 0x10-byte header, then the entries */
@@ -388,10 +388,10 @@ typedef struct {
 typedef struct {
     u16 point_count;                /* 0x00 */
     char pad02[0x02];
-    u16 unk04;                      /* 0x04 the value of GS ALPHA_2 */
+    u16 alpha_2;                    /* 0x04 the value of GS ALPHA_2 */
     u16 prim;                       /* 0x06 GS PRIM bits */
     u64 tex0;                       /* 0x08 GS TEX0, set from the texture header's before the part is drawn */
-    u64 unk10;                      /* 0x10 GS TEX0 of a second texture drawn over the first (PoolPart_DrawTinted), 0: none */
+    u64 second_tex0;                /* 0x10 GS TEX0 of a second texture drawn over the first (PoolPart_DrawTinted), 0: none */
     char pad18[0x08];
     PoolPartPoint points[1];        /* 0x20 point_count of them */
 } PoolPartMaterial;
@@ -457,7 +457,7 @@ typedef struct {
     u64 pages[2];                   /* 0x00 */
 } PoolClutPages;
 
-/* one 0x80-byte animation key of a RelocEntry (its unk30), interpolated towards the next one by PoolNode_Pose */
+/* one 0x80-byte animation key of a RelocEntry (its keys), interpolated towards the next one by PoolNode_Pose */
 typedef struct {
     u16 frame;                      /* 0x00 the frame the key starts at */
     u16 length;                     /* 0x02 frames to the next key */
@@ -491,9 +491,9 @@ typedef struct PoolPart {
 /* one 0x10-byte record of a PoolPartFile; the records end records_end_offset bytes into the file, the
    last one belonging to the last part */
 typedef struct PoolPartRecord {
-    s32 unk00;                      /* 0x00 above 0: the part's slot points at this record */
-    s32 unk04;                      /* 0x04 how many of the part's normals go by the parent slot's matrix (unk00: points) */
-    s32 unk08;                      /* 0x08 index, in the group's slot list, of the slot PoolSlot.unk40 is set to */
+    s32 parent_point_count;         /* 0x00 above 0: the part has a parent slot and this many points follow its matrix */
+    s32 parent_normal_count;        /* 0x04 how many of the part's normals go by the parent slot's matrix */
+    s32 parent_slot_index;          /* 0x08 index, in the group's slot list, of the parent slot */
     char pad0C[0x04];
 } PoolPartRecord;
 

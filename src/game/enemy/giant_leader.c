@@ -1,4 +1,4 @@
-/* GiantLeader: the behaviour of entity type 63 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* GiantLeader: the behaviour of entity type 63 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Giant Leader. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -70,7 +70,7 @@ static s32 GiantLeader_CheckPartHit(Entity *entity, EntityParamsUnk240 *unk240, 
 
 /* Set-up of a type 63 entity: clears its work area and installs the type's handlers. */
 void GiantLeader_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
@@ -78,12 +78,12 @@ void GiantLeader_Init(Entity *entity) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = GiantLeader_Think;
-    unkE0->animate = EntityAi_Animate;
-    unkE0->on_hit = (void (*)(void))GiantLeader_OnHit;
-    unkE0->move = (void (*)(void))EntityAi_Move;
-    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
-    unkE0->death = (void (*)(void))EntityAi_Death;
+    ai_state->think = GiantLeader_Think;
+    ai_state->animate = EntityAi_Animate;
+    ai_state->on_hit = (void (*)(void))GiantLeader_OnHit;
+    ai_state->move = (void (*)(void))EntityAi_Move;
+    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
+    ai_state->death = (void (*)(void))EntityAi_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -93,14 +93,14 @@ void GiantLeader_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
+        Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -113,7 +113,7 @@ void GiantLeader_Init(Entity *entity) {
    map records and one of them near the object; if so it puts the number of the object in unk7A,
    marks it in work byte unk7B (each object is used once) and starts GiantLeader_BreakMapObject. */
 static void GiantLeader_Think(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 position[4];
     f32 target[4];
     f32 delta[4];
@@ -134,62 +134,62 @@ static void GiantLeader_Think(Entity *entity, s32 unknown) {
         first = (Entity *)MapObject_GetById(entity->group_id, 0xA0);
         second = (Entity *)MapObject_GetById(entity->group_id, 0xA1);
         third = (Entity *)MapObject_GetById(entity->group_id, 0xA2);
-        if (unkE0->step_index == 0) {
+        if (ai_state->step_index == 0) {
             records = (MapRecord *)map_slots[entity->group_id].records;
             if (entity->map_record == &records[0x11]) {
-                if (EntityCollision_LineHits(first, entity->model->position, &player_state) == 1 && !(unkE0->action_flags & 1)
+                if (EntityCollision_LineHits(first, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & 1)
                     && (EntityMath_DistanceXZ(&player_state, first->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, first->model->position) < entity->radius + 400.0f)
                     && player_state.map_record_index == 0x14) {
-                    unkE0->step_index = 2;
-                    unkE0->action_flags |= 1;
+                    ai_state->step_index = 2;
+                    ai_state->action_flags |= 1;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
                     return;
                 }
-                if (EntityCollision_LineHits(second, entity->model->position, &player_state) == 1 && !(unkE0->action_flags & 2)
+                if (EntityCollision_LineHits(second, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & 2)
                     && (EntityMath_DistanceXZ(&player_state, second->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, second->model->position) < entity->radius + 400.0f)
                     && player_state.map_record_index == 0x16) {
-                    unkE0->step_index = 3;
-                    unkE0->action_flags |= 2;
+                    ai_state->step_index = 3;
+                    ai_state->action_flags |= 2;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
                     return;
                 }
             } else if (entity->map_record == &records[0x14]) {
-                if (EntityCollision_LineHits(first, entity->model->position, &player_state) == 1 && !(unkE0->action_flags & 1)
+                if (EntityCollision_LineHits(first, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & 1)
                     && (EntityMath_DistanceXZ(&player_state, first->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, first->model->position) < entity->radius + 400.0f)
                     && player_state.map_record_index == 0x11) {
-                    unkE0->step_index = 2;
-                    unkE0->action_flags |= 1;
+                    ai_state->step_index = 2;
+                    ai_state->action_flags |= 1;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
                     return;
                 }
-                if (EntityCollision_LineHits(third, entity->model->position, &player_state) == 1 && !(unkE0->action_flags & 4)
+                if (EntityCollision_LineHits(third, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & 4)
                     && (EntityMath_DistanceXZ(&player_state, third->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, third->model->position) < entity->radius + 400.0f)
                     && player_state.map_record_index == 0x16) {
-                    unkE0->step_index = 1;
-                    unkE0->action_flags |= 4;
+                    ai_state->step_index = 1;
+                    ai_state->action_flags |= 4;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
                     return;
                 }
             } else if (entity->map_record == &records[0x16]) {
-                if (EntityCollision_LineHits(second, entity->model->position, &player_state) == 1 && !(unkE0->action_flags & 2)
+                if (EntityCollision_LineHits(second, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & 2)
                     && (EntityMath_DistanceXZ(&player_state, second->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, second->model->position) < entity->radius + 400.0f)
                     && player_state.map_record_index == 0x11) {
-                    unkE0->step_index = 3;
-                    unkE0->action_flags |= 2;
+                    ai_state->step_index = 3;
+                    ai_state->action_flags |= 2;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
                     return;
                 }
-                if (EntityCollision_LineHits(third, entity->model->position, &player_state) == 1 && !(unkE0->action_flags & 4)
+                if (EntityCollision_LineHits(third, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & 4)
                     && (EntityMath_DistanceXZ(&player_state, third->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, third->model->position) < entity->radius + 400.0f)
                     && player_state.map_record_index == 0x14) {
-                    unkE0->step_index = 1;
-                    unkE0->action_flags |= 4;
+                    ai_state->step_index = 1;
+                    ai_state->action_flags |= 4;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
                     return;
                 }
@@ -223,7 +223,7 @@ static void GiantLeader_Think(Entity *entity, s32 unknown) {
 /* The think function of state 2: as EntityAi_ThinkCombat, but melee record 0 is
    GiantLeader_MeleeAttack0 and melee record 1 GiantLeader_MeleeAttack1; closing in never runs. */
 static void GiantLeader_ThinkCombat(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
     s32 side;
@@ -266,30 +266,30 @@ static void GiantLeader_ThinkCombat(Entity *entity, s32 unknown) {
         case 1:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
-            unkE0->move_choice = 0;
+            ai_state->move_choice = 0;
             break;
         case 2:
             entity->action_timer = rand() % 30 + 30;
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         default:
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         }
     }
-    if (unkE0->move_choice == 0) {
+    if (ai_state->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-            if (unkE0->turn_in_place == 0) {
-                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
-                if (unkE0->turn_in_place == 0) {
+            if (ai_state->turn_in_place == 0) {
+                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                if (ai_state->turn_in_place == 0) {
                     goto done;
                 }
             }
             entity->move_command = EntityAi_TurnCommand(entity);
             if (entity->move_command == 0) {
-                unkE0->turn_in_place = 0;
+                ai_state->turn_in_place = 0;
             }
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
@@ -303,14 +303,14 @@ static void GiantLeader_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* The melee attack with record 0 (busy bit 1): animation 20, no turning.
    GiantLeader_CheckPartHit checks six parts: 0, 2 and 4 towards the back (the heading plus
    180 degrees), 1, 3 and 5 along the heading; each pair shares one hit flag. */
 static void GiantLeader_MeleeAttack0(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[0];
     s32 frame;
 
@@ -325,32 +325,32 @@ static void GiantLeader_MeleeAttack0(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        unkE0->turn_rate = 0.0f;
-        frame = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        ai_state->turn_rate = 0.0f;
+        frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = GiantLeader_CheckPartHit(entity, unk240, 0, frame, entity->model->level_tables->unk82, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
+            ENTITY_FLAG_BITS(entity)->bit54 = GiantLeader_CheckPartHit(entity, unk240, 0, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
             if (!ENTITY_FLAG_BITS(entity)->bit54) {
-                ENTITY_FLAG_BITS(entity)->bit54 = GiantLeader_CheckPartHit(entity, unk240, 1, frame, entity->model->level_tables->unk82, entity->model->rotation[1]);
+                ENTITY_FLAG_BITS(entity)->bit54 = GiantLeader_CheckPartHit(entity, unk240, 1, frame, entity->model->level_tables->frame, entity->model->rotation[1]);
             }
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = GiantLeader_CheckPartHit(entity, unk240, 2, frame, entity->model->level_tables->unk82, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
+            ENTITY_FLAG_BITS(entity)->bit55 = GiantLeader_CheckPartHit(entity, unk240, 2, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
             if (!ENTITY_FLAG_BITS(entity)->bit55) {
-                ENTITY_FLAG_BITS(entity)->bit55 = GiantLeader_CheckPartHit(entity, unk240, 3, frame, entity->model->level_tables->unk82, entity->model->rotation[1]);
+                ENTITY_FLAG_BITS(entity)->bit55 = GiantLeader_CheckPartHit(entity, unk240, 3, frame, entity->model->level_tables->frame, entity->model->rotation[1]);
             }
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = GiantLeader_CheckPartHit(entity, unk240, 4, frame, entity->model->level_tables->unk82, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
+            ENTITY_FLAG_BITS(entity)->bit56 = GiantLeader_CheckPartHit(entity, unk240, 4, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
             if (!ENTITY_FLAG_BITS(entity)->bit56) {
-                ENTITY_FLAG_BITS(entity)->bit56 = GiantLeader_CheckPartHit(entity, unk240, 5, frame, entity->model->level_tables->unk82, entity->model->rotation[1]);
+                ENTITY_FLAG_BITS(entity)->bit56 = GiantLeader_CheckPartHit(entity, unk240, 5, frame, entity->model->level_tables->frame, entity->model->rotation[1]);
             }
         }
-        if (entity->model->level_tables->unk82 > 0 && unk240->hit_end_frame >= entity->model->level_tables->unk82) {
+        if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
@@ -361,9 +361,9 @@ static void GiantLeader_MeleeAttack0(Entity *entity) {
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk240->attack_delay);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -372,10 +372,10 @@ static void GiantLeader_MeleeAttack0(Entity *entity) {
 
 /* An action (busy bit 0x1000): goes past one of three map objects (0xA0-0xA2); work byte unk7A
    says which. The entity is put at a fixed place next to the object, facing it, and plays
-   animation 17, breaks the map object (MapObject_Break) on frame EntityParams.unk43C, then walks in
+   animation 17, breaks the map object (MapObject_Break) on frame EntityParams.type_param_1, then walks in
    animation 3 to a point on the far side and clears unk7A. GiantLeader_Think starts it. */
 static void GiantLeader_BreakMapObject(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     void *map_object;
     f32 coord; /* also the reach tested in step 4 */
     f32 centre;
@@ -387,7 +387,7 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
     case 0:
         ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-        switch (unkE0->step_index) {
+        switch (ai_state->step_index) {
         case 1:
             centre = 4200.0f;
             coord = (entity->model->position[0] > centre ? entity->radius + 50.0f : -(entity->radius + 50.0f)) + centre;
@@ -402,10 +402,10 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
             }
             entity->model->rotation[1] = angle;
             coord = (entity->model->position[0] > centre ? -(entity->radius + 100.0f) : entity->radius + 100.0f) + centre;
-            unkE0->target_point[0] = coord;
-            unkE0->target_point[1] = 640.0f;
-            unkE0->target_point[2] = -2400.0f;
-            unkE0->target_point[3] = 0.0f;
+            ai_state->target_point[0] = coord;
+            ai_state->target_point[1] = 640.0f;
+            ai_state->target_point[2] = -2400.0f;
+            ai_state->target_point[3] = 0.0f;
             break;
         case 2:
             centre = -1650.0f;
@@ -417,10 +417,10 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
             entity->model->position[3] = 0.0f;
             entity->model->rotation[1] = EntityMath_WrapAngle(entity->model->position[2] > limit ? 0.0f : 3.1415927f);
             coord = (entity->model->position[2] > limit ? -(entity->radius + 100.0f) : entity->radius + 100.0f) + limit;
-            unkE0->target_point[0] = 5200.0f;
-            unkE0->target_point[1] = 640.0f;
-            unkE0->target_point[2] = coord;
-            unkE0->target_point[3] = 0.0f;
+            ai_state->target_point[0] = 5200.0f;
+            ai_state->target_point[1] = 640.0f;
+            ai_state->target_point[2] = coord;
+            ai_state->target_point[3] = 0.0f;
             break;
         case 3:
             centre = -1650.0f;
@@ -432,23 +432,23 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
             entity->model->position[3] = 0.0f;
             entity->model->rotation[1] = EntityMath_WrapAngle(entity->model->position[2] > limit ? 0.0f : 3.1415927f);
             coord = (entity->model->position[2] > limit ? -(entity->radius + 100.0f) : entity->radius + 100.0f) + limit;
-            unkE0->target_point[0] = 3400.0f;
-            unkE0->target_point[1] = 640.0f;
-            unkE0->target_point[2] = coord;
-            unkE0->target_point[3] = 0.0f;
+            ai_state->target_point[0] = 3400.0f;
+            ai_state->target_point[1] = 640.0f;
+            ai_state->target_point[2] = coord;
+            ai_state->target_point[3] = 0.0f;
             break;
         }
         Motion_Start(entity, 0x11, 0, 0, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        if (entity->model->level_tables->unk82 == entity->params->unk43C) {
-            switch (unkE0->step_index) {
+        if (entity->model->level_tables->frame == entity->params->type_param_1) {
+            switch (ai_state->step_index) {
             case 1:
                 if (entity->group_id == current_map_slot) {
                     map_object = MapObject_GetById(entity->group_id, 0xA2);
@@ -482,24 +482,24 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
         }
         break;
     case 3:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
             ENTITY_FLAG_BITS(entity)->bits11 = 1;
         }
         break;
     case 4:
         coord = 100.0f;
-        if (EntityMath_DistanceXZ(entity->model->position, unkE0->target_point) < coord) {
+        if (EntityMath_DistanceXZ(entity->model->position, ai_state->target_point) < coord) {
             ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            unkE0->step_index = 0;
+            ai_state->step_index = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -523,9 +523,9 @@ static void GiantLeader_OnHit(Entity *entity) {
 }
 
 /* The melee attack with record 1 (busy bit 1): animation 21, as EntityAi_MeleeAttack; the first
-   time part 0 has hit (flag bit 54) it calls Attack_DrainPlayerMp with EntityParams.unk43E. */
+   time part 0 has hit (flag bit 54) it calls Attack_DrainPlayerMp with EntityParams.type_param_2. */
 static void GiantLeader_MeleeAttack1(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[1];
     s32 frame;
 
@@ -534,44 +534,44 @@ static void GiantLeader_MeleeAttack1(Entity *entity) {
     case 0:
         Motion_Start(entity, 0x15, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
-        unkE0->action_counter = 0;
+        ai_state->action_counter = 0;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
         ENTITY_FLAG_BITS(entity)->bit56 = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         if (unk240->hit_start_frame != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk240->hit_start_frame >= entity->model->level_tables->unk82) {
-            EntityAi_TurnToHeading(entity, &entity->unkE0.turn_rate, entity->heading_to_player);
+        if (unk240->hit_start_frame >= entity->model->level_tables->frame) {
+            EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
         } else {
-            unkE0->turn_rate = 0.0f;
+            ai_state->turn_rate = 0.0f;
         }
-        frame = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->level_tables->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->level_tables->frame);
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->level_tables->unk82);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->level_tables->frame);
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->level_tables->unk82);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->level_tables->frame);
         }
-        if (entity->model->level_tables->unk82 > 0 && unk240->hit_end_frame >= entity->model->level_tables->unk82) {
+        if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
         }
-        if (unkE0->action_counter == 0 && ENTITY_FLAG_BITS(entity)->bit54) {
-            Attack_DrainPlayerMp(entity->params->unk43E);
-            unkE0->action_counter = 1;
+        if (ai_state->action_counter == 0 && ENTITY_FLAG_BITS(entity)->bit54) {
+            Attack_DrainPlayerMp(entity->params->type_param_2);
+            ai_state->action_counter = 1;
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             entity->busy_flags = 0;
@@ -579,9 +579,9 @@ static void GiantLeader_MeleeAttack1(Entity *entity) {
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk240->attack_delay);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -594,9 +594,9 @@ static void GiantLeader_MeleeAttack1(Entity *entity) {
    EntityParams.action_frames instead and run as part 1, 0 and 1. */
 static s32 GiantLeader_CheckPartHit(Entity *entity, EntityParamsUnk240 *unk240, s32 part, s32 frame_from, s32 frame_to, f32 angle) {
     if (part < 3) {
-        if (unk240->hit_parts[part].unk24 == 0 ||
-            (frame_from < unk240->hit_parts[part].unk24 && frame_to < unk240->hit_parts[part].unk24) ||
-            (unk240->hit_parts[part].unk26 < frame_from && unk240->hit_parts[part].unk26 < frame_to)) {
+        if (unk240->hit_parts[part].first_frame == 0 ||
+            (frame_from < unk240->hit_parts[part].first_frame && frame_to < unk240->hit_parts[part].first_frame) ||
+            (unk240->hit_parts[part].last_frame < frame_from && unk240->hit_parts[part].last_frame < frame_to)) {
             return 0;
         }
     } else if (part == 3) {
@@ -617,7 +617,7 @@ static s32 GiantLeader_CheckPartHit(Entity *entity, EntityParamsUnk240 *unk240, 
     } else if (part == 5) {
         if (entity->params->far_distance == 0 ||
             (frame_from < entity->params->far_distance && frame_to < entity->params->far_distance) ||
-            (entity->params->unk43A - 1 < frame_from && entity->params->unk43A - 1 < frame_to)) {
+            (entity->params->type_param_0 - 1 < frame_from && entity->params->type_param_0 - 1 < frame_to)) {
             return 0;
         }
         part = 1;

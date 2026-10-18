@@ -1,4 +1,4 @@
-/* WaterElemental: the behaviour of entity type 51 (Entity.params->unk02, the index into entity_type_handlers): its
+/* WaterElemental: the behaviour of entity type 51 (EntityParams.entity_type, the index into entity_type_handlers): its
    set-up function, which the table names, and the handlers it installs. Used by: Water Elemental. The game
    names no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm
    records by hit points and experience, with resistances and drops where two monsters share those. */
@@ -62,7 +62,7 @@ static void WaterElemental_RunAtPlayer(Entity *entity);
 
 /* Set-up of a type 51 entity: clears its work area and installs the type's handlers. */
 void WaterElemental_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
     u8 *unkC0 = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
@@ -71,17 +71,17 @@ void WaterElemental_Init(Entity *entity) {
     // match: the three fills name their target inside the loop; unkBC and unkC0 above are
     // otherwise unused but retail computes them up front and copies them before each loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *work_area = (u8 *)&entity->unkE0;
+        u8 *work_area = (u8 *)&entity->ai_state;
 
         work_area[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = WaterElemental_Think;
-    unkE0->animate = EntityAi_Animate;
-    unkE0->on_hit = (void (*)(void))WaterElemental_OnHit;
-    unkE0->move = (void (*)(void))EntityAi_Move;
-    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
-    unkE0->death = (void (*)(void))EntityAi_Death;
+    ai_state->think = WaterElemental_Think;
+    ai_state->animate = EntityAi_Animate;
+    ai_state->on_hit = (void (*)(void))WaterElemental_OnHit;
+    ai_state->move = (void (*)(void))EntityAi_Move;
+    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
+    ai_state->death = (void (*)(void))EntityAi_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -91,14 +91,14 @@ void WaterElemental_Init(Entity *entity) {
     entity->target = NULL;
     entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
+        Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -112,22 +112,22 @@ void WaterElemental_Init(Entity *entity) {
    EntityParams.near_distance percent of EntityParams.hit_points it starts WaterElemental_RecoverHealth with a
    chance of unk438 in 100. */
 static void WaterElemental_Think(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0;
+    EntityAiState *ai_state;
 
-    unkE0 = &entity->unkE0;
+    ai_state = &entity->ai_state;
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (unkE0->mode_timer > 0) {
-        unkE0->mode_timer--;
+    if (ai_state->mode_timer > 0) {
+        ai_state->mode_timer--;
     }
     if (player_state.magic_shot_launched != 0) {
-        unkE0->action_flags = 30;
+        ai_state->action_flags = 30;
     }
-    if (unkE0->action_flags > 0) {
-        unkE0->action_flags--;
+    if (ai_state->action_flags > 0) {
+        ai_state->action_flags--;
     }
-    if (unkE0->pause_timer == 1) {
+    if (ai_state->pause_timer == 1) {
         if (entity->busy_flags == 0) {
             EntityAi_StartAction(entity, WaterElemental_RunAtPlayer, 1);
         }
@@ -136,7 +136,7 @@ static void WaterElemental_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
-        if (unkE0->mode_timer == 0 && (s32)(entity->hit_points * 100.0f / entity->params->hit_points) < entity->params->near_distance
+        if (ai_state->mode_timer == 0 && (s32)(entity->hit_points * 100.0f / entity->params->hit_points) < entity->params->near_distance
             && rand() % 100 < entity->params->far_distance) {
             EntityAi_StartAction(entity, WaterElemental_RecoverHealth, 1);
             return;
@@ -146,11 +146,11 @@ static void WaterElemental_Think(Entity *entity, s32 unknown) {
         } else {
             switch (entity->state) {
             case 0:
-                unkE0->pause_timer = 0;
+                ai_state->pause_timer = 0;
                 EntityAi_ThinkIdle(entity, unknown);
                 break;
             case 1:
-                unkE0->pause_timer = 0;
+                ai_state->pause_timer = 0;
                 EntityAi_ThinkPursue(entity, unknown);
                 break;
             case 2:
@@ -170,7 +170,7 @@ static void WaterElemental_Think(Entity *entity, s32 unknown) {
    WaterElemental_PlayTurnAnim now and then when the player is more than 90 degrees off its heading.
    */
 static void WaterElemental_ThinkCombat(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
     s32 mode;
@@ -217,30 +217,30 @@ static void WaterElemental_ThinkCombat(Entity *entity, s32 unknown) {
         case 1:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
-            unkE0->move_choice = 0;
+            ai_state->move_choice = 0;
             break;
         case 2:
             entity->action_timer = rand() % 30 + 30;
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         default:
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         }
     }
-    if (unkE0->move_choice == 0) {
+    if (ai_state->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
         if ((s32)(entity->flags >> 31) & 1) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-            if (unkE0->turn_in_place == 0) {
-                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
-                if (unkE0->turn_in_place == 0) {
+            if (ai_state->turn_in_place == 0) {
+                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                if (ai_state->turn_in_place == 0) {
                     goto done;
                 }
             }
             entity->move_command = EntityAi_TurnCommand(entity);
             if (entity->move_command == 0) {
-                unkE0->turn_in_place = 0;
+                ai_state->turn_in_place = 0;
             }
         } else {
             side = EntityAi_TurnFromPush(entity, direction);
@@ -251,7 +251,7 @@ static void WaterElemental_ThinkCombat(Entity *entity, s32 unknown) {
             } else {
                 if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 1.5707964f
                     && frame_counter % 15U == 0 && !(rand() & 1)) {
-                    unkE0->step_index = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
+                    ai_state->step_index = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
                     EntityAi_StartAction(entity, WaterElemental_PlayTurnAnim, unknown);
                     return;
                 }
@@ -260,19 +260,19 @@ static void WaterElemental_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* An action (busy bit 0x2000): plays animation 12 or, with work byte unk7A below 1, animation 11 to
    its end. WaterElemental_ThinkCombat starts it when the player is more than 90 degrees off the
    heading. */
 static void WaterElemental_PlayTurnAnim(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
     case 0:
-        if (unkE0->step_index > 0) {
+        if (ai_state->step_index > 0) {
             Motion_Start(entity, 0xC, 0, entity->params->motion_blend_frames, 1);
         } else {
             Motion_Start(entity, 0xB, 0, entity->params->motion_blend_frames, 1);
@@ -281,7 +281,7 @@ static void WaterElemental_PlayTurnAnim(Entity *entity) {
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
@@ -291,9 +291,9 @@ static void WaterElemental_PlayTurnAnim(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -302,42 +302,42 @@ static void WaterElemental_PlayTurnAnim(Entity *entity) {
 
 /* An action (busy bit 0x1000) that WaterElemental_Think starts when Entity.hit_points is below
    EntityParams.near_distance percent of EntityParams.hit_points: plays animation 18 to its end; on frame
-   EntityParams.unk43E it adds EntityParams.unk43A percent of unk0A to Entity.hit_points, once, and sets
-   the pause in work word unk6C to unk43C. Entity.hit_points is the entity's health: Entity_ResetToSpawn
+   EntityParams.type_param_2 it adds EntityParams.type_param_0 percent of unk0A to Entity.hit_points, once, and sets
+   the pause in work word unk6C to type_param_1. Entity.hit_points is the entity's health: Entity_ResetToSpawn
    loads it from EntityParams.hit_points, Attack_HitEntity takes the damage of a hit off it, and
    EntityAi_Update starts the death action when it is 0. */
 static void WaterElemental_RecoverHealth(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x12, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
-        unkE0->turn_rate = 0.0f;
+        ai_state->turn_rate = 0.0f;
         ENTITY_FLAGS(entity) &= ~0x200;
-        unkE0->action_counter = 0;
+        ai_state->action_counter = 0;
         entity->action_step++;
         break;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        if (unkE0->action_counter == 0 && entity->model->level_tables->unk82 == entity->params->unk43E) {
-            entity->hit_points += (s32)(entity->params->hit_points * (f32)entity->params->unk43A / 100.0f);
-            unkE0->mode_timer = entity->params->unk43C;
-            unkE0->action_counter = 1;
+        if (ai_state->action_counter == 0 && entity->model->level_tables->frame == entity->params->type_param_2) {
+            entity->hit_points += (s32)(entity->params->hit_points * (f32)entity->params->type_param_0 / 100.0f);
+            ai_state->mode_timer = entity->params->type_param_1;
+            ai_state->action_counter = 1;
         }
         if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -353,7 +353,7 @@ static s32 WaterElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32
     f32 angle;
     f32 player_angle;
 
-    if ((u8)(entity->unkE0.action_flags - 1) >= 15) {
+    if ((u8)(entity->ai_state.action_flags - 1) >= 15) {
         return FALSE;
     }
     distance = entity->distance_to_player - (entity->radius + 100.0f);
@@ -380,13 +380,13 @@ static void WaterElemental_AlertSameKind(Entity *entity) {
     for (other = active_entities_head; other != NULL; other = other->next) {
         if (entity->params == other->params && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST) && ((s32)(other->flags >> 1) & 1)
             && ((s32)(other->flags >> 2) & 3) == 0 && other != entity) {
-            EntityUnkE0 *unkE0 = &other->unkE0;
+            EntityAiState *ai_state = &other->ai_state;
 
-            if (unkE0->pause_timer == 0
+            if (ai_state->pause_timer == 0
                 && EntityMath_DistanceXZ(entity->model->position, other->model->position)
                        < (s16)entity->params->action_frames
                 && EntityMath_DistanceXZ(other->spawn_info, player_state.position) < other->spawn_info->wander_radius) {
-                unkE0->pause_timer = 1;
+                ai_state->pause_timer = 1;
             }
         }
     }
@@ -416,7 +416,7 @@ static void WaterElemental_OnHit(Entity *entity) {
    picks once EntityAi_PickCombatChoice chooses attacking (unk68 becomes 2), and else gives the command to run
    at the player and calls the move handler itself. Flag bit 53 ends it with unk68 at 2. */
 static void WaterElemental_RunAtPlayer(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 side;
 
@@ -425,12 +425,12 @@ static void WaterElemental_RunAtPlayer(Entity *entity) {
     case 0:
         Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
-        unkE0->turn_rate = 0.0f;
+        ai_state->turn_rate = 0.0f;
         ENTITY_FLAGS(entity) &= ~0x200;
         entity->action_step++;
         break;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
@@ -451,11 +451,11 @@ static void WaterElemental_RunAtPlayer(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            unkE0->pause_timer = 2;
+            ai_state->pause_timer = 2;
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         side = EntityAi_PickCombatChoice(entity, 0);
@@ -468,7 +468,7 @@ static void WaterElemental_RunAtPlayer(Entity *entity) {
             }
             EntityAi_LowerChoiceWeight(entity, 0);
             if (entity->combat_choice == 0) {
-                unkE0->pause_timer = 2;
+                ai_state->pause_timer = 2;
                 if (EntityAi_PickAttack((char *)entity)) {
                     EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
                 } else {
@@ -486,7 +486,7 @@ static void WaterElemental_RunAtPlayer(Entity *entity) {
         } else {
             entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
         }
-        ((void (*)(Entity *))unkE0->move)(entity);
+        ((void (*)(Entity *))ai_state->move)(entity);
         break;
     }
 }

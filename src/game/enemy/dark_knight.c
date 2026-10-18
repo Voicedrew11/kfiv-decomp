@@ -1,4 +1,4 @@
-/* DarkKnight: the behaviour of entity type 64 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* DarkKnight: the behaviour of entity type 64 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Dark Knight. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -76,7 +76,7 @@ static s32 DarkKnight_PickAttack(Entity *entity);
 
 /* Set-up of a type 64 entity: clears its work area and installs the type's handlers. */
 void DarkKnight_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
     u8 *unkC0 = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
@@ -85,17 +85,17 @@ void DarkKnight_Init(Entity *entity) {
     // match: the three fills name their target inside the loop; unkBC and unkC0 above are
     // otherwise unused but retail computes them up front and copies them before each loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *work_area = (u8 *)&entity->unkE0;
+        u8 *work_area = (u8 *)&entity->ai_state;
 
         work_area[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = DarkKnight_Think;
-    unkE0->animate = EntityAi_Animate;
-    unkE0->on_hit = (void (*)(void))DarkKnight_OnHit;
-    unkE0->move = (void (*)(void))EntityAi_Move;
-    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
-    unkE0->death = (void (*)(void))EntityAi_Death;
+    ai_state->think = DarkKnight_Think;
+    ai_state->animate = EntityAi_Animate;
+    ai_state->on_hit = (void (*)(void))DarkKnight_OnHit;
+    ai_state->move = (void (*)(void))EntityAi_Move;
+    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
+    ai_state->death = (void (*)(void))EntityAi_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -105,14 +105,14 @@ void DarkKnight_Init(Entity *entity) {
     entity->target = NULL;
     entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
+        Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -137,12 +137,12 @@ static void DarkKnight_OnHit(Entity *entity) {
    while work word unk68 counts down (DarkKnight_RangedAttack0 sets it), for the first
    EntityParams.near_distance frames it starts one of effects 0x21F to 0x221 at point 4 and writes
    EntityParams.far_distance into unk10[n].unk00.unk00[8] of the three melee records, and 0 once the count
-   is over; it counts down work word unk6C, set to EntityParams.unk43A while player_state.unk259 is
+   is over; it counts down work word unk6C, set to EntityParams.type_param_0 while player_state.unk259 is
    not 0; and while work word unk6A counts down it keeps flag bit 35 set, with effect 0x25C every
    third frame. */
 static void DarkKnight_Think(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityUnkE0Kind162BC8 *aims = (EntityUnkE0Kind162BC8 *)unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
+    EntityAiStateKind162BC8 *aims = (EntityAiStateKind162BC8 *)ai_state;
     f32 delta[4];
     f32 *from;
     f32 *tip;
@@ -153,9 +153,9 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    unkE0->pose_blend_weight = 0.5f;
-    first_aim = aims->unk80;
-    second_aim = aims->unk90;
+    ai_state->pose_blend_weight = 0.5f;
+    first_aim = aims->first_aim;
+    second_aim = aims->second_aim;
     from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x1E);
     tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x1C);
     delta[0] = tip[0] - from[0];
@@ -174,17 +174,17 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
     second_aim[2] = 0.0f;
     EntityEvent_StartEffectAtPoint((char **)entity, 0x3D7, 0x1E, (int)first_aim);
     EntityEvent_StartEffectAtPoint((char **)entity, 0x3D7, 0x1F, (int)second_aim);
-    if (unkE0->pause_timer > 0) {
-        if (unkE0->pause_timer > (s16)entity->params->action_frames - entity->params->near_distance) {
+    if (ai_state->pause_timer > 0) {
+        if (ai_state->pause_timer > (s16)entity->params->action_frames - entity->params->near_distance) {
             from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 4);
             tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 5);
             delta[0] = tip[0] - from[0];
             delta[1] = tip[1] - from[1];
             delta[2] = tip[2] - from[2];
-            aims->unk30[0] = atan2f(-delta[1], sqrtf(delta[0] * delta[0] + delta[2] * delta[2]));
-            aims->unk30[1] = atan2f(delta[0], delta[2]);
-            aims->unk30[2] = 0.0f;
-            EntityEvent_StartEffectAtPoint((char **)entity, rand() % 3 + 0x21F, 4, (int)aims->unk30);
+            aims->effect_angles[0] = atan2f(-delta[1], sqrtf(delta[0] * delta[0] + delta[2] * delta[2]));
+            aims->effect_angles[1] = atan2f(delta[0], delta[2]);
+            aims->effect_angles[2] = 0.0f;
+            EntityEvent_StartEffectAtPoint((char **)entity, rand() % 3 + 0x21F, 4, (int)aims->effect_angles);
             frames = entity->params->far_distance;
             entity->params->melee_attacks[0].hit_parts[0].unk00.unk00[8] = frames;
             entity->params->melee_attacks[0].hit_parts[1].unk00.unk00[8] = frames;
@@ -196,7 +196,7 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
             ((EntityParamsUnk240 *)entity->params->melee_attack_third)->hit_parts[1].unk00.unk00[8] = frames;
             ((EntityParamsUnk240 *)entity->params->melee_attack_third)->hit_parts[2].unk00.unk00[8] = frames;
         }
-        unkE0->pause_timer--;
+        ai_state->pause_timer--;
     } else {
         entity->params->melee_attacks[0].hit_parts[0].unk00.unk00[8] = 0;
         entity->params->melee_attacks[0].hit_parts[1].unk00.unk00[8] = 0;
@@ -208,18 +208,18 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
         ((EntityParamsUnk240 *)entity->params->melee_attack_third)->hit_parts[1].unk00.unk00[8] = 0;
         ((EntityParamsUnk240 *)entity->params->melee_attack_third)->hit_parts[2].unk00.unk00[8] = 0;
     }
-    if (unkE0->mode_timer > 0) {
-        unkE0->mode_timer--;
+    if (ai_state->mode_timer > 0) {
+        ai_state->mode_timer--;
     }
     if (player_state.magic_shot_launched != 0) {
-        unkE0->mode_timer = entity->params->unk43A;
+        ai_state->mode_timer = entity->params->type_param_0;
     }
-    if (unkE0->sub_timer > 0) {
+    if (ai_state->sub_timer > 0) {
         if (frame_counter % 3U == 0) {
             EntityEvent_StartEffectAtPoint((char **)entity, 0x25C, 0, (int)entity->model->rotation);
         }
         ENTITY_FLAGS(entity) |= 0x8000L << 20;
-        unkE0->sub_timer--;
+        ai_state->sub_timer--;
     } else {
         ENTITY_FLAGS(entity) &= ~(0x8000L << 20);
     }
@@ -254,8 +254,8 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
    500 away adds command bits 0x40 and 0x400; and with Entity.heading_to_player more than 90 degrees off the
    heading it may start DarkKnight_PlayTurnAnim (work byte unk7B: the side). */
 static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityUnkE0Kind162BC8 *work = (EntityUnkE0Kind162BC8 *)unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
+    EntityAiStateKind162BC8 *work = (EntityAiStateKind162BC8 *)ai_state;
     f32 direction[4];
     f32 angle;
     s32 mode;
@@ -301,7 +301,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
             return;
         case 1:
             entity->target = &player_state;
-            unkE0->move_choice = 0;
+            ai_state->move_choice = 0;
             if (entity->distance_to_player > 500.0f) {
                 entity->action_timer = rand() % 30 + 60;
                 work->unk6E = 1;
@@ -312,24 +312,24 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
             break;
         case 2:
         default:
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         }
     }
-    if (unkE0->move_choice == 0) {
+    if (ai_state->move_choice == 0) {
         side = EntityAi_TurnFromPush(entity, direction);
         EntityAi_ClearTurnInPlace(entity);
         if ((s32)(entity->flags >> 31) & 1) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-            if (unkE0->turn_in_place == 0) {
-                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
-                if (unkE0->turn_in_place == 0) {
+            if (ai_state->turn_in_place == 0) {
+                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                if (ai_state->turn_in_place == 0) {
                     goto done;
                 }
             }
             entity->move_command = EntityAi_TurnCommand(entity);
             if (entity->move_command == 0) {
-                unkE0->turn_in_place = 0;
+                ai_state->turn_in_place = 0;
             }
         } else if (work->unk6E != 0) {
             if (side > 0) {
@@ -339,7 +339,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
             } else {
                 if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 1.5707964f
                     && frame_counter % 15U == 0 && !(rand() & 1)) {
-                    unkE0->action_flags = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
+                    ai_state->action_flags = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
                     EntityAi_StartAction(entity, DarkKnight_PlayTurnAnim, unknown);
                     return;
                 }
@@ -354,7 +354,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
             } else {
                 if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 1.5707964f
                     && frame_counter % 15U == 0 && !(rand() & 1)) {
-                    unkE0->action_flags = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
+                    ai_state->action_flags = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
                     EntityAi_StartAction(entity, DarkKnight_PlayTurnAnim, unknown);
                     return;
                 }
@@ -363,18 +363,18 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* An action (busy bit 0x1000) that DarkKnight_ThinkCombat starts: plays animation 12 or 11, by
    the sign of work byte unk7B, to its end. */
 static void DarkKnight_PlayTurnAnim(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
-        if (unkE0->action_flags > 0) {
+        if (ai_state->action_flags > 0) {
             Motion_Start(entity, 0xC, 0, entity->params->motion_blend_frames, 1);
         } else {
             Motion_Start(entity, 0xB, 0, entity->params->motion_blend_frames, 1);
@@ -383,7 +383,7 @@ static void DarkKnight_PlayTurnAnim(Entity *entity) {
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
@@ -393,9 +393,9 @@ static void DarkKnight_PlayTurnAnim(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -405,24 +405,24 @@ static void DarkKnight_PlayTurnAnim(Entity *entity) {
 /* An action (busy bit 0x10) that DarkKnight_ThinkCombat starts when DarkKnight_ShouldHoldAnim13 says so: as
    EntityAi_Guard (animation 13 held for EntityParams.guard_frames frames with the motion stopped), but without flag
    35, so it adds no defence and a hit still starts a reaction; once the motion has blended in it puts work word
-   unk6A to EntityParams.unk43C, the pause before the next. */
+   unk6A to EntityParams.type_param_1, the pause before the next. */
 static void DarkKnight_HoldGuardPose(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_GUARD;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0xD, 0, 0xA, 1);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
-        unkE0->turn_rate = 0.0f;
+        ai_state->turn_rate = 0.0f;
         ENTITY_FLAGS(entity) &= ~0x200;
         entity->action_step++;
         break;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_timer = entity->params->guard_frames;
             ENTITY_FLAGS(entity) &= ~0x4000;
-            unkE0->sub_timer = entity->params->unk43C;
+            ai_state->sub_timer = entity->params->type_param_1;
             entity->action_step++;
         }
         break;
@@ -433,9 +433,9 @@ static void DarkKnight_HoldGuardPose(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -447,8 +447,8 @@ static void DarkKnight_HoldGuardPose(Entity *entity) {
    strike has blended in; then animation 20 (record 0) or 22 (record 2), checking part 0 of the record ahead
    and, if that misses, behind, and part 2. */
 static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[unkE0->step_index];
+    EntityAiState *ai_state = &entity->ai_state;
+    EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ai_state->step_index];
     s32 frame;
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
@@ -456,16 +456,16 @@ static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
     case 0:
         if (ABS(entity->heading_to_player - entity->model->rotation[1]) < 0.5235988f) {
             Motion_Start(entity, 0x11, 0, 5, 1);
-            unkE0->step_index = 0;
+            ai_state->step_index = 0;
         } else if (entity->heading_to_player - entity->model->rotation[1] > 0.5235988f && entity->heading_to_player - entity->model->rotation[1] < 1.5707964f) {
             Motion_Start(entity, 0x12, 0, 5, 1);
-            unkE0->step_index = 2;
+            ai_state->step_index = 2;
         } else if (entity->heading_to_player - entity->model->rotation[1] < -0.5235988f && entity->heading_to_player - entity->model->rotation[1] > -1.5707964f) {
             Motion_Start(entity, 0x13, 0, 5, 1);
-            unkE0->step_index = 2;
+            ai_state->step_index = 2;
         }
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
-        unkE0->turn_rate = 0.0f;
+        ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
         ENTITY_FLAG_BITS(entity)->bit56 = 0;
@@ -474,48 +474,48 @@ static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
         entity->action_step++;
         break;
     case 1:
-        unkE0->pose_blend_weight = 0.5f;
-        if (entity->model->level_tables->unk88 == 0) {
+        ai_state->pose_blend_weight = 0.5f;
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            if (unkE0->step_index == 0) {
+            if (ai_state->step_index == 0) {
                 Motion_Start(entity, 0x14, 0xE, 0, 1);
-            } else if (unkE0->step_index == 2) {
+            } else if (ai_state->step_index == 2) {
                 Motion_Start(entity, 0x16, 0xE, 0, 1);
             }
             entity->action_step++;
         }
         break;
     case 3:
-        unkE0->pose_blend_weight = 0.5f;
-        if (entity->model->level_tables->unk88 == 0) {
+        ai_state->pose_blend_weight = 0.5f;
+        if (entity->model->level_tables->blend_left == 0) {
             ENTITY_FLAG_BITS(entity)->bit35 = 0;
             entity->action_step++;
         }
         if (unk240->hit_start_frame != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 4:
-        if (unk240->hit_start_frame >= entity->model->level_tables->unk82) {
-            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
+        if (unk240->hit_start_frame >= entity->model->level_tables->frame) {
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->turn_rate = 0.0f;
+            ai_state->turn_rate = 0.0f;
         }
-        frame = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->unk82, entity->model->rotation[1]);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->frame, entity->model->rotation[1]);
             if (!ENTITY_FLAG_BITS(entity)->bit54) {
-                ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->unk82, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
+                ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
             }
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->level_tables->unk82, entity->model->rotation[1]);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->level_tables->frame, entity->model->rotation[1]);
         }
-        if (entity->model->level_tables->unk82 > 0 && unk240->hit_end_frame >= entity->model->level_tables->unk82) {
+        if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
@@ -526,9 +526,9 @@ static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk240->attack_delay);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -539,7 +539,7 @@ static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
    starts for attack index 3: animation 22; part 0 is checked along the heading and, when it has not
    hit, part 1 along the reverse of the heading; part 2 along the heading (EntityAi_CheckMeleeHitAt). */
 static void DarkKnight_MeleeAttack2(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk240 *unk240 = (EntityParamsUnk240 *)entity->params->melee_attack_third;
     s32 frame;
 
@@ -554,30 +554,30 @@ static void DarkKnight_MeleeAttack2(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         if (unk240->hit_start_frame != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk240->hit_start_frame >= entity->model->level_tables->unk82) {
-            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
+        if (unk240->hit_start_frame >= entity->model->level_tables->frame) {
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->turn_rate = 0.0f;
+            ai_state->turn_rate = 0.0f;
         }
-        frame = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->unk82, entity->model->rotation[1]);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->frame, entity->model->rotation[1]);
             if (!ENTITY_FLAG_BITS(entity)->bit54) {
-                ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->unk82, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
+                ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
             }
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->level_tables->unk82, entity->model->rotation[1]);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->level_tables->frame, entity->model->rotation[1]);
         }
-        if (entity->model->level_tables->unk82 > 0 && unk240->hit_end_frame >= entity->model->level_tables->unk82) {
+        if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
@@ -588,9 +588,9 @@ static void DarkKnight_MeleeAttack2(Entity *entity) {
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk240->attack_delay);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -600,7 +600,7 @@ static void DarkKnight_MeleeAttack2(Entity *entity) {
 /* The ranged attack with record 0 (busy bit 1): as EntityAi_RangedAttack with animation 23; at its
    end it also sets work word unk68 to EntityParams.action_frames. */
 static void DarkKnight_RangedAttack0(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
@@ -611,23 +611,23 @@ static void DarkKnight_RangedAttack0(Entity *entity) {
         ENTITY_FLAGS(entity) &= ~0x200;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
+        if (unk3D8->turn_frames != 0) {
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->unk82) {
-            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->turn_rate = 0.0f;
+            ai_state->turn_rate = 0.0f;
         }
         EntityAi_LaunchShots(entity, unk3D8,
-                      (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8,
-                      entity->model->level_tables->unk82);
-        if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
+                      (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8,
+                      entity->model->level_tables->frame);
+        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
@@ -636,12 +636,12 @@ static void DarkKnight_RangedAttack0(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
-            unkE0->pause_timer = entity->params->action_frames;
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
+            ai_state->pause_timer = entity->params->action_frames;
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -651,7 +651,7 @@ static void DarkKnight_RangedAttack0(Entity *entity) {
 /* The ranged attack with record 1 (busy bit 1): as EntityAi_RangedAttack with animation 24, but the
    shots are launched along the reverse of the heading (EntityShot_Launch). */
 static void DarkKnight_RangedAttack1(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, 1);
     f32 direction[4];
     s32 elapsed;
@@ -668,24 +668,24 @@ static void DarkKnight_RangedAttack1(Entity *entity) {
         ENTITY_FLAGS(entity) &= ~0x200;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
+        if (unk3D8->turn_frames != 0) {
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->unk82) {
-            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->turn_rate = 0.0f;
+            ai_state->turn_rate = 0.0f;
         }
-        elapsed = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(direction, entity->model->rotation);
         direction[1] -= 3.1415927f;
-        EntityShot_Launch(entity, unk3D8, elapsed, entity->model->level_tables->unk82, direction);
-        if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
+        EntityShot_Launch(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction);
+        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
@@ -694,11 +694,11 @@ static void DarkKnight_RangedAttack1(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -708,7 +708,7 @@ static void DarkKnight_RangedAttack1(Entity *entity) {
 /* Helper of DarkKnight_ThinkCombat: whether to start DarkKnight_RangedAttack0, which is
    whenever the count in work word unk68 has run out. */
 static s32 DarkKnight_ShouldRangedAttack0(Entity *entity) {
-    return entity->unkE0.pause_timer < 1;
+    return entity->ai_state.pause_timer < 1;
 }
 
 /* Helper of DarkKnight_ThinkCombat: whether to start DarkKnight_HoldGuardPose, the action (busy bit 0x10)
@@ -717,14 +717,14 @@ static s32 DarkKnight_ShouldRangedAttack0(Entity *entity) {
    (less the radius and 100) and Entity.heading_to_player is within max_angle of the heading; then
    EntityParams.guard_chance / 5 times in 100. */
 static s32 DarkKnight_ShouldHoldAnim13(Entity *entity, f32 min_distance, f32 max_angle) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 distance;
     f32 angle;
 
-    if (unkE0->mode_timer <= 0) {
+    if (ai_state->mode_timer <= 0) {
         return FALSE;
     }
-    if (unkE0->sub_timer > 0) {
+    if (ai_state->sub_timer > 0) {
         return FALSE;
     }
     distance = entity->distance_to_player - (entity->radius + 100.0f);

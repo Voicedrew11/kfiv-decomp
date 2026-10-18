@@ -81,8 +81,8 @@ static MapObject *plain_draw_list[2];           /* 0x447088 per map, through Map
 static MapObject *jointed_draw_list[2];         /* 0x447090 per map, through MapObject.next_in_draw_list */
 
 static MapObject *objects_by_id[2][0x100];      /* 0x472240 per map, by MapObjectUnk08.spawn_flags.bytes[2] */
-static MapSlotUnk10Vectors glow_lights_shared;  /* 0x472A40 map_draw_state.unkC0 blended for the glow */
-static MapSlotUnk10Vectors glow_lights[2][0x20]; /* 0x472AC0 map_draw_state.unkA90 blended for the glow */
+static MapLightBlockVectors glow_lights_shared;  /* 0x472A40 map_draw_state.current_light_block blended for the glow */
+static MapLightBlockVectors glow_lights[2][0x20]; /* 0x472AC0 map_draw_state.unkA90 blended for the glow */
 
 /* Empties the map objects of both maps. */
 void MapObject_ClearAllMaps(void) {
@@ -232,7 +232,7 @@ void MapObject_StartMap(int map) {
         if (Game_GetTriggerItem(tag, object->source->spawn_flags.bytes[2])) {
             flag = 1;
         }
-        object->map_record = (s32)Map_FindRecordAtInSlot((CameraState *)&object->model->position, 0.0f, MAP_OBJECT_BYTES(object)->unk00 & 1);
+        object->map_record = (s32)Map_FindRecordAtInSlot((CameraState *)&object->model->position, 0.0f, MAP_OBJECT_BYTES(object)->map_slot & 1);
         if (in_use) {
             MapObject_Activate(object);
         } else {
@@ -363,8 +363,8 @@ void MapObject_UpdateAll(void) {
             MAP_OBJECT_BITS_LOW(object)->bit3 = FALSE;
             if (MODEL_UNK100_BITS(model)->has_motion) {
                 anim = &object->definition->anims[MAP_OBJECT_BYTES(object)->anim];
-                if (anim->unk06 == MODEL_CHANNEL(model)->param) {
-                    Effect_StartSpawner(anim->unk02, &model->position, &model->rotation, object);
+                if (anim->spawn_frame == MODEL_CHANNEL(model)->frame) {
+                    Effect_StartSpawner(anim->spawner_effect_id, &model->position, &model->rotation, object);
                 }
             }
             kind = (object->state_flags & MAP_OBJECT_SCRIPTED) ? 0 : object->definition->kind;
@@ -382,7 +382,7 @@ void MapObject_UpdateAll(void) {
                 if ((MapObject *)player_state.floor_map_object == object) {
                     object->state_flags |= MAP_OBJECT_IN_VIEW;
                 } else if (object->source->linked_point_owner != 0 && object->source->linked_point_owner != 0xFF) {
-                    if (Map_TestFlagBlockBit(current_map_slot, player_state.record_flag_block, MAP_OBJECT_BYTES(object)->unk00 & 1, object->source->linked_point_owner)) {
+                    if (Map_TestFlagBlockBit(current_map_slot, player_state.record_flag_block, MAP_OBJECT_BYTES(object)->map_slot & 1, object->source->linked_point_owner)) {
                         object->state_flags |= MAP_OBJECT_IN_VIEW;
                     }
                 } else if (record->record_flags & 0x4000000) {
@@ -450,8 +450,8 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
     f32 rest;
     int map;
     int i;
-    MapSlotUnk10Vectors *dest;
-    MapSlotUnk10Vectors *source;
+    MapLightBlockVectors *dest;
+    MapLightBlockVectors *source;
     MapObject *object;
 
     glow_item_was_worn = glow_item_worn;
@@ -471,42 +471,42 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
         if (map_slots[map].loaded != 0) {
             for (i = 0; i < 0x20; i++) {
                 dest = &glow_lights[map][i];
-                source = (MapSlotUnk10Vectors *)&map_draw_state.light_blocks[map][i];
-                Vector_Copy(&dest->unk00[0], &source->unk00[0]);
-                Vector_Copy(&dest->unk00[1], &source->unk00[1]);
-                Vector_Copy(&dest->unk00[2], &source->unk00[2]);
-                Vector_Copy(&dest->unk00[3], &source->unk00[3]);
+                source = (MapLightBlockVectors *)&map_draw_state.light_blocks[map][i];
+                Vector_Copy(&dest->directions[0], &source->directions[0]);
+                Vector_Copy(&dest->directions[1], &source->directions[1]);
+                Vector_Copy(&dest->directions[2], &source->directions[2]);
+                Vector_Copy(&dest->directions[3], &source->directions[3]);
                 Vector_Scale(scaled, &map_object_glow_colors[0].x, blend);
-                Vector_Scale(&dest->unk40[0].x, &source->unk40[0].x, rest);
-                Vector_Add(&dest->unk40[0], &dest->unk40[0], scaled);
+                Vector_Scale(&dest->colors[0].x, &source->colors[0].x, rest);
+                Vector_Add(&dest->colors[0], &dest->colors[0], scaled);
                 Vector_Scale(scaled, &map_object_glow_colors[1].x, blend);
-                Vector_Scale(&dest->unk40[1].x, &source->unk40[1].x, rest);
-                Vector_Add(&dest->unk40[1], &dest->unk40[1], scaled);
+                Vector_Scale(&dest->colors[1].x, &source->colors[1].x, rest);
+                Vector_Add(&dest->colors[1], &dest->colors[1], scaled);
                 Vector_Scale(scaled, &map_object_glow_colors[2].x, blend);
-                Vector_Scale(&dest->unk40[2].x, &source->unk40[2].x, rest);
-                Vector_Add(&dest->unk40[2], &dest->unk40[2], scaled);
+                Vector_Scale(&dest->colors[2].x, &source->colors[2].x, rest);
+                Vector_Add(&dest->colors[2], &dest->colors[2], scaled);
                 Vector_Scale(scaled, &map_object_glow_colors[3].x, blend);
-                Vector_Scale(&dest->unk40[3].x, &source->unk40[3].x, rest);
-                Vector_Add(&dest->unk40[3], &dest->unk40[3], scaled);
+                Vector_Scale(&dest->colors[3].x, &source->colors[3].x, rest);
+                Vector_Add(&dest->colors[3], &dest->colors[3], scaled);
             }
         }
     }
-    Vector_Copy(&glow_lights_shared.unk00[0], &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk00[0]);
-    Vector_Copy(&glow_lights_shared.unk00[1], &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk00[1]);
-    Vector_Copy(&glow_lights_shared.unk00[2], &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk00[2]);
-    Vector_Copy(&glow_lights_shared.unk00[3], &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk00[3]);
+    Vector_Copy(&glow_lights_shared.directions[0], &((MapLightBlockVectors *)&map_draw_state.current_light_block)->directions[0]);
+    Vector_Copy(&glow_lights_shared.directions[1], &((MapLightBlockVectors *)&map_draw_state.current_light_block)->directions[1]);
+    Vector_Copy(&glow_lights_shared.directions[2], &((MapLightBlockVectors *)&map_draw_state.current_light_block)->directions[2]);
+    Vector_Copy(&glow_lights_shared.directions[3], &((MapLightBlockVectors *)&map_draw_state.current_light_block)->directions[3]);
     Vector_Scale(scaled, &map_object_glow_colors[0].x, blend);
-    Vector_Scale(&glow_lights_shared.unk40[0].x, &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk40[0].x, rest);
-    Vector_Add(&glow_lights_shared.unk40[0], &glow_lights_shared.unk40[0], scaled);
+    Vector_Scale(&glow_lights_shared.colors[0].x, &((MapLightBlockVectors *)&map_draw_state.current_light_block)->colors[0].x, rest);
+    Vector_Add(&glow_lights_shared.colors[0], &glow_lights_shared.colors[0], scaled);
     Vector_Scale(scaled, &map_object_glow_colors[1].x, blend);
-    Vector_Scale(&glow_lights_shared.unk40[1].x, &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk40[1].x, rest);
-    Vector_Add(&glow_lights_shared.unk40[1], &glow_lights_shared.unk40[1], scaled);
+    Vector_Scale(&glow_lights_shared.colors[1].x, &((MapLightBlockVectors *)&map_draw_state.current_light_block)->colors[1].x, rest);
+    Vector_Add(&glow_lights_shared.colors[1], &glow_lights_shared.colors[1], scaled);
     Vector_Scale(scaled, &map_object_glow_colors[2].x, blend);
-    Vector_Scale(&glow_lights_shared.unk40[2].x, &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk40[2].x, rest);
-    Vector_Add(&glow_lights_shared.unk40[2], &glow_lights_shared.unk40[2], scaled);
+    Vector_Scale(&glow_lights_shared.colors[2].x, &((MapLightBlockVectors *)&map_draw_state.current_light_block)->colors[2].x, rest);
+    Vector_Add(&glow_lights_shared.colors[2], &glow_lights_shared.colors[2], scaled);
     Vector_Scale(scaled, &map_object_glow_colors[3].x, blend);
-    Vector_Scale(&glow_lights_shared.unk40[3].x, &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk40[3].x, rest);
-    Vector_Add(&glow_lights_shared.unk40[3], &glow_lights_shared.unk40[3], scaled);
+    Vector_Scale(&glow_lights_shared.colors[3].x, &((MapLightBlockVectors *)&map_draw_state.current_light_block)->colors[3].x, rest);
+    Vector_Add(&glow_lights_shared.colors[3], &glow_lights_shared.colors[3], scaled);
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
     Packet_AddGsRegister(GS_REG_ALPHA_2, 9);
@@ -535,7 +535,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             }
             if ((MAP_OBJECT_DEF_WORD(object) & 0x4000) && glow_item_worn != 0) {
                 if ((s8)object->source->spawn_flags.bytes[5] != -1) {
-                    object->model->light_block = (s32)&glow_lights[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[5]];
+                    object->model->light_block = (s32)&glow_lights[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[5]];
                 } else if (RECORD_FLAGS(object) & 0x10) {
                     object->model->light_block = (s32)&glow_lights_shared;
                 } else {
@@ -543,17 +543,17 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
                 }
             } else {
                 if ((s8)object->source->spawn_flags.bytes[5] != -1) {
-                    object->model->light_block = (s32)&map_draw_state.light_blocks[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[5]];
+                    object->model->light_block = (s32)&map_draw_state.light_blocks[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[5]];
                 } else if (RECORD_FLAGS(object) & 0x10) {
-                    object->model->light_block = (s32)&map_draw_state.unkC0;
+                    object->model->light_block = (s32)&map_draw_state.current_light_block;
                 } else {
                     object->model->light_block = (s32)&map_draw_state.light_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->light_block_index];
                 }
             }
             if ((s8)object->source->spawn_flags.bytes[4] != -1) {
-                object->model->fog_block = &map_draw_state.fog_blocks[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[4]];
+                object->model->fog_block = &map_draw_state.fog_blocks[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[4]];
             } else if (RECORD_FLAGS(object) & 0x10) {
-                object->model->fog_block = &map_draw_state.unkA0;
+                object->model->fog_block = &map_draw_state.current_fog_block;
             } else {
                 object->model->fog_block = &map_draw_state.fog_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->fog_block_index];
             }
@@ -594,7 +594,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             }
             if ((MAP_OBJECT_DEF_WORD(object) & 0x4000) && glow_item_worn != 0) {
                 if ((s8)object->source->spawn_flags.bytes[5] != -1) {
-                    object->model->light_block = (s32)&glow_lights[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[5]];
+                    object->model->light_block = (s32)&glow_lights[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[5]];
                 } else if (RECORD_FLAGS(object) & 0x10) {
                     object->model->light_block = (s32)&glow_lights_shared;
                 } else {
@@ -602,21 +602,21 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
                 }
             } else {
                 if ((s8)object->source->spawn_flags.bytes[5] != -1) {
-                    object->model->light_block = (s32)&map_draw_state.light_blocks[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[5]];
+                    object->model->light_block = (s32)&map_draw_state.light_blocks[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[5]];
                 } else if (RECORD_FLAGS(object) & 0x10) {
-                    object->model->light_block = (s32)&map_draw_state.unkC0;
+                    object->model->light_block = (s32)&map_draw_state.current_light_block;
                 } else {
                     object->model->light_block = (s32)&map_draw_state.light_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->light_block_index];
                 }
             }
             if ((s8)object->source->spawn_flags.bytes[4] == -1) {
                 if (RECORD_FLAGS(object) & 0x10) {
-                    object->model->fog_block = &map_draw_state.unkA0;
+                    object->model->fog_block = &map_draw_state.current_fog_block;
                 } else {
                     object->model->fog_block = &map_draw_state.fog_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->fog_block_index];
                 }
             } else {
-                object->model->fog_block = &map_draw_state.fog_blocks[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[4]];
+                object->model->fog_block = &map_draw_state.fog_blocks[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[4]];
             }
             if (object->definition->kind == 9) {
                 LinkedPoint_FindHitsExclude(object->model, *(s16 *)object->work);
@@ -696,12 +696,12 @@ void MapObject_Break(MapObject *object) {
     if (MAP_OBJECT_DEF_WORD(object) & 0x1000) {
         MapObject_StartAnim(object, 1);
     }
-    Effect_StartSpawner(object->definition->break_effect, &object->model->position, &object->model->rotation, &map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1]);
-    if (object->source->break_script != 0 && (MAP_OBJECT_BYTES(object)->unk00 & 1) == current_map_slot) {
+    Effect_StartSpawner(object->definition->break_effect, &object->model->position, &object->model->rotation, &map_slots[MAP_OBJECT_BYTES(object)->map_slot & 1]);
+    if (object->source->break_script != 0 && (MAP_OBJECT_BYTES(object)->map_slot & 1) == current_map_slot) {
         Script_Start(object->source->break_script, 0);
     }
     if (object->definition->definition_flags & 0x20000) {
-        other = MapObject_GetById(MAP_OBJECT_BYTES(object)->unk00 & 1, object->source->spawn_flags.bytes[3]);
+        other = MapObject_GetById(MAP_OBJECT_BYTES(object)->map_slot & 1, object->source->spawn_flags.bytes[3]);
         if (other != NULL) {
             MapObject_Activate(other);
         }
@@ -716,8 +716,8 @@ s16 MapObject_StartAnim(MapObject *object, int anim) {
     ModelMotion_Select(object->model, object->definition->anims[anim].anim);
     MAP_OBJECT_BYTES(object)->anim = anim;
     channel = MODEL_CHANNEL(object->model);
-    channel->param = 0;
-    channel->param_shifted = 0;
+    channel->frame = 0;
+    channel->frame_fixed = 0;
     MapObject_StepAnim(object);
 }
 
@@ -730,7 +730,7 @@ int MapObject_StepAnim(MapObject *object) {
 
     if (anim->sound != 0xFFFF) {
         model = object->model;
-        if (anim->sound_frame == MODEL_CHANNEL(model)->param) {
+        if (anim->sound_frame == MODEL_CHANNEL(model)->frame) {
             range = 800.0f;
             if (object->definition->sound_range > 0.0f) {
                 range = object->definition->sound_range;
@@ -753,7 +753,7 @@ int MapObject_StepAnim(MapObject *object) {
     }
     if (MAP_OBJECT_BITS(object)->anim == 4 || MAP_OBJECT_BITS(object)->anim == 5) {
         anim = &object->definition->anims[MAP_OBJECT_BYTES(object)->anim + 2];
-        if (anim->sound != 0xFFFF && anim->sound_frame == MODEL_CHANNEL(object->model)->param) {
+        if (anim->sound != 0xFFFF && anim->sound_frame == MODEL_CHANNEL(object->model)->frame) {
             range = 800.0f;
             if (object->definition->sound_range > 0.0f) {
                 range = object->definition->sound_range;
@@ -775,11 +775,11 @@ int MapObject_StepAnim(MapObject *object) {
     object->model->update_bone_points(object->model);
     object->state_flags |= 8;
     model = object->model;
-    if (MODEL_CHANNEL(model)->param == 0) {
+    if (MODEL_CHANNEL(model)->frame == 0) {
         MapObject_StopSound(object);
         model = object->model; // match: re-read here although the return reads it again; keeps the model in $6
     }
-    return MODEL_CHANNEL(object->model)->param != 0;
+    return MODEL_CHANNEL(object->model)->frame != 0;
 }
 
 /* Marks a map object that holds something (bones and gravestones, chests, containers) of the map's own sources as emptied. */
@@ -787,7 +787,7 @@ void MapObject_MarkEmptied(MapObject *object) {
     u8 kind = object->definition->kind;
 
     if ((kind == 3 || kind == MAP_OBJECT_KIND_CHEST || kind == MAP_OBJECT_KIND_CONTAINER) &&
-        ((u32)(((int)object->source - map_object_placements[MAP_OBJECT_BYTES(object)->unk00 & 1]) >> 7) >> 7) < 0x200) {
+        ((u32)(((int)object->source - map_object_placements[MAP_OBJECT_BYTES(object)->map_slot & 1]) >> 7) >> 7) < 0x200) {
         object->state_flags |= MAP_OBJECT_EMPTIED;
     }
 }
@@ -800,7 +800,7 @@ void MapObject_MarkEmptiedById(int map, int object_id) {
     if (object != NULL) {
         kind = object->definition->kind;
         if ((kind == 3 || kind == MAP_OBJECT_KIND_CHEST || kind == MAP_OBJECT_KIND_CONTAINER) &&
-            ((u32)(((int)object->source - map_object_placements[MAP_OBJECT_BYTES(object)->unk00 & 1]) >> 7) >> 7) < 0x200) {
+            ((u32)(((int)object->source - map_object_placements[MAP_OBJECT_BYTES(object)->map_slot & 1]) >> 7) >> 7) < 0x200) {
             object->state_flags |= MAP_OBJECT_EMPTIED;
         }
     }
