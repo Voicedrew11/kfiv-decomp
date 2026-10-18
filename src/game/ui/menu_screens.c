@@ -3033,8 +3033,8 @@ static void Menu_UpdateMain(HandlerContext *context) {
                         }
                         if (Menu_KnowsCastableSpell() != 0 || main_menu_line != 1) {
                             menu_screen_handler = (void *)Menu_OpenChosenScreen;
-                            context->unk04 = main_menu_line;
-                            switch (context->unk04) {
+                            context->active_list = main_menu_line;
+                            switch (context->active_list) {
                             case 0:
                                 ((void (*)(s32))Menu_ChainItemListModels)(0); // match: the callee takes nothing
                                 break;
@@ -3058,7 +3058,7 @@ static void Menu_UpdateMain(HandlerContext *context) {
                             }
                         }
                     } else if (main_menu_state == 3) {
-                        context->unk04 = 0;
+                        context->active_list = 0;
                         main_menu_line = 0;
                         menu_step++;
                     }
@@ -3073,7 +3073,7 @@ static void Menu_UpdateMain(HandlerContext *context) {
 
 /* Makes the screen of the main menu line chosen (context->unk04) the current handler and clears the line. */
 static void Menu_OpenChosenScreen(HandlerContext *context) {
-    int *line = &context->unk04;
+    int *line = &context->active_list;
 
     pulse_sprite_alpha = 128.0f;
     menu_screen_handler = main_menu_screens[*line];
@@ -4647,7 +4647,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
     if ((menu_buttons & PAD_CROSS) && recollection_state == 1 && menu_input_enabled != 0) {
         Sound_PlayMenu(0);
         menu_screen_handler = (void *)Menu_UpdateRecollectionPage;
-        context->unk04 = recollection_page * LIST_PAGES + rows[recollection_cursor] + MSG_RECOLLECTION_FIRST;
+        context->active_list = recollection_page * LIST_PAGES + rows[recollection_cursor] + MSG_RECOLLECTION_FIRST;
         menu_input_enabled = 0;
     } else if ((menu_buttons & PAD_CIRCLE) && recollection_state == 1 && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
@@ -4738,7 +4738,7 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
     s32 entry;
     u8 kind;
 
-    page = (context->unk04 - 3000) / 50;
+    page = (context->active_list - 3000) / 50;
     for (i = 0; i < image_part_count; i++) {
         kind = image_parts[i].handler_index;
         Menu_SetBlendMode(image_parts[i].blend_mode);
@@ -4793,7 +4793,7 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
     }
     word.raw = 0x000AAE607C307F80;
     MenuText_SetPen(word);
-    entry = ((s32 *)table)[context->unk04 + 1];
+    entry = ((s32 *)table)[context->active_list + 1];
     if (entry != 0) {
         if (page == 0) {
             MenuText_DrawWrappedLong((u16 *)(table + entry), 0x1B);
@@ -4803,7 +4803,7 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
     }
     if (menu_buttons & PAD_CIRCLE) {
         Sound_PlayMenu(2);
-        context->unk04 = 0;
+        context->active_list = 0;
         menu_screen_handler = (void *)Menu_UpdateRecollection;
         menu_input_enabled = 1;
     }

@@ -123,7 +123,7 @@ typedef struct {
 /* the viewers MapViewer_Run runs, indexed by picked_viewer (ui/map_viewer.c), 0xC bytes each */
 typedef struct {
     void (*run)(void);              /* 0x00 loops until the viewer is left */
-    int unk04;                      /* 0x04 */
+    int locate_player_fn;           /* 0x04 the function that finds the player's marker on the picture */
     int count;                      /* 0x08 the number of pictures; viewer_picture stays below it */
 } ViewerEntry;
 
@@ -388,10 +388,10 @@ typedef struct {
 typedef struct {
     u16 point_count;                /* 0x00 */
     char pad02[0x02];
-    u16 unk04;                      /* 0x04 the value of GS ALPHA_2 */
+    u16 alpha_2;                    /* 0x04 the value of GS ALPHA_2 */
     u16 prim;                       /* 0x06 GS PRIM bits */
     u64 tex0;                       /* 0x08 GS TEX0, set from the texture header's before the part is drawn */
-    u64 unk10;                      /* 0x10 GS TEX0 of a second texture drawn over the first (PoolPart_DrawTinted), 0: none */
+    u64 second_tex0;                /* 0x10 GS TEX0 of a second texture drawn over the first (PoolPart_DrawTinted), 0: none */
     char pad18[0x08];
     PoolPartPoint points[1];        /* 0x20 point_count of them */
 } PoolPartMaterial;

@@ -2311,7 +2311,7 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
         *((u64 *)scratch->cursor)++ = 0x1C;
         *((u64 *)scratch->cursor)++ = scratch->tex0;
         *((u64 *)scratch->cursor)++ = 0x17;
-        *scratch->cursor++ = scratch->strip_at->unk04;
+        *scratch->cursor++ = scratch->strip_at->alpha_2;
         *scratch->cursor++ = 0;
         *scratch->cursor++ = 0x43;
         *scratch->cursor++ = 0;
@@ -2343,7 +2343,7 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
             scratch->cursor = out + 8;
             scratch->strip_point++;
         }
-        if (scratch->strip_at->unk10 != 0) {
+        if (scratch->strip_at->second_tex0 != 0) {
             scratch->strip_point = scratch->strip_at->points;
             *scratch->cursor++ = scratch->reg_tag[0];
             *scratch->cursor++ = scratch->reg_tag[1];
@@ -2354,7 +2354,7 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
             ((PoolPartMaterialBits *)scratch->strip_start)->cld = 4; // match: as above
             scratch->registers[0] = 0;
             scratch->registers[1] = 0;
-            scratch->registers[4] = scratch->strip_at->unk10 | 0x800000000;
+            scratch->registers[4] = scratch->strip_at->second_tex0 | 0x800000000;
             scratch->registers[5] = 7;
             scratch->registers[2] = 0x60;
             scratch->registers[3] = 0x15;
@@ -2363,7 +2363,7 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
             scratch->cursor += 0x10;
             *((u64 *)scratch->cursor)++ = 4;
             *((u64 *)scratch->cursor)++ = 0x1C;
-            *((u64 *)scratch->cursor)++ = scratch->strip_at->unk10;
+            *((u64 *)scratch->cursor)++ = scratch->strip_at->second_tex0;
             *((u64 *)scratch->cursor)++ = 0x17;
             *((u64 *)scratch->cursor)++ = 9;
             *scratch->cursor++ = 0x43;
@@ -2538,7 +2538,7 @@ void PoolPart_Draw(PoolPart *part, s32 parent) {
         *((u64 *)scratch->cursor)++ = 0x1C;
         *((u64 *)scratch->cursor)++ = scratch->tex0;
         *((u64 *)scratch->cursor)++ = 0x17;
-        *scratch->cursor++ = scratch->strip_at->unk04;
+        *scratch->cursor++ = scratch->strip_at->alpha_2;
         *scratch->cursor++ = 0;
         *scratch->cursor++ = 0x43;
         *scratch->cursor++ = 0;
@@ -2837,7 +2837,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
         *((u64 *)scratch->cursor)++ = 0x1C;
         *((u64 *)scratch->cursor)++ = scratch->tex0;
         *((u64 *)scratch->cursor)++ = 0x16;
-        *scratch->cursor++ = scratch->strip_at->unk04;
+        *scratch->cursor++ = scratch->strip_at->alpha_2;
         *scratch->cursor++ = 0;
         *scratch->cursor++ = 0x42;
         *scratch->cursor++ = 0;
@@ -2866,7 +2866,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
             scratch->cursor += 12;
             scratch->strip_point++;
         }
-        if (scratch->strip_at->unk10 != 0) {
+        if (scratch->strip_at->second_tex0 != 0) {
             scratch->strip_point = scratch->strip_at->points;
             *scratch->cursor++ = scratch->reg_tag[0];
             *scratch->cursor++ = scratch->reg_tag[1];
@@ -2877,7 +2877,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
             ((PoolPartMaterialBits *)scratch->strip_start)->cld = 4;
             scratch->registers[1] = 0x3F;
             scratch->registers[0] = 0;
-            scratch->registers[4] = scratch->strip_at->unk10 | 0x800000000;
+            scratch->registers[4] = scratch->strip_at->second_tex0 | 0x800000000;
             scratch->registers[5] = 6;
             scratch->registers[2] = 0x60;
             scratch->registers[3] = 0x15;
@@ -2886,7 +2886,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
             scratch->cursor += 0x10;
             *((u64 *)scratch->cursor)++ = 4;
             *((u64 *)scratch->cursor)++ = 0x1C;
-            *((u64 *)scratch->cursor)++ = scratch->strip_at->unk10 | 0x800000000;
+            *((u64 *)scratch->cursor)++ = scratch->strip_at->second_tex0 | 0x800000000;
             *((u64 *)scratch->cursor)++ = 0x16;
             *((u64 *)scratch->cursor)++ = 9;
             *scratch->cursor++ = 0x42;

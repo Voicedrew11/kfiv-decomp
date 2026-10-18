@@ -7,7 +7,7 @@
 /* trade_context, smith_context, save_screen_context: passed to the handler picked from a mode table */
 typedef struct {
     int unk00;                      /* 0x00 */
-    int unk04;                      /* 0x04 */
+    int active_list;                /* 0x04 0 or 1: the list the cursor is in (trade_list_handlers) */
     int arg;                        /* 0x08 */
 } HandlerContext;
 
@@ -50,12 +50,12 @@ typedef struct {
 typedef struct {
     char pad00[0x20];
     u32 pad20 : 24;
-    u32 unk23 : 8;                  /* 0x23 the level its fade runs to */
+    u32 fade_level : 8;             /* 0x23 the level its fade runs to */
     char pad24[0x1A];
-    u8 unk3E;                       /* 0x3E the kind */
+    u8 kind;                        /* 0x3E the kind */
     s8 unk3F;                       /* 0x3F */
     char pad40[0x02];
-    u8 unk42;                       /* 0x42 passed to Menu_SetBlendMode while it is drawn */
+    u8 blend_mode;                  /* 0x42 passed to Menu_SetBlendMode while it is drawn */
     char pad43[0x1D];
 } Entry60;
 
