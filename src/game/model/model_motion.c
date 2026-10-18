@@ -112,7 +112,7 @@ void ModelMotion_Select(ModelInstance *model, int index) {
 int ModelMotion_IsAtEnd(ModelInstance *model) {
     ModelChannel *channel = MODEL_CHANNEL(model);
 
-    return channel->frame >= ((ModelTableHeader *)channel->tables[channel->motion_index] - 1)->unk00;
+    return channel->frame >= ((ModelTableHeader *)channel->tables[channel->motion_index] - 1)->frame_count;
 }
 
 /* Whether the model's motion stepped onto the given frame on its last step. */
@@ -229,7 +229,7 @@ u16 ModelMotion_GetLastFrame(char *model_arg) {
     ModelInstance *model = (ModelInstance *)model_arg;
     ModelChannel *channel = MODEL_CHANNEL(model);
 
-    return ((ModelTableHeader *)channel->tables[channel->motion_index] - 1)->unk00;
+    return ((ModelTableHeader *)channel->tables[channel->motion_index] - 1)->frame_count;
 }
 
 /* Hermite interpolation: hands the four basis weights for the ratio to Vector_WeightedSum4. */

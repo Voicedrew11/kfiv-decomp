@@ -302,7 +302,7 @@ void ModelScreen_StepVertices(ModelPartVertexWords *out, ModelPartVertexWords *f
         out->x = position[0];
         out->y = position[1];
         out->z = position[2];
-        out->unk06 = 1;
+        out->built_between = 1;
         out->normal[0] = previous->normal[0] + step.normal[0];
         out->normal[1] = previous->normal[1] + step.normal[1];
         out->normal[2] = previous->normal[2] + step.normal[2];
@@ -364,7 +364,7 @@ void ModelScreen_StepVerticesRounded(ModelPartVertexWords *out, ModelPartVertexW
         out->x = ROUND_HALF(current[0]);
         out->y = ROUND_HALF(current[1]);
         out->z = ROUND_HALF(current[2]);
-        out->unk06 = 1;
+        out->built_between = 1;
         out->normal[0] = previous->normal[0] + step.normal[0];
         out->normal[1] = previous->normal[1] + step.normal[1];
         out->normal[2] = previous->normal[2] + step.normal[2];

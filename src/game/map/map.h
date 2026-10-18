@@ -371,7 +371,7 @@ typedef struct {
 /* what MapTrigger.source points at, as MapObject_StopAmbientSound reads it */
 typedef struct {
     char pad00[0x44];
-    u16 unk44;                      /* 0x44 */
+    u16 sound_tag;                  /* 0x44 the sound tag, Sound_StopTagged stops it */
 } TriggerSource;
 
 /* a map event trigger (MapObject_PlaceStoneOnMarker) */

@@ -445,7 +445,7 @@ s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f3
     ITEM_NODE_BITS(node)->bit2 = TRUE;
     node->position_y = position[1];
     node->floor_y = floor_y;
-    node->unk30 = 0.0f;
+    node->fall_speed = 0.0f;
     model_data = source->model_data;
     buffer = dropped_item_model_data[map][index];
     Model_SetUpPosed(node->model, &model_data, &buffer);
@@ -554,7 +554,7 @@ void MapItem_UpdateFalling(void) {
             if (node->record != 0) {
                 flags = node->flags;
                 if (((u32)flags >> 2) & 1) {
-                    height = node->position_y + node->unk30;
+                    height = node->position_y + node->fall_speed;
                     node->position_y = height;
                     if (node->floor_y <= height) {
                         // match: the model is read before the flags are stored, as retail schedules it
@@ -564,7 +564,7 @@ void MapItem_UpdateFalling(void) {
                         model->position.y = node->floor_y;
                     } else {
                         node->model->position.y = height;
-                        node->unk30 += 1.0f;
+                        node->fall_speed += 1.0f;
                     }
                 }
             }

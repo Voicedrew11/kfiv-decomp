@@ -106,7 +106,7 @@ typedef struct {
     s16 x;                          /* 0x00 */
     s16 y;                          /* 0x02 */
     s16 z;                          /* 0x04 */
-    s16 unk06;                      /* 0x06 1 on a vertex built between two others */
+    s16 built_between;              /* 0x06 1 on a vertex built between two others */
     s16 normal[3];                  /* 0x08 normal, x y z */
     u16 cut_flag;                   /* 0x0E 0; 0x8000 on the first two vertices of a strip (ModelScreen_QueueCutTriangle) */
     s16 tex_u;                      /* 0x10 */
@@ -312,7 +312,7 @@ typedef struct {
 
 /* the 4 bytes in front of each block ModelInstance.level_tables[n] points at */
 typedef struct {
-    u16 unk00;                      /* 0x00 the motion's frame count, MotionData.frame_count (Motion_FrameCount) */
+    u16 frame_count;                /* 0x00 the motion's frame count, MotionData.frame_count (Motion_FrameCount) */
     char pad02[0x02];
 } ModelTableHeader;
 
@@ -834,7 +834,7 @@ typedef struct ItemNode {
     struct ItemNode *next;          /* 0x24 */
     f32 floor_y;                    /* 0x28 the height of the floor it lies on */
     f32 position_y;                 /* 0x2C the item's y */
-    f32 unk30;                      /* 0x30 0 when the item is laid down */
+    f32 fall_speed;                 /* 0x30 0 when laid down, +1 each frame in the air */
     char pad34[0x08];
 } ItemNode;
 
