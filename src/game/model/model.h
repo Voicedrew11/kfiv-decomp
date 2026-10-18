@@ -875,12 +875,12 @@ typedef struct {
 typedef struct {
     ModelPartLevels *tables[0x20];  /* 0x00 MotionData.parts of each motion loaded */
     u8 limit;                       /* 0x80 entries at or above this index are replaced by 0 */
-    u8 motion_index;                /* 0x81 0x81 the motion playing */
-    s16 frame;                      /* 0x82 0x82 the current frame */
-    s32 frame_fixed;                /* 0x84 0x84 the frame times 256 */
-    u32 blend_left;                 /* 0x88 0x88 blend still to run (ModelMotion_StepBlend while nonzero) */
-    u16 frame_step;                 /* 0x8C 0x8C added to frame_fixed each frame (0x100: one frame) */
-    u8 frame_changed;               /* 0x8E 0x8E nonzero in a frame that moved on to a new frame */
+    u8 motion_index;                /* 0x81 the motion playing */
+    s16 frame;                      /* 0x82 the current frame */
+    s32 frame_fixed;                /* 0x84 the frame times 256 */
+    u32 blend_left;                 /* 0x88 blend still to run (ModelMotion_StepBlend while nonzero) */
+    u16 frame_step;                 /* 0x8C added to frame_fixed each frame (0x100: one frame) */
+    u8 frame_changed;               /* 0x8E nonzero in a frame that moved on to a new frame */
     u8 unk8F;                       /* 0x8F nonzero: a blend moves 255/unk8F of the way each frame (ModelMotion_StepBlend) */
 } ModelChannel;
 

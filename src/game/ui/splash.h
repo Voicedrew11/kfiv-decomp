@@ -81,10 +81,10 @@ typedef struct {
 
 /* the effect shown when item `kind` is used (files item_ms/...), item_effect_defs_by_kind[kind] (kinds 0x46 to 0x52 are used) */
 typedef struct {
-    int next_step_frame;            /* 0x00 0x00 the motion frame at which the effect goes to its next step */
-    int fade_per_frame;             /* 0x04 0x04 taken off the effect's brightness each frame while it fades */
-    int spawn_frame;                /* 0x08 0x08 the motion frame at which the spawner effect starts */
-    int effect_number;              /* 0x0C 0x0C an effect number for Effect_StartSpawner */
+    int next_step_frame;            /* 0x00 the motion frame at which the effect goes to its next step */
+    int fade_per_frame;             /* 0x04 taken off the effect's brightness each frame while it fades */
+    int spawn_frame;                /* 0x08 the motion frame at which the spawner effect starts */
+    int effect_number;              /* 0x0C an effect number for Effect_StartSpawner */
 } ItemUseEffectDef;
 
 void Splash_Reset(void);

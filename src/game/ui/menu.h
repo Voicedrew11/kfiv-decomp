@@ -28,10 +28,10 @@ typedef struct {
 } MenuCursorBar;
 
 typedef struct MenuItem {
-    int definition;                 /* 0x00 0x00 the item's definition: an item, weapon, worn or spell (fx_table) entry */
+    int definition;                 /* 0x00 the item's definition: an item, weapon, worn or spell (fx_table) entry */
     struct MenuItem *next;          /* 0x04 */
     struct MenuItem *prev;          /* 0x08 */
-    s16 item_number;                /* 0x0C 0x0C the item's number: its index in item_name_defs and item_counts */
+    s16 item_number;                /* 0x0C the item's number: its index in item_name_defs and item_counts */
     s8 group;                       /* 0x0E which run of LevelDefs it is in (0: 150 on, 1: the first 150, 2 to 9: 220 on), 0 to 12 */
 } MenuItem;
 
@@ -75,7 +75,7 @@ typedef struct DataNode {
     int unk00;                      /* 0x00 */
     struct DataNode *next;          /* 0x04 */
     struct DataNode *prev;          /* 0x08 */
-    s16 table_row;                  /* 0x0C 0x0C row of the item's text table, plus one */
+    s16 table_row;                  /* 0x0C row of the item's text table, plus one */
 } DataNode;
 
 /* one of the three 0x180-byte records SaveCard_GetSaveInfo hands out (SaveInfo in save/save_card.h), as the save list of
@@ -111,7 +111,7 @@ typedef struct {
 /* what the screen handler in menu_screen_handler is handed */
 typedef struct {
     s32 unk00;                      /* 0x00 */
-    s32 selection;                  /* 0x04 0x04 the selected line or text number of the screen; cleared when a screen is left */
+    s32 selection;                  /* 0x04 the selected line or text number of the screen; cleared when a screen is left */
 } MenuScreenContext;
 
 /* card_screen_state: state of the menu screen Menu_UpdateCardSlot runs; Menu_OpenCardSlot resets it */
