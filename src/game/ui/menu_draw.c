@@ -3529,7 +3529,7 @@ void MenuTexture_UploadTwoCluts(TextureHeader *header, u64 *tex0_out, u64 *trail
     }
     sceGsSetDefLoadImage(&second_load, ((BootTex0 *)trailer)->cbp, 1, ((BootTex0 *)trailer)->cpsm, 0, 0, clut_width, clut_height);
     FlushCache(0);
-    sceGsExecLoadImage(&second_load, (char *)header + header->unk0C);
+    sceGsExecLoadImage(&second_load, (char *)header + header->second_clut_offset);
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
 }
