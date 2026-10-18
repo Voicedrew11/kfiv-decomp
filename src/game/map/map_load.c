@@ -11,7 +11,7 @@
 
 extern void (*map_load_steps[])(void);
 void GameLoop_RunSoundLoads(void);
-int GameLoop_DrawFrame(int);
+void GameLoop_DrawFrame(int);
 int File_IsLocked(void);
 void File_Unlock(void);
 void Packet_SwapBuffers(void);

@@ -27,7 +27,7 @@ void DrawList_Clear(void);
 void MapChange_CaptureFrame(void);
 void Input_Update(void);
 void Display_SwapBuffers(int);
-int GameLoop_DrawFrame(int);
+void GameLoop_DrawFrame(int);
 void GsDraw_CopyFrame(int);
 void Packet_BeginGsRegisters(void);
 void Packet_AddGsRegister(int, s64);

@@ -64,7 +64,7 @@ void Game_StepFade(void);
 void GameLoop_UpdateCamera(void);
 void GameLoop_SetCameraMatrices(int, int);
 void GsDraw_QueueVu1Matrix(void *);
-int GameLoop_DrawFrame(int);
+void GameLoop_DrawFrame(int);
 void Packet_WaitForSend(void);
 void MapItem_UpdatePickup(void);
 void Map_RunFreeCamera(void);
@@ -332,7 +332,7 @@ void GameLoop_Run(int arg) {
 
 /* Draws one frame of the game: the world (once, or with a second view first for the modes 1 and 2), the screen
    tints, the overlays MapDrawState asks for, the fades and the pause shade. */
-int GameLoop_DrawFrame(int arg) {
+void GameLoop_DrawFrame(int arg) {
     int tinted = FALSE;
     f32 tint;
     int red;
