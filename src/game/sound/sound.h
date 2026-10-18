@@ -131,7 +131,7 @@ typedef struct {
     int step;                       /* 0x08 0: idle, 1-3: which load is running */
     int map_bank_load_pending;      /* 0x0C nonzero: a step 1 load is wanted; Sound_LoadMapBankStep clears it */
     struct MapSlot *pending_map_slot; /* 0x10 the map slot whose sound bank the step 1 load loads */
-    struct MapSlot *next_map_slot;  /* 0x14 the next pending_map_slot, taken once unk10 is NULL */
+    struct MapSlot *next_map_slot;  /* 0x14 the next pending_map_slot, taken once pending_map_slot is NULL */
     int entity_bank_load_pending;   /* 0x18 nonzero: a step 2 load is wanted; Sound_LoadEntityBankStep clears it */
     int entity_bank_args;           /* 0x1C arguments of Sound_LoadEntityBankStep */
     int entity_slot_index;          /* 0x20 entity pool slot the step 2 load binds its voice to */

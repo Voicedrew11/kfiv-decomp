@@ -769,7 +769,7 @@ int SoundDriver_VoiceLoadSendHeader(SoundLoadArgs *args, SoundReloadRequest *req
     request->voice = NULL;
     request->unk04 = 0;
     request->bytes_remaining = 0;
-    *(void **)&request->next_spu_addr = NULL; // match: unk0C and heap_addr are stored as pointers here
+    *(void **)&request->next_spu_addr = NULL; // match: next_spu_addr and heap_addr are stored as pointers here
     *(void **)&request->heap_addr = NULL; // match: as above
     request->voice_index = 0;
     request->piece_size = 0;
@@ -1849,7 +1849,7 @@ int SoundDriver_NoteOff(u32 key_index) {
     write_ptr = (u8 *)(((int)command_list + write_offset) | 0x20000000);
     key = (SoundKey *)sound_state->note_keys[key_index];
     *write_ptr++ = 0xFF;
-    // match: byte 0x18 of the voice (low byte of unk18), read as a byte
+    // match: byte 0x18 of the voice (low byte of driver_voice_id), read as a byte
     *write_ptr++ = ((u8 *)sound_state + (key->voice << 5))[0x18];
     *write_ptr++ = 7;
     *write_ptr++ = 0xFD;

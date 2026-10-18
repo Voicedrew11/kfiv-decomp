@@ -308,7 +308,7 @@ typedef struct {
     u64 unk08;                      /* 0x08 */
 } PoolSlotRegisters;
 
-/* a PoolSlot with unk58 and unk60 as the one member they are copied as */
+/* a PoolSlot with tex0 and unk60 as the one member they are copied as */
 typedef struct {
     char pad00[0x58];
     PoolSlotRegisters registers;    /* 0x58 */
@@ -457,7 +457,7 @@ typedef struct {
     u64 pages[2];                   /* 0x00 */
 } PoolClutPages;
 
-/* one 0x80-byte animation key of a RelocEntry (its unk30), interpolated towards the next one by PoolNode_Pose */
+/* one 0x80-byte animation key of a RelocEntry (its keys), interpolated towards the next one by PoolNode_Pose */
 typedef struct {
     u16 frame;                      /* 0x00 the frame the key starts at */
     u16 length;                     /* 0x02 frames to the next key */

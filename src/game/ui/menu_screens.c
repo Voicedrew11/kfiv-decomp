@@ -1210,12 +1210,12 @@ static void Menu_OpenModelFile(ChunkUpload *upload) {
     s32 file_handle;
 
     file_handle = File_OpenUnflagged(upload->name, 1, 1);
-    upload->unk08 = file_handle;
+    upload->file_handle = file_handle;
     if (file_handle < 0) {
-        upload->unk08 = File_Open("menu/select2/i0000.mod", 1, 1);
+        upload->file_handle = File_Open("menu/select2/i0000.mod", 1, 1);
     }
-    File_Read(upload->unk08, upload->pool_node->buffer, 0x25800);
-    model_read_file = upload->unk08;
+    File_Read(upload->file_handle, upload->pool_node->buffer, 0x25800);
+    model_read_file = upload->file_handle;
     upload->stage++;
 }
 
@@ -1223,13 +1223,13 @@ static void Menu_OpenModelFile(ChunkUpload *upload) {
 static void Menu_WaitModelRead(ChunkUpload *upload) {
     s32 status;
 
-    status = File_Sync(upload->unk08, 1);
+    status = File_Sync(upload->file_handle, 1);
     if (status == 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         model_read_file = -1;
         upload->stage++;
     } else if (status < 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         upload->done = upload->stage = 0;
         model_read_file = -1;
     }
@@ -1244,7 +1244,7 @@ static void Menu_FinishModelLoad(ChunkUpload *upload) {
     FlushCache(0);
     upload->done = 1;
     upload->stage = 0;
-    upload->unk08 = -1;
+    upload->file_handle = -1;
 }
 
 /* the stages of a menu model's load: open, wait for the read, hand the model over */
@@ -1293,13 +1293,13 @@ static void Menu_OpenWornModelFile(LinkNode *node) {
 static void Menu_WaitWornModelRead(ChunkUpload *upload) {
     s32 status;
 
-    status = File_Sync(upload->unk08, 1);
+    status = File_Sync(upload->file_handle, 1);
     if (status == 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         model_read_file = -1;
         upload->stage++;
     } else if (status < 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         upload->done = upload->stage = 0;
         model_read_file = -1;
         worn_model_loading = 0;
@@ -1368,14 +1368,14 @@ static void Menu_OpenPackageFile(ChunkUpload *upload) {
     s32 file_handle;
 
     file_handle = File_OpenUnflagged(upload->name, 1, 1);
-    upload->unk08 = file_handle;
+    upload->file_handle = file_handle;
     if (file_handle < 0) {
         upload->stage = 0;
         upload->done = 0;
         upload = NULL; // match: retail goes on to read through this null pointer
     }
-    File_Read(upload->unk08, upload->pool_node->buffer, 0x1A2000);
-    model_read_file = upload->unk08;
+    File_Read(upload->file_handle, upload->pool_node->buffer, 0x1A2000);
+    model_read_file = upload->file_handle;
     upload->stage++;
 }
 
@@ -1383,13 +1383,13 @@ static void Menu_OpenPackageFile(ChunkUpload *upload) {
 static void Menu_WaitPackageRead(ChunkUpload *upload) {
     s32 status;
 
-    status = File_Sync(upload->unk08, 1);
+    status = File_Sync(upload->file_handle, 1);
     if (status == 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         model_read_file = -1;
         upload->stage++;
     } else if (status < 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         upload->done = upload->stage = 0;
         model_read_file = -1;
     }
@@ -1412,7 +1412,7 @@ static void Menu_FinishPackageLoad(ChunkUpload *upload) {
     FlushCache(0);
     upload->done = 1;
     upload->stage = 0;
-    upload->unk08 = -1;
+    upload->file_handle = -1;
 }
 
 /* the stages of a package's load: open, wait for the read, hand every chunk over */

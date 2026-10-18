@@ -324,7 +324,7 @@ static void Sound_SetUpMixer(void) {
     SoundDriver_Remote(1, 0xD0, 0xE81, 0x7FFF);
 }
 
-/* Starts the BGM's sequence (bgm_load_job.unk14) playing, with value. Nothing calls it. */
+/* Starts the BGM's sequence (bgm_load_job.sequence_index) playing, with value. Nothing calls it. */
 static void Sound_PlayBgmSequence(int value) {
     SoundDriver_PlaySequence(bgm_load_job.sequence_index, value);
 }
