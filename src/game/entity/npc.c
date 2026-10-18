@@ -33,10 +33,6 @@ extern u32 frame_counter;
 void EntityAi_SensePlayer(Entity *, s32);
 void EntityAi_CheckFarFromSpawn(char *);
 
-/* Motion_BlendToPose as if it returned a value.
-   match: the callee is void, but retail keeps what it leaves in $2 */
-#define MOTION_BLEND_TO_POSE ((int (*)(EntityModel *, f32))Motion_BlendToPose)
-
 static void Npc_Animate(Entity *entity);
 static void Npc_OnHit(Entity *entity);
 static void Npc_ThinkStand(Entity *entity, int unknown);
@@ -119,7 +115,7 @@ static void Npc_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = MOTION_BLEND_TO_POSE(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }

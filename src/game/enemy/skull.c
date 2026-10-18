@@ -46,7 +46,6 @@ void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 float EntityMath_WrapAngle(float);
 int Motion_Step(void *, int);
-// match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 char *Model_GetSkinnedBonePoint(char *, u32);
 int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
