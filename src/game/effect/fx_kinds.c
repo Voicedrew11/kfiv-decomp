@@ -474,12 +474,12 @@ void EffectHandover_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectStart_PlaceModel(effect, spawn_slot);
     EffectAngle_ToVector(effect->def->speed, &effect->motion.velocity, &effect->model->rotation);
     angle = Effect_FramesToImpact(effect->def->turn_rate, effect, motion, &motion->unk10);
-    motion->unk22 = angle;
+    motion->frames_to_impact = angle;
     if (effect->def->sub_effect_id < (u32)(angle & 0xFFFF)) {
-        *(u16 *)&motion->unk22 = 0xFFFF; // match: stored as an unsigned halfword
+        *(u16 *)&motion->frames_to_impact = 0xFFFF; // match: stored as an unsigned halfword
     }
     unk_e8 = effect->def->spin_rate;
-    motion->unk25 = 0;
+    motion->ends_next_frame = 0;
     motion->unk24 = (int)unk_e8;
     motion->unk20 = effect->def->end_effect;
 }
@@ -615,7 +615,7 @@ void EffectBolt_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     EffectAngle_ToVector(actor->def->speed, &motion->velocity, &actor->model->rotation);
     angle = Effect_FramesToImpact((float)actor->def->radius_half, actor, motion, motion->unk10);
     motion->unk24 = 0;
-    motion->unk22 = angle;
+    motion->frames_to_impact = angle;
     def = actor->def;
     motion->unk20 = def->end_effect;
     if (def->child_effect_id != 0) {
@@ -660,7 +660,7 @@ void EffectBolt_StartCounted(EffectActor *effect, EffectSlot *spawn_slot) {
     effect->model->position.y -= 220.0f;
     angle = Effect_FramesToImpact((float)effect->def->radius_half, effect, motion, &motion->unk10);
     motion->unk24 = 0;
-    motion->unk22 = angle;
+    motion->frames_to_impact = angle;
     motion->unk20 = effect->def->end_effect;
     bolt_start_count += 1;
     if (bolt_start_count < effect->def->interval) {
@@ -1559,7 +1559,7 @@ void EffectSurroundPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     Vector_Subtract(&offset, &player_point, &effect->model->position);
     EffectAngle_FromVector(&effect->model->rotation, &offset);
     motion->unk20 = (s16)((effect->def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level) * effect->def->sub_effect_id + 30);
-    motion->unk22 = (s16)(motion->unk20 - effect->def->child_effect_id);
+    motion->frames_to_impact = (s16)(motion->unk20 - effect->def->child_effect_id);
     motion->unk24 = 0;
 }
 
@@ -1812,7 +1812,7 @@ void EffectHomeOnEntity_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     motion = (FollowerMotion *)&actor->motion;
     EffectStart_TurnModel(actor, spawn_slot);
     EffectStart_PlaceModel(actor, spawn_slot);
-    actor->unk6C = EffectHit_FindAimedEntity(actor, &player_state.position, &player_state.rotation);
+    actor->target_entity = EffectHit_FindAimedEntity(actor, &player_state.position, &player_state.rotation);
     speed = target->motion.velocity.x;
     motion->speed = speed;
     EffectAngle_ToVector(speed, &motion->velocity, &actor->model->rotation);
@@ -1838,12 +1838,12 @@ void EffectHomeOnEntity_Update(EffectActor *actor) {
     EffectKeys_ApplySpin(actor);
     EffectKeys_ApplyColour(actor);
     if (actor->def->sub_effect_id < actor->frame) {
-        actor->unk6C = 0;
+        actor->target_entity = 0;
     }
     if (actor->frame < actor->def->max_frames || actor->def->max_frames == 0) {
-        if (actor->unk6C != 0) {
-            Vector_Subtract(&delta, ((Entity *)actor->unk6C)->model->position, &actor->model->position);
-            delta.y -= ((Entity *)actor->unk6C)->height * 0.5f;
+        if (actor->target_entity != 0) {
+            Vector_Subtract(&delta, ((Entity *)actor->target_entity)->model->position, &actor->model->position);
+            delta.y -= ((Entity *)actor->target_entity)->height * 0.5f;
             EffectSteer_Toward(&motion->velocity, &delta, motion->speed, actor->def->turn_rate);
         }
         if (actor->def->radius_half < actor->frame) {
@@ -1910,7 +1910,7 @@ void EffectFollowLight_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     constant_copy[1] = light_point_start_target[1];
     EffectStart_TurnModel(effect, spawn_slot);
     EffectStart_PlaceModel(effect, spawn_slot);
-    EFFECT_FLAG_PARTS(effect)->unk44 = LINKED_POINT_START_S16(0.0f, &effect->model->position, constant_copy);
+    EFFECT_FLAG_PARTS(effect)->linked_point_index = LINKED_POINT_START_S16(0.0f, &effect->model->position, constant_copy);
     Vector_Copy(velocity, &effect->target->model->position);
 }
 
@@ -1922,7 +1922,7 @@ void EffectFollowLight_Update(EffectActor *effect) {
     EffectKeys_ApplyScale(effect);
     motion = &effect->motion;
     EffectKeys_ApplyColour(effect);
-    LinkedPoint_Retarget(100.0f * effect->model->scale_z, EFFECT_FLAG_PARTS(effect)->unk44, effect);
+    LinkedPoint_Retarget(100.0f * effect->model->scale_z, EFFECT_FLAG_PARTS(effect)->linked_point_index, effect);
     Vector_Copy(&effect->model->position, motion);
     Vector_Copy(motion, &effect->target->model->position);
     effect->frame += 1;
@@ -1936,14 +1936,14 @@ void EffectLight_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     constant_copy[1] = light_point_start_target[1];
     EffectStart_TurnModel(effect, spawn_slot);
     EffectStart_PlaceModel(effect, spawn_slot);
-    EFFECT_FLAG_PARTS(effect)->unk44 = LINKED_POINT_START_S16(0.0f, &effect->model->position, constant_copy);
+    EFFECT_FLAG_PARTS(effect)->linked_point_index = LINKED_POINT_START_S16(0.0f, &effect->model->position, constant_copy);
 }
 
 /* Kind 92 update: moves the light point to the effect over 100 x the z scale; runs no spin keys. */
 void EffectLight_Update(EffectActor *effect) {
     EffectKeys_ApplyScale(effect);
     EffectKeys_ApplyColour(effect);
-    LinkedPoint_Retarget(100.0f * effect->model->scale_z, EFFECT_FLAG_PARTS(effect)->unk44, effect);
+    LinkedPoint_Retarget(100.0f * effect->model->scale_z, EFFECT_FLAG_PARTS(effect)->linked_point_index, effect);
     effect->frame += 1;
 }
 

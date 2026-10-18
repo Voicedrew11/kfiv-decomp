@@ -117,9 +117,9 @@ typedef struct {
     Vector4 velocity;               /* 0x00 */
     char unk10[0x10];               /* 0x10 passed by address */
     s16 unk20;                      /* 0x20 */
-    s16 unk22;                      /* 0x22 */
+    s16 frames_to_impact;           /* 0x22 0x22 frames until the shot reaches what lies ahead */
     u8 unk24;                       /* 0x24 */
-    u8 unk25;                       /* 0x25 */
+    u8 ends_next_frame;             /* 0x25 0x25 set once a hit spawned its effects: the effect ends next frame */
     u8 unk26;                       /* 0x26 */
     char pad27[0x09];
 } TurningMotion;
@@ -211,12 +211,12 @@ typedef struct {
 /* EffectMotion as EffectTrailHoming_Start, EffectTrailHoming_Update, EffectHomingChain_Start and others use it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    f32 unkDC;                      /* 0x10 copied from def->unkDC; EffectTrailHoming_Update grows it by def->unkE0 */
-    int unk14;                      /* 0x14 EffectTrailHoming_Update: frames until it may be hit again */
-    int unk18;                      /* 0x18 EffectTrailHoming_Update: 1 once hit (it wobbles) */
-    f32 unk1C;                      /* 0x1C EffectTrailHoming_Update: wobble offset x */
-    f32 unk20;                      /* 0x20 EffectTrailHoming_Update: wobble offset z */
-    s8 unk24;                       /* 0x24 EffectTrailHoming_Update: set once the end effect is spawned */
+    f32 turn_rate;                  /* 0x10 turn rate, copied from def->turn_rate; grows by EffectDef.ground_height while it hunts */
+    int hit_cooldown;               /* 0x14 frames until it may be hit again */
+    int wobbling;                   /* 0x18 1 once hit (it wobbles) */
+    f32 wobble_x;                   /* 0x1C wobble offset x */
+    f32 wobble_z;                   /* 0x20 wobble offset z */
+    s8 ended;                       /* 0x24 set once the end effect is spawned */
     char pad25[0x0B];
 } HomingMotion;
 
@@ -255,7 +255,7 @@ typedef struct {
     char pad16[0x0A];
 } LandingMotion;
 
-/* EffectMotion as EffectChase_Start and EffectAimedChase_Start set it up: chases the entity in EffectActor.unk6C */
+/* EffectMotion as EffectChase_Start and EffectAimedChase_Start set it up: chases the entity in EffectActor.target_entity */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 turn;                       /* 0x10 how sharply it turns toward the entity; grows by EffectDef.ground_height */
@@ -880,15 +880,15 @@ typedef struct EffectActor {
     u16 effect_param;               /* 0x4E */
     ModelInstance *model;           /* 0x50 */
     EffectDef *def;                 /* 0x54 */
-    char *unk58;                    /* 0x58 one of MapSlot.records; cleared when its map is unloaded (Effect_FreeForMap) */
+    char *map_record;               /* 0x58 one of MapSlot.records; cleared when its map is unloaded (Effect_FreeForMap) */
     Entity *owner_entity;           /* 0x5C the entity that cast it; freed with it (Effect_FreeForOwner) */
     struct EffectActor *target;     /* 0x60 */
     Vector4 *start_position;        /* 0x64 */
     Vector4 *start_rotation;        /* 0x68 */
-    int unk6C;                      /* 0x6C an Entity (EffectTarget) the effect homes on */
-    Vector4 unk70;                  /* 0x70 */
+    int target_entity;              /* 0x6C the Entity the effect homes on (EffectTarget view) */
+    Vector4 saved_position;         /* 0x70 position kept with the model's, moved by Effect_TransformAll and Effect_OffsetAll */
     char pad80[0x10];
-    int unk90;                      /* 0x90 */
+    int reserved_frames;            /* 0x90 frames the actor stays reserved once it is freed */
     char pad94[0x0C];
 } EffectActor;
 
@@ -931,15 +931,15 @@ typedef struct {
 
 /* EffectActor.flags split into the parts some functions read */
 typedef struct {
-    int unk40;                      /* 0x40 a countdown */
-    s16 unk44;                      /* 0x44 */
-    s8 unk46;                       /* 0x46 a signed counter */
+    int frames_left;                /* 0x40 0x40 frames left before the effect's spawn check runs again */
+    s16 linked_point_index;         /* 0x44 0x44 the linked point it holds, -1: none */
+    s8 sound_track;                 /* 0x46 0x46 the tracked sound it plays, -1: none */
     u8 unk47;                       /* 0x47 */
 } EffectActorFlagParts;
 
 #define EFFECT_FLAG_PARTS(effect) ((EffectActorFlagParts *)&(effect)->flags)
 
-/* what EffectActor.unk6C points at: an Entity (entity/entity.h) as far as effects read it */
+/* what EffectActor.target_entity points at: an Entity (entity/entity.h) as far as effects read it */
 typedef struct {
     ModelInstance *model;           /* 0x00 */
     char pad04[0x38];
@@ -951,12 +951,12 @@ typedef struct {
 /* one 0x50-byte slot of the effect spawner pool, effect_slots (0x60 of them) */
 typedef struct {
     Vector4 position;               /* 0x00 */
-    Vector4 unk10;                  /* 0x10 */
+    Vector4 rotation;               /* 0x10 0x10 the spawn rotation: pitch x, heading y (the origin's when placed by the spawner) */
     s64 flags;                      /* 0x20 low word: the EffectDef; EFFECT_SLOT_LIVE */
     Entity *owner_entity;           /* 0x28 passed on to the effect */
     struct EffectActor *owner_effect; /* 0x2C the effect that spawned the slot */
-    void *unk30;                    /* 0x30 */
-    void *unk34;                    /* 0x34 */
+    void *start_position;           /* 0x30 pointer to the position the spawned effects start at, when the def keeps it */
+    void *start_rotation;           /* 0x34 pointer to the rotation the spawned effects start with, when the def keeps it */
     void *owner;                    /* 0x38 */
     u16 effect_param;               /* 0x3C */
     char pad3E[0x12];
@@ -983,24 +983,24 @@ typedef struct {
     EffectDef *def;                 /* 0x20 */
     u8 unk24;                       /* 0x24 */
     u8 level;                       /* 0x25 the spawner's level, from EffectDef.max_level */
-    u8 unk26;                       /* 0x26 */
-    u8 unk27;                       /* 0x27 */
+    u8 frames_to_firing;            /* 0x26 frames to the next firing */
+    u8 start_delay_frames;          /* 0x27 frames before the first firing, from EffectDef.spawn_start_delay */
 } EffectSlotFlagParts;
 
 #define EFFECT_SLOT_FLAG_PARTS(slot) ((EffectSlotFlagParts *)&(slot)->flags)
 
 /* the whole EffectSlot as Effect_RunSpawner reads it: the bytes of the flag word as members of
-   the slot itself (no address is taken, so gcc keeps no pointer to the word), and unk34 as
+   the slot itself (no address is taken, so gcc keeps no pointer to the word), and start_rotation as
    the vector pointer it is */
 typedef struct {
     char pad00[0x20];
     EffectDef *def;                 /* 0x20 */
     u8 unk24;                       /* 0x24 */
     u8 level;                       /* 0x25 the firings left */
-    u8 unk26;                       /* 0x26 frames to the next firing */
-    u8 unk27;                       /* 0x27 frames before the first firing, from EffectDef.spawn_start_delay */
+    u8 frames_to_firing;            /* 0x26 frames to the next firing */
+    u8 start_delay_frames;          /* 0x27 frames before the first firing, from EffectDef.spawn_start_delay */
     char pad28[0x0C];
-    Vector4 *start_rotation;        /* 0x34 EffectSlot.unk34 */
+    Vector4 *start_rotation;        /* 0x34 EffectSlot.start_rotation */
     char pad38[0x18];
 } EffectSlotView;
 

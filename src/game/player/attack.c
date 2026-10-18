@@ -1481,18 +1481,18 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
         memset(&request, 0, sizeof(request));
         switch (check->shape) {
         case 0:
-            position = &effect->unk70;
+            position = &effect->saved_position;
             request.radius = check->unk1E;
             request.shape = 0;
             break;
         case 1:
-            position = &effect->unk70;
+            position = &effect->saved_position;
             request.radius = check->unk1E;
             request.shape = 1;
             request.height = check->unk20;
             break;
         case 2:
-            position = &effect->unk70;
+            position = &effect->saved_position;
             request.shape = 2;
             Vector_Copy(request.second_point, position);
             break;
@@ -1535,11 +1535,11 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
         request.knockback = check->unk26 != 0;
         request.stun_frames = check->unk25;
         request.instant_kill_chance_percent = check->unk27;
-        request.player_hit_cooldown = EFFECT_FLAG_PARTS(effect)->unk40;
+        request.player_hit_cooldown = EFFECT_FLAG_PARTS(effect)->frames_left;
         request.double_hit_chance_percent = 0;
         hits = Attack_Run(&request, shot);
-        if (hits != 0 && (s8)request.landed_on_player != 0 && EFFECT_FLAG_PARTS(effect)->unk40 == 0) {
-            EFFECT_FLAG_PARTS(effect)->unk40 = check->unk24;
+        if (hits != 0 && (s8)request.landed_on_player != 0 && EFFECT_FLAG_PARTS(effect)->frames_left == 0) {
+            EFFECT_FLAG_PARTS(effect)->frames_left = check->unk24;
         }
     } else {
         request.unk50 = SHOT_REQUEST->unk50;
