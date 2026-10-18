@@ -165,19 +165,19 @@ int Sound_LoadEntityBankStep(int args_addr, int index, int voice_out);
 /* Plays sound from bank with the falloff player kind of falloff_sound_players */
 void Sound_PlayFalloff(int sound, int kind, int bank);
 /* Map bank load step: does nothing but move on */
-s32 Sound_MapBankNoOp(void);
+s32 Sound_MapBankNoOp(SoundJob *job);
 /* Map bank load step: waits for a pending reverb change, then loads the map's voice (SoundDriver_LoadVoiceStep) */
 int Sound_MapBankLoadVoice(SoundJob *job);
 /* Map bank load step: once the transfer to sound memory is done, frees the IOP copy of the samples */
 int Sound_MapBankFreeSampleBuffer(SoundJob *job);
 /* Map bank load step: frees the last map's reverb slot and stores the map's reverb settings (map_reverb_cue_indices) */
-int Sound_MapBankAddReverb(void);
+int Sound_MapBankAddReverb(SoundJob *job);
 /* Map bank load step: once the upload is done, sends the map's reverb settings and sets map_sounds_enabled (map
    sounds may start) */
-int Sound_MapBankApplyReverb(void);
+int Sound_MapBankApplyReverb(SoundJob *job);
 /* Map bank load step: the first time after Sound_Init moves on to the reverb steps; after that lets map
    sounds start (map_sounds_enabled) and ends the load */
-int Sound_MapBankFinishUnlessFirst(void);
+int Sound_MapBankFinishUnlessFirst(SoundJob *job);
 /* Loads the sound bank of a map slot (MapSlot.sound_bank) a step a call while pending; returns 0 once it is done */
 int Sound_LoadMapBankStep(int slot_addr, int pending);
 /* Loads the sound bank of a map slot (MapSlot.sound_bank), waiting until it is done */
