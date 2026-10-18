@@ -247,7 +247,7 @@ void EffectImpactLob_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     EffectAngle_ToVector(actor->def->speed, &motion->velocity, &actor->model->rotation);
     motion->end_frame = Effect_FramesToImpact((float)actor->def->radius_half, actor, motion, scratch);
     if (motion->end_frame != 0xFFFF) {
-        motion->mode = COLLISION_RESULT->unk18;
+        motion->mode = COLLISION_RESULT->floor_material;
     }
     motion->unk17[0] = 0;
     motion->spawned = 0;
@@ -491,7 +491,7 @@ void EffectHandover_StartBySurface(EffectActor *effect, EffectSlot *spawn_slot) 
 
     motion = (TurningMotion *)&effect->motion;
     EffectHandover_Start(effect, spawn_slot);
-    mode = COLLISION_RESULT->unk18;
+    mode = COLLISION_RESULT->floor_material;
     if (mode == 3 || mode == 5) {
         motion->unk20 = effect->def->child_effect_id;
     }
@@ -555,7 +555,7 @@ void EffectHandover_Update(EffectActor *effect) {
             }
             EffectHandover_StartNext(effect, &effect->model->position, effect_id);
         } else if (hits & 4) {
-            if (effect_kind_handlers[effect->def->kind_index][0] == EffectHandover_StartBySurface && (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5)) {
+            if (effect_kind_handlers[effect->def->kind_index][0] == EffectHandover_StartBySurface && (COLLISION_RESULT->floor_material == 3 || COLLISION_RESULT->floor_material == 5)) {
                 EffectHandover_StartNext(effect, &effect->model->position, effect->def->child_effect_id);
             } else {
                 EffectHandover_StartNext(effect, &effect->model->position, effect->def->end_effect);
@@ -631,7 +631,7 @@ void EffectBolt_StartBySurface(EffectActor *effect, EffectSlot *spawn_slot) {
 
     motion = (TurningMotion *)&effect->motion;
     EffectBolt_Start(effect, spawn_slot);
-    mode = COLLISION_RESULT->unk18;
+    mode = COLLISION_RESULT->floor_material;
     if (mode == 3 || mode == 5) {
         motion->unk20 = effect->def->interval;
     }
@@ -692,7 +692,7 @@ void EffectBolt_Update(EffectActor *actor) {
         if (hit != 0 && actor->def->end_effect != 0xFFFF) {
             if (hit & 2) {
                 Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
-            } else if ((effect_kind_handlers[actor->def->kind_index][0] == EffectBolt_StartBySurface || effect_kind_handlers[actor->def->kind_index][0] == EffectBolt_StartWithTargeters) && (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5)) {
+            } else if ((effect_kind_handlers[actor->def->kind_index][0] == EffectBolt_StartBySurface || effect_kind_handlers[actor->def->kind_index][0] == EffectBolt_StartWithTargeters) && (COLLISION_RESULT->floor_material == 3 || COLLISION_RESULT->floor_material == 5)) {
                 Effect_Spawn(actor->def->interval, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
             } else {
                 Effect_Spawn(motion->effect_id, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
@@ -1476,7 +1476,7 @@ void EffectSeekPlayer_Update(EffectActor *actor) {
     }
     sceVu0AddVector(&actor->model->position, &actor->model->position, velocity);
     if (Attack_RunEffectHitCheck(actor) != 0 && actor->def->end_effect != 0xFFFF) {
-        if (COLLISION_RESULT->unk18 != 5) {
+        if (COLLISION_RESULT->floor_material != 5) {
             Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
         }
         Effect_Free(actor);
@@ -2079,7 +2079,7 @@ void EffectDrop_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     Collision_CastRayAtMap(1.0f, &actor->model->position, &probe);
     if (COLLISION_RESULT->hit != 0) {
         Vector_Copy(&actor->motion, COLLISION_RESULT);
-        motion->unk16 = *(u8 *)&COLLISION_RESULT->unk18; // match: a byte load of the word's low byte
+        motion->unk16 = *(u8 *)&COLLISION_RESULT->floor_material; // match: a byte load of the word's low byte
         distance = Effect_Distance(&actor->motion, &actor->model->position);
         velocity = 0.0f;
         fallen = 0.0f;

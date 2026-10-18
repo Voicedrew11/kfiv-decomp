@@ -10,7 +10,7 @@ typedef struct {
     f32 point[4];                   /* 0x00 where it hit */
     s32 hit;                        /* 0x10 0: no hit */
     f32 distance;                   /* 0x14 */
-    s32 unk18;                      /* 0x18 */
+    s32 floor_material;             /* 0x18 the floor material of what was hit (Collision_GetFloorMaterial) */
     char pad1C[0x04];
     f32 normal[4];                  /* 0x20 unit vector away from what was hit */
 } CollisionResult;
@@ -47,7 +47,7 @@ typedef struct {
     f32 point[4];                   /* 0x00 */
     s32 hit;                        /* 0x10 */
     f32 distance;                   /* 0x14 */
-    s32 unk18;                      /* 0x18 */
+    s32 floor_material;             /* 0x18 the floor material of what was hit (Collision_GetFloorMaterial) */
     char pad1C[0x04];
     f32 normal[4];                  /* 0x20 */
 } __attribute__((aligned(8))) CollisionResultAligned;
@@ -57,9 +57,9 @@ typedef struct {
 /* one point of a triangle strip */
 typedef struct {
     void *position;                 /* 0x00 */
-    s32 unk04;                      /* 0x04 */
-    s32 unk08;                      /* 0x08 */
-    s32 unk0C;                      /* 0x0C */
+    s32 material_first;             /* 0x04 the first word of the floor material (Collision_GetFloorMaterial) */
+    s32 material_second;            /* 0x08 the second word of the floor material */
+    s32 material_third;             /* 0x0C the third word of the floor material */
 } CollisionStripPoint;
 
 /* a triangle strip; the next one follows its last point */

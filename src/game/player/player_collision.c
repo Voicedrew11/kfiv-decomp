@@ -129,7 +129,7 @@ int Player_CollideWithMap(void) {
                                           &player_state.position);
                             if (COLLISION_RESULT->hit != 0 && player_state.position.y - 230.0f <= COLLISION_RESULT->point[1]
                                 && COLLISION_RESULT->point[1] <= player_state.position.y) {
-                                surface = Collision_GetSurfaceEffect(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                                surface = Collision_GetSurfaceEffect(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                                 if (surface != 0) {
                                     player_state.ground_effect_kind = surface;
                                     player_state.ground_effect_active = 1;
@@ -208,7 +208,7 @@ int Player_CollideWithMap(void) {
                             floor_height = COLLISION_RESULT->point[1];
                             player_state.record_flag_block = record->flag_block_bit;
                             player_state.map_index = i;
-                            player_state.floor_material = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                            player_state.floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                             floor_map = current_map_slot != map;
                         }
                         strip_point++;
@@ -372,7 +372,7 @@ void Player_FindFloorMaterial(void) {
                                       &COLLISION_SCRATCH->point, 10.0f);
                         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest) {
                             lowest = COLLISION_RESULT->point[1];
-                            player_state.floor_material = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                            player_state.floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                         }
                         strip_point++;
                     } while (--points_left != 0);
