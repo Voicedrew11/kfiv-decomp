@@ -1,4 +1,4 @@
-/* Watcher: the behaviour of entity type 73 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* Watcher: the behaviour of entity type 73 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Watcher. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */

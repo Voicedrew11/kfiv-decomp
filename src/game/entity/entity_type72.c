@@ -1,4 +1,4 @@
-/* The behaviour of entity type 72 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* The behaviour of entity type 72 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers that function installs. */
 #include "entity/entity.h"
 

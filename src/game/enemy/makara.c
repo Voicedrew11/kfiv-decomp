@@ -1,4 +1,4 @@
-/* Makara: the behaviour of entity type 78 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* Makara: the behaviour of entity type 78 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Makara. The game names no monsters;
    these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by hit points
    and experience, with resistances and drops where two monsters share those. */
@@ -301,7 +301,7 @@ static void Makara_Dormant(Entity *entity) {
 
 /* The ranged attack with record 0 (busy bit 1): animation 23, as EntityAi_RangedAttack; when it
    ends and EntityAi_CanUseMelee finds the player in reach of melee record 2 it starts EntityAi_MeleeAttack
-   with that record, with a chance of EntityParams.unk43A in 100. */
+   with that record, with a chance of EntityParams.type_param_0 in 100. */
 static void Makara_RangedAttack0(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
@@ -317,12 +317,12 @@ static void Makara_RangedAttack0(Entity *entity) {
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
+        if (unk3D8->turn_frames != 0) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->frame) {
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
             ai_state->turn_rate = 0.0f;
@@ -339,9 +339,9 @@ static void Makara_RangedAttack0(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
-                if (EntityAi_CanUseMelee(entity, 2) && rand() % 100 < entity->params->unk43A) {
+                if (EntityAi_CanUseMelee(entity, 2) && rand() % 100 < entity->params->type_param_0) {
                     EntityAi_StartAttack(entity, EntityAi_MeleeAttack, 1, 0, 2);
                 } else {
                     ai_state->think(entity, 1);

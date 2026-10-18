@@ -1,4 +1,4 @@
-/* DarkArcher: the behaviour of entity type 55 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* DarkArcher: the behaviour of entity type 55 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Dark Archer. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -559,12 +559,12 @@ static void DarkArcher_RangedAttack(Entity *entity) {
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
+        if (unk3D8->turn_frames != 0) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->frame) {
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
             ai_state->turn_rate = 0.0f;
@@ -590,7 +590,7 @@ static void DarkArcher_RangedAttack(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
@@ -605,9 +605,9 @@ static void DarkArcher_RangedAttack(Entity *entity) {
    in an arc: plays animation 8 to frame 17, then animation 4 while it moves the entity forwards
    along the heading it had (work float unk54 holds that heading plus 180 degrees, and the speed is
    put on the other end of the axis, which gives the same direction as the forward command), the
-   speeds eased in work floats unk58 (y) and unk5C. The speed in y goes to minus EntityParams.unk43C
-   (up) until EntityCollision_DistanceToPropFloor, the distance to the floor below, reads EntityParams.unk43E or more,
-   then to plus unk43C until flag bit 44 or 50 is set; then it plays animation 9 to its end. */
+   speeds eased in work floats unk58 (y) and unk5C. The speed in y goes to minus EntityParams.type_param_1
+   (up) until EntityCollision_DistanceToPropFloor, the distance to the floor below, reads EntityParams.type_param_2 or more,
+   then to plus type_param_1 until flag bit 44 or 50 is set; then it plays animation 9 to its end. */
 static void DarkArcher_MoveAlongArc(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 height;
@@ -641,15 +641,15 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
     case 3:
         Motion_Start(entity, 4, 0, 0, 0);
         ai_state->keep_min_distance = EntityMath_Approach(ai_state->keep_min_distance, entity->params->max_speed, entity->params->speed_step_per_frame);
-        ai_state->heading_speed = EntityMath_Approach(ai_state->heading_speed, -entity->params->unk43C, -entity->params->unk43A);
+        ai_state->heading_speed = EntityMath_Approach(ai_state->heading_speed, -entity->params->type_param_1, -entity->params->type_param_0);
         ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-        if (height == D_0044682C[0] || height >= entity->params->unk43E) {
+        if (height == D_0044682C[0] || height >= entity->params->type_param_2) {
             entity->action_step++;
         }
         break;
     case 4:
         ai_state->keep_min_distance = EntityMath_Approach(ai_state->keep_min_distance, entity->params->max_speed, entity->params->speed_step_per_frame);
-        ai_state->heading_speed = EntityMath_Approach(ai_state->heading_speed, entity->params->unk43C, entity->params->unk43A);
+        ai_state->heading_speed = EntityMath_Approach(ai_state->heading_speed, entity->params->type_param_1, entity->params->type_param_0);
         if (ENTITY_FLAGS(entity) & (0x8200L << 35)) {
             Motion_Start(entity, 9, 0, 0, 1);
             ai_state->heading_speed = 0.0f;

@@ -1,4 +1,4 @@
-/* SkeletonSoldier: the behaviour of entity type 6 (Entity.params->unk02, the index into entity_type_handlers): its
+/* SkeletonSoldier: the behaviour of entity type 6 (EntityParams.entity_type, the index into entity_type_handlers): its
    set-up function, which the table names, and the handlers it installs. Used by: Skeleton Soldier
    Roundshield, Skeleton Soldier Squareshield, Skeleton Soldier Axe, High Skeleton Soldier. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by

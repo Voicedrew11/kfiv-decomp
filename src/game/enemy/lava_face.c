@@ -1,4 +1,4 @@
-/* LavaFace: the behaviour of entity type 32 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* LavaFace: the behaviour of entity type 32 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Lava Face. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -111,7 +111,7 @@ static void LavaFace_Think(Entity *entity, s32 unknown) {
         angles[0] = EntityMath_Approach(angles[0], pitch, entity->params->near_distance);
         angles[1] = EntityMath_Approach(angles[1], yaw, entity->params->far_distance);
         EntityAi_LaunchShot(entity, entity->params->pitch_limit_deg, from, angles);
-        EntityEvent_StartCue(entity, entity->params->unk43A, entity->params->unk43C, entity->params->unk43E);
+        EntityEvent_StartCue(entity, entity->params->type_param_0, entity->params->type_param_1, entity->params->type_param_2);
         entity->action_timer = entity->params->action_frames + rand() % 3;
     }
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);

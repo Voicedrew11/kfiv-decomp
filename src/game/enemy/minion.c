@@ -1,4 +1,4 @@
-/* Minion: the behaviour of entity type 60 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* Minion: the behaviour of entity type 60 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Minion. The game names no monsters;
    these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by hit points
    and experience, with resistances and drops where two monsters share those. */
@@ -435,12 +435,12 @@ static void Minion_RangedAttack(Entity *entity) {
         if (slots->motion_slot_0.frames_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
+        if (unk3D8->turn_frames != 0) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (slots->motion_slot_0.frame <= unk3D8->unk01) {
+        if (slots->motion_slot_0.frame <= unk3D8->turn_frames) {
             EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
         } else {
             ai_state->turn_rate = 0.0f;
@@ -455,7 +455,7 @@ static void Minion_RangedAttack(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
@@ -751,15 +751,15 @@ static s32 Minion_LaunchShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 fr
         end = i + 1;
     }
     for (; i < end; i++) {
-        if (record->unk10[i].unk02 != 0 && frame_from < record->unk10[i].unk02 && record->unk10[i].unk02 <= frame_to) {
+        if (record->launches[i].frame != 0 && frame_from < record->launches[i].frame && record->launches[i].frame <= frame_to) {
             shot = Shot_Alloc();
             shot->unk22 = shot->unk20 = 0;
             shot->unk00 = 1;
             shot->unk28 = entity->params->unk238;
-            from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01);
-            tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01 + 1);
+            from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone);
+            tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone + 1);
             if (from != NULL && tip != NULL) {
-                if (record->unk10[i].unk01 != 0xFF) {
+                if (record->launches[i].bone != 0xFF) {
                     delta_x = tip[0] - from[0];
                     delta_y = tip[1] - from[1];
                     delta_z = tip[2] - from[2];
@@ -776,7 +776,7 @@ static s32 Minion_LaunchShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 fr
                     angles[0] = EntityMath_Approach(angles[0], pitch, pitch_rate);
                     angles[1] = EntityMath_Approach(angles[1], yaw, yaw_rate);
                 }
-                Attack_LaunchMagicEffect(record->unk10[i].unk00, shot, from, angles, entity);
+                Attack_LaunchMagicEffect(record->launches[i].magic_effect, shot, from, angles, entity);
             }
         }
     }

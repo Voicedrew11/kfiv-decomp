@@ -1,4 +1,4 @@
-/* EyePedestal: the behaviour of entity type 31 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* EyePedestal: the behaviour of entity type 31 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: chr.prm record 91, model
    c0091 (an eye set in a stone pedestal), whose eight spawns stand in two rows of four in 006.map. They
    neither move nor take hits; each turns its eye after the player, except the one spawned with

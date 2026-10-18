@@ -1,4 +1,4 @@
-/* DarkPuppet: the behaviour of entity type 52 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* DarkPuppet: the behaviour of entity type 52 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Dark Puppet. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -138,7 +138,7 @@ static void DarkPuppet_OnHit(Entity *entity) {
 /* The think handler: as EntityAi_Think, with DarkPuppet_ThinkCombat for state 2. After that it
    keeps flag bit 28 set except during a hit reaction or the death (busy bits 2, 4, 0x40); while the
    bit is set it adds command bit 0x20 or 0x10 by the height EntityCollision_DistanceToPropFloor reads (work byte unk7A:
-   set above EntityParams.unk43C, cleared below unk43E); and it calls DarkPuppet_ApplyMoveCommand while the entity
+   set above EntityParams.type_param_1, cleared below type_param_2); and it calls DarkPuppet_ApplyMoveCommand while the entity
    is not busy or is in a hit reaction. */
 static void DarkPuppet_Think(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -177,9 +177,9 @@ static void DarkPuppet_Think(Entity *entity, s32 unknown) {
     if ((s32)(entity->flags >> 28) & 1) {
         height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
         if (height != D_00446834[0]) {
-            if ((f32)entity->params->unk43C < height) {
+            if ((f32)entity->params->type_param_1 < height) {
                 ai_state->step_index = 1;
-            } else if (height < (f32)entity->params->unk43E) {
+            } else if (height < (f32)entity->params->type_param_2) {
                 ai_state->step_index = 0;
             }
             if (ai_state->step_index != 0) {
@@ -196,7 +196,7 @@ static void DarkPuppet_Think(Entity *entity, s32 unknown) {
 
 /* The think function of state 2: as EntityAi_ThinkCombat with the type's own attacks
    (DarkPuppet_MeleeAttack; DarkPuppet_RangedAttack0 for ranged record 0,
-   DarkPuppet_RangedAttack for the others). Closing in lasts EntityParams.unk43A frames and has
+   DarkPuppet_RangedAttack for the others). Closing in lasts EntityParams.type_param_0 frames and has
    four ways, kept in work byte unk78: 0 forward (the player farther than unk438), 1 backwards
    (nearer than unk436), 2 and 3 sideways (command bits 4 and 8) while keeping between the two
    distances; EntityAi_IsPushedFromFront makes it change the way. Waiting (4) it turns to the player. */
@@ -249,7 +249,7 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
             } else {
                 ai_state->move_choice = 3;
             }
-            entity->action_timer = entity->params->unk43A;
+            entity->action_timer = entity->params->type_param_0;
             break;
         case 2:
             entity->target = &player_state;
@@ -374,23 +374,23 @@ static void DarkPuppet_ApplyMoveCommand(Entity *entity) {
     }
     turn = 0.0f;
     if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
-        ai_state->unk1C -= entity->params->turn_step_per_frame;
-        if (ai_state->unk1C < -entity->params->turn_limit) {
-            ai_state->unk1C = -entity->params->turn_limit;
+        ai_state->turn_rate -= entity->params->turn_step_per_frame;
+        if (ai_state->turn_rate < -entity->params->turn_limit) {
+            ai_state->turn_rate = -entity->params->turn_limit;
         }
     } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
-        ai_state->unk1C += entity->params->turn_step_per_frame;
-        if (entity->params->turn_limit < ai_state->unk1C) {
-            ai_state->unk1C = entity->params->turn_limit;
+        ai_state->turn_rate += entity->params->turn_step_per_frame;
+        if (entity->params->turn_limit < ai_state->turn_rate) {
+            ai_state->turn_rate = entity->params->turn_limit;
         }
-    } else if (ai_state->unk1C > entity->params->turn_step_per_frame) {
-        ai_state->unk1C -= entity->params->turn_step_per_frame;
-    } else if (ai_state->unk1C < -entity->params->turn_step_per_frame) {
-        ai_state->unk1C += entity->params->turn_step_per_frame;
+    } else if (ai_state->turn_rate > entity->params->turn_step_per_frame) {
+        ai_state->turn_rate -= entity->params->turn_step_per_frame;
+    } else if (ai_state->turn_rate < -entity->params->turn_step_per_frame) {
+        ai_state->turn_rate += entity->params->turn_step_per_frame;
     } else {
-        ai_state->unk1C = 0.0f;
+        ai_state->turn_rate = 0.0f;
     }
-    turn = ai_state->unk1C;
+    turn = ai_state->turn_rate;
     if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
@@ -399,59 +399,59 @@ static void DarkPuppet_ApplyMoveCommand(Entity *entity) {
     step = entity->params->speed_step_per_frame * 0.5f;
     limit = entity->params->max_speed * 0.2f;
     if (entity->move_command & MOVE_COMMAND_FORWARD) {
-        ai_state->unk4C -= entity->params->speed_step_per_frame;
-        if (ai_state->unk4C < -entity->params->max_speed) {
-            ai_state->unk4C = -entity->params->max_speed;
+        ai_state->forward_speed -= entity->params->speed_step_per_frame;
+        if (ai_state->forward_speed < -entity->params->max_speed) {
+            ai_state->forward_speed = -entity->params->max_speed;
         }
     } else if (entity->move_command & MOVE_COMMAND_BACK) {
-        ai_state->unk4C += entity->params->speed_step_per_frame;
-        if (entity->params->max_speed < ai_state->unk4C) {
-            ai_state->unk4C = entity->params->max_speed;
+        ai_state->forward_speed += entity->params->speed_step_per_frame;
+        if (entity->params->max_speed < ai_state->forward_speed) {
+            ai_state->forward_speed = entity->params->max_speed;
         }
-    } else if (entity->params->speed_step_per_frame < ai_state->unk4C) {
-        ai_state->unk4C -= entity->params->speed_step_per_frame;
-    } else if (ai_state->unk4C < -entity->params->speed_step_per_frame) {
-        ai_state->unk4C += entity->params->speed_step_per_frame;
+    } else if (entity->params->speed_step_per_frame < ai_state->forward_speed) {
+        ai_state->forward_speed -= entity->params->speed_step_per_frame;
+    } else if (ai_state->forward_speed < -entity->params->speed_step_per_frame) {
+        ai_state->forward_speed += entity->params->speed_step_per_frame;
     } else {
-        ai_state->unk4C = 0.0f;
+        ai_state->forward_speed = 0.0f;
     }
     if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
-        ai_state->unk44 += entity->params->speed_step_per_frame;
-        if (entity->params->max_speed < ai_state->unk44) {
-            ai_state->unk44 = entity->params->max_speed;
+        ai_state->move_speed += entity->params->speed_step_per_frame;
+        if (entity->params->max_speed < ai_state->move_speed) {
+            ai_state->move_speed = entity->params->max_speed;
         }
     } else if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
-        ai_state->unk44 -= entity->params->speed_step_per_frame;
-        if (ai_state->unk44 < -entity->params->max_speed) {
-            ai_state->unk44 = -entity->params->max_speed;
+        ai_state->move_speed -= entity->params->speed_step_per_frame;
+        if (ai_state->move_speed < -entity->params->max_speed) {
+            ai_state->move_speed = -entity->params->max_speed;
         }
-    } else if (entity->params->speed_step_per_frame < ai_state->unk44) {
-        ai_state->unk44 -= entity->params->speed_step_per_frame;
-    } else if (ai_state->unk44 < -entity->params->speed_step_per_frame) {
-        ai_state->unk44 += entity->params->speed_step_per_frame;
+    } else if (entity->params->speed_step_per_frame < ai_state->move_speed) {
+        ai_state->move_speed -= entity->params->speed_step_per_frame;
+    } else if (ai_state->move_speed < -entity->params->speed_step_per_frame) {
+        ai_state->move_speed += entity->params->speed_step_per_frame;
     } else {
-        ai_state->unk44 = 0.0f;
+        ai_state->move_speed = 0.0f;
     }
     if (entity->move_command & MOVE_COMMAND_DOWN) {
-        ai_state->unk48 -= step;
-        if (ai_state->unk48 < -limit) {
-            ai_state->unk48 = -limit;
+        ai_state->vertical_speed -= step;
+        if (ai_state->vertical_speed < -limit) {
+            ai_state->vertical_speed = -limit;
         }
     } else if (entity->move_command & MOVE_COMMAND_UP) {
-        ai_state->unk48 += step;
-        if (limit < ai_state->unk48) {
-            ai_state->unk48 = limit;
+        ai_state->vertical_speed += step;
+        if (limit < ai_state->vertical_speed) {
+            ai_state->vertical_speed = limit;
         }
-    } else if (step < ai_state->unk48) {
-        ai_state->unk48 -= step;
-    } else if (ai_state->unk48 < -step) {
-        ai_state->unk48 += step;
+    } else if (step < ai_state->vertical_speed) {
+        ai_state->vertical_speed -= step;
+    } else if (ai_state->vertical_speed < -step) {
+        ai_state->vertical_speed += step;
     } else {
-        ai_state->unk48 = 0.0f;
+        ai_state->vertical_speed = 0.0f;
     }
-    ENTITY_SCRATCH_VECTOR[0] = ai_state->unk44;
-    ENTITY_SCRATCH_VECTOR[1] = ai_state->unk48;
-    ENTITY_SCRATCH_VECTOR[2] = ai_state->unk4C;
+    ENTITY_SCRATCH_VECTOR[0] = ai_state->move_speed;
+    ENTITY_SCRATCH_VECTOR[1] = ai_state->vertical_speed;
+    ENTITY_SCRATCH_VECTOR[2] = ai_state->forward_speed;
     sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->rotation[2]);
     sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[0]);
     sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[1]);
@@ -555,12 +555,12 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->record.unk01 != 0) {
+        if (unk3D8->record.turn_frames != 0) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
         break;
     case 2:
-        if (unk3D8->record.unk01 >= entity->model->level_tables->frame) {
+        if (unk3D8->record.turn_frames >= entity->model->level_tables->frame) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
         if (((s32)(entity->flags >> 58) & 3) == 0 && entity->model->level_tables->frame == 0x1E &&
@@ -579,7 +579,7 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->record.unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->record.attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
@@ -614,12 +614,12 @@ static void DarkPuppet_RangedAttack(Entity *entity) {
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
+        if (unk3D8->turn_frames != 0) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->frame) {
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
         EntityAi_LaunchShots(entity, unk3D8, (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8,
@@ -633,7 +633,7 @@ static void DarkPuppet_RangedAttack(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
                 return;

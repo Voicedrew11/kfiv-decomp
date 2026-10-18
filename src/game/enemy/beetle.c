@@ -1,4 +1,4 @@
-/* Beetle: the behaviour of entity type 5 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* Beetle: the behaviour of entity type 5 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Beetle Small, Beetle Very Large,
    Beetle White, Beetle Medium. The game names no monsters; these names are from
    https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by hit points and experience, with
@@ -347,12 +347,12 @@ static void Beetle_RangedAttack0(Entity *entity) {
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
+        if (unk3D8->turn_frames != 0) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->frame) {
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
             ai_state->turn_rate = 0.0f;
@@ -375,7 +375,7 @@ static void Beetle_RangedAttack0(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {

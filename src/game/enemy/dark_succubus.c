@@ -1,4 +1,4 @@
-/* DarkSuccubus: the behaviour of entity type 54 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* DarkSuccubus: the behaviour of entity type 54 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Dark Succubus. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -198,7 +198,7 @@ static void DarkSuccubus_Animate(Entity *entity) {
    entity's position (work byte unk7A). While work word unk68 counts down, model flag 0x800 and flag
    bit 21 are set and Entity.model_alpha is 0x80; work word unk6A is the pause after it. With unk7C at 0
    the handler starts that time itself now and then, taking unkD6 down over 20 frames first. Work
-   word unk6C is put to EntityParams.unk43A while player_state.unk259 is set and counts down. */
+   word unk6C is put to EntityParams.type_param_0 while player_state.unk259 is set and counts down. */
 static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityAiStateKind15F8C0 *timers = (EntityAiStateKind15F8C0 *)ai_state;
@@ -216,11 +216,11 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
         return;
     }
     ENTITY_FLAGS(entity) &= ~0x40000;
-    if (timers->unk6C > 0) {
-        timers->unk6C--;
+    if (timers->think_timer > 0) {
+        timers->think_timer--;
     }
     if (player_state.magic_shot_launched != 0) {
-        timers->unk6C = entity->params->unk43A;
+        timers->think_timer = entity->params->type_param_0;
     }
     DarkSuccubus_CountLiveSpawns(entity);
     if (entity->busy_flags == 0) {
@@ -243,9 +243,9 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
                 EntityAi_ThinkPursue(entity, unknown);
                 break;
             case 2:
-                if (timers->unk7C == 0) {
+                if (timers->combat_mode == 0) {
                     DarkSuccubus_ThinkCombat(entity, unknown);
-                } else if (timers->unk7C == 1) {
+                } else if (timers->combat_mode == 1) {
                     DarkSuccubus_ThinkCombatCircleNear(entity, unknown);
                 } else {
                     DarkSuccubus_ThinkCombatKeepAwayWhenFaced(entity, unknown);
@@ -261,48 +261,48 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
         height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
         if (height != D_0044681C[0]) {
             if (height > 45.0f) {
-                timers->unk7A = 1;
+                timers->rising = 1;
             } else if (height < 35.0f) {
-                timers->unk7A = 0;
-                timers->unk7B = 1;
+                timers->rising = 0;
+                timers->dipped_low = 1;
             }
-            if (timers->unk7A != 0) {
+            if (timers->rising != 0) {
                 entity->move_command |= MOVE_COMMAND_UP;
             } else {
                 entity->move_command |= MOVE_COMMAND_DOWN;
             }
         }
     }
-    if (timers->unk7C == 0) {
-        if (timers->unk68 == 0 && timers->unk6A == 0 && timers->unk7D == 0 && rand() % 100 < 60) {
-            timers->unk7D = 1;
-            timers->unk7E = 20;
+    if (timers->combat_mode == 0) {
+        if (timers->vanish_frames == 0 && timers->vanish_cooldown == 0 && timers->fading_out == 0 && rand() % 100 < 60) {
+            timers->fading_out = 1;
+            timers->fade_frames = 20;
         }
-        if (timers->unk7D != 0) {
-            if (timers->unk7E != 0) {
-                entity->model_alpha = (timers->unk7E << 7) / 20;
-                timers->unk7E--;
+        if (timers->fading_out != 0) {
+            if (timers->fade_frames != 0) {
+                entity->model_alpha = (timers->fade_frames << 7) / 20;
+                timers->fade_frames--;
             } else {
-                timers->unk68 = entity->params->action_frames;
-                timers->unk7D = 0;
+                timers->vanish_frames = entity->params->action_frames;
+                timers->fading_out = 0;
                 EntityEvent_StartCue(entity, 7, 0, 0);
             }
         }
     }
-    if (timers->unk68 != 0) {
+    if (timers->vanish_frames != 0) {
         entity->model->draw_flags |= 0x800;
         ((EntityFlagWord *)&entity->spawn_info->spawn_flags)->bytes[3] = 0x1E;
         entity->model_alpha = 0x80;
         ENTITY_FLAGS(entity) |= 0x200000;
-        if (--timers->unk68 <= 0) {
-            timers->unk6A = entity->params->far_distance;
+        if (--timers->vanish_frames <= 0) {
+            timers->vanish_cooldown = entity->params->far_distance;
         }
     } else {
         entity->model->draw_flags &= ~0x800;
         ((EntityFlagWord *)&entity->spawn_info->spawn_flags)->bytes[3] = 0x1F;
         ENTITY_FLAGS(entity) &= ~0x200000;
-        if (timers->unk6A != 0) {
-            timers->unk6A--;
+        if (timers->vanish_cooldown != 0) {
+            timers->vanish_cooldown--;
         }
     }
 }
@@ -468,7 +468,7 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown) {
                 EntityAi_StartAction(entity, DarkSuccubus_MoveAlongArc, unknown);
                 return;
             }
-            if (timers->unk68 == 0 && timers->unk6A == 0 && rand() % 100 < 60) {
+            if (timers->vanish_frames == 0 && timers->vanish_cooldown == 0 && rand() % 100 < 60) {
                 EntityAi_StartAction(entity, DarkSuccubus_FadeOut, unknown);
                 return;
             }
@@ -602,7 +602,7 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknow
             } else if (entity->distance_to_player < ai_state->keep_min_distance) {
                 ai_state->move_choice = 1;
             } else {
-                if (timers->unk68 == 0 && timers->unk6A == 0 && rand() % 100 < 60) {
+                if (timers->vanish_frames == 0 && timers->vanish_cooldown == 0 && rand() % 100 < 60) {
                     EntityAi_StartAction(entity, DarkSuccubus_FadeOut, unknown);
                     return;
                 }
@@ -1019,12 +1019,12 @@ static void DarkSuccubus_RangedAttack(Entity *entity) {
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
+        if (unk3D8->turn_frames != 0) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->frame) {
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
@@ -1040,7 +1040,7 @@ static void DarkSuccubus_RangedAttack(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {

@@ -1,4 +1,4 @@
-/* FireLord: the behaviour of entity type 24 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* FireLord: the behaviour of entity type 24 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Fire Lord. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -794,19 +794,19 @@ static void FireLord_Move(Entity *entity) {
     }
     params = entity->params;
     if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
-        ai_state->unk1C -= params->turn_step_per_frame;
-        if (ai_state->unk1C < -params->turn_limit) {
-            ai_state->unk1C = -params->turn_limit;
+        ai_state->turn_rate -= params->turn_step_per_frame;
+        if (ai_state->turn_rate < -params->turn_limit) {
+            ai_state->turn_rate = -params->turn_limit;
         }
     } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
-        ai_state->unk1C += params->turn_step_per_frame;
-        if (params->turn_limit < ai_state->unk1C) {
-            ai_state->unk1C = params->turn_limit;
+        ai_state->turn_rate += params->turn_step_per_frame;
+        if (params->turn_limit < ai_state->turn_rate) {
+            ai_state->turn_rate = params->turn_limit;
         }
     } else {
-        ai_state->unk1C = 0.0f;
+        ai_state->turn_rate = 0.0f;
     }
-    turn = ai_state->unk1C;
+    turn = ai_state->turn_rate;
     if (entity->move_command & (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST)) {
         turn += turn;
     }

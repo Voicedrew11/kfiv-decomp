@@ -1,4 +1,4 @@
-/* Malice: the behaviour of entity type 58 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* Malice: the behaviour of entity type 58 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Malice. The game names no monsters;
    these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by hit points
    and experience, with resistances and drops where two monsters share those. */
@@ -119,7 +119,7 @@ void Malice_Init(Entity *entity) {
 /* The think handler: as EntityAi_Think, with Malice_ThinkCombat for state 2. It also keeps
    flag bits 18, 20, 21, 26 and 27 set while work byte unk7B is set or work word unk68 is 1, counts
    down work word unk6A, adds command bit 0x10 or 0x20 by what EntityCollision_DistanceToPropFloor reads at the entity's
-   position against EntityParams.unk43C and unk43E (work byte unk7A), and calls
+   position against EntityParams.type_param_1 and type_param_2 (work byte unk7A), and calls
    Malice_ApplyMoveCommand while the entity is not busy or has one of the busy bits 0x3006. */
 static void Malice_Think(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -170,9 +170,9 @@ static void Malice_Think(Entity *entity, s32 unknown) {
     if (ENTITY_FLAG_BITS(entity)->bit28) {
         height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
         if (height != D_00446814[0]) {
-            if (entity->params->unk43C < height) {
+            if (entity->params->type_param_1 < height) {
                 ai_state->step_index = 1;
-            } else if (height < entity->params->unk43E) {
+            } else if (height < entity->params->type_param_2) {
                 ai_state->step_index = 0;
             }
             if (ai_state->step_index != 0) {
@@ -192,7 +192,7 @@ static void Malice_Think(Entity *entity, s32 unknown) {
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but first it starts
    Malice_ToggleFadeLevel (when work byte unk7B is 1 and work word unk6A has run out, or with a
-   chance of EntityParams.unk43A in 100 when the timer is at 0) or Malice_FadeOutAndRelocate (a
+   chance of EntityParams.type_param_0 in 100 when the timer is at 0) or Malice_FadeOutAndRelocate (a
    chance of unk438 in 100). It attacks only with unk7B at 0 and the player within 200 in y, and
    else goes to a point EntityPoint_PickNearFromDistance picks; ranged record 0 is Malice_RangedAttack0. Closing
    in never runs. */
@@ -224,7 +224,7 @@ static void Malice_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_StartAction(entity, Malice_ToggleFadeLevel, 1);
         return;
     }
-    if (entity->action_timer == 0 && rand() % 100 < entity->params->unk43A) {
+    if (entity->action_timer == 0 && rand() % 100 < entity->params->type_param_0) {
         EntityAi_StartAction(entity, Malice_ToggleFadeLevel, 1);
         return;
     }
@@ -671,12 +671,12 @@ static void Malice_RangedAttack0(Entity *entity) {
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
+        if (unk3D8->turn_frames != 0) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->frame) {
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
             ai_state->turn_rate = 0.0f;
@@ -698,7 +698,7 @@ static void Malice_RangedAttack0(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {

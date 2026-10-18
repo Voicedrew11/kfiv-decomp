@@ -1,4 +1,4 @@
-/* WiddaQueen: the behaviour of entity type 46 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* WiddaQueen: the behaviour of entity type 46 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Widda Queen. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -340,12 +340,12 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
+        if (unk3D8->turn_frames != 0) {
             ai_state->step_index = 1;
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->frame) {
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             ai_state->step_index = 1;
         } else {
             ai_state->step_index = 2;
@@ -367,7 +367,7 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
@@ -379,7 +379,7 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
 }
 
 /* The ranged attack with record 1 (busy bit 1): animation 24; from frame EntityParams.far_distance to
-   unk43A launches the record's shots on two frames in three. */
+   type_param_0 launches the record's shots on two frames in three. */
 static void WiddaQueen_RangedAttack1(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, 1);
@@ -395,19 +395,19 @@ static void WiddaQueen_RangedAttack1(Entity *entity) {
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
+        if (unk3D8->turn_frames != 0) {
             ai_state->step_index = 1;
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->frame) {
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             ai_state->step_index = 1;
         } else {
             ai_state->step_index = 2;
         }
-        if (entity->model->level_tables->frame >= entity->params->far_distance && entity->model->level_tables->frame <= entity->params->unk43A) {
+        if (entity->model->level_tables->frame >= entity->params->far_distance && entity->model->level_tables->frame <= entity->params->type_param_0) {
             if (frame_counter % 3U != 0) {
-                EntityAi_LaunchShots(entity, unk3D8, entity->params->far_distance, entity->params->unk43A);
+                EntityAi_LaunchShots(entity, unk3D8, entity->params->far_distance, entity->params->type_param_0);
             }
         }
         if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
@@ -419,7 +419,7 @@ static void WiddaQueen_RangedAttack1(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {

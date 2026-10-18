@@ -1,4 +1,4 @@
-/* Onyx: the behaviour of entity type 74 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* Onyx: the behaviour of entity type 74 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Onyx. The game names no monsters;
    these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by hit points
    and experience, with resistances and drops where two monsters share those. */
@@ -339,7 +339,7 @@ static void Onyx_RangedAttack0(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
@@ -452,7 +452,7 @@ static s32 Onyx_PickAttack(Entity *entity) {
     for (i = 0; i < 6; i++) {
         if (i < 3) {
             if (EntityAi_CanUseMelee(entity, i) && (i == 1 || i == 2)) {
-                chance = (entity->attack_weights[i] * ((EntityAiStateKind17FC60 *)&entity->ai_state)->unk68[i]) >> 6;
+                chance = (entity->attack_weights[i] * ((EntityAiStateKind17FC60 *)&entity->ai_state)->action_weights[i]) >> 6;
             } else {
                 chance = 0;
             }

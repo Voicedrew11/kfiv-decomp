@@ -1,4 +1,4 @@
-/* AcidCrawler: the behaviour of entity type 18 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* AcidCrawler: the behaviour of entity type 18 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Acid Crawler Large, Acid Crawler
    Small. The game names no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to
    the chr.prm records by hit points and experience, with resistances and drops where two monsters share
@@ -152,21 +152,21 @@ static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg) {
     part = (EntityModelPart80 *)entity->model->parts;
     if (entity->animation_index != 0 && entity->animation_index != 3 && entity->animation_index != 4 && entity->animation_index != 0xB &&
         entity->animation_index != 0xC) {
-        ai_state->unk40[2] = ai_state->unk40[3] = ai_state->unk40[4] = ai_state->unk40[5] = ai_state->unk40[6] = 0.0f;
+        ai_state->neck_bend[2] = ai_state->neck_bend[3] = ai_state->neck_bend[4] = ai_state->neck_bend[5] = ai_state->neck_bend[6] = 0.0f;
         return;
     }
     if (entity->target != NULL) {
         angle = EntityMath_HeadingTo(entity->model->position, entity->target);
         angle = EntityMath_AngleDifference(entity->model->rotation[1], angle);
-        previous[0] = ai_state->unk40[2];
-        previous[1] = ai_state->unk40[3];
-        previous[2] = ai_state->unk40[4];
-        previous[3] = ai_state->unk40[5];
-        previous[4] = ai_state->unk40[6];
+        previous[0] = ai_state->neck_bend[2];
+        previous[1] = ai_state->neck_bend[3];
+        previous[2] = ai_state->neck_bend[4];
+        previous[3] = ai_state->neck_bend[5];
+        previous[4] = ai_state->neck_bend[6];
         step = entity->params->turn_limit;
         if (angle >= -0.0001f && angle <= 0.0001f) {
-            if (ai_state->unk40[2] != 0.0f) {
-                moved = EntityMath_StepToward(&ai_state->unk40[2], 0.0f, step);
+            if (ai_state->neck_bend[2] != 0.0f) {
+                moved = EntityMath_StepToward(&ai_state->neck_bend[2], 0.0f, step);
                 moved = ABS(moved);
                 if (moved < step) {
                     step -= moved;
@@ -176,8 +176,8 @@ static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg) {
             }
             previous_joint = previous;
             for (i = 0; i < 4; i++, previous_joint++) {
-                if (ai_state->unk40[i + 3] != *previous_joint) {
-                    moved = EntityMath_StepToward(&ai_state->unk40[i + 3], *previous_joint, step);
+                if (ai_state->neck_bend[i + 3] != *previous_joint) {
+                    moved = EntityMath_StepToward(&ai_state->neck_bend[i + 3], *previous_joint, step);
                     moved = ABS(moved);
                     if (moved < step) {
                         step -= moved;
@@ -187,22 +187,22 @@ static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg) {
                 }
             }
         } else {
-            remaining = ai_state->unk1C;
+            remaining = ai_state->turn_rate;
             done = FALSE;
             for (i = 2; i < 7; i++) {
                 if (!done) {
-                    ai_state->unk40[i] += remaining;
-                    if (ai_state->unk40[i] > limit) {
-                        remaining = ai_state->unk40[i] - limit;
-                        ai_state->unk40[i] = limit;
-                    } else if (ai_state->unk40[i] < -limit) {
-                        remaining = ai_state->unk40[i] + limit;
-                        ai_state->unk40[i] = -limit;
+                    ai_state->neck_bend[i] += remaining;
+                    if (ai_state->neck_bend[i] > limit) {
+                        remaining = ai_state->neck_bend[i] - limit;
+                        ai_state->neck_bend[i] = limit;
+                    } else if (ai_state->neck_bend[i] < -limit) {
+                        remaining = ai_state->neck_bend[i] + limit;
+                        ai_state->neck_bend[i] = -limit;
                     } else {
                         done = TRUE;
                     }
-                } else if (ai_state->unk40[i] != 0.0f) {
-                    moved = EntityMath_StepToward(&ai_state->unk40[i], 0.0f, step);
+                } else if (ai_state->neck_bend[i] != 0.0f) {
+                    moved = EntityMath_StepToward(&ai_state->neck_bend[i], 0.0f, step);
                     moved = ABS(moved);
                     if (moved < step) {
                         step -= moved;
@@ -215,15 +215,15 @@ static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg) {
     }
     part_index = 30;
     for (i = 0; i < 5; i++) {
-        part[part_index++].unk50[1] = -ai_state->unk40[i + 2];
+        part[part_index++].unk50[1] = -ai_state->neck_bend[i + 2];
     }
 }
 
 /* The think handler: as EntityAi_Think, with AcidCrawler_ThinkCombat for states 1 and 2; after
    EntityAi_ThinkIdle it sets work byte unk7A to 1. Before that, while Entity.ailment_4_frames is 0, it
-   launches shot EntityParams.unk43C from near the point Model_GetSkinnedBonePoint gives for 0, on two timers:
+   launches shot EntityParams.type_param_1 from near the point Model_GetSkinnedBonePoint gives for 0, on two timers:
    work word unk68 (chance EntityParams.action_frames in 100 a frame, then a pause of unk436 frames) and
-   work word unk6A (chance unk438, pause unk43A). */
+   work word unk6A (chance unk438, pause type_param_0). */
 static void AcidCrawler_Think(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
     char *part = Model_GetSkinnedBonePoint((char *)entity->model, 0);
@@ -243,7 +243,7 @@ static void AcidCrawler_Think(Entity *entity, s32 unknown) {
                 target[0] += offset;
                 target[1] += offset;
                 target[2] += offset;
-                EntityAi_LaunchShot(entity, entity->params->unk43C, target, direction);
+                EntityAi_LaunchShot(entity, entity->params->type_param_1, target, direction);
                 ai_state->pause_timer = entity->params->near_distance;
             }
         }
@@ -257,8 +257,8 @@ static void AcidCrawler_Think(Entity *entity, s32 unknown) {
                 target[0] += offset;
                 target[1] += offset;
                 target[2] += offset;
-                EntityAi_LaunchShot(entity, entity->params->unk43C, target, direction);
-                ai_state->sub_timer = entity->params->unk43A;
+                EntityAi_LaunchShot(entity, entity->params->type_param_1, target, direction);
+                ai_state->sub_timer = entity->params->type_param_0;
             }
         }
         if (ai_state->sub_timer != 0) {

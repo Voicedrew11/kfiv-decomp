@@ -1,4 +1,4 @@
-/* AncientKing: the behaviour of entity type 61 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* AncientKing: the behaviour of entity type 61 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: the Ancient King, chr.prm record
    57, whose one spawn is in 006.map with six High Skeletons as spawn ids 10-15, the entities this code
    raises again. The game names no monsters; the name is from the bestiary of Prima's official strategy
@@ -276,7 +276,7 @@ static void AncientKing_Death(Entity *entity) {
     case 4:
         if ((slots->motion_slot_1.frame_fixed - entity->params->motion_speeds[slots->motion_slot_1.index]) >> 8 < 0x2B && slots->motion_slot_1.frame >= 0x2B) {
             Vector_Copy(target, player_state.position);
-            EntityAi_LaunchShot(entity, ((EntityParamsUnk3D8Full *)&entity->params->ranged_attacks[0])->unk10[0].unk00, target,
+            EntityAi_LaunchShot(entity, ((EntityParamsUnk3D8Full *)&entity->params->ranged_attacks[0])->launches[0].magic_effect, target,
                           entity->model->rotation);
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {
@@ -332,7 +332,7 @@ static void AncientKing_RangedAttack0(Entity *entity) {
                     Vector_Copy(target, player_state.position);
                     target[0] += rand() % 1201 - 600;
                     target[2] += rand() % 1201 - 600;
-                    EntityAi_LaunchShot(entity, unk3D8->unk10[0].unk00, target, entity->model->rotation);
+                    EntityAi_LaunchShot(entity, unk3D8->launches[0].magic_effect, target, entity->model->rotation);
                 }
             }
         }
@@ -340,7 +340,7 @@ static void AncientKing_RangedAttack0(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
@@ -353,8 +353,8 @@ static void AncientKing_RangedAttack0(Entity *entity) {
 
 /* An action (busy bit 0x1000) that AncientKing_ThinkCombat starts when
    AncientKing_ShouldRespawnOthers says so: animation 17 on the second motion slot; on frame
-   EntityParams.far_distance it starts effect unk436 at model point unk43E (EntityEvent_StartEffectAtPoint), past frame
-   unk43C effect unk43A there, and calls AncientKing_RespawnTwoOthers; then it plays to the end. */
+   EntityParams.far_distance it starts effect unk436 at model point type_param_2 (EntityEvent_StartEffectAtPoint), past frame
+   type_param_1 effect type_param_0 there, and calls AncientKing_RespawnTwoOthers; then it plays to the end. */
 static void AncientKing_RespawnOthers(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -372,10 +372,10 @@ static void AncientKing_RespawnOthers(Entity *entity) {
         break;
     case 2:
         if (((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame == entity->params->far_distance) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->near_distance, entity->params->unk43E, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->near_distance, entity->params->type_param_2, (int)entity->model->rotation);
         }
-        if (entity->params->unk43C < ((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk43A, entity->params->unk43E, (int)entity->model->rotation);
+        if (entity->params->type_param_1 < ((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame) {
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->type_param_0, entity->params->type_param_2, (int)entity->model->rotation);
             AncientKing_RespawnTwoOthers(entity);
             entity->action_step++;
         }
@@ -597,7 +597,7 @@ static void AncientKing_DeathLaunchShot(Entity *entity) {
         if ((entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8 < 0x2B &&
             entity->model->level_tables->frame >= 0x2B) {
             Vector_Copy(target, player_state.position);
-            EntityAi_LaunchShot(entity, ((EntityParamsUnk3D8Full *)&entity->params->ranged_attacks[0])->unk10[0].unk00, target,
+            EntityAi_LaunchShot(entity, ((EntityParamsUnk3D8Full *)&entity->params->ranged_attacks[0])->launches[0].magic_effect, target,
                           entity->model->rotation);
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {
@@ -651,7 +651,7 @@ static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
                     Vector_Copy(target, player_state.position);
                     target[0] += rand() % 401 - 200;
                     target[2] += rand() % 401 - 200;
-                    EntityAi_LaunchShot(entity, unk3D8->unk10[0].unk00, target, entity->model->rotation);
+                    EntityAi_LaunchShot(entity, unk3D8->launches[0].magic_effect, target, entity->model->rotation);
                 }
             }
         }
@@ -659,7 +659,7 @@ static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
@@ -672,7 +672,7 @@ static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
 
 /* The ranged attack with record 1 (busy bit 1): animation 24; on each of the four frames in
    ancient_king_bone_shot_frames it launches the record's shot unk10[0].unk00 from the point Model_GetSkinnedBonePoint gives for
-   EntityParams.unk43E, heading away from the entity's own position, with a pitch of -10 degrees
+   EntityParams.type_param_2, heading away from the entity's own position, with a pitch of -10 degrees
    (EntityAi_LaunchShot). */
 static void AncientKing_RangedAttack1(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -702,14 +702,14 @@ static void AncientKing_RangedAttack1(Entity *entity) {
         for (i = 0; i < 4; i++) {
             if (entity->ailment_4_frames == 0 || unk3D8->unk0C != 0) {
                 if (elapsed < launch_frames.frames[i] && entity->model->level_tables->frame >= launch_frames.frames[i]) {
-                    source = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->unk43E);
+                    source = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->type_param_2);
                     if (source != NULL) {
                         delta_x = source[0] - entity->model->position[0];
                         delta_z = source[2] - entity->model->position[2];
                         direction[0] = -0.17453292f;
                         direction[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
                         direction[2] = direction[3] = 0.0f;
-                        EntityAi_LaunchShot(entity, unk3D8->unk10[0].unk00, source, direction);
+                        EntityAi_LaunchShot(entity, unk3D8->launches[0].magic_effect, source, direction);
                     }
                 }
             }
@@ -718,7 +718,7 @@ static void AncientKing_RangedAttack1(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
@@ -750,10 +750,10 @@ static void AncientKing_RespawnOthersAfterSwitch(Entity *entity) {
         break;
     case 2:
         if (((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame == entity->params->far_distance) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->near_distance, entity->params->unk43E, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->near_distance, entity->params->type_param_2, (int)entity->model->rotation);
         }
-        if (entity->params->unk43C < entity->model->level_tables->frame) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk43A, entity->params->unk43E, (int)entity->model->rotation);
+        if (entity->params->type_param_1 < entity->model->level_tables->frame) {
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->type_param_0, entity->params->type_param_2, (int)entity->model->rotation);
             AncientKing_RespawnTwoOthers(entity);
             entity->action_step++;
         }

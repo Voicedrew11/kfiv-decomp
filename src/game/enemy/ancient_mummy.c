@@ -1,4 +1,4 @@
-/* AncientMummy: the behaviour of entity type 42 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* AncientMummy: the behaviour of entity type 42 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Ancient Mummy. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -308,12 +308,12 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
             ai_state->step_index = 0;
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
+        if (unk3D8->turn_frames != 0) {
             EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->frame) {
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
         } else {
             ai_state->turn_rate = 0.0f;
@@ -349,7 +349,7 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            ai_state->mode_timer = (u16)entity->params->unk43A + (u16)entity->params->unk43C;
+            ai_state->mode_timer = (u16)entity->params->type_param_0 + (u16)entity->params->type_param_1;
             entity->model_alpha = 0;
             if (ai_state->step_index == 1) {
                 Vector_Copy(entity->model->position, ai_state->target_point);
@@ -362,8 +362,8 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
 
 /* An action (busy bit 0x2000) that AncientMummy_ShootAndRelocate starts: the second half of it.
    Waits EntityParams.near_distance frames, turns the entity straight to the player, then over
-   EntityParams.unk43A frames brings the model's scale and Entity.model_alpha back (to 1.3 and 0x80),
-   waits unk43C frames more, clears the flag bits the first half set, lets the motion end, goes to
+   EntityParams.type_param_0 frames brings the model's scale and Entity.model_alpha back (to 1.3 and 0x80),
+   waits type_param_1 frames more, clears the flag bits the first half set, lets the motion end, goes to
    state 2 and thinks, with the pause in work word unk68 set to EntityParams.action_frames. */
 static void AncientMummy_FadeBackIn(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -392,13 +392,13 @@ static void AncientMummy_FadeBackIn(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit27 = 0;
             ENTITY_FLAG_BITS(entity)->bit14 = 1;
             entity->action_step++;
-        } else if (entity->params->unk43C < ai_state->mode_timer) {
-            step = 1.3f / entity->params->unk43A;
+        } else if (entity->params->type_param_1 < ai_state->mode_timer) {
+            step = 1.3f / entity->params->type_param_0;
             entity->model->scale[0] += step;
             entity->model->scale[1] -= step;
             entity->model->scale[2] += step;
-            entity->model_alpha += 0x80 / entity->params->unk43A;
-        } else if (ai_state->mode_timer == entity->params->unk43C) {
+            entity->model_alpha += 0x80 / entity->params->type_param_0;
+        } else if (ai_state->mode_timer == entity->params->type_param_1) {
             entity->model->scale[0] = 1.3f;
             entity->model->scale[1] = 1.3f;
             entity->model->scale[2] = 1.3f;

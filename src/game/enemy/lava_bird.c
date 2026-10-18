@@ -1,4 +1,4 @@
-/* LavaBird: the behaviour of entity type 68 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* LavaBird: the behaviour of entity type 68 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Lava Bird. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -510,7 +510,7 @@ static s32 LavaBird_SteerToTargetCommand(Entity *entity, s32 mark_far, f32 range
 
 /* The dormant action (busy bit 0x20), on the motion slots: holds animation 1 until the player is
    within EntitySpawnInfo.wake_distance or flag bit 43 is set; then it starts effect 0x166 at model point
-   0xFF and moves the entity in y by a speed that starts at EntityParams.unk43A and falls off, plays
+   0xFF and moves the entity in y by a speed that starts at EntityParams.type_param_0 and falls off, plays
    animation 2 to its end while LavaBird_ApplyMoveCommand moves it with command 1, goes to state 2 and thinks.
    */
 static void LavaBird_Dormant(Entity *entity) {
@@ -535,7 +535,7 @@ static void LavaBird_Dormant(Entity *entity) {
         break;
     case 1:
         if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->bit43) {
-            ai_state->part_angle_z = entity->params->unk43A;
+            ai_state->part_angle_z = entity->params->type_param_0;
             EntityEvent_StartEffectAtPoint((char **)entity, 0x166, 0xFF, (int)entity->model->rotation);
             entity->action_step++;
         }
@@ -606,19 +606,19 @@ static void LavaBird_RangedAttack(Entity *entity) {
         if (slots->motion_slot_0.frames_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
+        if (unk3D8->turn_frames != 0) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (slots->motion_slot_0.frame <= unk3D8->unk01) {
+        if (slots->motion_slot_0.frame <= unk3D8->turn_frames) {
             EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
         } else {
             ai_state->turn_rate = 0.0f;
         }
         frame = (slots->motion_slot_0.frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         current_frame = slots->motion_slot_0.frame;
-        launch_frame = ((EntityParamsUnk3D8Full *)unk3D8)->unk10[0].unk02;
+        launch_frame = ((EntityParamsUnk3D8Full *)unk3D8)->launches[0].frame;
         if (launch_frame != 0 && frame < launch_frame && launch_frame <= current_frame) {
             LavaBird_LaunchBothShots(entity, unk3D8, frame, current_frame, player_state.position, 0.7853982f, 0.7853982f);
         }
@@ -631,7 +631,7 @@ static void LavaBird_RangedAttack(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
@@ -665,10 +665,10 @@ static s32 LavaBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
         shot->unk22 = shot->unk20 = 0;
         shot->unk00 = 1;
         shot->unk28 = entity->params->unk238;
-        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01);
-        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01 + 1);
+        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone);
+        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone + 1);
         if (from != NULL && tip != NULL) {
-            if (record->unk10[i].unk01 != 0xFF) {
+            if (record->launches[i].bone != 0xFF) {
                 delta_x = tip[0] - from[0];
                 delta_y = tip[1] - from[1];
                 delta_z = tip[2] - from[2];
@@ -685,7 +685,7 @@ static s32 LavaBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
                 angles[0] = EntityMath_Approach(angles[0], pitch, pitch_rate);
                 angles[1] = EntityMath_Approach(angles[1], yaw, yaw_rate);
             }
-            Attack_LaunchMagicEffect(record->unk10[i].unk00, shot, from, angles, entity);
+            Attack_LaunchMagicEffect(record->launches[i].magic_effect, shot, from, angles, entity);
         }
     }
     return 0;

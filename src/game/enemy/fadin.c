@@ -1,4 +1,4 @@
-/* Fadin: the behaviour of entity type 80 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* Fadin: the behaviour of entity type 80 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Fadin. The game names no monsters;
    these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by hit points
    and experience, with resistances and drops where two monsters share those. */
@@ -118,7 +118,7 @@ static void Fadin_Think(Entity *entity, s32 unknown) {
         if (ai_state->step_index < 0) {
             ai_state->step_index = 0;
         }
-        EntityEvent_StartCue(entity, entity->params->unk43A, entity->params->unk43C, entity->params->unk43E);
+        EntityEvent_StartCue(entity, entity->params->type_param_0, entity->params->type_param_1, entity->params->type_param_2);
         entity->action_timer = entity->params->action_frames + rand() % 3;
     }
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);

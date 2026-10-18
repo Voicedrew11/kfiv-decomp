@@ -1,4 +1,4 @@
-/* GiantLeader: the behaviour of entity type 63 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* GiantLeader: the behaviour of entity type 63 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Giant Leader. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -372,7 +372,7 @@ static void GiantLeader_MeleeAttack0(Entity *entity) {
 
 /* An action (busy bit 0x1000): goes past one of three map objects (0xA0-0xA2); work byte unk7A
    says which. The entity is put at a fixed place next to the object, facing it, and plays
-   animation 17, breaks the map object (MapObject_Break) on frame EntityParams.unk43C, then walks in
+   animation 17, breaks the map object (MapObject_Break) on frame EntityParams.type_param_1, then walks in
    animation 3 to a point on the far side and clears unk7A. GiantLeader_Think starts it. */
 static void GiantLeader_BreakMapObject(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -447,7 +447,7 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
         }
         break;
     case 2:
-        if (entity->model->level_tables->frame == entity->params->unk43C) {
+        if (entity->model->level_tables->frame == entity->params->type_param_1) {
             switch (ai_state->step_index) {
             case 1:
                 if (entity->group_id == current_map_slot) {
@@ -523,7 +523,7 @@ static void GiantLeader_OnHit(Entity *entity) {
 }
 
 /* The melee attack with record 1 (busy bit 1): animation 21, as EntityAi_MeleeAttack; the first
-   time part 0 has hit (flag bit 54) it calls Attack_DrainPlayerMp with EntityParams.unk43E. */
+   time part 0 has hit (flag bit 54) it calls Attack_DrainPlayerMp with EntityParams.type_param_2. */
 static void GiantLeader_MeleeAttack1(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[1];
@@ -570,7 +570,7 @@ static void GiantLeader_MeleeAttack1(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
         }
         if (ai_state->action_counter == 0 && ENTITY_FLAG_BITS(entity)->bit54) {
-            Attack_DrainPlayerMp(entity->params->unk43E);
+            Attack_DrainPlayerMp(entity->params->type_param_2);
             ai_state->action_counter = 1;
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {
@@ -594,9 +594,9 @@ static void GiantLeader_MeleeAttack1(Entity *entity) {
    EntityParams.action_frames instead and run as part 1, 0 and 1. */
 static s32 GiantLeader_CheckPartHit(Entity *entity, EntityParamsUnk240 *unk240, s32 part, s32 frame_from, s32 frame_to, f32 angle) {
     if (part < 3) {
-        if (unk240->hit_parts[part].unk24 == 0 ||
-            (frame_from < unk240->hit_parts[part].unk24 && frame_to < unk240->hit_parts[part].unk24) ||
-            (unk240->hit_parts[part].unk26 < frame_from && unk240->hit_parts[part].unk26 < frame_to)) {
+        if (unk240->hit_parts[part].first_frame == 0 ||
+            (frame_from < unk240->hit_parts[part].first_frame && frame_to < unk240->hit_parts[part].first_frame) ||
+            (unk240->hit_parts[part].last_frame < frame_from && unk240->hit_parts[part].last_frame < frame_to)) {
             return 0;
         }
     } else if (part == 3) {
@@ -617,7 +617,7 @@ static s32 GiantLeader_CheckPartHit(Entity *entity, EntityParamsUnk240 *unk240, 
     } else if (part == 5) {
         if (entity->params->far_distance == 0 ||
             (frame_from < entity->params->far_distance && frame_to < entity->params->far_distance) ||
-            (entity->params->unk43A - 1 < frame_from && entity->params->unk43A - 1 < frame_to)) {
+            (entity->params->type_param_0 - 1 < frame_from && entity->params->type_param_0 - 1 < frame_to)) {
             return 0;
         }
         part = 1;

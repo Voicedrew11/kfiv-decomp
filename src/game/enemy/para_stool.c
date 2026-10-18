@@ -1,4 +1,4 @@
-/* ParaStool: the behaviour of entity type 43 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* ParaStool: the behaviour of entity type 43 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Para Stool. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -278,21 +278,21 @@ static s32 ParaStool_CheckPartHitInPlayerView(Entity *entity, EntityParamsUnk240
     f32 pitch;
     f32 spread;
 
-    if (record->hit_parts[index].unk24 != 0 && !(frame < record->hit_parts[index].unk24 && current_frame < record->hit_parts[index].unk24) &&
-        !(record->hit_parts[index].unk26 < frame && record->hit_parts[index].unk26 < current_frame)) {
+    if (record->hit_parts[index].first_frame != 0 && !(frame < record->hit_parts[index].first_frame && current_frame < record->hit_parts[index].first_frame) &&
+        !(record->hit_parts[index].last_frame < frame && record->hit_parts[index].last_frame < current_frame)) {
         yaw = EntityMath_AngleDifference(player_state[5], EntityMath_AngleXZ(player_state, (char *)entity->model->position));
         pitch = (f32)atan((entity->model->position[1] - player_state[1] + 220.0f) / entity->distance_to_player) + player_state[4];
         if (ABS(yaw) < entity->params->yaw_limit_deg * 0.017453292f && ABS(pitch) < (s16)entity->params->action_frames * 0.017453292f) {
-            spread = EntityMath_WrapAngle(record->hit_parts[0].unk22 * 0.017453292f);
+            spread = EntityMath_WrapAngle(record->hit_parts[0].half_angle_deg * 0.017453292f);
             if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < spread) {
                 Attack_RollPlayerAilments(&entity->params->melee_attacks[0].hit_parts[0].unk12);
                 memset(&request, 0, sizeof(request));
                 memset(&extra, 0, sizeof(extra));
                 Vector_Copy(request.position, entity->model->position);
                 request.height = entity->height + 10.0f;
-                request.radius = entity->radius + record->hit_parts[index].unk20;
+                request.radius = entity->radius + record->hit_parts[index].radius_bonus;
                 request.facing = EntityMath_WrapAngle(angle + 3.1415927f);
-                request.half_angle = EntityMath_WrapAngle(record->hit_parts[index].unk22 * 0.017453292f);
+                request.half_angle = EntityMath_WrapAngle(record->hit_parts[index].half_angle_deg * 0.017453292f);
                 request.owner = entity;
                 request.shape = 3;
                 request.target_mask = 1;

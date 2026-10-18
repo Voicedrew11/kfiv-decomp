@@ -1,4 +1,4 @@
-/* DarkBird: the behaviour of entity type 59 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* DarkBird: the behaviour of entity type 59 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Dark Bird. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -721,8 +721,8 @@ static void DarkBird_MeleeAttack(Entity *entity) {
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, on the motion slots, with launches of
-   its own. Record 1: on the frame of the record's first shot and on frames EntityParams.unk43A and
-   unk43C, DarkBird_LaunchThreeShots launches, pitched at the player and up to 14 degrees to
+   its own. Record 1: on the frame of the record's first shot and on frames EntityParams.type_param_0 and
+   type_param_1, DarkBird_LaunchThreeShots launches, pitched at the player and up to 14 degrees to
    either side of the reverse of the heading. The other records: on the frame of the first shot
    DarkBird_LaunchBothShots launches at a point 200 below the player. The pause Entity.attack_delay_frames
    is the record's unk02 as it is. */
@@ -754,12 +754,12 @@ static void DarkBird_RangedAttack(Entity *entity) {
         if (ai_state->motion_slot_0.frames_left == 0) {
             entity->action_step++;
         }
-        if (record->unk01 != 0) {
+        if (record->turn_frames != 0) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (ai_state->motion_slot_0.frame <= record->unk01) {
+        if (ai_state->motion_slot_0.frame <= record->turn_frames) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
             ai_state->turn_rate = 0.0f;
@@ -770,13 +770,13 @@ static void DarkBird_RangedAttack(Entity *entity) {
             for (i = 0; i < 3; i++) {
                 switch (i) {
                 case 0:
-                    launch_frame = record->unk10[0].unk02;
+                    launch_frame = record->launches[0].frame;
                     break;
                 case 1:
-                    launch_frame = entity->params->unk43A;
+                    launch_frame = entity->params->type_param_0;
                     break;
                 case 2:
-                    launch_frame = entity->params->unk43C;
+                    launch_frame = entity->params->type_param_1;
                     break;
                 }
                 if (launch_frame != 0 && elapsed < launch_frame && frame >= launch_frame) {
@@ -794,7 +794,7 @@ static void DarkBird_RangedAttack(Entity *entity) {
         } else {
             Vector_Copy(target, &player_state);
             target[1] -= 200.0f;
-            if (record->unk10[0].unk02 != 0 && elapsed < record->unk10[0].unk02 && frame >= record->unk10[0].unk02) {
+            if (record->launches[0].frame != 0 && elapsed < record->launches[0].frame && frame >= record->launches[0].frame) {
                 DarkBird_LaunchBothShots(entity, (EntityParamsUnk3D8 *)record, elapsed, ai_state->motion_slot_0.frame, target, 0.7853982f, 0.0f);
             }
         }
@@ -807,7 +807,7 @@ static void DarkBird_RangedAttack(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            entity->attack_delay_frames = record->unk02;
+            entity->attack_delay_frames = record->attack_delay;
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
@@ -841,10 +841,10 @@ static s32 DarkBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
         shot->unk22 = shot->unk20 = 0;
         shot->unk00 = 1;
         shot->unk28 = entity->params->unk238;
-        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01);
-        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01 + 1);
+        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone);
+        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone + 1);
         if (from != NULL && tip != NULL) {
-            if (record->unk10[i].unk01 != 0xFF) {
+            if (record->launches[i].bone != 0xFF) {
                 delta_x = tip[0] - from[0];
                 delta_y = tip[1] - from[1];
                 delta_z = tip[2] - from[2];
@@ -861,7 +861,7 @@ static s32 DarkBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
                 angles[0] = EntityMath_Approach(angles[0], pitch, pitch_rate);
                 angles[1] = EntityMath_Approach(angles[1], yaw, yaw_rate);
             }
-            Attack_LaunchMagicEffect(record->unk10[i].unk00, shot, from, angles, entity);
+            Attack_LaunchMagicEffect(record->launches[i].magic_effect, shot, from, angles, entity);
         }
     }
     return 0;
@@ -883,9 +883,9 @@ static s32 DarkBird_LaunchThreeShots(Entity *entity, EntityParamsUnk3D8Full *rec
         shot->unk20 = 0;
         shot->unk22 = 0;
         shot->unk28 = entity->params->unk238;
-        point = Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01);
+        point = Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone);
         if (point != NULL) {
-            Attack_LaunchMagicEffect(record->unk10[i].unk00, shot, point, angles, entity);
+            Attack_LaunchMagicEffect(record->launches[i].magic_effect, shot, point, angles, entity);
         }
     }
     return 0;

@@ -1,4 +1,4 @@
-/* EarthElemental: the behaviour of entity type 49 (Entity.params->unk02, the index into entity_type_handlers): its
+/* EarthElemental: the behaviour of entity type 49 (EntityParams.entity_type, the index into entity_type_handlers): its
    set-up function, which the table names, and the handlers it installs. Used by: Earth Elemental. The game
    names no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm
    records by hit points and experience, with resistances and drops where two monsters share those. */
@@ -171,7 +171,7 @@ static void EarthElemental_Think(Entity *entity, s32 unknown) {
    the player's facing it goes backwards for 60 to 89 frames (work byte unk78 is 1, command from
    EarthElemental_BackwardsCommand); else it runs at the player for 60 to 119 frames (unk78 is 0); with the player
    more than 90 degrees off its heading it starts EarthElemental_PlayTurnAnim. Work word unk6A counts
-   the frames it is not going for the player; above EntityParams.unk43A, with the player within 30
+   the frames it is not going for the player; above EntityParams.type_param_0, with the player within 30
    degrees ahead and nearer than 1000, it starts EarthElemental_RangedAttack0. */
 static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -244,7 +244,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
             break;
         }
     }
-    if (ai_state->sub_timer > entity->params->unk43A
+    if (ai_state->sub_timer > entity->params->type_param_0
         && ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < 0.5235988f
         && entity->distance_to_player < 1000.0f) {
         ai_state->sub_timer = 0;
@@ -252,7 +252,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_StartAction(entity, EarthElemental_RangedAttack0, 1);
         return;
     }
-    if (ai_state->sub_timer <= entity->params->unk43A) {
+    if (ai_state->sub_timer <= entity->params->type_param_0) {
         ai_state->sub_timer++;
     }
     if (entity->combat_choice == 1) {
@@ -633,12 +633,12 @@ static void EarthElemental_RangedAttack0(Entity *entity) {
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
+        if (unk3D8->turn_frames != 0) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->frame) {
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
             ai_state->turn_rate = 0.0f;
@@ -656,7 +656,7 @@ static void EarthElemental_RangedAttack0(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {

@@ -1,4 +1,4 @@
-/* FireGenie: the behaviour of entity type 66 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* FireGenie: the behaviour of entity type 66 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Fire Genie. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -310,7 +310,7 @@ static void FireGenie_RangedAttack0(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
@@ -324,7 +324,7 @@ static void FireGenie_RangedAttack0(Entity *entity) {
 /* An action (busy bit 0x1000) that FireGenie_ThinkDecide starts when
    FireGenie_ShouldRespawnOther says so: plays animation 17 to its end. Past frame
    EntityParams.far_distance it calls FireGenie_RespawnOneOther and sets work byte unk7C; past frame
-   unk43A it calls FireGenie_SignalRespawned and clears unk7C. */
+   type_param_0 it calls FireGenie_SignalRespawned and clears unk7C. */
 static void FireGenie_RespawnOther(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -349,7 +349,7 @@ static void FireGenie_RespawnOther(Entity *entity) {
         }
         break;
     case 3:
-        if (entity->params->unk43A < entity->model->level_tables->frame) {
+        if (entity->params->type_param_0 < entity->model->level_tables->frame) {
             FireGenie_SignalRespawned(entity);
             ai_state->action_counter = 0;
             entity->action_step++;
@@ -506,8 +506,8 @@ static s32 FireGenie_PickAttack(Entity *entity) {
 }
 
 /* Helper of FireGenie_ThinkDecide: counts the entities with spawn ids 10 to 9 plus
-   EntityParams.unk43C that have flag bits 0 and 1 set and flag bits 2-3 below 3 (the count goes to
-   work byte unk7A, a bit each to work word unk6A); TRUE when there are fewer than unk43C and the
+   EntityParams.type_param_1 that have flag bits 0 and 1 set and flag bits 2-3 below 3 (the count goes to
+   work byte unk7A, a bit each to work word unk6A); TRUE when there are fewer than type_param_1 and the
    pause in work word unk68 is over. */
 static s32 FireGenie_ShouldRespawnOther(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -515,7 +515,7 @@ static s32 FireGenie_ShouldRespawnOther(Entity *entity) {
     s32 i;
 
     ai_state->sub_timer = 0;
-    for (i = 0; i < entity->params->unk43C; i++) {
+    for (i = 0; i < entity->params->type_param_1; i++) {
         Entity *other = Entity_GetBySpawnId(i + 10);
         if (other != NULL && (other->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) == 3 && ((s32)(other->flags >> 2) & 3) < 3) {
             ai_state->sub_timer |= 1 << i;
@@ -523,7 +523,7 @@ static s32 FireGenie_ShouldRespawnOther(Entity *entity) {
         }
     }
     ai_state->step_index = count;
-    if (ai_state->step_index < entity->params->unk43C) {
+    if (ai_state->step_index < entity->params->type_param_1) {
         if (ai_state->pause_timer < 1) {
             return TRUE;
         }
@@ -534,14 +534,14 @@ static s32 FireGenie_ShouldRespawnOther(Entity *entity) {
 /* Helper of FireGenie_RespawnOther: draws one of the entities FireGenie_ShouldRespawnOther
    did not count, respawns it when it has flag bit 0 set (EntityEvent_Respawn, which calls
    Entity_ResetToSpawn), keeps its spawn id in work byte unk7B, and sets the pause in work word
-   unk68 to EntityParams.unk43E. */
+   unk68 to EntityParams.type_param_2. */
 static void FireGenie_RespawnOneOther(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 remaining = 1;
     s32 i;
-    s32 slots_left = entity->params->unk43C - ai_state->step_index;
+    s32 slots_left = entity->params->type_param_1 - ai_state->step_index;
 
-    for (i = 0; i < entity->params->unk43C; i++) {
+    for (i = 0; i < entity->params->type_param_1; i++) {
         if (!((ai_state->sub_timer >> i) & 1)) {
             if (rand() % 100 < remaining * 100 / slots_left) {
                 s32 other_id = i + 10;
@@ -561,7 +561,7 @@ static void FireGenie_RespawnOneOther(Entity *entity) {
             }
         }
     }
-    ai_state->pause_timer = entity->params->unk43E;
+    ai_state->pause_timer = entity->params->type_param_2;
 }
 
 /* Helper of FireGenie_RespawnOther: puts 1 in work byte unk7A of the entity

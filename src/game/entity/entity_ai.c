@@ -175,10 +175,10 @@ static s32 EntityAi_CheckMeleeAilment(Entity *entity, EntityParamsUnk240 *record
     } else if (wrapped < -3.1415927f) {
         wrapped += 6.2831855f;
     }
-    if ((frame_min < record->hit_parts[index].unk24 && frame_max < record->hit_parts[index].unk24) || (record->hit_parts[index].unk26 < frame_min && record->hit_parts[index].unk26 < frame_max)) {
+    if ((frame_min < record->hit_parts[index].first_frame && frame_max < record->hit_parts[index].first_frame) || (record->hit_parts[index].last_frame < frame_min && record->hit_parts[index].last_frame < frame_max)) {
         return 0;
     }
-    return EntityAim_AilPlayerInArc(&record->hit_parts[index].unk12, model->position, record->hit_parts[index].unk22 * 0.017453292f, entity->collision_height, record->hit_parts[index].unk20, wrapped);
+    return EntityAim_AilPlayerInArc(&record->hit_parts[index].unk12, model->position, record->hit_parts[index].half_angle_deg * 0.017453292f, entity->collision_height, record->hit_parts[index].radius_bonus, wrapped);
 }
 
 /* Hit check of one part of a melee record: turns the model's heading by the record's angle (mirrored when
@@ -204,9 +204,9 @@ int EntityAi_CheckMeleeHit(Entity *entity, EntityParamsUnk240 *record, int part,
 /* Runs EntityAi_SendMeleeHit for one part of a melee record facing angle, unless the animation frames
    [frame_from, frame_to] lie outside the frames the part is active on (0 then). */
 s32 EntityAi_CheckMeleeHitAt(Entity *entity, EntityParamsUnk240 *unk240, s32 part, s32 frame_from, s32 frame_to, f32 angle) {
-    if (unk240->hit_parts[part].unk24 == 0 ||
-        (frame_from < unk240->hit_parts[part].unk24 && frame_to < unk240->hit_parts[part].unk24) ||
-        (unk240->hit_parts[part].unk26 < frame_from && unk240->hit_parts[part].unk26 < frame_to)) {
+    if (unk240->hit_parts[part].first_frame == 0 ||
+        (frame_from < unk240->hit_parts[part].first_frame && frame_to < unk240->hit_parts[part].first_frame) ||
+        (unk240->hit_parts[part].last_frame < frame_from && unk240->hit_parts[part].last_frame < frame_to)) {
         return 0;
     }
     return EntityAi_SendMeleeHit(entity, unk240, part, angle);
@@ -223,10 +223,10 @@ s32 EntityAi_SendMeleeHit(Entity *entity, EntityParamsUnk240 *record, s32 index,
     memset(&extra, 0, sizeof(extra));
     Vector_Copy(request.position, entity->model->position);
     yaw = angle + 3.1415927f;
-    request.radius = entity->radius + record->hit_parts[index].unk20;
+    request.radius = entity->radius + record->hit_parts[index].radius_bonus;
     request.height = entity->height + 10.0f;
     request.facing = wrap_angle(yaw);
-    request.half_angle = wrap_angle(record->hit_parts[index].unk22 * 0.017453292f);
+    request.half_angle = wrap_angle(record->hit_parts[index].half_angle_deg * 0.017453292f);
     request.owner = entity;
     request.shape = 3;
     request.target_mask = 1;
@@ -235,7 +235,7 @@ s32 EntityAi_SendMeleeHit(Entity *entity, EntityParamsUnk240 *record, s32 index,
     request.hit_armor_part = record->wear_armour_part;
     request.knockback = record->hit_parts[index].unk1E & 1;
     if ((ENTITY_PART_FLAGS(&record->hit_parts[index])->flags >> 1) & 1) {
-        request.mp_damage = record->hit_parts[index].unk1F;
+        request.mp_damage = record->hit_parts[index].mp_damage;
     }
     extra.is_magic_shot = 0;
     extra.strength_gauge = 0;
@@ -845,7 +845,7 @@ s32 EntityAi_CanAttack(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = entity->params->ranged_attacks[0].unk0E * 0.017453292f;
+        turn = entity->params->ranged_attacks[0].heading_offset_deg * 0.017453292f;
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
@@ -878,7 +878,7 @@ s32 EntityAi_CanAttack(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = entity->params->ranged_attacks[1].unk0E * 0.017453292f;
+        turn = entity->params->ranged_attacks[1].heading_offset_deg * 0.017453292f;
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
@@ -911,7 +911,7 @@ s32 EntityAi_CanAttack(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = entity->params->ranged_attacks[2].unk0E * 0.017453292f;
+        turn = entity->params->ranged_attacks[2].heading_offset_deg * 0.017453292f;
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
@@ -973,13 +973,13 @@ s32 EntityAi_CanAttack(Entity *entity) {
         }
     }
     if (top <= player_state.position.y && player_state.position.y - 230.0f <= bottom) {
-        if (entity->params->ranged_attacks[0].record.unk00 != 0 && angle_off[3] < entity->params->ranged_attacks[0].unk08 && reach[3] <= entity->distance_to_player && entity->distance_to_player < reach[9]) {
+        if (entity->params->ranged_attacks[0].record.unk00 != 0 && angle_off[3] < entity->params->ranged_attacks[0].widest_angle && reach[3] <= entity->distance_to_player && entity->distance_to_player < reach[9]) {
             return 1;
         }
-        if (entity->params->ranged_attacks[1].record.unk00 != 0 && angle_off[4] < entity->params->ranged_attacks[1].unk08 && reach[4] <= entity->distance_to_player && entity->distance_to_player < reach[10]) {
+        if (entity->params->ranged_attacks[1].record.unk00 != 0 && angle_off[4] < entity->params->ranged_attacks[1].widest_angle && reach[4] <= entity->distance_to_player && entity->distance_to_player < reach[10]) {
             return 1;
         }
-        if (entity->params->ranged_attacks[2].record.unk00 != 0 && angle_off[5] < entity->params->ranged_attacks[2].unk08 && reach[5] <= entity->distance_to_player && entity->distance_to_player < reach[11]) {
+        if (entity->params->ranged_attacks[2].record.unk00 != 0 && angle_off[5] < entity->params->ranged_attacks[2].widest_angle && reach[5] <= entity->distance_to_player && entity->distance_to_player < reach[11]) {
             return 1;
         }
     }
@@ -1341,7 +1341,7 @@ s32 EntityAi_CanShoot(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = entity->params->ranged_attacks[0].unk0E * 0.017453292f;
+        turn = entity->params->ranged_attacks[0].heading_offset_deg * 0.017453292f;
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
@@ -1374,7 +1374,7 @@ s32 EntityAi_CanShoot(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = entity->params->ranged_attacks[1].unk0E * 0.017453292f;
+        turn = entity->params->ranged_attacks[1].heading_offset_deg * 0.017453292f;
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
@@ -1407,7 +1407,7 @@ s32 EntityAi_CanShoot(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = entity->params->ranged_attacks[2].unk0E * 0.017453292f;
+        turn = entity->params->ranged_attacks[2].heading_offset_deg * 0.017453292f;
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
@@ -1452,13 +1452,13 @@ s32 EntityAi_CanShoot(Entity *entity) {
     reach[4] = (range < entity->params->ranged_attacks[1].reach_max ? range : entity->params->ranged_attacks[1].reach_max) + entity->radius + 100.0f;
     reach[5] = (range < entity->params->ranged_attacks[2].reach_max ? range : entity->params->ranged_attacks[2].reach_max) + entity->radius + 100.0f;
     if (top <= player_state.position.y && player_state.position.y - 230.0f <= bottom) {
-        if (entity->params->ranged_attacks[0].record.unk00 != 0 && angle_off[0] < entity->params->ranged_attacks[0].unk08 && reach[0] <= entity->distance_to_player && entity->distance_to_player < reach[3]) {
+        if (entity->params->ranged_attacks[0].record.unk00 != 0 && angle_off[0] < entity->params->ranged_attacks[0].widest_angle && reach[0] <= entity->distance_to_player && entity->distance_to_player < reach[3]) {
             return 1;
         }
-        if (entity->params->ranged_attacks[1].record.unk00 != 0 && angle_off[1] < entity->params->ranged_attacks[1].unk08 && reach[1] <= entity->distance_to_player && entity->distance_to_player < reach[4]) {
+        if (entity->params->ranged_attacks[1].record.unk00 != 0 && angle_off[1] < entity->params->ranged_attacks[1].widest_angle && reach[1] <= entity->distance_to_player && entity->distance_to_player < reach[4]) {
             return 1;
         }
-        if (entity->params->ranged_attacks[2].record.unk00 != 0 && angle_off[2] < entity->params->ranged_attacks[2].unk08 && reach[2] <= entity->distance_to_player && entity->distance_to_player < reach[5]) {
+        if (entity->params->ranged_attacks[2].record.unk00 != 0 && angle_off[2] < entity->params->ranged_attacks[2].widest_angle && reach[2] <= entity->distance_to_player && entity->distance_to_player < reach[5]) {
             return 1;
         }
     }
@@ -1479,7 +1479,7 @@ s32 EntityAi_CanUseRanged(Entity *entity, s32 index) {
     f32 farthest;
     f32 reach[2];
 
-    angle = ENTITY_PARAMS_RANGED(params)[index].unk0E * 0.017453292f;
+    angle = ENTITY_PARAMS_RANGED(params)[index].heading_offset_deg * 0.017453292f;
     if (!(model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
@@ -1502,7 +1502,7 @@ s32 EntityAi_CanUseRanged(Entity *entity, s32 index) {
     reach[0] = ENTITY_PARAMS_RANGED(params)[index].reach_min != 0 ? entity->radius + 100.0f + ENTITY_PARAMS_RANGED(params)[index].reach_min : 0.0f;
     reach[1] = (farthest < ENTITY_PARAMS_RANGED(params)[index].reach_max ? farthest + entity->radius : ENTITY_PARAMS_RANGED(params)[index].reach_max + entity->radius) + 100.0f;
 
-    if (bottom <= player_state.position.y && player_state.position.y - 230.0f <= top && abs_diff < ENTITY_PARAMS_RANGED(params)[index].unk08 &&
+    if (bottom <= player_state.position.y && player_state.position.y - 230.0f <= top && abs_diff < ENTITY_PARAMS_RANGED(params)[index].widest_angle &&
         reach[0] <= entity->distance_to_player && entity->distance_to_player < reach[1]) {
         return TRUE;
     }
@@ -1522,7 +1522,7 @@ int EntityAi_CanUseRangedFacing(Entity *entity, int index, float yaw) {
     float window[2];
 
     params = entity->params;
-    angle = params->ranged_attacks[index].unk0E * 0.017453292f;
+    angle = params->ranged_attacks[index].heading_offset_deg * 0.017453292f;
     yaw += angle;
     yaw -= (float)(int)(yaw / 6.2831855f) * 6.2831855f;
     if (3.1415927f < yaw) {
@@ -1553,7 +1553,7 @@ int EntityAi_CanUseRangedFacing(Entity *entity, int index, float yaw) {
     }
     window[0] = params->ranged_attacks[index].reach_min != 0 ? entity->radius + 100.0f + params->ranged_attacks[index].reach_min : 0.0f;
     window[1] = (reach < params->ranged_attacks[index].reach_max ? reach : params->ranged_attacks[index].reach_max) + entity->radius + 100.0f;
-    if (high <= player_state.position.y && player_state.position.y - 230.0f <= low && abs_diff < params->ranged_attacks[index].unk08) {
+    if (high <= player_state.position.y && player_state.position.y - 230.0f <= low && abs_diff < params->ranged_attacks[index].widest_angle) {
         if (window[0] <= entity->distance_to_player && entity->distance_to_player < window[1]) {
             return 1;
         }
@@ -1902,9 +1902,9 @@ int EntityAi_StartSlotMotion(Entity *entity, EntityMotionSlotWord *slot, int cha
     if (entity->ailment_3_frames != 0 && (entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY)) == 0) {
         float slowed = frames;
 
-        slot->unk01 = slowed + slowed * 0.75f;
+        slot->frames_left = slowed + slowed * 0.75f;
     } else {
-        slot->unk01 = frames;
+        slot->frames_left = frames;
     }
     if (*(int *)slot & 0x20) {
         ModelPart *root = ENTITY_MODEL(entity)->root_part;
@@ -1920,7 +1920,7 @@ int EntityAi_StepSlotMotion(Entity *entity, EntityMotionSlot *slot, int channel,
     u8 frames_left;
 
     Motion_BlendSlotToPose(ENTITY_MODEL(entity), channel, entity->params->motion_ids[slot->index], slot->frame, weight);
-    slot->unk01 = frames_left = slot->unk01 - 1;
+    slot->frames_left = frames_left = slot->frames_left - 1;
     return frames_left;
 }
 
@@ -1957,7 +1957,7 @@ void Entity_DrawPoolModels(void) {
     Packet_EndGsRegisters();
     GsDraw_QueueFlush();
     for (entity = active_entities_head; entity != NULL; entity = entity->next) {
-        if (!ENTITY_FLAG_BITS(entity)->bit1 || entity->map_record == NULL || (f32)entity->params->unk04 <= 0.0f) {
+        if (!ENTITY_FLAG_BITS(entity)->bit1 || entity->map_record == NULL || (f32)entity->params->body_radius <= 0.0f) {
             continue;
         }
         if (!ENTITY_FLAG_BITS(entity)->bit17) {

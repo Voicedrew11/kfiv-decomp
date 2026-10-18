@@ -59,11 +59,11 @@ struct Entity;
 /* what EntityModel.level_tables points at: the ModelChannel (model/model.h) seen from Entity code */
 typedef struct {
     char pad00[0x81];
-    u8 motion_index;                /* 0x81 0x81 the motion playing (ModelChannel.index) */
-    s16 frame;                      /* 0x82 0x82 the motion's current frame */
-    s32 frame_fixed;                /* 0x84 0x84 the frame times 256 */
-    s32 blend_left;                 /* 0x88 0x88 blend still to run; 0 once the motion plays on its own */
-    u16 frame_step;                 /* 0x8C 0x8C set from EntityParams.motion_speeds[] */
+    u8 motion_index;                /* 0x81 the motion playing (ModelChannel.index) */
+    s16 frame;                      /* 0x82 the motion's current frame */
+    s32 frame_fixed;                /* 0x84 the frame times 256 */
+    s32 blend_left;                 /* 0x88 blend still to run; 0 once the motion plays on its own */
+    u16 frame_step;                 /* 0x8C set from EntityParams.motion_speeds[] */
 } EntityModelChannel;
 
 /* one 0x100-byte element of what EntityModel.parts points at */
@@ -136,11 +136,11 @@ typedef struct {
     EntityParamsUnk240PartUnk00 unk00; /* 0x00 */
     EntityParamsUnk240PartUnk12 unk12; /* 0x12 */
     u8 unk1E;                       /* 0x1E */
-    u8 unk1F;                       /* 0x1F */
-    u16 unk20;                      /* 0x20 */
-    u16 unk22;                      /* 0x22 an angle in degrees */
-    u16 unk24;                      /* 0x24 first animation frame it is active on, 0: unused */
-    u16 unk26;                      /* 0x26 last animation frame it is active on */
+    u8 mp_damage;                   /* 0x1F mp the hit takes from the player */
+    u16 radius_bonus;               /* 0x20 added to Entity.radius for the hit's radius */
+    u16 half_angle_deg;             /* 0x22 half the arc of the hit, in degrees */
+    u16 first_frame;                /* 0x24 first animation frame it is active on, 0: unused */
+    u16 last_frame;                 /* 0x26 last animation frame it is active on */
 } EntityParamsUnk240Part;
 
 /* EntityParamsUnk240Part.unk1E as EntityAi_SendMeleeHit reads it: bit 1 of the halfword at 0x1E
@@ -259,28 +259,28 @@ typedef struct {
 
 /* one launch of a record at EntityParams+0x3D8 */
 typedef struct {
-    u8 unk00;                       /* 0x00 passed to Attack_LaunchMagicEffect */
-    u8 unk01;                       /* 0x01 passed to Model_GetSkinnedBonePoint; 0xFF: use the model's direction */
-    u16 unk02;                      /* 0x02 animation frame it happens on, 0: unused */
+    u8 magic_effect;                /* 0x00 passed to Attack_LaunchMagicEffect */
+    u8 bone;                        /* 0x01 passed to Model_GetSkinnedBonePoint; 0xFF: use the model's direction */
+    u16 frame;                      /* 0x02 animation frame it happens on, 0: unused */
 } EntityParamsUnk3D8Launch;
 
 /* a whole 0x1C-byte record at EntityParams+0x3D8 (EntityParamsUnk3D8 is its first word) */
 typedef struct {
     u8 unk00;                       /* 0x00 */
-    u8 unk01;                       /* 0x01 */
-    u8 unk02;                       /* 0x02 */
+    u8 turn_frames;                 /* 0x01 the entity turns to the player until the motion reaches this frame */
+    u8 attack_delay;                /* 0x02 passed to EntityAi_SetAttackDelay when the attack ends */
     u8 unk03;                       /* 0x03 */
     char pad04[0x08];
     u8 unk0C;                       /* 0x0C */
     char pad0D[0x03];
-    EntityParamsUnk3D8Launch unk10[3]; /* 0x10 */
+    EntityParamsUnk3D8Launch launches[3]; /* 0x10 the three launches of the record */
 } EntityParamsUnk3D8Full;
 
 /* sub-struct at EntityParams+0x3D8 */
 typedef struct {
     u8 unk00;                       /* 0x00 */
-    u8 unk01;                       /* 0x01 */
-    u8 unk02;                       /* 0x02 */
+    u8 turn_frames;                 /* 0x01 the entity turns to the player until the motion reaches this frame */
+    u8 attack_delay;                /* 0x02 passed to EntityAi_SetAttackDelay when the attack ends */
     u8 unk03;                       /* 0x03 */
 } EntityParamsUnk3D8;
 
@@ -288,10 +288,10 @@ typedef struct {
     EntityParamsUnk3D8 record;      /* 0x00 */
     u16 reach_min;                  /* 0x04 nearest distance (past the radius) the attack is used at, 0: none */
     u16 reach_max;                  /* 0x06 farthest distance it is used at */
-    f32 unk08;                      /* 0x08 widest angle to the player for it */
+    f32 widest_angle;               /* 0x08 widest angle to the player for it */
     u8 unk0C;                       /* 0x0C */
     char pad0D;
-    s16 unk0E;                      /* 0x0E degrees its direction is off the entity's heading */
+    s16 heading_offset_deg;         /* 0x0E degrees its direction is off the entity's heading */
     u8 unk10;                       /* 0x10 */
     u8 unk11;                       /* 0x11 */
     char pad12[0x0A];
@@ -304,7 +304,7 @@ typedef struct {
     u8 moves_entity : 1;            /* the root part's movement in the motion is handed to the entity */
     u8 bit6 : 1;
     u8 backwards : 1;               /* the motion plays from its last frame to its first */
-    u8 unk01;                       /* 0x01 */
+    u8 frames_left;                 /* 0x01 frames left, counted down by EntityAi_StepSlotMotion */
     s16 frame;                      /* 0x02 */
     s32 frame_fixed;                /* 0x04 the frame times 256 */
 } EntityMotionSlot;
@@ -317,9 +317,9 @@ typedef struct {
         u32 flags;                  /* 0x00 ENTITY_BODY_ bits */
         u8 point;                   /* 0x00 the model point it sits at */
     } unk00;
-    u16 unk04;                      /* 0x04 its radius, before the model's x scale */
-    u16 unk06;                      /* 0x06 its height, before the model's y scale */
-    f32 unk08;                      /* 0x08 a hit on this body counts this many times over (Attack_RunSphere) */
+    u16 radius;                     /* 0x04 its radius, before the model's x scale */
+    u16 height;                     /* 0x06 its height, before the model's y scale */
+    f32 hit_multiplier;             /* 0x08 a hit on this body counts this many times over (Attack_RunSphere) */
 } EntityBodyPoint;
 
 /* what Entity.params points at: per-kind tuning values. EntityController below is a second
@@ -331,7 +331,7 @@ typedef struct {
     u32 movement_kind : 2;          /* 0x03 bits 25-26: how it moves and collides (ENTITY_PARAMS_MOVEMENT_KIND) */
     u32 sphere_collision : 1;       /* 0x03 bit 27: it collides as a sphere, not as a cylinder */
     u32 unk03_4 : 4;
-    u16 unk04;                      /* 0x04 Entity.body_radius before scaling */
+    u16 body_radius;                /* 0x04 Entity.body_radius before scaling */
     u16 map_collision_radius;       /* 0x06 Entity.collision_radius before scaling */
     u16 map_collision_height;       /* 0x08 Entity.collision_height before scaling */
     u16 hit_points;                 /* 0x0A what Entity.hit_points is measured against */
@@ -357,7 +357,7 @@ typedef struct {
     u8 critical_defence;            /* 0xC9 percent off a hit's chance to double or to kill outright */
     u8 dodge_chance;                /* 0xCA chance out of 500 that it dodges the player's swing */
     u8 guard_chance;                /* 0xCB chance out of 500 that it guards the player's swing */
-    u16 body_radius;                /* 0xCC Entity.radius before scaling */
+    u16 radius;                     /* 0xCC Entity.radius before scaling */
     u16 guard_frames;               /* 0xCE frames the default guard holds animation 13 with flag bit 35 */
     u8 guard_physical_bonus;        /* 0xD0 added to each physical resistance while the guard flag is set */
     u8 guard_magic_bonus;           /* 0xD1 added to each magic resistance while the guard flag is set */
@@ -400,9 +400,9 @@ typedef struct {
     u16 action_frames;              /* 0x434 frames its actions run for, loaded into the work timers */
     s16 near_distance;              /* 0x436 the nearer of the two distances it keeps from the player */
     s16 far_distance;               /* 0x438 the farther of the two distances it keeps from the player */
-    s16 unk43A;                     /* 0x43A */
-    s16 unk43C;                     /* 0x43C */
-    s16 unk43E;                     /* 0x43E */
+    s16 type_param_0;               /* 0x43A a value each entity type uses its own way (frames, a bone, a distance) */
+    s16 type_param_1;               /* 0x43C a second per-type value */
+    s16 type_param_2;               /* 0x43E a third per-type value */
     u16 variant_effect_ids[8];      /* 0x440 indexed by flag bits 60-62; passed to Effect_StartSpawner */
 } EntityParams;
 
@@ -429,18 +429,18 @@ typedef struct {
 
 /* what EntityParams.anim_effect_offsets[n] leads to: something Effect_StartSpawner starts at a bone on an animation frame */
 typedef struct {
-    u16 unk00;                      /* 0x00 passed to Effect_StartSpawner */
-    u16 unk02;                      /* 0x02 the animation frame */
-    u8 unk04;                       /* 0x04 passed to Model_GetSkinnedBonePoint (and the one after it) */
-    s8 unk05;                       /* 0x05 not 0: EntityParams.variant_effect_ids picks what to start */
+    u16 effect_id;                  /* 0x00 passed to Effect_StartSpawner */
+    u16 frame;                      /* 0x02 the animation frame */
+    u8 bone;                        /* 0x04 passed to Model_GetSkinnedBonePoint (and the one after it) */
+    s8 use_variant;                 /* 0x05 not 0: EntityParams.variant_effect_ids picks what to start */
 } EntityParamsUnk130;
 
 /* what EntityParams.anim_sound_offsets[n] leads to: something Sound_PlayFalloff starts on an animation frame */
 typedef struct {
-    u8 unk00;                       /* 0x00 passed to Sound_PlayFalloff */
-    u8 unk01;                       /* 0x01 passed to Sound_PlayFalloff */
-    u16 unk02;                      /* 0x02 the animation frame */
-    u8 unk04;                       /* 0x04 not 0: left out while Entity.ailment_4_frames is set */
+    u8 sound;                       /* 0x00 the sound Sound_PlayFalloff plays */
+    u8 kind;                        /* 0x01 the kind passed to Sound_PlayFalloff */
+    u16 frame;                      /* 0x02 the animation frame */
+    u8 skip_while_ailing;           /* 0x04 not 0: left out while Entity.ailment_4_frames is set */
     char pad05[0x03];
 } EntityParamsUnk1B0;
 
@@ -472,7 +472,7 @@ typedef struct {
 typedef struct {
     u8 unk00;                       /* 0x00 */
     u8 unk01;                       /* 0x01 */
-    u8 unk02;                       /* 0x02 index into entity_type_handlers */
+    u8 entity_type;                 /* 0x02 index into entity_type_handlers */
     u8 unk03;                       /* 0x03 */
 } EntityParamsBytes;
 
@@ -546,10 +546,10 @@ typedef struct {
 
 /* one of the two 8-byte slots EntityAi_StartSlotMotion fills */
 typedef struct {
-    u8 motion_bits;                 /* 0x00 0x00 motion index (5 bits) and flags, as EntityMotionSlotWord */
-    u8 frames_left;                 /* 0x01 0x01 frames left, counted down by EntityAi_StepSlotMotion */
-    s16 frame;                      /* 0x02 0x02 current frame */
-    s32 frame_fixed;                /* 0x04 0x04 the frame times 256 */
+    u8 motion_bits;                 /* 0x00 motion index (5 bits) and flags, as EntityMotionSlotWord */
+    u8 frames_left;                 /* 0x01 frames left, counted down by EntityAi_StepSlotMotion */
+    s16 frame;                      /* 0x02 current frame */
+    s32 frame_fixed;                /* 0x04 the frame times 256 */
 } EntityAiMotionSlot;
 
 /* Entity+0xE0 as the kinds handled at 0x1740A8..0x180000 use it */
@@ -625,21 +625,21 @@ typedef struct {
     void (*dormant)(void);          /* 0x10 */
     void (*death)(void);            /* 0x14 */
     void (*move)(void);             /* 0x18 */
-    f32 unk1C;                      /* 0x1C */
+    f32 turn_rate;                  /* 0x1C turn speed built towards EntityParams.turn_limit */
     f32 unk20[4];                   /* 0x20 */
     char pad30[0x10];
     f32 unk40;                      /* 0x40 */
     f32 unk44;                      /* 0x44 */
     char pad48[0x22];
-    s16 unk6A;                      /* 0x6A */
+    s16 climb_point_index;          /* 0x6A which of the 5 climb_points it heads for next */
     s16 unk6C;                      /* 0x6C */
-    s16 unk6E;                      /* 0x6E */
+    s16 reload_timer;               /* 0x6E countdown after which other work fields are reloaded */
     char pad70[0x08];
-    s8 unk78;                       /* 0x78 */
-    s8 unk79;                       /* 0x79 */
-    s8 unk7A;                       /* 0x7A */
-    s8 unk7B;                       /* 0x7B */
-    s8 unk7C;                       /* 0x7C */
+    s8 move_choice;                 /* 0x78 the way it closes in (0 or -1), as EntityAiState.move_choice */
+    s8 turn_in_place;               /* 0x79 set while it must turn in place towards the player */
+    s8 player_far;                  /* 0x7A 1 once the player is over radius+1100 away, 0 again under radius+600 */
+    s8 sliding;                     /* 0x7B 1 while a slide is under way (the next choice slides to a stop) */
+    s8 magic_alert_timer;           /* 0x7C 30 frames counted down after the player launches a magic shot */
     char pad7D[0x23];
 } __attribute__((aligned(8))) EntityAiStateKind168160;
 
@@ -649,9 +649,9 @@ typedef struct {
     u64 bit5 : 1;
     u64 bit6 : 1;
     u64 pad7 : 1;
-    u8 frames_left;                 /* 0x01 0x01 frames left */
-    s16 frame;                      /* 0x02 0x02 current frame */
-    s32 frame_fixed;                /* 0x04 0x04 the frame times 256 */
+    u8 frames_left;                 /* 0x01 frames left */
+    s16 frame;                      /* 0x02 current frame */
+    s32 frame_fixed;                /* 0x04 the frame times 256 */
 } EntityAiMotionSlotBits;
 
 /* Entity+0xE0 as the kinds set up by func_00151D30 and its neighbours use it */
@@ -664,11 +664,11 @@ typedef struct {
 /* Entity+0xE0 as the kind set up by DarkSorcerer_Init lays it out */
 typedef struct {
     char pad00[0x1C];
-    f32 unk1C;                      /* 0x1C turn speed */
+    f32 turn_rate;                  /* 0x1C turn speed built towards EntityParams.turn_limit */
     char pad20[0x24];
-    f32 unk44;                      /* 0x44 speed along x, y and z */
-    f32 unk48;                      /* 0x48 */
-    f32 unk4C;                      /* 0x4C */
+    f32 move_speed;                 /* 0x44 speed the movement builds up with EntityAi_Accelerate */
+    f32 vertical_speed;             /* 0x48 up/down speed eased by the up and down commands */
+    f32 forward_speed;              /* 0x4C forward speed eased by the forward and back commands */
     char pad50[0x50];
 } EntityAiStateKind16BF98;
 
@@ -676,35 +676,35 @@ typedef struct {
    8-byte aligned: only then is "unk68 == 0 && unk6A == 0" one lwu. */
 typedef struct {
     char pad00[0x68];
-    s16 unk68;                      /* 0x68 counts down */
-    s16 unk6A;                      /* 0x6A counts down */
-    s16 unk6C;                      /* 0x6C counts down */
+    s16 vanish_frames;              /* 0x68 frames left while it is vanished (draw flag 0x800, params.action_frames to start) */
+    s16 vanish_cooldown;            /* 0x6A frames before it may vanish again (params.far_distance to start) */
+    s16 think_timer;                /* 0x6C countdown reloaded from params.type_param_0 */
     char pad6E[0x0A];
     s8 unk78;                       /* 0x78 */
     s8 unk79;                       /* 0x79 */
-    s8 unk7A;                       /* 0x7A */
-    s8 unk7B;                       /* 0x7B */
-    s8 unk7C;                       /* 0x7C */
-    s8 unk7D;                       /* 0x7D */
-    s8 unk7E;                       /* 0x7E */
+    s8 rising;                      /* 0x7A 1 while it climbs (above 45 over the floor) until under 35 */
+    s8 dipped_low;                  /* 0x7B set once it has dropped under 35 over the floor */
+    s8 combat_mode;                 /* 0x7C which combat think state 2 runs: 0 normal, 1 circle near, else keep away */
+    s8 fading_out;                  /* 0x7D set while it fades out before vanishing */
+    s8 fade_frames;                 /* 0x7E frames of the fade-out left (from 20) */
     char pad7F[0x21];
 } __attribute__((aligned(8))) EntityAiStateKind15F8C0;
 
 /* Entity+0xE0 as the kind set up by func_00162BC8 lays it out */
 typedef struct {
     char pad00[0x30];
-    f32 unk30[4];                   /* 0x30 pitch and yaw passed to EntityEvent_StartEffectAtPoint */
+    f32 effect_angles[4];           /* 0x30 pitch and yaw passed to EntityEvent_StartEffectAtPoint */
     char pad40[0x2E];
     s16 unk6E;                      /* 0x6E */
     char pad70[0x10];
-    f32 unk80[4];                   /* 0x80 pitch and yaw passed to EntityEvent_StartEffectAtPoint */
-    f32 unk90[4];                   /* 0x90 pitch and yaw passed to EntityEvent_StartEffectAtPoint */
+    f32 first_aim[4];               /* 0x80 pitch and yaw of the first aimed effect */
+    f32 second_aim[4];              /* 0x90 pitch and yaw of the second aimed effect */
 } EntityAiStateKind162BC8;
 
 /* Entity+0xE0 as the kind set up by Onyx_Init lays it out */
 typedef struct {
     char pad00[0x68];
-    s16 unk68[3];                   /* 0x68 weights of the first three actions (see Onyx_PickAttack) */
+    s16 action_weights[3];          /* 0x68 weights of the first three actions (see Onyx_PickAttack) */
     char pad6E[0x32];
 } EntityAiStateKind17FC60;
 
@@ -728,9 +728,9 @@ typedef struct {
 /* Entity+0xE0 as the kind set up by func_0012ACA0 lays it out */
 typedef struct {
     char pad00[0x1C];
-    f32 unk1C;                      /* 0x1C turn speed */
+    f32 turn_rate;                  /* 0x1C turn speed built towards EntityParams.turn_limit */
     char pad20[0x20];
-    f32 unk40[7];                   /* 0x40 [2] to [6]: how far each of the five neck joints (model parts 30 to 34) is bent */
+    f32 neck_bend[7];               /* 0x40 how far each of the five neck joints (model parts 30 to 34) is bent, [2] to [6] */
     char pad5C[0x44];
 } EntityAiStateKind12ACA0;
 
@@ -1157,7 +1157,7 @@ typedef union {
 typedef struct {
     char unk00;                     /* 0x00 */
     char unk01;                     /* 0x01 */
-    char unk02;                     /* 0x02 set when a member dies */
+    char member_died;               /* 0x02 set when a member dies */
     char pad03[0x3D];
 } EntityGroupRecord;
 
@@ -1193,9 +1193,9 @@ typedef struct {
             u32 unk2 : 16;
         } bits;
     } head;
-    s16 unk4;                       /* 0x04 entities using it */
-    u8 unk6;                        /* 0x06 */
-    u8 unk7;                        /* 0x07 copied to Entity.sound_bank */
+    s16 entity_count;               /* 0x04 entities using it */
+    u8 reuse_delay;                 /* 0x06 frames before the slot can be reused, 2 once its last entity leaves */
+    u8 sound_bank;                  /* 0x07 copied to Entity.sound_bank */
     int age;                        /* 0x08 frame_counter when last released; the oldest is reused first */
     int base_address;               /* 0x0C */
 } EntityPoolSlot;
@@ -1218,7 +1218,7 @@ typedef struct {
     char *model_offset;             /* 0x04 handed to Model_SetUpSkinned with the entity's model. The two are
                                        pointer typed: only then does Entity_TryActivate load them after base_address */
     char *motion_offset;            /* 0x08 handed to ModelMotion_LoadFile */
-    s32 unk0C;                      /* 0x0C becomes ModelInstance.texture_data */
+    s32 texture_data;               /* 0x0C becomes ModelInstance.texture_data */
     s32 pool_model_offset;          /* 0x10 the slot's own model (EntityPool_BuildBlockModel), 0: none */
 } EntityPoolData;
 
@@ -1269,19 +1269,19 @@ float Entity_SpawnDistanceToPlayer(Entity *entity);    /* distance to the player
 /* what ladder_object refers to: a record with a kind id at 0x30 (Ladder_PlayStepSound) */
 typedef struct {
     char pad00[0x30];
-    u16 unk30;                      /* 0x30 */
+    u16 kind;                       /* 0x30 kind id, picks the step sound (Ladder_PlayStepSound) */
     char pad32[0x1E];
-    s16 unk50;                      /* 0x50 how many steps there are between the two end points (Ladder_Start) */
-    s16 unk52;                      /* 0x52 frames one step takes */
+    s16 step_count;                 /* 0x50 how many steps there are between the two end points (Ladder_Start) */
+    s16 frames_per_step;            /* 0x52 frames one step takes */
 } ReferencedObject;
 
 /* ladder_object: the map object the player is climbing */
 typedef struct {
     ModelInstance *model;           /* 0x00 its get_point gives the two end points (Ladder_Start) */
     char pad04[0x04];
-    ReferencedObject *unk08;        /* 0x08 */
+    ReferencedObject *definition;   /* 0x08 the object's definition */
     char pad0C[0x04];
-    s32 unk10;                      /* 0x10 flags; 0x10000 is tested by Ladder_WaitOnRung */
+    s32 flags;                      /* 0x10 flags; 0x10000 is tested by Ladder_WaitOnRung */
 } ObjectReference;
 
 void Entity_ResetAllLists(void);

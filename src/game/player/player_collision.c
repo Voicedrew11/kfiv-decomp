@@ -507,10 +507,10 @@ void Player_CollideWithEntities(int climb) {
                 point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->unk00.point);
                 Vector_Copy(position, point);
                 if (!(body->unk00.flags & ENTITY_BODY_ROUND)) {
-                    radius = body->unk04 * ENTITY_MODEL(entity)->scale_x;
-                    height = body->unk06 * ENTITY_MODEL(entity)->scale_y;
+                    radius = body->radius * ENTITY_MODEL(entity)->scale_x;
+                    height = body->height * ENTITY_MODEL(entity)->scale_y;
                 } else {
-                    radius = body->unk04 * ENTITY_MODEL(entity)->scale_x;
+                    radius = body->radius * ENTITY_MODEL(entity)->scale_x;
                     position[1] += radius;
                     height = radius + radius;
                 }
