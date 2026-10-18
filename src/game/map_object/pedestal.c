@@ -225,10 +225,10 @@ int MapObject_PlaceStoneOnMarker(MapTrigger *trigger, int type_index) {
     MapTriggerShot *shot = &trigger->shot;
 
     type = item_common_defs[type_index].type;
-    slot = &map_slots[trigger->unk10 & 1];
+    slot = &map_slots[trigger->flags & 1];
     tag = slot->tag;
     if (trigger->type == 1 && shot->fired == 0 && type == trigger->type &&
-        Game_AddTriggerItem(tag, (u8)trigger->unk08[0x3A], type_index)) {
+        Game_AddTriggerItem(tag, (u8)trigger->source[0x3A], type_index)) {
         MapObject_ShowMarkerStone((MapObject *)trigger, type_index);
         shot->fired = type;
         return TRUE;

@@ -26,7 +26,7 @@ MapSlotUnk10Half current_map_light_colors = { { 0 } };     /* its second half: t
 /* 0x38A2F0 MapDrawState.pad140 */
 u8 D_0038A2F0[0x140] = { 0 };
 
-/* 0x38A430 MapDrawState.unk280: the current map's fog colour */
+/* 0x38A430 MapDrawState.current_fog_color: the current map's fog colour */
 MapFogColor current_map_fog_color = { 0 };
 
 /* 0x38A440 MapDrawState.fog_blocks: each map slot's 0x20 blocks (a model's unk14C points at one) */

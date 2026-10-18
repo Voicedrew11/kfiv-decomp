@@ -19,7 +19,7 @@
 #include "input/pad.h"
 
 #define FOG_COLOR() \
-    ((u64)map_draw_state.unk280.red | ((u64)map_draw_state.unk280.green << 8) | ((u64)map_draw_state.unk280.blue << 16) | \
+    ((u64)map_draw_state.current_fog_color.red | ((u64)map_draw_state.current_fog_color.green << 8) | ((u64)map_draw_state.current_fog_color.blue << 16) | \
      ((u64)0x80 << 24))
 #define USABLE(node) (!((node)->flags & 0x40000000))
 #define IN_X(node) ((node)->left - margin <= point[0] && point[0] <= (node)->right + margin)
@@ -199,8 +199,8 @@ void Map_DrawRecords(int mode) {
                     continue;
                 }
                 if (flags & 0x10) {
-                    record->model->light_block = (s32)&map_draw_state.unkC0;
-                    record->model->fog_block = &map_draw_state.unkA0;
+                    record->model->light_block = (s32)&map_draw_state.current_light_block;
+                    record->model->fog_block = &map_draw_state.current_fog_block;
                 } else {
                     record->model->light_block = (s32)&map_draw_state.light_blocks[map][record->light_block_index];
                     record->model->fog_block = &map_draw_state.fog_blocks[map][record->fog_block_index];
@@ -283,8 +283,8 @@ void Map_DrawLateRecords(int mode) {
                     Packet_EndGsRegisters();
                 }
                 if (record->flags & 0x10) {
-                    record->model->light_block = (s32)&map_draw_state.unkC0;
-                    record->model->fog_block = &map_draw_state.unkA0;
+                    record->model->light_block = (s32)&map_draw_state.current_light_block;
+                    record->model->fog_block = &map_draw_state.current_fog_block;
                 } else {
                     record->model->light_block = (s32)&map_draw_state.light_blocks[map][record->light_block_index];
                     record->model->fog_block = &map_draw_state.fog_blocks[map][record->fog_block_index];
@@ -1013,8 +1013,8 @@ void Map_DrawFreeCameraView(void) {
             for (i = 0; i < ((MapSlotUnk08 *)slot->header)->record_count; i++, record++) {
                 if (!(record->flags & 0x80000000)) {
                     if (record->flags & 0x10) {
-                        record->model->light_block = (s32)&map_draw_state.unkC0;
-                        record->model->fog_block = &map_draw_state.unkA0;
+                        record->model->light_block = (s32)&map_draw_state.current_light_block;
+                        record->model->fog_block = &map_draw_state.current_fog_block;
                     } else {
                         record->model->light_block = (s32)&map_draw_state.light_blocks[map][record->light_block_index];
                         record->model->fog_block = &map_draw_state.fog_blocks[map][record->fog_block_index];
@@ -1022,7 +1022,7 @@ void Map_DrawFreeCameraView(void) {
                     record->model->hit_count = 0;
                     // match: both blocks chosen above are replaced at once by the viewer's own
                     record->model->light_block = (s32)&map_object_default_lights;
-                    record->model->fog_block = &map_draw_state.unkA0;
+                    record->model->fog_block = &map_draw_state.current_fog_block;
                     Model_DrawPosed(record->model);
                 }
             }

@@ -60,8 +60,8 @@ typedef struct {
 /* a MapSlotUnk10Words block as the eight vectors it holds; MapObject_DrawAll blends the last four
    towards map_object_glow_colors */
 typedef struct {
-    Vector4 unk00[4];               /* 0x00 */
-    Vector4 unk40[4];               /* 0x40 */
+    Vector4 directions[4];          /* 0x00 the light directions (MapSlotUnk10Lights) */
+    Vector4 colors[4];              /* 0x40 the light colours (MapSlotUnk10Lights) */
 } MapSlotUnk10Vectors;
 
 /* a MapSlotUnk10Words block as three lights: their directions are the columns of a matrix, their
@@ -94,10 +94,10 @@ typedef struct {
     u8 unk9B;                       /* 0x9B */
     u8 unk9C;                       /* 0x9C */
     char pad9D[0x03];
-    MapSlotUnk0C unkA0;             /* 0xA0 the current map's first block */
-    MapSlotUnk10Words unkC0;        /* 0xC0 the current map's first block */
+    MapSlotUnk0C current_fog_block; /* 0xA0 the current map's first fog block */
+    MapSlotUnk10Words current_light_block; /* 0xC0 the current map's first light block */
     char pad140[0x140];
-    MapFogColor unk280;             /* 0x280 the current map's */
+    MapFogColor current_fog_color;  /* 0x280 the current map's fog colour */
     MapSlotUnk0C fog_blocks[2][0x20]; /* 0x290 each map slot's blocks */
     MapSlotUnk10Words light_blocks[2][0x20]; /* 0xA90 each map slot's blocks */
     f32 screen_tint_amount;         /* 0x2A90 0 to 0.25: rises while PlayerState.light_spell_timer or unk10C is set (Player_UpdateScreenTints) */
@@ -157,8 +157,8 @@ typedef struct MapDrawRecord {
 
 /* map_scroll_copy_pairs and map_scroll_draw_pairs in map/map_scroll.c: 16 pairs per map slot */
 typedef struct {
-    s16 unk00;                      /* 0x00 */
-    s16 unk02;                      /* 0x02 */
+    s16 scroll_x;                   /* 0x00 scroll offset in x, wrapped at the texture width */
+    s16 scroll_y;                   /* 0x02 scroll offset in y, wrapped at the texture height */
 } MapSlotPair;
 
 /* one of the 16 0xC-byte entries MapSlot.scroll_copy_textures points at: a texture that MapScroll_UpdateCopy scrolls in
@@ -282,7 +282,7 @@ typedef struct {
     u16 item_count;                 /* 0x44 how many fixed items (MapItemDef) the map has */
     char pad46[0x06];
     s32 script_offset;              /* 0x4C offset in the file of what MapSlot.script points at */
-    MapFogColor fog_color;          /* 0x50 becomes MapDrawState.unk280 when the map becomes current */
+    MapFogColor fog_color;          /* 0x50 becomes MapDrawState.current_fog_color when the map becomes current */
     f32 player_start_x;             /* 0x60 where the player starts: x */
     f32 player_start_y;             /* 0x64 y */
     f32 player_start_z;             /* 0x68 z */
@@ -362,10 +362,10 @@ typedef struct {
 
 /* MapTrigger.shot as MapObject_StartSinkingPlatform (start) and MapObject_UpdateSinkingPlatform (update) use it */
 typedef struct {
-    f32 unk00;                      /* 0x00 a speed, added to the model's y */
-    s32 unk04;                      /* 0x04 frames to wait */
-    s32 unk08;                      /* 0x08 1 while object_under_player is this trigger */
-    s32 unk0C;                      /* 0x0C unk08 of the frame before */
+    f32 speed;                      /* 0x00 a speed, added to the model's y */
+    s32 frames_to_wait;             /* 0x04 frames to wait */
+    s32 player_on;                  /* 0x08 1 while object_under_player is this trigger */
+    s32 player_was_on;              /* 0x0C player_on of the frame before */
 } MapTriggerShotKind121660;
 
 /* what MapTrigger.unk08 points at, as MapObject_StopAmbientSound reads it */
@@ -378,17 +378,17 @@ typedef struct {
 typedef struct {
     ModelInstance *model;           /* 0x00 */
     u8 *unk04;                      /* 0x04 */
-    char *unk08;                    /* 0x08 TriggerSource; byte 0x3A is passed to Game_AddTriggerItem */
+    char *source;                   /* 0x08 TriggerSource; byte 0x3A is passed to Game_AddTriggerItem */
     char pad0C[0x04];
-    u8 unk10;                       /* 0x10 bit 0 picks the MapSlot */
+    u8 flags;                       /* 0x10 bit 0 picks the MapSlot */
     u8 type;                        /* 0x11 */
     char pad12[0x2E];
     MapTriggerShot shot;            /* 0x40 */
 } MapTrigger;
 
-#define MAP_TRIGGER_SOURCE(trigger) ((TriggerSource *)(trigger)->unk08)
+#define MAP_TRIGGER_SOURCE(trigger) ((TriggerSource *)(trigger)->source)
 
-/* the word at MapTrigger+0x10 (unk10, type and flag bits) as the game reads it whole */
+/* the word at MapTrigger+0x10 (flags, type and flag bits) as the game reads it whole */
 typedef union {
     u32 word;                       /* MAP_TRIGGER_FLAG_20000 in bit 17 */
     struct {
@@ -400,7 +400,7 @@ typedef union {
     } bits;
 } MapTriggerFlags;
 
-#define MAP_TRIGGER_FLAGS(trigger) ((MapTriggerFlags *)&(trigger)->unk10)
+#define MAP_TRIGGER_FLAGS(trigger) ((MapTriggerFlags *)&(trigger)->flags)
 #define MAP_TRIGGER_FLAG_20000  0x20000
 
 /* MapTrigger.shot as the kind started by MapObject_StartPulse uses it (MapObject_UpdatePulse steps it) */
@@ -411,8 +411,8 @@ typedef struct {
 
 /* MapTrigger.shot as the kind started by MapObject_StartFadeObject uses it */
 typedef struct {
-    f32 unk00[4];                   /* 0x00 a vector handed to Model_FadeVertexColoursNear */
-    f32 unk10;                      /* 0x10 grows while it moves */
+    f32 fade_vector[4];             /* 0x00 a vector handed to Model_FadeVertexColoursNear */
+    f32 fade_progress;              /* 0x10 grows while it moves */
 } MapTriggerShotKind122BE8;
 
 /* trigger_items[5]: which item was placed on which trigger (Game_AddTriggerItem records, Game_GetTriggerItem looks up) */

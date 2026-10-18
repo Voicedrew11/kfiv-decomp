@@ -107,7 +107,7 @@ void MapObject_StopAmbientSound(MapTrigger *trigger) {
     if (*trigger->unk04 == 0) {
         source = MAP_TRIGGER_SOURCE(trigger);
         if (((u32)(source->unk44 - 0x40) < 0x40) && (trigger->shot.unk00[0] != 0)) {
-            if ((trigger->unk10 & 1) != current_map_slot) {
+            if ((trigger->flags & 1) != current_map_slot) {
                 trigger->shot.unk00[0] = 0;
                 return;
             }

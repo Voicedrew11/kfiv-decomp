@@ -240,10 +240,10 @@ typedef struct {
 /* the same doubleword whole, for the code that tests it with masks */
 typedef struct {
     char pad00[0x68];
-    u64 unk68;                      /* 0x68 */
+    u64 flag_word;                  /* 0x68 the flag bits, MODEL_PART_BIT* */
 } ModelPartFlagWord;
 
-#define MODEL_PART_FLAG_WORD(part) (((ModelPartFlagWord *)(part))->unk68)
+#define MODEL_PART_FLAG_WORD(part) (((ModelPartFlagWord *)(part))->flag_word)
 #define MODEL_PART_BIT40 (0x8000L << 25)
 #define MODEL_PART_BIT41 (0x8000L << 26)
 

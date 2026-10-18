@@ -120,8 +120,8 @@ void Gold_InitMap(int map) {
         source = (int)map_gold_model;
         Model_SetUpSkinned(model, &source, &work);
         copy_matrix((ModelMatrixQwords *)matrix, (ModelMatrixQwords *)identity_matrix);
-        model->light_block = (s32)&map_draw_state.unkC0;
-        model->fog_block = &map_draw_state.unkA0;
+        model->light_block = (s32)&map_draw_state.current_light_block;
+        model->fog_block = &map_draw_state.current_fog_block;
         model->texture_data = (int)map_gold_texture;
         model->texture_slot = 2;
         model->draw = (void (*)(ModelInstance *))Gold_PrepareFadedDraw;

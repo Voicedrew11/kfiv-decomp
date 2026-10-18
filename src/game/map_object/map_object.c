@@ -472,41 +472,41 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             for (i = 0; i < 0x20; i++) {
                 dest = &glow_lights[map][i];
                 source = (MapSlotUnk10Vectors *)&map_draw_state.light_blocks[map][i];
-                Vector_Copy(&dest->unk00[0], &source->unk00[0]);
-                Vector_Copy(&dest->unk00[1], &source->unk00[1]);
-                Vector_Copy(&dest->unk00[2], &source->unk00[2]);
-                Vector_Copy(&dest->unk00[3], &source->unk00[3]);
+                Vector_Copy(&dest->directions[0], &source->directions[0]);
+                Vector_Copy(&dest->directions[1], &source->directions[1]);
+                Vector_Copy(&dest->directions[2], &source->directions[2]);
+                Vector_Copy(&dest->directions[3], &source->directions[3]);
                 Vector_Scale(scaled, &map_object_glow_colors[0].x, blend);
-                Vector_Scale(&dest->unk40[0].x, &source->unk40[0].x, rest);
-                Vector_Add(&dest->unk40[0], &dest->unk40[0], scaled);
+                Vector_Scale(&dest->colors[0].x, &source->colors[0].x, rest);
+                Vector_Add(&dest->colors[0], &dest->colors[0], scaled);
                 Vector_Scale(scaled, &map_object_glow_colors[1].x, blend);
-                Vector_Scale(&dest->unk40[1].x, &source->unk40[1].x, rest);
-                Vector_Add(&dest->unk40[1], &dest->unk40[1], scaled);
+                Vector_Scale(&dest->colors[1].x, &source->colors[1].x, rest);
+                Vector_Add(&dest->colors[1], &dest->colors[1], scaled);
                 Vector_Scale(scaled, &map_object_glow_colors[2].x, blend);
-                Vector_Scale(&dest->unk40[2].x, &source->unk40[2].x, rest);
-                Vector_Add(&dest->unk40[2], &dest->unk40[2], scaled);
+                Vector_Scale(&dest->colors[2].x, &source->colors[2].x, rest);
+                Vector_Add(&dest->colors[2], &dest->colors[2], scaled);
                 Vector_Scale(scaled, &map_object_glow_colors[3].x, blend);
-                Vector_Scale(&dest->unk40[3].x, &source->unk40[3].x, rest);
-                Vector_Add(&dest->unk40[3], &dest->unk40[3], scaled);
+                Vector_Scale(&dest->colors[3].x, &source->colors[3].x, rest);
+                Vector_Add(&dest->colors[3], &dest->colors[3], scaled);
             }
         }
     }
-    Vector_Copy(&glow_lights_shared.unk00[0], &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk00[0]);
-    Vector_Copy(&glow_lights_shared.unk00[1], &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk00[1]);
-    Vector_Copy(&glow_lights_shared.unk00[2], &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk00[2]);
-    Vector_Copy(&glow_lights_shared.unk00[3], &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk00[3]);
+    Vector_Copy(&glow_lights_shared.directions[0], &((MapSlotUnk10Vectors *)&map_draw_state.current_light_block)->directions[0]);
+    Vector_Copy(&glow_lights_shared.directions[1], &((MapSlotUnk10Vectors *)&map_draw_state.current_light_block)->directions[1]);
+    Vector_Copy(&glow_lights_shared.directions[2], &((MapSlotUnk10Vectors *)&map_draw_state.current_light_block)->directions[2]);
+    Vector_Copy(&glow_lights_shared.directions[3], &((MapSlotUnk10Vectors *)&map_draw_state.current_light_block)->directions[3]);
     Vector_Scale(scaled, &map_object_glow_colors[0].x, blend);
-    Vector_Scale(&glow_lights_shared.unk40[0].x, &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk40[0].x, rest);
-    Vector_Add(&glow_lights_shared.unk40[0], &glow_lights_shared.unk40[0], scaled);
+    Vector_Scale(&glow_lights_shared.colors[0].x, &((MapSlotUnk10Vectors *)&map_draw_state.current_light_block)->colors[0].x, rest);
+    Vector_Add(&glow_lights_shared.colors[0], &glow_lights_shared.colors[0], scaled);
     Vector_Scale(scaled, &map_object_glow_colors[1].x, blend);
-    Vector_Scale(&glow_lights_shared.unk40[1].x, &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk40[1].x, rest);
-    Vector_Add(&glow_lights_shared.unk40[1], &glow_lights_shared.unk40[1], scaled);
+    Vector_Scale(&glow_lights_shared.colors[1].x, &((MapSlotUnk10Vectors *)&map_draw_state.current_light_block)->colors[1].x, rest);
+    Vector_Add(&glow_lights_shared.colors[1], &glow_lights_shared.colors[1], scaled);
     Vector_Scale(scaled, &map_object_glow_colors[2].x, blend);
-    Vector_Scale(&glow_lights_shared.unk40[2].x, &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk40[2].x, rest);
-    Vector_Add(&glow_lights_shared.unk40[2], &glow_lights_shared.unk40[2], scaled);
+    Vector_Scale(&glow_lights_shared.colors[2].x, &((MapSlotUnk10Vectors *)&map_draw_state.current_light_block)->colors[2].x, rest);
+    Vector_Add(&glow_lights_shared.colors[2], &glow_lights_shared.colors[2], scaled);
     Vector_Scale(scaled, &map_object_glow_colors[3].x, blend);
-    Vector_Scale(&glow_lights_shared.unk40[3].x, &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk40[3].x, rest);
-    Vector_Add(&glow_lights_shared.unk40[3], &glow_lights_shared.unk40[3], scaled);
+    Vector_Scale(&glow_lights_shared.colors[3].x, &((MapSlotUnk10Vectors *)&map_draw_state.current_light_block)->colors[3].x, rest);
+    Vector_Add(&glow_lights_shared.colors[3], &glow_lights_shared.colors[3], scaled);
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
     Packet_AddGsRegister(GS_REG_ALPHA_2, 9);
@@ -545,7 +545,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
                 if ((s8)object->source->spawn_flags.bytes[5] != -1) {
                     object->model->light_block = (s32)&map_draw_state.light_blocks[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[5]];
                 } else if (RECORD_FLAGS(object) & 0x10) {
-                    object->model->light_block = (s32)&map_draw_state.unkC0;
+                    object->model->light_block = (s32)&map_draw_state.current_light_block;
                 } else {
                     object->model->light_block = (s32)&map_draw_state.light_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->light_block_index];
                 }
@@ -553,7 +553,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             if ((s8)object->source->spawn_flags.bytes[4] != -1) {
                 object->model->fog_block = &map_draw_state.fog_blocks[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[4]];
             } else if (RECORD_FLAGS(object) & 0x10) {
-                object->model->fog_block = &map_draw_state.unkA0;
+                object->model->fog_block = &map_draw_state.current_fog_block;
             } else {
                 object->model->fog_block = &map_draw_state.fog_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->fog_block_index];
             }
@@ -604,14 +604,14 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
                 if ((s8)object->source->spawn_flags.bytes[5] != -1) {
                     object->model->light_block = (s32)&map_draw_state.light_blocks[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[5]];
                 } else if (RECORD_FLAGS(object) & 0x10) {
-                    object->model->light_block = (s32)&map_draw_state.unkC0;
+                    object->model->light_block = (s32)&map_draw_state.current_light_block;
                 } else {
                     object->model->light_block = (s32)&map_draw_state.light_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->light_block_index];
                 }
             }
             if ((s8)object->source->spawn_flags.bytes[4] == -1) {
                 if (RECORD_FLAGS(object) & 0x10) {
-                    object->model->fog_block = &map_draw_state.unkA0;
+                    object->model->fog_block = &map_draw_state.current_fog_block;
                 } else {
                     object->model->fog_block = &map_draw_state.fog_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->fog_block_index];
                 }
