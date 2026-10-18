@@ -430,7 +430,7 @@ typedef struct {
 typedef struct {
     u8 type;                        /* 0x00 */
     u16 unk01_0 : 4;                /* 0x01 */
-    u16 use_mode : 4;               /* using one: 0 takes it, 2 takes it and gives one of unk02 (Player_UseItem) */
+    u16 use_mode : 4;               /* using one: 0 takes it, 2 takes it and gives one of item (Player_UseItem) */
     u16 item;                       /* 0x02 an item (item_counts) */
     u16 hp_heal;                    /* 0x04 added to PlayerState.hp_now when a type 0 one is used */
     u16 mp_heal;                    /* 0x06 added to PlayerState.mp_now */

@@ -80,7 +80,7 @@ typedef struct ModelPart {
     struct ModelPart *child;        /* 0x70 first part hanging off this one, NULL: none */
     struct ModelPart *sibling;      /* 0x74 next part on the same parent, NULL: none */
     u64 data_addr : 32;             /* 0x78 */
-    u64 part_flags : 7;             /* MotionPart.unk02 of the motion last loaded */
+    u64 part_flags : 7;             /* ModelPartLevels.part_flags of the motion last loaded */
     u64 level : 7;                  /* detail level picked by Motion_SeekKeys */
     u64 pad78_46 : 7;
     u64 data_count : 11;
@@ -284,7 +284,7 @@ typedef struct {
     u32 size;                       /* 0x00 the next motion starts this many bytes on */
     u32 vectors_offset;             /* 0x04 */
     MotionVector *vectors;          /* 0x08 set from vectors_offset */
-    u16 frame_count;                /* 0x0C ModelTableHeader.unk00 */
+    u16 frame_count;                /* 0x0C ModelTableHeader.frame_count */
     u8 part_count;                  /* 0x0E */
     char pad0F;
     ModelPartLevels parts[1];       /* 0x10 part_count of them; ModelChannel.tables[n] points here */
@@ -349,7 +349,7 @@ typedef union {
    (ModelInstance.root_part is the first) */
 typedef struct {
     char pad00[0x130];
-    ModelPart *parts[3];            /* 0x130 the parts whose ModelFilePart.unk06 is 1, 2 and 3 */
+    ModelPart *parts[3];            /* 0x130 the parts whose ModelFilePart.slot is 1, 2 and 3 */
 } ModelInstanceSlots;
 
 #define MODEL_SLOT_PARTS(model) (((ModelInstanceSlots *)(model))->parts)
