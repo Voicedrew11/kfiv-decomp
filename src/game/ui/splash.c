@@ -26,7 +26,7 @@ void Packet_AddGsRegister(int, s64);
 void Packet_EndGsRegisters(void);
 void GsDraw_QueueTexFlush(void);
 void GsDraw_QueueTexturedSprite(void *);
-void GsDraw_FillScreen(int, int, int, int, int);
+void GsDraw_FillScreen(int, int, int, int, s64);
 void Player_StopWalking(void);
 static void Splash_BuildImagePacket(int tbp, int cbp);
 

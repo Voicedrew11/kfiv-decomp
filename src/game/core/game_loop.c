@@ -64,7 +64,7 @@ void Game_StepFade(void);
 void GameLoop_UpdateCamera(void);
 void GameLoop_SetCameraMatrices(int, int);
 void GsDraw_QueueVu1Matrix(void *);
-int GameLoop_DrawFrame(int);
+void GameLoop_DrawFrame(int);
 void Packet_WaitForSend(void);
 void MapItem_UpdatePickup(void);
 void Map_RunFreeCamera(void);
@@ -102,7 +102,7 @@ void Game_BlendScreenOffsetDown(void);
 void Game_BlendScreenOffsetUpDown(void);
 void Game_BlendPreviousFrame(int);
 void Game_ShiftScreenByViewTurn(void);
-void GsDraw_FillScreen(int, int, int, int, int);
+void GsDraw_FillScreen(int, int, int, int, s64);
 void Game_TintScreen(int, int, int);
 void Game_DrawFade(void);
 void Game_ApplyBrightness(int);
@@ -332,7 +332,7 @@ void GameLoop_Run(int arg) {
 
 /* Draws one frame of the game: the world (once, or with a second view first for the modes 1 and 2), the screen
    tints, the overlays MapDrawState asks for, the fades and the pause shade. */
-int GameLoop_DrawFrame(int arg) {
+void GameLoop_DrawFrame(int arg) {
     int tinted = FALSE;
     f32 tint;
     int red;
@@ -509,9 +509,8 @@ int GameLoop_DrawFrame(int arg) {
     }
     Hud_Draw();
     if (map_draw_state.screen_fill_alpha > 0) {
-        // match: the last argument is passed as the 64-bit word
-        ((void (*)(int, int, int, int, s64))GsDraw_FillScreen)(map_draw_state.screen_fill_red, map_draw_state.screen_fill_green, map_draw_state.screen_fill_blue,
-                                                             map_draw_state.screen_fill_alpha, map_draw_state.screen_fill_blend);
+        GsDraw_FillScreen(map_draw_state.screen_fill_red, map_draw_state.screen_fill_green, map_draw_state.screen_fill_blue,
+                          map_draw_state.screen_fill_alpha, map_draw_state.screen_fill_blend);
     }
     Game_DrawFade();
     Splash_Draw();

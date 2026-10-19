@@ -515,7 +515,7 @@ void Player_Update(void) {
     game_status.movement_input_enabled = 1;
 }
 
-void GsDraw_FillScreen(int, int, int, int, int);
+void GsDraw_FillScreen(int, int, int, int, s64);
 
 /* Draws the colours that lie over the screen (PlayerScreenTint). */
 void Player_DrawScreenTints(void) {
@@ -1112,7 +1112,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
     memset(&turn, 0, sizeof(turn));
     memset(&step, 0, sizeof(step));
 
-    platform = (MapObject *)player_previous.floor_map_object;
+    platform = player_previous.floor_map_object;
     if (platform != NULL && (platform->state_flags & MAP_OBJECT_IN_USE) && (MAP_OBJECT_DEF_FLAGS(platform->definition) & MAP_OBJECT_DEF_CARRIES)) {
         Vector_Subtract(&turn, &platform->model->rotation, &platform->last_rotation_x);
         turn.x = Angle_Wrap(turn.x);
@@ -1409,7 +1409,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
         if (!((s32)(player_state.status_bits >> 36) & 1)) {
             Player_CollideWithMap();
             Player_CollideWithMapObjects(1);
-            if (player_state.floor_material == 6 && player_state.floor_map_object != 0 && ((MapObject *)player_state.floor_map_object)->definition->kind == 12) {
+            if (player_state.floor_material == 6 && player_state.floor_map_object != 0 && player_state.floor_map_object->definition->kind == 12) {
                 Player_FindFloorMaterial();
             }
             if (!((s32)(player_state.status_bits >> 34) & 1)) {

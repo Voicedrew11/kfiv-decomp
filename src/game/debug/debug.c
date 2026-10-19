@@ -20,7 +20,7 @@ void Packet_OnFrameEnd(void);
 void Packet_SwapBuffers(void);
 void Packet_SendChain(void);
 void Packet_WaitForSend(void);
-void GsDraw_FillScreen(int, int, int, int, int);
+void GsDraw_FillScreen(int, int, int, int, s64);
 void Input_Update(void);
 void Display_SwapBuffers(int);
 extern DebugStartMenuSpacer debug_start_menu_spacer;

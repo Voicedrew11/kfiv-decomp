@@ -80,7 +80,7 @@ static int Entity_ClaimWorkArea(int index);
 static void Entity_FreeWorkArea(int index);
 static void Entity_PrepareModelDraw(ModelInstance *model);
 static void Entity_PrepareScreenTexturedDraw(ModelInstance *model);
-static void Entity_AfterDrawEmpty(void);
+static void Entity_AfterDrawEmpty(ModelInstance *model);
 static void EntityPool_BuildBlockModel(int slot_index);
 static void Entity_AppendToWaiting(Entity *entity);
 static Entity *Entity_UnlinkWaiting(Entity *entity);
@@ -1030,7 +1030,7 @@ static void Entity_PrepareScreenTexturedDraw(ModelInstance *model) {
 }
 
 /* Empty. */
-static void Entity_AfterDrawEmpty(void) {
+static void Entity_AfterDrawEmpty(ModelInstance *model) {
 }
 
 /* Clears a pool slot's model and work buffer, then builds the model from the slot's loaded data. */

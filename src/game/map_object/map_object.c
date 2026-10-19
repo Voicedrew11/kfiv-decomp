@@ -105,7 +105,7 @@ void MapObject_InitMap(int map) {
     for (; i < count; i++, object++) {
         MAP_OBJECT_BYTES(object)->step = 0;
         if (object->definition->model_index == 0xFFFF) {
-            object->model->get_point = (int (*)(void *, int))MapObject_GetPositionAsPoint;
+            object->model->get_point = (void *(*)(void *, int))MapObject_GetPositionAsPoint;
             object->model->update_bone_points = (void (*)(ModelInstance *))MapObject_UpdateNoBonePoints;
         }
         if (object->source->spawn_flags.bytes[2] != 0) {
@@ -379,7 +379,7 @@ void MapObject_UpdateAll(void) {
             map_object_update_hooks[object->definition->kind](object);
             record = (MapRecord *)object->map_record;
             if (record != NULL) {
-                if ((MapObject *)player_state.floor_map_object == object) {
+                if (player_state.floor_map_object == object) {
                     object->state_flags |= MAP_OBJECT_IN_VIEW;
                 } else if (object->source->linked_point_owner != 0 && object->source->linked_point_owner != 0xFF) {
                     if (Map_TestFlagBlockBit(current_map_slot, player_state.record_flag_block, MAP_OBJECT_BYTES(object)->map_slot & 1, object->source->linked_point_owner)) {

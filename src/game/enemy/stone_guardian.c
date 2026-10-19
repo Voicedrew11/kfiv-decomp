@@ -16,7 +16,6 @@ void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
-// match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
@@ -561,7 +560,7 @@ static void StoneGuardian_Mode2ReturnToSpawn(Entity *entity) {
     f32 angle;
 
     if (ai_state->sub_timer > 0) {
-        ai_state->move();
+        ((void (*)(Entity *))ai_state->move)(entity);
         return;
     }
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
@@ -778,7 +777,7 @@ static void StoneGuardian_Mode3ReturnToSpawn(Entity *entity) {
     f32 angle;
 
     if (ai_state->sub_timer > 0) {
-        ai_state->move();
+        ((void (*)(Entity *))ai_state->move)(entity);
         return;
     }
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
@@ -991,7 +990,7 @@ static void StoneGuardian_Mode4ReturnToSpawn(Entity *entity) {
     f32 angle;
 
     if (ai_state->sub_timer > 0) {
-        ai_state->move();
+        ((void (*)(Entity *))ai_state->move)(entity);
         return;
     }
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
@@ -1205,7 +1204,7 @@ static void StoneGuardian_Mode5ReturnToSpawn(Entity *entity) {
     f32 angle;
 
     if (ai_state->sub_timer > 0) {
-        ai_state->move();
+        ((void (*)(Entity *))ai_state->move)(entity);
         return;
     }
     ENTITY_FLAG_BITS(entity)->bits11 = 1;

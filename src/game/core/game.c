@@ -57,7 +57,7 @@ extern int fade_frames_left;                  /* frames of the fade left */
 extern int fade_frames;                  /* frames the fade takes */
 
 void *memcpy(void *, const void *, u32);
-void GsDraw_FillScreen(int, int, int, int, int);
+void GsDraw_FillScreen(int, int, int, int, s64);
 extern int haze_layer_depths[8];               /* the screen depth of each haze layer */
 extern u32 haze_layer_distances[8];               /* the distances of the haze layers, nearest last */
 extern float view_ray_status[];

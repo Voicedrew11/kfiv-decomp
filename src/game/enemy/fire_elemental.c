@@ -248,8 +248,7 @@ static void FireElemental_ThinkCombat(Entity *entity, s32 unknown) {
             } else if (turn < 0) {
                 entity->move_command = (MOVE_COMMAND_BACK | MOVE_COMMAND_TURN_LEFT);
             } else {
-                // match: called like EntityAi_MoveCommand, with a mode the callee ignores
-                entity->move_command = ((s16 (*)(float, void *, int))FireElemental_BackwardsCommand)(entity->radius + 100.0f + 30.0f, entity, 1);
+                entity->move_command = FireElemental_BackwardsCommand(entity, 1, entity->radius + 100.0f + 30.0f);
             }
         }
     }
@@ -675,8 +674,7 @@ static void FireElemental_BackAwayFromPlayer(Entity *entity) {
         } else if (side < 0) {
             entity->move_command = (MOVE_COMMAND_BACK | MOVE_COMMAND_TURN_LEFT);
         } else {
-            // match: called like EntityAi_MoveCommand, with a mode the callee ignores
-            entity->move_command = ((s16 (*)(float, void *, int))FireElemental_BackwardsCommand)(entity->radius + 100.0f + 30.0f, entity, 1);
+            entity->move_command = FireElemental_BackwardsCommand(entity, 1, entity->radius + 100.0f + 30.0f);
         }
         ((void (*)(Entity *))ai_state->move)(entity);
         break;
@@ -779,8 +777,7 @@ static void FireElemental_ThinkReturn(Entity *entity, s32 unknown) {
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn == 0) {
         entity->target = entity->spawn_info;
-        // match: called like EntityAi_MoveCommand, with a mode the callee ignores
-        entity->move_command = ((s16 (*)(float, void *, int))FireElemental_BackwardsCommand)(entity->radius + 100.0f + 30.0f, entity, 1);
+        entity->move_command = FireElemental_BackwardsCommand(entity, 1, entity->radius + 100.0f + 30.0f);
     } else {
         push[0] = push[1] = push[2] = push[3] = 0.0f;
         if (entity->flags & (ENTITY_FLAG_WALL_PUSH | ENTITY_FLAG_400000000000)) {
@@ -808,8 +805,7 @@ static void FireElemental_ThinkReturn(Entity *entity, s32 unknown) {
         } else if (turn < 0) {
             entity->move_command = (MOVE_COMMAND_BACK | MOVE_COMMAND_TURN_LEFT);
         } else {
-            // match: called like EntityAi_MoveCommand, with a mode the callee ignores
-            entity->move_command = ((s16 (*)(float, void *, int))FireElemental_BackwardsCommand)(entity->radius + 100.0f + 30.0f, entity, 1);
+            entity->move_command = FireElemental_BackwardsCommand(entity, 1, entity->radius + 100.0f + 30.0f);
         }
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);

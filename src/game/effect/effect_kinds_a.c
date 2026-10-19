@@ -42,7 +42,7 @@ void Collision_CastRayAtMap(f32 scale, void *position_arg, void *direction);
 
 /* Start handler of the kinds that do nothing of their own (kind 6 and most unused kinds): does
    nothing. */
-void EffectIdle_Start(void) {
+void EffectIdle_Start(EffectActor *effect, EffectSlot *spawn_slot) {
 }
 
 /* Update handler of those kinds: only counts the frame. */
@@ -1737,7 +1737,7 @@ void EffectBobFly_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     float bob_limit;
 
     motion = (BobbingGrowMotion *)&effect->motion;
-    ((void (*)(void))EffectStart_TurnModel)(); // match: retail calls with no arguments
+    EffectStart_TurnModel(effect, spawn_slot);
     EffectStart_PlaceModel(effect, spawn_slot);
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
     effect->flags |= EFFECT_FLAG_HAS_TARGETERS;

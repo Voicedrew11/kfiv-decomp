@@ -20,7 +20,7 @@ void Vector_Add(void *dest, void *a, void *b);
 void Game_MarkMessageHeard(int flag);
 int Motion_Start(void *, int, int, u32, int);
 int Motion_Step(void *, int);
-int Motion_BlendToPose(f32, void *); // match: retail leaves a value in $2
+int Motion_BlendToPose(EntityModel *, f32);
 float EntityMath_HeadingTo(float *from, float *to);
 float EntityMath_AngleDifference(float angle, float heading);
 void EntityAi_SetState(char *, u8);
@@ -276,7 +276,7 @@ int ScriptCmd_BlendEntityMotion(ScriptMotionBlendCommand *command) {
     if (entity != NULL && (entity->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE | ENTITY_FLAG_DYING_MASK)) == 3 && entity->hit_points != 0) {
         entity_model = entity->model;
         if (entity_model->level_tables->blend_left != 0) {
-            return Motion_BlendToPose(command->weight.value, entity_model);
+            return Motion_BlendToPose(entity_model, command->weight.value);
         }
     }
     command->active = 0;

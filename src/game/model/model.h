@@ -404,7 +404,8 @@ typedef struct ModelInstance {
     char pad170[0x08];
     void *chunk_skip_mask;          /* 0x178 passed to TextureTable_QueueEnabled with texture_data: bit n set skips chunk n (a mask, but not stored as an int) */
     int found_record_id;            /* 0x17C the id Effect_FindModelRecord last found; sent after the colour at unk150 by Model_DrawPosed, in its alpha slot */
-    int found_record[4];            /* 0x180 a copy of that record, its id bits replaced; a quadword sent after it */
+    VuIntVector found_record;       /* 0x180 a copy of that record, its id bits replaced; a quadword sent after it
+                                       (Effect_FindModelRecord clears it with one sq, so it is 16-byte aligned) */
     u16 texture_slot;               /* 0x190 slot of unk194 in texture_slots (0..2), 3: always sent */
     s16 shared_texture_slot;        /* 0x192 which entry of the shared last-sent texture record applies */
     int texture_data;               /* 0x194 the model's texture: a chunk table, or a raw packet */
@@ -414,9 +415,9 @@ typedef struct ModelInstance {
     struct ModelWaveUv *wave_uvs;   /* 0x1A4 one per vertex, built by Wobble_BuildWaveUvs */
     void (*draw_parts)(struct ModelInstance *model); /* 0x1A8 queues the model's part packets */
     void (*draw)(struct ModelInstance *model); /* 0x1AC sets the GS state and draws */
-    void (*after_draw)();           /* 0x1B0 called with the model by DrawList_Draw */
+    void (*after_draw)(struct ModelInstance *model); /* 0x1B0 called with the model by DrawList_Draw */
     void (*update_bone_points)(struct ModelInstance *model); /* 0x1B4 recomputes the 32 bone positions from the bone anchors */
-    int (*get_point)(void *model, int index); /* 0x1B8 */
+    void *(*get_point)(void *model, int index); /* 0x1B8 the point (a vector) of index */
     void (*on_textures_sent)(struct ModelInstance *model); /* 0x1BC called when ModelTexture_SendForModel sent new textures */
 } ModelInstance;
 

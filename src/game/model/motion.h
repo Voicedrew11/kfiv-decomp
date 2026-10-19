@@ -39,8 +39,9 @@ s32 Motion_StepModel(ModelInstance *model, s32 step, s32 backwards);
 /* Motion_StepModel, blending the pose with the current one by `weight`. */
 s32 Motion_StepModelBlended(ModelInstance *model, s32 step, s32 backwards, f32 weight);
 
-/* Eases every part toward the pose at the channel's frame and counts the blend frames down. */
-void Motion_BlendToPose(ModelInstance *model, f32 weight);
+/* Eases every part toward the pose at the channel's frame and counts the blend frames down; returns the
+   frames left. */
+s32 Motion_BlendToPose(ModelInstance *model, f32 weight);
 
 /* Poses every part between the first keys of two motions. */
 s32 Motion_MixFirstKeys(ModelInstance *model, s32 table_a, s32 table_b, f32 ratio);

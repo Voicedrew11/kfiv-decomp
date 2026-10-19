@@ -33,7 +33,7 @@ void Packet_SwapBuffers(void);
 void DrawList_Clear(void);
 void Packet_OnFrameStart(void);
 void GsDraw_ResetDrawTarget(void);
-void GsDraw_FillScreen(s64, s64, s64, s64, s64); // match: retail passes the last value as a 64-bit constant (0x100000044)
+void GsDraw_FillScreen(int, int, int, int, s64);
 void Packet_OnFrameEnd(void);
 void Packet_SendChain(void);
 void Packet_WaitForSend(void);
