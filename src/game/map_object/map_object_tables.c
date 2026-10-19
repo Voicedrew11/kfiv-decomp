@@ -29,7 +29,7 @@ void MapObject_UpdateBreakingItemHolder(MapObject *object);
 void MapObject_SetupItemHolder(MapObject *object);
 void MapObject_StartChest(MapObject *object);
 void MapObject_UpdateOpeningChest(MapObject *object);
-void func_00120128();
+void MapObject_ChestStep4Empty();
 void MapObject_OpenChestOnSignal(GameEvent *event, int mode);
 void MapObject_SetupChest(MapObject *object);
 void MapObject_StartDistanceFade(MapObject *object);
@@ -119,7 +119,7 @@ void (*map_object_step_handlers[0x20][16])(MapObject *) = { /* 0x3BDA30 the step
     MapObject_StartDoor, MapObject_UpdateClosedDoor, MapObject_UpdateOpeningDoor, MapObject_UpdateOpenDoor, MapObject_UpdateClosingDoor, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartDoor, MapObject_UpdateClosedDoor, MapObject_UpdateOpeningDoor, MapObject_UpdateOpenDoor, MapObject_UpdateClosingDoor, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartItemHolder, MapObject_UpdateItemHolder, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreakingItemHolder,
-    MapObject_StartChest, (void (*)(MapObject *))MapObject_UpdateClosedChest, MapObject_UpdateOpeningChest, MapObject_UpdateOpenChest, (void (*)(MapObject *))func_00120128, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
+    MapObject_StartChest, (void (*)(MapObject *))MapObject_UpdateClosedChest, MapObject_UpdateOpeningChest, MapObject_UpdateOpenChest, (void (*)(MapObject *))MapObject_ChestStep4Empty, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartDistanceFade, MapObject_UpdateDistanceFade, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartDoor, MapObject_UpdateClosedDoor, MapObject_UpdateOpeningDoor, MapObject_UpdateOpenDoor, MapObject_UpdateClosingDoor, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartToggle, MapObject_UpdateIdleToggle, MapObject_UpdateMovingToggle, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,

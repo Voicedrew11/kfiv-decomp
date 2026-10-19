@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Per-candidate measurements of the fog block, for decomp-permuter runs on src/nonmatching/func_00112BD0/fog_random.
+"""Per-candidate measurements of the fog block, for decomp-permuter runs on src/nonmatching/Map_UpdateDrawState/fog_random.
 
 As a hook (PERMUTER_FEATURE_HOOK=this file; run_fog.sh sets it) every scored candidate appends one line
 to fog_random/features.csv:

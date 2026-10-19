@@ -3,9 +3,9 @@
 
 typedef u32 u_long128 __attribute__((mode(TI)));
 
-// libdev: sceDevVif1PutFifo (name inferred). Writes quadwords to the VIF1 FIFO until it reports full;
+// libdev: Writes quadwords to the VIF1 FIFO until it reports full;
 // returns how many were written.
-int func_0022BC10(u_long128 *source, int quadword_count) {
+int sceDevVif1PutFifo(u_long128 *source, int quadword_count) {
     int written = 0;
 
     while (quadword_count--) {

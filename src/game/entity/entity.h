@@ -609,7 +609,7 @@ typedef struct {
     char pad7D[0x23];
 } EntityAiStateKind178358;
 
-/* Entity+0xE0 as the kind set up by func_00150588 lays it out */
+/* Entity+0xE0 as the kind set up by LivingDead_Init lays it out */
 typedef struct {
     char pad00[0x1C];
     s32 unk1C;                      /* 0x1C */
@@ -654,7 +654,7 @@ typedef struct {
     s32 frame_fixed;                /* 0x04 the frame times 256 */
 } EntityAiMotionSlotBits;
 
-/* Entity+0xE0 as the kinds set up by func_00151D30 and its neighbours use it */
+/* Entity+0xE0 as the kinds set up by Minion_Init and its neighbours use it */
 typedef struct {
     char pad00[0x80];
     EntityAiMotionSlotBits motion_slot_0; /* 0x80 */
@@ -672,7 +672,7 @@ typedef struct {
     char pad50[0x50];
 } EntityAiStateKind16BF98;
 
-/* Entity+0xE0 as the kind set up by func_0015F8C0 lays it out. The area is
+/* Entity+0xE0 as the kind set up by DarkSuccubus_Init lays it out. The area is
    8-byte aligned: only then is "unk68 == 0 && unk6A == 0" one lwu. */
 typedef struct {
     char pad00[0x68];
@@ -690,7 +690,7 @@ typedef struct {
     char pad7F[0x21];
 } __attribute__((aligned(8))) EntityAiStateKind15F8C0;
 
-/* Entity+0xE0 as the kind set up by func_00162BC8 lays it out */
+/* Entity+0xE0 as the kind set up by DarkKnight_Init lays it out */
 typedef struct {
     char pad00[0x30];
     f32 effect_angles[4];           /* 0x30 pitch and yaw passed to EntityEvent_StartEffectAtPoint */
@@ -708,7 +708,7 @@ typedef struct {
     char pad6E[0x32];
 } EntityAiStateKind17FC60;
 
-/* Entity+0xE0 as the kind set up by func_00131390 lays it out */
+/* Entity+0xE0 as the kind set up by FireLord_Init lays it out */
 typedef struct {
     void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
     char pad04[0x14];
@@ -725,7 +725,7 @@ typedef struct {
     char pad7F[0x21];
 } EntityAiStateKind131390;
 
-/* Entity+0xE0 as the kind set up by func_0012ACA0 lays it out */
+/* Entity+0xE0 as the kind set up by AcidCrawler_Init lays it out */
 typedef struct {
     char pad00[0x1C];
     f32 turn_rate;                  /* 0x1C turn speed built towards EntityParams.turn_limit */
@@ -1255,7 +1255,7 @@ extern LinkedPoint linked_point_pool[LINKED_POINT_COUNT];
 #define ENTITY_MODEL(entity) ((ModelInstance *)(entity)->model)
 #define ENTITY_CONTROLLER(entity) ((EntityController *)(entity)->params)
 
-/* a whole model instance (0x1C0 bytes) as func_00131390 copies it to fire_lord_model[0] and [1]
+/* a whole model instance (0x1C0 bytes) as FireLord_Init copies it to fire_lord_model[0] and [1]
    (afterimages drawn at half alpha): the game's struct is 8-byte aligned, the copy moves
    doublewords */
 typedef struct {

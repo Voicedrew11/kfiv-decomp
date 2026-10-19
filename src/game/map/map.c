@@ -83,8 +83,8 @@ void sceVu0MulMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 void Vector_Subtract(void *, void *, void *);
 void GameLoop_RunSoundLoads(void);
-void func_001095D0(void);
-void func_001095D8(void);
+void Packet_OnFrameStart(void);
+void Packet_OnFrameEnd(void);
 void Packet_SwapBuffers(void);
 void Packet_SendChain(void);
 void Packet_WaitForSend(void);
@@ -140,7 +140,7 @@ extern MapLightBlock map_object_default_lights;
 extern TextureTableHeader *D_00446790;
 extern u8 player_floor_block[];
 
-/* Draws the map records of both map slots whose flag bit 0 is clear (the list func_00112BD0 builds each
+/* Draws the map records of both map slots whose flag bit 0 is clear (the list Map_UpdateDrawState builds each
    frame), then each slot's map objects. mode 0 draws every record, the others only some; below 2 the
    drawing goes to the screen, at 2 to the off-screen buffer (Map_SetOffscreenTarget). */
 void Map_DrawRecords(int mode) {
@@ -972,10 +972,10 @@ void Map_RunFreeCamera(void) {
             sceVu0TransMatrix(world_view, world_view, &move.x);
             sceVu0MulMatrix(world_screen, view_screen, world_view);
             GsDraw_QueueVu1Matrix(world_screen);
-            func_001095D0();
+            Packet_OnFrameStart();
             Map_DrawFreeCameraView();
             Message_Update();
-            func_001095D8();
+            Packet_OnFrameEnd();
             GameLoop_RunSoundLoads();
             Packet_WaitForSend();
         } while (!(pad_state[1] & PAD_CIRCLE));

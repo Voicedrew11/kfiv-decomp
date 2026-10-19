@@ -107,8 +107,8 @@ extern s32 menu_file_block_count;
 extern s32 menu_heap;
 extern s32 trade_menu_arena;
 void *memset(void *, int, u32);
-void func_001095D0(void);
-void func_001095D8(void);
+void Packet_OnFrameStart(void);
+void Packet_OnFrameEnd(void);
 void Packet_SwapBuffers(void);
 void Packet_SendChain(void);
 void Packet_WaitForSend(void);
@@ -227,14 +227,14 @@ extern char model_name_left[];
 extern char model_name_right[];
 #define PAGE_ROWS 7
 /* Scrolls the window and the cursor up one row; FALSE once the window is at the top of the list. */
-static inline s32 func_001ED738_ScrollUp(void) {
+static inline s32 Trade_StockListScrollUp(void) {
     trade_stock_list_top[0] = trade_stock_list_top[0]->prev;
     trade_stock_list_page_mark[0] = trade_stock_list_page_mark[0]->prev;
     trade_stock_list_cursor[0] = trade_stock_list_top[0];
     return trade_stock_list_top[0] != item_list_last_page;
 }
 /* Scrolls the window and the cursor down one row; FALSE once the window is at the end of the list. */
-static inline s32 func_001ED738_ScrollDown(void) {
+static inline s32 Trade_StockListScrollDown(void) {
     trade_stock_list_top[0] = trade_stock_list_top[0]->next;
     trade_stock_list_page_mark[0] = trade_stock_list_page_mark[0]->next;
     trade_stock_list_cursor[0] = trade_stock_list_top[0];
@@ -340,14 +340,14 @@ static inline void ClearItemMark(s32 index) {
     worn_item_level_records[index].in_smith_rings = 0;
 }
 /* Scrolls the window and the cursor up one row; FALSE once the window is at the top of the list. */
-static inline s32 func_001F67C8_ScrollUp(void) {
+static inline s32 Smith_CollectListScrollUp(void) {
     smith_collect_list_top[0] = smith_collect_list_top[0]->prev;
     smith_collect_list_page_mark[0] = smith_collect_list_page_mark[0]->prev;
     smith_collect_list_cursor[0] = smith_collect_list_top[0];
     return smith_collect_list_top[0] != item_list_last_page;
 }
 /* Scrolls the window and the cursor down one row; FALSE once the window is at the end of the list. */
-static inline s32 func_001F67C8_ScrollDown(void) {
+static inline s32 Smith_CollectListScrollDown(void) {
     smith_collect_list_top[0] = smith_collect_list_top[0]->next;
     smith_collect_list_page_mark[0] = smith_collect_list_page_mark[0]->next;
     smith_collect_list_cursor[0] = smith_collect_list_top[0];
@@ -754,10 +754,10 @@ static s32 Trade_Start(HandlerContext *context) {
     LoadedBlockRef *block;
 
     Packet_SwapBuffers();
-    func_001095D0();
+    Packet_OnFrameStart();
     TextureTable_QueueAll((TextureTableHeader *)Message_GetFontTexture(menu_heap));
     GsDraw_QueueTexFlush();
-    func_001095D8();
+    Packet_OnFrameEnd();
     Packet_SendChain();
     ((s32 (*)(void))Packet_WaitForSend)(); // match: called as if it returned a value, which frees $2 for the loop below
     for (; i < menu_file_block_count; i++) {
@@ -2688,7 +2688,7 @@ static s32 Trade_MoveListCursor(HandlerContext *context) {
             if (cursor->prev != NULL) {
                 if (trade_stock_list_top[0]->next != trade_stock_list_page_mark[0]->prev) {
                     rows = 0;
-                    while (func_001ED738_ScrollUp()) {
+                    while (Trade_StockListScrollUp()) {
                         if (++rows >= PAGE_ROWS) {
                             break;
                         }
@@ -2701,7 +2701,7 @@ static s32 Trade_MoveListCursor(HandlerContext *context) {
             if (cursor->next != NULL) {
                 if (trade_stock_list_top[0]->next != trade_stock_list_page_mark[0]->prev) {
                     rows = 0;
-                    while (func_001ED738_ScrollDown()) {
+                    while (Trade_StockListScrollDown()) {
                         if (++rows >= PAGE_ROWS) {
                             break;
                         }
@@ -2905,10 +2905,10 @@ static s32 Smith_Start(void) {
     LoadedBlockRef *block;
 
     Packet_SwapBuffers();
-    func_001095D0();
+    Packet_OnFrameStart();
     TextureTable_QueueAll((TextureTableHeader *)Message_GetFontTexture(menu_heap));
     GsDraw_QueueTexFlush();
-    func_001095D8();
+    Packet_OnFrameEnd();
     Packet_SendChain();
     ((s32 (*)(void))Packet_WaitForSend)(); // match: called as if it returned a value, which frees $2 for the loop below
     for (; i < menu_file_block_count; i++) {
@@ -5241,7 +5241,7 @@ static s32 Smith_MoveListCursor(HandlerContext *context) {
             if (cursor->prev != NULL) {
                 if (smith_collect_list_top[0]->next != smith_collect_list_page_mark[0]->prev) {
                     rows = 0;
-                    while (func_001F67C8_ScrollUp()) {
+                    while (Smith_CollectListScrollUp()) {
                         if (++rows >= PAGE_ROWS) {
                             break;
                         }
@@ -5254,7 +5254,7 @@ static s32 Smith_MoveListCursor(HandlerContext *context) {
             if (cursor->next != NULL) {
                 if (smith_collect_list_top[0]->next != smith_collect_list_page_mark[0]->prev) {
                     rows = 0;
-                    while (func_001F67C8_ScrollDown()) {
+                    while (Smith_CollectListScrollDown()) {
                         if (++rows >= PAGE_ROWS) {
                             break;
                         }
@@ -5467,10 +5467,10 @@ static int SaveScreen_Start(HandlerContext *context) {
     int (*next_handler)();
 
     Packet_SwapBuffers();
-    func_001095D0();
+    Packet_OnFrameStart();
     TextureTable_QueueAll((TextureTableHeader *)Message_GetFontTexture(menu_heap));
     GsDraw_QueueTexFlush();
-    func_001095D8();
+    Packet_OnFrameEnd();
     Packet_SendChain();
     ((s32 (*)(void))Packet_WaitForSend)(); // match: called as if it returned a value, which frees $2 for the loop below
     for (; i < menu_file_block_count; i++) {

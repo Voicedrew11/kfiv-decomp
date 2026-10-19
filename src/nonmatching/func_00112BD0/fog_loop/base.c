@@ -3849,7 +3849,7 @@ typedef struct {
 } MapFogRgb;
 
 
-void func_00112BD0(void) {
+void Map_UpdateDrawState(void) {
     f32 unused_vector[4];
     f32 unused_matrix[32];
     MapSlot *slot;

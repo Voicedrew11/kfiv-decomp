@@ -1,8 +1,8 @@
 """Fog block in retail's split order, with a loop wrapper (loop notes = haifa-sched barrier) around one half."""
 import subprocess, sys
 
-SRC = "src/nonmatching/func_00112BD0.c"
-TMP = "src/game/func_00112BD0.c"
+SRC = "src/nonmatching/Map_UpdateDrawState.c"
+TMP = "src/game/Map_UpdateDrawState.c"
 text = open(SRC).read()
 start = text.index("            { /* fog blend")
 end = text.index("        } else {\n            D_0038A1B0.unkA0 = D_0038A1B0.unk160;")
@@ -59,10 +59,10 @@ def score(src, dump=False):
         notes = ""
         if dump:
             subprocess.run(["tools/compile_c.sh", TMP, "build/match/_lp.o"], env={**__import__("os").environ, "GAME_CFLAGS": "-G 8 -dR"}, capture_output=True)
-            d = open("src/game/func_00112BD0.c.sched2").read()
+            d = open("src/game/Map_UpdateDrawState.c.sched2").read()
             notes = f"LOOP_BEG notes in sched2 dump: {d.count('NOTE_INSN_LOOP_BEG')}"
     finally:
-        subprocess.run("rm -f src/game/func_00112BD0.c src/game/func_00112BD0.c.*", shell=True)
+        subprocess.run("rm -f src/game/Map_UpdateDrawState.c src/game/Map_UpdateDrawState.c.*", shell=True)
     return r.stdout.splitlines()[0] if r.stdout else r.stderr[-300:], notes
 
 

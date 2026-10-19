@@ -1,4 +1,4 @@
-/* func_00112BD0 (0x15C4 bytes, 1393 instructions): NOT MATCHED. This file is not built.
+/* Map_UpdateDrawState (0x15C4 bytes, 1393 instructions): NOT MATCHED. This file is not built.
  *
  * The per-frame map draw-state update, called once per frame from the main loop: fades the fog block and the light
  * block towards those of the map record the player stands on (30 frames), culls the map records and builds the
@@ -180,7 +180,7 @@ typedef struct {
 } MapFogRgb;
 #define FOG_COLOR(fog) ((MapFogRgb *)&(fog)->unk10)
 
-void func_00112BD0(void) {
+void Map_UpdateDrawState(void) {
     f32 unused_vector[4];
     f32 unused_matrix[32];
     MapSlot *slot;

@@ -1,4 +1,4 @@
-/* The sound driver's RPC buffers: the argument block func_0010E050 fills and the file name it sends. */
+/* The sound driver's RPC buffers: the argument block and the file name the stream calls send. */
 #include "common.h"
 
 u32 D_00420918[10] = { 0 };     /* 0x420918 the ten words before the argument block */

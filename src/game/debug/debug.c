@@ -10,13 +10,13 @@ extern char debug_cursor_mark[];
 extern char debug_cursor_blank[];
 static char debug_cursor_marks[0x68]; /* 0x5742E0 the strings the debug menus draw, four bytes apart */
 
-void func_001B0A58(void);
-void func_001B0A60(void);
-void func_001B0A68(void);
-void func_001B0A70(void);
+void Debug_StartMenuLoopInit(void);
+void Debug_StartMenuLoopTop(void);
+void Debug_StartMenuBeforeRun(void);
+void Debug_StartMenuBetweenRuns(void);
 int Debug_RunStartMenu(void);
-void func_001095D0(void);
-void func_001095D8(void);
+void Packet_OnFrameStart(void);
+void Packet_OnFrameEnd(void);
 void Packet_SwapBuffers(void);
 void Packet_SendChain(void);
 void Packet_WaitForSend(void);
@@ -203,14 +203,14 @@ float Angle_WrapPlusMinusPi(float angle) {
 /* Runs the debug start menu until its first line (NEW GAME) is chosen; returns 0. The four calls around it are
    empty. Nothing calls it. */
 int Debug_LoopUntilNewGame(void) {
-    func_001B0A58();
+    Debug_StartMenuLoopInit();
     while (TRUE) {
-        func_001B0A60();
-        func_001B0A68();
+        Debug_StartMenuLoopTop();
+        Debug_StartMenuBeforeRun();
         if (Debug_RunStartMenu() == 0) {
             return 0;
         }
-        func_001B0A70();
+        Debug_StartMenuBetweenRuns();
         if (Debug_RunStartMenu() == 0) {
             return 0;
         }
@@ -218,19 +218,19 @@ int Debug_LoopUntilNewGame(void) {
 }
 
 /* Empty. */
-void func_001B0A58(void) {
+void Debug_StartMenuLoopInit(void) {
 }
 
 /* Empty. */
-void func_001B0A60(void) {
+void Debug_StartMenuLoopTop(void) {
 }
 
 /* Empty. */
-void func_001B0A68(void) {
+void Debug_StartMenuBeforeRun(void) {
 }
 
 /* Empty. */
-void func_001B0A70(void) {
+void Debug_StartMenuBetweenRuns(void) {
 }
 
 /* Debug start menu: waits on a PUSH START screen, then lets up and down pick one of four
@@ -251,13 +251,13 @@ int Debug_RunStartMenu(void) {
                 break;
             }
             Packet_SwapBuffers();
-            func_001095D0();
+            Packet_OnFrameStart();
             GsDraw_FillScreen(0, 0, 0, 0, 0x2A);
             Message_DebugSetColor(0);
             Message_DebugPrintf(spacer.text);
             Message_DebugPrintf(prompt.text);
             Message_Update();
-            func_001095D8();
+            Packet_OnFrameEnd();
             Packet_SendChain();
             Packet_WaitForSend();
             Display_SwapBuffers(0);
@@ -276,7 +276,7 @@ int Debug_RunStartMenu(void) {
                 running = FALSE;
             }
             Packet_SwapBuffers();
-            func_001095D0();
+            Packet_OnFrameStart();
             GsDraw_FillScreen(0, 0, 0, 0, 0x2A);
             Message_DebugPrintf(spacer.text);
             for (i = 0; i < 4; i++) {
@@ -284,7 +284,7 @@ int Debug_RunStartMenu(void) {
                 Message_DebugPrintf(items.text[i]);
             }
             Message_Update();
-            func_001095D8();
+            Packet_OnFrameEnd();
             Packet_SendChain();
             Packet_WaitForSend();
             Display_SwapBuffers(0);
@@ -339,10 +339,10 @@ int Debug_PickMap(int *map_id) {
             }
         }
         Packet_SwapBuffers();
-        func_001095D0();
+        Packet_OnFrameStart();
         Message_DebugPrintf(debug_map_format, map);
         Message_Update();
-        func_001095D8();
+        Packet_OnFrameEnd();
         Packet_SendChain();
         ((int (*)(void))Packet_WaitForSend)(); // match: a result keeps $2 busy after the call
         if (pressed & PAD_CIRCLE) {
@@ -364,7 +364,7 @@ int Debug_PickMap(int *map_id) {
 }
 
 /* Empty. Nothing calls it. */
-void func_001B1028(void) {
+void Debug_UnusedStub(void) {
 }
 
 /* Debug editor for a four-digit decimal number on an "INI:" screen: left and right move
@@ -404,7 +404,7 @@ void Debug_EditIniNumber(int *value) {
             digits[cursor] = (digits[cursor] + 9) % 10;
         }
         Packet_SwapBuffers();
-        func_001095D0();
+        Packet_OnFrameStart();
         Message_DebugSetColor(9);
         Message_DebugPrintf(debug_ini_prompt);
         for (i = 3; i >= 0; i--) {
@@ -413,7 +413,7 @@ void Debug_EditIniNumber(int *value) {
         }
         Message_DebugPrintf(debug_ini_line_end);
         Message_Update();
-        func_001095D8();
+        Packet_OnFrameEnd();
         Packet_SendChain();
         ((int (*)(void))Packet_WaitForSend)(); // match: a result keeps $2 busy after the call
         if (pressed & PAD_CIRCLE) {

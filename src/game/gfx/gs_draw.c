@@ -129,7 +129,7 @@ void GsDraw_CopyFrame(int dest_base) {
 }
 
 /* The same as GsDraw_CopyFrame; nothing calls it. */
-void func_0010A0A0(int value) {
+void GsDraw_CopyFrameToGsAddress(int value) {
     GsDraw_QueueImageTransfer((context1_buffer_half != 0) ? 0 : 0x1180, 0, 0xA, 0, 0, 0x280, 0x1C0, value, 0, 0xA, 0, 0, 2);
 }
 

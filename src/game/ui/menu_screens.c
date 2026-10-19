@@ -325,8 +325,8 @@ extern ColorBytes model_draw_color;
 extern s32 menu_file_block_count;
 extern s32 menu_heap;
 extern u8 brightness_before;
-void func_001095D0(void);
-void func_001095D8(void);
+void Packet_OnFrameStart(void);
+void Packet_OnFrameEnd(void);
 void Packet_SwapBuffers(void);
 void Packet_SendChain(void);
 void Packet_WaitForSend(void);
@@ -2825,10 +2825,10 @@ static s32 Menu_Start(char *context) {
     LoadedBlockRef *block;
 
     Packet_SwapBuffers();
-    func_001095D0();
+    Packet_OnFrameStart();
     TextureTable_QueueAll((TextureTableHeader *)Message_GetFontTexture(menu_heap));
     GsDraw_QueueTexFlush();
-    func_001095D8();
+    Packet_OnFrameEnd();
     Packet_SendChain();
     ((s32 (*)(void))Packet_WaitForSend)(); // match: called as if it returned a value, which frees $2 for the loop below
     for (; i < menu_file_block_count; i++) {

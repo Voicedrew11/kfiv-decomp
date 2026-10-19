@@ -42,7 +42,7 @@ extern u8 dark_sanctuary_fog_lifted[];
 extern u8 D_0034A0D5[];
 extern u8 craftsmans_room_door_unlocked[];
 
-void func_0011A428(int);
+void MapSetup_Map252(int);
 
 /* Runs the set-up function of the map in the slot, picked by the map's number (its tag): it puts the map's
    records, objects, fog and lights in the state the story flags call for. */
@@ -100,7 +100,7 @@ void MapSetup_RunForMap(int slot) {
         MapSetup_PlaceItemLowered(slot);
         break;
     case 0xFC:
-        func_0011A428(slot);
+        MapSetup_Map252(slot);
         break;
     }
 }
@@ -583,5 +583,5 @@ void MapSetup_PlaceItemLowered(int map) {
 }
 
 /* Set-up of map 252, which is not on the disc: empty. */
-void func_0011A428(int map) {
+void MapSetup_Map252(int map) {
 }

@@ -1,12 +1,12 @@
 """Score whole-block static inline helper variants of the fog blend."""
 import re, subprocess, sys
 
-SRC = "src/nonmatching/func_00112BD0.c"
-TMP = "src/game/func_00112BD0.c"
+SRC = "src/nonmatching/Map_UpdateDrawState.c"
+TMP = "src/game/Map_UpdateDrawState.c"
 text = open(SRC).read()
 start = text.index("            { /* fog blend")
 end = text.index("        } else {\n            D_0038A1B0.unkA0 = D_0038A1B0.unk160;")
-anchor = "void func_00112BD0(void) {"
+anchor = "void Map_UpdateDrawState(void) {"
 
 CH = """    FOG_COLOR(cur)->red = (int)(FOG_COLOR(from)->red * fade_out + FOG_COLOR(to)->red * fade_in);
     FOG_COLOR(cur)->green = (int)(FOG_COLOR(from)->green * fade_out + FOG_COLOR(to)->green * fade_in);

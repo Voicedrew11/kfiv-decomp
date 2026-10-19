@@ -10,9 +10,9 @@ os.chdir(ROOT)
 import match
 
 src, edit = sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else "s"
-tmp = "src/game/func_00112BD0.c"
+tmp = "src/game/Map_UpdateDrawState.c"
 open(tmp, "w").write(open(src).read())
-out = "build/match/src/game/func_00112BD0.c.o"
+out = "build/match/src/game/Map_UpdateDrawState.c.o"
 try:
     subprocess.run(["tools/compile_c.sh", tmp, out], check=True)
     s_path = out[:-2] + ".s"

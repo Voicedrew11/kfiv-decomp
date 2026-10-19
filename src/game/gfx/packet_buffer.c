@@ -68,11 +68,11 @@ void Packet_UploadVu1Programs(void) {
 }
 
 /* Called before a frame's drawing; empty. */
-void func_001095D0(void) {
+void Packet_OnFrameStart(void) {
 }
 
 /* Called after a frame's drawing; empty. */
-void func_001095D8(void) {
+void Packet_OnFrameEnd(void) {
 }
 
 /* Starts filling the other packet buffer: its chain is emptied and the buffer cleared. */

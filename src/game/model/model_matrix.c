@@ -93,7 +93,7 @@ static void ModelMatrix_CopyFixedDrawMatrices(ModelInstance *model, void *normal
 }
 
 /* Empty. */
-static void func_0020BD40(void) {
+static void ModelMatrix_UnusedStub(void) {
 }
 
 /* Builds a matrix from the model's x and z angles with its y row cleared, turned a quarter about x and pushed

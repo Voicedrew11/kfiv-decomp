@@ -42,9 +42,9 @@
 
 typedef unsigned int LibdevUint128 __attribute__((mode(TI)));
 
-/* One quadword of VU memory.  sceDevVu0GetMem really returns one of these by
-   value and sceDevVu0PutMem takes one by value (both through a hidden pointer,
-   which is what the prototypes below spell out by hand). */
+/* One quadword of VU memory.  sceDevVu0PutMem takes one by value;
+   sceDevVu0GetMem returns one by value, through the hidden pointer its
+   prototype below spells out. */
 typedef union {
     unsigned long dword[2];
     unsigned int word[4];
@@ -126,39 +126,39 @@ int sceDevVu0GetStat(void);
 void sceDevVu0Start(unsigned int addr);
 unsigned int sceDevVu0GetTpc(void);
 int sceDevVu0ChkIdle(void);
-void sceDevVu0PutMem(unsigned int addr, void *src);
+void sceDevVu0PutMem(unsigned short address, LibdevQuadword quadword);
 void *sceDevVu0GetMem(void *dst, unsigned int addr);
 unsigned short sceDevVu0GetTop(void);
 void sceDevVu0PutTop(unsigned short top);
 int sceDevVu0GetCnd(void);
 int sceDevVu0ChkCnd(void);
 int sceDevVu0Resume(void);
-int sceDevVu0GetVi(void *ctx);
-int sceDevVu0GetVf(void *ctx);
-int sceDevVu0GetCtx(void *ctx);
-int sceDevVu0PutCtx(void *ctx);
+int sceDevVu0GetVi(LibdevVu0Registers *registers);
+int sceDevVu0GetVf(LibdevVu0Registers *registers);
+int sceDevVu0GetCtx(LibdevVu1Registers *registers);
+int sceDevVu0PutCtx(LibdevVu1Registers *registers);
 void sceDevVu0SetTBit(void);
 void sceDevVu0PutEBit(int on);
 void sceDevVu0PutMBit(int on);
 int sceDevVu0GetEBit(void);
 int sceDevVu0GetMBit(void);
 
-int sceDevVif0Reset(void);
+void sceDevVif0Reset(void);
 int sceDevVif0Pause(int mode);
 int sceDevVif0Continue(void);
-void sceDevVif0PutErr(unsigned int me0, unsigned int me1, unsigned int mii);
+int sceDevVif0PutErr(int mask_interrupt, int mask_dmatag, int mask_vifcode);
 unsigned int sceDevVif0GetErr(void);
 int sceDevVif0GetStat(void);
-int sceDevVif0GetRegs(void *ctx);
-int sceDevVif0PutFifo(void *src, int qwc);
-int sceDevVif1Reset(void);
+int sceDevVif0GetRegs(LibdevVif0Registers *registers);
+int sceDevVif0PutFifo(LibdevUint128 *source, int quadword_count);
+void sceDevVif1Reset(void);
 int sceDevVif1Pause(int mode);
 int sceDevVif1Continue(void);
-void sceDevVif1PutErr(unsigned int me0, unsigned int me1, unsigned int mii);
+int sceDevVif1PutErr(int mask_interrupt, int mask_dmatag, int mask_vifcode);
 unsigned int sceDevVif1GetErr(void);
 int sceDevVif1GetStat(void);
-int sceDevVif1GetRegs(void *ctx);
-int sceDevVif1PutFifo(void *src, int qwc);
-int sceDevVif1GetFifo(void *dst, int qwc);
+int sceDevVif1GetRegs(LibdevVif1Registers *registers);
+int sceDevVif1PutFifo(LibdevUint128 *source, int quadword_count);
+int sceDevVif1GetFifo(LibdevUint128 *destination, int quadword_count);
 
 #endif /* SCE_LIBDEV_LIBDEV_INTERNAL_H */

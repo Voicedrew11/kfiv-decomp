@@ -184,5 +184,5 @@ void Input_ResumeRumble(void) {
 }
 
 /* Empty. */
-void func_001B5808(void) {
+void Input_StartupHook(void) {
 }

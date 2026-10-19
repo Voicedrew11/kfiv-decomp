@@ -547,7 +547,7 @@ static f32 (*part_work_buffer)[4] = NULL;   /* 0x446D40 the part drawers' work b
                                                screen points and normals */
 
 /* Starts the second allocator at `value` and takes the part drawers' work buffer from it. */
-s32 MenuArena_Init(s32 value) { // match: declared with a result that no path sets (func_001D55E8 only matches so)
+s32 MenuArena_Init(s32 value) { // match: declared with a result that no path sets (Menu_InitLoadBuffers only matches so)
     arena_start = value;
     arena_next = value;
     MenuArena_AllocWorkBuffer();

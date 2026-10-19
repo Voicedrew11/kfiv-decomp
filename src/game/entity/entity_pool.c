@@ -80,7 +80,7 @@ static int Entity_ClaimWorkArea(int index);
 static void Entity_FreeWorkArea(int index);
 static void Entity_PrepareModelDraw(ModelInstance *model);
 static void Entity_PrepareScreenTexturedDraw(ModelInstance *model);
-static void func_00124AF8(ModelInstance *model);
+static void Entity_AfterDrawEmpty(ModelInstance *model);
 static void EntityPool_BuildBlockModel(int slot_index);
 static void Entity_AppendToWaiting(Entity *entity);
 static Entity *Entity_UnlinkWaiting(Entity *entity);
@@ -451,7 +451,7 @@ static int Entity_TryActivate(Entity *entity) {
         model->model_flags |= 0x200;
         model->draw_flags |= MODEL_FLAG_800;
         model->draw = Entity_PrepareScreenTexturedDraw;
-        model->after_draw = func_00124AF8;
+        model->after_draw = Entity_AfterDrawEmpty;
         screen_textured_entity_type = entity->spawn_info->type_id;
         work_address = (int)entity_work_area;
         work_address = (int)Model_SaveGsWordsAndUvs(model, (s64 *)work_address);
@@ -1030,7 +1030,7 @@ static void Entity_PrepareScreenTexturedDraw(ModelInstance *model) {
 }
 
 /* Empty. */
-static void func_00124AF8(ModelInstance *model) {
+static void Entity_AfterDrawEmpty(ModelInstance *model) {
 }
 
 /* Clears a pool slot's model and work buffer, then builds the model from the slot's loaded data. */

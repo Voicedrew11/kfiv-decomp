@@ -22,5 +22,5 @@ int Timer_GetTicks(void) {
 }
 
 /* Empty. */
-static void func_0020D0A8(void) {
+static void Timer_UnusedStub(void) {
 }

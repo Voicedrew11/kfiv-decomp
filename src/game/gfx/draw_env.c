@@ -9,10 +9,10 @@ extern int context1_buffer_half;
 extern GsDrawEnv game_dbuff_draw0;          /* game_dbuff.draw0 */
 extern GsDrawEnv game_dbuff_draw1;          /* game_dbuff.draw1 */
 
-static void func_0019B4A0(void);
-static void func_0019B4A8(void);
+static void DrawEnv_UnusedStubA(void);
+static void DrawEnv_UnusedStubB(void);
 static void DrawEnv_PutScreen(void);
-static void func_0019B618(void);
+static void DrawEnv_UnusedStubC(void);
 
 /* Puts a 256x256 16-bit draw environment at frame page 0x1C2, waits, and puts the normal one back. The copy of
    offscreen_square_corners in front of the packet is not sent. Nothing calls it by name. */
@@ -38,11 +38,11 @@ void DrawEnv_PutOffscreenAndBack(void) {
 }
 
 /* Does nothing. */
-static void func_0019B4A0(void) {
+static void DrawEnv_UnusedStubA(void) {
 }
 
 /* Does nothing. */
-static void func_0019B4A8(void) {
+static void DrawEnv_UnusedStubB(void) {
 }
 
 /* Puts the draw environment of DrawEnv_PutOffscreenAndBack and waits, without putting the normal one back. */
@@ -78,5 +78,5 @@ static void DrawEnv_PutScreen(void) {
 }
 
 /* Does nothing. */
-static void func_0019B618(void) {
+static void DrawEnv_UnusedStubC(void) {
 }

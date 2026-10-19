@@ -91,19 +91,19 @@ void System_InitMemory(void) {
 }
 
 /* Empty. */
-static void func_0020B6E8(void) {
+static void Display_UnusedStubA(void) {
 }
 
 /* Empty. */
-static void func_0020B6F0(void) {
+static void Display_UnusedStubB(void) {
 }
 
 /* Empty. */
-static void func_0020B6F8(void) {
+static void Display_UnusedStubC(void) {
 }
 
 /* Empty. */
-static void func_0020B700(void) {
+static void Display_UnusedStubD(void) {
 }
 
 /* Waits for the vsync, sets the half-pixel offset of the half about to be drawn to for the field, and swaps the
@@ -153,5 +153,5 @@ static void Display_ReapplyLastSwap(void) {
 }
 
 /* Empty. */
-static void func_0020B8A8(void) {
+static void Display_UnusedStubE(void) {
 }
