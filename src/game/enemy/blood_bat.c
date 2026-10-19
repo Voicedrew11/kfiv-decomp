@@ -14,7 +14,6 @@ void EntityAi_OnHit(char *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
-// match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 extern u32 frame_counter;
 void EntityAi_StepState(void *);

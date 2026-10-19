@@ -43,7 +43,6 @@ extern Qword living_armor_look_limits;
 float EntityMath_WrapAngle(float);
 int Bone_TurnPartToLook(void *, int, int, int, void *, int, float);
 int Motion_Step(void *, int);
-// match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);

@@ -40,7 +40,6 @@ s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 void EntityAi_SetAttackDelay(Entity *, s32);
 int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
 int Motion_Step(void *, int);
-// match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 float EntityMath_HeadingTo(float *, float *);
@@ -161,8 +160,7 @@ static void MutantWall_ThinkCombat(Entity *entity, s32 unknown) {
         if (entity->combat_choice != entity->prev_combat_choice) {
             entity->choice_change_frame = frame_counter;
         }
-        // match: called with one argument here
-        ((void (*)(Entity *))EntityAi_LowerChoiceWeight)(entity);
+        EntityAi_LowerChoiceWeight(entity, next_action);
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {

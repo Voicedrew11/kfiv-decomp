@@ -206,8 +206,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
         if (entity->combat_choice != entity->prev_combat_choice) {
             entity->choice_change_frame = frame_counter;
         }
-        // match: called with the entity alone here
-        ((void (*)(Entity *))EntityAi_LowerChoiceWeight)(entity);
+        EntityAi_LowerChoiceWeight(entity, mode);
         switch (entity->combat_choice) {
         case 0:
             ai_state->reload_timer = entity->params->near_distance;

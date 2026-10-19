@@ -144,9 +144,9 @@ typedef struct {
     s32 landing_dip_frames;         /* 0x1F8 how many frames the dip takes */
     s32 landing_dip_frame;          /* 0x1FC the frame of the dip; unk1F0 follows half a sine wave */
     s32 landing_slow_timer;         /* 0x200 frames left of half speed after a hard landing */
-    s32 stepped_on_entity;          /* 0x204 the entity the player was put on top of */
-    s32 floor_map_object;           /* 0x208 the map object the player stands on */
-    s32 touched_map_object;         /* 0x20C the map object mesh wall the player touched */
+    struct Entity *stepped_on_entity; /* 0x204 the entity the player was put on top of */
+    MapObject *floor_map_object;    /* 0x208 the map object the player stands on */
+    MapObject *touched_map_object;  /* 0x20C the map object mesh wall the player touched */
     u8 floor_material;              /* 0x210 3: the second row of the movement tables is used; 6: see Player_FindFloorMaterial */
     u8 unk211;                      /* 0x211 set to 6 with unk210 before the floors are looked for (Player_CollideWithMap) */
     char pad212[0x02];

@@ -245,7 +245,7 @@ void GsDraw_QueueFlatSprite(void *sprite_arg) {
 }
 
 /* Cover the screen with a blended flat colour, in ten vertical strips. */
-void GsDraw_FillScreen(int red, int green, int blue, int alpha, int blend) {
+void GsDraw_FillScreen(int red, int green, int blue, int alpha, s64 blend) {
     ScreenSprite sprite;
     int strips_left;
 

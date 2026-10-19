@@ -81,14 +81,14 @@ extern char rev_para_path[];
 extern s32 sound_file_load_step;
 extern s32 (*const sound_file_load_steps[])(void);
 extern int entity_bank_load_step;
-extern int (*entity_bank_load_steps[])(void);
+extern int (*entity_bank_load_steps[])(SoundJob *job);
 /* the falloff players Sound_PlayFalloff picks from (the Sfx and Map ones take no bank) */
 extern int (*falloff_sound_players[])(int, int); // match: an int result, though the players are void
 extern int map_bank_load_step;
 extern SoundScriptState map_reverb_cue_indices;
 extern u8 map_reverb_slot;
 extern int D_004468B4;
-extern int (*map_bank_load_steps[])(void);
+extern int (*map_bank_load_steps[])(SoundJob *job);
 extern SoundBankSpec map_bank_files;
 extern SoundFileBuffer sw_bank;
 extern SoundFileBuffer mg_bank;
@@ -127,8 +127,8 @@ static void Sound_CancelBgmLoad(LoadJob *job);
 static int Sound_StepBgmLoad(LoadJob *job, s32 state);
 static int Sound_LoadReverbParams(void);
 static s32 Sound_RunFileLoad(void);
-static int Sound_RunEntityBankLoad(void *sequence, int index);
-static int Sound_RunMapBankLoad(void *sequence, int kind);
+static int Sound_RunEntityBankLoad(SoundJob *job, int index);
+static int Sound_RunMapBankLoad(SoundJob *job, int kind);
 static int Sound_LoadFilePair(char *name_a, char *name_b, SoundJobSpec *spec, int first_arg, int second_arg);
 static int Sound_StepUpload(void);
 static int Sound_UpdateMapReverbVolume(void);
@@ -1922,8 +1922,8 @@ int Sound_EntityBankFreeSampleBuffer(SoundJob *job) {
 }
 
 /* Runs the current step of the entity bank load (entity_bank_load_steps); 0 when it reports done, else 1. */
-static int Sound_RunEntityBankLoad(void *sequence, int index) {
-    if (entity_bank_load_steps[entity_bank_load_step]() > 0) {
+static int Sound_RunEntityBankLoad(SoundJob *job, int index) {
+    if (entity_bank_load_steps[entity_bank_load_step](job) > 0) {
         entity_bank_load_step = 0;
         return 0;
     }
@@ -1960,7 +1960,7 @@ void Sound_PlayFalloff(int sound, int kind, int bank) {
 }
 
 /* Map bank load step: does nothing but move on. */
-s32 Sound_MapBankNoOp(void) {
+s32 Sound_MapBankNoOp(SoundJob *job) {
     map_bank_load_step += 1;
     return 0;
 }
@@ -2003,7 +2003,7 @@ int Sound_MapBankFreeSampleBuffer(SoundJob *job) {
 
 /* Map bank load step: frees the reverb slot of the last map and stores the map's reverb settings (the
    entry map_reverb_cue_indices names in map_bank_cues) for core 1. */
-int Sound_MapBankAddReverb(void) {
+int Sound_MapBankAddReverb(SoundJob *job) {
     SoundScriptState state;
     SoundCue *cue;
 
@@ -2019,7 +2019,7 @@ int Sound_MapBankAddReverb(void) {
 
 /* Map bank load step: once the upload is done, sends the map's reverb settings (SoundDriver_ApplyReverb)
    and sets map_sounds_enabled (map sounds may start); 1 (done). */
-int Sound_MapBankApplyReverb(void) {
+int Sound_MapBankApplyReverb(SoundJob *job) {
     if (SoundDriver_StepUpload() == 0) {
         return 0;
     }
@@ -2034,7 +2034,7 @@ int Sound_MapBankApplyReverb(void) {
 
 /* Map bank load step: the first time after Sound_Init sets map_reverb_set and moves on to the reverb steps;
    after that sets map_sounds_enabled (map sounds may start) and ends the load (1), so the reverb stays. */
-int Sound_MapBankFinishUnlessFirst(void) {
+int Sound_MapBankFinishUnlessFirst(SoundJob *job) {
     map_bank_load_step += 1;
     D_004468B4 = 0;
     if (map_reverb_set != 0) {
@@ -2046,8 +2046,8 @@ int Sound_MapBankFinishUnlessFirst(void) {
 }
 
 /* Runs the current step of the map bank load (map_bank_load_steps); 0 when it reports done, else 1. */
-static int Sound_RunMapBankLoad(void *sequence, int kind) {
-    if (map_bank_load_steps[map_bank_load_step]() > 0) {
+static int Sound_RunMapBankLoad(SoundJob *job, int kind) {
+    if (map_bank_load_steps[map_bank_load_step](job) > 0) {
         map_bank_load_step = 0;
         return 0;
     }

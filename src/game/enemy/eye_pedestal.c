@@ -15,7 +15,6 @@ int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
-// match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPoint(void *, int, int, int, int, float);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);

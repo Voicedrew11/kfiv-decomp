@@ -998,8 +998,8 @@ s32 Motion_StepModelBlended(ModelInstance *model, s32 step, s32 backwards, f32 w
 }
 
 /* Eases every part toward the pose between the motion keys around the channel's frame, then counts the blend
-   frames down. */
-void Motion_BlendToPose(ModelInstance *model, f32 weight) {
+   frames down; returns the frames left. */
+s32 Motion_BlendToPose(ModelInstance *model, f32 weight) {
     Vector4 *point0 = &MOTION_SCRATCH[0];
     Vector4 *point1 = &MOTION_SCRATCH[1];
     Vector4 *tangent0 = &MOTION_SCRATCH[2];
@@ -1117,7 +1117,7 @@ void Motion_BlendToPose(ModelInstance *model, f32 weight) {
             }
         }
     }
-    channel->blend_left--;
+    return --channel->blend_left;
 }
 
 /* Poses every part between the first keys of two motions: ratio 0 gives the first motion's, 1 the second's.

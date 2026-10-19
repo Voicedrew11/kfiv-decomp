@@ -327,7 +327,7 @@ void MapViewer_DrawPictureMap(void) {
     GsDraw_QueueTexFlush();
     GsDraw_QueueFlush();
     GsDraw_QueueTexturedSprite(&viewer_picture_rect);
-    found = ((int (*)(int *, int *))entry->locate_player_fn)(&x, &y);
+    found = entry->locate_player_fn(&x, &y);
     if (found == 1) {
         Packet_BeginGsRegisters();
         Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);

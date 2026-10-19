@@ -47,7 +47,6 @@ s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 s32 EntityAi_CheckMeleeHitAt(Entity *, void *, s32, s32, s32, f32);
 void EntityAi_SetAttackDelay(Entity *, s32);
 s32 Motion_Step(Entity *, s32);
-// match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_AnimationFrameCount(Entity *, s32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);

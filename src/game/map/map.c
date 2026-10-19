@@ -100,7 +100,7 @@ void GsDraw_QueueTexturedSprite(void *);
 void TextureTable_QueueAll(TextureTableHeader *);
 void Model_DrawPosed(ModelInstance *);
 void GsDraw_SetDrawTarget(s64, s64, s64);
-void GsDraw_FillScreen(int, int, int, int, int);
+void GsDraw_FillScreen(int, int, int, int, s64);
 u32 *Packet_Alloc(int);
 void Packet_AppendToChain(u32 *, u32 *);
 void Vu0_LoadMatrix(void *);

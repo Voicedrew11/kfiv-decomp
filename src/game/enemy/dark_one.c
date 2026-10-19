@@ -116,9 +116,8 @@ static void DarkOne_Think(Entity *entity, s32 unknown) {
         }
         if (ai_state->step_index != dark_one_hits_left) {
             EntityEvent_StartCue(entity, entity->params->near_distance, entity->params->far_distance, 0);
-            // match: an int result keeps $2 busy after the call
-            ((int (*)(s32, s32, f32 *, f32))Sound_PlayMapAtRange)((u8)entity->params->type_param_0, (u8)entity->params->type_param_1,
-                                                           entity->model->position, entity->params->sound_id);
+            Sound_PlayMapAtRange((u8)entity->params->type_param_0, (u8)entity->params->type_param_1, entity->model->position,
+                                 entity->params->sound_id);
             ai_state->step_index = dark_one_hits_left;
         }
     }

@@ -13,10 +13,10 @@ void MapViewer_RunKingsMap();
 
 /* 0x38D6B0 one entry per viewer, indexed by picked_viewer */
 ViewerEntry viewer_entries[5] = {
-    { MapViewer_RunPictureMap, (int)MapViewer_LocateOnCaretakersMap, 2 },
-    { MapViewer_RunPictureMap, (int)MapViewer_LocateOnZastarisMap, 3 },
-    { MapViewer_RunPictureMap, (int)MapViewer_LocateOnEarthFolksMap, 1 },
-    { MapViewer_RunPictureMap, (int)MapViewer_LocateOnWiddasMap, 1 },
+    { MapViewer_RunPictureMap, MapViewer_LocateOnCaretakersMap, 2 },
+    { MapViewer_RunPictureMap, MapViewer_LocateOnZastarisMap, 3 },
+    { MapViewer_RunPictureMap, MapViewer_LocateOnEarthFolksMap, 1 },
+    { MapViewer_RunPictureMap, MapViewer_LocateOnWiddasMap, 1 },
     { MapViewer_RunKingsMap, 0, 0 },
 };
 

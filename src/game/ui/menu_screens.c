@@ -696,9 +696,9 @@ static void Menu_DrawBackdropPlain(void);
 static void Menu_DrawBackdropItemSelParts(void);
 static void Menu_DrawBackdropPreshopParts(void);
 static int Menu_RunStep(void);
-static s32 Menu_Start(void);
-static s32 Menu_RunHandler(void);
-static s32 Menu_CutModelChain(void);
+static s32 Menu_Start(char *context);
+static s32 Menu_RunHandler(char *context);
+static s32 Menu_CutModelChain(char *context);
 static void Menu_OpenMain(void);
 static void Menu_UpdateMain(HandlerContext *context);
 static void Menu_OpenChosenScreen(HandlerContext *context);
@@ -2303,8 +2303,8 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
 }
 
 extern char equip_screen_name[8];
-/* the steps of a menu's start, run by Menu_RunStep until one gives 0 */
-static int (*const menu_steps[4])(void) = {
+/* the steps of a menu's start, run by Menu_RunStep until one gives 0; each is handed D_005CE0E0 */
+static int (*const menu_steps[4])(char *context) = {
     Menu_Start,
     Menu_RunHandler,
     Menu_CutModelChain,
@@ -2811,7 +2811,7 @@ static int Menu_RunStep(void) {
     int (*step)(char *);
 
     Menu_StepModelLoads(0);
-    step = (int (*)(char *))menu_steps[menu_step]; // match: the steps take nothing, yet D_005CE0E0 is passed
+    step = menu_steps[menu_step];
     if (step != NULL) {
         return step(D_005CE0E0);
     }
@@ -2819,7 +2819,7 @@ static int Menu_RunStep(void) {
 }
 
 /* Start-up step of a menu screen: loads its textures and blocks, then picks the handler for the screen menu_mode names. */
-static s32 Menu_Start(void) {
+static s32 Menu_Start(char *context) {
     s32 i = 0;
     u32 *packet;
     LoadedBlockRef *block;
@@ -2896,15 +2896,15 @@ static s32 Menu_Start(void) {
     return TRUE;
 }
 
-/* Runs the current screen handler and reports that it ran. */
-static s32 Menu_RunHandler(void) {
-    ((void (*)(void))menu_screen_handler)();
+/* Runs the current screen handler, handing it the step's context, and reports that it ran. */
+static s32 Menu_RunHandler(char *context) {
+    ((void (*)(char *))menu_screen_handler)(context);
     return TRUE;
 }
 
 /* Last step of a menu: in the game's menu waits for the model load in progress with the chain cut behind it, then
    takes the lists' cursors back as they were, closes the load's file and ends the menu (step 0, returns FALSE). */
-static s32 Menu_CutModelChain(void) {
+static s32 Menu_CutModelChain(char *context) {
     LinkNode *node;
 
     switch (menu_mode) {
