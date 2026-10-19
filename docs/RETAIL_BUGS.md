@@ -614,7 +614,7 @@ just opened it fills the alphas from the other list:
 if (D_004472C7 == 1) {
     RESET_ALPHAS(D_00447240, D_00446A44);
 }
-DRAW_PARTS(D_00447268, D_00446A7C, D_00446E1C);
+DRAW_PARTS(D_00447268, D_00446A7C, menu_number_54);
 ```
 
 The case for groups 2 to 6 uses `D_00447240` for both.

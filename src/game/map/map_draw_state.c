@@ -8,7 +8,7 @@ u32 haze_layer_distances[8] = { 0x800, 0x600, 0x400, 0, 0, 0, 0, 0 };
 int haze_layer_depths[8] = { 0 };
 
 /* 0x38A198 six words the game's code never refers to */
-int D_0038A198[6] = { 0x20, 0x18, 0x10, 0x8, 0x4, 0 };
+int haze_unused_words[6] = { 0x20, 0x18, 0x10, 0x8, 0x4, 0 };
 
 /* 0x38A1B0 the map draw state (MapDrawState): this unit's objects from here on are its fields */
 MapDrawStateMirror map_draw_state = { 0 };
@@ -24,7 +24,7 @@ MapLightBlockHalf current_light_block = { { 0 } };
 MapLightBlockHalf current_map_light_colors = { { 0 } };     /* its second half: the colours of the lights */
 
 /* 0x38A2F0 MapDrawState.pad140 */
-u8 D_0038A2F0[0x140] = { 0 };
+u8 map_draw_state_pad_140[0x140] = { 0 };
 
 /* 0x38A430 MapDrawState.current_fog_color: the current map's fog colour */
 MapFogColor current_map_fog_color = { 0 };

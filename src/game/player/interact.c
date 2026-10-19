@@ -34,8 +34,8 @@ extern s32 map_object_counts[2];
 extern int current_map_slot;
 extern ItemNode *lying_items;
 extern ItemNode *pickup_item;
-extern f32 D_00446A08[];
-extern float D_00446A0C[];
+extern f32 view_ray_no_hit_distance[];
+extern float interact_out_of_range_distance[];
 
 /* Keep last frame's view ray, then rebuild it: from the player's eyes (or the camera, in a cutscene) along the
    direction looked in. */
@@ -101,7 +101,7 @@ void Interact_FindTarget(void) {
 
     Timer_GetTicks();
     Interact_UpdateViewRay();
-    nearest = view_ray_status.target_distance = view_ray_status.view_distance = D_00446A08[0];
+    nearest = view_ray_status.target_distance = view_ray_status.view_distance = view_ray_no_hit_distance[0];
     view_ray_status.facing_entity = NULL;
     view_ray_status.current = NULL;
     view_ray_status.facing_item = NULL;
@@ -249,7 +249,7 @@ void Interact_FindTarget(void) {
         view_ray_status.current = NULL;
         view_ray_status.facing_item = node;
     }
-    if (view_ray_status.view_distance == D_00446A08[0]) {
+    if (view_ray_status.view_distance == view_ray_no_hit_distance[0]) {
         view_ray_status.view_distance = 2000.0f;
     }
     if (player_state.death_timer == 0) {
@@ -298,7 +298,7 @@ void Interact_OffsetViewRay(f32 *offset) {
     Vector_Add(view_ray_status.prev_view_origin, view_ray_status.prev_view_origin, offset);
 }
 
-/* Distance from pos to target if within radius on every axis and overall, else D_00446A0C. */
+/* Distance from pos to target if within radius on every axis and overall, else interact_out_of_range_distance. */
 float Interact_GetDistanceWithin(float radius, float *pos, float *target) {
     float diff[4];
     float dist;
@@ -306,12 +306,12 @@ float Interact_GetDistanceWithin(float radius, float *pos, float *target) {
     if (pos[0] < target[0] - radius || target[0] + radius < pos[0]
         || pos[1] < target[1] - radius || target[1] + radius < pos[1]
         || pos[2] < target[2] - radius || target[2] + radius < pos[2]) {
-        return D_00446A0C[0];
+        return interact_out_of_range_distance[0];
     }
     Vector_Subtract(diff, pos, target);
     dist = sqrtf(diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2]);
     if (dist <= radius) {
         return dist;
     }
-    return D_00446A0C[0];
+    return interact_out_of_range_distance[0];
 }

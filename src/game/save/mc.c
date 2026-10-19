@@ -14,7 +14,7 @@ int sceClose(int);
 /* The module's .bss: a work area and the file state, packed at four bytes. */
 #define MC_4BYTE __attribute__((section(".bss"), aligned(4)))
 
-static u8 D_01E10000[0x3F240];      /* 0x1E10000 a zeroed work area no code of this unit names */
+static u8 mc_work_area[0x3F240];      /* 0x1E10000 a zeroed work area no code of this unit names */
 static int mc_file_size MC_4BYTE;      /* 0x1E4F240 size of the file being written (McFileProgress.total_size) */
 static u32 mc_file_offset MC_4BYTE;      /* 0x1E4F244 bytes of it written so far (McFileProgress.offset) */
 static int mc_file_chunk_size MC_4BYTE;      /* 0x1E4F248 bytes to hand to sceMcWrite each step (McFileProgress.chunk_size) */

@@ -23,7 +23,7 @@ void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
 extern u32 frame_counter;
 // match: the size is unknown; a complete small type would be read through $gp
-extern f32 D_00446830[];
+extern f32 dark_sorcerer_no_floor_height[];
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(void *);
 void EntityAi_StepState(void *);
@@ -172,7 +172,7 @@ static void DarkSorcerer_Think(Entity *entity, s32 unknown) {
     }
     if ((s32)(entity->flags >> 28) & 1) {
         height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
-        if (height != D_00446830[0]) {
+        if (height != dark_sorcerer_no_floor_height[0]) {
             if (!((f32)entity->params->type_param_1 < height)) {
                 if (height < (f32)entity->params->type_param_2) {
                     ai_state->step_index = 0;

@@ -296,7 +296,7 @@ extern char menu_first_draw_env2[];
 extern char menu_second_draw_env[];           /* inside menu_frame_buffers: the second buffer's draw environments */
 extern char menu_second_draw_env2[];
 extern s32 menu_frame_ticks;
-extern u8 D_00447208;
+extern u8 menu_l2_cycle_step;
 void Menu_DrawBrightness(s32);
 int Timer_GetTicks(void);
 int Timer_Restart(void); // match: an int result keeps $2 clear of the pad test after the call
@@ -312,7 +312,7 @@ extern ColorBytes backdrop_shade_color[]; // match: the initialiser of the local
 int Menu_SetBlendMode(u8);
 void MenuSprite_DrawPlain(int owner, int index, int param);
 extern s32 menu_step;
-extern char D_005CE0E0[];
+extern char menu_step_context[];
 extern u8 brightness_option[];
 extern LoadedBlockRef menu_file_blocks[];
 extern void *menu_screen_handler;
@@ -346,12 +346,12 @@ s32 Sound_PlayMenu(s32);
 int Menu_OwnsAnyItem(void);
 int Menu_KnowsCastableSpell(void);
 void MenuSprite_Draw(int, int, int, int);
-extern u8 D_00446B39;
+extern u8 menu_blink_step;
 extern GameStatus game_status;
 extern f32 use_item_model_position[4];
 extern f32 use_item_model_angle;              /* the shown item model's turn about y */
 extern s32 use_item_frames;
-extern s32 D_00446DF4;
+extern s32 menu_number_44;
 extern s8 use_item_state;               /* 0: fading in, 1: open, 2 to 4: waiting for the models, 5 to 7: fading out */
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
@@ -365,7 +365,7 @@ static inline f32 wrap_angle(f32 angle) {
     return angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
 }
 extern f32 cast_spell_model_position[4];
-extern s32 D_00446DF8;
+extern s32 menu_number_45;
 extern s8 cast_spell_state;               /* 0: fading in, 1: open, 2: waiting for the models, 3: fading out */
 int MenuText_SetGlyphSize(GsPackedWord);
 s32 MenuText_DrawLine(u16 *text, s32 limit);
@@ -376,27 +376,27 @@ extern f32 equip_item_model_position[4];
 extern f32 equip_weapon_model_position[4];
 extern void (*pool_slot_drawers[])(PoolSlot *, ColorBytes);
 extern PoolSlot pool_slots[32];
-extern s32 D_00446ACC;
+extern s32 equip_weapon_draw_index;
 extern u8 detail_panel_open; // match: a byte here; ui/trade.c reads and writes it as a word
 extern u8 equipped_list_open;
 extern s8 detail_panel_sound_pending;
 extern f32 equip_item_model_angle;
 extern f32 equip_weapon_model_angle;
 extern u32 equip_weapon_motion_frame;
-extern s32 D_00446DFC;
-extern s32 D_00446E00;
-extern s32 D_00446E04;
-extern s32 D_00446E08;
-extern s32 D_00446E0C;
-extern s32 D_00446E10;
-extern s32 D_00446E14;
-extern s32 D_00446E18;
-extern s32 D_00446E1C;
-extern s32 D_00446E20;
-extern s32 D_00446E24;
-extern s32 D_00446E28;
-extern s32 D_00446E30;
-extern MenuFreeNode D_004472B8;
+extern s32 menu_number_46;
+extern s32 menu_number_47;
+extern s32 menu_number_48;
+extern s32 menu_number_49;
+extern s32 menu_number_50;
+extern s32 menu_number_51;
+extern s32 menu_number_52;
+extern s32 menu_number_53;
+extern s32 menu_number_54;
+extern s32 menu_number_70;
+extern s32 menu_number_71;
+extern s32 menu_number_72;
+extern s32 menu_number_74;
+extern MenuFreeNode equip_weapon_pool_node;
 extern s8 equip_state;
 extern s8 equip_panel_state;
 // match: equip_panel_state is the second byte of what the symbol list has as one two-byte object. It has to be a variable of
@@ -477,7 +477,7 @@ static inline s32 GetPageTextOffset(s32 table, s32 number) {
 }
 extern f32 visible_item_model_position[4];
 extern f32 visible_item_model_angle;              /* the turning model's angle */
-extern s32 D_00446E2C;
+extern s32 menu_number_73;
 extern MenuItem *visible_bar_top;
 extern MenuItem *visible_bar_cursor;
 extern MenuItem *visible_names_top;
@@ -564,26 +564,26 @@ s32 SaveCard_IsChecking(void);
 s8 SaveCard_IsPresent(s32);
 extern u8 save_image[];
 extern s8 save_list_leave_steps;
-extern s32 D_00446E34;
-extern s32 D_00446E38;
-extern s32 D_00446E3C;
-extern s32 D_00446E40;
-extern s32 D_00446E44;
-extern s32 D_00446E48;
-extern s32 D_00446E4C;
-extern s32 D_00446E50;
-extern s32 D_00446E54;
-extern s32 D_00446E58;
-extern s32 D_00446E5C;
-extern s32 D_00446E60;
-extern s32 D_00446E64;
-extern s32 D_00446E68;
-extern s32 D_00446E6C;
-extern s32 D_00446E70;
-extern s32 D_00446E74;
-extern s32 D_00446E78;
-extern s32 D_00446E7C;
-extern s32 D_00446E80;
+extern s32 menu_number_75;
+extern s32 menu_number_76;
+extern s32 menu_number_77;
+extern s32 menu_number_78;
+extern s32 menu_number_79;
+extern s32 menu_number_80;
+extern s32 menu_number_81;
+extern s32 menu_number_82;
+extern s32 menu_number_83;
+extern s32 menu_number_84;
+extern s32 menu_number_85;
+extern s32 menu_number_86;
+extern s32 menu_number_87;
+extern s32 menu_number_88;
+extern s32 menu_number_89;
+extern s32 menu_number_90;
+extern s32 menu_number_91;
+extern s32 menu_number_92;
+extern s32 menu_number_93;
+extern s32 menu_number_94;
 s32 SaveCard_Init(void);
 s32 SaveCard_StartLoad(s32, s32, s32 *, s32);
 s32 SaveCard_HasCard(s32);
@@ -2303,7 +2303,7 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
 }
 
 extern char equip_screen_name[8];
-/* the steps of a menu's start, run by Menu_RunStep until one gives 0; each is handed D_005CE0E0 */
+/* the steps of a menu's start, run by Menu_RunStep until one gives 0; each is handed menu_step_context */
 static int (*const menu_steps[4])(char *context) = {
     Menu_Start,
     Menu_RunHandler,
@@ -2711,9 +2711,9 @@ s32 Menu_EndFrame(s32 run_handler) {
     even_field = sceGsSyncV(0) == 0;
     Timer_Restart();
     if (menu_buttons & PAD_L2) {
-        D_00447208++;
+        menu_l2_cycle_step++;
     }
-    D_00447208 %= 3;
+    menu_l2_cycle_step %= 3;
     sceGsSetHalfOffset(context1_buffer_half != 0 ? menu_second_draw_env : (char *)menu_first_draw_env, 0x800, 0x800, even_field);
     sceGsSetHalfOffset2(context1_buffer_half != 0 ? menu_second_draw_env2 : menu_first_draw_env2, 0x800, 0x800, even_field);
     FlushCache(0);
@@ -2813,7 +2813,7 @@ static int Menu_RunStep(void) {
     Menu_StepModelLoads(0);
     step = menu_steps[menu_step];
     if (step != NULL) {
-        return step(D_005CE0E0);
+        return step(menu_step_context);
     }
     return 1;
 }
@@ -3082,9 +3082,9 @@ static void Menu_OpenChosenScreen(HandlerContext *context) {
     pulse_value_falling = 0;
 }
 
-/* Steps the counter D_00446B39 round 0 to 6. Nothing calls it, and nothing else touches the counter. */
+/* Steps the counter menu_blink_step round 0 to 6. Nothing calls it, and nothing else touches the counter. */
 static void Menu_StepBlink(void) {
-    D_00446B39 = (s8)(D_00446B39 + 1) % 7;
+    menu_blink_step = (s8)(menu_blink_step + 1) % 7;
 }
 
 /* Takes item out of its ring and links it in right after the item `after`. Nothing calls it. */
@@ -3148,9 +3148,9 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         Menu_MoveItemListCursor(context, menu_input_enabled == 0);
     }
     if (item_list_cursor[0] != NULL) {
-        D_00446DF4 = item_counts[item_list_cursor[0]->item_number];
+        menu_number_44 = item_counts[item_list_cursor[0]->item_number];
     } else {
-        D_00446DF4 = 0;
+        menu_number_44 = 0;
     }
     for (i = 0; i < item_part_count; i++) {
         kind = item_parts[i].handler_index;
@@ -3359,8 +3359,8 @@ static void Menu_UpdateCastSpell(s32 context) {
     i = 0;
     number = castable_spell_cursor[0]->item_number; /* the selected magic's number */
     page = (number - 1) / 15;
-    D_00446DF4 = fx_table[number].mp_cost;
-    D_00446DF8 = (number - 1) % 3 + 1;
+    menu_number_44 = fx_table[number].mp_cost;
+    menu_number_45 = (number - 1) % 3 + 1;
     for (; i < magic_part_count; i++) {
         kind = magic_parts[i].handler_index;
         Menu_SetBlendMode(magic_parts[i].blend_mode);
@@ -3523,7 +3523,7 @@ static const VuVector4 equip_model_offset_high = { 55.0f, 60.0f, 400.0f, 0.0f };
 /* per MenuItem.group, the glyph that names the group */
 static const EquipGroupBytes equip_group_glyphs = { { 0x5B, 0x5C, 0x5D, 0x5E, 0x5F, 0x60, 0x61, 0x63, 0x62, 0x64, 0x65 } };
 /* a byte per MenuItem.group (for groups 0 to 6 the values slot_pool_groups has); copied to a local and never read */
-static const EquipGroupBytes D_0043FDD0 = { { 4, -1, 5, 2, 1, 3, 0, -1, -1, -1, -1 } };
+static const EquipGroupBytes equip_group_slot_bytes = { { 4, -1, 5, 2, 1, 3, 0, -1, -1, -1, -1 } };
 
 /* The Equip screen (main menu line 2): moves between the eleven lists and inside the list shown, draws the
    screen's parts, the worn weapon's model and the cursor item's model, the item's detail panel (button
@@ -3594,9 +3594,9 @@ static void Menu_UpdateEquip(void) {
     }
     index = CURRENT_ITEM->item_number - bases.first_item[CURRENT_ITEM->group];
     if (CURRENT_ITEM->group == 0) {
-        D_00446E30 = weapon_level_records[index].level_index + 1;
+        menu_number_74 = weapon_level_records[index].level_index + 1;
     } else if (CURRENT_ITEM->group == 1) {
-        D_00446E30 = (index - 1) % 3 + 1;
+        menu_number_74 = (index - 1) % 3 + 1;
     }
     for (i = 0; i < equip_part_count; i++) {
         kind = equip_parts[i].handler_index;
@@ -3639,30 +3639,30 @@ static void Menu_UpdateEquip(void) {
     equip_weapon_model_angle -= (f32)(s32)(equip_weapon_model_angle / 3.1415927f) * 6.2831855f;
     sceVu0RotMatrixY(weapon_matrix, unit, equip_weapon_model_angle);
     sceVu0TransMatrix(weapon_matrix, weapon_matrix, equip_weapon_model_position);
-    node.pool_node = &D_004472B8;
+    node.pool_node = &equip_weapon_pool_node;
     node.done = 1;
     node.unk00 = 0;
-    D_00446ACC = weapon_defs[player_state.weapon].equip_menu_motion;
+    equip_weapon_draw_index = weapon_defs[player_state.weapon].equip_menu_motion;
     if (weapon_defs[player_state.weapon].action_handler_index == 0) {
-        D_00446ACC += worn_defs[player_state.equipment[EQUIP_SHIELD]].equip_menu_motion_offset;
+        equip_weapon_draw_index += worn_defs[player_state.equipment[EQUIP_SHIELD]].equip_menu_motion_offset;
     }
-    PoolNode_Pose((RelocEntry *)equip_weapon_motions[D_00446ACC]->frames, pool_slots, weapon_matrix, equip_weapon_motion_frame);
+    PoolNode_Pose((RelocEntry *)equip_weapon_motions[equip_weapon_draw_index]->frames, pool_slots, weapon_matrix, equip_weapon_motion_frame);
     equip_weapon_motion_frame++;
-    equip_weapon_motion_frame %= equip_weapon_motions[D_00446ACC]->frame_count;
+    equip_weapon_motion_frame %= equip_weapon_motions[equip_weapon_draw_index]->frame_count;
     // match: a pointer-typed load, as in CURRENT_ITEM
-    D_00446ACC = ((PlayerItemDef *)((MenuItemList *)equipped_weapon.item)->item)->equip_menu_draw_index;
+    equip_weapon_draw_index = ((PlayerItemDef *)((MenuItemList *)equipped_weapon.item)->item)->equip_menu_draw_index;
     switch (weapon_defs[player_state.weapon].action_handler_index) {
     case 0:
-        D_00446ACC += player_state.equipment[EQUIP_SHIELD] == ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
+        equip_weapon_draw_index += player_state.equipment[EQUIP_SHIELD] == ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
         break;
     case 1:
-        D_00446ACC++;
+        equip_weapon_draw_index++;
         break;
     case 2:
-        D_00446ACC = 0;
+        equip_weapon_draw_index = 0;
         break;
     }
-    draw = pool_slot_drawers[D_00446ACC];
+    draw = pool_slot_drawers[equip_weapon_draw_index];
     scissor_packet = MenuDraw_NextPacket();
     scissor_packet[0] = 0x8001;
     scissor_packet[1] = 0x10000000;
@@ -3742,20 +3742,20 @@ static void Menu_UpdateEquip(void) {
     if (detail_panel_open != 0) {
         switch (CURRENT_ITEM->group) {
         case 0:
-            D_00446DF4 = (weapon_level_records[index].gained_values[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[0]) * weapon_level_records[index].level / 100;
-            D_00446DF8 = (weapon_level_records[index].gained_values[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[1]) * weapon_level_records[index].level / 100;
-            D_00446DFC = (weapon_level_records[index].gained_values[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[2]) * weapon_level_records[index].level / 100;
-            D_00446E00 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[3] * weapon_level_records[index].level / 100;
-            D_00446E04 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[4] * weapon_level_records[index].level / 100;
-            D_00446E08 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[5] * weapon_level_records[index].level / 100;
-            D_00446E0C = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
-            D_00446E10 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
-            D_00446E14 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
-            D_00446E1C = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
-            D_00446E20 = weapon_level_records[index].level;
-            D_00446E18 = item_name_defs[CURRENT_ITEM->item_number].weight_tenths_of_pound;
-            D_00446E24 = 100;
-            D_00446E28 = player_weapon[EQUIP_LIST->group];
+            menu_number_44 = (weapon_level_records[index].gained_values[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[0]) * weapon_level_records[index].level / 100;
+            menu_number_45 = (weapon_level_records[index].gained_values[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[1]) * weapon_level_records[index].level / 100;
+            menu_number_46 = (weapon_level_records[index].gained_values[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[2]) * weapon_level_records[index].level / 100;
+            menu_number_47 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[3] * weapon_level_records[index].level / 100;
+            menu_number_48 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[4] * weapon_level_records[index].level / 100;
+            menu_number_49 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[5] * weapon_level_records[index].level / 100;
+            menu_number_50 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
+            menu_number_51 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
+            menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
+            menu_number_54 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = weapon_level_records[index].level;
+            menu_number_53 = item_name_defs[CURRENT_ITEM->item_number].weight_tenths_of_pound;
+            menu_number_71 = 100;
+            menu_number_72 = player_weapon[EQUIP_LIST->group];
             if (equip_panel_state == 1) {
                 RESET_ALPHAS(equip_a_parts, equip_a_part_count);
             }
@@ -3774,16 +3774,16 @@ static void Menu_UpdateEquip(void) {
         case 1:
             if (fx_table[CURRENT_ITEM->item_number].item_menu_magic == 0) {
                 magic = &fx_table[index];
-                D_00446DF4 = magic->hit_checks[0].strengths.unk00[0];
-                D_00446DF8 = magic->hit_checks[0].strengths.unk00[1];
-                D_00446DFC = magic->hit_checks[0].strengths.unk00[2];
-                D_00446E00 = magic->hit_checks[0].strengths.unk00[3];
-                D_00446E04 = magic->hit_checks[0].strengths.unk00[4];
-                D_00446E08 = magic->hit_checks[0].strengths.unk00[5];
-                D_00446E0C = magic->hit_checks[0].strengths.unk00[6];
-                D_00446E10 = magic->hit_checks[0].strengths.unk00[7];
-                D_00446E14 = magic->hit_checks[0].strengths.unk00[8];
-                D_00446E1C = magic->mp_cost;
+                menu_number_44 = magic->hit_checks[0].strengths.unk00[0];
+                menu_number_45 = magic->hit_checks[0].strengths.unk00[1];
+                menu_number_46 = magic->hit_checks[0].strengths.unk00[2];
+                menu_number_47 = magic->hit_checks[0].strengths.unk00[3];
+                menu_number_48 = magic->hit_checks[0].strengths.unk00[4];
+                menu_number_49 = magic->hit_checks[0].strengths.unk00[5];
+                menu_number_50 = magic->hit_checks[0].strengths.unk00[6];
+                menu_number_51 = magic->hit_checks[0].strengths.unk00[7];
+                menu_number_52 = magic->hit_checks[0].strengths.unk00[8];
+                menu_number_54 = magic->mp_cost;
                 if (equip_panel_state == 1) {
                     RESET_ALPHAS(equip_m_parts, equip_m_part_count);
                 }
@@ -3799,7 +3799,7 @@ static void Menu_UpdateEquip(void) {
                 parts = equip_m_parts;
                 count = equip_m_part_count;
             } else {
-                D_00446E1C = fx_table[index].mp_cost;
+                menu_number_54 = fx_table[index].mp_cost;
                 if (equip_panel_state == 1) {
                     RESET_ALPHAS(equip_m2_parts, equip_m2_part_count);
                 }
@@ -3841,19 +3841,19 @@ static void Menu_UpdateEquip(void) {
         case 4:
         case 5:
         case 6:
-            D_00446DF4 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
-            D_00446DF8 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
-            D_00446DFC = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
-            D_00446E00 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
-            D_00446E04 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
-            D_00446E08 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
-            D_00446E0C = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
-            D_00446E10 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
-            D_00446E14 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            D_00446E18 = item_name_defs[CURRENT_ITEM->item_number].weight_tenths_of_pound;
-            D_00446E1C = player_weapon[EQUIP_LIST->group];
-            D_00446E20 = worn_item_level_records[index].level;
-            D_00446E24 = 100;
+            menu_number_44 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
+            menu_number_45 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
+            menu_number_46 = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
+            menu_number_47 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
+            menu_number_48 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
+            menu_number_49 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
+            menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
+            menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
+            menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
+            menu_number_53 = item_name_defs[CURRENT_ITEM->item_number].weight_tenths_of_pound;
+            menu_number_54 = player_weapon[EQUIP_LIST->group];
+            menu_number_70 = worn_item_level_records[index].level;
+            menu_number_71 = 100;
             if (index != 0 && index != 30 && index != 55 && index != 80 && index != 105) {
                 if (detail_panel_sound_pending != 0) {
                     Sound_PlayMenu(1);
@@ -3862,7 +3862,7 @@ static void Menu_UpdateEquip(void) {
                 if (equip_panel_state == 1) {
                     RESET_ALPHAS(equip_g_parts, equip_g_part_count);
                 }
-                DRAW_PARTS(equip_g_parts, equip_g_part_count, D_00446E1C);
+                DRAW_PARTS(equip_g_parts, equip_g_part_count, menu_number_54);
                 MenuText_SetColor(panel_text_color);
                 Menu_DrawEquipItemText(MSG_ITEM_TEXT_FIRST);
             }
@@ -3872,17 +3872,17 @@ static void Menu_UpdateEquip(void) {
         case 7:
         case 8:
         case 9:
-            D_00446DF4 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
-            D_00446DF8 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
-            D_00446DFC = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
-            D_00446E00 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
-            D_00446E04 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
-            D_00446E08 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
-            D_00446E0C = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
-            D_00446E10 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
-            D_00446E14 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            D_00446E18 = item_name_defs[CURRENT_ITEM->item_number].weight_tenths_of_pound;
-            D_00446E1C = player_weapon[EQUIP_LIST->group];
+            menu_number_44 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
+            menu_number_45 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
+            menu_number_46 = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
+            menu_number_47 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
+            menu_number_48 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
+            menu_number_49 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
+            menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
+            menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
+            menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
+            menu_number_53 = item_name_defs[CURRENT_ITEM->item_number].weight_tenths_of_pound;
+            menu_number_54 = player_weapon[EQUIP_LIST->group];
             if (index != 130 && index != 140 && index != 150) {
                 if (detail_panel_sound_pending != 0) {
                     Sound_PlayMenu(1);
@@ -3891,7 +3891,7 @@ static void Menu_UpdateEquip(void) {
                 if (equip_panel_state == 1) {
                     RESET_ALPHAS(equip_g_parts, equip_g_part_count); // match: the armour panel's list; the parts drawn and faded in this case are equip_g2_parts's
                 }
-                DRAW_PARTS(equip_g2_parts, equip_g2_part_count, D_00446E1C);
+                DRAW_PARTS(equip_g2_parts, equip_g2_part_count, menu_number_54);
                 MenuText_SetColor(panel_text_color);
                 Menu_DrawEquipItemText(MSG_ITEM_TEXT_FIRST);
             }
@@ -4025,7 +4025,7 @@ static void Menu_UpdateEquip(void) {
         }
     }
     if ((menu_buttons & PAD_CROSS) && equip_model_shown != 0 && menu_input_enabled != 0) {
-        EquipGroupBytes unused_bytes = D_0043FDD0;
+        EquipGroupBytes unused_bytes = equip_group_slot_bytes;
         f32 unused_pair[32];
 
         if (*equipped_item_refs[EQUIP_LIST->group] != *equip_list_refs[EQUIP_LIST->group]) {
@@ -4900,9 +4900,9 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     }
 
     record = owned_list_current[0]->item_number - bases.first_item[owned_list_current[0]->group];
-    D_00446DF4 = item_counts[owned_list_current[0]->item_number];
+    menu_number_44 = item_counts[owned_list_current[0]->item_number];
     if (owned_list_current[0]->group == 0) {
-        D_00446E30 = weapon_level_records[record].level_index + 1;
+        menu_number_74 = weapon_level_records[record].level_index + 1;
     }
     for (i = 0; i < recol_part_count; i++) {
         kind = recol_parts[i].handler_index;
@@ -5023,18 +5023,18 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         case 4:
         case 5:
         case 6:
-            D_00446DF8 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
-            D_00446E18 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
-            D_00446E24 = worn_item_level_records[record].level;
-            D_00446E28 = 100;
-            D_00446E1C = item_name_defs[owned_list_current[0]->item_number].weight_tenths_of_pound;
+            menu_number_45 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
+            menu_number_46 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
+            menu_number_47 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
+            menu_number_48 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
+            menu_number_49 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
+            menu_number_50 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
+            menu_number_51 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
+            menu_number_52 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
+            menu_number_53 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
+            menu_number_71 = worn_item_level_records[record].level;
+            menu_number_72 = 100;
+            menu_number_54 = item_name_defs[owned_list_current[0]->item_number].weight_tenths_of_pound;
             if (visible_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, recol_g_parts, recol_g_part_count)
             }
@@ -5045,16 +5045,16 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         case 7:
         case 8:
         case 9:
-            D_00446DF8 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
-            D_00446E18 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
-            D_00446E1C = item_name_defs[owned_list_current[0]->item_number].weight_tenths_of_pound;
+            menu_number_45 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
+            menu_number_46 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
+            menu_number_47 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
+            menu_number_48 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
+            menu_number_49 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
+            menu_number_50 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
+            menu_number_51 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
+            menu_number_52 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
+            menu_number_53 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
+            menu_number_54 = item_name_defs[owned_list_current[0]->item_number].weight_tenths_of_pound;
             if (visible_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, recol_g2_parts, recol_g2_part_count)
             }
@@ -5063,20 +5063,20 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             count = recol_g2_part_count;
             break;
         case 0:
-            D_00446DF8 = ScaleValue(weapon_level_records[record].gained_values[0] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[0], weapon_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(weapon_level_records[record].gained_values[1] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[1], weapon_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(weapon_level_records[record].gained_values[2] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[2], weapon_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[3], weapon_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[4], weapon_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[5], weapon_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
-            D_00446E18 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
-            D_00446E20 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
-            D_00446E24 = weapon_level_records[record].level;
-            D_00446E1C = item_name_defs[owned_list_current[0]->item_number].weight_tenths_of_pound;
-            D_00446E28 = player_weapon[owned_list_current[0]->group];
-            D_00446E2C = 100;
+            menu_number_45 = ScaleValue(weapon_level_records[record].gained_values[0] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[0], weapon_level_records[record].level, 100);
+            menu_number_46 = ScaleValue(weapon_level_records[record].gained_values[1] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[1], weapon_level_records[record].level, 100);
+            menu_number_47 = ScaleValue(weapon_level_records[record].gained_values[2] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[2], weapon_level_records[record].level, 100);
+            menu_number_48 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[3], weapon_level_records[record].level, 100);
+            menu_number_49 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[4], weapon_level_records[record].level, 100);
+            menu_number_50 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[5], weapon_level_records[record].level, 100);
+            menu_number_51 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
+            menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
+            menu_number_53 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
+            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_71 = weapon_level_records[record].level;
+            menu_number_54 = item_name_defs[owned_list_current[0]->item_number].weight_tenths_of_pound;
+            menu_number_72 = player_weapon[owned_list_current[0]->group];
+            menu_number_73 = 100;
             if (visible_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, recol_a_parts, recol_a_part_count)
             }
@@ -5867,44 +5867,44 @@ static void Menu_UpdateSaveList(void) {
     PadReport *report;
 
     info[0] = (CardSaveInfo *)SaveCard_GetSaveInfo(0);
-    D_00446DF4 = info[0]->level;
-    D_00446DF8 = info[0]->experience;
-    D_00446DFC = info[0]->gold;
-    D_00446E00 = info[0]->hp_now;
-    D_00446E04 = info[0]->hp_max;
-    D_00446E08 = info[0]->mp_now;
-    D_00446E0C = info[0]->mp_max;
-    D_00446E10 = info[0]->power_base;
-    D_00446E14 = info[0]->magic_base;
-    D_00446E18 = info[0]->play_hours;
-    D_00446E1C = info[0]->play_minutes;
-    D_00446E20 = info[0]->play_seconds;
+    menu_number_44 = info[0]->level;
+    menu_number_45 = info[0]->experience;
+    menu_number_46 = info[0]->gold;
+    menu_number_47 = info[0]->hp_now;
+    menu_number_48 = info[0]->hp_max;
+    menu_number_49 = info[0]->mp_now;
+    menu_number_50 = info[0]->mp_max;
+    menu_number_51 = info[0]->power_base;
+    menu_number_52 = info[0]->magic_base;
+    menu_number_53 = info[0]->play_hours;
+    menu_number_54 = info[0]->play_minutes;
+    menu_number_70 = info[0]->play_seconds;
     info[1] = (CardSaveInfo *)SaveCard_GetSaveInfo(1);
-    D_00446E24 = info[1]->level;
-    D_00446E28 = info[1]->experience;
-    D_00446E2C = info[1]->gold;
-    D_00446E30 = info[1]->hp_now;
-    D_00446E34 = info[1]->hp_max;
-    D_00446E38 = info[1]->mp_now;
-    D_00446E3C = info[1]->mp_max;
-    D_00446E40 = info[1]->power_base;
-    D_00446E44 = info[1]->magic_base;
-    D_00446E48 = info[1]->play_hours;
-    D_00446E4C = info[1]->play_minutes;
-    D_00446E50 = info[1]->play_seconds;
+    menu_number_71 = info[1]->level;
+    menu_number_72 = info[1]->experience;
+    menu_number_73 = info[1]->gold;
+    menu_number_74 = info[1]->hp_now;
+    menu_number_75 = info[1]->hp_max;
+    menu_number_76 = info[1]->mp_now;
+    menu_number_77 = info[1]->mp_max;
+    menu_number_78 = info[1]->power_base;
+    menu_number_79 = info[1]->magic_base;
+    menu_number_80 = info[1]->play_hours;
+    menu_number_81 = info[1]->play_minutes;
+    menu_number_82 = info[1]->play_seconds;
     info[2] = (CardSaveInfo *)SaveCard_GetSaveInfo(2);
-    D_00446E54 = info[2]->level;
-    D_00446E58 = info[2]->experience;
-    D_00446E5C = info[2]->gold;
-    D_00446E60 = info[2]->hp_now;
-    D_00446E64 = info[2]->hp_max;
-    D_00446E68 = info[2]->mp_now;
-    D_00446E6C = info[2]->mp_max;
-    D_00446E70 = info[2]->power_base;
-    D_00446E74 = info[2]->magic_base;
-    D_00446E78 = info[2]->play_hours;
-    D_00446E7C = info[2]->play_minutes;
-    D_00446E80 = info[2]->play_seconds;
+    menu_number_83 = info[2]->level;
+    menu_number_84 = info[2]->experience;
+    menu_number_85 = info[2]->gold;
+    menu_number_86 = info[2]->hp_now;
+    menu_number_87 = info[2]->hp_max;
+    menu_number_88 = info[2]->mp_now;
+    menu_number_89 = info[2]->mp_max;
+    menu_number_90 = info[2]->power_base;
+    menu_number_91 = info[2]->magic_base;
+    menu_number_92 = info[2]->play_hours;
+    menu_number_93 = info[2]->play_minutes;
+    menu_number_94 = info[2]->play_seconds;
 
     if (card_screen_state.list_step == -1) {
         for (i = 0; i < 3; i++) {
@@ -6596,9 +6596,9 @@ static void Menu_UpdateButtonConfig(void) {
         }
     }
 
-    D_00446DFC = 0;
+    menu_number_46 = 0;
     bar_drawn = FALSE;
-    D_00446E00 = 0;
+    menu_number_47 = 0;
     for (i = 0; i < keyconf_part_count; i++) {
         kind = keyconf_parts[i].handler_index;
         slot = keyconf_parts[i].slot;
@@ -6646,26 +6646,26 @@ static void Menu_UpdateButtonConfig(void) {
                 }
             }
             if (slot == button_choices_shown[button_line]) {
-                D_00446DF4 = 0x20400;
-                D_00446DF8 = 0x80FF00;
+                menu_number_44 = 0x20400;
+                menu_number_45 = 0x80FF00;
             } else if (is_shared) {
-                D_00446DF4 = 0x4020000;
-                D_00446DF8 = 0xFF800000;
-                D_00446DFC++;
+                menu_number_44 = 0x4020000;
+                menu_number_45 = 0xFF800000;
+                menu_number_46++;
             } else {
-                D_00446DF4 = 0;
-                D_00446DF8 = 0;
+                menu_number_44 = 0;
+                menu_number_45 = 0;
             }
             MenuSprite_Draw((int)&keyconf_parts[i], kind + 1000, slot, screen_part_alphas[i]);
             break;
         case 0x21:
-            if (D_00446E00 == 0) {
+            if (menu_number_47 == 0) {
                 j = i;
             }
-            D_00446E04 = button_choices_shown[D_00446E00];
+            menu_number_48 = button_choices_shown[menu_number_47];
             // match: called as returning a value, which keeps $2 out of the count's increment
-            ((int (*)(int, int, int, int))MenuSprite_Draw)((int)&(&keyconf_parts[j])[11 - D_00446E04], kind + 1000, D_00446E00, screen_part_alphas[i]);
-            D_00446E00++;
+            ((int (*)(int, int, int, int))MenuSprite_Draw)((int)&(&keyconf_parts[j])[11 - menu_number_48], kind + 1000, menu_number_47, screen_part_alphas[i]);
+            menu_number_47++;
             break;
         default:
             MenuSprite_Draw((int)&keyconf_parts[i], kind + 1000, slot, screen_part_alphas[i]);

@@ -50,14 +50,14 @@ ScreenQuad viewer_picture_rect = { .tag = 0x4007FC0665322BC0, .unk08 = 0x0000000
   .second_x = 0x9400, .second_y = 0x8E00, .second_z = 0xFFFFFFFF,
   .second_u = 0x1E00, .second_v = 0x1500 }; /* 0x38D7B0 the picture the viewer picked */
 
-ScreenQuad D_0038D7F0 = { .tag = 0x4007FC059D30ABC0, .unk08 = 0x0000000000000060, .prim = 0x156,
+ScreenQuad viewer_arrow_rect_1 = { .tag = 0x4007FC059D30ABC0, .unk08 = 0x0000000000000060, .prim = 0x156,
   .red = 64, .green = 64, .blue = 64, .alpha = 128,
   .first_x = 0x6D00, .first_y = 0x8900, .first_z = 0xFFFFFFFF,
   .first_u = 0, .first_v = 0,
   .second_x = 0x7500, .second_y = 0x8D00, .second_z = 0xFFFFFFFF,
   .second_u = 0x800, .second_v = 0x400 }; /* 0x38D7F0 one of the picture's arrow rectangles */
 
-ScreenQuad D_0038D830 = { .tag = 0x4007FC059D30ABC0, .unk08 = 0x0000000000000060, .prim = 0x156,
+ScreenQuad viewer_arrow_rect_2 = { .tag = 0x4007FC059D30ABC0, .unk08 = 0x0000000000000060, .prim = 0x156,
   .red = 64, .green = 64, .blue = 64, .alpha = 128,
   .first_x = 0x7000, .first_y = 0x8900, .first_z = 0xFFFFFFFF,
   .first_u = 0, .first_v = 0,

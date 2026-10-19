@@ -82,7 +82,7 @@ typedef u32 u_long128 __attribute__((mode(TI)));
         "sqc2 $vf19, 0x30(%1)\n"                                                                   \
         : : "r"(from), "r"(to))
 /* the largest float: a vertex's distance before it has been measured.
-   match: written as a literal, the compiler keeps it in .sdata (D_0044675C) */
+   match: written as a literal, the compiler keeps it in .sdata (largest_float_not_measured) */
 #define NOT_MEASURED 3.4028235e38f
 void Model_DrawSkinned(ModelInstance *);
 // match: the asm label is part of the register order, see Model_GetSkinnedBonePoint above

@@ -53,7 +53,7 @@ typedef struct {
 } KFDirHeader;
 
 extern int file_layer_locked;   /* file layer locked */
-extern int D_00447000[2];       /* [1] the KF4.DAT header, [2] its entries, [3] the fade direction (core/game.c); 8 bytes keeps it $gp-relative */
+extern int kf4_directory_words[2];       /* [1] the KF4.DAT header, [2] its entries, [3] the fade direction (core/game.c); 8 bytes keeps it $gp-relative */
 extern KFFile file_slots[2];
 extern char archive_toc[];       /* the KF4.DAT table of contents */
 

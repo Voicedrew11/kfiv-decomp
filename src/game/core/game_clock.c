@@ -2,12 +2,12 @@
    day. Nothing calls either function. */
 #include "core/game.h"
 
-extern ClockControl D_00432820;
+extern ClockControl game_clock_control;
 extern u32 frame_counter;              /* the frame counter */
-extern int D_00446EF0;
+extern int game_clock_speed_flags;
 
 GameClock game_clock = { 0 };       /* 0x431CE8 the game clock */
-u32 D_00431CF8[0x13E] = { 0 };      /* 0x431CF8 zero fill up to the map slot memory */
+u32 game_clock_tail_pad[0x13E] = { 0 };      /* 0x431CF8 zero fill up to the map slot memory */
 
 /* The game clock's tick count. */
 static inline u32 Clock_GetTicks(void) {
@@ -16,23 +16,23 @@ static inline u32 Clock_GetTicks(void) {
     return clock->ticks;
 }
 
-/* Advances the game clock by a tick unless D_00432820 stops it (with its flag 0x200, only on every fourth
-   frame), and by 59 more while bit 0x400 of D_00446EF0 is set. */
+/* Advances the game clock by a tick unless game_clock_control stops it (with its flag 0x200, only on every fourth
+   frame), and by 59 more while bit 0x400 of game_clock_speed_flags is set. */
 static void GameClock_Tick(void) {
     GameClock *clock;
 
-    if (D_00432820.clock_stopped == 0) {
-        if (D_00432820.flags & 0x200) {
-            if (D_00432820.tick_held == 0 && (frame_counter & 3) == 0) {
+    if (game_clock_control.clock_stopped == 0) {
+        if (game_clock_control.flags & 0x200) {
+            if (game_clock_control.tick_held == 0 && (frame_counter & 3) == 0) {
                 clock = &game_clock;
                 clock->ticks += 1;
             }
-        } else if (D_00432820.tick_held == 0) {
+        } else if (game_clock_control.tick_held == 0) {
             clock = &game_clock;
             clock->ticks += 1;
         }
     }
-    if (D_00446EF0 & 0x400) {
+    if (game_clock_speed_flags & 0x400) {
         clock = &game_clock;
         clock->ticks += 0x3B;
     }

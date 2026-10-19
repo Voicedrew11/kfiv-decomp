@@ -5,9 +5,9 @@ int sceCdInit(int);
 int sceCdMmode(int);
 
 // match: core/file.h declares these, so a plain definition would go to COMMON
-static u8 D_004475C8[0x38] __attribute__((section(".bss"))) = { 0 }; /* 0x4475C8 */
+static u8 file_slots_lead_pad[0x38] __attribute__((section(".bss"))) = { 0 }; /* 0x4475C8 */
 KFFile file_slots[2] __attribute__((section(".bss"))) = { 0 };       /* 0x447600 the two file slots */
-static u8 D_00447658[0x28] __attribute__((section(".bss"))) = { 0 }; /* 0x447658 */
+static u8 file_slots_tail_pad[0x28] __attribute__((section(".bss"))) = { 0 }; /* 0x447658 */
 char archive_toc[0x20000] __attribute__((section(".bss"))) = { 0 };   /* 0x447680 the KF4.DAT table of contents, read whole */
 
 /* Starts the disc drive in DVD mode. */
@@ -22,11 +22,11 @@ void File_LoadArchiveToc(void) {
     int file;
 
     memset(file_slots, 0, sizeof(file_slots));
-    D_00447000[1] = (int)archive_toc;
-    D_00447000[2] = (int)(archive_toc + 0x40);
+    kf4_directory_words[1] = (int)archive_toc;
+    kf4_directory_words[2] = (int)(archive_toc + 0x40);
     file = File_Open("KF4.DAT", 0, 0);
     File_Read(file, archive_toc, 0x20000);
-    ((KFDirHeader *)D_00447000[1])->lsn = file_slots[file].start;
+    ((KFDirHeader *)kf4_directory_words[1])->lsn = file_slots[file].start;
     File_Close(file);
 }
 
@@ -84,18 +84,18 @@ int KF_File_Open(char *name, int nowait, int pack, int unused) {
                 *cursor = '/';
             }
         }
-        entry = (KFDirEntry *)D_00447000[2];
-        for (i = 0; i < ((KFDirHeader *)D_00447000[1])->count; i++, entry++) {
+        entry = (KFDirEntry *)kf4_directory_words[2];
+        for (i = 0; i < ((KFDirHeader *)kf4_directory_words[1])->count; i++, entry++) {
             if (strcasecmp(path, entry->name) == 0) {
                 break;
             }
         }
-        if (i >= ((KFDirHeader *)D_00447000[1])->count) {
+        if (i >= ((KFDirHeader *)kf4_directory_words[1])->count) {
             return -1;
         }
         opened->nowait = nowait;
         opened->active = 1;
-        opened->start = opened->cur = ((KFDirHeader *)D_00447000[1])->lsn + (entry->offset >> 11);
+        opened->start = opened->cur = ((KFDirHeader *)kf4_directory_words[1])->lsn + (entry->offset >> 11);
         opened->size = opened->remain = entry->size;
     } else {
         strcpy(path, "\\DATA\\");

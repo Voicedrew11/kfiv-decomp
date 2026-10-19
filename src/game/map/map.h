@@ -457,7 +457,7 @@ typedef struct MapActor {
     s8 step;                        /* 0x04 0: fading in, 1: lying there, 2: fading out */
     u8 fade_timer;                  /* 0x05 frames left of the fade */
     char pad06[0x02];
-    f32 unk08;                      /* 0x08 D_004469DC when it was dropped */
+    f32 unk08;                      /* 0x08 gold_drop_unmeasured_distance when it was dropped */
     u32 serial;                     /* 0x0C the slot's count of drops when it was dropped: the lowest is the oldest */
     ModelInstance *body;            /* 0x10 */
     f32 position_y;                 /* 0x14 the y position */

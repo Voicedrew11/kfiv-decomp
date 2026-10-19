@@ -23,7 +23,7 @@ void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
 extern u32 frame_counter;
 // match: the size is unknown; a complete small type would be read through $gp
-extern f32 D_00446834[];
+extern f32 dark_puppet_no_floor_height[];
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(void *);
 void EntityAi_StepState(void *);
@@ -176,7 +176,7 @@ static void DarkPuppet_Think(Entity *entity, s32 unknown) {
     }
     if ((s32)(entity->flags >> 28) & 1) {
         height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
-        if (height != D_00446834[0]) {
+        if (height != dark_puppet_no_floor_height[0]) {
             if ((f32)entity->params->type_param_1 < height) {
                 ai_state->step_index = 1;
             } else if (height < (f32)entity->params->type_param_2) {

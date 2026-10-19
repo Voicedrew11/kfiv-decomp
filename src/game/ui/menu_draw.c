@@ -40,42 +40,42 @@ extern u64 *menu_font_page_tex0[];  /* where the TEX0 of each font page is kept 
 extern PlayerState player_state;
 extern ClockTime wall_clock_time;
 extern ClockTime current_play_time;
-extern s32 D_00446DF4;              /* numbers 44 to 54: set by the screen that shows them */
-extern s32 D_00446DF8;
-extern s32 D_00446DFC;
-extern s32 D_00446E00;
-extern s32 D_00446E04;
-extern s32 D_00446E08;
-extern s32 D_00446E0C;
-extern s32 D_00446E10;
-extern s32 D_00446E14;
-extern s32 D_00446E18;
-extern s32 D_00446E1C;
-extern s32 D_00446E20;              /* numbers 70 to 94, likewise */
-extern s32 D_00446E24;
-extern s32 D_00446E28;              /* number 72; the weapon MenuSprite_TintWeaponStat compares with */
-extern s32 D_00446E2C;
-extern s32 D_00446E30;
-extern s32 D_00446E34;
-extern s32 D_00446E38;
-extern s32 D_00446E3C;
-extern s32 D_00446E40;
-extern s32 D_00446E44;
-extern s32 D_00446E48;
-extern s32 D_00446E4C;
-extern s32 D_00446E50;
-extern s32 D_00446E54;
-extern s32 D_00446E58;
-extern s32 D_00446E5C;
-extern s32 D_00446E60;
-extern s32 D_00446E64;
-extern s32 D_00446E68;
-extern s32 D_00446E6C;
-extern s32 D_00446E70;
-extern s32 D_00446E74;
-extern s32 D_00446E78;
-extern s32 D_00446E7C;
-extern s32 D_00446E80;
+extern s32 menu_number_44;              /* numbers 44 to 54: set by the screen that shows them */
+extern s32 menu_number_45;
+extern s32 menu_number_46;
+extern s32 menu_number_47;
+extern s32 menu_number_48;
+extern s32 menu_number_49;
+extern s32 menu_number_50;
+extern s32 menu_number_51;
+extern s32 menu_number_52;
+extern s32 menu_number_53;
+extern s32 menu_number_54;
+extern s32 menu_number_70;              /* numbers 70 to 94, likewise */
+extern s32 menu_number_71;
+extern s32 menu_number_72;              /* number 72; the weapon MenuSprite_TintWeaponStat compares with */
+extern s32 menu_number_73;
+extern s32 menu_number_74;
+extern s32 menu_number_75;
+extern s32 menu_number_76;
+extern s32 menu_number_77;
+extern s32 menu_number_78;
+extern s32 menu_number_79;
+extern s32 menu_number_80;
+extern s32 menu_number_81;
+extern s32 menu_number_82;
+extern s32 menu_number_83;
+extern s32 menu_number_84;
+extern s32 menu_number_85;
+extern s32 menu_number_86;
+extern s32 menu_number_87;
+extern s32 menu_number_88;
+extern s32 menu_number_89;
+extern s32 menu_number_90;
+extern s32 menu_number_91;
+extern s32 menu_number_92;
+extern s32 menu_number_93;
+extern s32 menu_number_94;
 extern int menu_file_block_count;              /* how many */
 extern u16 menu_buttons;              /* this frame's buttons, as the menus read them (MenuPad_Update) */
 
@@ -93,7 +93,7 @@ extern FxTableEntry fx_table[];   /* the magic table */
 extern u8 game_options[];             /* the options block, a byte per setting */
 extern u8 music_volume[];
 extern u8 sfx_volume[];
-extern u8 D_00349683[];
+extern u8 game_option_third_bar[];
 extern s8 head_bob_option[];
 extern s8 rumble_option[];
 extern s8 menu_backdrop_option[];
@@ -348,19 +348,19 @@ LoadedTexture menu_font_texture = { 0 };
 asm(".globl menu_font_second_tex0\nmenu_font_second_tex0 = menu_font_texture + 8\n");
 
 /* 0x42A8E8 8 zero bytes after the loaded font the code never refers to */
-static u64 D_0042A8E8 __attribute__((section(".data"))) = 0;
+static u64 menu_font_texture_pad __attribute__((section(".data"))) = 0;
 
 /* 0x42A8F0 the 32 pool slots, chained into a free list through their next pointers */
 PoolSlot pool_slots[32] = { { 0 } };
 
 /* 0x42B6F0 0x50 zero bytes after the pool the code never refers to */
-static PoolPart D_0042B6F0 = { 0 };
+static PoolPart pool_slots_tail_pad = { 0 };
 
-/* 0x42B740 where PoolSlot_InitFreeList keeps the address of the slot at D_0042B760 */
-void *D_0042B740[8] = { 0 };
+/* 0x42B740 where PoolSlot_InitFreeList keeps the address of the slot at pool_slot_spare_buffer */
+void *pool_slot_buffer_table[8] = { 0 };
 
-/* 0x42B760 the slot-shaped buffer D_0042B740 points at */
-char D_0042B760[0x70] = { 0 };
+/* 0x42B760 the slot-shaped buffer pool_slot_buffer_table points at */
+char pool_slot_spare_buffer[0x70] = { 0 };
 
 /* 0x42B7D0 the view-to-screen matrix the model drawer fills in */
 f32 menu_view_screen_matrix[16] = { 0 };
@@ -829,27 +829,27 @@ int MenuDraw_GetNumber(int number) {
     case 43:
         return wall_clock_time.sec;
     case 44:
-        return D_00446DF4;
+        return menu_number_44;
     case 45:
-        return D_00446DF8;
+        return menu_number_45;
     case 46:
-        return D_00446DFC;
+        return menu_number_46;
     case 47:
-        return D_00446E00;
+        return menu_number_47;
     case 48:
-        return D_00446E04;
+        return menu_number_48;
     case 49:
-        return D_00446E08;
+        return menu_number_49;
     case 50:
-        return D_00446E0C;
+        return menu_number_50;
     case 51:
-        return D_00446E10;
+        return menu_number_51;
     case 52:
-        return D_00446E14;
+        return menu_number_52;
     case 53:
-        return D_00446E18;
+        return menu_number_53;
     case 54:
-        return D_00446E1C;
+        return menu_number_54;
     case 55:
         return player_state.worn_item_stats.values[0];
     case 56:
@@ -873,55 +873,55 @@ int MenuDraw_GetNumber(int number) {
     case 67:
         return player_state.max_weight;
     case 70:
-        return D_00446E20;
+        return menu_number_70;
     case 71:
-        return D_00446E24;
+        return menu_number_71;
     case 72:
-        return D_00446E28;
+        return menu_number_72;
     case 73:
-        return D_00446E2C;
+        return menu_number_73;
     case 74:
-        return D_00446E30;
+        return menu_number_74;
     case 75:
-        return D_00446E34;
+        return menu_number_75;
     case 76:
-        return D_00446E38;
+        return menu_number_76;
     case 77:
-        return D_00446E3C;
+        return menu_number_77;
     case 78:
-        return D_00446E40;
+        return menu_number_78;
     case 79:
-        return D_00446E44;
+        return menu_number_79;
     case 80:
-        return D_00446E48;
+        return menu_number_80;
     case 81:
-        return D_00446E4C;
+        return menu_number_81;
     case 82:
-        return D_00446E50;
+        return menu_number_82;
     case 83:
-        return D_00446E54;
+        return menu_number_83;
     case 84:
-        return D_00446E58;
+        return menu_number_84;
     case 85:
-        return D_00446E5C;
+        return menu_number_85;
     case 86:
-        return D_00446E60;
+        return menu_number_86;
     case 87:
-        return D_00446E64;
+        return menu_number_87;
     case 88:
-        return D_00446E68;
+        return menu_number_88;
     case 89:
-        return D_00446E6C;
+        return menu_number_89;
     case 90:
-        return D_00446E70;
+        return menu_number_90;
     case 91:
-        return D_00446E74;
+        return menu_number_91;
     case 92:
-        return D_00446E78;
+        return menu_number_92;
     case 93:
-        return D_00446E7C;
+        return menu_number_93;
     case 94:
-        return D_00446E80;
+        return menu_number_94;
     default:
         return 0;
     }
@@ -3018,13 +3018,13 @@ void PoolSlot_SetGroupParts(PoolPartFile *file, s32 group) {
     }
 }
 
-/* Chains the 32 pool slots into the free list pool_slot_free_list and points D_0042B740[0] at D_0042B760. */
+/* Chains the 32 pool slots into the free list pool_slot_free_list and points pool_slot_buffer_table[0] at pool_slot_spare_buffer. */
 static void PoolSlot_InitFreeList(void) {
     PoolSlot **link;
     PoolSlot *next_slot;
     s32 i;
 
-    D_0042B740[0] = D_0042B760;
+    pool_slot_buffer_table[0] = pool_slot_spare_buffer;
     pool_slot_free_list = pool_slots;
     link = &pool_slots[0].next;
     next_slot = pool_slots + 1;
@@ -3713,7 +3713,7 @@ static void MenuSprite_Stub14(void) {
 }
 
 /* Sprite handler: a copy of the sprite, blue when the number it stands for (44 to 52) is above what the
-   weapon D_00446E28 gives at its level, red when it is below. */
+   weapon menu_number_72 gives at its level, red when it is below. */
 static SpritePacket *MenuSprite_TintWeaponStat(SpritePacket *packet) {
     static SpritePacket copy; /* 0x5DD7C0 */
     int current;
@@ -3723,31 +3723,31 @@ static SpritePacket *MenuSprite_TintWeaponStat(SpritePacket *packet) {
     current = MenuDraw_GetNumber(packet->number_id);
     switch (packet->number_id) {
     case 0x2C:
-        base = (weapon_level_records[D_00446E28].gained_values[0] + weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[0]) * weapon_level_records[D_00446E28].level / 100;
+        base = (weapon_level_records[menu_number_72].gained_values[0] + weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[0]) * weapon_level_records[menu_number_72].level / 100;
         break;
     case 0x2D:
-        base = (weapon_level_records[D_00446E28].gained_values[1] + weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[1]) * weapon_level_records[D_00446E28].level / 100;
+        base = (weapon_level_records[menu_number_72].gained_values[1] + weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[1]) * weapon_level_records[menu_number_72].level / 100;
         break;
     case 0x2E:
-        base = (weapon_level_records[D_00446E28].gained_values[2] + weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[2]) * weapon_level_records[D_00446E28].level / 100;
+        base = (weapon_level_records[menu_number_72].gained_values[2] + weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[2]) * weapon_level_records[menu_number_72].level / 100;
         break;
     case 0x2F:
-        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[3] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[3] * weapon_level_records[menu_number_72].level / 100;
         break;
     case 0x30:
-        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[4] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[4] * weapon_level_records[menu_number_72].level / 100;
         break;
     case 0x31:
-        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[5] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[5] * weapon_level_records[menu_number_72].level / 100;
         break;
     case 0x32:
-        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[6] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[6] * weapon_level_records[menu_number_72].level / 100;
         break;
     case 0x33:
-        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[7] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[7] * weapon_level_records[menu_number_72].level / 100;
         break;
     case 0x34:
-        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[8] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[8] * weapon_level_records[menu_number_72].level / 100;
         break;
     default:
         base = 0;
@@ -3953,7 +3953,7 @@ static SpritePacket *MenuSprite_SizeToLevel(SpritePacket *packet) {
         level = sfx_volume[0];
         break;
     case 2:
-        level = D_00349683[0];
+        level = game_option_third_bar[0];
         break;
     default:
         level = 0x7F;
@@ -3967,11 +3967,11 @@ static SpritePacket *MenuSprite_SizeToLevel(SpritePacket *packet) {
 static s64 color_data_blue = 0x80000000;    /* 0x446DB0 what color_data points at for the colour 0x80FF00 (a blue) */
 static s64 color_data_orange = 0x80000000;  /* 0x446DB8 and for 0xFF800000 (an orange) */
 
-/* Sprite handler: a copy of the sprite in the colour number 45 (D_00446DF8) holds, nothing when that is 0;
+/* Sprite handler: a copy of the sprite in the colour number 45 (menu_number_45) holds, nothing when that is 0;
    a blue and an orange also choose what color_data points at, which nothing reads. */
 static SpritePacket *MenuSprite_ColorFromNumber(SpritePacket *packet) {
     static SpritePacket copy; /* 0x5DDA60 */
-    u32 colour = D_00446DF8;
+    u32 colour = menu_number_45;
     u8 unused[16]; // match: retail's frame has 16 unused bytes below the colour bytes
     u8 rgb[3];
     s32 green;
@@ -4106,31 +4106,31 @@ static SpritePacket *MenuSprite_TintWeaponStatAlt(SpritePacket *packet) {
     current = MenuDraw_GetNumber(packet->number_id);
     switch (packet->number_id) {
     case 0x2D:
-        base = (weapon_level_records[D_00446E28].gained_values[0] + weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[0]) * weapon_level_records[D_00446E28].level / 100;
+        base = (weapon_level_records[menu_number_72].gained_values[0] + weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[0]) * weapon_level_records[menu_number_72].level / 100;
         break;
     case 0x2E:
-        base = (weapon_level_records[D_00446E28].gained_values[1] + weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[1]) * weapon_level_records[D_00446E28].level / 100;
+        base = (weapon_level_records[menu_number_72].gained_values[1] + weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[1]) * weapon_level_records[menu_number_72].level / 100;
         break;
     case 0x2F:
-        base = (weapon_level_records[D_00446E28].gained_values[2] + weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[2]) * weapon_level_records[D_00446E28].level / 100;
+        base = (weapon_level_records[menu_number_72].gained_values[2] + weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[2]) * weapon_level_records[menu_number_72].level / 100;
         break;
     case 0x30:
-        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[3] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[3] * weapon_level_records[menu_number_72].level / 100;
         break;
     case 0x31:
-        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[4] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[4] * weapon_level_records[menu_number_72].level / 100;
         break;
     case 0x32:
-        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[5] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[5] * weapon_level_records[menu_number_72].level / 100;
         break;
     case 0x33:
-        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[6] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[6] * weapon_level_records[menu_number_72].level / 100;
         break;
     case 0x34:
-        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[7] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[7] * weapon_level_records[menu_number_72].level / 100;
         break;
     case 0x35:
-        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].level_index].values[8] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[8] * weapon_level_records[menu_number_72].level / 100;
         break;
     default:
         base = 0;
@@ -4458,42 +4458,42 @@ int menu_file_block_count = 0;
 void *pool_slot_free_list = NULL;
 
 /* 0x446DF4 to 0x446E80 the numbers a menu sprite can stand for (MenuDraw_GetNumber) */
-s32 D_00446DF4 = 0;                 /* 0x446DF4 numbers 44 to 54: set by the screen that shows them */
-s32 D_00446DF8 = 0;                 /* 0x446DF8 */
-s32 D_00446DFC = 0;                 /* 0x446DFC */
-s32 D_00446E00 = 0;                 /* 0x446E00 */
-s32 D_00446E04 = 0;                 /* 0x446E04 */
-s32 D_00446E08 = 0;                 /* 0x446E08 */
-s32 D_00446E0C = 0;                 /* 0x446E0C */
-s32 D_00446E10 = 0;                 /* 0x446E10 */
-s32 D_00446E14 = 0;                 /* 0x446E14 */
-s32 D_00446E18 = 0;                 /* 0x446E18 */
-s32 D_00446E1C = 0;                 /* 0x446E1C */
-s32 D_00446E20 = 0;                 /* 0x446E20 numbers 70 to 94, likewise */
-s32 D_00446E24 = 0;                 /* 0x446E24 */
-s32 D_00446E28 = 0;                 /* 0x446E28 number 72; the weapon MenuSprite_TintWeaponStat compares with */
-s32 D_00446E2C = 0;                 /* 0x446E2C */
-s32 D_00446E30 = 0;                 /* 0x446E30 */
-s32 D_00446E34 = 0;                 /* 0x446E34 */
-s32 D_00446E38 = 0;                 /* 0x446E38 */
-s32 D_00446E3C = 0;                 /* 0x446E3C */
-s32 D_00446E40 = 0;                 /* 0x446E40 */
-s32 D_00446E44 = 0;                 /* 0x446E44 */
-s32 D_00446E48 = 0;                 /* 0x446E48 */
-s32 D_00446E4C = 0;                 /* 0x446E4C */
-s32 D_00446E50 = 0;                 /* 0x446E50 */
-s32 D_00446E54 = 0;                 /* 0x446E54 */
-s32 D_00446E58 = 0;                 /* 0x446E58 */
-s32 D_00446E5C = 0;                 /* 0x446E5C */
-s32 D_00446E60 = 0;                 /* 0x446E60 */
-s32 D_00446E64 = 0;                 /* 0x446E64 */
-s32 D_00446E68 = 0;                 /* 0x446E68 */
-s32 D_00446E6C = 0;                 /* 0x446E6C */
-s32 D_00446E70 = 0;                 /* 0x446E70 */
-s32 D_00446E74 = 0;                 /* 0x446E74 */
-s32 D_00446E78 = 0;                 /* 0x446E78 */
-s32 D_00446E7C = 0;                 /* 0x446E7C */
-s32 D_00446E80 = 0;                 /* 0x446E80 */
+s32 menu_number_44 = 0;                 /* 0x446DF4 numbers 44 to 54: set by the screen that shows them */
+s32 menu_number_45 = 0;                 /* 0x446DF8 */
+s32 menu_number_46 = 0;                 /* 0x446DFC */
+s32 menu_number_47 = 0;                 /* 0x446E00 */
+s32 menu_number_48 = 0;                 /* 0x446E04 */
+s32 menu_number_49 = 0;                 /* 0x446E08 */
+s32 menu_number_50 = 0;                 /* 0x446E0C */
+s32 menu_number_51 = 0;                 /* 0x446E10 */
+s32 menu_number_52 = 0;                 /* 0x446E14 */
+s32 menu_number_53 = 0;                 /* 0x446E18 */
+s32 menu_number_54 = 0;                 /* 0x446E1C */
+s32 menu_number_70 = 0;                 /* 0x446E20 numbers 70 to 94, likewise */
+s32 menu_number_71 = 0;                 /* 0x446E24 */
+s32 menu_number_72 = 0;                 /* 0x446E28 number 72; the weapon MenuSprite_TintWeaponStat compares with */
+s32 menu_number_73 = 0;                 /* 0x446E2C */
+s32 menu_number_74 = 0;                 /* 0x446E30 */
+s32 menu_number_75 = 0;                 /* 0x446E34 */
+s32 menu_number_76 = 0;                 /* 0x446E38 */
+s32 menu_number_77 = 0;                 /* 0x446E3C */
+s32 menu_number_78 = 0;                 /* 0x446E40 */
+s32 menu_number_79 = 0;                 /* 0x446E44 */
+s32 menu_number_80 = 0;                 /* 0x446E48 */
+s32 menu_number_81 = 0;                 /* 0x446E4C */
+s32 menu_number_82 = 0;                 /* 0x446E50 */
+s32 menu_number_83 = 0;                 /* 0x446E54 */
+s32 menu_number_84 = 0;                 /* 0x446E58 */
+s32 menu_number_85 = 0;                 /* 0x446E5C */
+s32 menu_number_86 = 0;                 /* 0x446E60 */
+s32 menu_number_87 = 0;                 /* 0x446E64 */
+s32 menu_number_88 = 0;                 /* 0x446E68 */
+s32 menu_number_89 = 0;                 /* 0x446E6C */
+s32 menu_number_90 = 0;                 /* 0x446E70 */
+s32 menu_number_91 = 0;                 /* 0x446E74 */
+s32 menu_number_92 = 0;                 /* 0x446E78 */
+s32 menu_number_93 = 0;                 /* 0x446E7C */
+s32 menu_number_94 = 0;                 /* 0x446E80 */
 
 /* Up and down in `buttons` as steps of a menu, the way MenuPad_StepVertical does it for the directional buttons:
    1 or -1 when both are let go more than ten frames after the last step, and held for more than ten frames,

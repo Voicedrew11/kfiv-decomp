@@ -39,7 +39,7 @@ extern u8 guardians_room_water_purified[];
 extern int current_map_slot;
 extern u32 frame_counter;
 extern int sacrificial_mask_cooldown;              /* frames until the item 0x32 may launch its effect again */
-extern f32 D_00446954[];
+extern f32 player_no_water_surface_y[];
 extern s8 footstep_voice;               /* what the last footstep sound returned */
 extern int recent_damage_frames;
 
@@ -262,7 +262,7 @@ void Player_Update(void) {
     if (game_status.player_control != 0 && !(game_status.update_hold_flags & 1)) {
         PLAYER_STATUS(&player_state)->bit38 = FALSE;
         PLAYER_STATUS(&player_state)->bit39 = FALSE;
-        player_state.water_surface_y = D_00446954[0];
+        player_state.water_surface_y = player_no_water_surface_y[0];
         PLAYER_STATUS(&player_state)->bit34 = TRUE;
     } else {
         PLAYER_STATUS(&player_state)->bit34 = FALSE;
@@ -922,7 +922,7 @@ void Player_FireProjectile(u16 held, u16 pressed) {
 }
 
 extern GameDefinition weapon_name_defs[];
-static u8 D_0057A348[8] __attribute__((section(".bss")));  /* 0x57A348 the eight bytes before the requests */
+static u8 bow_shot_requests_lead_pad[8] __attribute__((section(".bss")));  /* 0x57A348 the eight bytes before the requests */
 static Unk1B1470Request bow_shot_requests[32];                     /* 0x57A350 the bow's requests, one per shot */
 
 int ModelMotion_BlendInto(ModelInstance *model, u8 index, u16 speed);

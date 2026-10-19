@@ -103,29 +103,29 @@ void Vector_TriangleNormal(float *, float *, float *, float *);
 void Vector_Normalize(void *, void *);
 void Collision_DropOnTriangleWithin(void *, void *, void *, void *, f32);
 
-extern f32 D_00446980[];
-extern const f32 D_00446984[];
+extern f32 negative_zero_along_limit[];
+extern const f32 negative_zero_drop_within_limit[];
 extern int current_map_slot;
 extern MapSlot map_slots[2];
-extern const f32 D_00446988[];
-extern const f32 D_0044698C[];
+extern const f32 largest_float_floor_lowest_seed[];
+extern const f32 largest_float_water_lowest_seed[];
 extern s32 strip_list_indices[4];
-extern const f32 D_00446990[];
-extern const f32 D_00446994[];
+extern const f32 largest_float_ray_best_distance[];
+extern const f32 largest_float_ray_lists_best_distance[];
 extern ModelInstanceBlock *map_slot_record_models[];
 extern s32 segment_strip_lists[2];
-extern const f32 D_004469A0[];
+extern const f32 largest_float_segment_best_distance[];
 extern s32 map_objects_started[2];
 extern s32 map_object_counts[2];
 extern MapObject map_slot_objects[];
 extern MapObject map_slot1_objects[];
 extern PlayerState player_state;
 extern char hit_sphere_pitfall_message[];
-extern f32 D_004469AC[];    /* the largest float; an array so that it is not read through $gp */
-extern f32 D_004469B0[];    /* the largest float; an array so that it is not read through $gp */
-extern f32 D_004469B4[];    /* the largest float; an array so that it is not read through $gp */
-extern f32 D_004469A4[]; // match: the largest float; declared without a size, it is not reached through $gp
-extern f32 D_004469A8[]; // match: the largest float; declared without a size, it is not reached through $gp
+extern f32 largest_float_mesh_lowest_seed[];    /* the largest float; an array so that it is not read through $gp */
+extern f32 largest_float_quad_lowest_seed[];    /* the largest float; an array so that it is not read through $gp */
+extern f32 largest_float_strip_lowest_seed[];    /* the largest float; an array so that it is not read through $gp */
+extern f32 largest_float_tested_point_distance[]; // match: the largest float; declared without a size, it is not reached through $gp
+extern f32 largest_float_stand_farthest_start[]; // match: the largest float; declared without a size, it is not reached through $gp
 
 /* Drops a vertical line through `point` onto a triangle: on a hit the scratchpad result gets the
    height where it meets the triangle and how far that is from the point (positive: below it, as y grows
@@ -177,10 +177,10 @@ void Collision_DropOnTriangle(void *corner_a, void *corner_b, void *corner_c, vo
     along_a = offset[2] * edge_c[0] - offset[0] * edge_c[2];
     along_c /= scalar;
     along_a /= scalar;
-    if (along_c < D_00446980[0]) {
+    if (along_c < negative_zero_along_limit[0]) {
         return;
     }
-    if (along_a < D_00446980[0]) {
+    if (along_a < negative_zero_along_limit[0]) {
         return;
     }
     if (along_c + along_a <= 1.0f) {
@@ -228,7 +228,7 @@ void Collision_DropOnTriangleWithin(void *corner_a, void *corner_b, void *corner
     scalar = (normal[0] * ((f32 *)corner_a)[0] + scalar * ((f32 *)corner_a)[1] + normal[2] * ((f32 *)corner_a)[2] +
               (-normal[0] * ((f32 *)point)[0] - scalar * ((f32 *)point)[1] - normal[2] * ((f32 *)point)[2])) /
              scalar;
-    if (scalar < D_00446984[0]) {
+    if (scalar < negative_zero_drop_within_limit[0]) {
         return;
     }
     if (reach < scalar) {
@@ -244,10 +244,10 @@ void Collision_DropOnTriangleWithin(void *corner_a, void *corner_b, void *corner
     along_a = offset[2] * edge_c[0] - offset[0] * edge_c[2];
     along_c /= scalar;
     along_a /= scalar;
-    if (along_c < D_00446984[0]) {
+    if (along_c < negative_zero_drop_within_limit[0]) {
         return;
     }
-    if (along_a < D_00446984[0]) {
+    if (along_a < negative_zero_drop_within_limit[0]) {
         return;
     }
     if (along_c + along_a <= 1.0f) {
@@ -276,7 +276,7 @@ int Collision_FindFloorBelow(f32 reach, void *point_arg) {
     s32 points_left;
 
     COLLISION_RESULT->hit = 0;
-    lowest = D_00446988[0];
+    lowest = largest_float_floor_lowest_seed[0];
     found = FALSE;
     for (map = 0; map < 2; map++) {
         slot = current_map_slot == map ? &map_slots[0] : &map_slots[1];
@@ -349,7 +349,7 @@ int Collision_FindWaterBelow(f32 reach, void *point_arg) {
     s32 points_left;
 
     COLLISION_RESULT->hit = 0;
-    lowest = D_0044698C[0];
+    lowest = largest_float_water_lowest_seed[0];
     found = FALSE;
     for (map = 0; map < 2; map++) {
         slot = current_map_slot == map ? &map_slots[0] : &map_slots[1];
@@ -427,7 +427,7 @@ void Collision_CastRayAtMap(f32 scale, void *position_arg, void *direction) {
     Vector_Scale(step, direction, scale);
     best.result.hit = 0;
     COLLISION_RESULT->hit = 0;
-    best.result.distance = D_00446990[0];
+    best.result.distance = largest_float_ray_best_distance[0];
     for (map = 0; map < 2; map++) {
         slot = map_slots;
         if (current_map_slot != map) {
@@ -528,7 +528,7 @@ void Collision_CastRayAtMapLists(f32 scale, void *position_arg, void *direction,
     Vector_Scale(step, direction, scale);
     best.result.hit = 0;
     COLLISION_RESULT->hit = 0;
-    best.result.distance = D_00446994[0];
+    best.result.distance = largest_float_ray_lists_best_distance[0];
     for (map = 0; map < 2; map++) {
         slot = map_slots;
         if (current_map_slot != map) {
@@ -636,7 +636,7 @@ void Collision_CastSegmentAtMap(f32 *position, f32 *target) {
     Vector_Scale(direction, direction, 1.0f / length);
     best.hit = 0;
     COLLISION_RESULT->hit = 0;
-    best.distance = D_004469A0[0];
+    best.distance = largest_float_segment_best_distance[0];
     for (map = 0; map < 2; map++) {
         slot = map_slots;
         if (current_map_slot != map) {
@@ -924,7 +924,7 @@ void Collision_PushOutOfObjects(f32 *centre, s32 measure, f32 radius, f32 push) 
             }
             reach = object->reach_radius + push;
             if (measure) {
-                object->tested_point_distance = D_004469A4[0];
+                object->tested_point_distance = largest_float_tested_point_distance[0];
                 delta_x = ABS(object->model->position.x - centre[0]);
                 if (delta_x > reach) {
                     continue;
@@ -978,7 +978,7 @@ s32 Collision_StandOnObjects(f32 *centre, s32 measure, f32 radius, f32 push) {
     s32 count;
     s32 i;
     s32 result = FALSE;
-    f32 farthest = D_004469A8[0];
+    f32 farthest = largest_float_stand_farthest_start[0];
 
     COLLISION_RESULT->hit = 0;
     for (map = 0; map < 2; map++) {
@@ -2708,7 +2708,7 @@ s32 Collision_StandOnMeshObj(CollisionOwner *owner, f32 *position, f32 radius) {
         }
         Collision_TransformMeshPoints(owner->model);
         Vector_Copy(centre, position);
-        lowest = D_004469AC[0];
+        lowest = largest_float_mesh_lowest_seed[0];
         centre[1] = centre[1] - 1.0f - radius;
         strip = mesh->floor_strips;
         i = mesh->floor_strip_count;
@@ -2724,7 +2724,7 @@ s32 Collision_StandOnMeshObj(CollisionOwner *owner, f32 *position, f32 radius) {
             } while (--j != 0);
             strip = (CollisionStrip *)(point + 2);
         }
-        if (lowest < D_004469AC[0]) {
+        if (lowest < largest_float_mesh_lowest_seed[0]) {
             position[1] = lowest - 1.0f;
             return TRUE;
         }
@@ -2754,7 +2754,7 @@ s32 Collision_StandOnQuadObj(CollisionOwner *owner, f32 *position, f32 radius) {
             return FALSE;
         }
         Vector_Copy(centre, position);
-        lowest = D_004469B0[0];
+        lowest = largest_float_quad_lowest_seed[0];
         centre[1] = centre[1] - 1.0f - radius;
         Collision_DropOnTriangleWithin(point0, point1, point2, centre, radius);
         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest) {
@@ -2764,7 +2764,7 @@ s32 Collision_StandOnQuadObj(CollisionOwner *owner, f32 *position, f32 radius) {
         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest) {
             lowest = COLLISION_RESULT->point[1];
         }
-        if (lowest < D_004469B0[0]) {
+        if (lowest < largest_float_quad_lowest_seed[0]) {
             position[1] = lowest - 1.0f;
             return TRUE;
         }
@@ -2791,7 +2791,7 @@ static inline s32 drop_on_floor_strips(MapObject *object, f32 *position, f32 rad
     }
     Collision_TransformMeshPoints(object->model);
     Vector_Copy(centre, position);
-    lowest = D_004469B4[0];
+    lowest = largest_float_strip_lowest_seed[0];
     centre[1] = centre[1] - 1.0f - radius;
     strip = mesh->floor_strips;
     strips_left = mesh->floor_strip_count;
@@ -2807,7 +2807,7 @@ static inline s32 drop_on_floor_strips(MapObject *object, f32 *position, f32 rad
         } while (--points_left != 0);
         strip = (CollisionStrip *)(point + 2);
     }
-    if (lowest < D_004469B4[0]) {
+    if (lowest < largest_float_strip_lowest_seed[0]) {
         position[1] = lowest - 1.0f;
         return TRUE;
     }
@@ -2833,7 +2833,7 @@ s32 Collision_StandOnPitfallObj(MapObject *object, f32 *position, f32 radius) {
             return drop_on_floor_strips(object, position, radius);
         }
         Vector_Copy(centre, position);
-        lowest = D_004469B4[0];
+        lowest = largest_float_strip_lowest_seed[0];
         centre[1] = centre[1] - 1.0f - radius;
         for (i = 0; i < 0x20; i += 4) {
             point0 = (f32 *)object->model->get_point(object->model, i);
@@ -2852,7 +2852,7 @@ s32 Collision_StandOnPitfallObj(MapObject *object, f32 *position, f32 radius) {
             if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest) {
                 lowest = COLLISION_RESULT->point[1];
             }
-            if (lowest < D_004469B4[0]) {
+            if (lowest < largest_float_strip_lowest_seed[0]) {
                 position[1] = lowest - 1.0f;
                 return TRUE;
             }

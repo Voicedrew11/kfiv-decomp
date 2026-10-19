@@ -69,7 +69,7 @@ WeaponTrailKind weapon_trail_kinds[7] = {
 };
 f32 held_item_offsets[4] = { 16.0f, 19.0f, 22.0f, 1.0f }; /* 0x414740 the held model's position offsets */
 /* 0x414750 twelve words after the offsets that nothing in the game reads */
-u32 D_00414750[12] = { 0x44, 0x0, 0x48, 0x0, 0x42, 0x0, 0x80, 0x80, 0x80, 0x40, 0x0, 0x0 };
+u32 held_item_offsets_tail_words[12] = { 0x44, 0x0, 0x48, 0x0, 0x42, 0x0, 0x80, 0x80, 0x80, 0x40, 0x0, 0x0 };
 PlayerArmPoints held_item_arm_points = { 0 }; /* 0x414780 points 30 and 31 of the held model */
 PlayerArmPoints held_item_arm_points_prev = { 0 }; /* 0x4147A0 the same for the frame before */
 

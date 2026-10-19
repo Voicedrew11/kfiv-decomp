@@ -188,8 +188,8 @@ extern u8 pad_state[];
 extern u8 player_state[];
 extern u8 view_ray_status[];
 extern u8 camera_state[];
-extern u32 D_004335D0[0x10];
-extern u32 D_00433610[0x10];
+extern u32 script_spare_var_block_a[0x10];
+extern u32 script_spare_var_block_b[0x10];
 extern u16 forward_button;
 extern u16 back_button;
 extern u16 turn_right_button;
@@ -237,7 +237,7 @@ u8 *script_game_var_blocks[0x40] = {
     game_status, camera_state, player_state, view_ray_status,
     item_counts, trade_stock_1, trade_stock_2, trade_stock_3,
     trade_stock_4, spell_levels, map_script_flags, story_flags,
-    entity_group_state, (u8 *)D_004335D0, (u8 *)D_00433610, story_values,
+    entity_group_state, (u8 *)script_spare_var_block_a, (u8 *)script_spare_var_block_b, story_values,
     weapon_level_records, 0x00000000, 0x00000000, 0x00000000,
     NULL, 0x00000000, 0x00000000, 0x00000000,
     NULL, 0x00000000, 0x00000000, 0x00000000,
@@ -280,9 +280,9 @@ ScriptCommandHandler script_world_command_handlers[0x64] = {
     ScriptCmd_SetHudShown, ScriptCmd_SetScreenColor, ScriptCmd_RumblePad, ScriptCmd_IsScriptRunning,
 }; /* 0x433440 commands 0x100 to 0x163 */
 
-u32 D_004335D0[0x10]                         = { 0 }; /* 0x4335D0 zero fill */
+u32 script_spare_var_block_a[0x10]                         = { 0 }; /* 0x4335D0 zero fill */
 
-u32 D_00433610[0x10]                         = { 0 }; /* 0x433610 zero fill */
+u32 script_spare_var_block_b[0x10]                         = { 0 }; /* 0x433610 zero fill */
 
 ScriptCommandHandler script_entity_command_handlers[0x64] = {
     ScriptCmd_Nop200, ScriptCmd_Nop201, ScriptCmd_Nop202, ScriptCmd_Nop203,

@@ -42,7 +42,7 @@ void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 float EntityMath_HeadingTo(float *origin, float *target);
 float EntityMath_DistanceXZ(float *a, float *b);
-extern f32 D_00446810[];
+extern f32 ancient_mummy_no_floor_height[];
 int Motion_Start(void *, int, int, u32, int);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 void EntityPoint_PickNearFromDistance(f32 *, f32 *, f32, f32);
@@ -323,7 +323,7 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
             destination = ai_state->target_point;
             EntityPoint_PickNearFromDistance(destination, position, EntityMath_DistanceXZ(position, (float *)entity->spawn_info), entity->spawn_info->wander_radius);
             height = EntityCollision_DistanceToPropFloor(entity->map_record, destination);
-            if (height != D_00446810[0]) {
+            if (height != ancient_mummy_no_floor_height[0]) {
                 yaw = EntityMath_AngleXZ(player_state.position, (char *)destination);
                 if (EntityMath_WrapAngle(yaw - player_state.heading) < -1.5707964f || EntityMath_WrapAngle(yaw - player_state.heading) > 1.5707964f) {
                     ai_state->step_index = 1;

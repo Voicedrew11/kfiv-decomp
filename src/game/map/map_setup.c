@@ -39,7 +39,7 @@ extern u8 ocean_shore_icon_of_fire_placed[];
 extern f32 map_record_height[];
 extern u8 guardians_room_water_purified[];
 extern u8 dark_sanctuary_fog_lifted[];
-extern u8 D_0034A0D5[];
+extern u8 kings_throne_alcoves_story_flag[];
 extern u8 craftsmans_room_door_unlocked[];
 
 void MapSetup_Map252(int);
@@ -458,7 +458,7 @@ void MapSetup_DarkSanctuary(int map) {
 void MapSetup_KingsThroneAlcoves(int map) {
     MapSlot *slot = &map_slots[map];
 
-    if (D_0034A0D5[0] == 1) {
+    if (kings_throne_alcoves_story_flag[0] == 1) {
         MapFogBlockValues *fog = (MapFogBlockValues *)slot->fog_blocks;
         MapSlotUnk10 *light = slot->light_blocks;
 

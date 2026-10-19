@@ -11,8 +11,8 @@ extern u32 frame_counter;
 extern s32 current_map_slot;
 extern PlayerData player_state;
 extern MapSlot map_slots[];
-extern f32 D_00446824[];
-extern f32 D_00446828[];
+extern f32 greater_demon_no_floor_height_think[];
+extern f32 greater_demon_no_floor_height_attack[];
 
 static KfVector climb_points[3]; /* 0x4FF390 the points GreaterDemon_Think climbs over (it indexes up to 5) */
 
@@ -149,7 +149,7 @@ static void GreaterDemon_Think(Entity *entity, s32 unknown) {
         EntityPoint_PickNear(500.0f, &climb_points[ai_state->climb_point_index], &player_state, &player_state);
         slot = &map_slots[current_map_slot];
         height = EntityCollision_DistanceToPropFloor((MapRecord *)slot->records + player_state.map_record_index, &climb_points[ai_state->climb_point_index]);
-        no_floor = D_00446824[0];
+        no_floor = greater_demon_no_floor_height_think[0];
         if (height == no_floor) {
             height = EntityCollision_DistanceToPropFloor(entity->map_record, &climb_points[ai_state->climb_point_index]);
             if (height != no_floor) {
@@ -804,7 +804,7 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
             EntityPoint_PickNear(500.0f, &climb_points[ai_state->climb_point_index], &player_state, &player_state);
             slot = &map_slots[current_map_slot];
             height = EntityCollision_DistanceToPropFloor((MapRecord *)slot->records + player_state.map_record_index, &climb_points[ai_state->climb_point_index]);
-            no_floor = D_00446828[0];
+            no_floor = greater_demon_no_floor_height_attack[0];
             if (height == no_floor) {
                 height = EntityCollision_DistanceToPropFloor(entity->map_record, &climb_points[ai_state->climb_point_index]);
                 if (height == no_floor) {

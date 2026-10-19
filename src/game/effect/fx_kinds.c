@@ -62,7 +62,7 @@ extern s64 light_point_start_target[2];
 // match: only this type matches; model/linked_point.c defines it as returning int
 #define LINKED_POINT_START_S16 ((s16(*)(f32, void *, void *))LinkedPoint_StartDefault)
 extern u8 dark_sanctuary_idol_of_sorrow_placed[];
-extern u8 D_0034AFD6[];
+extern u8 loop_effect_stop_state[];
 void Sound_PlaySw(int mode);
 /* 0x402D50 seven (weapon, effect param) pairs EffectWeaponSound_Start matches to play sound 3 */
 u32 weapon_sound_pairs[14] = { '%', '[', '&', ']', '\'', '^', '(', '\\', ')', '`', ',', 'a', '.', 'b' };
@@ -2411,7 +2411,7 @@ void EffectLoopUntilFlag_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     *(int *)&effect->motion = 0; // match: an int store of the velocity's first word (sw $0)
 }
 
-/* Kind 107 update: loops its first def->radius_half frames until D_0034AFD6 is 3. */
+/* Kind 107 update: loops its first def->radius_half frames until loop_effect_stop_state is 3. */
 void EffectLoopUntilFlag_Update(EffectActor *effect) {
     LoopMotion *motion;
 
@@ -2420,7 +2420,7 @@ void EffectLoopUntilFlag_Update(EffectActor *effect) {
     EffectKeys_ApplySpin(effect);
     EffectKeys_ApplyColour(effect);
     effect->frame += 1;
-    if (D_0034AFD6[0] == 3) {
+    if (loop_effect_stop_state[0] == 3) {
         motion->stopped = 1;
     }
     if (motion->stopped == 0) {

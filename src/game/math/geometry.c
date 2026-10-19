@@ -2,7 +2,7 @@
    a point to the screen, and an index of the largest of seven values. Nothing calls any of them. */
 #include "core/game.h"
 
-extern f32 D_00446FA4[];         /* -0.0f */
+extern f32 negative_zero_angle_step_limit[];         /* -0.0f */
 extern f32 world_screen_matrix[16];          /* the world-to-screen matrix */
 
 float sqrtf(float);
@@ -47,7 +47,7 @@ static float Vector_Pitch(void *point, void *origin) {
 static void Angle_StepToward(f32 *angle, f32 target) {
     f32 current = *angle;
 
-    if (current - target < D_00446FA4[0]) {
+    if (current - target < negative_zero_angle_step_limit[0]) {
         *angle = current + 0.01f;
     } else {
         *angle = current - 0.01f;

@@ -12,7 +12,7 @@ extern char *map_file_area;        /* the memory area the movie player is given 
 extern int map_file_area_size;          /* the size it is given for that heap */
 extern int context1_buffer_half;          /* the half of the first double buffer in use; each swap flips it */
 extern int context2_buffer_half;          /* the same for the second */
-extern int D_00446F80;
+extern int display_spare_buffer_half;
 extern u32 game_status_flags[];
 extern s64 game_dbuff_clear_color[];
 extern s64 game_dbuff_context2_clear_color[];
@@ -21,7 +21,7 @@ extern char ending_movie_path[];        /* "cdrom0:\DATA\KF4ED.PSS;1" */
 extern char staff_roll_movie_path[];    /* "cdrom0:\DATA\KF4STAFF.PSS;1" */
 extern f32 identity_matrix[16];
 extern f32 world_view_matrix[16];
-extern f32 D_004323A0[16];
+extern f32 world_view_copy_matrix[16];
 extern f32 projection_matrix[4][4];
 extern GsDoubleBuffer game_dbuff;           /* the game's frame buffers, drawn through GS context 1 */
 extern GsDoubleBuffer game_dbuff_context2;  /* the same frame buffers, drawn through GS context 2 */
@@ -153,10 +153,10 @@ void Display_Init(void) {
     game_dbuff.draw0.zbuf.zbp = 0x118;
     game_dbuff.draw1.zbuf.zbp = 0x118;
     sceVu0CopyMatrix(world_view_matrix, identity_matrix);
-    sceVu0CopyMatrix(D_004323A0, identity_matrix);
+    sceVu0CopyMatrix(world_view_copy_matrix, identity_matrix);
     Display_BuildProjection(projection_matrix, 512.0f, 1.0f, 65536.0f);
     context1_buffer_half = 0;
-    D_00446F80 = 0;
+    display_spare_buffer_half = 0;
     game_dbuff.clear1.rgbaq = game_dbuff.clear0.rgbaq = 0x100000000L;
     sceGsSetDefDBuff(&game_dbuff_context2, 0, 0x280, 0x1C0, 3, 0x3A, 1);
     game_dbuff_context2.disp[0].dispfb.fbp = 0;

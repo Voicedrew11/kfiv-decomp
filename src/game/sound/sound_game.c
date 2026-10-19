@@ -21,9 +21,9 @@ extern SoundFileBuffer se_com_bank;
 extern SoundFileBuffer sfx_com_bank;
 extern SoundChannel sound_channels[];
 extern char sound_heap_base[];
-extern int D_004468BC;
-extern float D_004468C0;
-extern int D_004468C4;
+extern int map_reverb_volume_cap;
+extern float map_reverb_scale;
+extern int map_reverb_enabled_flag;
 extern s8 map_reverb_set;
 extern char map_sounds_enabled;
 extern char reverb_change_pending;
@@ -87,7 +87,7 @@ extern int (*falloff_sound_players[])(int, int); // match: an int result, though
 extern int map_bank_load_step;
 extern SoundScriptState map_reverb_cue_indices;
 extern u8 map_reverb_slot;
-extern int D_004468B4;
+extern int map_bank_done_flag;
 extern int (*map_bank_load_steps[])(SoundJob *job);
 extern SoundBankSpec map_bank_files;
 extern SoundFileBuffer sw_bank;
@@ -100,10 +100,10 @@ static char sound_file_path[0x80];         /* 0x4FF3C0 a file name for sprintf *
 static char map_bank_file_path[0x80];         /* 0x4FF440 the map bank's file name */
 static SoundStartSpec sound_load_spec;     /* 0x4FF4C0 the spec of the sound file load */
 static SoundJob sound_load_job;           /* 0x4FF4D8 the sound file load job */
-static u8 D_004FF4F8[0x18];           /* 0x4FF4F8 */
+static u8 sound_load_job_tail_pad[0x18];           /* 0x4FF4F8 */
 static SoundBankSpec map_bank_spec;      /* 0x4FF510 the spec of the map bank load */
 static SoundJob map_bank_load_job;           /* 0x4FF528 the map bank load job */
-static u8 D_004FF548[0x10];           /* 0x4FF548 */
+static u8 map_bank_load_job_tail_pad[0x10];           /* 0x4FF548 */
 static char bgm_cues[0x400];        /* 0x4FF558 the reverb settings of each BGM (SoundCue), 0x40 of them */
 static char map_bank_cues[0x800];        /* 0x4FF958 the reverb settings of the maps (SoundCue), 0x80 of them */
 static char tagged_voice_flags[0x18];         /* 0x500158 a claim flag per voice 0x54..0x6B */
@@ -139,9 +139,9 @@ void Sound_Init(void) {
     int i;
     u32 heap_start;
 
-    D_004468BC = 0x40;
-    D_004468C0 = 0.013f;
-    D_004468C4 = 1;
+    map_reverb_volume_cap = 0x40;
+    map_reverb_scale = 0.013f;
+    map_reverb_enabled_flag = 1;
     reverb_change_pending = 0;
     map_reverb_volume = 0;
     map_sounds_enabled = 0;
@@ -2036,7 +2036,7 @@ int Sound_MapBankApplyReverb(SoundJob *job) {
    after that sets map_sounds_enabled (map sounds may start) and ends the load (1), so the reverb stays. */
 int Sound_MapBankFinishUnlessFirst(SoundJob *job) {
     map_bank_load_step += 1;
-    D_004468B4 = 0;
+    map_bank_done_flag = 0;
     if (map_reverb_set != 0) {
         map_sounds_enabled = TRUE;
         return 1;

@@ -11,7 +11,7 @@ static int sent_texture_19C;        /* 0x447048 last model texture sent from unk
 static int sent_texture_1A0;        /* 0x44704C last model texture sent from unk1A0 */
 /* 0x447050 the model texture taken as sent from unk198, by unk192; only [0] is read, and nothing but the reset
    writes it. A 4-byte object: [1] would be screen_uv_frame_copy (model/model_screen.c), so it stays extern. */
-extern int D_00447050[2];
+extern int shared_texture_packet_sent[2];
 static int texture_slots[4];        /* 0x468190 chunk table last sent for each unk190 slot */
 
 /* Forgets every texture slot. */
@@ -19,7 +19,7 @@ void ModelTexture_ResetSlots(void) {
     sent_texture_19C = 0;
     sent_texture_1A0 = 0;
     memset(texture_slots, 0, sizeof(texture_slots));
-    D_00447050[0] = 0;
+    shared_texture_packet_sent[0] = 0;
 }
 
 /* Sets texture slot `slot` (0..3) to chunk_table, the table ModelTexture_SendForModel then takes as sent.
@@ -53,7 +53,7 @@ void ModelTexture_SendForModel(void *model_arg) {
         }
     }
     if (model->shared_texture_packet != 0) {
-        if (D_00447050[model->shared_texture_slot] != model->shared_texture_packet && model->shared_texture_slot == 0) {
+        if (shared_texture_packet_sent[model->shared_texture_slot] != model->shared_texture_packet && model->shared_texture_slot == 0) {
             Map_QueuePacket((int *)model->shared_texture_packet);
         }
     }

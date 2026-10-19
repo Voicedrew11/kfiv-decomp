@@ -15,7 +15,7 @@ void EntityAi_Dormant(Entity *);
 extern s32 entity_type_handlers[][2];
 extern u32 frame_counter;
 // match: const, so that the store to unk48 can follow the load of it
-extern const f32 D_00446804[];
+extern const f32 seafang_no_floor_height_think[];
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn3D(char *);
 void EntityAi_StepState(void *);
@@ -37,13 +37,13 @@ void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 // match: const, so that the store to unk48 can follow the load of it
-extern const f32 D_00446808[];
+extern const f32 seafang_no_floor_height_lower[];
 void EntityPoint_PickNear(float, void *, void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
 int Motion_Start(void *, int, int, u32, int);
 float EntityMath_EaseAngleToward(float *, float, float);
 // match: const, so that the store to unk48 can follow the load of it
-extern const f32 D_0044680C[];
+extern const f32 seafang_no_floor_height_death[];
 void EntityEvent_OnDeath(Entity *);
 
 static void Seafang_Think(Entity *entity, s32 unknown);
@@ -108,7 +108,7 @@ static void Seafang_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn3D((char *)entity);
         EntityAi_StepState(entity);
         ai_state->part_angle_x = EntityCollision_DistanceToGround(entity->model->position);
-        if (ai_state->part_angle_x != D_00446804[0] && -entity->collision_height < ai_state->part_angle_x) {
+        if (ai_state->part_angle_x != seafang_no_floor_height_think[0] && -entity->collision_height < ai_state->part_angle_x) {
             entity->model->position[1] += entity->collision_height + ai_state->part_angle_x;
             if (ai_state->part_angle_x > 0.0f) {
                 EntityAi_StartAction(entity, Seafang_DeathWithoutDrop, 1);
@@ -244,7 +244,7 @@ static void Seafang_ThinkLowerGradually(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn3D((char *)entity);
         EntityAi_StepState(entity);
         ai_state->part_angle_x = EntityCollision_DistanceToGround(entity->model->position);
-        if (ai_state->part_angle_x != D_00446808[0] && -entity->collision_height < ai_state->part_angle_x) {
+        if (ai_state->part_angle_x != seafang_no_floor_height_lower[0] && -entity->collision_height < ai_state->part_angle_x) {
             entity->model->position[1] += 5.0f;
             if (ai_state->part_angle_x > 0.0f) {
                 EntityAi_StartAction(entity, Seafang_DeathWithoutDrop, 1);
@@ -433,7 +433,7 @@ static void Seafang_Death(Entity *entity) {
 
     entity->busy_flags = ENTITY_BUSY_DEATH;
     ai_state->part_angle_x = EntityCollision_DistanceToGround(entity->model->position);
-    if (ai_state->part_angle_x != D_0044680C[0] && ai_state->part_angle_x < fall) {
+    if (ai_state->part_angle_x != seafang_no_floor_height_death[0] && ai_state->part_angle_x < fall) {
         fall = 2.0f;
     }
     switch (entity->action_step) {

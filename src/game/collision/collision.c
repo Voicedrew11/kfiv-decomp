@@ -3,12 +3,12 @@
 #include "collision/collision.h"
 #include "entity/entity.h"
 
-extern const f32 D_00446FB8[];      /* -0.0f */
-extern const f32 D_00446FBC[];      /* -0.0f */
-extern const f32 D_00446FC0[];      /* -0.0f */
-extern const f32 D_00446FC4[];      /* -0.0f */
-extern const f32 D_00446FC8[];      /* -0.0f */
-extern const f32 D_00446FCC[];      /* -0.0f */
+extern const f32 negative_zero_point_triangle_limit[];      /* -0.0f */
+extern const f32 negative_zero_capsule_limit[];      /* -0.0f */
+extern const f32 negative_zero_ray_triangle_limit[];      /* -0.0f */
+extern const f32 negative_zero_drop_triangle_limit[];      /* -0.0f */
+extern const f32 negative_zero_ray_cylinder_limit[];      /* -0.0f */
+extern const f32 negative_zero_sphere_cylinder_limit[];      /* -0.0f */
 
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
@@ -128,7 +128,7 @@ void Collision_PointTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *p
     sceVu0Normalize(normal, normal);
     distance = normal[0] * corner_a[0] + normal[1] * corner_a[1] + normal[2] * corner_a[2];
     distance += -normal[0] * point[0] - normal[1] * point[1] - normal[2] * point[2];
-    if (distance < D_00446FB8[0]) {
+    if (distance < negative_zero_point_triangle_limit[0]) {
         normal[0] = -normal[0];
         normal[1] = -normal[1];
         normal[2] = -normal[2];
@@ -174,10 +174,10 @@ void Collision_PointTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *p
     }
     weight_c /= denominator;
     weight_a /= denominator;
-    if (weight_c < D_00446FB8[0]) {
+    if (weight_c < negative_zero_point_triangle_limit[0]) {
         return;
     }
-    if (weight_a < D_00446FB8[0]) {
+    if (weight_a < negative_zero_point_triangle_limit[0]) {
         return;
     }
     if (weight_c + weight_a <= 1.0f) {
@@ -253,7 +253,7 @@ void Collision_CapsuleTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 
         }
         normal[1] = 0.0f;
         sceVu0Normalize(normal, normal);
-        if (distance < D_00446FBC[0]) {
+        if (distance < negative_zero_capsule_limit[0]) {
             normal[0] = -normal[0];
             normal[2] = -normal[2];
         }
@@ -271,10 +271,10 @@ void Collision_CapsuleTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 
         }
     } else {
         ratio = distance / ratio;
-        if (ratio < D_00446FBC[0]) {
+        if (ratio < negative_zero_capsule_limit[0]) {
             normal[1] = 0.0f;
             sceVu0Normalize(normal, normal);
-            if (distance < D_00446FBC[0]) {
+            if (distance < negative_zero_capsule_limit[0]) {
                 normal[0] = -normal[0];
                 normal[2] = -normal[2];
             }
@@ -288,7 +288,7 @@ void Collision_CapsuleTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 
             origin[1] = centre[1] - height;
             normal[1] = 0.0f;
             sceVu0Normalize(normal, normal);
-            if (distance < D_00446FBC[0]) {
+            if (distance < negative_zero_capsule_limit[0]) {
                 normal[0] = -normal[0];
                 normal[2] = -normal[2];
             }
@@ -340,7 +340,7 @@ void Collision_CapsuleTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 
         ratio += -flat[0] * end[0] - flat[1] * end[1] - flat[2] * end[2];
         along = 1.0f / along;
         ratio *= along;
-        if (ratio < D_00446FBC[0]) {
+        if (ratio < negative_zero_capsule_limit[0]) {
             point[0] = end[0];
             point[1] = centre[1];
             point[2] = end[2];
@@ -420,7 +420,7 @@ void Collision_RayTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *ori
     distance = normal[0] * corner_a[0] + normal[1] * corner_a[1] + normal[2] * corner_a[2];
     distance += -normal[0] * origin[0] - normal[1] * origin[1] - normal[2] * origin[2];
     denominator = distance / denominator;
-    if (denominator < D_00446FC0[0]) {
+    if (denominator < negative_zero_ray_triangle_limit[0]) {
         return;
     }
     if (reach < denominator) {
@@ -465,10 +465,10 @@ void Collision_RayTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *ori
     }
     weight_c /= denominator;
     weight_a /= denominator;
-    if (weight_c < D_00446FC0[0]) {
+    if (weight_c < negative_zero_ray_triangle_limit[0]) {
         return;
     }
-    if (weight_a < D_00446FC0[0]) {
+    if (weight_a < negative_zero_ray_triangle_limit[0]) {
         return;
     }
     if (weight_c + weight_a <= 1.0f) {
@@ -596,7 +596,7 @@ static void Collision_DropOntoTriangle(f32 *corner_a, f32 *corner_b, f32 *corner
         :
         : "r"(corner_a), "r"(point), "r"(normal), "r"(from_b));
     denominator = (from_b[0] + from_b[1] + from_b[2]) / denominator;
-    if (denominator < D_00446FC4[0]) {
+    if (denominator < negative_zero_drop_triangle_limit[0]) {
         return;
     }
     if (8192.0f < denominator) {
@@ -612,10 +612,10 @@ static void Collision_DropOntoTriangle(f32 *corner_a, f32 *corner_b, f32 *corner
     weight_a = from_b[2] * edge_c[0] - from_b[0] * edge_c[2];
     weight_c /= denominator;
     weight_a /= denominator;
-    if (weight_c < D_00446FC4[0]) {
+    if (weight_c < negative_zero_drop_triangle_limit[0]) {
         return;
     }
-    if (weight_a < D_00446FC4[0]) {
+    if (weight_a < negative_zero_drop_triangle_limit[0]) {
         return;
     }
     if (weight_c + weight_a <= 1.0f) {
@@ -762,7 +762,7 @@ void Collision_RayCylinder(f32 radius, f32 height, f32 length, f32 *base, f32 *o
         nearest[0] = start[0] + along[0] * part;
         nearest[1] = start[1] + along[1] * part;
         nearest[2] = start[2] + along[2] * part;
-        if (part < D_00446FC8[0]) {
+        if (part < negative_zero_ray_cylinder_limit[0]) {
             Vector_Subtract(offset, base, start);
             distance_squared = offset[0] * offset[0] + offset[2] * offset[2];
             if (!(distance_squared <= radius_squared)) {
@@ -853,7 +853,7 @@ void Collision_SphereCylinder(f32 *base, f32 *centre, f32 radius, f32 height, f3
     if (height < distance) {
         goto past_far_end;
     }
-    if (distance < D_00446FCC[0]) {
+    if (distance < negative_zero_sphere_cylinder_limit[0]) {
         goto past_near_end;
     }
     distance = delta[0] * delta[0] + delta[2] * delta[2];

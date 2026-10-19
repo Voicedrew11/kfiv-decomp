@@ -78,7 +78,7 @@ void Input_Update(void);
 s16 MenuPad_Update(void);
 void MenuHeap_FreeToMark(void);
 extern s8 modal_input_locked;       /* TRUE while a trade or smith screen fades: the buttons are not read */
-extern s8 D_00447310;
+extern s8 trade_left_move_lock;
 extern s8 menu_mode;
 extern s32 modal_pad_mode;          /* Pad_GetMode of pad 0 this frame; 0xFF: no pad */
 extern s32 modal_pad_mode_last;     /* the same, last frame */
@@ -154,22 +154,22 @@ extern SpritePacket *shop_g_parts;
 extern u8 trade_panel_shown;        /* TRUE while the selected item's panel is up */
 extern s32 trade_stock_list_panel_sound_pending; /* TRUE until the panel's opening sound has played */
 extern f32 trade_stock_list_model_angle; /* the model's turn */
-extern s32 D_00446DF4;
-extern s32 D_00446DF8;
-extern s32 D_00446DFC;
-extern s32 D_00446E00;
-extern s32 D_00446E04;
-extern s32 D_00446E08;
-extern s32 D_00446E0C;
-extern s32 D_00446E10;
-extern s32 D_00446E14;
-extern s32 D_00446E1C;
-extern s32 D_00446E20;
-extern s32 D_00446E24;
-extern s32 D_00446E28;
-extern s32 D_00446E2C;
-extern s32 D_00446E3C;
-extern s32 D_00446E80;
+extern s32 menu_number_44;
+extern s32 menu_number_45;
+extern s32 menu_number_46;
+extern s32 menu_number_47;
+extern s32 menu_number_48;
+extern s32 menu_number_49;
+extern s32 menu_number_50;
+extern s32 menu_number_51;
+extern s32 menu_number_52;
+extern s32 menu_number_54;
+extern s32 menu_number_70;
+extern s32 menu_number_71;
+extern s32 menu_number_72;
+extern s32 menu_number_73;
+extern s32 menu_number_77;
+extern s32 menu_number_94;
 extern s8 trade_panel_state;        /* the panel's fade: 0 in, 1 open, 2 out and close, 3 out */
 void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, float, float, float);
 void sceVu0RotMatrixY(float *, float *, float);
@@ -203,11 +203,11 @@ extern u32 shop_mess_part_count;
 extern SpritePacket *shop_mess_parts;
 extern s32 trade_take_amount_panel_sound_pending;
 extern f32 trade_take_amount_model_angle;
-extern s32 D_00446E30;
-extern s32 D_00446E44;
-extern s32 D_00446E48;
-extern s32 D_00446E4C;
-extern s32 D_00446E50;
+extern s32 menu_number_74;
+extern s32 menu_number_79;
+extern s32 menu_number_80;
+extern s32 menu_number_81;
+extern s32 menu_number_82;
 s32 MenuText_DrawLineCentered(u16 *, s32);
 extern f32 trade_owned_list_model_position[4];
 extern f32 trade_owned_list_model_angle;
@@ -276,7 +276,7 @@ int PlayTime_SecondsBetween(ClockTime, ClockTime);
         } \
     }
 extern s8 smith_confirm_shown;      /* TRUE while Smith_UpdateListWithConfirm shows its question */
-extern s8 D_00447314;
+extern s8 smith_confirm_lock;
 extern s8 smith_upgrade_choice;     /* which of the three lines of Smith_UpdateItemScreen is picked */
 extern s32 smith_pad_change_frames; /* counts 20 frames without buttons after the pad type changed */
 extern s32 smith_run_step;          /* which of smith_run_steps runs */
@@ -296,7 +296,7 @@ extern u32 tune_part_count;              /* how many parts the screen has */
 extern SpritePacket *tune_parts;
 extern s32 smith_upgrade_list_panel_sound_pending;
 extern f32 smith_upgrade_list_model_angle;
-extern s32 D_00446E34;
+extern s32 menu_number_75;
 extern s8 smith_panel_state;        /* the same for the selected item's panel */
 /* match: the two level lookups are inline functions taking the record index, so the subtraction is not folded into
    the table address; each caller picks the table itself and uses the level inside its own branch. */
@@ -314,7 +314,7 @@ static inline void SetCorner(GsPackedWord *corner, s32 left, s32 top, s32 depth)
 extern f32 smith_upgrade_confirm_model_position[4];
 extern s32 smith_upgrade_confirm_panel_sound_pending;
 extern f32 smith_upgrade_confirm_model_angle;
-extern s32 D_00446E38;
+extern s32 menu_number_76;
 /* match: the records are written through these two for the same reason. */
 static inline LevelRecord *GetWeaponRecord(s32 index) {
     return &weapon_level_records[index];
@@ -389,19 +389,19 @@ extern u32 mc_part_count;
 extern SpritePacket *data_parts;
 extern SpritePacket *mc_parts;
 extern s32 save_lines_reorder_pending; /* TRUE while a save into an empty slot runs: the lines are reordered after it */
-extern s32 D_00446E18;
-extern s32 D_00446E40;
-extern s32 D_00446E54;
-extern s32 D_00446E58;
-extern s32 D_00446E5C;
-extern s32 D_00446E60;
-extern s32 D_00446E64;
-extern s32 D_00446E68;
-extern s32 D_00446E6C;
-extern s32 D_00446E70;
-extern s32 D_00446E74;
-extern s32 D_00446E78;
-extern s32 D_00446E7C;
+extern s32 menu_number_53;
+extern s32 menu_number_78;
+extern s32 menu_number_83;
+extern s32 menu_number_84;
+extern s32 menu_number_85;
+extern s32 menu_number_86;
+extern s32 menu_number_87;
+extern s32 menu_number_88;
+extern s32 menu_number_89;
+extern s32 menu_number_90;
+extern s32 menu_number_91;
+extern s32 menu_number_92;
+extern s32 menu_number_93;
 void Game_WriteSaveImage(void);
 s32 SaveCard_StartSave(s32, s32, s32 *);
 s8 SaveCard_GetSaveState(s32);
@@ -487,7 +487,7 @@ static const TradeValueTables trade_value_tables = { { trade_values_1, trade_val
 static const TradeStockTables trade_stock_tables = { { trade_stock_1, trade_stock_2, trade_stock_3, trade_stock_4, trade_stock_5 } };
 static const TradeGroupBases item_group_bases = { { 150, 0, 220, 220, 220, 220, 220, 220, 220, 220, 0, 0, 0 } };
 static const TradeValueSlots trade_value_slots = {
-    { &D_00446E64, &D_00446E68, &D_00446E6C, &D_00446E70, &D_00446E74, &D_00446E78, &D_00446E7C }
+    { &menu_number_87, &menu_number_88, &menu_number_89, &menu_number_90, &menu_number_91, &menu_number_92, &menu_number_93 }
 };
 
 /* Builds the two item rings of trade table `table`: what is owned and may be given, and what is in stock. */
@@ -577,7 +577,7 @@ static void Trade_BuildItemRings(s32 table) {
 /* Runs the screen loop of the handler trade_run_step selects until it returns 0, watching the pad type for changes. */
 void Trade_Run(s32 value) {
     modal_input_locked = 1;
-    D_00447310 = 0;
+    trade_left_move_lock = 0;
     sceGsSyncPath(0, 0);
     sceGsSyncV(0);
     Vram_Clear(0x3D00, 0x3F00);
@@ -1042,18 +1042,18 @@ static void Trade_UpdateStockList(HandlerContext *context) {
     if (context->arg == 4) {
         switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & 3) {
         case 1:
-            D_00446E80 = item_counts[ITEM_BONE];
+            menu_number_94 = item_counts[ITEM_BONE];
             break;
         case 2:
-            D_00446E80 = item_counts[ITEM_SCALE];
+            menu_number_94 = item_counts[ITEM_SCALE];
             break;
         case 3:
-            D_00446E80 = item_counts[ITEM_CLAW];
+            menu_number_94 = item_counts[ITEM_CLAW];
             break;
         }
     }
     if (trade_stock_list_cursor[0]->group == 0) {
-        D_00446E3C = weapon_level_records[record].level_index + 1;
+        menu_number_77 = weapon_level_records[record].level_index + 1;
     }
     for (i = 0; i < shop_part_count; i++) {
         kind = shop_parts[i].handler_index;
@@ -1217,18 +1217,18 @@ static void Trade_UpdateStockList(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             trade_stock_list_panel_sound_pending = 0;
-            D_00446DF4 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
-            D_00446DF8 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
-            D_00446E24 = worn_item_level_records[record].level;
-            D_00446E28 = 100;
-            D_00446E1C = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
+            menu_number_45 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
+            menu_number_46 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
+            menu_number_47 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
+            menu_number_48 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
+            menu_number_49 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
+            menu_number_50 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
+            menu_number_51 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
+            menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
+            menu_number_71 = worn_item_level_records[record].level;
+            menu_number_72 = 100;
+            menu_number_54 = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             glow = player_weapon[trade_stock_list_cursor[0]->group];
             if (trade_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, shop_g_parts, shop_g_part_count)
@@ -1244,16 +1244,16 @@ static void Trade_UpdateStockList(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             trade_stock_list_panel_sound_pending = 0;
-            D_00446DF4 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
-            D_00446DF8 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
-            D_00446E1C = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
+            menu_number_45 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
+            menu_number_46 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
+            menu_number_47 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
+            menu_number_48 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
+            menu_number_49 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
+            menu_number_50 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
+            menu_number_51 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
+            menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
+            menu_number_54 = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             glow = player_weapon[trade_stock_list_cursor[0]->group];
             if (trade_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, shop_g2_parts, shop_g2_part_count)
@@ -1267,20 +1267,20 @@ static void Trade_UpdateStockList(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             trade_stock_list_panel_sound_pending = 0;
-            D_00446DF4 = ScaleValue(weapon_level_records[record].gained_values[0] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[0], weapon_level_records[record].level, 100);
-            D_00446DF8 = ScaleValue(weapon_level_records[record].gained_values[1] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[1], weapon_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(weapon_level_records[record].gained_values[2] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[2], weapon_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[3], weapon_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[4], weapon_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[5], weapon_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
-            D_00446E20 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
-            D_00446E24 = weapon_level_records[record].level;
-            D_00446E1C = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
-            D_00446E28 = player_weapon[trade_stock_list_cursor[0]->group];
-            D_00446E2C = 100;
+            menu_number_44 = ScaleValue(weapon_level_records[record].gained_values[0] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[0], weapon_level_records[record].level, 100);
+            menu_number_45 = ScaleValue(weapon_level_records[record].gained_values[1] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[1], weapon_level_records[record].level, 100);
+            menu_number_46 = ScaleValue(weapon_level_records[record].gained_values[2] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[2], weapon_level_records[record].level, 100);
+            menu_number_47 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[3], weapon_level_records[record].level, 100);
+            menu_number_48 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[4], weapon_level_records[record].level, 100);
+            menu_number_49 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[5], weapon_level_records[record].level, 100);
+            menu_number_50 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
+            menu_number_51 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
+            menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
+            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_71 = weapon_level_records[record].level;
+            menu_number_54 = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_72 = player_weapon[trade_stock_list_cursor[0]->group];
+            menu_number_73 = 100;
             if (trade_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, shop_a_parts, shop_a_part_count)
             }
@@ -1403,7 +1403,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
                 if (trade_screen_state == 5) {
                     trade_handler = Trade_UpdateTakeAmount;
                     context->active_list = 1;
-                    D_00447310 = 0;
+                    trade_left_move_lock = 0;
                 } else if (trade_screen_state == 6) {
                     context->active_list = 0;
                     trade_handler = Trade_UpdateSelectScreen;
@@ -1456,7 +1456,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         if (menu_buttons & PAD_RIGHT) {
             Sound_PlayMenu(1);
             context->active_list++;
-        } else if ((menu_buttons & PAD_LEFT) && D_00447310 == 0) {
+        } else if ((menu_buttons & PAD_LEFT) && trade_left_move_lock == 0) {
             Sound_PlayMenu(1);
             context->active_list--;
         }
@@ -1477,32 +1477,32 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         }
     }
     if (context->arg != 4) {
-        D_00446E44 = item_counts[trade_stock_list_cursor[0]->item_number];
-        D_00446E48 = stock.counts[context->arg][trade_stock_list_cursor[0]->item_number];
-        D_00446E4C = context->active_list;
-        D_00446E50 = context->active_list * values.values[context->arg][trade_stock_list_cursor[0]->item_number].take_value;
+        menu_number_79 = item_counts[trade_stock_list_cursor[0]->item_number];
+        menu_number_80 = stock.counts[context->arg][trade_stock_list_cursor[0]->item_number];
+        menu_number_81 = context->active_list;
+        menu_number_82 = context->active_list * values.values[context->arg][trade_stock_list_cursor[0]->item_number].take_value;
     } else {
-        D_00446E44 = item_counts[trade_stock_list_cursor[0]->item_number];
-        D_00446E48 = stock.counts[4][trade_stock_list_cursor[0]->item_number];
-        D_00446E4C = context->active_list;
-        D_00446E50 = context->active_list * values.values[4][trade_stock_list_cursor[0]->item_number].take_value;
+        menu_number_79 = item_counts[trade_stock_list_cursor[0]->item_number];
+        menu_number_80 = stock.counts[4][trade_stock_list_cursor[0]->item_number];
+        menu_number_81 = context->active_list;
+        menu_number_82 = context->active_list * values.values[4][trade_stock_list_cursor[0]->item_number].take_value;
         switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & 3) {
         case 1:
-            D_00446E30 = item_counts[ITEM_BONE];
+            menu_number_74 = item_counts[ITEM_BONE];
             break;
         case 2:
-            D_00446E30 = item_counts[ITEM_SCALE];
+            menu_number_74 = item_counts[ITEM_SCALE];
             break;
         case 3:
-            D_00446E30 = item_counts[ITEM_CLAW];
+            menu_number_74 = item_counts[ITEM_CLAW];
             break;
         }
     }
-    if (D_00446E48 >= 100) {
-        D_00446E48 = 99;
+    if (menu_number_80 >= 100) {
+        menu_number_80 = 99;
     }
     if (trade_stock_list_cursor[0]->group == 0) {
-        D_00446E3C = weapon_level_records[record].level_index + 1;
+        menu_number_77 = weapon_level_records[record].level_index + 1;
     }
     for (i = 0; i < shop_part_count; i++) {
         kind = shop_parts[i].handler_index;
@@ -1567,18 +1567,18 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             trade_take_amount_panel_sound_pending = 0;
-            D_00446DF4 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
-            D_00446DF8 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
-            D_00446E24 = worn_item_level_records[record].level;
-            D_00446E28 = 100;
-            D_00446E1C = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
+            menu_number_45 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
+            menu_number_46 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
+            menu_number_47 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
+            menu_number_48 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
+            menu_number_49 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
+            menu_number_50 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
+            menu_number_51 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
+            menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
+            menu_number_71 = worn_item_level_records[record].level;
+            menu_number_72 = 100;
+            menu_number_54 = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             kind = player_weapon[trade_stock_list_cursor[0]->group];
             if (trade_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, shop_g_parts, shop_g_part_count)
@@ -1594,16 +1594,16 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             trade_take_amount_panel_sound_pending = 0;
-            D_00446DF4 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
-            D_00446DF8 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
-            D_00446E1C = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
+            menu_number_45 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
+            menu_number_46 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
+            menu_number_47 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
+            menu_number_48 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
+            menu_number_49 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
+            menu_number_50 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
+            menu_number_51 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
+            menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
+            menu_number_54 = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             kind = player_weapon[trade_stock_list_cursor[0]->group];
             if (trade_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, shop_g2_parts, shop_g2_part_count)
@@ -1617,20 +1617,20 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             trade_take_amount_panel_sound_pending = 0;
-            D_00446DF4 = ScaleValue(weapon_level_records[record].gained_values[0] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[0], weapon_level_records[record].level, 100);
-            D_00446DF8 = ScaleValue(weapon_level_records[record].gained_values[1] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[1], weapon_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(weapon_level_records[record].gained_values[2] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[2], weapon_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[3], weapon_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[4], weapon_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[5], weapon_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
-            D_00446E20 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
-            D_00446E24 = weapon_level_records[record].level;
-            D_00446E1C = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
-            D_00446E28 = player_weapon[trade_stock_list_cursor[0]->group];
-            D_00446E2C = 100;
+            menu_number_44 = ScaleValue(weapon_level_records[record].gained_values[0] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[0], weapon_level_records[record].level, 100);
+            menu_number_45 = ScaleValue(weapon_level_records[record].gained_values[1] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[1], weapon_level_records[record].level, 100);
+            menu_number_46 = ScaleValue(weapon_level_records[record].gained_values[2] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[2], weapon_level_records[record].level, 100);
+            menu_number_47 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[3], weapon_level_records[record].level, 100);
+            menu_number_48 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[4], weapon_level_records[record].level, 100);
+            menu_number_49 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[5], weapon_level_records[record].level, 100);
+            menu_number_50 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
+            menu_number_51 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
+            menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
+            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_71 = weapon_level_records[record].level;
+            menu_number_54 = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_72 = player_weapon[trade_stock_list_cursor[0]->group];
+            menu_number_73 = 100;
             if (trade_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, shop_a_parts, shop_a_part_count)
             }
@@ -1749,7 +1749,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
 
     if (modal_input_locked == 0) {
         if (menu_buttons & PAD_CROSS) {
-            if ((player_state.gold >= D_00446E50 && context->arg != 4) || (D_00446E30 >= D_00446E50 && context->arg == 4)) {
+            if ((player_state.gold >= menu_number_82 && context->arg != 4) || (menu_number_74 >= menu_number_82 && context->arg == 4)) {
                 Sound_PlayMenu(0);
                 trade_screen_state = 3;
                 trade_panel_state = 2;
@@ -1826,19 +1826,19 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             if (screen_part_alphas[i] < 0.0f) {
                 if (trade_screen_state == 5) {
                     if (context->arg != 4) {
-                        player_state.gold -= D_00446E50;
+                        player_state.gold -= menu_number_82;
                         trade_handler = Trade_UpdateSelectScreen;
                         ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                     } else {
                         switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & 3) {
                         case 1:
-                            item_counts[ITEM_BONE] -= D_00446E50;
+                            item_counts[ITEM_BONE] -= menu_number_82;
                             break;
                         case 2:
-                            item_counts[ITEM_SCALE] -= D_00446E50;
+                            item_counts[ITEM_SCALE] -= menu_number_82;
                             break;
                         case 3:
-                            item_counts[ITEM_CLAW] -= D_00446E50;
+                            item_counts[ITEM_CLAW] -= menu_number_82;
                             break;
                         }
                         trade_handler = trade_list_handlers[0];
@@ -1921,7 +1921,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
     }
     record = item_list_cursor[0]->item_number - bases.first_item[item_list_cursor[0]->group];
     if (item_list_cursor[0]->group == 0) {
-        D_00446E3C = weapon_level_records[record].level_index + 1;
+        menu_number_77 = weapon_level_records[record].level_index + 1;
     }
     for (i = 0; i < shop_part_count; i++) {
         kind = shop_parts[i].handler_index;
@@ -2043,18 +2043,18 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             if (details_opened != 0) {
                 Sound_PlayMenu(1);
             }
-            D_00446DF4 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
-            D_00446DF8 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
-            D_00446E24 = worn_item_level_records[record].level;
-            D_00446E28 = 100;
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
+            menu_number_45 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
+            menu_number_46 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
+            menu_number_47 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
+            menu_number_48 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
+            menu_number_49 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
+            menu_number_50 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
+            menu_number_51 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
+            menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
+            menu_number_71 = worn_item_level_records[record].level;
+            menu_number_72 = 100;
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             worn = player_weapon[item_list_cursor[0]->group];
             if (trade_panel_state == 1) {
                 FILL_FADE_2(panel_part_alphas, shop_g_parts, shop_g_part_count)
@@ -2069,16 +2069,16 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             if (details_opened != 0) {
                 Sound_PlayMenu(1);
             }
-            D_00446DF4 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
-            D_00446DF8 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
+            menu_number_45 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
+            menu_number_46 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
+            menu_number_47 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
+            menu_number_48 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
+            menu_number_49 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
+            menu_number_50 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
+            menu_number_51 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
+            menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             worn = player_weapon[item_list_cursor[0]->group];
             if (trade_panel_state == 1) {
                 FILL_FADE_2(panel_part_alphas, shop_g2_parts, shop_g2_part_count)
@@ -2091,20 +2091,20 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             if (details_opened != 0) {
                 Sound_PlayMenu(1);
             }
-            D_00446DF4 = ScaleValue(weapon_level_records[record].gained_values[0] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[0], weapon_level_records[record].level, 100);
-            D_00446DF8 = ScaleValue(weapon_level_records[record].gained_values[1] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[1], weapon_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(weapon_level_records[record].gained_values[2] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[2], weapon_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[3], weapon_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[4], weapon_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[5], weapon_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
-            D_00446E20 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
-            D_00446E24 = weapon_level_records[record].level;
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
-            D_00446E28 = player_weapon[item_list_cursor[0]->group];
-            D_00446E2C = 100;
+            menu_number_44 = ScaleValue(weapon_level_records[record].gained_values[0] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[0], weapon_level_records[record].level, 100);
+            menu_number_45 = ScaleValue(weapon_level_records[record].gained_values[1] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[1], weapon_level_records[record].level, 100);
+            menu_number_46 = ScaleValue(weapon_level_records[record].gained_values[2] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[2], weapon_level_records[record].level, 100);
+            menu_number_47 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[3], weapon_level_records[record].level, 100);
+            menu_number_48 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[4], weapon_level_records[record].level, 100);
+            menu_number_49 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[5], weapon_level_records[record].level, 100);
+            menu_number_50 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
+            menu_number_51 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
+            menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
+            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_71 = weapon_level_records[record].level;
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_72 = player_weapon[item_list_cursor[0]->group];
+            menu_number_73 = 100;
             if (trade_panel_state == 1) {
                 FILL_FADE_2(panel_part_alphas, shop_a_parts, shop_a_part_count)
             }
@@ -2218,7 +2218,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
                 if (trade_screen_state == 4) {
                     trade_handler = Trade_UpdateGiveAmount;
                     context->active_list = 1;
-                    D_00447310 = 0;
+                    trade_left_move_lock = 0;
                 } else if (trade_screen_state == 5) {
                     context->active_list = 1;
                     trade_handler = Trade_UpdateSelectScreen;
@@ -2277,16 +2277,16 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
     } else if (context->active_list <= 0) {
         context->active_list = item_counts[item_list_cursor[0]->item_number];
     }
-    D_00446E44 = item_counts[item_list_cursor[0]->item_number];
-    D_00446E48 = stock.counts[context->arg][item_list_cursor[0]->item_number];
-    D_00446E4C = context->active_list;
-    D_00446E50 = context->active_list * values.values[context->arg][item_list_cursor[0]->item_number].give_value;
-    if (D_00446E48 >= 100) {
-        D_00446E48 = 99;
+    menu_number_79 = item_counts[item_list_cursor[0]->item_number];
+    menu_number_80 = stock.counts[context->arg][item_list_cursor[0]->item_number];
+    menu_number_81 = context->active_list;
+    menu_number_82 = context->active_list * values.values[context->arg][item_list_cursor[0]->item_number].give_value;
+    if (menu_number_80 >= 100) {
+        menu_number_80 = 99;
     }
     record = item_list_cursor[0]->item_number - bases.first_item[item_list_cursor[0]->group];
     if (item_list_cursor[0]->group == 0) {
-        D_00446E3C = weapon_level_records[record].level_index + 1;
+        menu_number_77 = weapon_level_records[record].level_index + 1;
     }
     for (i = 0; i < shop_part_count; i++) {
         kind = shop_parts[i].handler_index;
@@ -2355,18 +2355,18 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             if (info_pressed != 0) {
                 Sound_PlayMenu(1);
             }
-            D_00446DF4 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
-            D_00446DF8 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
-            D_00446E24 = worn_item_level_records[record].level;
-            D_00446E28 = 100;
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
+            menu_number_45 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
+            menu_number_46 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
+            menu_number_47 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
+            menu_number_48 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
+            menu_number_49 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
+            menu_number_50 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
+            menu_number_51 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
+            menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
+            menu_number_71 = worn_item_level_records[record].level;
+            menu_number_72 = 100;
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             glow = player_weapon[item_list_cursor[0]->group];
             if (trade_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, shop_g_parts, shop_g_part_count)
@@ -2381,16 +2381,16 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             if (info_pressed != 0) {
                 Sound_PlayMenu(1);
             }
-            D_00446DF4 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
-            D_00446DF8 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
+            menu_number_45 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
+            menu_number_46 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
+            menu_number_47 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
+            menu_number_48 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
+            menu_number_49 = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
+            menu_number_50 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
+            menu_number_51 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
+            menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             glow = player_weapon[item_list_cursor[0]->group];
             if (trade_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, shop_g2_parts, shop_g2_part_count)
@@ -2403,20 +2403,20 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             if (info_pressed != 0) {
                 Sound_PlayMenu(1);
             }
-            D_00446DF4 = ScaleValue(weapon_level_records[record].gained_values[0] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[0], weapon_level_records[record].level, 100);
-            D_00446DF8 = ScaleValue(weapon_level_records[record].gained_values[1] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[1], weapon_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(weapon_level_records[record].gained_values[2] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[2], weapon_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[3], weapon_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[4], weapon_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[5], weapon_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
-            D_00446E20 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
-            D_00446E24 = weapon_level_records[record].level;
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
-            D_00446E28 = player_weapon[item_list_cursor[0]->group];
-            D_00446E2C = 100;
+            menu_number_44 = ScaleValue(weapon_level_records[record].gained_values[0] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[0], weapon_level_records[record].level, 100);
+            menu_number_45 = ScaleValue(weapon_level_records[record].gained_values[1] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[1], weapon_level_records[record].level, 100);
+            menu_number_46 = ScaleValue(weapon_level_records[record].gained_values[2] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[2], weapon_level_records[record].level, 100);
+            menu_number_47 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[3], weapon_level_records[record].level, 100);
+            menu_number_48 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[4], weapon_level_records[record].level, 100);
+            menu_number_49 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[5], weapon_level_records[record].level, 100);
+            menu_number_50 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
+            menu_number_51 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
+            menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
+            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_71 = weapon_level_records[record].level;
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_72 = player_weapon[item_list_cursor[0]->group];
+            menu_number_73 = 100;
             if (trade_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, shop_a_parts, shop_a_part_count)
             }
@@ -2506,7 +2506,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
     if (modal_input_locked == 0) {
         if (menu_buttons & PAD_CROSS) {
             Sound_PlayMenu(0);
-            player_state.gold += D_00446E50;
+            player_state.gold += menu_number_82;
             if (player_state.gold > 999999) {
                 player_state.gold = 999999;
             }
@@ -2860,7 +2860,7 @@ static void (*const smith_list_handlers[3])(HandlerContext *) IN_RODATA = {
 void Smith_Run(void) {
     modal_input_locked = 1;
     smith_confirm_shown = 0;
-    D_00447314 = 0;
+    smith_confirm_lock = 0;
     smith_upgrade_choice = 0;
     sceGsSyncPath(0, 0);
     sceGsSyncV(0);
@@ -3374,13 +3374,13 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
     number = item_list_cursor[0]->item_number;
     index = number - bases.first_item[item_list_cursor[0]->group];
     if (item_list_cursor[0]->group == 0) {
-        D_00446E3C = weapon_level_records[index].level_index + 1;
+        menu_number_77 = weapon_level_records[index].level_index + 1;
     }
-    D_00446E30 = 100;
+    menu_number_74 = 100;
     if (item_list_cursor[0]->item_number < 220) {
-        D_00446E34 = GetWeaponLevel(item_list_cursor[0]->item_number - 150);
+        menu_number_75 = GetWeaponLevel(item_list_cursor[0]->item_number - 150);
     } else {
-        D_00446E34 = GetItemLevel(item_list_cursor[0]->item_number - 220);
+        menu_number_75 = GetItemLevel(item_list_cursor[0]->item_number - 220);
     }
     for (i = 0; i < tune_part_count; i++) {
         kind = tune_parts[i].handler_index;
@@ -3469,18 +3469,18 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             smith_upgrade_list_panel_sound_pending = 0;
-            D_00446DF4 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
-            D_00446DF8 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
-            D_00446DFC = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
-            D_00446E00 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
-            D_00446E04 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
-            D_00446E08 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
-            D_00446E0C = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
-            D_00446E10 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
-            D_00446E14 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            D_00446E24 = worn_item_level_records[index].level;
-            D_00446E28 = 100;
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
+            menu_number_45 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
+            menu_number_46 = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
+            menu_number_47 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
+            menu_number_48 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
+            menu_number_49 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
+            menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
+            menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
+            menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
+            menu_number_71 = worn_item_level_records[index].level;
+            menu_number_72 = 100;
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_g_part_count; i++) {
@@ -3503,16 +3503,16 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             smith_upgrade_list_panel_sound_pending = 0;
-            D_00446DF4 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
-            D_00446DF8 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
-            D_00446DFC = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
-            D_00446E00 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
-            D_00446E04 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
-            D_00446E08 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
-            D_00446E0C = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
-            D_00446E10 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
-            D_00446E14 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
+            menu_number_45 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
+            menu_number_46 = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
+            menu_number_47 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
+            menu_number_48 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
+            menu_number_49 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
+            menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
+            menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
+            menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_g2_part_count; i++) {
@@ -3533,20 +3533,20 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             smith_upgrade_list_panel_sound_pending = 0;
-            D_00446DF4 = (weapon_level_records[index].gained_values[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[0]) * weapon_level_records[index].level / 100;
-            D_00446DF8 = (weapon_level_records[index].gained_values[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[1]) * weapon_level_records[index].level / 100;
-            D_00446DFC = (weapon_level_records[index].gained_values[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[2]) * weapon_level_records[index].level / 100;
-            D_00446E00 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[3] * weapon_level_records[index].level / 100;
-            D_00446E04 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[4] * weapon_level_records[index].level / 100;
-            D_00446E08 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[5] * weapon_level_records[index].level / 100;
-            D_00446E0C = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
-            D_00446E10 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
-            D_00446E14 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
-            D_00446E20 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
-            D_00446E24 = weapon_level_records[index].level;
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
-            D_00446E28 = player_weapon[item_list_cursor[0]->group];
-            D_00446E2C = 100;
+            menu_number_44 = (weapon_level_records[index].gained_values[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[0]) * weapon_level_records[index].level / 100;
+            menu_number_45 = (weapon_level_records[index].gained_values[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[1]) * weapon_level_records[index].level / 100;
+            menu_number_46 = (weapon_level_records[index].gained_values[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[2]) * weapon_level_records[index].level / 100;
+            menu_number_47 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[3] * weapon_level_records[index].level / 100;
+            menu_number_48 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[4] * weapon_level_records[index].level / 100;
+            menu_number_49 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[5] * weapon_level_records[index].level / 100;
+            menu_number_50 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
+            menu_number_51 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
+            menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
+            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_71 = weapon_level_records[index].level;
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_72 = player_weapon[item_list_cursor[0]->group];
+            menu_number_73 = 100;
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_a_part_count; i++) {
                     full_alpha = shop_a_parts[i].alpha;
@@ -3689,7 +3689,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
 
 /* The screen Smith_UpdateUpgradeList opens for the item chosen from its list: draws the parts, the list with the item's panel,
    its name and its text, waits for accept or cancel and fades out. On accept the item's record gets level 100, the
-   play time of now and the flag that makes that time count (LevelDef.upgrade_wait_minutes minutes, shown through D_00446E38); item
+   play time of now and the flag that makes that time count (LevelDef.upgrade_wait_minutes minutes, shown through menu_number_76); item
    183 is given up for item 184; and the item is taken off if it was equipped. Looks like leaving an item to be
    restored (a guess from what is written). */
 static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
@@ -3717,16 +3717,16 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
     LevelDef *selected_def; // match: its own variable, so that both definitions get the short-lived register
     MenuItem *bought; // match: its own variable (no call while it is used, so it stays in a scratch register)
 
-    D_00446E30 = 100;
+    menu_number_74 = 100;
     if (item_list_cursor[0]->item_number < 220) {
-        D_00446E34 = GetWeaponLevel(item_list_cursor[0]->item_number - 150);
+        menu_number_75 = GetWeaponLevel(item_list_cursor[0]->item_number - 150);
     } else {
-        D_00446E34 = GetItemLevel(item_list_cursor[0]->item_number - 220);
+        menu_number_75 = GetItemLevel(item_list_cursor[0]->item_number - 220);
     }
     number = item_list_cursor[0]->item_number;
     index = number - bases.first_item[item_list_cursor[0]->group];
     if (item_list_cursor[0]->group == 0) {
-        D_00446E3C = weapon_level_records[index].level_index + 1;
+        menu_number_77 = weapon_level_records[index].level_index + 1;
     }
     for (i = 0; i < tune_part_count; i++) {
         kind = tune_parts[i].handler_index;
@@ -3784,18 +3784,18 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             smith_upgrade_confirm_panel_sound_pending = 0;
-            D_00446DF4 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
-            D_00446DF8 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
-            D_00446DFC = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
-            D_00446E00 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
-            D_00446E04 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
-            D_00446E08 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
-            D_00446E0C = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
-            D_00446E10 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
-            D_00446E14 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            D_00446E24 = worn_item_level_records[index].level;
-            D_00446E28 = 100;
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
+            menu_number_45 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
+            menu_number_46 = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
+            menu_number_47 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
+            menu_number_48 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
+            menu_number_49 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
+            menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
+            menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
+            menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
+            menu_number_71 = worn_item_level_records[index].level;
+            menu_number_72 = 100;
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_g_part_count; i++) {
@@ -3818,16 +3818,16 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             smith_upgrade_confirm_panel_sound_pending = 0;
-            D_00446DF4 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
-            D_00446DF8 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
-            D_00446DFC = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
-            D_00446E00 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
-            D_00446E04 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
-            D_00446E08 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
-            D_00446E0C = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
-            D_00446E10 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
-            D_00446E14 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
+            menu_number_45 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
+            menu_number_46 = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
+            menu_number_47 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
+            menu_number_48 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
+            menu_number_49 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
+            menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
+            menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
+            menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_g2_part_count; i++) {
@@ -3849,20 +3849,20 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             smith_upgrade_confirm_panel_sound_pending = 0;
-            D_00446DF4 = (weapon_level_records[index].gained_values[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[0]) * weapon_level_records[index].level / 100;
-            D_00446DF8 = (weapon_level_records[index].gained_values[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[1]) * weapon_level_records[index].level / 100;
-            D_00446DFC = (weapon_level_records[index].gained_values[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[2]) * weapon_level_records[index].level / 100;
-            D_00446E00 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[3] * weapon_level_records[index].level / 100;
-            D_00446E04 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[4] * weapon_level_records[index].level / 100;
-            D_00446E08 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[5] * weapon_level_records[index].level / 100;
-            D_00446E0C = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
-            D_00446E10 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
-            D_00446E14 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
-            D_00446E20 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
-            D_00446E24 = weapon_level_records[index].level;
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
-            D_00446E28 = player_weapon[item_list_cursor[0]->group];
-            D_00446E2C = 100;
+            menu_number_44 = (weapon_level_records[index].gained_values[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[0]) * weapon_level_records[index].level / 100;
+            menu_number_45 = (weapon_level_records[index].gained_values[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[1]) * weapon_level_records[index].level / 100;
+            menu_number_46 = (weapon_level_records[index].gained_values[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[2]) * weapon_level_records[index].level / 100;
+            menu_number_47 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[3] * weapon_level_records[index].level / 100;
+            menu_number_48 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[4] * weapon_level_records[index].level / 100;
+            menu_number_49 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[5] * weapon_level_records[index].level / 100;
+            menu_number_50 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
+            menu_number_51 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
+            menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
+            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_71 = weapon_level_records[index].level;
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_72 = player_weapon[item_list_cursor[0]->group];
+            menu_number_73 = 100;
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_a_part_count; i++) {
                     full_alpha = shop_a_parts[i].alpha;
@@ -3915,7 +3915,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             break;
         }
     }
-    D_00446E38 = item_name_defs[item_list_cursor[0]->item_number].upgrade_wait_minutes;
+    menu_number_76 = item_name_defs[item_list_cursor[0]->item_number].upgrade_wait_minutes;
     for (i = 0; i < tune_mess_part_count; i++) {
         kind = tune_mess_parts[i].handler_index;
         SELECT_PART((s8)tune_mess_parts[i].blend_mode);
@@ -4108,13 +4108,13 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
     number = item_list_cursor[0]->item_number;
     index = number - bases.first_item[item_list_cursor[0]->group];
     if (item_list_cursor[0]->group == 0) {
-        D_00446E3C = weapon_level_records[index].level_index + 1;
+        menu_number_77 = weapon_level_records[index].level_index + 1;
     }
-    D_00446E30 = 100;
+    menu_number_74 = 100;
     if (item_list_cursor[0]->item_number < 220) {
-        D_00446E34 = GetWeaponLevel(item_list_cursor[0]->item_number - 150);
+        menu_number_75 = GetWeaponLevel(item_list_cursor[0]->item_number - 150);
     } else {
-        D_00446E34 = GetItemLevel(item_list_cursor[0]->item_number - 220);
+        menu_number_75 = GetItemLevel(item_list_cursor[0]->item_number - 220);
     }
     for (i = 0; i < tune_part_count; i++) {
         kind = tune_parts[i].handler_index;
@@ -4220,18 +4220,18 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             smith_confirm_list_panel_sound_pending = 0;
-            D_00446DF4 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
-            D_00446DF8 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
-            D_00446DFC = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
-            D_00446E00 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
-            D_00446E04 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
-            D_00446E08 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
-            D_00446E0C = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
-            D_00446E10 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
-            D_00446E14 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            D_00446E24 = worn_item_level_records[index].level;
-            D_00446E28 = 100;
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
+            menu_number_45 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
+            menu_number_46 = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
+            menu_number_47 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
+            menu_number_48 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
+            menu_number_49 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
+            menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
+            menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
+            menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
+            menu_number_71 = worn_item_level_records[index].level;
+            menu_number_72 = 100;
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_g_part_count; i++) {
@@ -4254,16 +4254,16 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             smith_confirm_list_panel_sound_pending = 0;
-            D_00446DF4 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
-            D_00446DF8 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
-            D_00446DFC = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
-            D_00446E00 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
-            D_00446E04 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
-            D_00446E08 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
-            D_00446E0C = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
-            D_00446E10 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
-            D_00446E14 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
+            menu_number_45 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
+            menu_number_46 = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
+            menu_number_47 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
+            menu_number_48 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
+            menu_number_49 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
+            menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
+            menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
+            menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_g2_part_count; i++) {
@@ -4284,20 +4284,20 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             smith_confirm_list_panel_sound_pending = 0;
-            D_00446DF4 = (weapon_level_records[index].gained_values[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[0]) * weapon_level_records[index].level / 100;
-            D_00446DF8 = (weapon_level_records[index].gained_values[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[1]) * weapon_level_records[index].level / 100;
-            D_00446DFC = (weapon_level_records[index].gained_values[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[2]) * weapon_level_records[index].level / 100;
-            D_00446E00 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[3] * weapon_level_records[index].level / 100;
-            D_00446E04 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[4] * weapon_level_records[index].level / 100;
-            D_00446E08 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[5] * weapon_level_records[index].level / 100;
-            D_00446E0C = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
-            D_00446E10 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
-            D_00446E14 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
-            D_00446E20 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
-            D_00446E24 = weapon_level_records[index].level;
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
-            D_00446E28 = player_weapon[item_list_cursor[0]->group];
-            D_00446E2C = 100;
+            menu_number_44 = (weapon_level_records[index].gained_values[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[0]) * weapon_level_records[index].level / 100;
+            menu_number_45 = (weapon_level_records[index].gained_values[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[1]) * weapon_level_records[index].level / 100;
+            menu_number_46 = (weapon_level_records[index].gained_values[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[2]) * weapon_level_records[index].level / 100;
+            menu_number_47 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[3] * weapon_level_records[index].level / 100;
+            menu_number_48 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[4] * weapon_level_records[index].level / 100;
+            menu_number_49 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[5] * weapon_level_records[index].level / 100;
+            menu_number_50 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
+            menu_number_51 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
+            menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
+            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_71 = weapon_level_records[index].level;
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_72 = player_weapon[item_list_cursor[0]->group];
+            menu_number_73 = 100;
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_a_part_count; i++) {
                     full_alpha = shop_a_parts[i].alpha;
@@ -4341,7 +4341,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
         }
     }
     if (smith_confirm_shown != 0) {
-        D_00446E38 = item_name_defs[item_list_cursor[0]->item_number].upgrade_wait_minutes;
+        menu_number_76 = item_name_defs[item_list_cursor[0]->item_number].upgrade_wait_minutes;
         for (i = 0; i < tune_mess_part_count; i++) {
             kind = tune_mess_parts[i].handler_index;
             SELECT_PART((s8)tune_mess_parts[i].blend_mode);
@@ -4526,7 +4526,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                 } else if (smith_screen_state == 9) {
                     smith_confirm_shown = 0;
                 }
-                D_00447314 = 0;
+                smith_confirm_lock = 0;
                 smith_screen_state = 0;
                 smith_panel_state = 0;
                 memset(screen_part_alphas, 0, 0x400);
@@ -4582,16 +4582,16 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
     }
     line_count = 3;
     smith_upgrade_choice = (s8)(smith_upgrade_choice + 3) % line_count;
-    D_00446E30 = 100;
+    menu_number_74 = 100;
     if (item_list_cursor[0]->item_number < 220) {
-        D_00446E34 = GetWeaponLevel(item_list_cursor[0]->item_number - 150);
+        menu_number_75 = GetWeaponLevel(item_list_cursor[0]->item_number - 150);
     } else {
-        D_00446E34 = GetItemLevel(item_list_cursor[0]->item_number - 220);
+        menu_number_75 = GetItemLevel(item_list_cursor[0]->item_number - 220);
     }
     number = item_list_cursor[0]->item_number;
     index = number - bases.first_item[item_list_cursor[0]->group];
     if (item_list_cursor[0]->group == 0) {
-        D_00446E3C = weapon_level_records[index].level_index + 1;
+        menu_number_77 = weapon_level_records[index].level_index + 1;
     }
     bar_drawn = FALSE;
     for (i = 0; i < tune_s_part_count; i++) {
@@ -4660,18 +4660,18 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             if (play_sound) {
                 Sound_PlayMenu(1);
             }
-            D_00446DF4 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
-            D_00446DF8 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
-            D_00446DFC = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
-            D_00446E00 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
-            D_00446E04 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
-            D_00446E08 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
-            D_00446E0C = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
-            D_00446E10 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
-            D_00446E14 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            D_00446E24 = worn_item_level_records[index].level;
-            D_00446E28 = 100;
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
+            menu_number_45 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
+            menu_number_46 = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
+            menu_number_47 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
+            menu_number_48 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
+            menu_number_49 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
+            menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
+            menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
+            menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
+            menu_number_71 = worn_item_level_records[index].level;
+            menu_number_72 = 100;
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
             for (i = 0; i < shop_g_part_count; i++) {
                 SELECT_PART((s8)shop_g_parts[i].blend_mode);
@@ -4687,16 +4687,16 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             if (play_sound) {
                 Sound_PlayMenu(1);
             }
-            D_00446DF4 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
-            D_00446DF8 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
-            D_00446DFC = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
-            D_00446E00 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
-            D_00446E04 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
-            D_00446E08 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
-            D_00446E0C = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
-            D_00446E10 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
-            D_00446E14 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
+            menu_number_45 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
+            menu_number_46 = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
+            menu_number_47 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
+            menu_number_48 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
+            menu_number_49 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
+            menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
+            menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
+            menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
             for (i = 0; i < shop_g2_part_count; i++) {
                 SELECT_PART((s8)shop_g2_parts[i].blend_mode);
@@ -4710,20 +4710,20 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             if (play_sound) {
                 Sound_PlayMenu(1);
             }
-            D_00446DF4 = (weapon_level_records[index].gained_values[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[0]) * weapon_level_records[index].level / 100;
-            D_00446DF8 = (weapon_level_records[index].gained_values[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[1]) * weapon_level_records[index].level / 100;
-            D_00446DFC = (weapon_level_records[index].gained_values[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[2]) * weapon_level_records[index].level / 100;
-            D_00446E00 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[3] * weapon_level_records[index].level / 100;
-            D_00446E04 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[4] * weapon_level_records[index].level / 100;
-            D_00446E08 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[5] * weapon_level_records[index].level / 100;
-            D_00446E0C = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
-            D_00446E10 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
-            D_00446E14 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
-            D_00446E20 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
-            D_00446E24 = weapon_level_records[index].level;
-            D_00446E1C = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
-            D_00446E28 = player_weapon[item_list_cursor[0]->group];
-            D_00446E2C = 100;
+            menu_number_44 = (weapon_level_records[index].gained_values[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[0]) * weapon_level_records[index].level / 100;
+            menu_number_45 = (weapon_level_records[index].gained_values[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[1]) * weapon_level_records[index].level / 100;
+            menu_number_46 = (weapon_level_records[index].gained_values[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[2]) * weapon_level_records[index].level / 100;
+            menu_number_47 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[3] * weapon_level_records[index].level / 100;
+            menu_number_48 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[4] * weapon_level_records[index].level / 100;
+            menu_number_49 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[5] * weapon_level_records[index].level / 100;
+            menu_number_50 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
+            menu_number_51 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
+            menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
+            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_71 = weapon_level_records[index].level;
+            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_72 = player_weapon[item_list_cursor[0]->group];
+            menu_number_73 = 100;
             for (i = 0; i < shop_a_part_count; i++) {
                 SELECT_PART((s8)shop_a_parts[i].blend_mode);
                 MenuSprite_Draw((int)&shop_a_parts[i], shop_a_parts[i].handler_index + 1000, 0, (int)panel_part_alphas[i]);
@@ -4891,13 +4891,13 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
     number = smith_collect_list_cursor[0]->item_number;
     index = number - bases.first_item[smith_collect_list_cursor[0]->group];
     if (smith_collect_list_cursor[0]->group == 0) {
-        D_00446E3C = weapon_level_records[index].level_index + 1;
+        menu_number_77 = weapon_level_records[index].level_index + 1;
     }
-    D_00446E30 = 100;
+    menu_number_74 = 100;
     if (smith_collect_list_cursor[0]->item_number < 220) {
-        D_00446E34 = GetWeaponLevel(smith_collect_list_cursor[0]->item_number - 150);
+        menu_number_75 = GetWeaponLevel(smith_collect_list_cursor[0]->item_number - 150);
     } else {
-        D_00446E34 = GetItemLevel(smith_collect_list_cursor[0]->item_number - 220);
+        menu_number_75 = GetItemLevel(smith_collect_list_cursor[0]->item_number - 220);
     }
     for (i = 0; i < tune_part_count; i++) {
         kind = tune_parts[i].handler_index;
@@ -4986,18 +4986,18 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             smith_collect_list_panel_sound_pending = 0;
-            D_00446DF4 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
-            D_00446DF8 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
-            D_00446DFC = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
-            D_00446E00 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
-            D_00446E04 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
-            D_00446E08 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
-            D_00446E0C = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
-            D_00446E10 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
-            D_00446E14 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            D_00446E24 = worn_item_level_records[index].level;
-            D_00446E28 = 100;
-            D_00446E1C = item_name_defs[smith_collect_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
+            menu_number_45 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
+            menu_number_46 = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
+            menu_number_47 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
+            menu_number_48 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
+            menu_number_49 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
+            menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
+            menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
+            menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
+            menu_number_71 = worn_item_level_records[index].level;
+            menu_number_72 = 100;
+            menu_number_54 = item_name_defs[smith_collect_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[smith_collect_list_cursor[0]->group];
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_g_part_count; i++) {
@@ -5020,16 +5020,16 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             smith_collect_list_panel_sound_pending = 0;
-            D_00446DF4 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
-            D_00446DF8 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
-            D_00446DFC = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
-            D_00446E00 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
-            D_00446E04 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
-            D_00446E08 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
-            D_00446E0C = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
-            D_00446E10 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
-            D_00446E14 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            D_00446E1C = item_name_defs[smith_collect_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_44 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
+            menu_number_45 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
+            menu_number_46 = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
+            menu_number_47 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
+            menu_number_48 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
+            menu_number_49 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
+            menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
+            menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
+            menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
+            menu_number_54 = item_name_defs[smith_collect_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[smith_collect_list_cursor[0]->group];
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_g2_part_count; i++) {
@@ -5050,20 +5050,20 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             smith_collect_list_panel_sound_pending = 0;
-            D_00446DF4 = (weapon_level_records[index].gained_values[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[0]) * weapon_level_records[index].level / 100;
-            D_00446DF8 = (weapon_level_records[index].gained_values[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[1]) * weapon_level_records[index].level / 100;
-            D_00446DFC = (weapon_level_records[index].gained_values[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[2]) * weapon_level_records[index].level / 100;
-            D_00446E00 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[3] * weapon_level_records[index].level / 100;
-            D_00446E04 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[4] * weapon_level_records[index].level / 100;
-            D_00446E08 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[5] * weapon_level_records[index].level / 100;
-            D_00446E0C = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
-            D_00446E10 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
-            D_00446E14 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
-            D_00446E20 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
-            D_00446E24 = weapon_level_records[index].level;
-            D_00446E1C = item_name_defs[smith_collect_list_cursor[0]->item_number].weight_tenths_of_pound;
-            D_00446E28 = player_weapon[smith_collect_list_cursor[0]->group];
-            D_00446E2C = 100;
+            menu_number_44 = (weapon_level_records[index].gained_values[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[0]) * weapon_level_records[index].level / 100;
+            menu_number_45 = (weapon_level_records[index].gained_values[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[1]) * weapon_level_records[index].level / 100;
+            menu_number_46 = (weapon_level_records[index].gained_values[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[2]) * weapon_level_records[index].level / 100;
+            menu_number_47 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[3] * weapon_level_records[index].level / 100;
+            menu_number_48 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[4] * weapon_level_records[index].level / 100;
+            menu_number_49 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[5] * weapon_level_records[index].level / 100;
+            menu_number_50 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
+            menu_number_51 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
+            menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
+            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_71 = weapon_level_records[index].level;
+            menu_number_54 = item_name_defs[smith_collect_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_72 = player_weapon[smith_collect_list_cursor[0]->group];
+            menu_number_73 = 100;
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_a_part_count; i++) {
                     full_alpha = shop_a_parts[i].alpha;
@@ -5933,44 +5933,44 @@ static void SaveScreen_UpdateSaveList(void) {
     s32 swapped;
 
     info[0] = (CardSaveInfo *)SaveCard_GetSaveInfo(save_line_slots[0]);
-    D_00446DF4 = info[0]->level;
-    D_00446DF8 = info[0]->experience;
-    D_00446DFC = info[0]->gold;
-    D_00446E00 = info[0]->hp_now;
-    D_00446E04 = info[0]->hp_max;
-    D_00446E08 = info[0]->mp_now;
-    D_00446E0C = info[0]->mp_max;
-    D_00446E10 = info[0]->power_base;
-    D_00446E14 = info[0]->magic_base;
-    D_00446E18 = info[0]->play_hours;
-    D_00446E1C = info[0]->play_minutes;
-    D_00446E20 = info[0]->play_seconds;
+    menu_number_44 = info[0]->level;
+    menu_number_45 = info[0]->experience;
+    menu_number_46 = info[0]->gold;
+    menu_number_47 = info[0]->hp_now;
+    menu_number_48 = info[0]->hp_max;
+    menu_number_49 = info[0]->mp_now;
+    menu_number_50 = info[0]->mp_max;
+    menu_number_51 = info[0]->power_base;
+    menu_number_52 = info[0]->magic_base;
+    menu_number_53 = info[0]->play_hours;
+    menu_number_54 = info[0]->play_minutes;
+    menu_number_70 = info[0]->play_seconds;
     info[1] = (CardSaveInfo *)SaveCard_GetSaveInfo(save_line_slots[1]);
-    D_00446E24 = info[1]->level;
-    D_00446E28 = info[1]->experience;
-    D_00446E2C = info[1]->gold;
-    D_00446E30 = info[1]->hp_now;
-    D_00446E34 = info[1]->hp_max;
-    D_00446E38 = info[1]->mp_now;
-    D_00446E3C = info[1]->mp_max;
-    D_00446E40 = info[1]->power_base;
-    D_00446E44 = info[1]->magic_base;
-    D_00446E48 = info[1]->play_hours;
-    D_00446E4C = info[1]->play_minutes;
-    D_00446E50 = info[1]->play_seconds;
+    menu_number_71 = info[1]->level;
+    menu_number_72 = info[1]->experience;
+    menu_number_73 = info[1]->gold;
+    menu_number_74 = info[1]->hp_now;
+    menu_number_75 = info[1]->hp_max;
+    menu_number_76 = info[1]->mp_now;
+    menu_number_77 = info[1]->mp_max;
+    menu_number_78 = info[1]->power_base;
+    menu_number_79 = info[1]->magic_base;
+    menu_number_80 = info[1]->play_hours;
+    menu_number_81 = info[1]->play_minutes;
+    menu_number_82 = info[1]->play_seconds;
     info[2] = (CardSaveInfo *)SaveCard_GetSaveInfo(save_line_slots[2]);
-    D_00446E54 = info[2]->level;
-    D_00446E58 = info[2]->experience;
-    D_00446E5C = info[2]->gold;
-    D_00446E60 = info[2]->hp_now;
-    D_00446E64 = info[2]->hp_max;
-    D_00446E68 = info[2]->mp_now;
-    D_00446E6C = info[2]->mp_max;
-    D_00446E70 = info[2]->power_base;
-    D_00446E74 = info[2]->magic_base;
-    D_00446E78 = info[2]->play_hours;
-    D_00446E7C = info[2]->play_minutes;
-    D_00446E80 = info[2]->play_seconds;
+    menu_number_83 = info[2]->level;
+    menu_number_84 = info[2]->experience;
+    menu_number_85 = info[2]->gold;
+    menu_number_86 = info[2]->hp_now;
+    menu_number_87 = info[2]->hp_max;
+    menu_number_88 = info[2]->mp_now;
+    menu_number_89 = info[2]->mp_max;
+    menu_number_90 = info[2]->power_base;
+    menu_number_91 = info[2]->magic_base;
+    menu_number_92 = info[2]->play_hours;
+    menu_number_93 = info[2]->play_minutes;
+    menu_number_94 = info[2]->play_seconds;
 
     if ((save_screen_state.list_step == -1 && (save_screen_state.free_clusters == 0 || save_screen_state.free_clusters != SaveCard_GetFreeClusters(save_screen_state.selected_card))) ||
         (save_screen_state.list_step == 2 && save_screen_state.free_clusters != SaveCard_GetFreeClusters(save_screen_state.selected_card))) {

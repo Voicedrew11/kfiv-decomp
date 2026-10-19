@@ -106,7 +106,7 @@ int Attack_TestMapModelWalls(ModelInstance *, void *, f32);
 
 /* 0x402D88 the three hit checks of a swing, one per kind of collision shape class */
 int (*swing_hit_checks[3])(ModelInstance *, void *, f32) = { Attack_TestMapModel, Attack_TestMapModelFloors, Attack_TestMapModelWalls };
-u32 D_00402D98[4] = { 0x18, 8, 0x10, 0 }; /* 0x402D98 four words after the table, which nothing reads */
+u32 swing_hit_checks_tail_words[4] = { 0x18, 8, 0x10, 0 }; /* 0x402D98 four words after the table, which nothing reads */
 /* 0x402DA8 the effect table, 0x110 bytes per effect id, which Attack_LoadMagicTable loads from its file */
 FxTableEntry fx_table[256] = { 0 };
 
