@@ -131,21 +131,21 @@ static page) and the table below; commit those with each batch of work.
 <!-- progress:start -->
 | | code | linked | functions | named | units linked |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| overall | 99.58% | 99.58% | 3837 / 3839 | 3771 / 3839 | 411 / 455 |
-| game | 99.53% | 99.53% | 2990 / 2991 | 2945 / 2991 | 207 / 249 |
-| sce | 100.00% | 100.00% | 847 / 848 | 826 / 848 | 204 / 206 |
+| overall | 99.58% | 99.58% | 3837 / 3839 | 3838 / 3839 | 411 / 455 |
+| game | 99.53% | 99.53% | 2990 / 2991 | 2991 / 2991 | 207 / 249 |
+| sce | 100.00% | 100.00% | 847 / 848 | 847 / 848 | 204 / 206 |
 
 | game readability | | |
 | --- | ---: | ---: |
 | structs recovered | 38.47% | 237 of 616 |
 | struct fields named | 78.07% | 2947 of 3775 |
-| field uses named | 98.53% | 57421 of 58278 |
+| field uses named | 98.53% | 57469 of 58326 |
 | globals named | 85.69% | 1258 of 1468 |
 | bit operations named | 68.70% | 2427 of 3533 |
-| function-pointer casts | 1455 | left |
-| `// match:` comments | 1050 | left |
+| function-pointer casts | 1440 | left |
+| `// match:` comments | 996 | left |
 | gotos | 79 | left |
-| multi-line comments | 1800 | left |
+| multi-line comments | 1798 | left |
 <!-- progress:end -->
 
 ## Contributing
