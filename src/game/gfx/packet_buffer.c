@@ -32,7 +32,7 @@ extern u32 vu1_packed_vertex_program[]; /* 0x000: triangles of packed vertices (
 extern u32 vu1_gif_kick_program[];      /* 0x276: passes a GIF packet on (Packet_EndGsRegisters) */
 extern u32 vu1_float_vertex_program[];  /* 0x280: triangles of float vertices (ModelScreen_QueueCutFloatTriangle) */
 extern u32 vu1_posed_model_program[];   /* 0x5A0: the pool blocks' posed models (Model_SetVu1Program) */
-extern u32 vu1_unnamed_program[];                /* 0x700: no C code starts it */
+extern u32 vu1_program_700[];      /* 0x700: no C code starts it */
 void Packet_UploadVu1Programs(void);
 void Packet_AppendToChain(u32 *, u32 *);
 void Packet_LayOutBuffers(int);
@@ -64,7 +64,7 @@ void Packet_UploadVu1Programs(void) {
     SEND_TO_VIF1(vu1_gif_kick_program);
     SEND_TO_VIF1(vu1_float_vertex_program);
     SEND_TO_VIF1(vu1_posed_model_program);
-    SEND_TO_VIF1(vu1_unnamed_program);
+    SEND_TO_VIF1(vu1_program_700);
 }
 
 /* Called before a frame's drawing; empty. */

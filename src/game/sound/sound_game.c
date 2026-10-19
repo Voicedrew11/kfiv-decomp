@@ -21,9 +21,9 @@ extern SoundFileBuffer se_com_bank;
 extern SoundFileBuffer sfx_com_bank;
 extern SoundChannel sound_channels[];
 extern char sound_heap_base[];
-extern int map_reverb_volume_cap;
-extern float map_reverb_scale;
-extern int map_reverb_enabled_flag;
+extern int sound_unread_limit;            /* Sound_Init sets it to 0x40; nothing reads it */
+extern float sound_unread_scale;          /* Sound_Init sets it to 0.013; nothing reads it */
+extern int sound_unread_switch;           /* Sound_Init sets it to 1; nothing reads it */
 extern s8 map_reverb_set;
 extern char map_sounds_enabled;
 extern char reverb_change_pending;
@@ -87,7 +87,7 @@ extern int (*falloff_sound_players[])(int, int); // match: an int result, though
 extern int map_bank_load_step;
 extern SoundScriptState map_reverb_cue_indices;
 extern u8 map_reverb_slot;
-extern int map_bank_done_flag;
+extern int map_bank_unread_flag;          /* cleared by Sound_MapBankFinishUnlessFirst; nothing reads it */
 extern int (*map_bank_load_steps[])(SoundJob *job);
 extern SoundBankSpec map_bank_files;
 extern SoundFileBuffer sw_bank;
@@ -139,9 +139,9 @@ void Sound_Init(void) {
     int i;
     u32 heap_start;
 
-    map_reverb_volume_cap = 0x40;
-    map_reverb_scale = 0.013f;
-    map_reverb_enabled_flag = 1;
+    sound_unread_limit = 0x40;
+    sound_unread_scale = 0.013f;
+    sound_unread_switch = 1;
     reverb_change_pending = 0;
     map_reverb_volume = 0;
     map_sounds_enabled = 0;
@@ -2036,7 +2036,7 @@ int Sound_MapBankApplyReverb(SoundJob *job) {
    after that sets map_sounds_enabled (map sounds may start) and ends the load (1), so the reverb stays. */
 int Sound_MapBankFinishUnlessFirst(SoundJob *job) {
     map_bank_load_step += 1;
-    map_bank_done_flag = 0;
+    map_bank_unread_flag = 0;
     if (map_reverb_set != 0) {
         map_sounds_enabled = TRUE;
         return 1;

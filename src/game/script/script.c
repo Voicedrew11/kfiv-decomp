@@ -29,7 +29,7 @@ extern u8 *script_game_var_blocks[];
 extern ScriptCommandHandler script_general_command_handlers[];
 extern ScriptCommandHandler script_world_command_handlers[];
 extern ScriptCommandHandler script_entity_command_handlers[];
-extern f32 camera_script_value[];
+extern f32 camera_state_tail[];       /* camera_state from CameraState.screen_scale (0x48) on */
 extern u8 recollection_pages[50];
 extern u8 game_options[];
 extern SoundLoadQueue sound_load_queue;
@@ -1060,10 +1060,10 @@ void ScriptCmd_WaitForever19(void) {
 void ScriptCmd_WaitForever20(void) {
 }
 
-/* Command 29: sets the camera's word at 0x48 (camera_script_value, which Map_ResetGameState starts at 512.0f) to the
+/* Command 29: sets CameraState.screen_scale (camera_state_tail[0], which Map_ResetGameState starts at 512.0f) to the
    float argument, then finishes. No reader of the word is known. */
 void ScriptCmd_SetCameraUnk48(ScriptFloatValueCommand *command) {
-    camera_script_value[0] = command->value.value;
+    camera_state_tail[0] = command->value.value;
     command->active = 0;
 }
 
