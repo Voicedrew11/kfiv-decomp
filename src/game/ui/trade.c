@@ -78,7 +78,7 @@ void Input_Update(void);
 s16 MenuPad_Update(void);
 void MenuHeap_FreeToMark(void);
 extern s8 modal_input_locked;       /* TRUE while a trade or smith screen fades: the buttons are not read */
-extern s8 trade_left_move_lock;
+extern s8 trade_amount_down_locked;  /* TRUE stops LEFT lowering the take amount; the game only clears it */
 extern s8 menu_mode;
 extern s32 modal_pad_mode;          /* Pad_GetMode of pad 0 this frame; 0xFF: no pad */
 extern s32 modal_pad_mode_last;     /* the same, last frame */
@@ -276,7 +276,7 @@ int PlayTime_SecondsBetween(ClockTime, ClockTime);
         } \
     }
 extern s8 smith_confirm_shown;      /* TRUE while Smith_UpdateListWithConfirm shows its question */
-extern s8 smith_confirm_lock;
+extern s8 smith_unread_flag;         /* cleared with the smith screen state; nothing sets or reads it */
 extern s8 smith_upgrade_choice;     /* which of the three lines of Smith_UpdateItemScreen is picked */
 extern s32 smith_pad_change_frames; /* counts 20 frames without buttons after the pad type changed */
 extern s32 smith_run_step;          /* which of smith_run_steps runs */
@@ -577,7 +577,7 @@ static void Trade_BuildItemRings(s32 table) {
 /* Runs the screen loop of the handler trade_run_step selects until it returns 0, watching the pad type for changes. */
 void Trade_Run(s32 value) {
     modal_input_locked = 1;
-    trade_left_move_lock = 0;
+    trade_amount_down_locked = 0;
     sceGsSyncPath(0, 0);
     sceGsSyncV(0);
     Vram_Clear(0x3D00, 0x3F00);
@@ -1403,7 +1403,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
                 if (trade_screen_state == 5) {
                     trade_handler = Trade_UpdateTakeAmount;
                     context->active_list = 1;
-                    trade_left_move_lock = 0;
+                    trade_amount_down_locked = 0;
                 } else if (trade_screen_state == 6) {
                     context->active_list = 0;
                     trade_handler = Trade_UpdateSelectScreen;
@@ -1456,7 +1456,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         if (menu_buttons & PAD_RIGHT) {
             Sound_PlayMenu(1);
             context->active_list++;
-        } else if ((menu_buttons & PAD_LEFT) && trade_left_move_lock == 0) {
+        } else if ((menu_buttons & PAD_LEFT) && trade_amount_down_locked == 0) {
             Sound_PlayMenu(1);
             context->active_list--;
         }
@@ -2218,7 +2218,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
                 if (trade_screen_state == 4) {
                     trade_handler = Trade_UpdateGiveAmount;
                     context->active_list = 1;
-                    trade_left_move_lock = 0;
+                    trade_amount_down_locked = 0;
                 } else if (trade_screen_state == 5) {
                     context->active_list = 1;
                     trade_handler = Trade_UpdateSelectScreen;
@@ -2860,7 +2860,7 @@ static void (*const smith_list_handlers[3])(HandlerContext *) IN_RODATA = {
 void Smith_Run(void) {
     modal_input_locked = 1;
     smith_confirm_shown = 0;
-    smith_confirm_lock = 0;
+    smith_unread_flag = 0;
     smith_upgrade_choice = 0;
     sceGsSyncPath(0, 0);
     sceGsSyncV(0);
@@ -4526,7 +4526,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                 } else if (smith_screen_state == 9) {
                     smith_confirm_shown = 0;
                 }
-                smith_confirm_lock = 0;
+                smith_unread_flag = 0;
                 smith_screen_state = 0;
                 smith_panel_state = 0;
                 memset(screen_part_alphas, 0, 0x400);
