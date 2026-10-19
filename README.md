@@ -139,8 +139,8 @@ static page) and the table below; commit those with each batch of work.
 | --- | ---: | ---: |
 | structs recovered | 38.47% | 237 of 616 |
 | struct fields named | 78.07% | 2947 of 3775 |
-| field uses named | 98.53% | 57469 of 58326 |
-| globals named | 85.69% | 1258 of 1468 |
+| field uses named | 98.52% | 57473 of 58334 |
+| globals named | 94.35% | 1385 of 1468 |
 | bit operations named | 68.70% | 2427 of 3533 |
 | function-pointer casts | 1440 | left |
 | `// match:` comments | 996 | left |
