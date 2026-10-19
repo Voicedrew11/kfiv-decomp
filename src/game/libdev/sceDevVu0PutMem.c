@@ -1,9 +1,9 @@
 #include "common.h"
 #include <libdev_internal.h>
 
-// libdev: sceDevVu0PutMem (name inferred). Stores one quadword at a VU0 data memory address, through VF1 and
+// libdev: Stores one quadword at a VU0 data memory address, through VF1 and
 // VI1, which it saves and restores.
-void func_0022B090(u16 address, LibdevQuadword quadword) {
+void sceDevVu0PutMem(u16 address, LibdevQuadword quadword) {
     u32 saved_index;
     LibdevUint128 saved_vector;
     LibdevUint128 value;

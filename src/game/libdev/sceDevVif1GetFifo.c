@@ -3,9 +3,9 @@
 
 typedef u32 u_long128 __attribute__((mode(TI)));
 
-// libdev: sceDevVif1GetFifo (name inferred). Reads quadwords from the VIF1 FIFO while it holds any;
+// libdev: Reads quadwords from the VIF1 FIFO while it holds any;
 // returns how many were read.
-int func_0022BC70(u_long128 *destination, int quadword_count) {
+int sceDevVif1GetFifo(u_long128 *destination, int quadword_count) {
     int read_count = 0;
 
     while (quadword_count--) {

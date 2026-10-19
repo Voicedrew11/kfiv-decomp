@@ -1,9 +1,9 @@
 """Fog block rewritten in retail's split order (conversions, red sum and green multiplies first), with barriers."""
 import importlib.util, itertools, sys
 sys.argv = ["x", "show", "0", "0"]
-spec = importlib.util.spec_from_file_location("tb", "src/nonmatching/func_00112BD0/try_barrier.py")
+spec = importlib.util.spec_from_file_location("tb", "src/nonmatching/Map_UpdateDrawState/try_barrier.py")
 tb = importlib.util.module_from_spec(spec)
-src = open("src/nonmatching/func_00112BD0.c").read()
+src = open("src/nonmatching/Map_UpdateDrawState.c").read()
 I = "                "
 a = src.index(I + "blend_sum = FOG_COLOR(&D_0038A1B0.unk140)->red")
 b = src.index(I + "far_to = D_0038A1B0.unk160.unk0C;")
@@ -28,8 +28,8 @@ AFTER = [
     "blended = (int)(blue_from);",
     "FOG_COLOR(&D_0038A1B0.unkA0)->blue = blended;",
 ]
-exec(open("src/nonmatching/func_00112BD0/try_barrier.py").read().split("def label")[0].split("lines = open")[0])
-exec("def score(src):" + open("src/nonmatching/func_00112BD0/try_barrier.py").read().split("def score(src):")[1].split("def label")[0])
+exec(open("src/nonmatching/Map_UpdateDrawState/try_barrier.py").read().split("def label")[0].split("lines = open")[0])
+exec("def score(src):" + open("src/nonmatching/Map_UpdateDrawState/try_barrier.py").read().split("def score(src):")[1].split("def label")[0])
 stmts = BEFORE + AFTER
 best = []
 for kind in (0, 1):

@@ -5,8 +5,8 @@
 """
 import itertools, os, subprocess, sys
 
-SRC = "src/nonmatching/func_00112BD0.c"
-TMP = "src/game/func_00112BD0.c"
+SRC = "src/nonmatching/Map_UpdateDrawState.c"
+TMP = "src/game/Map_UpdateDrawState.c"
 BARRIERS = ['__asm__ volatile("");', '__asm__ volatile("" : : : "memory");']
 FIRST, LAST = "fade_out = D_0038A1B0.unk9A;", "D_0038A1B0.unkA0.unk08 = blend_sum;"
 

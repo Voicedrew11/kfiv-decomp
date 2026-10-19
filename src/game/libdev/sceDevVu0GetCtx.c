@@ -1,13 +1,12 @@
 #include "common.h"
 #include <libdev_internal.h>
 
-int func_0022B060(void);
 // match: sceDevVu0GetMem returns the quadword by value; libdev_internal.h spells out the hidden pointer
 #define GET_MEM(address) ((LibdevQuadword (*)(u16))sceDevVu0GetMem)(address)
 
-// libdev: sceDevVu0GetCtx in libdev_internal.h (name inferred). Reads VU1's registers, which VU0 sees in
+// libdev: Reads VU1's registers, which VU0 sees in
 // its data memory from quadword 0x400 on; fails while either VU is running.
-int func_0022B2E0(LibdevVu1Registers *registers) {
+int sceDevVu0GetCtx(LibdevVu1Registers *registers) {
     LibdevQuadword status;
     LibdevQuadword mac;
     LibdevQuadword clipping;
@@ -18,7 +17,7 @@ int func_0022B2E0(LibdevVu1Registers *registers) {
     LibdevQuadword integer;
     u32 i;
 
-    if (func_0022B060()) {
+    if (sceDevVu0ChkIdle()) {
         return FALSE;
     }
     for (i = 0; i < 32; i++) {

@@ -54,7 +54,7 @@ int Script_UpdateAll(void);
 void GameLoop_UpdateCameraShake(void);
 void Interact_FindTarget(void);
 void MapLoad_Update(void);
-void func_00112BD0(void);
+void Map_UpdateDrawState(void);
 void Entity_UpdatePool(void);
 void MapItem_UpdateFalling(void);
 void Player_UseItem(void);
@@ -78,7 +78,7 @@ int sceGsSyncV(int);
 int Sound_BgmLoadCanYield(void);
 void File_CloseAll(void);
 void Wobble_AdvanceSines(void);
-void func_001095D0(void);
+void Packet_OnFrameStart(void);
 void GsDraw_ResetDrawTarget(void);
 void ModelTexture_ResetSlots(void);
 void Map_DrawRecords(int);
@@ -106,7 +106,7 @@ void GsDraw_FillScreen(int, int, int, int, int);
 void Game_TintScreen(int, int, int);
 void Game_DrawFade(void);
 void Game_ApplyBrightness(int);
-void func_001095D8(void);
+void Packet_OnFrameEnd(void);
 MapRecordInfo *Map_FindRecordAtInSlot(CameraState *, f32, int);
 int rand(void);
 float Angle_Wrap(float);
@@ -271,7 +271,7 @@ void GameLoop_Run(int arg) {
         Interact_FindTarget();
         MapLoad_Update();
         Player_UpdateArmModels();
-        func_00112BD0();
+        Map_UpdateDrawState();
         MapObject_UpdateAll();
         Entity_UpdatePool();
         Entity_UpdateAll();
@@ -340,7 +340,7 @@ int GameLoop_DrawFrame(int arg) {
     int blue;
 
     Wobble_AdvanceSines();
-    func_001095D0();
+    Packet_OnFrameStart();
     GsDraw_ResetDrawTarget();
     switch (map_draw_state.mode) {
     case 0:
@@ -537,7 +537,7 @@ int GameLoop_DrawFrame(int arg) {
         Hud_DrawPaused();
     }
     Game_ApplyBrightness(game_options[10]);
-    func_001095D8();
+    Packet_OnFrameEnd();
 }
 
 /* Finds the map record the camera is in and works out this frame's two camera shake offsets. */
@@ -968,7 +968,7 @@ void GameLoop_ShowGrabbedFrame(int divisor) {
     for (pass = 0; pass < 2; pass++) {
         Packet_SwapBuffers();
         DrawList_Clear();
-        func_001095D0();
+        Packet_OnFrameStart();
         context1_buffer_half = pass;
         context2_buffer_half = pass;
         GsDraw_ResetDrawTarget();
@@ -981,7 +981,7 @@ void GameLoop_ShowGrabbedFrame(int divisor) {
         Packet_BeginGsRegisters();
         Packet_AddGsRegister(8, 0);
         Packet_EndGsRegisters();
-        func_001095D8();
+        Packet_OnFrameEnd();
         if (pass == 0) {
             context1_buffer_half = 1;
             context2_buffer_half = 1;
@@ -999,12 +999,12 @@ void GameLoop_ClearBothBuffers(void) {
     for (pass = 0; pass < 2; pass++) {
         Packet_SwapBuffers();
         DrawList_Clear();
-        func_001095D0();
+        Packet_OnFrameStart();
         context1_buffer_half = pass;
         context2_buffer_half = pass;
         GsDraw_ResetDrawTarget();
         GsDraw_FillScreen(0, 0, 0, 0x80, 0x44);
-        func_001095D8();
+        Packet_OnFrameEnd();
         if (pass == 0) {
             context1_buffer_half = 1;
             context2_buffer_half = 1;

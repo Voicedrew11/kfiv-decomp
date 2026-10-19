@@ -1,6 +1,6 @@
 """Pin fog-block variables to retail's FP registers (register ... asm("$fN")) and score each via a temp copy in src/game."""
 import re, subprocess, sys
-BASE = open("src/nonmatching/func_00112BD0.c").read()
+BASE = open("src/nonmatching/Map_UpdateDrawState.c").read()
 RETAIL = {"fade_out": "$f2", "fade_in": "$f3", "green_from": "$f4", "green_to": "$f6",
           "blue_from": "$f5", "blue_to": "$f0", "blend_sum": "$f1", "far_to": "$f9"}
 
@@ -14,11 +14,11 @@ def pin(src, names):
 
 
 def score(src):
-    open("src/game/func_00112BD0.c", "w").write(src)
+    open("src/game/Map_UpdateDrawState.c", "w").write(src)
     try:
-        r = subprocess.run([".venv/bin/python", "tools/match.py", "diff", "src/game/func_00112BD0.c"], capture_output=True, text=True)
+        r = subprocess.run([".venv/bin/python", "tools/match.py", "diff", "src/game/Map_UpdateDrawState.c"], capture_output=True, text=True)
     finally:
-        subprocess.run(["rm", "-f", "src/game/func_00112BD0.c"])
+        subprocess.run(["rm", "-f", "src/game/Map_UpdateDrawState.c"])
     out = r.stdout.splitlines()
     return out[0] if out else "compile failed: " + r.stderr.strip().splitlines()[-1]
 
@@ -27,11 +27,11 @@ def block(src):
     """Our fog block (66 words at function offset 0x60C) next to retail's."""
     import rabbitizer
     from elftools.elf.elffile import ELFFile
-    open("src/game/func_00112BD0.c", "w").write(src)
+    open("src/game/Map_UpdateDrawState.c", "w").write(src)
     try:
-        subprocess.run(["tools/compile_c.sh", "src/game/func_00112BD0.c", "build/permuter/pin.o"], check=True, capture_output=True)
+        subprocess.run(["tools/compile_c.sh", "src/game/Map_UpdateDrawState.c", "build/permuter/pin.o"], check=True, capture_output=True)
     finally:
-        subprocess.run(["rm", "-f", "src/game/func_00112BD0.c"])
+        subprocess.run(["rm", "-f", "src/game/Map_UpdateDrawState.c"])
     ours = ELFFile(open("build/permuter/pin.o", "rb")).get_section_by_name(".text").data()[0x60C:0x60C + 66 * 4]
     retail = open("baserom/us/SLUS_203.18", "rb").read() if False else None
     lines = []

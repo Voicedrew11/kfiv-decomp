@@ -44,8 +44,8 @@ void Display_SwapBuffers(int);
 void Packet_SendChain(void);
 void Packet_SwapBuffers(void);
 void DrawList_Clear(void);
-void func_001095D0(void);
-void func_001095D8(void);
+void Packet_OnFrameStart(void);
+void Packet_OnFrameEnd(void);
 void Input_Update(void);
 float cosf(float);
 float sinf(float);
@@ -283,9 +283,9 @@ void MapViewer_RunPictureMap(void) {
         Packet_SendChain();
         Packet_SwapBuffers();
         DrawList_Clear();
-        func_001095D0();
+        Packet_OnFrameStart();
         MapViewer_DrawPictureMap();
-        func_001095D8();
+        Packet_OnFrameEnd();
         Input_Update();
         if ((pad_state[1] & PAD_UP) && (viewer_picture > 0)) {
             viewer_picture -= 1;
@@ -741,9 +741,9 @@ void MapViewer_RunKingsMap(void) {
             sceVu0TransMatrix(world_view, world_view, &move.x);
             sceVu0MulMatrix(world_screen, view_screen, world_view);
             GsDraw_QueueVu1Matrix(world_screen);
-            func_001095D0();
+            Packet_OnFrameStart();
             MapViewer_DrawKingsMap();
-            func_001095D8();
+            Packet_OnFrameEnd();
             // match: it returns a value here, which keeps $2 busy
             ((int (*)(void))Packet_WaitForSend)();
         } while (!(pressed & PAD_CIRCLE));

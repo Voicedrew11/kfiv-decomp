@@ -10,9 +10,9 @@ os.chdir(ROOT)
 sys.path.insert(0, "tools")
 import match
 
-SRC = sys.argv[1] if len(sys.argv) > 1 else "src/nonmatching/func_00112BD0.c"
-TMP = "src/game/func_00112BD0.c"
-OUT = "build/match/src/game/func_00112BD0.c.o"
+SRC = sys.argv[1] if len(sys.argv) > 1 else "src/nonmatching/Map_UpdateDrawState.c"
+TMP = "src/game/Map_UpdateDrawState.c"
+OUT = "build/match/src/game/Map_UpdateDrawState.c.o"
 FIRST = "fade_out = D_0038A1B0.unk9A;"
 lines = open(SRC).read().split("\n")
 start = next(i for i, l in enumerate(lines) if l.strip() == FIRST)

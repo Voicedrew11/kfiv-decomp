@@ -121,7 +121,7 @@ static void Texture_BuildPacketTable(char **textures, char **packets) {
 }
 
 /* Calls Texture_BuildPacket with the same arguments. */
-static void func_0020D470(char **texture, char **packet) {
+static void Texture_BuildPacketWrapper(char **texture, char **packet) {
     Texture_BuildPacket(texture, packet);
 }
 
@@ -307,7 +307,7 @@ void Texture_SendTexFlush(void) {
 }
 
 /* Returns 0. */
-static int func_0020DAA0(void) {
+static int Texture_ReturnZero(void) {
     return 0;
 }
 

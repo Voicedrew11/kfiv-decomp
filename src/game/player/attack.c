@@ -27,8 +27,8 @@
 #define SHOT_REQUEST ((Unk1B1470Request *)shot->attack_request)
 
 s32 Attack_RunSphere(Unk1B1470Request *, Unk1B1470Extra *);
-int func_001B1B80(void);
-int func_001B1B88(void);
+int Attack_RunShape1Stub(void);
+int Attack_RunShape2Stub(void);
 s32 Attack_RunSwept(Unk1B1470Request *, Unk1B1470Extra *);
 void Attack_HitPlayer(Unk1B1470Request *, Unk1B1470Extra *);
 void Attack_HitEntity(Unk1B1470Request *, Unk1B1470Extra *, Entity *, f32);
@@ -118,9 +118,9 @@ s32 Attack_Run(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     case 0:
         return Attack_RunSphere(request, extra);
     case 1:
-        return func_001B1B80();
+        return Attack_RunShape1Stub();
     case 2:
-        return func_001B1B88();
+        return Attack_RunShape2Stub();
     case 3:
         return Attack_RunSwept(request, extra);
     }
@@ -302,12 +302,12 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
 }
 
 /* Attack shape 1: does nothing, returns 0. */
-int func_001B1B80(void) {
+int Attack_RunShape1Stub(void) {
     return 0;
 }
 
 /* Attack shape 2: does nothing, returns 0. */
-int func_001B1B88(void) {
+int Attack_RunShape2Stub(void) {
     return 0;
 }
 

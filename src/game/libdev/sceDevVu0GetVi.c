@@ -1,9 +1,9 @@
 #include "common.h"
 #include <libdev_internal.h>
 
-// libdev: sceDevVu0GetVi in libdev_internal.h (name inferred). Copies VU0's status, MAC, clipping, R, I and Q
+// libdev: Copies VU0's status, MAC, clipping, R, I and Q
 // registers and its sixteen integer registers into the register block; fails while VU0 is running.
-int func_0022AE10(LibdevVu0Registers *registers) {
+int sceDevVu0GetVi(LibdevVu0Registers *registers) {
     u32 value;
 
     if (sceDevVu0IsRunning()) {

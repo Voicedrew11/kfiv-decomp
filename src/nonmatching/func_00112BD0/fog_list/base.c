@@ -3849,7 +3849,7 @@ typedef struct {
 } MapFogRgb;
 
 
-void func_00112BD0(void) {
+void Map_UpdateDrawState(void) {
     PERM_GENERAL(PERM_VAR(fade_outer, f32 fade_out; f32 fade_in;) PERM_VAR(fade_inner, ), PERM_VAR(fade_outer, ) PERM_VAR(fade_inner, f32 fade_out; f32 fade_in;))
     PERM_GENERAL(PERM_VAR(S, D_0038A1B0), PERM_VAR(S, (*state)))
     PERM_GENERAL(PERM_VAR(F, ((MapFogRgb *)&PERM_VAR(S).unk140.unk10)) PERM_VAR(T, ((MapFogRgb *)&PERM_VAR(S).unk160.unk10)) PERM_VAR(D, ((MapFogRgb *)&PERM_VAR(S).unkA0.unk10)), PERM_VAR(F, from_rgb) PERM_VAR(T, to_rgb) PERM_VAR(D, out_rgb))

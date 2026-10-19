@@ -1,9 +1,9 @@
 #include "common.h"
 #include <libdev_internal.h>
 
-// libdev: sceDevVu0GetVf in libdev_internal.h (name inferred). Copies VU0's 32 vector registers into the
+// libdev: Copies VU0's 32 vector registers into the
 // register block, then loads VU0's status, MAC, clipping, R, I, Q and integer registers FROM the block.
-int func_0022AEF0(LibdevVu0Registers *registers) {
+int sceDevVu0GetVf(LibdevVu0Registers *registers) {
     LibdevUint128 *vectors = registers->vector;
     u32 value;
 

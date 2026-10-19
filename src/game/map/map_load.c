@@ -25,7 +25,7 @@ void Input_StopRumble(void);
 void Display_SwapBuffers(int);
 void Map_MakeCurrent(int);
 void Map_UnlinkSlotRecords(int);
-void func_001A15F8(void);
+void MapLoad_AfterUnloadHook(void);
 void MapItem_UnloadMap(int);
 void File_Lock(void);
 int File_GetSize(int);
@@ -34,7 +34,7 @@ void Map_ParseFile(int);
 void Map_BuildModels(int);
 void Map_OffsetRecords(int, f32 *);
 void Map_PlaceRecordModels(int);
-void func_001A15F0(void);
+void MapLoad_BeforeObjectInitHook(void);
 void MapItem_InitMap(int);
 void MapItem_MoveMap(int, f32 *);
 void Game_MarkMapVisited(int);
@@ -175,7 +175,7 @@ void MapLoad_FinishAndEnter(void) {
     Gold_UnlinkMap(current_map_slot == 0);
     MapItem_UnloadMap(current_map_slot == 0);
     LinkedPoint_ReleaseByKind(current_map_slot == 0);
-    func_001A15F8();
+    MapLoad_AfterUnloadHook();
 }
 
 /* Map load step 0: once a load is asked for, frees what the other map slot holds and goes on to wait two
@@ -197,7 +197,7 @@ void MapLoad_StartRequest(void) {
             Gold_UnlinkMap(other_map);
             MapItem_UnloadMap(other_map);
             LinkedPoint_ReleaseByKind(other_map);
-            func_001A15F8();
+            MapLoad_AfterUnloadHook();
         }
         map_load_state.timer = 2;
         map_load_state.step++;
@@ -296,7 +296,7 @@ void MapLoad_SetUpMap(void) {
     Map_OffsetRecords(other_slot, offset);
     Map_PlaceRecordModels(other_slot);
     MapScroll_ClearPairs(other_slot);
-    func_001A15F0();
+    MapLoad_BeforeObjectInitHook();
     MapObject_InitMap(other_slot);
     MapObject_OffsetAll(other_slot, offset);
     MapItem_InitMap(other_slot);

@@ -1,14 +1,13 @@
 #include "common.h"
 #include <libdev_internal.h>
 
-int func_0022B6B8(void);
 
-// libdev: sceDevVif0GetRegs in libdev_internal.h (name inferred). Takes a snapshot of VIF0's registers;
+// libdev: Takes a snapshot of VIF0's registers;
 // fails unless VIF0 is idle or stopped.
-int func_0022B708(LibdevVif0Registers *registers) {
+int sceDevVif0GetRegs(LibdevVif0Registers *registers) {
     u32 cycle = LIBDEV_VIF_REG32(VIF0_STAT, VIF_CYCLE);
 
-    if ((u32)func_0022B6B8() >= 2) {
+    if ((u32)sceDevVif0GetStat() >= 2) {
         return FALSE;
     }
     registers->row[0] = LIBDEV_VIF_REG32(VIF0_STAT, VIF_ROW + 0x00);

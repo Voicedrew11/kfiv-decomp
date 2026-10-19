@@ -3,13 +3,13 @@
 # outputs that were measured against the old base into fog_random/archive-<time>/. Stop run_fog.sh first.
 set -eu
 cd "$(dirname "$0")/../../.."
-DIR=src/nonmatching/func_00112BD0/fog_random
+DIR=src/nonmatching/Map_UpdateDrawState/fog_random
 if pgrep -f "permuter.py ${DIR}" > /dev/null; then
     echo "run_fog.sh is still running; stop it (Ctrl+C) first" >&2
     exit 1
 fi
 .venv/bin/python - <<'EOF'
-p = "src/nonmatching/func_00112BD0/fog_random/base.c"
+p = "src/nonmatching/Map_UpdateDrawState/fog_random/base.c"
 s = open(p).read()
 old = "blend_sum = D_0038A1B0.unk160.unk08 * fade_in + D_0038A1B0.unk140.unk08 * fade_out;"
 new = "blend_sum = (blue_to = D_0038A1B0.unk160.unk08 * fade_in + D_0038A1B0.unk140.unk08 * fade_out);"
@@ -27,4 +27,4 @@ for f in features.csv baseline.json interesting "${DIR}"/output-*; do
     [ -e "${f}" ] && mv "${f}" "${ARCHIVE}/"
 done
 echo "old logs, findings and outputs moved to ${ARCHIVE}"
-echo "now run: src/nonmatching/func_00112BD0/run_fog.sh"
+echo "now run: src/nonmatching/Map_UpdateDrawState/run_fog.sh"

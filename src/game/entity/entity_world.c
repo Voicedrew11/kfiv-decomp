@@ -88,7 +88,7 @@ void Entity_UpdateInert(void) {
 }
 
 /* Empty. main calls it once among the set-up calls at start; what it was for is not known. */
-void func_00124EF8(void) {
+void Entity_StartupHook(void) {
 }
 
 /* Sets up the entities of a map from its spawn records, filling in defaults for values left at 0. */
@@ -709,11 +709,11 @@ Entity *Entity_GetBySpawnIdForMap(int map_index, int entity_id) {
 }
 
 /* Returns 0. Nothing calls it. */
-int func_00126818(void) {
+int Entity_UnusedReturnZeroA(void) {
     return 0;
 }
 
 /* Returns 0. Nothing calls it. */
-int func_00126820(void) {
+int Entity_UnusedReturnZeroB(void) {
     return 0;
 }

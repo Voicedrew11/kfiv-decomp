@@ -5,7 +5,7 @@
 #define MODEL_MESH(model) ((CollisionMesh *)(model)->strips)
 
 /* Does nothing. */
-void func_001123F8(void) {
+void Collision_UnusedStub(void) {
 }
 
 /* Makes a collision mesh that was just loaded usable: turns its offsets into pointers and, if
@@ -66,7 +66,7 @@ u32 Collision_GetFloorMaterial(int first, u32 second, u32 third) {
 
 /* Decodes the three words of a strip point: the first value of (0-7, 0xFF, 0xFF), the third of (0xFF, 0xFF,
    0xFE-0xFF), 0 otherwise. Nothing calls it. */
-u32 func_00112560(u32 first, u32 second, u32 third) {
+u32 Collision_DecodeStripPointIndex(u32 first, u32 second, u32 third) {
     if (first < 8 && second == 0xFF && third == 0xFF) {
         return first;
     }
@@ -87,7 +87,7 @@ u32 Collision_GetSurfaceEffect(u32 first, u32 second, int third) {
 
 /* Decodes the three words of a strip point: the third value of (0xFF, 0xFF, 0xFE-0xFF), 1 otherwise. Nothing
    calls it. */
-u32 func_001125D0(u32 first, u32 second, u32 third) {
+u32 Collision_DecodeStripPointFlag(u32 first, u32 second, u32 third) {
     if (first == 0xFF && second == 0xFF && third >= 0xFE) {
         return third;
     }

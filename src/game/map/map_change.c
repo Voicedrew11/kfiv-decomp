@@ -42,7 +42,7 @@ void Entity_UpdatePool(void);
 void Sound_Update(void);
 void Map_UnlinkSlotRecords(int);
 void MapLoad_Reset(void);
-void func_001A15F8(void);
+void MapLoad_AfterUnloadHook(void);
 void Player_EndSwingHits(void);
 void MapItem_UnloadMap(int);
 void File_Lock(void);
@@ -59,7 +59,7 @@ void Map_PlaceRecordModels(int);
 void MapSetup_RunForMap(int);
 void Entity_AddGroupToWaiting(int);
 void Sound_StopAll(int);
-void func_001A15F0(void);
+void MapLoad_BeforeObjectInitHook(void);
 void MapItem_InitMap(int);
 void MapItem_RollFixedItems(int);
 void Script_Init(int);
@@ -288,7 +288,7 @@ void MapChange_UnloadAll(void) {
         }
     }
     MapLoad_Reset();
-    func_001A15F8();
+    MapLoad_AfterUnloadHook();
     Entity_ResetAllLists();
     Player_EndSwingHits();
     Effect_FreePlayerMagic();
@@ -352,7 +352,7 @@ void MapChange_SetUpMap(void) {
     Map_BuildModels(0);
     Map_PlaceRecordModels(0);
     MapScroll_ClearPairs(0);
-    func_001A15F0();
+    MapLoad_BeforeObjectInitHook();
     MapObject_InitMap(0);
     MapItem_InitMap(0);
     Gold_InitMap(0);

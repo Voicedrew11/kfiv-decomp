@@ -15,7 +15,7 @@ void Map_ParseFile(int);
 void Map_BuildModels(int);
 int Sound_LoadMapBank(MapSlot *);
 void Map_PlaceRecordModels(int);
-void func_001A15F0(void);
+void MapLoad_BeforeObjectInitHook(void);
 void MapItem_InitMap(int);
 void Entity_AddGroupToWaiting(int);
 void MapItem_RollFixedItems(int);
@@ -147,7 +147,7 @@ void Map_LoadAtOnce(int map) {
     Sound_LoadMapBank(slot);
     Map_PlaceRecordModels(0);
     MapScroll_ClearPairs(0);
-    func_001A15F0();
+    MapLoad_BeforeObjectInitHook();
     MapObject_InitMap(0);
     MapItem_InitMap(0);
     Gold_InitMap(0);

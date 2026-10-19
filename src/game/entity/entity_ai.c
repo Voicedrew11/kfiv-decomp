@@ -83,9 +83,9 @@ extern char fire_lord_model_matrix[];
 static s32 EntityAi_CheckMeleeAilment(Entity *entity, EntityParamsUnk240 *record, s32 index, s32 frame_min, s32 frame_max);
 static void EntityAi_Kill(Entity *entity);
 static int EntityAi_TurnLookPart(Entity *actor, f32 *out_a, int mode, f32 *out_b, f32 *limit);
-static int func_001961D0(Entity *entity, f32 *angles, int mode, f32 *goal, f32 *limits);
-static int func_00196200(Entity *entity, int value_a, int value_b, void *value_c, int value_d, float scale);
-static int func_00196248(Entity *entity, int angles, int mode, int limits, float rate);
+static int EntityAi_TurnAimPart(Entity *entity, f32 *angles, int mode, f32 *goal, f32 *limits);
+static int EntityAi_LookAtAimPart(Entity *entity, int value_a, int value_b, void *value_c, int value_d, float scale);
+static int EntityAi_LookAtAimPartFromPlayerHead(Entity *entity, int angles, int mode, int limits, float rate);
 static int EntityAi_IsPlayerNear(Entity *entity);
 static void EntityAi_SensePlayerInArc(Entity *actor);
 static void EntityAi_RollNoticePlayer(Entity *actor);
@@ -342,7 +342,7 @@ int EntityAi_LookAtPlayer(Entity *entity, void *target, s32 mode, void *out, f32
 
 /* Bone_TurnPart for the model part at EntityModel.aim_part (the one the model file marks with ModelFilePart.unk06
    2); FALSE without it. Nothing calls it, and no code that runs uses that part, so its role is not known. */
-static int func_001961D0(Entity *entity, f32 *angles, int mode, f32 *goal, f32 *limits) {
+static int EntityAi_TurnAimPart(Entity *entity, f32 *angles, int mode, f32 *goal, f32 *limits) {
     int part = entity->model->aim_part;
     int result;
 
@@ -354,9 +354,9 @@ static int func_001961D0(Entity *entity, f32 *angles, int mode, f32 *goal, f32 *
     return result;
 }
 
-/* As EntityAi_LookAtPoint, for the model part at EntityModel.aim_part (role unknown, see func_001961D0) and
+/* As EntityAi_LookAtPoint, for the model part at EntityModel.aim_part (role unknown, see EntityAi_TurnAimPart) and
    without the params flag test; FALSE without the part. Nothing calls it. */
-static int func_00196200(Entity *entity, int value_a, int value_b, void *value_c, int value_d, float scale) {
+static int EntityAi_LookAtAimPart(Entity *entity, int value_a, int value_b, void *value_c, int value_d, float scale) {
     EntityModel *model = entity->model;
 
     if (model->aim_part == 0) {
@@ -365,9 +365,9 @@ static int func_00196200(Entity *entity, int value_a, int value_b, void *value_c
     return Bone_TurnPartToLook(model, model->aim_part, value_a, value_b, value_c, value_d, scale);
 }
 
-/* As func_00196200, at the player's position 115 above his feet; FALSE without the part.
+/* As EntityAi_LookAtAimPart, at the player's position 115 above his feet; FALSE without the part.
    Nothing calls it. */
-static int func_00196248(Entity *entity, int angles, int mode, int limits, float rate) {
+static int EntityAi_LookAtAimPartFromPlayerHead(Entity *entity, int angles, int mode, int limits, float rate) {
     float position[2]; // match: Vector_Copy writes four floats, but retail reserves room for two
     EntityModel *model;
 

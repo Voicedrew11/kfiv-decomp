@@ -1,4 +1,4 @@
-func_name = "func_00112BD0"
+func_name = "Map_UpdateDrawState"
 compiler_type = "gcc"
 objdump_command = "mips64-linux-gnu-objdump -drz -m mips:5900"
 

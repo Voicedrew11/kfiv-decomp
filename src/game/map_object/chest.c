@@ -209,7 +209,7 @@ void MapObject_UpdateOpenChest(MapObject *object) {
 }
 
 /* Does nothing: step 4 of a chest, which the chest code never sets. */
-void func_00120128(void) {
+void MapObject_ChestStep4Empty(void) {
 }
 
 /* Signal hook of the chests: opens a closed chest (step 1) as if the player had used it, by running

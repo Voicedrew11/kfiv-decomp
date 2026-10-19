@@ -1,11 +1,10 @@
 #include "common.h"
 #include <libdev_internal.h>
 
-int func_0022B6B8(void);
 
-// libdev: sceDevVif0Pause (name inferred). mode 0 force-breaks VIF0, mode 1 stops it after the current VIFcode.
-int func_0022B5E0(int mode) {
-    int status = func_0022B6B8();
+// libdev: Mode 0 force-breaks VIF0, mode 1 stops it after the current VIFcode.
+int sceDevVif0Pause(int mode) {
+    int status = sceDevVif0GetStat();
 
     if (status == 0) {
         return 0;

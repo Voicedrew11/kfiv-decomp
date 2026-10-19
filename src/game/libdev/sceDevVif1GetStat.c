@@ -1,9 +1,9 @@
 #include "common.h"
 #include <libdev_internal.h>
 
-// libdev: sceDevVif0GetStat (name inferred). 0 idle, 1 stopped, 2 waiting for VU0, 3 stalled on an error, 4 busy.
-int func_0022B6B8(void) {
-    u32 status = LIBDEV_REG32(VIF0_STAT);
+// libdev: 0 idle, 1 stopped, 2 waiting for VU1, 3 stalled on an error, 4 busy.
+int sceDevVif1GetStat(void) {
+    u32 status = LIBDEV_REG32(VIF1_STAT);
 
     if (!(status & 3)) {
         return 0;

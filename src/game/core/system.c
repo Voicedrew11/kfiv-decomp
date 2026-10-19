@@ -31,18 +31,18 @@ extern GsRegisterPair frame_display_regs;   /* the DISPLAY values of the two fra
 int Movie_Play(char *, u32, u32, int (*)(void), u32, s16, s16, s16);
 void Packet_SwapBuffers(void);
 void DrawList_Clear(void);
-void func_001095D0(void);
+void Packet_OnFrameStart(void);
 void GsDraw_ResetDrawTarget(void);
 void GsDraw_FillScreen(s64, s64, s64, s64, s64); // match: retail passes the last value as a 64-bit constant (0x100000044)
-void func_001095D8(void);
+void Packet_OnFrameEnd(void);
 void Packet_SendChain(void);
 void Packet_WaitForSend(void);
 void SoundDriver_ReleaseAll(void);
 void Sound_Init(void);
 int sceGsSyncV(int);
 void Vram_Clear(int, int);
-int func_0022B5B8();
-int func_0022B8E8();
+void sceDevVif0Reset(void);
+void sceDevVif1Reset(void);
 int sceDevVu0Pause();
 int sceDevVu0SetTBit();
 int sceDmaReset(int);
@@ -81,12 +81,12 @@ void Movie_PlayOpening(void) {
     Packet_SwapBuffers();
     Packet_SwapBuffers();
     DrawList_Clear();
-    func_001095D0();
+    Packet_OnFrameStart();
     context1_buffer_half = 0;
     context2_buffer_half = 0;
     GsDraw_ResetDrawTarget();
     GsDraw_FillScreen(0, 0, 0, 0x80, 0x100000044L);
-    func_001095D8();
+    Packet_OnFrameEnd();
     context1_buffer_half = 1;
     context2_buffer_half = 1;
     Packet_SendChain();
@@ -115,13 +115,13 @@ void Movie_PlayEnding(void) {
 }
 
 /* Returns TRUE; the 0x80 bytes of stack are unused. Nothing calls it. */
-static int func_0020AF18(void) {
+static int System_ReturnTrueStackPad(void) {
     volatile char buf[0x80];
     return 1;
 }
 
-/* The same as func_0020AF18. */
-static int func_0020AF28(void) {
+/* The same as System_ReturnTrueStackPad. */
+static int System_ReturnTrueStackPadCopy(void) {
     volatile char buf[0x80];
     return 1;
 }
@@ -131,9 +131,9 @@ static int func_0020AF28(void) {
 void System_Init(void) {
     System_RebootIop();
     sceMcInit();
-    func_0022B5B8();
+    sceDevVif0Reset();
     sceDevVu0Pause();
-    func_0022B8E8();
+    sceDevVif1Reset();
     sceDevVu0SetTBit();
     sceDmaReset(1);
     sceGsResetPath();

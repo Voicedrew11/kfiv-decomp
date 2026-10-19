@@ -115,7 +115,7 @@ static void Vu0_LoadVf1ToVf4(void *matrix) {
 }
 
 /* The same as Vu0_LoadVf5ToVf7. */
-static void func_00207690(void *matrix) {
+static void Vu0_LoadVf5ToVf7Copy(void *matrix) {
     __asm__ volatile(
         "lqc2 $vf5, 0x0(%0)\n"
         "lqc2 $vf6, 0x10(%0)\n"
@@ -124,7 +124,7 @@ static void func_00207690(void *matrix) {
 }
 
 /* The same as Vu0_LoadVf8ToVf11. */
-static void func_002076A0(void *matrix) {
+static void Vu0_LoadVf8ToVf11Copy(void *matrix) {
     __asm__ volatile(
         "lqc2 $vf8, 0x0(%0)\n"
         "lqc2 $vf9, 0x10(%0)\n"
@@ -144,7 +144,7 @@ static void Vu0_LoadVf12ToVf15(void *matrix) {
 }
 
 /* The same as Vu0_LoadVf1ToVf4. */
-static void func_002076D0(void *matrix) {
+static void Vu0_LoadVf1ToVf4Copy(void *matrix) {
     __asm__ volatile(
         "lqc2 $vf1, 0x0(%0)\n"
         "lqc2 $vf2, 0x10(%0)\n"
@@ -191,7 +191,7 @@ static void Vu0_TexCoordFromNormal(void *dest, void *src) {
 }
 
 /* Vu0_TexCoordFromNormal with the arguments the other way round (src, dest). */
-static void func_00207748(void *src, void *dest) {
+static void Vu0_TexCoordFromNormalSrcFirst(void *src, void *dest) {
     __asm__ volatile(
         "lqc2 $vf16, 0(%0)\n"
         "vmulax.xyzw ACC, $vf12, $vf16x\n"
