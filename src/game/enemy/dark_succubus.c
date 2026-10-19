@@ -25,7 +25,7 @@ extern u32 frame_counter;
 extern PlayerData player_state;
 extern u8 dark_succubus_fight_started[];
 // match: the size is unknown; a complete small type would be read through $gp
-extern f32 D_0044681C[];
+extern f32 dark_succubus_no_floor_height_think[];
 int rand(void);
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(void *);
@@ -62,7 +62,7 @@ s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 // match: the size is unknown (a complete small type would be read through $gp) and it is
 // const: the store to unk54 may then be scheduled after the lui of this address
-extern const f32 D_00446820[];
+extern const f32 dark_succubus_no_floor_height_arc[];
 f32 EntityMath_Approach(f32, f32, f32);
 int EntityAi_AnimationFrameCount(void *, int);
 
@@ -258,7 +258,7 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
     }
     if (((s32)(ENTITY_FLAGS(entity) >> 28) & 1) && !(entity->busy_flags & ENTITY_BUSY_1000)) {
         height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
-        if (height != D_0044681C[0]) {
+        if (height != dark_succubus_no_floor_height_think[0]) {
             if (height > 45.0f) {
                 timers->rising = 1;
             } else if (height < 35.0f) {
@@ -1079,7 +1079,7 @@ static void DarkSuccubus_MoveAlongArc(Entity *entity) {
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames, 0);
         ai_state->heading_speed = EntityMath_Approach(ai_state->heading_speed, entity->params->max_speed, entity->params->speed_step_per_frame);
         ai_state->pitch_speed = EntityMath_Approach(ai_state->pitch_speed, -20.0f, 2.0f);
-        if (height == D_00446820[0] || height >= 400.0f) {
+        if (height == dark_succubus_no_floor_height_arc[0] || height >= 400.0f) {
             entity->action_step++;
         }
         break;

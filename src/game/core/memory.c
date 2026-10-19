@@ -12,7 +12,7 @@ extern u32 map_work_area_size;
 extern int map_file_area_size;
 extern int hud_area_size;           /* hud_area */
 extern int item_effect_area_size;
-extern int D_00446F2C;              /* set, but no area is placed with it */
+extern int memory_unplaced_area_size;              /* set, but no area is placed with it */
 
 /* the areas, as Memory_PlaceAreas lays them out */
 extern MapSlotMemory map_slot_memory[2];
@@ -41,7 +41,7 @@ void Memory_Init(void) {
     entity_pool_area_size = 0x300000;
     hud_area_size = 0x20000;
     item_effect_area_size = 0x80000;
-    D_00446F2C = 0x60000;
+    memory_unplaced_area_size = 0x60000;
     Memory_PlaceAreas();
 }
 

@@ -690,7 +690,7 @@ typedef struct {
 
 /* EffectMotion as EffectLoopUntilFlag_Update uses it: loops until a game flag is set */
 typedef struct {
-    int stopped;                    /* 0x00 set once D_0034AFD6 is 3 */
+    int stopped;                    /* 0x00 set once loop_effect_stop_state is 3 */
     char pad04[0x1C];
 } LoopMotion;
 

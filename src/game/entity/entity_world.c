@@ -24,7 +24,7 @@ extern f32 identity_matrix[16];
 extern u32 frame_counter;
 extern int current_map_slot;
 extern u8 player_floor_block[];
-extern const f32 D_004467F8[];
+extern const f32 entity_no_hit_distance[];
 
 void Vector_Copy(void *, void *);
 void Vector_Scale(float *, float *, float);
@@ -605,7 +605,7 @@ static MapRecordBounds *Entity_FindMapRecordUnder(Entity *entity) {
     f32 height;
 
     nearest = NULL;
-    nearest_distance = D_004467F8[0];
+    nearest_distance = entity_no_hit_distance[0];
     reach = (entity->collision_height < entity->collision_radius) ? entity->collision_radius : entity->collision_height;
     Vector_Copy(position, entity->model->position);
     position[1] -= (reach < 75.0f) ? 75.0f : reach;
@@ -637,7 +637,7 @@ static MapRecordBounds *Entity_FindMapRecordUnder(Entity *entity) {
                     continue;
                 }
                 height = EntityCollision_DistanceToPropFloor(record, position);
-                if (height != D_004467F8[0]) {
+                if (height != entity_no_hit_distance[0]) {
                     distance = height; // match: the copy to a second variable keeps the loop long enough that its end test is not hoisted
                     if (distance < nearest_distance) {
                         nearest_distance = distance;

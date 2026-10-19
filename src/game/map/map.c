@@ -131,13 +131,13 @@ extern f32 identity_matrix[16];
 extern f32 world_screen_matrix[16];
 extern AreaNode *record_boxes;
 extern AreaNode *backdrop_record_boxes;
-extern f32 D_00446768[]; /* the largest float */
-extern f32 D_0044676C[]; /* the largest float */
+extern f32 largest_float_record_best_distance[]; /* the largest float */
+extern f32 largest_float_record_slot_best_distance[]; /* the largest float */
 extern GameStatus game_status;
 extern u16 pad_state[];
 extern PlayerState player_state;
 extern MapLightBlock map_object_default_lights;
-extern TextureTableHeader *D_00446790;
+extern TextureTableHeader *free_camera_texture_table;
 extern u8 player_floor_block[];
 
 /* Draws the map records of both map slots whose flag bit 0 is clear (the list Map_UpdateDrawState builds each
@@ -787,7 +787,7 @@ AreaNode *Map_FindRecordAt(f32 *point, f32 margin) {
             return node;
         }
     }
-    best_distance = D_00446768[0];
+    best_distance = largest_float_record_best_distance[0];
     best = NULL;
     for (node = head; node != NULL; node = node->next) {
         if (USABLE(node) && IN_X(node) && IN_Z(node)) {
@@ -827,7 +827,7 @@ MapRecordInfo *Map_FindRecordAtInSlot(CameraState *position, f32 margin, int map
             return (MapRecordInfo *)node;
         }
     }
-    best_distance = D_0044676C[0];
+    best_distance = largest_float_record_slot_best_distance[0];
     best = NULL;
     for (node = head; node != NULL; node = node->next) {
         if (USABLE_IN_MAP(node) && IN_X(node) && IN_Z(node)) {
@@ -992,7 +992,7 @@ void Map_DrawFreeCameraView(void) {
     int map;
     int i;
 
-    TextureTable_QueueAll(D_00446790);
+    TextureTable_QueueAll(free_camera_texture_table);
     GsDraw_QueueTexFlush();
     game_dbuff_clear_color[0] = 0;
     game_dbuff_clear_color[30] = 0;

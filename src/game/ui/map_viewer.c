@@ -85,15 +85,15 @@ extern PlayerState player_state;
 extern ViewerEntry viewer_entries[];
 extern ScreenQuad viewer_marker_rect;
 extern ScreenQuad viewer_picture_rect;
-extern ScreenQuad D_0038D7F0;
-extern ScreenQuad D_0038D830;
+extern ScreenQuad viewer_arrow_rect_1;
+extern ScreenQuad viewer_arrow_rect_2;
 extern ScreenQuad viewer_picture_label_rect;
 extern ViewerCornerTable viewer_marker_corner_us;
 extern ViewerCornerTable viewer_marker_corner_vs;
 extern char viewer_texture_file_name_format[];       /* "map_view/%3.3d.tx2" */
 extern char viewer_pointer_model_path[];       /* "map_view/pointer.omd" */
-extern f32 D_00446798[];        /* the largest float */
-extern f32 D_0044679C[];        /* the lowest float */
+extern f32 float_largest_value[];        /* the largest float */
+extern f32 float_lowest_value[];        /* the lowest float */
 extern f32 identity_matrix[16];      /* the unit matrix */
 extern MapDrawState map_draw_state;
 extern MapLightBlock viewer_default_lights;
@@ -241,8 +241,8 @@ static int MapViewer_Load(void) {
     for (i = 0; i < pointer_model.part_count; i++) {
         Model_MultiplyChildMatrices(&pointer_model.parts[i]);
     }
-    bounds_min.z = bounds_min.y = bounds_min.x = D_00446798[0];
-    bounds_max.z = bounds_max.y = bounds_max.x = D_0044679C[0];
+    bounds_min.z = bounds_min.y = bounds_min.x = float_largest_value[0];
+    bounds_max.z = bounds_max.y = bounds_max.x = float_lowest_value[0];
     for (i = 0; i < 2; i++) {
         if (map_slots[i].loaded != 0 && MapViewer_IsKingsMapUsable(map_slots[i].tag) != 0) {
             count = ((MapSlotUnk08 *)map_slots[i].header)->record_count;
@@ -417,14 +417,14 @@ void MapViewer_DrawPictureMap(void) {
         Packet_BeginGsRegisters();
         Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
         Packet_EndGsRegisters();
-        GsDraw_QueueTexturedSprite(&D_0038D7F0);
+        GsDraw_QueueTexturedSprite(&viewer_arrow_rect_1);
         TextureTable_QueueOne((TextureTableHeader *)viewer_data, entry->count * 2 + 2);
         GsDraw_QueueTexFlush();
         GsDraw_QueueFlush();
         Packet_BeginGsRegisters();
         Packet_AddGsRegister(GS_REG_ALPHA_1, 0x48);
         Packet_EndGsRegisters();
-        GsDraw_QueueTexturedSprite(&D_0038D830);
+        GsDraw_QueueTexturedSprite(&viewer_arrow_rect_2);
         TextureTable_QueueOne((TextureTableHeader *)viewer_data, entry->count + 1 + viewer_picture);
         GsDraw_QueueTexFlush();
         GsDraw_QueueFlush();

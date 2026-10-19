@@ -37,8 +37,8 @@ extern PlayerState player_previous;      /* the player as of the frame before */
 extern int current_map_slot;
 extern MapSlot map_slots[2];
 extern MapSlotMemory map_slot_memory[2];
-extern f32 D_00446968[];
-extern f32 D_0044696C[];    /* the largest float; an array so that it is not read through $gp */
+extern f32 player_no_floor_height[];
+extern f32 largest_float[];    /* the largest float; an array so that it is not read through $gp */
 extern Entity *active_entities_head;
 extern u32 frame_counter;
 extern u8 spell_levels[6][5];
@@ -85,7 +85,7 @@ int Player_CollideWithMap(void) {
             player_state.position.y -= player_state.step_per_frame;
         }
     }
-    floor_height = D_00446968[0];
+    floor_height = player_no_floor_height[0];
     Vector_Copy(wall_point, &player_state.position);
     found = FALSE;
     wall_point->y -= 1.0f;
@@ -340,7 +340,7 @@ void Player_FindFloorMaterial(void) {
     s32 strips_left;
     s32 points_left;
 
-    lowest = D_0044696C[0];
+    lowest = largest_float[0];
     Vector_Copy(&COLLISION_SCRATCH->point, &player_state.position);
     for (map = 0; map < 2; map++) {
         slot = current_map_slot == map ? &map_slots[0] : &map_slots[1];

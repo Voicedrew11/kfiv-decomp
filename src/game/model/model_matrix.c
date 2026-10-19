@@ -9,9 +9,9 @@ extern f32 scale_matrices[4][4];
 extern f32 fixed_normal_matrix[16];
 extern f32 fixed_light_matrix[16];
 extern f32 view_screen_matrix[16];
-extern f32 D_004322E0[16];
+extern f32 model_extra_transform_matrix[16];
 extern f32 world_screen_matrix[16];
-extern f32 D_00432620[16];
+extern f32 flagged_model_transform_matrix[16];
 extern CameraState camera_state;
 extern Vector4Arg mirrored_flat_offset; /* (0, -160000, 32768, 1): z times sin(pitch) is added to y */
 
@@ -62,7 +62,7 @@ static void ModelMatrix_BuildPartRotation(ModelInstance *model, ModelPart *part,
     }
 }
 
-/* Builds a model's matrix from its rotation and position; flagged models only turn about z and take D_00432620. */
+/* Builds a model's matrix from its rotation and position; flagged models only turn about z and take flagged_model_transform_matrix. */
 static void ModelMatrix_BuildFromModel(ModelInstance *model) {
     f32 *matrix;
 
@@ -75,7 +75,7 @@ static void ModelMatrix_BuildFromModel(ModelInstance *model) {
     } else {
         matrix = (f32 *)model->model_matrix;
         sceVu0RotMatrixZ(matrix, identity_matrix, ModelMatrix_WrapAngle(model->rotation.z));
-        Matrix_Multiply(matrix, D_00432620, matrix);
+        Matrix_Multiply(matrix, flagged_model_transform_matrix, matrix);
         sceVu0TransMatrix(matrix, matrix, &model->position.x);
     }
 }
@@ -97,7 +97,7 @@ static void ModelMatrix_UnusedStub(void) {
 }
 
 /* Builds a matrix from the model's x and z angles with its y row cleared, turned a quarter about x and pushed
-   16 along z, and applies D_004322E0 to it into the model's matrix. Nothing calls it. */
+   16 along z, and applies model_extra_transform_matrix to it into the model's matrix. Nothing calls it. */
 static void ModelMatrix_BuildFlattenedTilt(ModelInstance *model) {
     f32 matrix[16];
     f32 offset[4];
@@ -109,7 +109,7 @@ static void ModelMatrix_BuildFlattenedTilt(ModelInstance *model) {
     matrix[4] = matrix[5] = matrix[6] = matrix[7] = 0.0f;
     sceVu0RotMatrixX(matrix, matrix, -1.5707964f);
     sceVu0TransMatrix(matrix, matrix, offset);
-    Matrix_Multiply(model, D_004322E0, matrix);
+    Matrix_Multiply(model, model_extra_transform_matrix, matrix);
 }
 
 /* Builds a model's matrix from its scale, rotation and position, then applies world_screen_matrix to a copy of it whose
@@ -213,7 +213,7 @@ void ModelMatrix_Build(ModelInstance *model, Vector4 *position, Vector4 *rotatio
     }
 }
 
-/* Builds a model's matrix from a scale (x, y), a turn about z, D_00432620 and a position, then applies
+/* Builds a model's matrix from a scale (x, y), a turn about z, flagged_model_transform_matrix and a position, then applies
    world_screen_matrix. */
 static void ModelMatrix_BuildFlatScaled(ModelInstance *model, f32 *position, Vector4 *rotation, f32 *scale) {
     f32 *scratch = SCRATCH_MATRIX;
@@ -224,7 +224,7 @@ static void ModelMatrix_BuildFlatScaled(ModelInstance *model, f32 *position, Vec
     scratch[0] *= scale[0];
     scratch[5] *= scale[1];
     sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->z));
-    Matrix_Multiply(SCRATCH_MATRIX, D_00432620, SCRATCH_MATRIX);
+    Matrix_Multiply(SCRATCH_MATRIX, flagged_model_transform_matrix, SCRATCH_MATRIX);
     sceVu0TransMatrix(matrix, SCRATCH_MATRIX, position);
     Matrix_Multiply(model, world_screen_matrix, matrix);
 }

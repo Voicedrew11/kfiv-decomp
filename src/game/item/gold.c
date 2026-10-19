@@ -39,7 +39,7 @@ extern u16 pad_pressed[];
 extern PlayerState player_state;
 extern u16 action_button;
 extern int current_map_slot;
-extern f32 D_004469DC[];
+extern f32 gold_drop_unmeasured_distance[];
 
 MapActor *Gold_FindFree(int slot);
 MapActor *Gold_FindOldest(int slot);
@@ -279,7 +279,7 @@ int Gold_Drop(Vector4 *position, Vector4 *rotation, int map, int amount, int obj
     MAP_ACTOR_BITS(actor)->in_reach = FALSE;
     MAP_ACTOR_WORDS(actor)->object_id = object_id;
     actor->serial = map_actor_drop_counts[map]++;
-    actor->unk08 = D_004469DC[0];
+    actor->unk08 = gold_drop_unmeasured_distance[0];
     actor->fade_timer = 15;
     actor->step = 0;
     // match: read even when on_ground is not set and no test was made: then it is whatever the last test left

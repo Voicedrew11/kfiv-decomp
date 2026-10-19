@@ -73,7 +73,7 @@ s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 void EntityAi_SpawnBoneEffect(Entity *, s32, s32);
 int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
 void EntityAi_SetAttackDelay(Entity *, s32);
-extern const f32 D_0044682C[];
+extern const f32 dark_archer_no_floor_height[];
 f32 EntityCollision_DistanceToPropFloor(void *, void *);
 f32 EntityMath_Approach(f32, f32, f32);
 void Vector_ApplyMatrix(void *, void *, void *);
@@ -642,7 +642,7 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
         ai_state->keep_min_distance = EntityMath_Approach(ai_state->keep_min_distance, entity->params->max_speed, entity->params->speed_step_per_frame);
         ai_state->heading_speed = EntityMath_Approach(ai_state->heading_speed, -entity->params->type_param_1, -entity->params->type_param_0);
         ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-        if (height == D_0044682C[0] || height >= entity->params->type_param_2) {
+        if (height == dark_archer_no_floor_height[0] || height >= entity->params->type_param_2) {
             entity->action_step++;
         }
         break;

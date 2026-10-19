@@ -20,7 +20,7 @@ extern char fsiopsnd_module_path[];
 extern char empty_module_args[];        /* "": no module arguments */
 extern char vector4_print_format[];     /* "(%f,%f,%f,%f)\n" */
 static char menu_heap_area[0x200000];   /* 0x1BFAF80 the area the menus' heap (menu_heap) lies in */
-extern ClockControl D_00432820;
+extern ClockControl game_clock_control;
 extern s32 menu_heap;
 extern GsDoubleBuffer game_dbuff;           /* the game's frame buffers, drawn through GS context 1 */
 extern GsDoubleBuffer game_dbuff_context2;  /* the same frame buffers, drawn through GS context 2 */
@@ -83,10 +83,10 @@ void Display_BuildProjection(f32 (*matrix)[4], f32 screen_scale, f32 near_plane,
    menu_heap at menu_heap_area. */
 void System_InitMemory(void) {
     Memory_Init();
-    D_00432820.unk208 = 0;
-    D_00432820.unk209 = 0;
-    D_00432820.unk20A = 0;
-    D_00432820.unk20B = 2;
+    game_clock_control.unk208 = 0;
+    game_clock_control.unk209 = 0;
+    game_clock_control.unk20A = 0;
+    game_clock_control.unk20B = 2;
     menu_heap = (s32)menu_heap_area;
 }
 

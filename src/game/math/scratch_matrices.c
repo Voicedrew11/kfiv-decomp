@@ -44,4 +44,4 @@ Vector4 origin_point = {
     0.0f, 0.0f, 0.0f, 1.0f,
 }; /* 0x431C80 the w axis */
 
-u32 D_00431C90[0x16]                         = { 0 }; /* 0x431C90 zero fill */
+u32 scratch_matrices_pad[0x16]                         = { 0 }; /* 0x431C90 zero fill */

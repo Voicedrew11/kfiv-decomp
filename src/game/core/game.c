@@ -823,7 +823,7 @@ int Game_CheckSaveImage(void) {
 void Game_StartFadeIn(int red, int green, int blue, int frames) {
     int *color = fade_color;
 
-    D_00447000[3] = 1;
+    kf4_directory_words[3] = 1;
     fade_color[0] = red;
     fade_frames_left = frames;
     color[1] = green;
@@ -836,7 +836,7 @@ void Game_StartFadeOut(int red, int green, int blue, int frames) {
     int *color = fade_color;
 
     color[0] = red;
-    D_00447000[3] = -1;
+    kf4_directory_words[3] = -1;
     color[1] = green;
     color[2] = blue;
     fade_frames = (frames > 0) ? frames : 1;
@@ -845,7 +845,7 @@ void Game_StartFadeOut(int red, int green, int blue, int frames) {
 
 /* counts the fade down a frame */
 void Game_StepFade(void) {
-    if (D_00447000[3] != 0 && fade_frames_left > 0) {
+    if (kf4_directory_words[3] != 0 && fade_frames_left > 0) {
         fade_frames_left--;
     }
 }
@@ -855,7 +855,7 @@ void Game_DrawFade(void) {
     char unused_stack[0x40]; // match: retail reserves the 0x40 bytes
     int alpha;
 
-    switch (D_00447000[3]) {
+    switch (kf4_directory_words[3]) {
     case 0:
         return;
     case 1:

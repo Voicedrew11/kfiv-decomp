@@ -164,7 +164,7 @@ typedef struct {
     int ticks;                      /* 0x08 */
 } GameClock;
 
-/* D_00432820: what decides whether GameClock_Tick advances GameClock.ticks */
+/* game_clock_control: what decides whether GameClock_Tick advances GameClock.ticks */
 typedef struct {
     char pad00[0x208];
     char unk208;                    /* 0x208 System_InitMemory clears it */
@@ -235,7 +235,7 @@ typedef struct {
     char pad34[0x08];
     u8 starting_level_percent;      /* 0x3C the percent a level record's level starts at for it */
     char pad3D[0x01];
-    u16 weight_tenths_of_pound;     /* 0x3E unk33 scaled by D_0043E568, worked out after loading */
+    u16 weight_tenths_of_pound;     /* 0x3E unk33 scaled by kilograms_to_pounds_factor, worked out after loading */
 } GameDefinition;
 
 /* a GameDefinition as the menu code reads it: the record is word-aligned (LevelDef in player/player.h

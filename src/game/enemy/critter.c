@@ -18,7 +18,7 @@ extern s32 entity_type_handlers[][2];
 int Motion_Start(void *, int, int, u32, int);
 void EntityAi_SetState(char *, u8);
 extern u32 frame_counter;
-extern f32 D_004467FC[];
+extern f32 critter_no_ground_height[];
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -144,7 +144,7 @@ static void Critter_Think(Entity *entity, s32 unknown) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (EntityCollision_DistanceToGround(entity->model->position) != D_004467FC[0]) {
+    if (EntityCollision_DistanceToGround(entity->model->position) != critter_no_ground_height[0]) {
         ENTITY_FLAG_BITS(entity)->bits60 = 5;
     }
     if (entity->busy_flags != 0) {

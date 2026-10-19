@@ -4,7 +4,7 @@
 
 PadState pad_state = { 0 };                                         /* 0x413DA8 */
 PadState pad_states[2] = { 0 };                                      /* 0x413DB8 */
-u32 D_00413DD8[2] __attribute__((section(".data"))) = { 0 };         /* 0x413DD8 */
+u32 pad_states_tail_pad[2] __attribute__((section(".data"))) = { 0 };         /* 0x413DD8 */
 
 /* pad_pressed is pad_state.pressed: several files still read it by that name. */
 asm(".globl pad_pressed\npad_pressed = pad_state + 2\n");

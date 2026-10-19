@@ -83,7 +83,7 @@ typedef struct DataNode {
 typedef struct {
     char pad00[0x04];
     s32 save_area;                  /* 0x04 GameStatus.save_area: the message id of its area name, from 400 */
-    s32 experience;                 /* 0x08 experience, to gold: numbers put into the text (D_00446DF4...) */
+    s32 experience;                 /* 0x08 experience, to gold: numbers put into the text (menu_number_44...) */
     s32 level;                      /* 0x0C the player's level */
     s32 hp_now;                     /* 0x10 the HP the player had */
     s32 hp_max;                     /* 0x14 the most HP the player could have */
@@ -173,7 +173,7 @@ typedef struct {
     char *names[7];                 /* 0x00 */
 } MenuWeekdayNames;
 
-/* trade_value_slots: where the values of the seven listed items go (D_00446E64...); copied whole like TradeValueTables */
+/* trade_value_slots: where the values of the seven listed items go (menu_number_87...); copied whole like TradeValueTables */
 typedef struct {
     s32 *shown_value[7];            /* 0x00 */
 } TradeValueSlots;
@@ -189,7 +189,7 @@ typedef struct {
     void *unk00[12];                /* 0x00 */
 } EquipUnusedTable;
 
-/* equip_group_glyphs, D_0043FDD0: one byte per MenuItem.group (the first holds the glyph that names the group);
+/* equip_group_glyphs, equip_group_slot_bytes: one byte per MenuItem.group (the first holds the glyph that names the group);
    copied whole to a local */
 typedef struct {
     s8 per_group[11];               /* 0x00 */

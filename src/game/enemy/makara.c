@@ -25,7 +25,7 @@ int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
 f32 EntityCollision_DistanceToGround(f32 *);
 extern float player_state[];
-extern f32 D_00446800[];
+extern f32 makara_no_floor_height[];
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -138,7 +138,7 @@ static void Makara_Think(Entity *entity, s32 unknown) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but first starts
-   Makara_RangedAttack0 when work float unk48 is not D_00446800[0] and is above -Entity.collision_height
+   Makara_RangedAttack0 when work float unk48 is not makara_no_floor_height[0] and is above -Entity.collision_height
    / 2, the pause is over, and the player is within EntityParams.near_distance degrees ahead and farther
    than unk438; the pause is then unk434 plus 0 to 29 frames. Closing in never runs. */
 static void Makara_ThinkCombat(Entity *entity, s32 unknown) {
@@ -161,7 +161,7 @@ static void Makara_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    if (ai_state->part_angle_x != D_00446800[0] && entity->collision_height * -0.5f < ai_state->part_angle_x) {
+    if (ai_state->part_angle_x != makara_no_floor_height[0] && entity->collision_height * -0.5f < ai_state->part_angle_x) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
         angle = ABS(angle);
         if (ai_state->pause_timer <= 0 && angle < entity->params->near_distance * 0.017453292f

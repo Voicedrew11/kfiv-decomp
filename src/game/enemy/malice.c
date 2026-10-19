@@ -15,7 +15,7 @@ void Vector_Copy(void *, void *);
 void EntityAi_Animate(void);
 extern s32 entity_type_handlers[][2];
 extern u32 frame_counter;
-extern f32 D_00446814[];
+extern f32 malice_no_floor_height_think[];
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -48,7 +48,7 @@ void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
-extern f32 D_00446818[];
+extern f32 malice_no_floor_height_relocate[];
 void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 float EntityMath_AngleXZ(float *, char *);
 float EntityMath_WrapAngle(float);
@@ -169,7 +169,7 @@ static void Malice_Think(Entity *entity, s32 unknown) {
     }
     if (ENTITY_FLAG_BITS(entity)->bit28) {
         height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
-        if (height != D_00446814[0]) {
+        if (height != malice_no_floor_height_think[0]) {
             if (entity->params->type_param_1 < height) {
                 ai_state->step_index = 1;
             } else if (height < entity->params->type_param_2) {
@@ -511,7 +511,7 @@ static void Malice_FadeOutAndRelocate(Entity *entity) {
             destination = ai_state->target_point;
             EntityPoint_PickNearFromDistance(destination, (f32 *)entity->spawn_info, EntityMath_DistanceXZ(entity->model->position, entity->spawn_info), entity->spawn_info->wander_radius);
             height = EntityCollision_DistanceToPropFloor(entity->map_record, destination);
-            if (height != D_00446818[0]) {
+            if (height != malice_no_floor_height_relocate[0]) {
                 yaw = EntityMath_AngleXZ(player_state.position, (char *)destination);
                 if (ABS(EntityMath_WrapAngle(yaw - player_state.heading)) > 0.7853982f) {
                     ai_state->target_point[1] += height - (f32)(rand() % 200);
