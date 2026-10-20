@@ -35,9 +35,6 @@ static f32 movement_top_speed;                    /* 0x447124 top walk speed thi
 #define WEAPON_MODEL ((ModelInstance *)held_item_model_ptr)
 #define WEAPON_AIM_MODEL ((struct PlayerWeaponModel *)held_item_model_ptr)
 /* PlayerState.shortcut_type: what the shortcut button does (ini equip_shortcut_type) */
-#define SHORTCUT_TYPE_NONE  0
-#define SHORTCUT_TYPE_ITEM  1
-#define SHORTCUT_TYPE_MAGIC 2
 #define FALL_DAMAGE_MIN_SPEED 66.666664f
 #define SCREEN_TINT_STEP_PER_FRAME (1.0f / 128.0f)
 
@@ -990,7 +987,6 @@ void Player_UpdateWeaponAim(void) {
     weapon_tip_angles[1] = atan2f(vec[0], vec[2]);
 }
 
-/* the pad bits of each control */
 
 #define PLAYER_FLAG_32 0x100000000L /* the view is levelling out */
 #define PLAYER_FLAG_37 0x2000000000L /* the view dips after a landing */

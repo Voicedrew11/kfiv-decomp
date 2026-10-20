@@ -21,17 +21,6 @@
 #include "math/vu0.h"
 #include "save/save_state.h"
 
-/* TEX0 psm of a texture header: the GS pixel formats the texture is read with (HEADER_TEX0(header)->psm) */
-#define GS_PSM_CT32     0x00
-#define GS_PSM_CT24     0x01
-#define GS_PSM_CT16     0x02
-#define GS_PSM_CT16S    0x0A
-#define GS_PSM_T8       0x13
-#define GS_PSM_T8H      0x1B
-#define GS_PSM_Z32      0x30
-#define GS_PSM_Z24      0x31
-#define GS_PSM_Z16      0x32
-#define GS_PSM_Z16S     0x3A
 
 /* SpritePacket.number_id: the number a sprite stands for (MenuDraw_GetNumber gives its value) */
 #define MENU_NUMBER_NONE                0
@@ -106,9 +95,7 @@ static s32 heap_mark;               /* 0x447348 what MenuHeap_FreeToMark goes ba
 static s32 heap_top;                /* 0x44734C where the next block of the menus' heap comes from */
 static u32 long_text_packets[2][0x3700]; /* 0x5DDF00 the two packet buffers of the long text drawers */
 
-/* the numbers a menu sprite can stand for (MenuDraw_GetNumber) */
 
-/* the loaded menu file */
 
 /* 0x428BD0 the matrix the menu model drawer multiplies the light by */
 f32 menu_model_light_colors[16] = {

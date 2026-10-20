@@ -45,13 +45,6 @@
 #define SCRIPT_SET_OPERATOR             4       /* the next word is an operator */
 #define SCRIPT_SET_END                  0xFF    /* the set ends */
 
-/* the value types in a variable's code (the byte above its kind): 4 and 5 are 32 bits, signed and unsigned */
-#define SCRIPT_TYPE_S8                  0
-#define SCRIPT_TYPE_U8                  1
-#define SCRIPT_TYPE_S16                 2
-#define SCRIPT_TYPE_U16                 3
-#define SCRIPT_TYPE_S32                 4
-#define SCRIPT_TYPE_U32                 5
 
 static ScriptThread *current_thread = NULL; /* 0x446FD0 the thread being stepped */
 static int command_count;                   /* 0x4473E4 commands in use, as Script_StepHeldCommands counts them */

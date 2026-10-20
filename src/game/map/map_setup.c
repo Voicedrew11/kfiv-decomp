@@ -10,23 +10,7 @@
 #include "item/item.h"
 #include "save/save_state.h"
 
-/* map tags (the map file number) the switch in MapSetup_RunForMap picks a set-up by */
-#define MAP_TAG_ARMORY                 0xB
-#define MAP_TAG_FORGE_017              0x11
-#define MAP_TAG_FORGE_018              0x12
-#define MAP_TAG_FORGE_019              0x13
-#define MAP_TAG_EARTH_FOLKS_VILLAGE    0x14
-#define MAP_TAG_CAVERN_OF_LAVA         0x18
-#define MAP_TAG_FIRE_LORDS_DOMAIN      0x19
-#define MAP_TAG_OCEAN_SHORE            0x1B
-#define MAP_TAG_UNDERGROUND_CANAL      0x1D
-#define MAP_TAG_GUARDIANS_ROOM         0x23
-#define MAP_TAG_DARK_SANCTUARY         0x26
-#define MAP_TAG_KINGS_THRONE_ALCOVES   0x29
-#define MAP_TAG_SANCTUARY_OF_LIGHT     0x2A
-#define MAP_TAG_CENTRAL_TOWER_LEVEL3   0x64
-#define MAP_TAG_CRAFTSMANS_ROOM        0x68
-#define MAP_TAG_CENTRAL_TOWER_LEVEL2   0x6B
+/* map tags past the maps (MapSlot.tag) the switch in MapSetup_RunForMap picks a set-up by */
 #define MAP_TAG_PLACE_ITEM_LOWERED     0xFB
 #define MAP_TAG_252_EMPTY              0xFC
 
@@ -78,13 +62,13 @@ void MapSetup_RunForMap(int slot) {
     case MAP_TAG_SANCTUARY_OF_LIGHT:
         MapSetup_SanctuaryOfLight(slot);
         break;
-    case MAP_TAG_CENTRAL_TOWER_LEVEL3:
+    case MAP_TAG_ANCIENT_CITY_L3_CENTRAL_TOWER:
         MapSetup_CentralTowerLevel3(slot);
         break;
-    case MAP_TAG_CRAFTSMANS_ROOM:
+    case MAP_TAG_ANCIENT_CITY_L3_CRAFTSMANS_ROOM:
         MapSetup_CraftsmansRoom(slot);
         break;
-    case MAP_TAG_CENTRAL_TOWER_LEVEL2:
+    case MAP_TAG_ANCIENT_CITY_L2_CENTRAL_TOWER:
         MapSetup_CentralTowerLevel2(slot);
         break;
     case MAP_TAG_PLACE_ITEM_LOWERED:

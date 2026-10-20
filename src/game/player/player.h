@@ -225,6 +225,11 @@ typedef struct {
     char pad2F4[0x0C];              /* the block is 0x300 bytes (Player_ResetForNewGame clears and copies that many) */
 } PlayerState;
 
+/* PlayerState.shortcut_type: what the shortcut button does */
+#define SHORTCUT_TYPE_NONE          0
+#define SHORTCUT_TYPE_ITEM          1
+#define SHORTCUT_TYPE_MAGIC         2
+
 /* weapon_trail_kinds[7]: colour and life of the weapon trail, one per kind (trail_kind picks one) */
 typedef struct {
     s32 red;                        /* 0x00 */

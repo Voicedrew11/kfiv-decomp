@@ -14,13 +14,6 @@
 #include <math.h>
 #include "script/script.h"
 
-/* map tags (the map file number) the interact checks name */
-#define MAP_TAG_ANCIENT_CITY_EXTERIOR       0xC
-#define MAP_TAG_FORGE_017                   0x11
-#define MAP_TAG_FORGE_018                   0x12
-#define MAP_TAG_FORGE_019                   0x13
-#define MAP_TAG_ANCIENT_CITY_LEVEL2_WEST    0x6D
-
 #define INTERACT_CONE_COS 0.866025f /* cos 30 degrees: objects further off the view direction are skipped */
 
 
@@ -214,7 +207,7 @@ void Interact_FindTarget(void) {
                         object = MapObject_GetById(item_map, def->slot_id + 0x32);
                     }
                     break;
-                case MAP_TAG_ANCIENT_CITY_LEVEL2_WEST:
+                case MAP_TAG_ANCIENT_CITY_L2_WEST:
                     if (def->slot_id >= 0xFA && def->slot_id <= 0xFD) {
                         object = MapObject_GetById(item_map, def->slot_id);
                     }

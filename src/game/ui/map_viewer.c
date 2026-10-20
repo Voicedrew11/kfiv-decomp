@@ -42,38 +42,6 @@
 #define WIDDAS_MAP_X_SCALE 21.333334f
 #define WIDDAS_MAP_Z_SCALE 20.363636f
 
-/* Map tags (MapSlot.tag) of the maps the viewer names: the map numbers of docs/GAME_DATA.md. */
-#define MAP_ID_VILLAGE_RUINS                               0x00
-#define MAP_ID_MINERS_CEMETERY                             0x02
-#define MAP_ID_EAST_VALLEY                                 0x04
-#define MAP_ID_UPPER_MINES                                 0x08
-#define MAP_ID_LOWER_MINES                                 0x09
-#define MAP_ID_ANCIENT_CITY_L3_WEST                        0x0F
-#define MAP_ID_SOUTH_CLIFFS                                0x10
-#define MAP_ID_CLIFF_PASSAGE                               0x1A
-#define MAP_ID_OCEAN_SHORE                                 0x1B
-#define MAP_ID_NORTH_CLIFFS                                0x1F
-#define MAP_ID_UNDERGROUND_GRAVEYARD                       0x5F
-#define MAP_ID_THE_SHOP                                    0x60
-#define MAP_ID_ICON_OF_HEALING                             0x61
-#define MAP_ID_PALACE_OF_OATH_INTERIOR                     0x62
-#define MAP_ID_PALACE_OF_OATH_EXTERIOR                     0x63
-#define MAP_ID_ANCIENT_CITY_L3_CENTRAL_TOWER               0x64
-#define MAP_ID_ANCIENT_CITY_L3_NORTH                       0x65
-#define MAP_ID_ANCIENT_CITY_L3_EAST                        0x66
-#define MAP_ID_ANCIENT_CITY_L3_EAST_CATACOMBS              0x67
-#define MAP_ID_ANCIENT_CITY_L3_CRAFTSMANS_ROOM             0x68
-#define MAP_ID_ANCIENT_CITY_L3_SOUTH                       0x69
-#define MAP_ID_ANCIENT_CITY_L3_SOUTH_WIDDA_AREAS           0x6A
-#define MAP_ID_ANCIENT_CITY_L2_CENTRAL_TOWER               0x6B
-#define MAP_ID_ANCIENT_CITY_L2_SOUTH                       0x6C
-#define MAP_ID_ANCIENT_CITY_L2_WEST                        0x6D
-#define MAP_ID_ANCIENT_CITY_L2_SORCERERS_AREA              0x6E
-#define MAP_ID_ANCIENT_CITY_L2_NORTH                       0x6F
-#define MAP_ID_ANCIENT_CITY_L1_CENTRAL_TOWER               0x70
-#define MAP_ID_ANCIENT_CITY_L1_WEST                        0x71
-#define MAP_ID_ANCIENT_CITY_L1_AND_2_EAST                  0x73
-#define MAP_ID_TREASURY                                    0x74
 
 /* The Caretaker's Map pictures: fixed spots for each map, or a spot from the player's position. */
 #define CARETAKERS_MAP_PICTURE_FIXED_SPOTS    0
@@ -425,7 +393,7 @@ int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y) {
     switch (viewer_picture) {
     case CARETAKERS_MAP_PICTURE_FIXED_SPOTS:
         switch (map_slots[current_map_slot].tag) {
-        case MAP_ID_VILLAGE_RUINS:
+        case MAP_TAG_VILLAGE_RUINS:
             if (player_state.map_index != 0xFFFF
                 && ((MapRecord *)map_slots[current_map_slot].records)[player_state.map_index].prop_id == 0xC8) {
                 *screen_x = 0x96;
@@ -435,7 +403,7 @@ int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y) {
                 *screen_y = 0x69;
             }
             return -1;
-        case MAP_ID_MINERS_CEMETERY:
+        case MAP_TAG_MINERS_CEMETERY:
             if (player_state.map_index != 0xFFFF
                 && ((MapRecord *)map_slots[current_map_slot].records)[player_state.map_index].prop_id == 0xC8) {
                 *screen_x = 0x96;
@@ -445,20 +413,20 @@ int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y) {
                 *screen_y = 0x151;
             }
             return -1;
-        case MAP_ID_EAST_VALLEY:
+        case MAP_TAG_EAST_VALLEY:
             *screen_x = 0x214;
             *screen_y = 0x12E;
             return -1;
-        case MAP_ID_UPPER_MINES:
-        case MAP_ID_LOWER_MINES:
+        case MAP_TAG_UPPER_MINES:
+        case MAP_TAG_LOWER_MINES:
             *screen_x = 0x214;
             *screen_y = 0x94;
             return -1;
-        case MAP_ID_PALACE_OF_OATH_INTERIOR:
+        case MAP_TAG_PALACE_OF_OATH_INTERIOR:
             *screen_x = 0x169;
             *screen_y = 0x5C;
             return -1;
-        case MAP_ID_PALACE_OF_OATH_EXTERIOR:
+        case MAP_TAG_PALACE_OF_OATH_EXTERIOR:
             *screen_x = 0x14A;
             *screen_y = 0xFF;
             return -1;
@@ -468,24 +436,24 @@ int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y) {
     case CARETAKERS_MAP_PICTURE_PLAYER_SPOTS:
         if (player_state.position.y > -700.0f) {
             switch (map_slots[current_map_slot].tag) {
-            case MAP_ID_UNDERGROUND_GRAVEYARD:
-            case MAP_ID_THE_SHOP:
-            case MAP_ID_ICON_OF_HEALING:
+            case MAP_TAG_UNDERGROUND_GRAVEYARD:
+            case MAP_TAG_SHOP:
+            case MAP_TAG_ICON_OF_HEALING:
                 *screen_x = (player_state.position.x - 0.0f) * CARETAKERS_MAP_X_SCALE / 1000.0f + 148.0f;
                 *screen_y = 273.0f - (player_state.position.z - 0.0f) * CARETAKERS_MAP_Z_SCALE / 1000.0f;
                 return TRUE;
             }
         } else {
             switch (map_slots[current_map_slot].tag) {
-            case MAP_ID_UNDERGROUND_GRAVEYARD:
+            case MAP_TAG_UNDERGROUND_GRAVEYARD:
                 if (player_state.position.x > 4800.0f && player_state.position.z > 8000.0f) {
                     return FALSE;
                 }
-            case MAP_ID_THE_SHOP:
+            case MAP_TAG_SHOP:
                 *screen_x = (player_state.position.x - 3600.0f) * CARETAKERS_MAP_X_SCALE / 1000.0f + 490.0f;
                 *screen_y = 143.0f - (player_state.position.z - 5200.0f) * CARETAKERS_MAP_Z_SCALE / 1000.0f;
                 return TRUE;
-            case MAP_ID_ICON_OF_HEALING: // match: named although it does what the default does; it shapes the compare tree
+            case MAP_TAG_ICON_OF_HEALING: // match: named although it does what the default does; it shapes the compare tree
             default:
                 return FALSE;
             }
@@ -501,16 +469,16 @@ int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y) {
     switch (viewer_picture) {
     case 0:
         switch (map_slots[current_map_slot].tag) {
-        case MAP_ID_ANCIENT_CITY_L1_CENTRAL_TOWER:
-        case MAP_ID_ANCIENT_CITY_L1_WEST:
+        case MAP_TAG_ANCIENT_CITY_L1_CENTRAL_TOWER:
+        case MAP_TAG_ANCIENT_CITY_L1_WEST:
             *screen_x = (player_state.position.x - 0.0f) * ZASTARI_PICTURE0_X_SCALE / 1000.0f + 321.0f;
             *screen_y = 280.0f - (player_state.position.z - 0.0f) * ZASTARI_PICTURE0_Z_SCALE / 1000.0f;
             return TRUE;
-        case MAP_ID_ANCIENT_CITY_L1_AND_2_EAST:
+        case MAP_TAG_ANCIENT_CITY_L1_AND_2_EAST:
             *screen_x = (player_state.position.x - -10500.0f) * ZASTARI_PICTURE0_X_SCALE / 1000.0f + 321.0f;
             *screen_y = 280.0f - (player_state.position.z - 500.0f) * ZASTARI_PICTURE0_Z_SCALE / 1000.0f;
             return TRUE;
-        case MAP_ID_TREASURY:
+        case MAP_TAG_TREASURY:
             *screen_x = (player_state.position.x - -9700.0f) * ZASTARI_PICTURE0_X_SCALE / 1000.0f + 321.0f;
             *screen_y = 280.0f - (player_state.position.z - -8900.0f) * ZASTARI_PICTURE0_Z_SCALE / 1000.0f;
             return TRUE;
@@ -518,19 +486,19 @@ int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y) {
         break;
     case 1:
         switch (map_slots[current_map_slot].tag) {
-        case MAP_ID_NORTH_CLIFFS:
+        case MAP_TAG_NORTH_CLIFFS:
             *screen_x = (player_state.position.x - 0.0f) * ZASTARI_PICTURE1_X_SCALE / 1000.0f + 348.0f;
             *screen_y = 263.0f - (player_state.position.z - -12100.0f) * ZASTARI_PICTURE1_Z_SCALE / 1000.0f;
             return TRUE;
-        case MAP_ID_ANCIENT_CITY_L2_CENTRAL_TOWER:
-        case MAP_ID_ANCIENT_CITY_L2_SOUTH:
-        case MAP_ID_ANCIENT_CITY_L2_WEST:
-        case MAP_ID_ANCIENT_CITY_L2_SORCERERS_AREA:
-        case MAP_ID_ANCIENT_CITY_L2_NORTH:
+        case MAP_TAG_ANCIENT_CITY_L2_CENTRAL_TOWER:
+        case MAP_TAG_ANCIENT_CITY_L2_SOUTH:
+        case MAP_TAG_ANCIENT_CITY_L2_WEST:
+        case MAP_TAG_ANCIENT_CITY_L2_SORCERERS_AREA:
+        case MAP_TAG_ANCIENT_CITY_L2_NORTH:
             *screen_x = (player_state.position.x - 0.0f) * ZASTARI_PICTURE1_X_SCALE / 1000.0f + 348.0f;
             *screen_y = 263.0f - (player_state.position.z - 0.0f) * ZASTARI_PICTURE1_Z_SCALE / 1000.0f;
             return TRUE;
-        case MAP_ID_ANCIENT_CITY_L1_AND_2_EAST:
+        case MAP_TAG_ANCIENT_CITY_L1_AND_2_EAST:
             *screen_x = (player_state.position.x - -10500.0f) * ZASTARI_PICTURE1_X_SCALE / 1000.0f + 348.0f;
             *screen_y = 263.0f - (player_state.position.z - 500.0f) * ZASTARI_PICTURE1_Z_SCALE / 1000.0f;
             return TRUE;
@@ -538,27 +506,27 @@ int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y) {
         break;
     case 2:
         switch (map_slots[current_map_slot].tag) {
-        case MAP_ID_ANCIENT_CITY_L3_WEST:
+        case MAP_TAG_ANCIENT_CITY_L3_WEST:
             *screen_x = (player_state.position.x - 9300.0f) * ZASTARI_PICTURE2_X_SCALE / 1000.0f + 194.0f;
             *screen_y = 167.0f - (player_state.position.z - -4400.0f) * 11.2f / 1000.0f;
             return TRUE;
-        case MAP_ID_SOUTH_CLIFFS:
+        case MAP_TAG_SOUTH_CLIFFS:
             *screen_x = (player_state.position.x - 700.0f) * ZASTARI_PICTURE2_X_SCALE / 1000.0f + 335.0f;
             *screen_y = 328.0f - (player_state.position.z - 1650.0f) * 11.2f / 1000.0f;
             return TRUE;
-        case MAP_ID_ANCIENT_CITY_L3_CENTRAL_TOWER:
-        case MAP_ID_ANCIENT_CITY_L3_SOUTH:
-        case MAP_ID_ANCIENT_CITY_L3_SOUTH_WIDDA_AREAS:
+        case MAP_TAG_ANCIENT_CITY_L3_CENTRAL_TOWER:
+        case MAP_TAG_ANCIENT_CITY_L3_SOUTH:
+        case MAP_TAG_ANCIENT_CITY_L3_SOUTH_WIDDA_AREAS:
             *screen_x = (player_state.position.x - 0.0f) * ZASTARI_PICTURE2_X_SCALE / 1000.0f + 326.0f;
             *screen_y = 168.0f - (player_state.position.z - 0.0f) * 11.2f / 1000.0f;
             return TRUE;
-        case MAP_ID_ANCIENT_CITY_L3_NORTH:
+        case MAP_TAG_ANCIENT_CITY_L3_NORTH:
             *screen_x = (player_state.position.x - 3800.0f) * ZASTARI_PICTURE2_X_SCALE / 1000.0f + 326.0f;
             *screen_y = 168.0f - (player_state.position.z - -7900.0f) * 11.2f / 1000.0f;
             return TRUE;
-        case MAP_ID_ANCIENT_CITY_L3_EAST:
-        case MAP_ID_ANCIENT_CITY_L3_EAST_CATACOMBS:
-        case MAP_ID_ANCIENT_CITY_L3_CRAFTSMANS_ROOM:
+        case MAP_TAG_ANCIENT_CITY_L3_EAST:
+        case MAP_TAG_ANCIENT_CITY_L3_EAST_CATACOMBS:
+        case MAP_TAG_ANCIENT_CITY_L3_CRAFTSMANS_ROOM:
             *screen_x = (player_state.position.x - -7050.0f) * ZASTARI_PICTURE2_X_SCALE / 1000.0f + 326.0f;
             *screen_y = 168.0f - (player_state.position.z - 0.0f) * 11.2f / 1000.0f;
             return TRUE;
@@ -597,11 +565,11 @@ int MapViewer_LocateOnEarthFolksMap(int *map_x, int *map_y) {
    and 027, FALSE on other maps. */
 int MapViewer_LocateOnWiddasMap(int *screen_x, int *screen_y) {
     switch (map_slots[current_map_slot].tag) {
-    case MAP_ID_CLIFF_PASSAGE:
+    case MAP_TAG_CLIFF_PASSAGE:
         *screen_x = (player_state.position.x - -3200.0f) * WIDDAS_MAP_X_SCALE / 1000.0f + 438.0f;
         *screen_y = 214.0f - (player_state.position.z - -5600.0f) * WIDDAS_MAP_Z_SCALE / 1000.0f;
         break;
-    case MAP_ID_OCEAN_SHORE:
+    case MAP_TAG_OCEAN_SHORE:
         *screen_x = (player_state.position.x - -8800.0f) * WIDDAS_MAP_X_SCALE / 1000.0f + 320.0f;
         *screen_y = 82.0f - (player_state.position.z - 900.0f) * WIDDAS_MAP_Z_SCALE / 1000.0f;
         break;
@@ -771,13 +739,13 @@ static void MapViewer_DrawKingsMap(void) {
         record = (MapDrawRecord *)slot->records;
         if (slot->loaded != 0) {
             switch (slot->tag) {
-                case MAP_ID_VILLAGE_RUINS:
-                case MAP_ID_MINERS_CEMETERY:
-                case MAP_ID_EAST_VALLEY:
-                case MAP_ID_UPPER_MINES:
-                case MAP_ID_LOWER_MINES:
-                case MAP_ID_PALACE_OF_OATH_INTERIOR:
-                case MAP_ID_PALACE_OF_OATH_EXTERIOR:
+                case MAP_TAG_VILLAGE_RUINS:
+                case MAP_TAG_MINERS_CEMETERY:
+                case MAP_TAG_EAST_VALLEY:
+                case MAP_TAG_UPPER_MINES:
+                case MAP_TAG_LOWER_MINES:
+                case MAP_TAG_PALACE_OF_OATH_INTERIOR:
+                case MAP_TAG_PALACE_OF_OATH_EXTERIOR:
                     break;
                 default:
                     for (i = 0; i < ((MapSlotUnk08 *)slot->header)->record_count; i++, record++) {
@@ -861,13 +829,13 @@ static void MapViewer_DrawKingsMap(void) {
    002, 004, 008, 009, 098, 099). */
 int MapViewer_IsKingsMapUsable(int map_tag) {
     switch (map_tag) {
-        case MAP_ID_VILLAGE_RUINS:
-        case MAP_ID_MINERS_CEMETERY:
-        case MAP_ID_EAST_VALLEY:
-        case MAP_ID_UPPER_MINES:
-        case MAP_ID_LOWER_MINES:
-        case MAP_ID_PALACE_OF_OATH_INTERIOR:
-        case MAP_ID_PALACE_OF_OATH_EXTERIOR:
+        case MAP_TAG_VILLAGE_RUINS:
+        case MAP_TAG_MINERS_CEMETERY:
+        case MAP_TAG_EAST_VALLEY:
+        case MAP_TAG_UPPER_MINES:
+        case MAP_TAG_LOWER_MINES:
+        case MAP_TAG_PALACE_OF_OATH_INTERIOR:
+        case MAP_TAG_PALACE_OF_OATH_EXTERIOR:
             return FALSE;
     }
     return TRUE;

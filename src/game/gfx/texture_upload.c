@@ -11,20 +11,6 @@
 
 #define TEX0_BITS(header) ((TextureTex0Bits *)&(header)->tex0)
 
-/* GS TEX0 PSM values: the texture pixel format (TEX0_BITS(header)->pixel_format) */
-#define GS_PSM_CT32   0x00
-#define GS_PSM_CT24   0x01
-#define GS_PSM_CT16   0x02
-#define GS_PSM_CT16S  0x0A
-#define GS_PSM_T8     0x13
-#define GS_PSM_T8H    0x1B
-#define GS_PSM_T4     0x14
-#define GS_PSM_T4HL   0x24
-#define GS_PSM_T4HH   0x2C
-#define GS_PSM_Z32    0x30
-#define GS_PSM_Z24    0x31
-#define GS_PSM_Z16    0x32
-#define GS_PSM_Z16S   0x3A
 
 static u32 texflush_packet[0xC];    /* 0x1DFAF80 where Texture_SendTexFlush builds its DMA packet */
 

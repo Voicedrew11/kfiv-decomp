@@ -69,10 +69,6 @@
 #define MENU_MODE_CARD_CHECK           4
 #define MENU_MODE_BRIGHTNESS           5
 
-/* shortcut_type: what the equipped shortcut is (PlayerState.shortcut_type) */
-#define SHORTCUT_TYPE_NONE             0
-#define SHORTCUT_TYPE_ITEM             1
-#define SHORTCUT_TYPE_MAGIC            2
 
 /* main_menu_state: the fades of the main menu */
 #define MAIN_MENU_STATE_FADE_IN                0
