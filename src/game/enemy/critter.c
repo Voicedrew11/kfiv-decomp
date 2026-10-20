@@ -89,7 +89,7 @@ static void Critter_Dormant(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
         ENTITY_FLAG_BITS(entity)->no_second_wall_collision = FALSE;
         ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
