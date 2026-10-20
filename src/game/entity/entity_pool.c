@@ -828,6 +828,7 @@ static void EntityPool_CopyLoadedFile(EntityPoolSlot *slot) {
     if ((table_offset = file[4]) != 0 || (table_offset = file[3]) != 0) {
         size = table_offset + *(int *)(table_offset + (char *)file);
     }
+    // match: retail shares one hang loop at the end for all three checks; only gotos give that layout
     if (size == 0) {
         goto hang;
     }
@@ -889,6 +890,7 @@ static void EntityPool_FreeUnusedBlocks(void) {
     slot = entity_pool_slots;
     while (slot_index < ENTITY_POOL_SLOT_COUNT) {
         if ((slot->head.word & 0x2FF) == (ENTITY_POOL_FLAG_200 | ENTITY_POOL_READY)) {
+            // match: a type in use skips straight to the next slot; break or flag forms reorder the blocks
             for (entity = list_a; entity != NULL; entity = entity->next) {
                 if (entity->spawn_info->type_id == slot->head.fields.type_id) {
                     goto in_use;

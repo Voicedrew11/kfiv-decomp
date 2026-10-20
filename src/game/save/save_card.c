@@ -882,9 +882,9 @@ static s32 SaveCard_StepRescan(void) {
             break;
         }
         if (Mc_StartCheck(index, 0) == 0) {
-            goto next;
-        }
-        if (++task->retries == 5) {
+            task->retries = 0;
+            task->step++;
+        } else if (++task->retries == 5) {
             card->status.bytes.check_state = 2;
             card->message = 1;
             result = 1;
@@ -899,9 +899,11 @@ static s32 SaveCard_StepRescan(void) {
             card->status.bytes.check_state = 2;
             card->message = 1;
             if (task->step == 8) {
-                goto done;
+                result = 1;
+                break;
             }
-            goto retry;
+            task->step = 7;
+            break;
         case MC_STATUS_UNFORMATTED:
         case 4:
             if (++task->retries == 5) {
@@ -933,9 +935,11 @@ static s32 SaveCard_StepRescan(void) {
             card->status.bytes.check_state = 0;
             card->status.bytes.card_type = 0;
             if (task->step == 8) {
-                goto done;
+                result = 1;
+                break;
             }
-            goto retry;
+            task->step = 7;
+            break;
         }
         break;
     case 2:
@@ -948,20 +952,21 @@ static s32 SaveCard_StepRescan(void) {
                 }
             }
             card->status.bytes.check_state = 0;
-        done:
             result = 1;
         }
         break;
     case 3:
         if (Mc_StartGetDir(index, 0, "/BASLUS-20318*", 0, 0xB, dir_entries) == 0) {
-            goto next;
-        }
-        if (++task->retries == 5) {
+            task->retries = 0;
+            task->step++;
+        } else if (++task->retries == 5) {
             card->status.bytes.check_state = 2;
             if (task->step >= 0xA) {
-                goto done;
+                result = 1;
+                break;
             }
-            goto retry;
+            task->step = 7;
+            break;
         }
         break;
     case 4:
@@ -971,18 +976,24 @@ static s32 SaveCard_StepRescan(void) {
         if (Mc_GetStatus() == MC_STATUS_OK) {
             card->status.bytes.check_state = 0;
             if (Mc_GetDirCount() > 0) {
-                goto next;
+                task->retries = 0;
+                task->step++;
+                break;
             }
             if (task->step == 0xB) {
-                goto done;
+                result = 1;
+                break;
             }
-            goto retry;
+            task->step = 7;
+            break;
         }
         card->status.bytes.check_state = 2;
         if (task->step == 0xB) {
-            goto done;
+            result = 1;
+            break;
         }
-        goto retry;
+        task->step = 7;
+        break;
     case 5:
         memset(dir_entries, 0, 0x2C0);
         if (Mc_StartGetDir(index, 0, "/BASLUS-20318S/*", 0, 0xB, dir_entries) != 0) {
@@ -991,11 +1002,12 @@ static s32 SaveCard_StepRescan(void) {
             }
             card->status.bytes.check_state = 2;
             if (task->step >= 0xC) {
-                goto done;
+                result = 1;
+                break;
             }
-            goto retry;
+            task->step = 7;
+            break;
         }
-    next:
         task->retries = 0;
         task->step++;
         break;
@@ -1009,27 +1021,35 @@ static s32 SaveCard_StepRescan(void) {
                     card->has_save_list = 0;
                     // match: retail repeats the check tail here instead of falling into check
                     if (task->step == 0xD) {
-                        goto done;
+                        result = 1;
+                        break;
                     }
-                    goto retry;
+                    task->step = 7;
+                    break;
                 }
-            check:
                 if (task->step == 0xD) {
-                    goto done;
+                    result = 1;
+                    break;
                 }
-                goto retry;
+                task->step = 7;
+                break;
             }
             sprintf(rescan_path, "%s", "KF4GAME.ICO");
             if (SaveCard_FindFile(rescan_path, 0xDBF0) != 0) {
-                goto check;
+                if (task->step == 0xD) {
+                    result = 1;
+                    break;
+                }
+                task->step = 7;
+                break;
             }
             sprintf(rescan_path, "icon.sys");
             if (SaveCard_FindFile(rescan_path, 0) != 0) {
                 card->has_save_folder = 0;
                 if (task->step == 0xD) {
-                    goto done;
+                    result = 1;
+                    break;
                 }
-            retry:
                 task->step = 7;
                 break;
             }
@@ -1045,7 +1065,8 @@ static s32 SaveCard_StepRescan(void) {
             if (task->step != 0xD) {
                 task->step = 7;
             }
-            goto done;
+            result = 1;
+            break;
         }
         result = SaveCard_Fail();
         break;
