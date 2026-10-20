@@ -179,10 +179,10 @@ void Entity_ResetToSpawn(Entity *entity) {
     entity->ailment_4_frames = 0;
     entity->action_step = 0;
     entity->reaction_step = 0;
-    entity->state = 0;
-    entity->combat_choice = 0;
-    entity->prev_state = 0;
-    entity->prev_combat_choice = 0;
+    entity->state = ENTITY_STATE_UNAWARE;
+    entity->combat_choice = COMBAT_CHOICE_ATTACK;
+    entity->prev_state = ENTITY_STATE_UNAWARE;
+    entity->prev_combat_choice = COMBAT_CHOICE_ATTACK;
     ((EntityFlags *)&entity->flags)->halves[1] = 0;
     entity->busy_flags = 0;
     entity->move_command = 0;

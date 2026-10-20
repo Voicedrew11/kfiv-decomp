@@ -15,6 +15,9 @@
 #include "model/motion.h"
 #include "player/player.h"
 
+/* Entity.ai_state.move_choice 1: backs away from the player */
+#define ANCIENT_MUMMY_MOVE_CHOICE_BACK 1
+
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void AncientMummy_Think(Entity *entity, s32 run_now);
@@ -80,13 +83,13 @@ static void AncientMummy_Think(Entity *entity, s32 run_now) {
             EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 EntityAi_ThinkIdle(entity, run_now);
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 AncientMummy_ThinkCombat(entity, run_now);
                 break;
             default:
@@ -136,9 +139,9 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 run_now) {
     if (entity->distance_to_player_3d - entity->radius - 100.0f < 800.0f && ABS(angle) < DEG_TO_RAD(40)) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
         if (ABS(angle) < HALF_PI) {
-            ai_state->move_choice = 1;
+            ai_state->move_choice = ANCIENT_MUMMY_MOVE_CHOICE_BACK;
             entity->target = &player_state;
-            entity->combat_choice = 1;
+            entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
             entity->action_timer = rand() % 60 + 90;
         }
     }
@@ -150,24 +153,24 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
@@ -188,7 +191,7 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 run_now) {
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             switch (ai_state->move_choice) {
-            case 0:
+            case MOVE_CHOICE_CLOSE_IN:
                 if (turn > 0) {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                 } else if (turn < 0) {
@@ -197,7 +200,7 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 run_now) {
                     entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
                 break;
-            case 1:
+            case ANCIENT_MUMMY_MOVE_CHOICE_BACK:
                 if (turn > 0) {
                     entity->move_command = (MOVE_COMMAND_BACK | MOVE_COMMAND_TURN_LEFT);
                 } else if (turn < 0) {
@@ -302,7 +305,7 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit18 = 1;
             ENTITY_FLAG_BITS(entity)->bit21 = 1;
             ENTITY_FLAG_BITS(entity)->no_player_collision = 1;
-            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
             step = 1.3f / entity->params->far_distance;
             entity->model->scale[0] -= step;
             entity->model->scale[1] += step;
@@ -354,7 +357,7 @@ static void AncientMummy_FadeBackIn(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit18 = 0;
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
             ENTITY_FLAG_BITS(entity)->no_player_collision = 0;
-            ENTITY_FLAG_BITS(entity)->animates = 1;
+            ENTITY_FLAG_BITS(entity)->animates = TRUE;
             entity->action_step++;
         } else if (entity->params->type_param_1 < ai_state->mode_timer) {
             step = 1.3f / entity->params->type_param_0;

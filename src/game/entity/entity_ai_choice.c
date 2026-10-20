@@ -156,36 +156,36 @@ void EntityAi_StepState(Entity *entity) {
     next = entity->state;
     entity->prev_state = next;
     switch ((char)next) {
-    case 0:
+    case ENTITY_STATE_UNAWARE:
         if (((int)((u64)entity->flags >> 33) & ENTITY_FLAG_ACTIVE_LIST)) {
-            next = 2;
-            entity->state = 2;
+            next = ENTITY_STATE_NOTICED;
+            entity->state = ENTITY_STATE_NOTICED;
         }
         break;
-    case 1:
+    case ENTITY_STATE_SEARCHING:
         if (((int)((u64)entity->flags >> 33) & ENTITY_FLAG_ACTIVE_LIST)) {
-            next = 2;
-            entity->state = 2;
+            next = ENTITY_STATE_NOTICED;
+            entity->state = ENTITY_STATE_NOTICED;
         } else if (entity->timer == 0) {
-            entity->state = 0;
-            next = 0;
+            entity->state = ENTITY_STATE_UNAWARE;
+            next = ENTITY_STATE_UNAWARE;
         }
         entity->timer--;
         break;
-    case 2:
+    case ENTITY_STATE_NOTICED:
         if (!(((int)((u64)entity->flags >> 33) & ENTITY_FLAG_ACTIVE_LIST))) {
-            entity->state = 1;
-            next = 1;
+            entity->state = ENTITY_STATE_SEARCHING;
+            next = ENTITY_STATE_SEARCHING;
             entity->timer = ENTITY_CONTROLLER(entity)->state_timer_reload;
         }
         break;
-    case 3:
-        entity->state = 3;
-        next = 3;
+    case ENTITY_STATE_HELD:
+        entity->state = ENTITY_STATE_HELD;
+        next = ENTITY_STATE_HELD;
         break;
     default:
-        entity->state = 0;
-        next = 0;
+        entity->state = ENTITY_STATE_UNAWARE;
+        next = ENTITY_STATE_UNAWARE;
         break;
     }
     if ((char)next != entity->prev_state) {
@@ -694,7 +694,7 @@ void EntityAi_LowerWeightsAfterHit(Entity *entity) {
     s32 first;
     u8 *weights;
 
-    if (entity->state == 2) {
+    if (entity->state == ENTITY_STATE_NOTICED) {
         for (i = 0; i < 2; i++) {
             if (entity->combat_choice == i) {
                 adjust_level(&entity->choice_weights[i], -10, 0xC0);
@@ -702,7 +702,7 @@ void EntityAi_LowerWeightsAfterHit(Entity *entity) {
                 adjust_level(&entity->choice_weights[i], 5, 0xC0);
             }
         }
-        if (entity->combat_choice == 0) {
+        if (entity->combat_choice == COMBAT_CHOICE_ATTACK) {
             first = 3;
             if ((entity->flags >> 57) & ENTITY_FLAG_ACTIVE_LIST) {
                 first = 0;

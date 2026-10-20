@@ -17,6 +17,9 @@
 #include "model/motion.h"
 
 
+/* Entity.ai_state.move_choice: 2 stands while the wander timer runs (no target) */
+#define SLIME_MOVE_CHOICE_STAND     2
+
 static void Slime_Animate(Entity *entity);
 static void Slime_OnHit(Entity *entity);
 static void Slime_Think(Entity *entity, s32 run_now);
@@ -110,7 +113,7 @@ static void Slime_Think(Entity *entity, s32 run_now) {
         Slime_ThinkReturn(entity, run_now);
         return;
     }
-    if (entity->state == 2) {
+    if (entity->state == ENTITY_STATE_NOTICED) {
         Slime_ThinkCombat(entity, run_now);
         return;
     }
@@ -145,7 +148,7 @@ static void Slime_ThinkWander(Entity *entity, s32 run_now) {
             EntityPoint_PickNear(entity->spawn_info->wander_radius, entity->ai_state.target_point, entity->spawn_info, entity->model->position);
             entity->target = entity->ai_state.target_point;
             entity->action_timer = rand() % 120 + 240;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
         } else if (roll > 40) {
             ai_state->part_angle_x = EntityAi_RandomAngle();
             entity->action_timer = rand() % 30 + 60;
@@ -153,10 +156,10 @@ static void Slime_ThinkWander(Entity *entity, s32 run_now) {
         } else {
             entity->target = NULL;
             entity->action_timer = rand() % 30 + 60;
-            ai_state->move_choice = 2;
+            ai_state->move_choice = SLIME_MOVE_CHOICE_STAND;
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         if (entity->target != NULL) {
             if (EntityMath_DistanceXZ(entity->model->position, entity->target) > 50.0f) {
                 entity->move_command = MOVE_COMMAND_FORWARD;
@@ -194,18 +197,18 @@ static void Slime_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
                 return;
             }
             EntityAi_StartAction(entity, Slime_MeleeAttack, run_now);
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             if (rand() % 100 < entity->params->pitch_limit_deg) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 120 + 480;
-                ai_state->move_choice = 0;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             } else {
                 EntityPoint_PickNear(entity->spawn_info->wander_radius, entity->ai_state.target_point, entity->spawn_info, entity->model->position);
                 entity->target = entity->ai_state.target_point;
@@ -213,12 +216,12 @@ static void Slime_ThinkCombat(Entity *entity, s32 run_now) {
                 ai_state->move_choice = 1;
             }
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 60 + 120;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }

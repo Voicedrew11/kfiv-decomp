@@ -17,6 +17,12 @@
 #include "model/motion.h"
 #include "player/player.h"
 
+/* Entity.ai_state.move_choice (1 to 4) */
+#define DRAGON_FLY_MOVE_CHOICE_APPROACH       1   /* flies at the player, up or down to a height near its own */
+#define DRAGON_FLY_MOVE_CHOICE_FLY_TO_POINT   2   /* flies to a point above the player, then closes in */
+#define DRAGON_FLY_MOVE_CHOICE_PAUSE          3   /* hovers after an attack, then dives */
+#define DRAGON_FLY_MOVE_CHOICE_DIVE           4   /* dives at the player until close to its height */
+
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 static void DragonFly_Animate(Entity *entity);
@@ -109,10 +115,10 @@ static void DragonFly_Think(Entity *entity, s32 run_now) {
         return;
     }
     switch (entity->state) {
-    case 0:
-    case 1:
+    case ENTITY_STATE_UNAWARE:
+    case ENTITY_STATE_SEARCHING:
         break;
-    case 2:
+    case ENTITY_STATE_NOTICED:
         DragonFly_ThinkCombat(entity, run_now);
         return;
     }
@@ -226,20 +232,20 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 run_now) {
     s32 roll;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
-    if (ai_state->move_choice != 4 && entity->attack_delay_frames == 0 && EntityAi_CanAttack(entity)) {
+    if (ai_state->move_choice != DRAGON_FLY_MOVE_CHOICE_DIVE && entity->attack_delay_frames == 0 && EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack(entity)) {
             EntityAi_StartAction(entity, DragonFly_RangedAttack, run_now);
         } else {
             EntityAi_StartAction(entity, DragonFly_MeleeAttack, run_now);
         }
         ai_state->part_angle_x = 0.0f;
-        ai_state->move_choice = 3;
+        ai_state->move_choice = DRAGON_FLY_MOVE_CHOICE_PAUSE;
         return;
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         if (rand() % 100 < 75) {
             roll = rand() % 60;
-            ai_state->move_choice = 1;
+            ai_state->move_choice = DRAGON_FLY_MOVE_CHOICE_APPROACH;
             ai_state->action_flags = roll;
         } else {
             ai_state->part_angle_y = player_state.position.y - 220.0f - (f32)(rand() % 700);
@@ -249,7 +255,7 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 run_now) {
                 ai_state->step_index = 0;
             }
             entity->action_timer = 120;
-            ai_state->move_choice = 2;
+            ai_state->move_choice = DRAGON_FLY_MOVE_CHOICE_FLY_TO_POINT;
         }
     }
     turn = EntityAi_TurnFromPush(entity, direction);
@@ -257,7 +263,7 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 run_now) {
         entity->move_command = EntityAi_PushTurnCommand3D(entity, turn);
     } else {
         switch (ai_state->move_choice) {
-        case 1:
+        case DRAGON_FLY_MOVE_CHOICE_APPROACH:
             delta = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(delta) > entity->params->turn_limit) {
                 if (delta >= 0.0f) {
@@ -277,7 +283,7 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 run_now) {
                 entity->move_command |= MOVE_COMMAND_RUN;
             }
             break;
-        case 2:
+        case DRAGON_FLY_MOVE_CHOICE_FLY_TO_POINT:
             delta = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(delta) > entity->params->turn_limit) {
                 if (delta >= 0.0f) {
@@ -300,10 +306,10 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 run_now) {
             target[1] = ai_state->part_angle_y;
             // match: the shared prototype has no result; it returns the distance
             if (EntityMath_Distance(target, entity->model->position) <= 200.0f) {
-                ai_state->move_choice = 0;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             }
             break;
-        case 3:
+        case DRAGON_FLY_MOVE_CHOICE_PAUSE:
             delta = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(delta) > entity->params->turn_limit) {
                 if (delta >= 0.0f) {
@@ -318,10 +324,10 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 run_now) {
             ai_state->pause_timer++;
             if (ai_state->pause_timer > 90) {
                 ai_state->pause_timer = 0;
-                ai_state->move_choice = 4;
+                ai_state->move_choice = DRAGON_FLY_MOVE_CHOICE_DIVE;
             }
             break;
-        case 4:
+        case DRAGON_FLY_MOVE_CHOICE_DIVE:
             delta = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(delta) > entity->params->turn_limit) {
                 if (delta >= 0.0f) {
@@ -333,11 +339,11 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 run_now) {
             delta = player_state.position.y - entity->model->position[1];
             entity->move_command |= (MOVE_COMMAND_FORWARD | MOVE_COMMAND_DOWN | MOVE_COMMAND_RUN);
             if (delta > 700.0f) {
-                ai_state->move_choice = 0;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             }
             break;
         default:
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
         }
     }

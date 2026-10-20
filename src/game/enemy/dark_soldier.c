@@ -16,7 +16,32 @@
 #include "player/player.h"
 #include "entity/entity_collision.h"
 
+/* Entity.combat_choice 2: picks a point near the spawn and closes in on it */
+#define DARK_SOLDIER_COMBAT_CHOICE_NEAR_SPAWN 2
+
 #define ENTITY_WORK_AREA_SIZE 0xA0
+
+/* Entity.action_step in DarkSoldier_MoveAlongArc */
+#define DARK_SOLDIER_ARC_START      0
+#define DARK_SOLDIER_ARC_TURN       1   /* turns to the heading, then starts the arc */
+#define DARK_SOLDIER_ARC_RUN        2   /* moves along the arc until animation 17 ends */
+#define DARK_SOLDIER_ARC_BLEND_OUT  3   /* moves along the arc until the blend ends */
+#define DARK_SOLDIER_ARC_LEAP       4   /* moves along the arc until it is close to the target */
+#define DARK_SOLDIER_ARC_FALL       5   /* falls until it lands (animation 9) */
+#define DARK_SOLDIER_ARC_LAND_NOW   6   /* lands at once if it is already on the floor */
+#define DARK_SOLDIER_ARC_LANDING    7   /* waits to land, then ends */
+#define DARK_SOLDIER_ARC_END        8   /* the action ends: thinks, or starts the move or melee */
+
+/* Entity.action_step in DarkSoldier_Dodge */
+#define DARK_SOLDIER_DODGE_START    0   /* plays animation 6 or 7 by the side of the player */
+#define DARK_SOLDIER_DODGE_TURN     1   /* blends in while turning to the player */
+#define DARK_SOLDIER_DODGE_FALL     2   /* moves down with animation 9 */
+#define DARK_SOLDIER_DODGE_FALLING  3   /* moves down until the blend ends */
+#define DARK_SOLDIER_DODGE_LANDING  4   /* moves down until it lands */
+#define DARK_SOLDIER_DODGE_END      5   /* the action ends: thinks, or starts the move */
+
+/* EntitySpawnInfo.spawn_mode: the default spawn, the only one that may move along the arc */
+#define DARK_SOLDIER_SPAWN_MODE_DEFAULT 0
 /* one frame of the arc of DarkSoldier_MoveAlongArc: forwards at unk44 along unk30, in y at minus
    unk48 (up); both wear off */
 static inline void move_along_arc(Entity *entity, EntityAiState *ai_state) {
@@ -109,13 +134,13 @@ static void DarkSoldier_Think(Entity *entity, s32 run_now) {
             entity->move_command |= (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 EntityAi_ThinkIdle(entity, run_now);
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 DarkSoldier_ThinkCombat(entity, run_now);
                 break;
             default:
@@ -163,7 +188,7 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 run_now) {
             EntityAi_StartAction(entity, DarkSoldier_PlayAnim6Or7BySide, run_now);
             return;
         }
-        if (rand() % 100 < entity->params->far_distance && ABS(angle) < HALF_PI && entity->spawn_info->spawn_mode == 0
+        if (rand() % 100 < entity->params->far_distance && ABS(angle) < HALF_PI && entity->spawn_info->spawn_mode == DARK_SOLDIER_SPAWN_MODE_DEFAULT
             && DarkSoldier_CanMoveAlongArc(entity)) {
             ai_state->action_flags = 0;
             EntityAi_StartAction(entity, DarkSoldier_MoveAlongArc, run_now);
@@ -180,7 +205,7 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
                 return;
@@ -191,7 +216,7 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 run_now) {
                 EntityAi_StartAction(entity, DarkSoldier_PlayAnim6Or7BySide, run_now);
                 return;
             }
-            if (rand() % 100 < entity->params->far_distance && ABS(angle) < HALF_PI && entity->spawn_info->spawn_mode == 0
+            if (rand() % 100 < entity->params->far_distance && ABS(angle) < HALF_PI && entity->spawn_info->spawn_mode == DARK_SOLDIER_SPAWN_MODE_DEFAULT
                 && DarkSoldier_CanMoveAlongArc(entity)) {
                 ai_state->action_flags = 1;
                 EntityAi_StartAction(entity, DarkSoldier_MoveAlongArc, run_now);
@@ -199,24 +224,24 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 run_now) {
             }
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 60;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
-        case 2:
+        case DARK_SOLDIER_COMBAT_CHOICE_NEAR_SPAWN:
             EntityPoint_PickNear(entity->spawn_info->wander_radius, point, entity->spawn_info, entity->model->position);
             entity->target = point;
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = 0;
-            entity->combat_choice = 1;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
+            entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -431,14 +456,14 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
-    case 0:
+    case DARK_SOLDIER_ARC_START:
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         ENTITY_FLAG_BITS(entity)->draw_afterimage = FALSE;
         entity->action_step++;
-    case 1:
+    case DARK_SOLDIER_ARC_TURN:
         EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         model = entity->model;
         if (model->level_tables->blend_left == 0) {
@@ -448,7 +473,7 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
             EntityMath_FacingVector((Vector4 *)ai_state->target_point, model->rotation[1]);
         }
         break;
-    case 2:
+    case DARK_SOLDIER_ARC_RUN:
         if (entity->model->level_tables->frame >= 10) {
             move_along_arc(entity, ai_state);
         }
@@ -457,7 +482,7 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
             entity->action_step += 2;
         }
         break;
-    case 4:
+    case DARK_SOLDIER_ARC_LEAP:
         move_along_arc(entity, ai_state);
         if (ai_state->part_angle_x < 10.0f) {
             if (ABS(entity->heading_to_player - entity->model->rotation[1]) > HALF_PI) {
@@ -469,13 +494,13 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
             }
         }
         break;
-    case 5:
+    case DARK_SOLDIER_ARC_FALL:
         if (ENTITY_FLAG_BITS(entity)->on_floor == 1 || ENTITY_FLAG_BITS(entity)->player_push == 1
             || ENTITY_FLAG_BITS(entity)->entity_push == 1 || ENTITY_FLAG_BITS(entity)->on_top == 1) {
             Motion_Start(entity, 9, 0, 1, 1);
             ENTITY_FLAG_BITS(entity)->animates = TRUE;
             ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
-            entity->action_step = 8;
+            entity->action_step = DARK_SOLDIER_ARC_END;
             entity->move_delta_y = 0.0f;
             entity->move_delta_z = 0.0f;
             entity->move_delta_x = 0.0f;
@@ -484,28 +509,28 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
         move_along_arc(entity, ai_state);
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             Motion_Start(entity, 9, 0, 1, 1);
-            entity->action_step = 7;
+            entity->action_step = DARK_SOLDIER_ARC_LANDING;
         }
         break;
-    case 6:
+    case DARK_SOLDIER_ARC_LAND_NOW:
         if (ENTITY_FLAG_BITS(entity)->on_floor == 1 || ENTITY_FLAG_BITS(entity)->player_push == 1
             || ENTITY_FLAG_BITS(entity)->entity_push == 1 || ENTITY_FLAG_BITS(entity)->on_top == 1) {
             ENTITY_FLAG_BITS(entity)->animates = TRUE;
             ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
-            entity->action_step = 8;
+            entity->action_step = DARK_SOLDIER_ARC_END;
             entity->move_delta_y = 0.0f;
             entity->move_delta_z = 0.0f;
             entity->move_delta_x = 0.0f;
             break;
         }
-    case 3:
+    case DARK_SOLDIER_ARC_BLEND_OUT:
         move_along_arc(entity, ai_state);
         if (entity->model->level_tables->blend_left == 0) {
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
             entity->action_step++;
         }
         break;
-    case 7:
+    case DARK_SOLDIER_ARC_LANDING:
         if (ENTITY_FLAG_BITS(entity)->on_floor == 1 || ENTITY_FLAG_BITS(entity)->player_push == 1
             || ENTITY_FLAG_BITS(entity)->entity_push == 1 || ENTITY_FLAG_BITS(entity)->on_top == 1) {
             ENTITY_FLAG_BITS(entity)->animates = TRUE;
@@ -518,7 +543,7 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
         }
         move_along_arc(entity, ai_state);
         break;
-    case 8:
+    case DARK_SOLDIER_ARC_END:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
@@ -549,7 +574,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_DODGE;
     switch (entity->action_step) {
-    case 0:
+    case DARK_SOLDIER_DODGE_START:
         if (EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position)) > 0.0f) {
             Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 1);
         } else {
@@ -558,14 +583,14 @@ static void DarkSoldier_Dodge(Entity *entity) {
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
         ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
-    case 1:
+    case DARK_SOLDIER_DODGE_TURN:
         if (entity->model->level_tables->blend_left == 0) {
             ai_state->part_angle_x = entity->params->type_param_0 * 0.8f;
-            entity->action_step = 5;
+            entity->action_step = DARK_SOLDIER_DODGE_END;
         }
         EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         break;
-    case 2:
+    case DARK_SOLDIER_DODGE_FALL:
         if (entity->model->level_tables->frame >= 4) {
             entity->move_delta_y = -ai_state->part_angle_x;
             ai_state->part_angle_x -= entity->params->type_param_2 * 0.1f;
@@ -575,7 +600,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DARK_SOLDIER_DODGE_FALLING:
         entity->move_delta_y = -ai_state->part_angle_x;
         ai_state->part_angle_x -= entity->params->type_param_2 * 0.1f;
         if (entity->model->level_tables->blend_left == 0) {
@@ -583,7 +608,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 4:
+    case DARK_SOLDIER_DODGE_LANDING:
         entity->move_delta_y = -ai_state->part_angle_x;
         ai_state->part_angle_x -= entity->params->type_param_2 * 0.1f;
         landed = ENTITY_FLAG_BITS(entity)->on_floor;
@@ -596,7 +621,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 5:
+    case DARK_SOLDIER_DODGE_END:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;

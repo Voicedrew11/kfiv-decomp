@@ -14,6 +14,9 @@
 #include "entity/entity_ai.h"
 #include "model/motion.h"
 
+/* EntitySpawnInfo.spawn_mode: the default spawn, which keeps the think handler with states */
+#define HIGH_SKELETON_SPAWN_MODE_DEFAULT 0
+
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void HighSkeleton_Think(Entity *entity, s32 run_now);
@@ -35,7 +38,7 @@ void HighSkeleton_Init(Entity *entity) {
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = EntityAi_OnHit;
     ai_state->move = EntityAi_Move;
-    if (entity->spawn_info->spawn_mode != 0) {
+    if (entity->spawn_info->spawn_mode != HIGH_SKELETON_SPAWN_MODE_DEFAULT) {
         ai_state->dormant = HighSkeleton_DormantScaleUp;
     } else {
         ai_state->dormant = HighSkeleton_Dormant;
@@ -73,7 +76,7 @@ static void HighSkeleton_Think(Entity *entity, s32 run_now) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (entity->spawn_info->spawn_mode != 0 && entity->spawn_info->variant != 0) {
+    if (entity->spawn_info->spawn_mode != HIGH_SKELETON_SPAWN_MODE_DEFAULT && entity->spawn_info->variant != 0) {
         other = Entity_GetBySpawnId(entity->spawn_info->variant);
         if (other != NULL && frame_counter % entity->spawn_index == 0) {
             if (ENTITY_FLAG_BITS(other)->dying >= 2 || !ENTITY_FLAG_BITS(other)->live) {
@@ -89,13 +92,13 @@ static void HighSkeleton_Think(Entity *entity, s32 run_now) {
             EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 EntityAi_ThinkIdle(entity, run_now);
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 EntityAi_ThinkCombat(entity, run_now);
                 break;
             default:
@@ -240,7 +243,7 @@ static void HighSkeleton_Death(Entity *entity) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
-        ENTITY_FLAG_BITS(entity)->animates = 1;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
         ENTITY_FLAG_BITS(entity)->dying = 1;
         ENTITY_FLAG_BITS(entity)->no_player_collision = 1;
@@ -259,7 +262,7 @@ static void HighSkeleton_Death(Entity *entity) {
     case 2:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->action_timer = 20;
-            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;
             ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             entity->action_step++;
