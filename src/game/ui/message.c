@@ -142,7 +142,7 @@ void Message_Update(void) {
             }
         } else if (pad_pressed[0] & action_button) {
             while (message_box.cursor < message_box.end) {
-                if ((*message_box.cursor & ~0xFFF) == 0) {
+                if ((*message_box.cursor & GLYPH_HIGH_BITS) == 0) {
                     message_box.typed++;
                 }
                 message_box.cursor++;
@@ -156,7 +156,7 @@ void Message_Update(void) {
                 if (box->cursor >= box->end) {
                     box->waiting = 1;
                 } else {
-                    if ((*box->cursor & ~0xFFF) == 0) {
+                    if ((*box->cursor & GLYPH_HIGH_BITS) == 0) {
                         box->typed++;
                     }
                     box->timer = 0;

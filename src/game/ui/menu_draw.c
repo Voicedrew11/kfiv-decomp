@@ -1091,7 +1091,7 @@ static void MenuDraw_TextAt(u16 *text, GsPackedWord origin) {
     while (text[index] != 0xFFFF && !(text[index] & 0x8000)) {
         if (text[index] & GLYPH_HALF_WIDTH) {
             glyph = text[index]; // match: read again into a 16-bit local
-            code = glyph & 0x7FF; // match: two statements
+            code = glyph & GLYPH_CODE_MASK; // match: two statements
             code += 0x47E;
             column = code % 50;
             row = code / 50;
@@ -1181,7 +1181,7 @@ static void MenuDraw_TextRightAligned(u16 *text, GsPackedWord origin) {
     while (text[index] != 0xFFFF && !(text[index] & 0x8000)) {
         if (text[index] & GLYPH_HALF_WIDTH) {
             glyph = text[index]; // match: read again into a 16-bit local
-            code = glyph & 0x7FF; // match: two statements
+            code = glyph & GLYPH_CODE_MASK; // match: two statements
             code += 0x47E;
             column = code % 50;
             row = code / 50;
@@ -1366,7 +1366,7 @@ s32 MenuText_DrawWrapped(u16 *text, s32 limit) {
         if (text[i] & GLYPH_HALF_WIDTH) {
             /* a half-width glyph */
             glyph = text[i]; // match: three statements on the one variable, not one expression
-            glyph &= 0x7FF;
+            glyph &= GLYPH_CODE_MASK;
             glyph += 0x47E;
             glyph_column = glyph % 50;
             glyph_row = glyph / 50;
@@ -1492,7 +1492,7 @@ s32 MenuText_DrawWrappedLong(u16 *text, s32 limit) {
         if (text[i] & GLYPH_HALF_WIDTH) {
             /* a half-width glyph */
             glyph = text[i]; // match: three statements on the one variable, not one expression
-            glyph &= 0x7FF;
+            glyph &= GLYPH_CODE_MASK;
             glyph += 0x47E;
             glyph_column = glyph % 50;
             glyph_row = glyph / 50;
@@ -1595,7 +1595,7 @@ s32 MenuText_DrawLine(u16 *text, s32 limit) {
         column = next_column;
         if (text[i] & GLYPH_HALF_WIDTH) {
             glyph = text[i]; // match: read again as an int, then two statements
-            glyph = (glyph & 0x7FF) + 0x47E;
+            glyph = (glyph & GLYPH_CODE_MASK) + 0x47E;
             glyph_column = glyph % 50;
             glyph_row = glyph / 50;
             top_left.pos_x = bottom_right.pos_x;
@@ -1707,7 +1707,7 @@ s32 MenuText_DrawLineShortened(u16 *text, s32 limit) {
                     glyph = 0;
                 } else {
                     code = text[i]; // match: read again as an int, into its own variable
-                    glyph = code & 0x7FF;
+                    glyph = code & GLYPH_CODE_MASK;
                 }
             } else {
                 glyph = 0xE;
@@ -1822,7 +1822,7 @@ s32 MenuText_DrawLineCentered(u16 *text, s32 limit) {
         column = next_column;
         if (text[i] & GLYPH_HALF_WIDTH) {
             glyph = text[i]; // match: read again as an int, then two statements
-            glyph = (glyph & 0x7FF) + 0x47E;
+            glyph = (glyph & GLYPH_CODE_MASK) + 0x47E;
             glyph_column = glyph % 50;
             glyph_row = glyph / 50;
             top_left.pos_x = bottom_right.pos_x;
@@ -1943,7 +1943,7 @@ static s32 MenuText_DrawWordWrapped(u16 *text, s32 limit) {
         column = next_column;
         if (text[i] & GLYPH_HALF_WIDTH) {
             glyph = text[i]; // match: read again as an int, then two statements
-            glyph = (glyph & 0x7FF) + 0x47E;
+            glyph = (glyph & GLYPH_CODE_MASK) + 0x47E;
             glyph_column = glyph % 50;
             glyph_row = glyph / 50;
             top_left.pos_x = bottom_right.pos_x;
@@ -2070,7 +2070,7 @@ s32 MenuText_DrawWordWrappedLong(u16 *text, s32 limit) {
         if (text[i] & GLYPH_HALF_WIDTH) {
             /* a half-width glyph */
             glyph = text[i]; // match: three statements on the one variable, not one expression
-            glyph &= 0x7FF;
+            glyph &= GLYPH_CODE_MASK;
             glyph += 0x47E;
             glyph_column = glyph % 50;
             glyph_row = glyph / 50;
@@ -2321,7 +2321,7 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
         *scratch->cursor++ = 0;
         scratch->prim_tag[0] = scratch->strip_at->point_count | GIF_TAG_EOP;
         scratch->prim_tag[1] = 0x31004000;
-        scratch->prim_tag[1] |= (scratch->strip_at->prim & 0x7FF) << 15;
+        scratch->prim_tag[1] |= (scratch->strip_at->prim & POOL_PART_PRIM_MASK) << 15;
         *scratch->cursor++ = scratch->prim_tag[0];
         *scratch->cursor++ = scratch->prim_tag[1];
         *scratch->cursor++ = scratch->prim_tag[2];
@@ -2374,7 +2374,7 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
             *scratch->cursor++ = 0;
             scratch->prim_tag[0] = scratch->strip_at->point_count | GIF_TAG_EOP;
             scratch->prim_tag[1] = 0x31004000;
-            scratch->prim_tag[1] |= (scratch->strip_at->prim & 0x7FF) << 15;
+            scratch->prim_tag[1] |= (scratch->strip_at->prim & POOL_PART_PRIM_MASK) << 15;
             scratch->prim_tag[1] |= GIF_TAG_PRIM_ABE;
             scratch->prim_tag[1] |= GIF_TAG_PRIM_TME;
             *scratch->cursor++ = scratch->prim_tag[0];
@@ -2548,7 +2548,7 @@ void PoolPart_Draw(PoolPart *part, s32 parent) {
         *scratch->cursor++ = 0;
         scratch->prim_tag[0] = scratch->strip_at->point_count | GIF_TAG_EOP;
         scratch->prim_tag[1] = 0x31004000; // match: two statements, or the constant is not kept in a register across the loop
-        scratch->prim_tag[1] |= (scratch->strip_at->prim & 0x7FF) << 15;
+        scratch->prim_tag[1] |= (scratch->strip_at->prim & POOL_PART_PRIM_MASK) << 15;
         *scratch->cursor++ = scratch->prim_tag[0];
         *scratch->cursor++ = scratch->prim_tag[1];
         *scratch->cursor++ = scratch->prim_tag[2];
@@ -2847,7 +2847,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
         *scratch->cursor++ = 0;
         scratch->prim_tag[0] = scratch->strip_at->point_count | GIF_TAG_EOP;
         scratch->prim_tag[1] = 0x30004000;
-        scratch->prim_tag[1] |= (scratch->strip_at->prim & 0x7FF) << 15;
+        scratch->prim_tag[1] |= (scratch->strip_at->prim & POOL_PART_PRIM_MASK) << 15;
         *scratch->cursor++ = scratch->prim_tag[0];
         *scratch->cursor++ = scratch->prim_tag[1];
         *scratch->cursor++ = scratch->prim_tag[2];
@@ -2897,7 +2897,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
             *scratch->cursor++ = 0;
             scratch->prim_tag[0] = scratch->strip_at->point_count | GIF_TAG_EOP;
             scratch->prim_tag[1] = 0x30004000;
-            scratch->prim_tag[1] |= (scratch->strip_at->prim & 0x7FF) << 15;
+            scratch->prim_tag[1] |= (scratch->strip_at->prim & POOL_PART_PRIM_MASK) << 15;
             scratch->prim_tag[1] |= GIF_TAG_PRIM_ABE;
             scratch->prim_tag[1] |= GIF_TAG_PRIM_TME;
             *scratch->cursor++ = scratch->prim_tag[0];
