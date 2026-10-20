@@ -163,7 +163,7 @@ static void DarkArcher_Animate(Entity *entity) {
         if (blend_frames != 0) {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
         DarkArcher_PitchPart2ToPlayer(entity, (s32)((s64)(entity->flags << 22) >> 32) & ENTITY_FLAG_ACTIVE_LIST);
         params = entity->params;
@@ -250,7 +250,7 @@ static void DarkArcher_OnHit(Entity *entity) {
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     flags = entity->flags;
-    hit_strength = (flags >> 36) & 3;
+    hit_strength = ENTITY_FLAG_BITS(entity)->hit_strength;
     if (hit_strength == 1) {
         if (ENTITY_FLAG_BITS(entity)->attack_window) {
             EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
@@ -569,7 +569,7 @@ static void DarkArcher_RangedAttack(Entity *entity) {
             ai_state->turn_rate = 0.0f;
         }
         ENTITY_FLAG_BITS(entity)->attacking = 1;
-        if (((s32)(entity->flags >> 58) & 3) == 0) {
+        if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
             if (entity->model->level_tables->frame >= 0x15 && entity->model->level_tables->frame < 0x20) {
                 EntityAi_SpawnBoneEffect(entity, 0x379, 8);
             }

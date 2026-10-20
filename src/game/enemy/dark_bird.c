@@ -665,7 +665,7 @@ static void DarkBird_MeleeAttack(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_0, 0, kind | ENTITY_MOTION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_1, 1, ((s32)(entity->flags >> 58) & 3) | ENTITY_MOTION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
+        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->attack_index | ENTITY_MOTION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
@@ -742,7 +742,7 @@ static void DarkBird_RangedAttack(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_0, 0, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_1, 1, ((s32)(entity->flags >> 58) & 3) + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
+        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
@@ -766,7 +766,7 @@ static void DarkBird_RangedAttack(Entity *entity) {
         }
         frame = ai_state->motion_slot_0.frame;
         elapsed = (ai_state->motion_slot_0.frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
-        if (((s32)(entity->flags >> 58) & 3) == 1) {
+        if (ENTITY_FLAG_BITS(entity)->attack_index == 1) {
             for (i = 0; i < 3; i++) {
                 switch (i) {
                 case 0:
@@ -898,9 +898,9 @@ static void DarkBird_OnHit(Entity *entity) {
     entity->target = NULL;
     entity->flags &= ~ENTITY_FLAG_ATTACKING;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
-    if (((s32)(entity->flags >> 36) & 3) == 1) {
+    if (ENTITY_FLAG_BITS(entity)->hit_strength == 1) {
         EntityAi_SetReaction(entity, DarkBird_ReactionLight, 0);
-    } else if (((s32)(entity->flags >> 36) & 3) == 2) {
+    } else if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_SetReaction(entity, DarkBird_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);

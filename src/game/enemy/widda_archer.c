@@ -333,7 +333,7 @@ static void WiddaArcher_ThinkCombat(Entity *entity, s32 unknown) {
    below the player's position, within 10 degrees (EntityShot_LaunchAimed). */
 static void WiddaArcher_RangedAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    s32 attack_index = (s32)(entity->flags >> 58) & 3;
+    s32 attack_index = ENTITY_FLAG_BITS(entity)->attack_index;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, attack_index);
     f32 target[4];
     s32 elapsed;

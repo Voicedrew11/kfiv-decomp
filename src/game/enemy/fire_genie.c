@@ -117,11 +117,9 @@ void FireGenie_Init(Entity *entity) {
 static void FireGenie_Animate(Entity *entity) {
     f32 limits[4];
     u32 blend_frames; // match: converted to float as unsigned
-    s64 flags;
     EntityAiState *ai_state;
     s32 look_at_target;
 
-    flags = entity->flags;
     ai_state = &entity->ai_state;
     if (ENTITY_FLAG_BITS(entity)->animates) {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
@@ -207,12 +205,10 @@ static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode) {
    the entity with spawn id work byte unk7B, and clears unk7C. */
 static void FireGenie_OnHit(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u64 flags;
     Entity *other;
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
-    flags = entity->flags;
-    if (((flags >> 36) & 3) == 2) {
+    if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         ENTITY_UNK5C(entity)->as_s32 = 0;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
@@ -260,7 +256,7 @@ static void FireGenie_ThinkDecide(Entity *entity, s32 unknown) {
             EntityAi_StartAction(entity, FireGenie_RespawnOther, unknown);
         } else if (entity->attack_delay_frames == 0 && FireGenie_CanAttack(entity)) {
             if (FireGenie_PickAttack(entity)) {
-                if (((s32)(entity->flags >> 58) & 3) == 0) {
+                if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
                     EntityAi_StartAction(entity, FireGenie_RangedAttack0, unknown);
                 } else {
                     EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
@@ -516,7 +512,7 @@ static s32 FireGenie_ShouldRespawnOther(Entity *entity) {
     ai_state->sub_timer = 0;
     for (i = 0; i < entity->params->type_param_1; i++) {
         Entity *other = Entity_GetBySpawnId(i + 10);
-        if (other != NULL && (other->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) == 3 && ((s32)(other->flags >> 2) & 3) < 3) {
+        if (other != NULL && (other->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) == (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE) && ENTITY_FLAG_BITS(other)->dying < 3) {
             ai_state->sub_timer |= 1 << i;
             count++;
         }

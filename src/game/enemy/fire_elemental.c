@@ -505,7 +505,7 @@ static s32 FireElemental_ShouldDodge(Entity *entity, f32 max_distance, f32 max_a
    heading plus 5 degrees. */
 static void FireElemental_RangedAttack1(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    s32 attack_index = (s32)(entity->flags >> 58) & 3;
+    s32 attack_index = ENTITY_FLAG_BITS(entity)->attack_index;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, attack_index);
     f32 direction[4];
     s32 elapsed;

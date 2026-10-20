@@ -124,13 +124,11 @@ void DarkSorcerer_Init(Entity *entity) {
 
 /* The on_hit handler: as EntityAi_OnHit, but it leaves the target and flag bit 10 as they are. */
 static void DarkSorcerer_OnHit(Entity *entity) {
-    u64 flags;
     u64 hit_strength;
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
-    flags = entity->flags;
-    hit_strength = (flags >> 36) & 3;
+    hit_strength = ENTITY_FLAG_BITS(entity)->hit_strength;
     if (hit_strength == 1) {
         if (ENTITY_FLAG_BITS(entity)->attack_window) {
             EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
@@ -480,7 +478,7 @@ static void DarkSorcerer_Dormant(Entity *entity) {
    EntityAi_TurnCommand, and calls DarkSorcerer_ApplyMoveCommand every frame. */
 static void DarkSorcerer_MeleeAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    s32 kind = (s32)(entity->flags >> 58) & 3;
+    s32 kind = ENTITY_FLAG_BITS(entity)->attack_index;
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[kind];
     s32 elapsed;
 

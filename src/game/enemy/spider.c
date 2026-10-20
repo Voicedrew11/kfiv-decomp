@@ -118,17 +118,15 @@ void Spider_Init(Entity *entity) {
    and flag bit 53 are both set it reverses this frame's turn, Entity.turn_delta_yaw. */
 static void Spider_Animate(Entity *entity) {
     u32 blend_frames; // match: converted to float as unsigned
-    s64 flags;
     EntityAiState *ai_state;
 
-    flags = entity->flags;
     ai_state = &entity->ai_state;
     if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
     }
     if (ai_state->step_index != 0) {
@@ -308,7 +306,7 @@ done:
    below the player (EntityShot_LaunchAimed). */
 static void Spider_RangedAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    s32 kind = (s32)(entity->flags >> 58) & 3;
+    s32 kind = ENTITY_FLAG_BITS(entity)->attack_index;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
     f32 direction[4];
     s32 elapsed;

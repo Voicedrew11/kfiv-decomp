@@ -284,7 +284,7 @@ static void Larva_DormantHeldAtModelPoint(Entity *entity) {
             return;
         }
         other = Entity_GetBySpawnId(entity->spawn_info->variant);
-        if (other != NULL && (other->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) == 3) {
+        if (other != NULL && (other->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) == (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) {
             point = (f32 *)Model_GetSkinnedBonePoint((char *)other->model, 8);
             if (point != NULL) {
                 entity->model->position[0] = point[0];

@@ -122,7 +122,7 @@ static void Widdacona_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
-    if (((s32)(entity->flags >> 36) & 3) == 2) {
+    if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);

@@ -96,20 +96,18 @@ void GiantSpider_Init(Entity *entity) {
    float unk20[1]; in animations 14 to 16 it takes the part's own angle instead. */
 static void GiantSpider_Animate(Entity *entity) {
     u32 blend_frames; // match: converted to float as unsigned
-    s64 flags;
     EntityAiState *ai_state;
     EntityModelPart80 *part;
     f32 angle;
 
     ai_state = &entity->ai_state;
-    flags = entity->flags;
     part = entity->model->look_at_part;
     if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
         if (part != NULL) {
             if ((u8)(entity->animation_index - 0xE) < 3) {
@@ -347,7 +345,7 @@ static void GiantSpider_PlayTurnAnim7Or12(Entity *entity) {
    below the player by at most 15 degrees (EntityShot_LaunchAimed). */
 static void GiantSpider_RangedAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    s32 kind = (s32)(entity->flags >> 58) & 3;
+    s32 kind = ENTITY_FLAG_BITS(entity)->attack_index;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
     f32 direction[4];
     s32 elapsed;

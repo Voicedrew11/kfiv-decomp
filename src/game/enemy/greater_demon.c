@@ -236,7 +236,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
             if (ai_state->sliding == 1) {
                 EntityAi_StartAction(entity, GreaterDemon_SlideToStop, unknown);
             } else if (EntityAi_PickAttack((char *)entity)) {
-                if (((s32)(entity->flags >> 58) & 3) == 2) {
+                if (ENTITY_FLAG_BITS(entity)->attack_index == 2) {
                     EntityAi_StartAction(entity, GreaterDemon_RangedAttack2, unknown);
                 } else {
                     EntityAi_StartAction(entity, GreaterDemon_RangedAttack, unknown);
@@ -647,7 +647,7 @@ static void GreaterDemon_PlayAnim6Or7BySide(Entity *entity) {
 
 /* When the state field in flags is 2, resets the entity and registers GreaterDemon_ReactionHeavy; then sets state 2. */
 static void GreaterDemon_OnHit(Entity *entity) {
-    if ((((u64)entity->flags >> 36) & 3) == 2) {
+    if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_LowerWeightsAfterHit((char *)entity);
         entity->target = NULL;
         entity->flags &= ~ENTITY_FLAG_ATTACKING;
@@ -770,7 +770,7 @@ static s32 GreaterDemon_ShouldGuard(Entity *entity, f32 min_gap, f32 max_angle) 
 static void GreaterDemon_RangedAttack2(Entity *entity) {
     EntityAiStateKind168160 *ai_state = (EntityAiStateKind168160 *)&entity->ai_state;
     EntityParams *params = entity->params;
-    s32 kind = (s32)(entity->flags >> 58) & 3;
+    s32 kind = ENTITY_FLAG_BITS(entity)->attack_index;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(params, kind);
     MapSlot *slot;
     KfVector *floor_point;
@@ -830,7 +830,7 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
                 for (; minion_index < 8; minion_index++) {
                     minion = Entity_GetBySpawnId(minion_index + 10);
                     if (minion != NULL && (minion->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) == 1 &&
-                        (((s32)(minion->flags >> 2) & 3) == 0 || ((s32)(minion->flags >> 2) & 3) == 3)) {
+                        (ENTITY_FLAG_BITS(minion)->dying == 0 || ENTITY_FLAG_BITS(minion)->dying == 3)) {
                         point = &climb_points[point_index];
                         if (EntityMath_DistanceXZ(point, &player_state) > 180.0f) {
                             EntityEvent_Respawn((char *)minion);
@@ -901,7 +901,7 @@ static int GreaterDemon_SetRanged2Weight(Entity *entity) {
 
 static void GreaterDemon_RangedAttack(Entity *entity) {
     EntityAiStateKind168160 *ai_state = (EntityAiStateKind168160 *)&entity->ai_state;
-    s32 kind = (s32)(entity->flags >> 58) & 3;
+    s32 kind = ENTITY_FLAG_BITS(entity)->attack_index;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
     f32 direction[3];
     s32 elapsed;

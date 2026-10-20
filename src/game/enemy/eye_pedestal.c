@@ -70,12 +70,10 @@ static void EyePedestal_Animate(Entity *entity) {
     f32 limits[4];
     f32 point[3];
     u32 blend_frames; // match: converted to float as unsigned
-    s64 flags;
     s32 look_at_target;
     EntityParams *params;
     EntityAiState *ai_state;
 
-    flags = entity->flags;
     ai_state = &entity->ai_state;
     if (ENTITY_FLAG_BITS(entity)->animates) {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;

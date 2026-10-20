@@ -123,13 +123,13 @@ void DarkPuppet_Init(Entity *entity) {
 static void DarkPuppet_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
-    if (((s32)(entity->flags >> 36) & 3) == 1) {
+    if (ENTITY_FLAG_BITS(entity)->hit_strength == 1) {
         if ((s32)(entity->flags >> 19) & ENTITY_FLAG_ACTIVE_LIST) {
             EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
             EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);
         }
-    } else if (((s32)(entity->flags >> 36) & 3) == 2) {
+    } else if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
@@ -468,7 +468,7 @@ static void DarkPuppet_ApplyMoveCommand(Entity *entity) {
    EntityAi_TurnCommand, and calls DarkPuppet_ApplyMoveCommand every frame. */
 static void DarkPuppet_MeleeAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    s32 kind = (s32)(entity->flags >> 58) & 3;
+    s32 kind = ENTITY_FLAG_BITS(entity)->attack_index;
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[kind];
     s32 elapsed;
 
@@ -563,7 +563,7 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
         if (unk3D8->record.turn_frames >= entity->model->level_tables->frame) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
-        if (((s32)(entity->flags >> 58) & 3) == 0 && entity->model->level_tables->frame == 0x1E &&
+        if (ENTITY_FLAG_BITS(entity)->attack_index == 0 && entity->model->level_tables->frame == 0x1E &&
             (entity->ailment_4_frames == 0 || unk3D8->ignores_ailment_4 != 0)) {
             point = Model_GetSkinnedBonePoint((char *)entity->model, unk3D8->bone_index);
             if (point != NULL) {
@@ -596,7 +596,7 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
    EntityAi_RangedAttack; turns and moves as DarkPuppet_MeleeAttack does. */
 static void DarkPuppet_RangedAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    s32 kind = (s32)(entity->flags >> 58) & 3;
+    s32 kind = ENTITY_FLAG_BITS(entity)->attack_index;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;

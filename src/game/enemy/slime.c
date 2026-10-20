@@ -100,17 +100,15 @@ void Slime_Init(Entity *entity) {
    without the head turn. */
 static void Slime_Animate(Entity *entity) {
     u32 blend_frames; // match: converted to float as unsigned
-    s64 flags;
     EntityAiState *ai_state;
 
-    flags = entity->flags;
     ai_state = &entity->ai_state;
     if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
     }
 }
