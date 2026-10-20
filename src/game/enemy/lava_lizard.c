@@ -17,6 +17,9 @@
 /* EntitySpawnInfo.spawn_mode: the default spawn, which keeps the think handler with states */
 #define LAVA_LIZARD_SPAWN_MODE_DEFAULT 0
 
+/* LavaLizard_RunAtPlayer: Entity.action_step (step 0 is the shared start) */
+#define LAVA_LIZARD_RUN_STEP_TURN 1                 /* turns to the player until action_timer runs out or it is pushed */
+
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void LavaLizard_Think(Entity *entity, s32 run_now);
@@ -211,7 +214,7 @@ static void LavaLizard_RunAtPlayer(Entity *entity) {
         entity->action_timer = entity->params->near_distance;
         entity->action_step++;
         break;
-    case 1:
+    case LAVA_LIZARD_RUN_STEP_TURN:
         EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         entity->turn_delta_yaw += entity->turn_delta_yaw;
         if (entity->action_timer == 0 || EntityAi_TurnFromPush(entity, direction) != 0) {
