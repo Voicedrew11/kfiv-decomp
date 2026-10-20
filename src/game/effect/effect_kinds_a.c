@@ -37,8 +37,6 @@ int Attack_RunEffectHitCheck(void *effect_actor);
 int Collision_FindFloorBelow(f32 reach, void *point_arg);
 void Collision_CastRayAtMap(f32 scale, void *position_arg, void *direction);
 
-#define TWO_PI 6.2831855f
-#define PI 3.14159265f
 
 /* Start handler of the kinds that do nothing of their own (kind 6 and most unused kinds): does
    nothing. */

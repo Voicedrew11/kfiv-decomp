@@ -23,4 +23,13 @@ typedef u32 Uint128 __attribute__((mode(TI))); /* a 128-bit integer, moved with 
 
 #define ABS(x) ((x) >= 0 ? (x) : -(x))
 
+#define PI      3.1415927f
+#define TWO_PI  6.2831855f
+#define HALF_PI 1.5707964f
+/* Degrees to radians; folds to the retail constant for whole-degree angles */
+#define DEG_TO_RAD(deg) ((deg) * (PI / 180.0f))
+#define FLT_MAX 3.4028235e38f
+/* 1 / 2^31: scales rand() (0..0x7FFFFFFF) to 0..1 */
+#define RAND_SCALE (1.0f / 2147483648.0f)
+
 #endif

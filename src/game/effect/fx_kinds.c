@@ -10,8 +10,6 @@
 #include "model/linked_point.h"
 #include "collision/collision.h"
 
-#define TWO_PI 6.2831855f
-#define PI 3.1415927f
 extern PlayerState player_state;
 extern float identity_matrix[16];
 int Attack_RunEffectHitCheck(void *);

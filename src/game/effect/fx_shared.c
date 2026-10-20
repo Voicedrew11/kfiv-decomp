@@ -28,8 +28,6 @@ float atan2f(float, float);
 int rand(void);
 double sin(double);
 double cos(double);
-#define TWO_PI 6.2831855f
-#define PI 3.1415927f
 void Vector_Normalize(void *dst, void *src);
 void Vector_Scale(void *, void *, float);
 void Vector_Add(void *, void *, void *);

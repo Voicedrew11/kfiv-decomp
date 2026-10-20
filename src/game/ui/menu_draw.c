@@ -371,10 +371,9 @@ f32 menu_view_screen_matrix[16] = { 0 };
 #define PACKET_BUFFER_1 ((void *)((char *)POOL_DRAW_SCRATCH + 0x2400))
 #define POOL(slot) ((PoolSlot *)(slot))
 #define HEADER_TEX0(header) ((BootTex0 *)&(header)->tex0)
-#define ANGLE_PI 3.1415927f
-#define ANGLE_TURN 6.283184f
+#define ANGLE_TURN 6.283184f /* a hair under TWO_PI */
 /* an angle brought into -PI..PI */
-#define WRAP_ANGLE(angle) ((angle) + ANGLE_PI - (f32)(s32)(((angle) + ANGLE_PI) / ANGLE_TURN) * ANGLE_TURN - ANGLE_PI)
+#define WRAP_ANGLE(angle) ((angle) + PI - (f32)(s32)(((angle) + PI) / ANGLE_TURN) * ANGLE_TURN - PI)
 
 /* The colour number of a colour change code in a text. */
 static inline s32 text_color(u16 code) {
