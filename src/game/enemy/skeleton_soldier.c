@@ -121,7 +121,7 @@ static void SkeletonSoldier_Dormant(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         if (entity->spawn_info->spawn_mode != SKELETON_SOLDIER_SPAWN_MODE_NORMAL) {
             Motion_Start(entity, 0x12, 0, 0, 1);
         } else {
@@ -144,7 +144,7 @@ static void SkeletonSoldier_Dormant(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
         break;
-    case 1:
+    case DORMANT_STEP_SLEEP:
         if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
             if (entity->spawn_info->spawn_mode != SKELETON_SOLDIER_SPAWN_MODE_NORMAL) {
                 Motion_Start(entity, 0x13, 0, entity->params->motion_blend_frames, 0);
@@ -160,12 +160,12 @@ static void SkeletonSoldier_Dormant(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case DORMANT_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DORMANT_STEP_WAKE:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetState(entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
@@ -199,7 +199,7 @@ static void SkeletonSoldier_PlayAnim17(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_1000;
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 0);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
@@ -209,12 +209,12 @@ static void SkeletonSoldier_PlayAnim17(Entity *entity) {
         ai_state->turn_rate = 0.0f;
         entity->action_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
@@ -280,7 +280,7 @@ static void SkeletonSoldier_DormantAnim18Then19(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x12, 0, 0, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
@@ -300,7 +300,7 @@ static void SkeletonSoldier_DormantAnim18Then19(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
         break;
-    case 1:
+    case DORMANT_STEP_SLEEP:
         if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
             Motion_Start(entity, 0x13, 0, entity->params->motion_blend_frames, 0);
             if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
@@ -312,12 +312,12 @@ static void SkeletonSoldier_DormantAnim18Then19(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case DORMANT_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DORMANT_STEP_WAKE:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetState(entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;

@@ -401,7 +401,7 @@ static void BloodBat_Dormant(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 1, 0, 0, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ai_state->turn_rate = 0.0f;
@@ -411,7 +411,7 @@ static void BloodBat_Dormant(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
         entity->action_step++;
         break;
-    case 1:
+    case DORMANT_STEP_SLEEP:
         if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
             EntityAi_SetState(entity, 2);
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;

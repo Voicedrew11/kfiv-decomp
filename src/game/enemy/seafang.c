@@ -411,7 +411,7 @@ static void Seafang_Death(Entity *entity) {
         fall = 2.0f;
     }
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x10, 0, 5, 1);
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->flags |= ENTITY_FLAG_ANIMATES;
@@ -420,12 +420,12 @@ static void Seafang_Death(Entity *entity) {
         entity->flags |= ENTITY_FLAG_NO_PLAYER_COLLISION;
         entity->flags |= ENTITY_FLAG_NO_ENTITY_COLLISION;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;
@@ -455,7 +455,7 @@ static void Seafang_Death(Entity *entity) {
 static void Seafang_DeathWithoutDrop(Entity *entity) {
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x10, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FLY) {
@@ -468,12 +468,12 @@ static void Seafang_DeathWithoutDrop(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->no_entity_collision = 1;
         ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->action_timer = 20;
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
@@ -482,7 +482,7 @@ static void Seafang_DeathWithoutDrop(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DEATH_STEP_FADE_OUT:
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {

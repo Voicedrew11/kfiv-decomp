@@ -112,7 +112,7 @@ static void Watcher_Move(Entity *entity) {
 static void Watcher_Death(Entity *entity) {
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         EntityEvent_StartCueAlways(entity, 2, 0);
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;

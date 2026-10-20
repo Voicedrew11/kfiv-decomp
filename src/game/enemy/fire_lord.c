@@ -443,7 +443,7 @@ static void FireLord_PlayAnim6Or7Alternately(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         if (ai_state->alternate_anim_flag != FALSE) {
             Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 0);
         } else {
@@ -451,12 +451,12 @@ static void FireLord_PlayAnim6Or7Alternately(Entity *entity) {
         }
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
@@ -491,7 +491,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
@@ -611,7 +611,7 @@ static void FireLord_MeleeAttack1(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x15, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
@@ -701,7 +701,7 @@ static void FireLord_PlayAnim6Or7ThenMelee0(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
         player = &player_state;
         if (EntityMath_AngleDifference(player->rotation.y, EntityMath_AngleXZ(&player->position.x, entity->model->position)) >= 0.0f) {
@@ -711,12 +711,12 @@ static void FireLord_PlayAnim6Or7ThenMelee0(Entity *entity) {
         }
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;

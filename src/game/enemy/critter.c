@@ -69,7 +69,7 @@ static void Critter_Dormant(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 2, 0, 0, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0.0f;
@@ -82,7 +82,7 @@ static void Critter_Dormant(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->animates = FALSE;
         entity->action_step++;
         break;
-    case 1:
+    case DORMANT_STEP_SLEEP:
         if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
             ENTITY_FLAG_BITS(entity)->hit_strength = 0;
             ENTITY_FLAG_BITS(entity)->animates = TRUE;

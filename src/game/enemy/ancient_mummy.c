@@ -260,7 +260,7 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames, 0);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->hit_strength = 0;
@@ -270,7 +270,7 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             ai_state->step_index = 0;
             entity->action_step++;
@@ -279,7 +279,7 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
             EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
         } else {
@@ -338,7 +338,7 @@ static void AncientMummy_FadeBackIn(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         ENTITY_FLAG_BITS(entity)->hit_strength = 0;
         ai_state->sub_timer = 0;
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;

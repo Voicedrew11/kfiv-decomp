@@ -789,8 +789,16 @@ typedef struct {
 #define MOVE_COMMAND_FORWARD_BACK   0x3     /* the forward/back axis */
 #define MOVE_COMMAND_SIDEWAYS       0xC     /* the step left/right axis */
 
-/* Entity.action_step and reaction_step: the first step, where an action or reaction sets itself up */
-#define ACTION_STEP_START           0
+/* Entity.action_step and reaction_step: the steps the EntityAi_* actions share */
+#define ACTION_STEP_START           0       /* starts the motion and sets flags up */
+#define ACTION_STEP_BLEND_IN        1       /* waits for the motion's blend-in to end */
+#define ACTION_STEP_PLAY            2       /* the motion plays (hit windows) until it ends */
+/* EntityAi_Death and its copies: the step after the motion */
+#define DEATH_STEP_FADE_OUT         3       /* fades the model out over action_timer, then frees it */
+/* EntityAi_Dormant and its copies */
+#define DORMANT_STEP_SLEEP          1       /* waits for the player to come near or hit it */
+#define DORMANT_STEP_BLEND_IN       2       /* waits for the wake motion's blend-in to end */
+#define DORMANT_STEP_WAKE           3       /* plays the wake motion, then notices the player */
 
 /* Entity.state: what the entity knows of the player (EntityAi_StepState) */
 #define ENTITY_STATE_UNAWARE        0       /* the player is not noticed */
