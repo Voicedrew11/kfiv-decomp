@@ -137,11 +137,11 @@ static page) and the table below; commit those with each batch of work.
 
 | game readability | | |
 | --- | ---: | ---: |
-| structs recovered | 44.32% | 273 of 616 |
-| struct fields named | 82.38% | 3110 of 3775 |
-| field uses named | 99.93% | 58361 of 58402 |
+| structs recovered | 44.41% | 274 of 617 |
+| struct fields named | 82.39% | 3112 of 3777 |
+| field uses named | 99.93% | 58462 of 58503 |
 | globals named | 94.35% | 1385 of 1468 |
-| bit operations named | 68.70% | 2427 of 3533 |
+| bit operations named | 91.61% | 2981 of 3254 |
 | function-pointer casts | 164 | left |
 | `// match:` comments | 937 | left |
 | gotos | 79 | left |
