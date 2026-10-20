@@ -23,7 +23,7 @@
 #define ONYX_ATTACK_MELEE_RECORD_1  1       /* melee record 1: parts 11 and 12 */
 #define ONYX_ATTACK_MELEE_RECORD_2  2       /* melee record 2: parts 13 to 21 */
 #define ONYX_ATTACK_NONE            3       /* no attack group yet: parts 8 to 10 */
-/* Onyx_SwitchAttack: Entity.action_step, past step 2 */
+/* Onyx_SwitchAttack: Entity.action_step (steps 0 to 2 are the shared ones) */
 #define ONYX_SWITCH_STEP_BLEND_IN   3       /* waits for animation 18 to blend in */
 #define ONYX_SWITCH_STEP_END        4       /* ends once animation 18 ends, then sets the reload timer */
 
