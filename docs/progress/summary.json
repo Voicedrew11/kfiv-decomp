@@ -78,13 +78,14 @@
   "long_comments": 1798,
   "match_comments": 941,
   "named_bit_ops": 3081,
-  "named_field_uses": 58498,
-  "named_fields": 3110,
+  "named_field_uses": 58513,
+  "named_fields": 3112,
   "named_globals": 1385,
-  "recovered_structs": 274,
-  "total_fields": 3774,
+  "padding_fields": 624,
+  "recovered_structs": 587,
+  "total_fields": 3135,
   "total_globals": 1468,
-  "total_structs": 616
+  "total_structs": 605
  },
  "units": [
   {
