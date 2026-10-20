@@ -29,7 +29,7 @@ typedef struct {
 
 /* LoadRequest.target (Sound_ReadRequestFile) */
 typedef struct {
-    s32 unk00;                      /* 0x00 */
+    s32 pad00;                      /* 0x00 */
     void *buffer;                   /* 0x04 where the file is read to */
 } LoadBuffer;
 

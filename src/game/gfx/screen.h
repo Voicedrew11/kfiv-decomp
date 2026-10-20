@@ -17,8 +17,8 @@ typedef struct {
 
 /* PoolSlot_Draw's second argument: eight bytes passed in one register, only spilled */
 typedef struct {
-    s32 unk00;                      /* 0x00 */
-    s32 unk04;                      /* 0x04 */
+    s32 pad00;                      /* 0x00 */
+    s32 pad04;                      /* 0x04 */
 } RenderSlotArg;
 
 /* screen_fade: the screen fade */

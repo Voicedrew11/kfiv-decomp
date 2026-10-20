@@ -183,8 +183,9 @@ register bits, `EntityParams.flags`, `Entity.flags`, `busy_flags`,
 - **Raw bit masks** (about 860): shift-form tests (`(flags >> n) & 1`)
   that only match as written, and about 100 smaller flag fields of a few
   uses each; name them as their module is touched.
-- **Unknown struct fields** (`unkXX`): about 1,100 left, mostly rarely used.
-  `readability_scan.py -v` lists structs by unknown fields.
+- **Unknown struct fields** (`unkXX`): 23 left; bytes no game code touches
+  are padding (`padXX`, about 620) and counted apart. `readability_scan.py -v`
+  lists structs by unknown fields.
 - **Function-pointer casts** (about 1,450): handler tables called or stored
   through casts. A typedef per table (`map_object/map_object_tables.c`,
   `ui/menu_screens.c` first) removes most of them.

@@ -14,7 +14,7 @@ typedef struct {
 /* a 0x60-byte sprite packet (two corners), like the static copies ui/menu_draw.c's sprite functions keep */
 typedef struct {
     GsXyz xyz0;                     /* 0x00 */
-    s64 unk08;                      /* 0x08 */
+    s64 pad08;                      /* 0x08 */
     GsXyz xyz1;                     /* 0x10 */
     f32 second_s;                   /* 0x18 the right edge's texture coordinate (TexturedRectDef.second_s) */
     char pad1C[0x04];

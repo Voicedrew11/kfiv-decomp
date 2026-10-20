@@ -61,7 +61,7 @@ typedef struct {
 /* a node of the menu free list free_load_buffers (15 of them at load_buffer_nodes) */
 typedef struct MenuFreeNode {
     struct MenuFreeNode *next;      /* 0x00 */
-    int unk04;                      /* 0x04 */
+    int pad04;                      /* 0x04 */
 } MenuFreeNode;
 
 /* what Menu_FreeLoadBuffer is handed: the node to give back at 0x0C */
@@ -72,7 +72,7 @@ typedef struct {
 
 /* a node of the list *equip_list_shown[0] points into (Menu_MoveEquipCursor follows next/prev) */
 typedef struct DataNode {
-    int unk00;                      /* 0x00 */
+    int pad00;                      /* 0x00 */
     struct DataNode *next;          /* 0x04 */
     struct DataNode *prev;          /* 0x08 */
     s16 table_row;                  /* 0x0C row of the item's text table, plus one */
@@ -110,7 +110,7 @@ typedef struct {
 
 /* what the screen handler in menu_screen_handler is handed */
 typedef struct {
-    s32 unk00;                      /* 0x00 */
+    s32 pad00;                      /* 0x00 */
     s32 selection;                  /* 0x04 the selected line or text number of the screen; cleared when a screen is left */
 } MenuScreenContext;
 

@@ -176,7 +176,7 @@ typedef struct {
 typedef struct {
     u8 *buffer_a;                   /* 0x00 */
     void *buffer_b;                 /* 0x04 */
-    int unk08;                      /* 0x08 */
+    int pad08;                      /* 0x08 */
     int size_a;                     /* 0x0C */
     int size_b;                     /* 0x10 */
 } SoundJobSpec;
@@ -226,7 +226,7 @@ typedef struct {
 typedef struct {
     void *buffer_a;                 /* 0x00 */
     void *buffer_b;                 /* 0x04 */
-    int unk08;                      /* 0x08 */
+    int pad08;                      /* 0x08 */
     int size_a;                     /* 0x0C */
     int size_b;                     /* 0x10 */
 } SoundStartSpec;
@@ -258,7 +258,7 @@ typedef struct {
 /* map_reverb_cue_indices: 0x78 cue indices (0 to 3) into map_bank_cues; Sound_MapBankAddReverb copies
    the whole table and takes entry 1 (cue_index) */
 typedef struct {
-    u8 unk00;                       /* 0x00 */
+    u8 pad00;                       /* 0x00 */
     s8 cue_index;                   /* 0x01 index into the cue table */
     char pad02[0x76];
 } SoundScriptState;
