@@ -104,15 +104,15 @@ void MapObject_UpdateBreaking(MapObject *object) {
 void MapObject_StopAmbientSound(MapTrigger *trigger) {
     TriggerSource *source;
 
-    if (*trigger->unk04 == 0) {
+    if (*trigger->stop_block_flag == 0) {
         source = MAP_TRIGGER_SOURCE(trigger);
-        if (((u32)(source->sound_tag - 0x40) < 0x40) && (trigger->shot.unk00[0] != 0)) {
+        if (((u32)(source->sound_tag - 0x40) < 0x40) && (trigger->shot.shot_state[0] != 0)) {
             if ((trigger->flags & 1) != current_map_slot) {
-                trigger->shot.unk00[0] = 0;
+                trigger->shot.shot_state[0] = 0;
                 return;
             }
             Sound_StopTagged((char)source->sound_tag);
-            trigger->shot.unk00[0] = 0;
+            trigger->shot.shot_state[0] = 0;
         }
     }
 }

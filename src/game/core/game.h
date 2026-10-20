@@ -8,7 +8,7 @@
    declare it as char[]/int[], so the extern stays in each file. */
 typedef struct {
     char player_control;            /* 0x00 nonzero: script blends are skipped */
-    char unk01;                     /* 0x01 */
+    char set_on_map_reset;          /* 0x01 Flag set to 1 after the map state reset */
     char paused;                    /* 0x02 1 while GameLoop_UpdatePause holds the game */
     s8 camera_mode;                 /* 0x03 0 the camera follows the player, 1 the script places it */
     u8 camera_look_mode;            /* 0x04 0 or 1 */
@@ -167,10 +167,10 @@ typedef struct {
 /* game_clock_control: what decides whether GameClock_Tick advances GameClock.ticks */
 typedef struct {
     char pad00[0x208];
-    char unk208;                    /* 0x208 System_InitMemory clears it */
-    char unk209;                    /* 0x209 System_InitMemory clears it */
-    char unk20A;                    /* 0x20A System_InitMemory clears it */
-    char unk20B;                    /* 0x20B System_InitMemory sets it to 2 */
+    char startup_flag_a;            /* 0x208 Byte cleared at startup, never read */
+    char startup_flag_b;            /* 0x209 Byte cleared at startup, never read */
+    char startup_flag_c;            /* 0x20A Byte cleared at startup, never read */
+    char startup_level;             /* 0x20B Byte set to 2 at startup, never read */
     char pad20C[0x7];
     char clock_stopped;             /* 0x213 nonzero: the clock stops */
     char tick_held;                 /* 0x214 nonzero: the clock stops */
@@ -298,7 +298,7 @@ typedef struct PoolSlot {
     struct PoolSlot *next;          /* 0x50 */
     s32 key_index;                  /* 0x54 the key of its node's animation that PoolNode_Pose is at */
     u64 tex0;                       /* 0x58 GS TEX0 copied from the texture header */
-    u64 unk60;                      /* 0x60 */
+    u64 tex1;                       /* 0x60 GS TEX1 copied from the texture header */
     char pad68[0x08];
 } PoolSlot;
 
@@ -320,8 +320,8 @@ typedef struct {
 /* one 0x10-byte record of a RelocEntry, with two file offsets that PoolNodeFile_Relocate turns into pointers */
 typedef struct {
     char pad00[0x08];
-    void *unk08;                    /* 0x08 */
-    void *unk0C;                    /* 0x0C */
+    void *layer_data;               /* 0x08 Pointer made from a file offset at load */
+    void *layer_aux_data;           /* 0x0C Second pointer made from a file offset */
 } RelocLayer;
 
 /* one 0x40-byte entry of a RelocFile */
@@ -415,7 +415,7 @@ typedef struct {
     u32 normal_count;               /* 0x7C */
     u32 strip_count;                /* 0x80 */
     char pad84[0x1C];
-    f32 unkA0[4];                   /* 0xA0 128.0 each */
+    f32 unity_color_scale[4];       /* 0xA0 Four floats of 128, the colour scale of 1.0 */
     f32 screen[16];                 /* 0xB0 the part's points to the screen */
     f32 light[16];                  /* 0xF0 */
     f32 world[16];                  /* 0x130 the part in the world */
@@ -430,7 +430,7 @@ typedef struct {
     f32 (*work)[4];                 /* 0x194 part_work_buffer */
     f32 (*normals)[4];              /* 0x198 the part's normals in the world */
     char pad19C[0x04];
-    s32 unk1A0[4];                  /* 0x1A0 0, 0, 0, 0x80; stored as one quadword */
+    s32 default_point_color[4];     /* 0x1A0 Quadword sent as each point's colour */
     u32 parent_point_count;         /* 0x1B0 PoolSlot_Draw: how many points go by the parent slot's matrix */
     u32 point_at;                   /* 0x1B4 */
     u32 point_index;                /* 0x1B8 */
@@ -528,7 +528,7 @@ typedef struct {
     f32 tex_s;                      /* 0x20 */
     f32 tex_t;                      /* 0x24 */
     f32 tex_q;                      /* 0x28 1.0 */
-    f32 unk2C;                      /* 0x2C 0 */
+    f32 tex_w;                      /* 0x2C Fourth float of the texture quad, always 0 */
     f32 color[4];                   /* 0x30 */
 } PoolPartFlatPoint;
 
@@ -574,7 +574,7 @@ typedef struct {
 /* what Geometry_IndexOfLargestOfSeven is given; nothing calls that function, so what this is stays unknown */
 typedef struct {
     char pad00[0x70];
-    s16 *unk70;                     /* 0x70 seven values */
+    s16 *largest_search_values;     /* 0x70 Seven s16 values searched for the largest */
 } Unk20D008Owner;
 
 #endif

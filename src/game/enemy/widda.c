@@ -144,10 +144,10 @@ static void Widda_AimPartsAtTarget(Entity *entity) {
     f32 limit;
 
     if (entity->target == NULL || entity->busy_flags != 0) {
-        ai_state->part_angle_x = parts[first].unk50[0];
-        ai_state->part_angle_y = parts[first].unk50[1];
-        ai_state->part_angle_z = parts[second].unk50[0];
-        ai_state->pitch_speed = parts[second].unk50[1];
+        ai_state->part_angle_x = parts[first].part_angles[0];
+        ai_state->part_angle_y = parts[first].part_angles[1];
+        ai_state->part_angle_z = parts[second].part_angles[0];
+        ai_state->pitch_speed = parts[second].part_angles[1];
     } else {
         angle = atan2f(player_state.position[1] - entity->model->position[1], entity->distance_to_player);
         limit = 0.5235988f;
@@ -158,8 +158,8 @@ static void Widda_AimPartsAtTarget(Entity *entity) {
         }
         EntityMath_EaseAngleToward(&ai_state->part_angle_x, angle * 0.5f, 10.0f);
         EntityMath_EaseAngleToward(&ai_state->part_angle_z, angle * 0.5f, 10.0f);
-        parts[first].unk50[0] = ai_state->part_angle_x;
-        parts[second].unk50[0] = ai_state->part_angle_z;
+        parts[first].part_angles[0] = ai_state->part_angle_x;
+        parts[second].part_angles[0] = ai_state->part_angle_z;
         bearing = EntityMath_HeadingTo(entity->model->position, entity->target);
         angle = EntityMath_AngleDifference(entity->model->rotation[1], bearing);
         limit = 0.6981317f;
@@ -170,8 +170,8 @@ static void Widda_AimPartsAtTarget(Entity *entity) {
         }
         EntityMath_EaseAngleToward(&ai_state->part_angle_y, angle * 0.5f, 10.0f);
         EntityMath_EaseAngleToward(&ai_state->pitch_speed, angle * 0.5f, 10.0f);
-        parts[first].unk50[1] = ai_state->part_angle_y;
-        parts[second].unk50[1] = ai_state->pitch_speed;
+        parts[first].part_angles[1] = ai_state->part_angle_y;
+        parts[second].part_angles[1] = ai_state->pitch_speed;
     }
 }
 

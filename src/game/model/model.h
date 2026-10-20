@@ -30,8 +30,8 @@ typedef struct {
 
 /* a 128-bit value moved as two doublewords */
 typedef struct {
-    u64 unk00;
-    u64 unk08;
+    u64 low_doubleword; /* low 64 bits */
+    u64 high_doubleword; /* high 64 bits */
 } Qword;
 
 /* the same 128 bits at any alignment, copied as two unaligned doublewords */
@@ -45,7 +45,7 @@ typedef s32 VuIntVector[4] __attribute__((aligned(16)));
 
 /* one vertex of a strip */
 typedef struct {
-    void *unk00;                    /* 0x00 */
+    void *position;                 /* 0x00 vertex position passed to the triangle tests */
     s32 x;                          /* 0x04 x, as Collision_GetFloorMaterial reads it */
     s32 y;                          /* 0x08 y, as Collision_GetFloorMaterial reads it */
     s32 z;                          /* 0x0C z, as Collision_GetFloorMaterial reads it */
@@ -63,7 +63,7 @@ typedef struct {
     s32 strip_count;                /* 0x00 */
     Strip *strips;                  /* 0x04 */
     s32 unk08;                      /* 0x08 */
-    u32 unk0C;                      /* 0x0C */
+    u32 total_vertex_count;         /* 0x0C gate: collision needs at least 4 */
 } ModelStripList;
 
 /* one 0x80-byte part (joint) of a model, ModelInstance.parts[i] */
@@ -82,7 +82,7 @@ typedef struct ModelPart {
     u64 data_addr : 32;             /* 0x78 */
     u64 part_flags : 7;             /* ModelPartLevels.part_flags of the motion last loaded */
     u64 level : 7;                  /* detail level picked by Motion_SeekKeys */
-    u64 pad78_46 : 7;
+    u64 parent_index : 7;  /* parent part index from the model file */
     u64 data_count : 11;
 } ModelPart;
 
@@ -95,7 +95,7 @@ typedef struct {
     u16 flags;                      /* 0x0E flag bits Wobble_DrawRippledModel passes on to the GS vertex */
     u16 tex_u;                      /* 0x10 texture coordinates */
     u16 tex_v;                      /* 0x12 */
-    u16 unk14;                      /* 0x14 set to 1 by ModelScreen_SetUvsFromScreen */
+    u16 uvs_set_from_screen;        /* 0x14 flag: uvs were computed from the screen */
     char pad16[0x02];
     s16 colour[4];                  /* 0x18 red, green, blue, alpha: 0..0xFF each (set by Model_SetVertexColour) */
 } ModelPartVertex;
@@ -111,8 +111,8 @@ typedef struct {
     u16 cut_flag;                   /* 0x0E 0; 0x8000 on the first two vertices of a strip (ModelScreen_QueueCutTriangle) */
     s16 tex_u;                      /* 0x10 */
     s16 tex_v;                      /* 0x12 */
-    s16 unk14;                      /* 0x14 0x1000 */
-    s16 unk16;                      /* 0x16 0x7FFF on a vertex built between two others, 0 on the two ends */
+    s16 unit_weight;                /* 0x14 4.12 weight, always 1.0 here */
+    s16 blend_fraction;             /* 0x16 0x7FFF on vertices built between two others */
     s16 colour[4];                  /* 0x18 */
 } ModelPartVertexWords;
 
@@ -129,7 +129,7 @@ typedef struct {
     u64 pad14 : 23;
     u64 clut_base : 14;             /* 0x37 14 bits: the CLUT base, not 0 on the blocks Model_SetUpSkinned looks for */
     u64 pad51 : 10;
-    u64 unk61 : 3;                  /* set to 2 on the first block of a model whose unk37 is not 0 */
+    u64 clut_load_mode : 3;                  /* TEX0 CLUT load field (bits 61-63) */
 } ModelPartDataBits30;
 
 /* one block of a part's data (ModelPart.data_addr): 0x90 bytes of GS setup, then the vertices.
@@ -378,7 +378,7 @@ typedef struct ModelInstance {
     ModelPartLevels **level_tables; /* 0xFC */
     u16 model_flags;                /* 0x100 bits: 1 motion on, 0x200 draw-list, 0x400 unlit, 0x800 record sent */
     u16 draw_flags;                 /* 0x102 MODEL_FLAG_800: drawn with its own texture */
-    int unk104;                     /* 0x104 passed to Effect_FindModelRecord, which does not read it */
+    int effect_record_hint;         /* 0x104 int passed to Effect_FindModelRecord, unread */
     char pad108[0x08];
     ModelStripList *strips;         /* 0x110 also read as a CollisionMesh (collision/collision.h), NULL: none */
     MotionFile *motion_file;        /* 0x114 */
@@ -400,7 +400,7 @@ typedef struct ModelInstance {
     f32 colour_green;               /* 0x154 the model's green tint */
     f32 colour_blue;                /* 0x158 the model's blue tint */
     f32 alpha;                      /* 0x15C below 128: drawn without z writes */
-    s32 unk160[4];                  /* 0x160 */
+    s32 draw_header_vector[4];      /* 0x160 four words sent in the draw packet */
     char pad170[0x08];
     void *chunk_skip_mask;          /* 0x178 passed to TextureTable_QueueEnabled with texture_data: bit n set skips chunk n (a mask, but not stored as an int) */
     int found_record_id;            /* 0x17C the id Effect_FindModelRecord last found; sent after the colour at unk150 by Model_DrawPosed, in its alpha slot */
@@ -622,7 +622,7 @@ typedef struct {
     ModelInstance *model;           /* 0x00 */
     void *anims;                    /* 0x04 8-byte entries */
     char pad08[0x08];
-    u8 unk10;                       /* 0x10 the flag word is ANIM_OBJECT_FLAGS */
+    u8 anim_flags;                  /* 0x10 flags word; bit 0x10000 enables the quad hit */
     u8 mode;                        /* 0x11 */
     char pad12[0x02];
     char pad14[0x2C];
@@ -630,7 +630,7 @@ typedef struct {
 } AnimObject;
 
 /* the 32-bit flags at AnimObject+0x10 */
-#define ANIM_OBJECT_FLAGS(object) (*(u32 *)&(object)->unk10)
+#define ANIM_OBJECT_FLAGS(object) (*(u32 *)&(object)->anim_flags)
 
 /* the objects of a map, looked up by MapObject_GetById(map, id) */
 typedef struct {
@@ -766,7 +766,7 @@ typedef struct {
 /* the props of a map, looked up by Map_GetRecordById(map, id) */
 typedef struct {
     char pad00[0x32];
-    u16 unk32;                      /* 0x32 0xFFFF: nothing to collide with */
+    u16 collision_strip_index;      /* 0x32 0xFFFF when there is nothing to collide with */
     char pad34[0x48];
     ModelInstance *model;           /* 0x7C */
 } MapProp;

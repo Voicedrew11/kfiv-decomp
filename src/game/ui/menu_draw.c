@@ -1243,7 +1243,7 @@ int MenuText_SetPen(GsPackedWord word) {
     text_pen.pos_x = word.f.lo16;
     text_pen.pos_y = word.f.mid16;
     text_pen.depth = word.f.mid24;
-    text_pen.pad07 = word.f.hi8;
+    text_pen.top_byte = word.f.hi8;
     return 1;
 }
 
@@ -1252,7 +1252,7 @@ static int MenuText_ResetPen(void) {
     text_pen.pos_x = 0x6C00;
     text_pen.pos_y = 0x7900;
     text_pen.depth = 0xFFFFFF;
-    text_pen.pad07 = 0;
+    text_pen.top_byte = 0;
     return 1;
 }
 
@@ -1261,7 +1261,7 @@ int MenuText_SetGlyphSize(GsPackedWord word) {
     text_glyph_size.pos_x = word.f.lo16;
     text_glyph_size.pos_y = word.f.mid16;
     text_glyph_size.depth = word.f.mid24;
-    text_glyph_size.pad07 = word.f.hi8;
+    text_glyph_size.top_byte = word.f.hi8;
     return 1;
 }
 
@@ -1270,7 +1270,7 @@ static int MenuText_ResetGlyphSize(void) {
     text_glyph_size.pos_x = 0x140;
     text_glyph_size.pos_y = 0xB0;
     text_glyph_size.depth = 0;
-    text_glyph_size.pad07 = 0;
+    text_glyph_size.top_byte = 0;
     return 1;
 }
 
@@ -2172,11 +2172,11 @@ s32 PoolNodeFile_Relocate(RelocFile *file) {
             entry->sibling = (char *)file + (s32)entry->sibling;
         }
         for (j = 0, layer = entry->layers; j < entry->layer_count; j++, layer++) {
-            if (layer->unk08 != NULL) {
-                layer->unk08 = (char *)file + (s32)layer->unk08;
+            if (layer->layer_data != NULL) {
+                layer->layer_data = (char *)file + (s32)layer->layer_data;
             }
-            if (layer->unk0C != NULL) {
-                layer->unk0C = (char *)file + (s32)layer->unk0C;
+            if (layer->layer_aux_data != NULL) {
+                layer->layer_aux_data = (char *)file + (s32)layer->layer_aux_data;
             }
         }
         cursor = entry + 1;
@@ -2196,14 +2196,14 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
     s32 source;
     s32 target;
 
-    scratch->unkA0[0] = 128.0f;
-    scratch->unkA0[1] = 128.0f;
-    scratch->unkA0[2] = 128.0f;
-    scratch->unkA0[3] = 128.0f;
+    scratch->unity_color_scale[0] = 128.0f;
+    scratch->unity_color_scale[1] = 128.0f;
+    scratch->unity_color_scale[2] = 128.0f;
+    scratch->unity_color_scale[3] = 128.0f;
     scratch->work = part_work_buffer;
     scratch->screen_points = part_work_buffer + 0x500;
     scratch->normals = part_work_buffer + 0xA00;
-    *(Uint128 *)scratch->unk1A0 = 0x00000080000000000000000000000000;
+    *(Uint128 *)scratch->default_point_color = 0x00000080000000000000000000000000;
     scratch->point_count = part->point_count;
     scratch->strip_count = part->strip_count;
     scratch->normal_count = part->normal_count;
@@ -2389,7 +2389,7 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
                                  "lq $8, 0x0(%2)\n"
                                  "sq $9, 0x0(%1)\n"
                                  "sq $8, 0x0(%3)\n"
-                                 : : "r"(&scratch->screen_points[scratch->strip_point->point]), "r"(scratch->cursor + 8), "r"(scratch->unk1A0), "r"(scratch->cursor + 4) : "$8", "$9");
+                                 : : "r"(&scratch->screen_points[scratch->strip_point->point]), "r"(scratch->cursor + 8), "r"(scratch->default_point_color), "r"(scratch->cursor + 4) : "$8", "$9");
                 scratch->cursor += 12;
                 scratch->strip_point++;
             }
@@ -2422,14 +2422,14 @@ void PoolPart_Draw(PoolPart *part, s32 parent) {
     s32 source;
     s32 target;
 
-    scratch->unkA0[0] = 128.0f;
-    scratch->unkA0[1] = 128.0f;
-    scratch->unkA0[2] = 128.0f;
-    scratch->unkA0[3] = 128.0f;
+    scratch->unity_color_scale[0] = 128.0f;
+    scratch->unity_color_scale[1] = 128.0f;
+    scratch->unity_color_scale[2] = 128.0f;
+    scratch->unity_color_scale[3] = 128.0f;
     scratch->work = part_work_buffer;
     scratch->screen_points = part_work_buffer + 0x500;
     scratch->normals = part_work_buffer + 0xA00;
-    *(Uint128 *)scratch->unk1A0 = 0x00000080000000000000000000000000;
+    *(Uint128 *)scratch->default_point_color = 0x00000080000000000000000000000000;
     scratch->point_count = part->point_count;
     scratch->strip_count = part->strip_count;
     scratch->normal_count = part->normal_count;
@@ -2663,11 +2663,11 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
     scratch->work = part_work_buffer;
     scratch->screen_points = part_work_buffer + 0x500;
     scratch->normals = part_work_buffer + 0xA00;
-    scratch->unkA0[0] = 128.0f;
-    scratch->unkA0[1] = 128.0f;
-    scratch->unkA0[2] = 128.0f;
-    scratch->unkA0[3] = 128.0f;
-    *(Uint128 *)scratch->unk1A0 = 0x00000080000000000000000000000000;
+    scratch->unity_color_scale[0] = 128.0f;
+    scratch->unity_color_scale[1] = 128.0f;
+    scratch->unity_color_scale[2] = 128.0f;
+    scratch->unity_color_scale[3] = 128.0f;
+    *(Uint128 *)scratch->default_point_color = 0x00000080000000000000000000000000;
     scratch->point_count = part->point_count;
     scratch->strip_count = part->strip_count;
     scratch->normal_count = part->normal_count;
@@ -2912,7 +2912,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
                                  "lq $8, 0x0(%2)\n"
                                  "sq $9, 0x0(%1)\n"
                                  "sq $8, 0x0(%3)\n"
-                                 : : "r"(&scratch->screen_points[scratch->strip_point->point]), "r"(scratch->cursor + 8), "r"(scratch->unk1A0), "r"(scratch->cursor + 4) : "$8", "$9");
+                                 : : "r"(&scratch->screen_points[scratch->strip_point->point]), "r"(scratch->cursor + 8), "r"(scratch->default_point_color), "r"(scratch->cursor + 4) : "$8", "$9");
                 scratch->cursor += 12;
                 scratch->strip_point++;
             }
@@ -3227,7 +3227,7 @@ void PoolPartFile_Expand(PoolPartFile *source, PoolPartFile *dest) {
                 dest_point->tex_s = source_point->tex_s;
                 dest_point->tex_t = source_point->tex_t;
                 dest_point->tex_q = 1.0f;
-                dest_point->unk2C = 0.0f;
+                dest_point->tex_w = 0.0f;
                 dest_point->color[0] = source_point->color[0];
                 dest_point->color[1] = source_point->color[1];
                 dest_point->color[2] = source_point->color[2];
@@ -3827,28 +3827,28 @@ static SpritePacket *MenuSprite_TintMagicStat(SpritePacket *packet) {
     current = MenuDraw_GetNumber(packet->number_id);
     switch (packet->number_id) {
     case 0x2C:
-        base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.unk00[0];
+        base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.element_strengths[0];
         break;
     case 0x2D:
-        base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.unk00[1];
+        base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.element_strengths[1];
         break;
     case 0x2E:
-        base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.unk00[2];
+        base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.element_strengths[2];
         break;
     case 0x2F:
-        base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.unk00[3];
+        base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.element_strengths[3];
         break;
     case 0x30:
-        base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.unk00[4];
+        base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.element_strengths[4];
         break;
     case 0x31:
-        base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.unk00[5];
+        base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.element_strengths[5];
         break;
     case 0x32:
-        base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.unk00[6];
+        base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.element_strengths[6];
         break;
     case 0x33:
-        base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.unk00[7];
+        base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.element_strengths[7];
         break;
     case 0x34:
     default:

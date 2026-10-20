@@ -1039,7 +1039,7 @@ void Map_DrawFreeCameraView(void) {
     GsDraw_QueueFlush();
     memset(&quad, 0, sizeof(quad));
     quad.tag = 0x4007A80621312E40L;
-    quad.unk08 = 0x60;
+    quad.gif_register_list = 0x60;
     quad.prim = 0x156;
     quad.red = 0x80;
     quad.green = 0x80;
@@ -1094,7 +1094,7 @@ void Map_StretchOffscreenToScreen(void) {
     Packet_AddGsRegister(8, 5);
     Packet_EndGsRegisters();
     quad.tag = 0x624A16BC0L;
-    quad.unk08 = 0x60;
+    quad.gif_register_list = 0x60;
     quad.prim = 0x116;
     quad.red = 0x80;
     quad.green = 0x80;

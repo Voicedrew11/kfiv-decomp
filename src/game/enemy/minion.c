@@ -272,9 +272,9 @@ static void Minion_Animate(Entity *entity) {
             if (ai_state->action_flags) {
                 part = &entity->model->parts[3];
             }
-            ai_state->pitch_speed = part->unk50[0];
-            ai_state->heading_speed = part->unk50[1];
-            ai_state->keep_min_distance = part->unk50[2];
+            ai_state->pitch_speed = part->part_angles[0];
+            ai_state->heading_speed = part->part_angles[1];
+            ai_state->keep_min_distance = part->part_angles[2];
             ai_state->turn_in_place = 2;
         }
         if (ai_state->turn_in_place != 2) {
@@ -446,7 +446,7 @@ static void Minion_RangedAttack(Entity *entity) {
             ai_state->turn_rate = 0.0f;
         }
         Minion_LaunchShots(entity, unk3D8, (slots->motion_slot_0.frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8, slots->motion_slot_0.frame, NULL, 0.0f, 0.0f);
-        if (slots->motion_slot_0.frame > 0 && unk3D8->unk03 >= slots->motion_slot_0.frame) {
+        if (slots->motion_slot_0.frame > 0 && unk3D8->attack_end_frame >= slots->motion_slot_0.frame) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
@@ -740,7 +740,7 @@ static s32 Minion_LaunchShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 fr
     s32 i;
     s32 end;
 
-    if (entity->ailment_4_frames != 0 && record->unk0C == 0) {
+    if (entity->ailment_4_frames != 0 && record->ignores_ailment_4 == 0) {
         return 0;
     }
     if (ai_state->turn_in_place == 0) {
@@ -753,9 +753,9 @@ static s32 Minion_LaunchShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 fr
     for (; i < end; i++) {
         if (record->launches[i].frame != 0 && frame_from < record->launches[i].frame && record->launches[i].frame <= frame_to) {
             shot = Shot_Alloc();
-            shot->unk22 = shot->unk20 = 0;
-            shot->unk00 = 1;
-            shot->unk28 = entity->params->unk238;
+            shot->player_magic = shot->player_power = 0;
+            shot->is_magic_shot = 1;
+            shot->shot_params = entity->params->shot_params;
             from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone);
             tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone + 1);
             if (from != NULL && tip != NULL) {

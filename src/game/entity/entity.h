@@ -69,9 +69,9 @@ typedef struct {
 /* one 0x100-byte element of what EntityModel.parts points at */
 typedef struct {
     char pad00[0x50];
-    f32 unk50[4];                   /* 0x50 */
+    f32 part_angles[4];             /* 0x50 x, y, z angles of the part, in radians */
     char pad60[0x08];
-    u64 unk68;                      /* 0x68 flags */
+    u64 part_flags;                 /* 0x68 64-bit part flags, bit 40 toggled */
     char pad70[0x90];
 } EntityModelUnkF8;
 
@@ -79,16 +79,16 @@ typedef struct {
    it that way (element 2 is at 0x100) */
 typedef struct {
     char pad00[0x50];
-    f32 unk50[4];                   /* 0x50 */
+    f32 part_angles[4];             /* 0x50 x, y, z angles of the part, in radians */
     char pad60[0x08];
-    u64 unk68;                      /* 0x68 flags */
+    u64 part_flags;                 /* 0x68 64-bit part flags, bits 40 and 41 */
     char pad70[0x10];
 } EntityModelPart80;
 
 /* EntityModelPart80 with the byte at 0x6C, which lies inside unk68 (reached by cast) */
 typedef struct {
     char pad00[0x6C];
-    s8 unk6C;                       /* 0x6C */
+    s8 motion_slot;                 /* 0x6C motion slot the part plays in */
     char pad6D[0x13];
 } EntityModelPart80Byte;
 
@@ -100,7 +100,7 @@ typedef struct {
     u64 pad42 : 22;
 } EntityModelPartFlagBits;
 
-#define ENTITY_MODEL_PART_FLAG_BITS(part) ((EntityModelPartFlagBits *)&(part)->unk68)
+#define ENTITY_MODEL_PART_FLAG_BITS(part) ((EntityModelPartFlagBits *)&(part)->part_flags)
 
 /* what Entity.model points at. ModelInstance (model/model.h) is a second view of the same block,
    see ENTITY_MODEL; the two are to be unified. */
@@ -124,18 +124,18 @@ typedef struct {
 
 /* two blocks of an EntityParamsUnk240Part that ParaStool_CheckPartHitInPlayerView copies whole into its request */
 typedef struct {
-    s16 unk00[9];                   /* 0x00 */
+    s16 element_strengths[9];       /* 0x00 nine strength values per hit, one per element */
 } EntityParamsUnk240PartUnk00;
 
 typedef struct {
-    s16 unk00[6];                   /* 0x00 */
+    s16 chance_percent[6];          /* 0x00 six ailment chances in percent */
 } EntityParamsUnk240PartUnk12;
 
 /* one of the three 0x28-byte parts of an EntityParamsUnk240 */
 typedef struct {
-    EntityParamsUnk240PartUnk00 unk00; /* 0x00 */
-    EntityParamsUnk240PartUnk12 unk12; /* 0x12 */
-    u8 unk1E;                       /* 0x1E */
+    EntityParamsUnk240PartUnk00 strengths; /* 0x00 strength block copied into the hit request */
+    EntityParamsUnk240PartUnk12 ailment_chances; /* 0x12 ailment chance block copied into the request */
+    u8 hit_flags;                   /* 0x1E hit flags: bit 0 knockback, bit 1 mp damage */
     u8 mp_damage;                   /* 0x1F mp the hit takes from the player */
     u16 radius_bonus;               /* 0x20 added to Entity.radius for the hit's radius */
     u16 half_angle_deg;             /* 0x22 half the arc of the hit, in degrees */
@@ -149,7 +149,7 @@ typedef struct {
     u16 flags;                      /* 0x1E bit 1: unk1F is copied */
 } EntityParamsUnk240PartFlags;
 
-#define ENTITY_PART_FLAGS(part) ((EntityParamsUnk240PartFlags *)&(part)->unk1E)
+#define ENTITY_PART_FLAGS(part) ((EntityParamsUnk240PartFlags *)&(part)->hit_flags)
 
 /* one of the 0x88-byte records at EntityParams+0x240 (EntityParams.melee_attack_third is the third) */
 typedef struct {
@@ -179,14 +179,14 @@ typedef struct {
     f32 half_pitch;                 /* 0x44 half the swing's pitch window */
     struct Entity *owner;           /* 0x48 */
     u64 shape : 2;                  /* 0x4C which hit shape: 0 sphere, 3 swept, 1 and 2 do nothing */
-    u64 unk4C_2 : 1;
+    u64 cleared_on_effect_check : 1;  /* bit only zeroed in the effect hit check */
     u64 knockback : 1;              /* not 0: the hit knocks the player back */
     u64 unk4C_4 : 4;
     u8 target_mask;                 /* 0x4D what it may hit: 1 player, 2 entities, 4 objects, 8/0x10 the map */
     u8 hit_armor_part;              /* 0x4E which worn piece a hit on the player wears out, 1 to 4 */
     u8 stun_frames;                 /* 0x4F copied to Entity.stun_frames by a hit of kind 1 */
-    EntityParamsUnk240PartUnk00 unk50; /* 0x50 */
-    EntityParamsUnk240PartUnk12 unk62; /* 0x62 */
+    EntityParamsUnk240PartUnk00 strengths; /* 0x50 strength block for the hit */
+    EntityParamsUnk240PartUnk12 ailment_chances; /* 0x62 ailment chances for the hit */
     u8 map_object_damage_multiplier; /* 0x6E a weapon hit's damage to a map object is multiplied by it when the object asks (Attack_HitMapObject) */
     u8 double_hit_chance_percent;   /* 0x6F chance in percent that the hit counts double */
     u8 instant_kill_chance_percent; /* 0x70 chance in percent that the hit kills outright */
@@ -249,12 +249,12 @@ typedef struct {
 
 /* what Shot_Alloc returns: something an entity launches */
 typedef struct {
-    char unk00;                     /* 0x00 */
+    char is_magic_shot;             /* 0x00 1 for a magic shot an entity launches */
     char pad01[0x1F];
-    u16 unk20;                      /* 0x20 */
-    s16 unk22;                      /* 0x22 */
+    u16 player_power;               /* 0x20 player power, zero for entity shots */
+    s16 player_magic;               /* 0x22 player magic, zero for entity shots */
     char pad24[0x04];
-    EntityUnaligned64 unk28;        /* 0x28 copy of EntityParams.unk238 */
+    EntityUnaligned64 shot_params;  /* 0x28 copy of the entity's shot params block */
 } EntityUnk1B1390;
 
 /* one launch of a record at EntityParams+0x3D8 */
@@ -269,19 +269,19 @@ typedef struct {
     u8 unk00;                       /* 0x00 */
     u8 turn_frames;                 /* 0x01 the entity turns to the player until the motion reaches this frame */
     u8 attack_delay;                /* 0x02 passed to EntityAi_SetAttackDelay when the attack ends */
-    u8 unk03;                       /* 0x03 */
+    u8 attack_end_frame;            /* 0x03 last animation frame the ranged attack is active */
     char pad04[0x08];
-    u8 unk0C;                       /* 0x0C */
+    u8 ignores_ailment_4;           /* 0x0C 1: attack still fires during ailment 4 */
     char pad0D[0x03];
     EntityParamsUnk3D8Launch launches[3]; /* 0x10 the three launches of the record */
 } EntityParamsUnk3D8Full;
 
 /* sub-struct at EntityParams+0x3D8 */
 typedef struct {
-    u8 unk00;                       /* 0x00 */
+    u8 ranged_weight;               /* 0x00 selection weight, 0 means the attack is unused */
     u8 turn_frames;                 /* 0x01 the entity turns to the player until the motion reaches this frame */
     u8 attack_delay;                /* 0x02 passed to EntityAi_SetAttackDelay when the attack ends */
-    u8 unk03;                       /* 0x03 */
+    u8 attack_end_frame;            /* 0x03 last animation frame the ranged attack is active */
 } EntityParamsUnk3D8;
 
 typedef struct {
@@ -289,11 +289,11 @@ typedef struct {
     u16 reach_min;                  /* 0x04 nearest distance (past the radius) the attack is used at, 0: none */
     u16 reach_max;                  /* 0x06 farthest distance it is used at */
     f32 widest_angle;               /* 0x08 widest angle to the player for it */
-    u8 unk0C;                       /* 0x0C */
+    u8 ignores_ailment_4;           /* 0x0C 1: attack still fires during ailment 4 */
     char pad0D;
     s16 heading_offset_deg;         /* 0x0E degrees its direction is off the entity's heading */
-    u8 unk10;                       /* 0x10 */
-    u8 unk11;                       /* 0x11 */
+    u8 magic_effect;                /* 0x10 effect id the launched shot uses */
+    u8 bone_index;                  /* 0x11 model bone the attack starts from */
     char pad12[0x0A];
 } EntityParamsUnk3D8Array;
 
@@ -316,7 +316,7 @@ typedef struct {
     union {
         u32 flags;                  /* 0x00 ENTITY_BODY_ bits */
         u8 point;                   /* 0x00 the model point it sits at */
-    } unk00;
+    } flags_or_model_point; /* ENTITY_BODY flags, or the model point index */
     u16 radius;                     /* 0x04 its radius, before the model's x scale */
     u16 height;                     /* 0x06 its height, before the model's y scale */
     f32 hit_multiplier;             /* 0x08 a hit on this body counts this many times over (Attack_RunSphere) */
@@ -388,7 +388,7 @@ typedef struct {
     u16 second_drop_item;           /* 0x234 the item it may drop when the first one's roll fails, 0xFFFF: none */
     s8 drop_chance;                 /* 0x236 percent */
     s8 second_drop_chance;          /* 0x237 percent */
-    EntityUnaligned64 unk238;       /* 0x238 */
+    EntityUnaligned64 shot_params;  /* 0x238 block copied into each shot launched */
     EntityParamsUnk240 melee_attacks[2]; /* 0x240 indexed by flag bits 58-59 */
     char melee_attack_third[0x88];  /* 0x350 the third melee attack record, reached past unk240 */
     EntityParamsUnk3D8Array ranged_attacks[3]; /* 0x3D8 the three ranged attack records: weight, bone, frame, shots */
@@ -612,7 +612,7 @@ typedef struct {
 /* Entity+0xE0 as the kind set up by LivingDead_Init lays it out */
 typedef struct {
     char pad00[0x1C];
-    s32 unk1C;                      /* 0x1C */
+    s32 cleared_on_motion_finish;   /* 0x1C only zeroed when the motion finish step runs */
 } EntityAiStateKind150588;
 
 /* Entity+0xE0 as the kind set up by GreaterDemon_Init lays it out. The area is
@@ -695,7 +695,7 @@ typedef struct {
     char pad00[0x30];
     f32 effect_angles[4];           /* 0x30 pitch and yaw passed to EntityEvent_StartEffectAtPoint */
     char pad40[0x2E];
-    s16 unk6E;                      /* 0x6E */
+    s16 should_run;                 /* 0x6E 1 when the player is far, so the knight runs */
     char pad70[0x10];
     f32 first_aim[4];               /* 0x80 pitch and yaw of the first aimed effect */
     f32 second_aim[4];              /* 0x90 pitch and yaw of the second aimed effect */
@@ -952,7 +952,7 @@ typedef struct {
     u32 bit5 : 1;
     u32 bit6 : 1;
     u32 bit7 : 1;
-    u32 pad8 : 1;
+    u32 respawn_roll_done : 1;  /* set once the respawn chance has been rolled */
     u32 bit9 : 1;
     u32 bit10 : 1;
     u32 bits11 : 3;
@@ -981,7 +981,7 @@ typedef struct {
     u32 bits36 : 2;
     u32 bit38 : 1;
     u32 bit39 : 1;
-    u32 pad40 : 1;
+    u32 last_hit_knockback : 1;  /* the last hit on the entity was a knockback hit */
     u32 bit41 : 1;
     u32 bit42 : 1;
     u32 bit43 : 1;
@@ -1155,7 +1155,7 @@ typedef union {
 
 /* entity_group_state[EntityController.entity_group_index]: state shared by a group of entities */
 typedef struct {
-    char unk00;                     /* 0x00 */
+    char death_kind;                /* 0x00 1 or 2: how the group member died */
     char unk01;                     /* 0x01 */
     char member_died;               /* 0x02 set when a member dies */
     char pad03[0x3D];
@@ -1183,14 +1183,14 @@ typedef struct {
         u32 word;                   /* ENTITY_POOL_FLAG_* in bits 8, 9 */
         struct {
             u8 kind;                /* 0x00 0: free, 4/5: in use */
-            u16 unk2;               /* 0x02 */
+            u16 type_id;            /* 0x02 entity type id in the slot, 0xFFFF: none */
         } fields;
         struct {
             u32 kind : 8;
             u32 flag_100 : 1;       /* ENTITY_POOL_FLAG_100 */
             u32 flag_200 : 1;       /* ENTITY_POOL_FLAG_200 */
             u32 pad10 : 6;
-            u32 unk2 : 16;
+            u32 type_id : 16;  /* entity type id in the slot, 0xFFFF: none */
         } bits;
     } head;
     s16 entity_count;               /* 0x04 entities using it */
@@ -1206,8 +1206,8 @@ extern EntityPoolSlot entity_pool_slots[ENTITY_POOL_SLOT_COUNT];
    sound part is handed to the sound loader */
 typedef struct {
     char pad00[0x14];
-    int unk14;                      /* 0x14 an offset into the file, made an address; 0: no sound part */
-    int unk18;                      /* 0x18 an offset into the file, made an address; 0: no sound part */
+    int sound_buffer_b_offset;      /* 0x14 file offset of sound buffer b, made an address */
+    int sound_buffer_a_offset;      /* 0x18 file offset of sound buffer a, made an address */
     char pad1C[0x04];
 } EntityTypeFileHeader;
 
@@ -1236,7 +1236,7 @@ typedef struct LinkedPoint {
     u8 list_index;                  /* 0x2F which linked_point_heads list it is on */
     u8 kind_a;                      /* 0x30 */
     s8 kind_b;                      /* 0x31 */
-    s16 unk32;                      /* 0x32 */
+    s16 owner_id;                   /* 0x32 owner of the point, -1: none */
     char pad34[0x04];
     struct LinkedPoint *prev;       /* 0x38 */
     struct LinkedPoint *next;       /* 0x3C */

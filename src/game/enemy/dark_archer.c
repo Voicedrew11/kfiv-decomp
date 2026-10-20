@@ -208,9 +208,9 @@ static void DarkArcher_PitchPart2ToPlayer(Entity *entity, s32 mode) {
             parent[13] = 0.0f;
             parent[14] = 0.0f;
             parent[15] = 1.0f;
-            sceVu0RotMatrixX(rotation, identity_matrix, bone->unk50[0]);
-            sceVu0RotMatrixZ(rotation, rotation, bone->unk50[2]);
-            sceVu0RotMatrixY(rotation, rotation, bone->unk50[1]);
+            sceVu0RotMatrixX(rotation, identity_matrix, bone->part_angles[0]);
+            sceVu0RotMatrixZ(rotation, rotation, bone->part_angles[2]);
+            sceVu0RotMatrixY(rotation, rotation, bone->part_angles[1]);
             Matrix_Multiply(rotation, parent, rotation);
             sceVu0RotMatrixX(tilt, identity_matrix, pitch);
             Matrix_Multiply(rotation, tilt, rotation);
@@ -220,21 +220,21 @@ static void DarkArcher_PitchPart2ToPlayer(Entity *entity, s32 mode) {
             EntityMath_EaseAngleToward(&ai_state->part_angle_x, angles[0], rate);
             EntityMath_EaseAngleToward(&ai_state->part_angle_y, angles[1], rate);
             EntityMath_EaseAngleToward(&ai_state->part_angle_z, angles[2], rate);
-            bone->unk50[0] = ai_state->part_angle_x;
-            bone->unk50[1] = ai_state->part_angle_y;
-            bone->unk50[2] = ai_state->part_angle_z;
+            bone->part_angles[0] = ai_state->part_angle_x;
+            bone->part_angles[1] = ai_state->part_angle_y;
+            bone->part_angles[2] = ai_state->part_angle_z;
         } else if (mode == 0) {
             rate = 10.0f;
-            EntityMath_EaseAngleToward(&ai_state->part_angle_x, bone->unk50[0], rate);
-            EntityMath_EaseAngleToward(&ai_state->part_angle_y, bone->unk50[1], rate);
-            EntityMath_EaseAngleToward(&ai_state->part_angle_z, bone->unk50[2], rate);
-            bone->unk50[0] = ai_state->part_angle_x;
-            bone->unk50[1] = ai_state->part_angle_y;
-            bone->unk50[2] = ai_state->part_angle_z;
+            EntityMath_EaseAngleToward(&ai_state->part_angle_x, bone->part_angles[0], rate);
+            EntityMath_EaseAngleToward(&ai_state->part_angle_y, bone->part_angles[1], rate);
+            EntityMath_EaseAngleToward(&ai_state->part_angle_z, bone->part_angles[2], rate);
+            bone->part_angles[0] = ai_state->part_angle_x;
+            bone->part_angles[1] = ai_state->part_angle_y;
+            bone->part_angles[2] = ai_state->part_angle_z;
         } else {
-            ai_state->part_angle_x = bone->unk50[0];
-            ai_state->part_angle_y = bone->unk50[1];
-            ai_state->part_angle_z = bone->unk50[2];
+            ai_state->part_angle_x = bone->part_angles[0];
+            ai_state->part_angle_y = bone->part_angles[1];
+            ai_state->part_angle_z = bone->part_angles[2];
         }
     }
 }
@@ -580,7 +580,7 @@ static void DarkArcher_RangedAttack(Entity *entity) {
         }
         EntityAi_LaunchShots(entity, unk3D8, (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8,
                       entity->model->level_tables->frame);
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;

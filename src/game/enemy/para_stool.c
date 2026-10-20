@@ -284,7 +284,7 @@ static s32 ParaStool_CheckPartHitInPlayerView(Entity *entity, EntityParamsUnk240
         if (ABS(yaw) < entity->params->yaw_limit_deg * 0.017453292f && ABS(pitch) < (s16)entity->params->action_frames * 0.017453292f) {
             spread = EntityMath_WrapAngle(record->hit_parts[0].half_angle_deg * 0.017453292f);
             if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < spread) {
-                Attack_RollPlayerAilments(&entity->params->melee_attacks[0].hit_parts[0].unk12);
+                Attack_RollPlayerAilments(&entity->params->melee_attacks[0].hit_parts[0].ailment_chances);
                 memset(&request, 0, sizeof(request));
                 memset(&extra, 0, sizeof(extra));
                 Vector_Copy(request.position, entity->model->position);
@@ -295,14 +295,14 @@ static s32 ParaStool_CheckPartHitInPlayerView(Entity *entity, EntityParamsUnk240
                 request.owner = entity;
                 request.shape = 3;
                 request.target_mask = 1;
-                request.unk50 = record->hit_parts[index].unk00;
-                request.unk62 = record->hit_parts[index].unk12;
+                request.strengths = record->hit_parts[index].strengths;
+                request.ailment_chances = record->hit_parts[index].ailment_chances;
                 request.hit_armor_part = record->wear_armour_part;
                 extra.is_magic_shot = 0;
                 extra.strength_gauge = 0;
                 extra.player_power = 0;
                 extra.player_magic = 0;
-                request.knockback = record->hit_parts[index].unk1E & 1;
+                request.knockback = record->hit_parts[index].hit_flags & 1;
                 return Attack_Run(&request, &extra);
             }
         }

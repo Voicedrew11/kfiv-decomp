@@ -255,10 +255,10 @@ void MapSetup_EarthFolksVillage(int map) {
     target = &map_slots[map];
     block = (MapFogBlockValues *)((MapSlot *)target)->fog_blocks;
     light = ((MapSlot *)target)->light_blocks;
-    block[2].unk00 = block[2].unk04 = 0.0f;
-    block[2].unk08 = -43.40425f;
-    block[2].unk0C = 238723.4f;
-    block[2].unk10 = 0;
+    block[2].always_zero_a = block[2].always_zero_b = 0.0f;
+    block[2].fog_base_value = -43.40425f;
+    block[2].fog_inverse_depth_scale = 238723.4f;
+    block[2].fog_colour = 0;
     light[4].light1_direction_y = 0.0f;
     light[4].light1_direction_z = 0.0f;
     light[4].light1_direction_x = -1.57f;
@@ -278,17 +278,17 @@ void MapSetup_CavernOfLava(int map) {
     MapLightBlockLights *lights;
 
     if (forge_stage[0] == 0) {
-        ((MapFogBlockValues *)slot->fog_blocks)[5].unk00 = ((MapFogBlockValues *)slot->fog_blocks)[5].unk04 = 0.0f;
-        ((MapFogBlockValues *)slot->fog_blocks)[5].unk08 = -28.333328f;
-        ((MapFogBlockValues *)slot->fog_blocks)[5].unk0C = 113333.336f;
-        ((MapFogBlockValues *)slot->fog_blocks)[5].unk10 = 0x8C8C8C;
+        ((MapFogBlockValues *)slot->fog_blocks)[5].always_zero_a = ((MapFogBlockValues *)slot->fog_blocks)[5].always_zero_b = 0.0f;
+        ((MapFogBlockValues *)slot->fog_blocks)[5].fog_base_value = -28.333328f;
+        ((MapFogBlockValues *)slot->fog_blocks)[5].fog_inverse_depth_scale = 113333.336f;
+        ((MapFogBlockValues *)slot->fog_blocks)[5].fog_colour = 0x8C8C8C;
     } else {
         fog = (MapFogBlockValues *)slot->fog_blocks;
         lights = slot->light_blocks;
-        fog[5].unk00 = fog[5].unk04 = 0.0f;
-        fog[5].unk08 = -318.75f;
-        fog[5].unk0C = 1.1475e+06f;
-        fog[5].unk10 = 0;
+        fog[5].always_zero_a = fog[5].always_zero_b = 0.0f;
+        fog[5].fog_base_value = -318.75f;
+        fog[5].fog_inverse_depth_scale = 1.1475e+06f;
+        fog[5].fog_colour = 0;
         lights[9].colors[3].x = 0.6627451f;
         lights[9].colors[3].y = 0.3372549f;
         lights[9].directions[0][0] = 0.0f;
@@ -377,18 +377,18 @@ void MapSetup_OceanShore(int map) {
 
     if (ocean_shore_icon_of_fire_placed[0] == 1) {
         fog = (MapFogBlockValues *)slot->fog_blocks;
-        fog[0].unk00 = fog[0].unk04 = 0.0f;
-        fog[0].unk08 = -9.705887f;
-        fog[0].unk0C = 476470.62f;
-        fog[0].unk10 = 0;
-        fog[1].unk00 = fog[1].unk04 = 0.0f;
-        fog[1].unk08 = 2.0588226f;
-        fog[1].unk0C = 455294.1f;
-        fog[1].unk10 = 0;
-        fog[4].unk00 = fog[4].unk04 = 0.0f;
-        fog[4].unk08 = -9.705887f;
-        fog[4].unk0C = 476470.62f;
-        fog[4].unk10 = 0;
+        fog[0].always_zero_a = fog[0].always_zero_b = 0.0f;
+        fog[0].fog_base_value = -9.705887f;
+        fog[0].fog_inverse_depth_scale = 476470.62f;
+        fog[0].fog_colour = 0;
+        fog[1].always_zero_a = fog[1].always_zero_b = 0.0f;
+        fog[1].fog_base_value = 2.0588226f;
+        fog[1].fog_inverse_depth_scale = 455294.1f;
+        fog[1].fog_colour = 0;
+        fog[4].always_zero_a = fog[4].always_zero_b = 0.0f;
+        fog[4].fog_base_value = -9.705887f;
+        fog[4].fog_inverse_depth_scale = 476470.62f;
+        fog[4].fog_colour = 0;
     }
 }
 
@@ -442,14 +442,14 @@ void MapSetup_DarkSanctuary(int map) {
     if (dark_sanctuary_fog_lifted[0] == 1) {
         MapFogBlockValues *fog = (MapFogBlockValues *)slot->fog_blocks;
 
-        fog[1].unk00 = fog[1].unk04 = 0.0f;
-        fog[1].unk08 = 46.666664f;
-        fog[1].unk0C = 166666.67f;
-        fog[1].unk10 = 0;
-        fog[2].unk00 = fog[2].unk04 = 0.0f;
-        fog[2].unk08 = 1.6666718f;
-        fog[2].unk0C = 405333.34f;
-        fog[2].unk10 = 0;
+        fog[1].always_zero_a = fog[1].always_zero_b = 0.0f;
+        fog[1].fog_base_value = 46.666664f;
+        fog[1].fog_inverse_depth_scale = 166666.67f;
+        fog[1].fog_colour = 0;
+        fog[2].always_zero_a = fog[2].always_zero_b = 0.0f;
+        fog[2].fog_base_value = 1.6666718f;
+        fog[2].fog_inverse_depth_scale = 405333.34f;
+        fog[2].fog_colour = 0;
     }
 }
 
@@ -462,14 +462,14 @@ void MapSetup_KingsThroneAlcoves(int map) {
         MapFogBlockValues *fog = (MapFogBlockValues *)slot->fog_blocks;
         MapSlotUnk10 *light = slot->light_blocks;
 
-        fog[2].unk00 = fog[2].unk04 = 0.0f;
-        fog[2].unk08 = -127.5f;
-        fog[2].unk0C = 382500.0f;
-        fog[2].unk10 = 0;
-        fog[3].unk00 = fog[3].unk04 = 0.0f;
-        fog[3].unk08 = -127.5f;
-        fog[3].unk0C = 382500.0f;
-        fog[3].unk10 = 0;
+        fog[2].always_zero_a = fog[2].always_zero_b = 0.0f;
+        fog[2].fog_base_value = -127.5f;
+        fog[2].fog_inverse_depth_scale = 382500.0f;
+        fog[2].fog_colour = 0;
+        fog[3].always_zero_a = fog[3].always_zero_b = 0.0f;
+        fog[3].fog_base_value = -127.5f;
+        fog[3].fog_inverse_depth_scale = 382500.0f;
+        fog[3].fog_colour = 0;
         light[1].ambient_red = 0.29803923f;
         light[1].ambient_green = 0.29803923f;
         light[1].ambient_blue = 0.30980393f;

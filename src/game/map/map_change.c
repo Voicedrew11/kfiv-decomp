@@ -137,7 +137,7 @@ int MapChange_StartPassage(int entry) {
     }
     map = target[0];
     screen_fade.step = 1;
-    screen_fade.unk14 = target[1];
+    screen_fade.target_object_id = target[1];
     screen_fade.timer = 30;
     screen_fade.map = map;
     screen_fade.kind = 2;
@@ -198,7 +198,7 @@ void MapChange_FadeOutCapture(void) {
     quad.first_y = 0x71F8;
     quad.second_x = 0x7000;
     quad.second_y = 0x8E00;
-    quad.unk08 = 0;
+    quad.gif_register_list = 0;
     quad.second_z = quad.first_z = 0xFFFFFFFF;
     quad.second_u = 0x400;
     quad.second_v = 0x1C00;
@@ -361,7 +361,7 @@ void MapChange_SetUpMap(void) {
         Vector_Copy(&player_state, &screen_fade);
         break;
     case 2:
-        object = MapObject_GetById(0, screen_fade.unk14);
+        object = MapObject_GetById(0, screen_fade.target_object_id);
         if (object != NULL) {
             sine = sinf(-object->model->rotation.y);
             cosine = cosf(-object->model->rotation.y);

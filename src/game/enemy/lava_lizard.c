@@ -288,7 +288,7 @@ static void LavaLizard_RangedAttack0(Entity *entity) {
         if (entity->model->level_tables->frame >= 50 && entity->model->level_tables->frame <= 150 && (frame_counter & 1)) {
             EntityAi_LaunchShots(entity, unk3D8, 50, 150);
         }
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;

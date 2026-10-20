@@ -489,8 +489,8 @@ static void Skull_SwingPart3(Entity *entity) {
             }
         }
         angle = ai_state->part_angle_z;
-        part->unk50[0] = angle;
-        part->unk50[0] = EntityMath_WrapAngle(angle);
+        part->part_angles[0] = angle;
+        part->part_angles[0] = EntityMath_WrapAngle(angle);
         ai_state->pause_timer--;
     }
 }
@@ -525,10 +525,10 @@ static void Skull_Animate(Entity *entity) {
         }
         if (frame_counter % 10U == 0) {
             shot = Shot_Alloc();
-            shot->unk00 = 1;
-            shot->unk20 = 0;
-            shot->unk22 = 0;
-            shot->unk28 = entity->params->unk238;
+            shot->is_magic_shot = 1;
+            shot->player_power = 0;
+            shot->player_magic = 0;
+            shot->shot_params = entity->params->shot_params;
             Attack_LaunchMagicEffect(0xD0, shot, Model_GetSkinnedBonePoint((char *)entity->model, 0xFF), entity->model->rotation, entity);
         } else {
             EntityEvent_StartEffectAtPoint((char **)entity, 0x39D, 0xFF, (int)entity->model->rotation);
@@ -567,7 +567,7 @@ static void Skull_RangedAttack0(Entity *entity) {
             (frame_counter & 1)) {
             EntityAi_LaunchShots(entity, unk3D8, entity->params->type_param_0, entity->params->type_param_1);
         }
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;

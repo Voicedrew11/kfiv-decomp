@@ -279,7 +279,7 @@ int Gold_Drop(Vector4 *position, Vector4 *rotation, int map, int amount, int obj
     MAP_ACTOR_BITS(actor)->in_reach = FALSE;
     MAP_ACTOR_WORDS(actor)->object_id = object_id;
     actor->serial = map_actor_drop_counts[map]++;
-    actor->unk08 = gold_drop_unmeasured_distance[0];
+    actor->drop_unmeasured_distance = gold_drop_unmeasured_distance[0];
     actor->fade_timer = 15;
     actor->step = 0;
     // match: read even when on_ground is not set and no test was made: then it is whatever the last test left
@@ -419,7 +419,7 @@ void Gold_SaveMark(MapActor *actor) {
     mark->z = actor->body->position.z;
     mark->radius = actor->body->rotation.y * 16.0f;
     mark->amount = MAP_ACTOR_WORDS(actor)->amount;
-    mark->object_id = actor->unk24;
+    mark->object_id = actor->object_id;
 }
 
 /* Clears the ObjectMark for a map actor slot. */

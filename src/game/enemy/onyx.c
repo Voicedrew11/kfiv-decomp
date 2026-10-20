@@ -100,7 +100,7 @@ void Onyx_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    ai_state->pause_timer = entity->params->ranged_attacks[0].record.unk00;
+    ai_state->pause_timer = entity->params->ranged_attacks[0].record.ranged_weight;
     ai_state->sub_timer = entity->params->melee_attacks[1].attack_weight;
     ai_state->mode_timer = (u8)entity->params->melee_attack_third[0];
     ai_state->step_index = 3;
@@ -116,7 +116,7 @@ void Onyx_Init(Entity *entity) {
     case 0:
         first_part = 0x16;
         part_count = 10;
-        ai_state->pause_timer = entity->params->ranged_attacks[0].record.unk00;
+        ai_state->pause_timer = entity->params->ranged_attacks[0].record.ranged_weight;
         break;
     case 1:
         first_part = 0xB;
@@ -131,7 +131,7 @@ void Onyx_Init(Entity *entity) {
     default:
         first_part = 8;
         part_count = 3;
-        ai_state->pause_timer = entity->params->ranged_attacks[0].record.unk00;
+        ai_state->pause_timer = entity->params->ranged_attacks[0].record.ranged_weight;
         ai_state->sub_timer = entity->params->melee_attacks[1].attack_weight;
         ai_state->mode_timer = (u8)entity->params->melee_attack_third[0];
         break;
@@ -158,7 +158,7 @@ static void Onyx_Think(Entity *entity, s32 unknown) {
         ai_state->reload_timer--;
     }
     if (!(entity->busy_flags & ENTITY_BUSY_1000) && ai_state->reload_timer == 0) {
-        ai_state->pause_timer = entity->params->ranged_attacks[0].record.unk00;
+        ai_state->pause_timer = entity->params->ranged_attacks[0].record.ranged_weight;
         ai_state->sub_timer = entity->params->melee_attacks[1].attack_weight;
         ai_state->mode_timer = (u8)entity->params->melee_attack_third[0];
     }
@@ -330,7 +330,7 @@ static void Onyx_RangedAttack0(Entity *entity) {
                 EntityAi_LaunchShots(entity, unk3D8, entity->params->near_distance, entity->params->far_distance);
             }
         }
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
@@ -389,7 +389,7 @@ static void Onyx_SwitchAttack(Entity *entity) {
             case 0:
                 first_part = 0x16;
                 part_count = 10;
-                ai_state->pause_timer = entity->params->ranged_attacks[0].record.unk00;
+                ai_state->pause_timer = entity->params->ranged_attacks[0].record.ranged_weight;
                 break;
             case 1:
                 first_part = 0xB;

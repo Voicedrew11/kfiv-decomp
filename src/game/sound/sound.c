@@ -77,7 +77,7 @@ int SoundDriver_Init(void) {
     FlushCache(0);
     sound_state = &sound_state_storage;
     sound_state->dma_src = SoundDriver_Remote(1, 0x10);
-    *(int *)sound_state->unk4D0 = 0x3FFF; // match: the int at 0x4D0; the header has six chars there
+    *(int *)sound_state->volume_and_stereo = 0x3FFF; // match: the int at 0x4D0; the header has six chars there
     SoundDriver_Remote(1, 0x30, 0x3FFF, 0x3FFF);
     sound_state->load_addr = NULL;
     sound_state->iop_buffer = SoundDriver_Remote(1, 0xA0);
@@ -86,12 +86,12 @@ int SoundDriver_Init(void) {
     sound_command_list[0] = 0;
     // match: as above
     *(char **)&sound_state->sample_area_start = *(char **)&sound_state->spu_used_end = (char *)0x5010;
-    *(u16 *)&sound_state->unk4D0[4] = 1; // match: the u16 at 0x4D4
+    *(u16 *)&sound_state->volume_and_stereo[4] = 1; // match: the u16 at 0x4D4
     sound_state->active = 0;
     voice = sound_state->voices;
     for (i = 15; i != -1; i--, voice++) {
         voice->stereo_header_block = voice->mono_header_block = voice->iop_heap = voice->sample_spu_addr = 0;
-        voice->unk1B = 0;
+        voice->voice_flags = 0;
         voice->driver_voice_id = 0;
         voice->dma_channel = 0;
         voice->sample_size = 0;
@@ -110,7 +110,7 @@ int SoundDriver_Init(void) {
     effect = (SoundEffectFields *)sound_state->effects;
     for (i = 3; i != -1; i--, effect++) {
         effect->core = -1;
-        effect->mode = effect->depth_l = effect->depth_r = effect->delay = effect->feedback = effect->unk14 = effect->unk16 = 0;
+        effect->mode = effect->depth_l = effect->depth_r = effect->delay = effect->feedback = effect->aux_level_l = effect->aux_level_r = 0;
     }
     sound_upload.active = 0;
     FlushCache(0);
@@ -309,7 +309,7 @@ void SoundDriver_SetMono(void) {
     if (sound_state->active != 0) {
         SoundDriver_Remote(1, 0x50);
     }
-    *(u16 *)&sound_state->unk4D0[4] = 0; // match: the u16 at 0x4D4; the header has six chars there
+    *(u16 *)&sound_state->volume_and_stereo[4] = 0; // match: the u16 at 0x4D4; the header has six chars there
     SoundDriver_Remote(1, 0xC0, 0);
     voice = sound_state->voices;
     for (i = 0; i < 16; i++) {
@@ -323,7 +323,7 @@ void SoundDriver_SetMono(void) {
         if (voice->mono_header_block == 0) {
             continue;
         }
-        SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, voice->mono_header_block, voice->unk1B);
+        SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, voice->mono_header_block, voice->voice_flags);
         voice++; // match: retail only steps to the next voice after a reload
     }
     bank = sound_state->banks;
@@ -335,7 +335,7 @@ void SoundDriver_SetMono(void) {
             continue;
         }
         voice = &sound_state->voices[bank->voice];
-        SoundDriver_Remote(1, 0x2070, bank->sequence_id, voice->sample_spu_addr, voice->mono_header_block, voice->unk1B, 0);
+        SoundDriver_Remote(1, 0x2070, bank->sequence_id, voice->sample_spu_addr, voice->mono_header_block, voice->voice_flags, 0);
         bank++; // match: as above
     }
     if (sound_state->active != 0) {
@@ -353,7 +353,7 @@ void SoundDriver_SetStereo(void) {
     if (sound_state->active != 0) {
         SoundDriver_Remote(1, 0x50);
     }
-    *(u16 *)&sound_state->unk4D0[4] = 1; // match: the u16 at 0x4D4; the header has six chars there
+    *(u16 *)&sound_state->volume_and_stereo[4] = 1; // match: the u16 at 0x4D4; the header has six chars there
     SoundDriver_Remote(1, 0xC0, 1);
     voice = sound_state->voices;
     for (i = 0; i < 16; i++) {
@@ -367,7 +367,7 @@ void SoundDriver_SetStereo(void) {
         if (voice->mono_header_block == 0) {
             continue;
         }
-        SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, voice->stereo_header_block, voice->unk1B);
+        SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, voice->stereo_header_block, voice->voice_flags);
         voice++; // match: retail only steps to the next voice after a reload
     }
     bank = sound_state->banks;
@@ -379,7 +379,7 @@ void SoundDriver_SetStereo(void) {
             continue;
         }
         voice = &sound_state->voices[bank->voice];
-        SoundDriver_Remote(1, 0x2070, bank->sequence_id, voice->sample_spu_addr, voice->stereo_header_block, voice->unk1B, 1);
+        SoundDriver_Remote(1, 0x2070, bank->sequence_id, voice->sample_spu_addr, voice->stereo_header_block, voice->voice_flags, 1);
         bank++; // match: as above
     }
     if (sound_state->active != 0) {
@@ -424,7 +424,7 @@ int SoundDriver_LoadVoiceFiles(int voice_id, char *header_name, char *sample_nam
     if (voice_id == -1) {
         voice_id = voice_index;
     }
-    voice->unk1B = unk1B;
+    voice->voice_flags = unk1B;
     voice->driver_voice_id = voice_id;
     size = SoundDriver_GetFileSize(header_name);
     if (size < 0) {
@@ -481,7 +481,7 @@ int SoundDriver_LoadVoiceFiles(int voice_id, char *header_name, char *sample_nam
     } else {
         block = voice->mono_header_block;
     }
-    if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, block, voice->unk1B) != 0) {
+    if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, block, voice->voice_flags) != 0) {
         SoundDriver_FreeVoice(voice_index);
         return -1;
     }
@@ -512,7 +512,7 @@ int SoundDriver_LoadVoice(int voice_id, int header_data, int header_size, int sa
         return -1;
     }
     voice->driver_voice_id = voice_id;
-    voice->unk1B = unk1B;
+    voice->voice_flags = unk1B;
     while (header_size & 0xF) {
         header_size++;
     }
@@ -561,7 +561,7 @@ int SoundDriver_LoadVoice(int voice_id, int header_data, int header_size, int sa
     } else {
         block = voice->mono_header_block;
     }
-    if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, block, voice->unk1B) != 0) {
+    if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, block, voice->voice_flags) != 0) {
         SoundDriver_FreeVoice(voice_index);
         return -1;
     }
@@ -595,7 +595,7 @@ int SoundDriver_LoadVoiceSharedSamples(int voice_id, int source_index, int heade
         return -1;
     }
     voice->driver_voice_id = voice_id;
-    voice->unk1B = unk1B;
+    voice->voice_flags = unk1B;
     while (header_size & 0xF) {
         header_size++;
     }
@@ -627,7 +627,7 @@ int SoundDriver_LoadVoiceSharedSamples(int voice_id, int source_index, int heade
     } else {
         block = voice->mono_header_block;
     }
-    if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, block, voice->unk1B) != 0) {
+    if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, block, voice->voice_flags) != 0) {
         SoundDriver_FreeVoice(voice_index);
         return -1;
     }
@@ -665,7 +665,7 @@ int SoundDriver_LoadVoiceBuffered(int voice_id, int header_data, int header_size
         return -1;
     }
     voice->driver_voice_id = voice_id;
-    voice->unk1B = unk1B;
+    voice->voice_flags = unk1B;
     while (header_size & 0xF) {
         header_size++;
     }
@@ -746,7 +746,7 @@ int SoundDriver_LoadVoiceBuffered(int voice_id, int header_data, int header_size
     } else {
         block = voice->mono_header_block;
     }
-    if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, block, voice->unk1B) != 0) {
+    if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, block, voice->voice_flags) != 0) {
         SoundDriver_FreeVoice(voice_index);
         return -1;
     }
@@ -767,7 +767,7 @@ int SoundDriver_VoiceLoadSendHeader(SoundLoadArgs *args, SoundReloadRequest *req
     int voice_index;
 
     request->voice = NULL;
-    request->unk04 = 0;
+    request->cleared_on_header_start = 0;
     request->bytes_remaining = 0;
     *(void **)&request->next_spu_addr = NULL; // match: next_spu_addr and heap_addr are stored as pointers here
     *(void **)&request->heap_addr = NULL; // match: as above
@@ -777,7 +777,7 @@ int SoundDriver_VoiceLoadSendHeader(SoundLoadArgs *args, SoundReloadRequest *req
     voice_index = args->voice_index;
     voice = &sound_state->voices[voice_index];
     voice->driver_voice_id = args->voice_index;
-    voice->unk1B = args->unk14;
+    voice->voice_flags = args->voice_flags;
     while (args->header_size & 0xF) {
         args->header_size++;
     }
@@ -811,9 +811,9 @@ int SoundDriver_VoiceLoadAllocBuffer(IopLoadRequest *request, IopLoadContext *co
     request->size = aligned;
     context->size = aligned;
     buffer->size = aligned;
-    unk18 = request->unk18;
-    buffer->unk0C = unk18;
-    context->unk0C = unk18;
+    unk18 = request->spu_dest;
+    buffer->spu_dest = unk18;
+    context->spu_dest = unk18;
     do {
         heap_size >>= 1;
     } while ((context->heap = sceSifAllocIopHeap(heap_size)) == 0);
@@ -889,7 +889,7 @@ int SoundDriver_VoiceLoadBind(s32 unused, SoundReloadRequest *request) {
             heap_src = desc->mono_header_block;
         }
         if (SoundDriver_Remote(1, 0x1010, desc->driver_voice_id, desc->sample_spu_addr, heap_src,
-                          desc->unk1B) != 0) {
+                          desc->voice_flags) != 0) {
             SoundDriver_FreeVoice(request->voice_index);
             return -1;
         }
@@ -947,7 +947,7 @@ int SoundDriver_LoadVoiceAt(int voice_index, int header_data, int header_size, i
     int sent;
     int write_addr;
 
-    voice->unk1B = unk1B;
+    voice->voice_flags = unk1B;
     voice->driver_voice_id = voice_index;
     while (header_size & 0xF) {
         header_size++;
@@ -1017,7 +1017,7 @@ int SoundDriver_LoadVoiceAt(int voice_index, int header_data, int header_size, i
     } else {
         block = voice->mono_header_block;
     }
-    if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, block, voice->unk1B) != 0) {
+    if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, block, voice->voice_flags) != 0) {
         SoundDriver_FreeVoice(voice_index);
         return -1;
     }
@@ -1048,7 +1048,7 @@ int SoundDriver_BindIopVoice(int voice_id, int header_block, int header_size, in
         return -1;
     }
     voice->driver_voice_id = voice_id;
-    voice->unk1B = unk1B;
+    voice->voice_flags = unk1B;
     voice->header_size = header_size;
     voice->stereo_header_block = header_block;
     if (header_block == 0) {
@@ -1081,7 +1081,7 @@ int SoundDriver_BindIopVoice(int voice_id, int header_block, int header_size, in
     } else {
         block = voice->mono_header_block;
     }
-    if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, block, voice->unk1B) != 0) {
+    if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, block, voice->voice_flags) != 0) {
         return -1; // match: the voice is not released here (the other loaders call SoundDriver_FreeVoice first)
     }
     FlushCache(0);
@@ -1114,7 +1114,7 @@ int SoundDriver_MoveVoiceSamples(int voice_index, char channel, u32 spu_addr) {
         return -1;
     }
     voice->sample_spu_addr = spu_addr;
-    if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, spu_addr, voice->stereo_header_block, voice->unk1B) != 0) {
+    if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, spu_addr, voice->stereo_header_block, voice->voice_flags) != 0) {
         return -1;
     }
     sent = SoundDriver_Remote(1, 0x90, voice->dma_channel, 0, voice->iop_heap, voice->sample_spu_addr, voice->sample_size);
@@ -1287,7 +1287,7 @@ int SoundDriver_CompactMemory(void) {
             } else {
                 block = voice->mono_header_block;
             }
-            if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, block, voice->unk1B) != 0) {
+            if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, block, voice->voice_flags) != 0) {
                 return -1;
             }
         } else {
@@ -1309,7 +1309,7 @@ int SoundDriver_CompactMemory(void) {
         } else {
             block = voice->mono_header_block;
         }
-        if (SoundDriver_Remote(1, 0x1010, bank->sequence_id, voice->sample_spu_addr, block, voice->unk1B) != 0) {
+        if (SoundDriver_Remote(1, 0x1010, bank->sequence_id, voice->sample_spu_addr, block, voice->voice_flags) != 0) {
             return -1;
         }
     }
@@ -1371,9 +1371,9 @@ int SoundDriver_SetVoiceMono(int voice_index) {
         SoundDriver_Remote(1, 0x50);
     }
     banks_left = 4;
-    result = (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, voice->mono_header_block, voice->unk1B) != 0) ? -1 : 0;
+    result = (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, voice->mono_header_block, voice->voice_flags) != 0) ? -1 : 0;
     while (--banks_left != -1) {
-        if (bank->voice == voice_index && SoundDriver_Remote(1, 0x2070, bank->sequence_id, voice->sample_spu_addr, voice->mono_header_block, voice->unk1B, 0) != 0) {
+        if (bank->voice == voice_index && SoundDriver_Remote(1, 0x2070, bank->sequence_id, voice->sample_spu_addr, voice->mono_header_block, voice->voice_flags, 0) != 0) {
             result = -1;
             break;
         }
@@ -1396,12 +1396,12 @@ int SoundDriver_SetVoiceStereo(int voice_index) {
     if (sound_state->active != 0) {
         SoundDriver_Remote(1, 0x50);
     }
-    if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, voice->stereo_header_block, voice->unk1B) != 0) {
+    if (SoundDriver_Remote(1, 0x1010, voice->driver_voice_id, voice->sample_spu_addr, voice->stereo_header_block, voice->voice_flags) != 0) {
         result = -1;
     }
     for (i = 4; --i != -1; bank++) {
         if (bank->voice == voice_index) {
-            if (SoundDriver_Remote(1, 0x2070, bank->sequence_id, voice->sample_spu_addr, voice->stereo_header_block, voice->unk1B, 1) != 0) {
+            if (SoundDriver_Remote(1, 0x2070, bank->sequence_id, voice->sample_spu_addr, voice->stereo_header_block, voice->voice_flags, 1) != 0) {
                 result = -1;
                 break;
             }
@@ -1460,7 +1460,7 @@ int SoundDriver_LoadSequenceFile(int bank_id, int voice_index, char *name) {
     } else {
         block = voice->mono_header_block;
     }
-    if (SoundDriver_Remote(1, 0x1010, bank->sequence_id, voice->sample_spu_addr, block, voice->unk1B) != 0) {
+    if (SoundDriver_Remote(1, 0x1010, bank->sequence_id, voice->sample_spu_addr, block, voice->voice_flags) != 0) {
         return -1;
     }
     if (SoundDriver_Remote(1, 0x2000, bank->sequence_id, bank->iop_heap) != 0) {
@@ -1522,7 +1522,7 @@ int SoundDriver_LoadSequenceStep(int bank_id, int voice_index, int data, u32 siz
         } else {
             bank_load_voice_data = bank_load_voice->mono_header_block;
         }
-        if (SoundDriver_Remote(1, 0x1010, bank_load_bank->sequence_id, bank_load_voice->sample_spu_addr, bank_load_voice_data, bank_load_voice->unk1B) != 0 ||
+        if (SoundDriver_Remote(1, 0x1010, bank_load_bank->sequence_id, bank_load_voice->sample_spu_addr, bank_load_voice_data, bank_load_voice->voice_flags) != 0 ||
             SoundDriver_Remote(1, 0x2000, bank_load_bank->sequence_id, bank_load_bank->iop_heap) != 0) {
             SoundDriver_FreeSequence(bank_load_index);
             sequence_load_step = 0;
@@ -1587,7 +1587,7 @@ int SoundDriver_LoadSequence(int bank_id, int voice_index, int data, int size) {
     } else {
         heap_src = voice->mono_header_block;
     }
-    if (SoundDriver_Remote(1, 0x1010, bank->sequence_id, voice->sample_spu_addr, heap_src, voice->unk1B) != 0 ||
+    if (SoundDriver_Remote(1, 0x1010, bank->sequence_id, voice->sample_spu_addr, heap_src, voice->voice_flags) != 0 ||
         SoundDriver_Remote(1, 0x2000, bank->sequence_id, bank->iop_heap) != 0) {
         SoundDriver_FreeSequence(free_index);
         return -1;
@@ -1635,7 +1635,7 @@ int SoundDriver_BindIopSequence(int bank_id, int voice_index, int iop_heap, int 
     } else {
         heap_src = voice->mono_header_block;
     }
-    if (SoundDriver_Remote(1, 0x1010, bank->sequence_id, voice->sample_spu_addr, heap_src, voice->unk1B) != 0) {
+    if (SoundDriver_Remote(1, 0x1010, bank->sequence_id, voice->sample_spu_addr, heap_src, voice->voice_flags) != 0) {
         return -1;
     }
     if (SoundDriver_Remote(1, 0x2000, bank->sequence_id, bank->iop_heap) != 0) {
@@ -1796,7 +1796,7 @@ int SoundDriver_NoteOn(u32 slot, int voice_index, char channel, char program, ch
         *out++ = program;
     }
     // match: the u16 at 0x4D4; the header has six chars there
-    if (*(u16 *)&sound_state->unk4D0[4] == 0 || voice->stereo_selected == 0) {
+    if (*(u16 *)&sound_state->volume_and_stereo[4] == 0 || voice->stereo_selected == 0) {
         pan = 0x3F;
     }
     *out++ = 0xF9;
@@ -1904,7 +1904,7 @@ int SoundDriver_SetNoteControl(int kind, u32 slot, int value) {
         break;
     case 1:
         // match: the u16 at 0x4D4; the header has six chars there
-        if (*(u16 *)&sound_state->unk4D0[4] == 0 || voice->stereo_selected == 0) {
+        if (*(u16 *)&sound_state->volume_and_stereo[4] == 0 || voice->stereo_selected == 0) {
             value = 0x3F;
         }
         *out++ = 0xFD;
@@ -2052,8 +2052,8 @@ int SoundDriver_AddReverb(int effect_flags, s16 param1, s16 param2, s16 param3, 
     effect->depth_r = param2;
     effect->delay = param3;
     effect->feedback = param4;
-    effect->unk14 = param5;
-    effect->unk16 = param6;
+    effect->aux_level_l = param5;
+    effect->aux_level_r = param6;
     FlushCache(0);
     return slot;
 }

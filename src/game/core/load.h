@@ -13,7 +13,7 @@ typedef struct {
     char *name_format;              /* 0x0C sprintf format of the index */
     int voice_index;                /* 0x10 the voice the load fills */
     int sequence_index;             /* 0x14 the sequence the load starts */
-    char pad18[0x0C];
+    char file_size_area[0x0C]; /* 12 bytes; holds a file size at +4 for BGM */
     int file_handle;                /* 0x24 -1 when closed */
 } LoadJob;
 
@@ -68,7 +68,7 @@ typedef struct {
 /* IopLoadContext.buffer */
 typedef struct {
     char pad00[0x0C];
-    s32 unk0C;                      /* 0x0C */
+    s32 spu_dest;                   /* 0x0C Where the samples go in sound memory */
     char pad10[0x04];
     s32 size;                       /* 0x14 */
 } IopLoadBuffer;
@@ -78,7 +78,7 @@ typedef struct {
     char pad00[0x10];
     s32 size;                       /* 0x10 rounded up to 16 */
     char pad14[0x04];
-    s32 unk18;                      /* 0x18 */
+    s32 spu_dest;                   /* 0x18 Where the samples go in sound memory */
 } IopLoadRequest;
 
 /* an IOP heap block load: the sizes it settled on and the heap it got */
@@ -86,7 +86,7 @@ typedef struct {
     IopLoadBuffer *buffer;          /* 0x00 */
     char pad04[0x04];
     s32 size;                       /* 0x08 */
-    s32 unk0C;                      /* 0x0C */
+    s32 spu_dest;                   /* 0x0C Where the samples go in sound memory */
     s32 heap;                       /* 0x10 */
     char pad14[0x04];
     s32 heap_size;                  /* 0x18 */
@@ -128,8 +128,8 @@ typedef struct {
 typedef struct {
     char pad00[0x04];
     s32 payload_offset;             /* 0x04 from the header to the chunk's data */
-    s32 unk08;                      /* 0x08 the next chunk is unk08 + unk0C bytes after this header */
-    s32 unk0C;                      /* 0x0C */
+    s32 chunk_data_size;            /* 0x08 Bytes after the header, added to the stride */
+    s32 chunk_padding_size;         /* 0x0C Bytes after the header, added to the stride */
 } PackageChunk;
 
 /* a loaded key item model (the buffer of a key_item_model_loads[] upload, Menu_UpdateKeyItems) */

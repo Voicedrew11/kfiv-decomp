@@ -186,27 +186,27 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
             aims->effect_angles[2] = 0.0f;
             EntityEvent_StartEffectAtPoint((char **)entity, rand() % 3 + 0x21F, 4, (int)aims->effect_angles);
             frames = entity->params->far_distance;
-            entity->params->melee_attacks[0].hit_parts[0].unk00.unk00[8] = frames;
-            entity->params->melee_attacks[0].hit_parts[1].unk00.unk00[8] = frames;
-            entity->params->melee_attacks[0].hit_parts[2].unk00.unk00[8] = frames;
-            entity->params->melee_attacks[1].hit_parts[0].unk00.unk00[8] = frames;
-            entity->params->melee_attacks[1].hit_parts[1].unk00.unk00[8] = frames;
-            entity->params->melee_attacks[1].hit_parts[2].unk00.unk00[8] = frames;
-            ((EntityParamsUnk240 *)entity->params->melee_attack_third)->hit_parts[0].unk00.unk00[8] = frames;
-            ((EntityParamsUnk240 *)entity->params->melee_attack_third)->hit_parts[1].unk00.unk00[8] = frames;
-            ((EntityParamsUnk240 *)entity->params->melee_attack_third)->hit_parts[2].unk00.unk00[8] = frames;
+            entity->params->melee_attacks[0].hit_parts[0].strengths.element_strengths[8] = frames;
+            entity->params->melee_attacks[0].hit_parts[1].strengths.element_strengths[8] = frames;
+            entity->params->melee_attacks[0].hit_parts[2].strengths.element_strengths[8] = frames;
+            entity->params->melee_attacks[1].hit_parts[0].strengths.element_strengths[8] = frames;
+            entity->params->melee_attacks[1].hit_parts[1].strengths.element_strengths[8] = frames;
+            entity->params->melee_attacks[1].hit_parts[2].strengths.element_strengths[8] = frames;
+            ((EntityParamsUnk240 *)entity->params->melee_attack_third)->hit_parts[0].strengths.element_strengths[8] = frames;
+            ((EntityParamsUnk240 *)entity->params->melee_attack_third)->hit_parts[1].strengths.element_strengths[8] = frames;
+            ((EntityParamsUnk240 *)entity->params->melee_attack_third)->hit_parts[2].strengths.element_strengths[8] = frames;
         }
         ai_state->pause_timer--;
     } else {
-        entity->params->melee_attacks[0].hit_parts[0].unk00.unk00[8] = 0;
-        entity->params->melee_attacks[0].hit_parts[1].unk00.unk00[8] = 0;
-        entity->params->melee_attacks[0].hit_parts[2].unk00.unk00[8] = 0;
-        entity->params->melee_attacks[1].hit_parts[0].unk00.unk00[8] = 0;
-        entity->params->melee_attacks[1].hit_parts[1].unk00.unk00[8] = 0;
-        entity->params->melee_attacks[1].hit_parts[2].unk00.unk00[8] = 0;
-        ((EntityParamsUnk240 *)entity->params->melee_attack_third)->hit_parts[0].unk00.unk00[8] = 0;
-        ((EntityParamsUnk240 *)entity->params->melee_attack_third)->hit_parts[1].unk00.unk00[8] = 0;
-        ((EntityParamsUnk240 *)entity->params->melee_attack_third)->hit_parts[2].unk00.unk00[8] = 0;
+        entity->params->melee_attacks[0].hit_parts[0].strengths.element_strengths[8] = 0;
+        entity->params->melee_attacks[0].hit_parts[1].strengths.element_strengths[8] = 0;
+        entity->params->melee_attacks[0].hit_parts[2].strengths.element_strengths[8] = 0;
+        entity->params->melee_attacks[1].hit_parts[0].strengths.element_strengths[8] = 0;
+        entity->params->melee_attacks[1].hit_parts[1].strengths.element_strengths[8] = 0;
+        entity->params->melee_attacks[1].hit_parts[2].strengths.element_strengths[8] = 0;
+        ((EntityParamsUnk240 *)entity->params->melee_attack_third)->hit_parts[0].strengths.element_strengths[8] = 0;
+        ((EntityParamsUnk240 *)entity->params->melee_attack_third)->hit_parts[1].strengths.element_strengths[8] = 0;
+        ((EntityParamsUnk240 *)entity->params->melee_attack_third)->hit_parts[2].strengths.element_strengths[8] = 0;
     }
     if (ai_state->mode_timer > 0) {
         ai_state->mode_timer--;
@@ -304,10 +304,10 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
             ai_state->move_choice = 0;
             if (entity->distance_to_player > 500.0f) {
                 entity->action_timer = rand() % 30 + 60;
-                work->unk6E = 1;
+                work->should_run = 1;
             } else {
                 entity->action_timer = rand() % 30 + 60;
-                work->unk6E = 0;
+                work->should_run = 0;
             }
             break;
         case 2:
@@ -331,7 +331,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
             if (entity->move_command == 0) {
                 ai_state->turn_in_place = 0;
             }
-        } else if (work->unk6E != 0) {
+        } else if (work->should_run != 0) {
             if (side > 0) {
                 entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
             } else if (side < 0) {
@@ -627,7 +627,7 @@ static void DarkKnight_RangedAttack0(Entity *entity) {
         EntityAi_LaunchShots(entity, unk3D8,
                       (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8,
                       entity->model->level_tables->frame);
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
@@ -685,7 +685,7 @@ static void DarkKnight_RangedAttack1(Entity *entity) {
         Vector_Copy(direction, entity->model->rotation);
         direction[1] -= 3.1415927f;
         EntityShot_Launch(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction);
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
@@ -836,7 +836,7 @@ static s32 DarkKnight_PickAttack(Entity *entity) {
             if (!EntityAi_CanUseRanged(entity, slot)) {
                 chance = 0;
             } else {
-                chance = (entity->attack_weights[i] * ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[slot].record.unk00) >> 6;
+                chance = (entity->attack_weights[i] * ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[slot].record.ranged_weight) >> 6;
             }
         }
         chances[i] = chance;

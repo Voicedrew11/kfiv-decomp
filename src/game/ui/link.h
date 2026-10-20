@@ -5,7 +5,7 @@
 #include "common.h"
 
 typedef struct LinkNode {
-    s64 unk00;                      /* 0x00 */
+    s64 reserved_header;            /* 0x00 64-bit header word, only zeroed */
     s32 file_handle;                /* 0x08 file handle of the file the node loads, -1 when none */
     void *pool_node;                /* 0x0C */
     struct LinkNode *target_node;   /* 0x10 the node this load is for: its model file is read and the buffer goes to it */

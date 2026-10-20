@@ -62,7 +62,7 @@ int LinkedPoint_Allocate(f32 duration, void *start, void *end, u8 kind_a, int ki
     Vector_Copy(&point->target, end);
     point->kind_a = kind_a;
     point->kind_b = kind_b;
-    point->unk32 = owner;
+    point->owner_id = owner;
     point->target.w = 1.0f;
     point->duration = duration;
     point->position.w = 1.0f / duration;
@@ -162,7 +162,7 @@ void LinkedPoint_FindHitsForOwner(ModelInstance *model, int owner) {
     model->hit_count = 0;
     for (i = 1; i >= 0; i--) {
         for (node = linked_point_heads[i]; node != NULL; node = node->next) {
-            if (node->unk32 != -1 && node->unk32 != owner) {
+            if (node->owner_id != -1 && node->owner_id != owner) {
                 continue;
             }
             sceVu0SubVector(delta, &model->position, node);
@@ -193,7 +193,7 @@ void LinkedPoint_FindHitsForMapDraw(MapDrawRecord *record, ModelInstance *model)
             if (taken[node->list_index] >= 2) {
                 continue;
             }
-            if (node->unk32 != -1 && node->unk32 != record->linked_point_owner) {
+            if (node->owner_id != -1 && node->owner_id != record->linked_point_owner) {
                 continue;
             }
             reach = node->duration;

@@ -1017,7 +1017,7 @@ void Game_DrawHazeLayersShifted(void) {
     texture_height_log2 = 9;
     tex0_low = texture_base | 0x28028000L;
     sprite.tex0 = tex0_low | ((u64)texture_height_log2 << 30);
-    sprite.unk08 = 0x60L;
+    sprite.gif_register_list = 0x60L;
     sprite.prim = 0x156;
     sprite.rgba[0] = 0x80;
     sprite.rgba[1] = 0x80;
@@ -1157,7 +1157,7 @@ void Game_BlendScreenOffsetDown(void) {
     Packet_EndGsRegisters();
     texture_height_log2 = 9;
     tex0_low = texture_base | 0x28028000L;
-    sprite.unk08 = 0;
+    sprite.gif_register_list = 0;
     sprite.tex0 = tex0_low | ((u64)texture_height_log2 << 30);
     sprite.rgba[0] = 0x80;
     sprite.rgba[1] = 0x80;
@@ -1210,7 +1210,7 @@ void Game_BlendScreenOffsetUpDown(void) {
 
     texture_height_log2 = 9;
     tex0_low = texture_base | 0x28028000L;
-    sprite.unk08 = 0;
+    sprite.gif_register_list = 0;
     sprite.tex0 = tex0_low | ((u64)texture_height_log2 << 30);
     sprite.rgba[0] = 0x80;
     sprite.rgba[1] = 0x80;
@@ -1465,7 +1465,7 @@ void Game_ShiftScreenByViewTurn(void) {
     sprite_packet.prim = 0x116;
     sprite_packet.tex0 = 0x28028000L | texture_base;
     sprite_packet.tex0 |= 0xA400L << 20;
-    sprite_packet.unk08 = 0;
+    sprite_packet.gif_register_list = 0;
     sprite_packet.rgba[0] = 0x80;
     sprite_packet.rgba[1] = 0x80;
     sprite_packet.rgba[2] = 0x80;
@@ -1584,7 +1584,7 @@ void Game_ShiftScreenByFocusTurn(void) {
 
     sprite_packet.prim = 0x116;
     tex0_low = texture_base | 0x28028000L;
-    sprite_packet.unk08 = 0;
+    sprite_packet.gif_register_list = 0;
     sprite_packet.rgba[0] = 0x80;
     sprite_packet.rgba[1] = 0x80;
     sprite_packet.rgba[2] = 0x80;
@@ -1655,7 +1655,7 @@ void Game_ApplyBrightness(int brightness) {
     Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
     Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
     Packet_EndGsRegisters();
-    sprite.unk08 = 0;
+    sprite.gif_register_list = 0;
     tex0_low = texture_base | 0x28028000L;
     texture_height_log2 = 9;
     sprite.tex0 = tex0_low | ((u64)texture_height_log2 << 30);
@@ -1707,7 +1707,7 @@ void Game_TintScreen(int red, int green, int blue) {
     Packet_EndGsRegisters();
 
     sprite_packet.tex0 = (0x28028000L | texture_base) | (0x9000L << 18);
-    sprite_packet.unk08 = 0;
+    sprite_packet.gif_register_list = 0;
     sprite_packet.prim = 0x116;
     sprite_packet.rgba[0] = red;
     sprite_packet.rgba[1] = green;

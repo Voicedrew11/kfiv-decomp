@@ -93,11 +93,11 @@ s32 SaveCard_Open(void) {
     File_Read(file_handle, icon_file, 0xDBF0);
     File_Close(file_handle);
     card_records[0].icon_data = icon_file;
-    card_records[0].unk10 = icon_file;
-    card_records[0].unk14 = icon_file;
+    card_records[0].icon_data_copy = icon_file;
+    card_records[0].icon_data_backup = icon_file;
     card_records[1].icon_data = icon_file;
-    card_records[1].unk10 = icon_file;
-    card_records[1].unk14 = icon_file;
+    card_records[1].icon_data_copy = icon_file;
+    card_records[1].icon_data_backup = icon_file;
     memset(dir_entries, 0, 0x2C0);
     memset(icon_sys, 0, 0x3C4);
     memset((void *)save_infos, 0, 0x480);

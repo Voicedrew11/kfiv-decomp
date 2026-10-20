@@ -64,8 +64,8 @@ void MapObject_SetupItemHolder(MapObject *object) {
 void MapObject_SpawnHeldItem(MapObject *object) {
     s64 drop_params[2];
 
-    drop_params[0] = object_item_scale.unk00;
-    drop_params[1] = object_item_scale.unk08;
+    drop_params[0] = object_item_scale.low_doubleword;
+    drop_params[1] = object_item_scale.high_doubleword;
     if (object->source->kind_param_0 != 0) {
         if (!(object->state_flags & MAP_OBJECT_EMPTIED)) {
             map_object_update_hooks[object->definition->kind](object);
@@ -84,8 +84,8 @@ void MapObject_StartChest(MapObject *object) {
     ModelInstance *model;
     MapObjectUnk08 *source;
 
-    drop_params[0] = object_item_scale.unk00;
-    drop_params[1] = object_item_scale.unk08;
+    drop_params[0] = object_item_scale.low_doubleword;
+    drop_params[1] = object_item_scale.high_doubleword;
     if (!(object->state_flags & MAP_OBJECT_ON)) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;

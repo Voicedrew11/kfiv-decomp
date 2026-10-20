@@ -55,8 +55,8 @@ typedef struct {
     char load_failed;               /* 0x07 */
     s32 *save_data;                 /* 0x08 the save image to write or to read into; its first word is its size */
     void *icon_data;                /* 0x0C the icon file */
-    void *unk10;                    /* 0x10 the icon file again; never read */
-    void *unk14;                    /* 0x14 */
+    void *icon_data_copy;           /* 0x10 Copy of the icon file pointer, never read */
+    void *icon_data_backup;         /* 0x14 Second copy of the icon file pointer, never read */
     s32 free_clusters;              /* 0x18 */
     s32 save_data_size;             /* 0x1C */
     CardStatus status;              /* 0x20 */

@@ -1041,10 +1041,10 @@ void ScriptCmd_SetMapFog(ScriptFogCommand *command) {
         span = far - near;
         // match: the block's offset is added to the address as a number
         block = (MapFogBlockValues *)((block_index << 5) + (u32)slot->fog_blocks);
-        block->unk10 = (s64)((blue << 16) + (green << 8) + red);
-        block->unk00 = block->unk04 = 0.0f;
-        block->unk0C = far * near * (far_value - near_value) / span;
-        block->unk08 = ((near_value - far_value) * (far + near) / span + (near_value + far_value)) * 0.5f;
+        block->fog_colour = (s64)((blue << 16) + (green << 8) + red);
+        block->always_zero_a = block->always_zero_b = 0.0f;
+        block->fog_inverse_depth_scale = far * near * (far_value - near_value) / span;
+        block->fog_base_value = ((near_value - far_value) * (far + near) / span + (near_value + far_value)) * 0.5f;
     }
     command->active = 0;
 }

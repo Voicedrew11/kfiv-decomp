@@ -2359,7 +2359,7 @@ f32 EntityCollision_DistanceToPropFloor(void *prop_arg, void *position_arg) {
     s32 j;
 
     result = lowest = 3.4028235e38f;
-    if (prop == NULL || prop->unk32 == 0xFFFF || prop->model == NULL || prop->model->strips == NULL) {
+    if (prop == NULL || prop->collision_strip_index == 0xFFFF || prop->model == NULL || prop->model->strips == NULL) {
         return lowest;
     }
     found = FALSE;
@@ -2404,7 +2404,7 @@ s32 EntityCollision_RayProp(void *prop_arg, f32 *origin, f32 *direction, f32 len
     s32 i;
     s32 j;
 
-    if (prop == NULL || prop->unk32 == 0xFFFF || prop->model == NULL || prop->model->strips == NULL) {
+    if (prop == NULL || prop->collision_strip_index == 0xFFFF || prop->model == NULL || prop->model->strips == NULL) {
         return 0;
     }
     kind = 0;

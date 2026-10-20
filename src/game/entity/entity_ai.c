@@ -178,7 +178,7 @@ static s32 EntityAi_CheckMeleeAilment(Entity *entity, EntityParamsUnk240 *record
     if ((frame_min < record->hit_parts[index].first_frame && frame_max < record->hit_parts[index].first_frame) || (record->hit_parts[index].last_frame < frame_min && record->hit_parts[index].last_frame < frame_max)) {
         return 0;
     }
-    return EntityAim_AilPlayerInArc(&record->hit_parts[index].unk12, model->position, record->hit_parts[index].half_angle_deg * 0.017453292f, entity->collision_height, record->hit_parts[index].radius_bonus, wrapped);
+    return EntityAim_AilPlayerInArc(&record->hit_parts[index].ailment_chances, model->position, record->hit_parts[index].half_angle_deg * 0.017453292f, entity->collision_height, record->hit_parts[index].radius_bonus, wrapped);
 }
 
 /* Hit check of one part of a melee record: turns the model's heading by the record's angle (mirrored when
@@ -230,10 +230,10 @@ s32 EntityAi_SendMeleeHit(Entity *entity, EntityParamsUnk240 *record, s32 index,
     request.owner = entity;
     request.shape = 3;
     request.target_mask = 1;
-    request.unk50 = record->hit_parts[index].unk00;
-    request.unk62 = record->hit_parts[index].unk12;
+    request.strengths = record->hit_parts[index].strengths;
+    request.ailment_chances = record->hit_parts[index].ailment_chances;
     request.hit_armor_part = record->wear_armour_part;
-    request.knockback = record->hit_parts[index].unk1E & 1;
+    request.knockback = record->hit_parts[index].hit_flags & 1;
     if ((ENTITY_PART_FLAGS(&record->hit_parts[index])->flags >> 1) & 1) {
         request.mp_damage = record->hit_parts[index].mp_damage;
     }
@@ -250,9 +250,9 @@ int EntityAi_LaunchShot(Entity *entity, int effect_id, void *origin, void *angle
     EntityUnk1B1390 *shot;
 
     shot = Shot_Alloc();
-    shot->unk22 = shot->unk20 = 0;
-    shot->unk00 = 1;
-    shot->unk28 = entity->params->unk238;
+    shot->player_magic = shot->player_power = 0;
+    shot->is_magic_shot = 1;
+    shot->shot_params = entity->params->shot_params;
     return Attack_LaunchMagicEffect((u16)effect_id, shot, origin, angles, entity);
 }
 
@@ -441,15 +441,15 @@ s32 EntityAi_ShouldRespawn(Entity *entity) {
         if ((entity->spawn_info->spawn_flags & (0xC000L << 45)) == (0x8000L << 44)) {
             return TRUE;
         }
-        if (ENTITY_FLAG_BITS(entity)->pad8) {
+        if (ENTITY_FLAG_BITS(entity)->respawn_roll_done) {
             return FALSE;
         }
-        ENTITY_FLAG_BITS(entity)->pad8 = TRUE;
+        ENTITY_FLAG_BITS(entity)->respawn_roll_done = TRUE;
         if (rand() % 100 < entity->spawn_info->respawn_chance) {
             return TRUE;
         }
     } else {
-        ENTITY_FLAG_BITS(entity)->pad8 = FALSE;
+        ENTITY_FLAG_BITS(entity)->respawn_roll_done = FALSE;
     }
     return FALSE;
 }
@@ -727,7 +727,7 @@ static int EntityAi_HasMeleeAttack(Entity *entity) {
 static int EntityAi_HasRangedAttack(Entity *entity) {
     EntityParams *params = entity->params;
 
-    if (params->ranged_attacks[0].record.unk00 != 0 || ENTITY_PARAMS_UNK3D8(params, 1)->unk00 != 0 || ENTITY_PARAMS_UNK3D8(params, 2)->unk00 != 0) {
+    if (params->ranged_attacks[0].record.ranged_weight != 0 || ENTITY_PARAMS_UNK3D8(params, 1)->ranged_weight != 0 || ENTITY_PARAMS_UNK3D8(params, 2)->ranged_weight != 0) {
         return 1;
     }
     return 0;
@@ -973,13 +973,13 @@ s32 EntityAi_CanAttack(Entity *entity) {
         }
     }
     if (top <= player_state.position.y && player_state.position.y - 230.0f <= bottom) {
-        if (entity->params->ranged_attacks[0].record.unk00 != 0 && angle_off[3] < entity->params->ranged_attacks[0].widest_angle && reach[3] <= entity->distance_to_player && entity->distance_to_player < reach[9]) {
+        if (entity->params->ranged_attacks[0].record.ranged_weight != 0 && angle_off[3] < entity->params->ranged_attacks[0].widest_angle && reach[3] <= entity->distance_to_player && entity->distance_to_player < reach[9]) {
             return 1;
         }
-        if (entity->params->ranged_attacks[1].record.unk00 != 0 && angle_off[4] < entity->params->ranged_attacks[1].widest_angle && reach[4] <= entity->distance_to_player && entity->distance_to_player < reach[10]) {
+        if (entity->params->ranged_attacks[1].record.ranged_weight != 0 && angle_off[4] < entity->params->ranged_attacks[1].widest_angle && reach[4] <= entity->distance_to_player && entity->distance_to_player < reach[10]) {
             return 1;
         }
-        if (entity->params->ranged_attacks[2].record.unk00 != 0 && angle_off[5] < entity->params->ranged_attacks[2].widest_angle && reach[5] <= entity->distance_to_player && entity->distance_to_player < reach[11]) {
+        if (entity->params->ranged_attacks[2].record.ranged_weight != 0 && angle_off[5] < entity->params->ranged_attacks[2].widest_angle && reach[5] <= entity->distance_to_player && entity->distance_to_player < reach[11]) {
             return 1;
         }
     }
@@ -1452,13 +1452,13 @@ s32 EntityAi_CanShoot(Entity *entity) {
     reach[4] = (range < entity->params->ranged_attacks[1].reach_max ? range : entity->params->ranged_attacks[1].reach_max) + entity->radius + 100.0f;
     reach[5] = (range < entity->params->ranged_attacks[2].reach_max ? range : entity->params->ranged_attacks[2].reach_max) + entity->radius + 100.0f;
     if (top <= player_state.position.y && player_state.position.y - 230.0f <= bottom) {
-        if (entity->params->ranged_attacks[0].record.unk00 != 0 && angle_off[0] < entity->params->ranged_attacks[0].widest_angle && reach[0] <= entity->distance_to_player && entity->distance_to_player < reach[3]) {
+        if (entity->params->ranged_attacks[0].record.ranged_weight != 0 && angle_off[0] < entity->params->ranged_attacks[0].widest_angle && reach[0] <= entity->distance_to_player && entity->distance_to_player < reach[3]) {
             return 1;
         }
-        if (entity->params->ranged_attacks[1].record.unk00 != 0 && angle_off[1] < entity->params->ranged_attacks[1].widest_angle && reach[1] <= entity->distance_to_player && entity->distance_to_player < reach[4]) {
+        if (entity->params->ranged_attacks[1].record.ranged_weight != 0 && angle_off[1] < entity->params->ranged_attacks[1].widest_angle && reach[1] <= entity->distance_to_player && entity->distance_to_player < reach[4]) {
             return 1;
         }
-        if (entity->params->ranged_attacks[2].record.unk00 != 0 && angle_off[2] < entity->params->ranged_attacks[2].widest_angle && reach[2] <= entity->distance_to_player && entity->distance_to_player < reach[5]) {
+        if (entity->params->ranged_attacks[2].record.ranged_weight != 0 && angle_off[2] < entity->params->ranged_attacks[2].widest_angle && reach[2] <= entity->distance_to_player && entity->distance_to_player < reach[5]) {
             return 1;
         }
     }
@@ -1582,9 +1582,9 @@ static int EntityAi_InRangedDistance(Entity *entity) {
     window[3] = (reach < entity->params->ranged_attacks[0].reach_max ? reach : entity->params->ranged_attacks[0].reach_max) + entity->radius + 100.0f;
     window[4] = (reach < entity->params->ranged_attacks[1].reach_max ? reach : entity->params->ranged_attacks[1].reach_max) + entity->radius + 100.0f;
     window[5] = (reach < params->ranged_attacks[2].reach_max ? reach : params->ranged_attacks[2].reach_max) + entity->radius + 100.0f;
-    if ((params->ranged_attacks[0].record.unk00 != 0 && window[0] <= entity->distance_to_player && entity->distance_to_player < window[3]) ||
-        (params->ranged_attacks[1].record.unk00 != 0 && window[1] <= entity->distance_to_player && entity->distance_to_player < window[4]) ||
-        (params->ranged_attacks[2].record.unk00 != 0 && window[2] <= entity->distance_to_player && entity->distance_to_player < window[5])) {
+    if ((params->ranged_attacks[0].record.ranged_weight != 0 && window[0] <= entity->distance_to_player && entity->distance_to_player < window[3]) ||
+        (params->ranged_attacks[1].record.ranged_weight != 0 && window[1] <= entity->distance_to_player && entity->distance_to_player < window[4]) ||
+        (params->ranged_attacks[2].record.ranged_weight != 0 && window[2] <= entity->distance_to_player && entity->distance_to_player < window[5])) {
         return 1;
     }
     return 0;

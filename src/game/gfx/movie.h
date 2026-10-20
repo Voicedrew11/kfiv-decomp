@@ -99,7 +99,7 @@ typedef struct {
     void *out_pictures;             /* 0x28 five MovieOutPicture */
     void *out_tags;                 /* 0x2C five MovieOutTag */
     void *time_stamps;              /* 0x30 0x3C00 bytes, 0x280 MovieTimeStamp */
-    void *unk34;                    /* 0x34 0x100 bytes, not used */
+    void *spare_buffer;             /* 0x34 0x100-byte buffer allocated, never used */
     s32 read_buffer;                /* 0x38 the MovieReadBuffer (MOVIE_READ_BUFFER) */
     char pad3C[0x04];
     s32 decode_thread;              /* 0x40 thread id */

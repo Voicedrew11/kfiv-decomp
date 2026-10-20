@@ -183,7 +183,7 @@ void Entity_ResetToSpawn(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bits2 = 0;
     ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit15 = FALSE;
-    ENTITY_FLAG_BITS(entity)->pad8 = FALSE;
+    ENTITY_FLAG_BITS(entity)->respawn_roll_done = FALSE;
     ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit19 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit20 = FALSE;
@@ -306,7 +306,7 @@ void Entity_UpdateAll(void) {
         if (ENTITY_FLAG_BITS(entity)->bit16) {
             entity->ailment_1_frames = 0;
             entity->ailment_2_frames = 0;
-            ENTITY_FLAG_BITS(entity)->pad40 = FALSE;
+            ENTITY_FLAG_BITS(entity)->last_hit_knockback = FALSE;
             entity->ailment_3_frames = 0;
             entity->ailment_4_frames = 0;
         }
@@ -348,7 +348,7 @@ void Entity_UpdateAll(void) {
             if (entity->params->hit_points < entity->last_hit_damage) {
                 entity->last_hit_damage = entity->params->hit_points;
             }
-            if (ENTITY_FLAG_BITS(entity)->pad40) {
+            if (ENTITY_FLAG_BITS(entity)->last_hit_knockback) {
                 entity->knockback_speed = (f32)entity->last_hit_damage * 75.0f / (f32)entity->params->hit_points;
                 entity->hit_flash_frames = 6;
             } else {

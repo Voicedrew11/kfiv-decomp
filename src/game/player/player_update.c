@@ -833,8 +833,8 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             request.pitch = player_state.rotation.x;
             request.half_pitch = def->swing_pitch_arc_degrees * 0.5f * 0.017453292f;
             request.target_mask = 0x3E;
-            *(PlayerShotStats *)&request.unk50 = player_state.attack_stats;
-            *(PlayerItemRates *)&request.unk62 = player_state.ailment_attack_rates;
+            *(PlayerShotStats *)&request.strengths = player_state.attack_stats;
+            *(PlayerItemRates *)&request.ailment_chances = player_state.ailment_attack_rates;
             request.map_object_damage_multiplier = def->map_object_damage_multiplier;
             request.double_hit_chance_percent = def->double_hit_chance_percent;
             request.lowest_y = player_state.position.y - 230.0f - 50.0f;
@@ -874,11 +874,11 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
                 swing_magic_frames = def->second_magic_effect_frames;
             }
         }
-        if (player_state.magic1_state != 0 && !player_state.magic1_motion_reached && def->unk46 != 0xFFFF &&
+        if (player_state.magic1_state != 0 && !player_state.magic1_motion_reached && def->first_magic_motion_id != 0xFFFF &&
             MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->first_magic_latch_frame) {
             player_state.magic1_motion_reached = 1;
         }
-        if (player_state.magic2_state != 0 && !player_state.magic2_motion_reached && def->unk56 != 0xFFFF &&
+        if (player_state.magic2_state != 0 && !player_state.magic2_motion_reached && def->second_magic_motion_id != 0xFFFF &&
             MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->second_magic_latch_frame) {
             player_state.magic1_motion_reached = 1; // match: bit 1 again, though bit 2 was tested
         }
@@ -968,8 +968,8 @@ void Player_DrawBow(u16 held, u16 pressed) {
             item_shot->attack_request = &bow_shot_requests[bow_request_ring_index];
             bow_request_ring_index = (bow_request_ring_index + 1) % 32;
             memset(item_shot->attack_request, 0, sizeof(Unk1B1470Request));
-            *(PlayerShotStats *)&SHOT_REQUEST->unk50 = player_state.attack_stats;
-            *(PlayerItemRates *)&SHOT_REQUEST->unk62 = player_state.ailment_attack_rates;
+            *(PlayerShotStats *)&SHOT_REQUEST->strengths = player_state.attack_stats;
+            *(PlayerItemRates *)&SHOT_REQUEST->ailment_chances = player_state.ailment_attack_rates;
             SHOT_REQUEST->map_object_damage_multiplier = def->map_object_damage_multiplier;
             SHOT_REQUEST->double_hit_chance_percent = def->double_hit_chance_percent;
             if (MODEL_CHANNEL(WEAPON_MODEL)->frame != 0) {
@@ -1594,10 +1594,10 @@ void Player_MoveByOffset(f32 *offset) {
     Vector_Add(&player_previous.position, &player_previous.position, offset);
     player_state.airborne_start_y += offset[1];
     player_state.water_surface_y += offset[1];
-    player_state.unk214 += offset[1];
+    player_state.collision_base_y += offset[1];
     player_previous.airborne_start_y += offset[1];
     player_previous.water_surface_y += offset[1];
-    player_previous.unk214 += offset[1];
+    player_previous.collision_base_y += offset[1];
 }
 
 /* Stops the player's walking, turning and looking speeds, the stride and the head bob. */

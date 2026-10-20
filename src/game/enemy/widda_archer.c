@@ -162,7 +162,7 @@ static void WiddaArcher_PitchPartToPlayer(Entity *entity) {
             pitch = -0.87266463f;
         }
         EntityMath_EaseAngleToward(&ai_state->heading_speed, pitch, 5.0f);
-        part->unk50[0] = ai_state->heading_speed;
+        part->part_angles[0] = ai_state->heading_speed;
     }
 }
 
@@ -182,10 +182,10 @@ static void WiddaArcher_AimPartsAtTarget(Entity *entity) {
     f32 yaw_to_target;
 
     if (entity->target == NULL || entity->busy_flags != 0) {
-        ai_state->part_angle_x = parts[30].unk50[0];
-        ai_state->part_angle_y = parts[30].unk50[1];
-        ai_state->part_angle_z = parts[31].unk50[0];
-        ai_state->pitch_speed = parts[31].unk50[1];
+        ai_state->part_angle_x = parts[30].part_angles[0];
+        ai_state->part_angle_y = parts[30].part_angles[1];
+        ai_state->part_angle_z = parts[31].part_angles[0];
+        ai_state->pitch_speed = parts[31].part_angles[1];
     } else {
         pitch = atan2f(player_state.position[1] - entity->model->position[1], entity->distance_to_player);
         pitch_limit = 0.5235988f;
@@ -197,8 +197,8 @@ static void WiddaArcher_AimPartsAtTarget(Entity *entity) {
         half_pitch = pitch * 0.5f;
         EntityMath_EaseAngleToward(&ai_state->part_angle_x, half_pitch, 10.0f);
         EntityMath_EaseAngleToward(&ai_state->part_angle_z, half_pitch, 10.0f);
-        parts[20].unk50[0] = ai_state->part_angle_x;
-        parts[21].unk50[0] = ai_state->part_angle_z;
+        parts[20].part_angles[0] = ai_state->part_angle_x;
+        parts[21].part_angles[0] = ai_state->part_angle_z;
         yaw_to_target = EntityMath_HeadingTo(entity->model->position, entity->target);
         yaw = EntityMath_AngleDifference(entity->model->rotation[1], yaw_to_target);
         yaw_limit = 0.6981317f;
@@ -210,8 +210,8 @@ static void WiddaArcher_AimPartsAtTarget(Entity *entity) {
         half_yaw = yaw * 0.5f;
         EntityMath_EaseAngleToward(&ai_state->part_angle_y, half_yaw, 10.0f);
         EntityMath_EaseAngleToward(&ai_state->pitch_speed, half_yaw, 10.0f);
-        parts[20].unk50[1] = ai_state->part_angle_y;
-        parts[21].unk50[1] = ai_state->pitch_speed;
+        parts[20].part_angles[1] = ai_state->part_angle_y;
+        parts[21].part_angles[1] = ai_state->pitch_speed;
     }
 }
 
@@ -222,9 +222,9 @@ static void WiddaArcher_Think(Entity *entity, s32 unknown) {
     if (entity->model->level_tables->blend_left == 0 &&
         ((entity->animation_index == 0x17 && entity->model->level_tables->frame >= 7 && entity->model->level_tables->frame < 0x24) ||
          (entity->animation_index == 0x18 && entity->model->level_tables->frame >= 0x19 && entity->model->level_tables->frame < 0x32))) {
-        ((EntityModelPart80 *)entity->model->parts)[29].unk68 |= 0x8000L << 25;
+        ((EntityModelPart80 *)entity->model->parts)[29].part_flags |= 0x8000L << 25;
     } else {
-        ((EntityModelPart80 *)entity->model->parts)[29].unk68 &= ~(0x8000L << 25);
+        ((EntityModelPart80 *)entity->model->parts)[29].part_flags &= ~(0x8000L << 25);
     }
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
@@ -367,7 +367,7 @@ static void WiddaArcher_RangedAttack(Entity *entity) {
         Vector_Copy(target, player_state.position);
         target[1] -= 190.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, 0.17453294f, 0.17453294f);
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
@@ -394,9 +394,9 @@ static void WiddaArcher_ThinkUseMapObject(Entity *entity, s32 unknown) {
     if (entity->model->level_tables->blend_left == 0 &&
         ((entity->animation_index == 0x17 && entity->model->level_tables->frame >= 7 && entity->model->level_tables->frame < 0x24) ||
          (entity->animation_index == 0x18 && entity->model->level_tables->frame >= 0x19 && entity->model->level_tables->frame < 0x32))) {
-        ((EntityModelPart80 *)entity->model->parts)[29].unk68 |= 0x8000L << 25;
+        ((EntityModelPart80 *)entity->model->parts)[29].part_flags |= 0x8000L << 25;
     } else {
-        ((EntityModelPart80 *)entity->model->parts)[29].unk68 &= ~(0x8000L << 25);
+        ((EntityModelPart80 *)entity->model->parts)[29].part_flags &= ~(0x8000L << 25);
     }
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);

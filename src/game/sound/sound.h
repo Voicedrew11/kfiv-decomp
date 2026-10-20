@@ -18,7 +18,7 @@ typedef struct {
     int sample_size;                /* 0x14 size of the block at iop_heap */
     s16 driver_voice_id;            /* 0x18 the driver's id for the voice */
     char dma_channel;               /* 0x1A the transfer channel of the samples (commands 0x80, 0x90) */
-    char unk1B;                     /* 0x1B */
+    char voice_flags;               /* 0x1B flag sent with the voice load commands */
     int stereo_selected;            /* 0x1C 1: the stereo copy is in use, 0: the mono one */
 } SoundVoice;
 
@@ -33,7 +33,7 @@ typedef struct {
 /* the request SoundDriver_VoiceLoadBind reads: the voice to reload and the heap to free */
 typedef struct {
     SoundVoice *voice;              /* 0x00 */
-    int unk04;                      /* 0x04 */
+    int cleared_on_header_start;    /* 0x04 zeroed when a header load starts */
     int bytes_remaining;            /* 0x08 bytes still to send */
     int next_spu_addr;              /* 0x0C where the next piece goes in sound memory */
     int heap_addr;                  /* 0x10 */
@@ -49,7 +49,7 @@ typedef struct {
     int header_size;                /* 0x08 its size */
     char *next_sample_data;         /* 0x0C where the next piece is read from */
     int sample_size;                /* 0x10 the samples' size */
-    int unk14;                      /* 0x14 */
+    int voice_flags;                /* 0x14 copied into the voice's flags */
     int spu_dest;                   /* 0x18 where the samples go in sound memory */
 } SoundLoadArgs;
 
@@ -67,8 +67,8 @@ typedef struct {
     s16 depth_r;                    /* 0x0A the right depth */
     int delay;                      /* 0x0C the reverb delay */
     int feedback;                   /* 0x10 the reverb feedback */
-    s16 unk14;                      /* 0x14 */
-    s16 unk16;                      /* 0x16 */
+    s16 aux_level_l;                /* 0x14 fifth reverb parameter, stored */
+    s16 aux_level_r;                /* 0x16 sixth reverb parameter, stored */
 } SoundEffectFields;
 
 /* sound_rpc_buffer: the record SoundDriver_Remote sends the sound driver; the reply lands on it */
@@ -118,7 +118,7 @@ typedef struct {
     int dma_src;                    /* 0x4C4 */
     int iop_buffer;                 /* 0x4C8 the IOP buffer the streams are read into */
     int dma_dest;                   /* 0x4CC */
-    char unk4D0[0x06];              /* 0x4D0 u16 at 0x4D4: 1 stereo output, 0 mono */
+    char volume_and_stereo[0x06];   /* 0x4D0 six bytes: a volume int and a stereo u16 */
     u16 active;                     /* 0x4D6 */
     char pad4D8[0x08];              /* the block in .bss is 0x4E0 bytes */
 } SoundState;
@@ -159,8 +159,8 @@ typedef struct {
     s16 depth_r;                    /* 0x06 the right depth */
     s16 delay;                      /* 0x08 the reverb delay */
     s16 feedback;                   /* 0x0A the reverb feedback */
-    s16 unk0C;                      /* 0x0C */
-    s16 unk0E;                      /* 0x0E */
+    s16 aux_level_l;                /* 0x0C fifth reverb parameter from rev_para */
+    s16 aux_level_r;                /* 0x0E sixth reverb parameter from rev_para */
 } SoundCue;
 
 /* the data a SoundJob loads or plays: two buffers and their sizes. The two

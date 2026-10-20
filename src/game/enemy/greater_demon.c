@@ -120,7 +120,7 @@ void GreaterDemon_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    ai_state->mode_timer = entity->params->ranged_attacks[2].record.unk00;
+    ai_state->mode_timer = entity->params->ranged_attacks[2].record.ranged_weight;
     Motion_StepModel(entity->model, 0, 0);
 }
 
@@ -211,7 +211,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
     if (entity->spawn_info->spawn_mode == 1) {
         GreaterDemon_SetRanged2Weight(entity);
     } else {
-        entity->params->ranged_attacks[2].record.unk00 = 0;
+        entity->params->ranged_attacks[2].record.ranged_weight = 0;
     }
     // match: angle is read here before anything has set it
     if (ai_state->sliding == 0 && entity->distance_to_player < entity->radius + 50.0f + 100.0f && entity->action_timer == 0 &&
@@ -850,7 +850,7 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
                 }
             }
         }
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
@@ -895,7 +895,7 @@ static int GreaterDemon_SetRanged2Weight(Entity *entity) {
             }
         }
     }
-    entity->params->ranged_attacks[2].record.unk00 = (f32)work->action_weights[2] * (f32)ally_count * 0.125f;
+    entity->params->ranged_attacks[2].record.ranged_weight = (f32)work->action_weights[2] * (f32)ally_count * 0.125f;
     return 0;
 }
 
@@ -932,7 +932,7 @@ static void GreaterDemon_RangedAttack(Entity *entity) {
         direction[1] = EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f);
         direction[2] = 0.0f;
         EntityShot_Launch(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction);
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;

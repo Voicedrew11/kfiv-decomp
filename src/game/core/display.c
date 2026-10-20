@@ -83,10 +83,10 @@ void Display_BuildProjection(f32 (*matrix)[4], f32 screen_scale, f32 near_plane,
    menu_heap at menu_heap_area. */
 void System_InitMemory(void) {
     Memory_Init();
-    game_clock_control.unk208 = 0;
-    game_clock_control.unk209 = 0;
-    game_clock_control.unk20A = 0;
-    game_clock_control.unk20B = 2;
+    game_clock_control.startup_flag_a = 0;
+    game_clock_control.startup_flag_b = 0;
+    game_clock_control.startup_flag_c = 0;
+    game_clock_control.startup_level = 2;
     menu_heap = (s32)menu_heap_area;
 }
 

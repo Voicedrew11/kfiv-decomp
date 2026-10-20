@@ -446,7 +446,7 @@ static void Salamander_RangedAttack(Entity *entity) {
                           (ai_state->motion_slot_0.frame_fixed - entity->params->motion_speeds[((EntityAiMotionSlotBits *)&ai_state->motion_slot_0)->index]) >> 8,
                           ai_state->motion_slot_0.frame);
         }
-        if (ai_state->motion_slot_0.frame > 0 && unk3D8->unk03 >= ai_state->motion_slot_0.frame) {
+        if (ai_state->motion_slot_0.frame > 0 && unk3D8->attack_end_frame >= ai_state->motion_slot_0.frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;

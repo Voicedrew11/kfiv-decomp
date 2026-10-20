@@ -214,7 +214,7 @@ static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg) {
     }
     part_index = 30;
     for (i = 0; i < 5; i++) {
-        part[part_index++].unk50[1] = -ai_state->neck_bend[i + 2];
+        part[part_index++].part_angles[1] = -ai_state->neck_bend[i + 2];
     }
 }
 

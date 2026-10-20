@@ -113,7 +113,7 @@ static void GiantSpider_Animate(Entity *entity) {
         }
         if (part != NULL) {
             if ((u8)(entity->animation_index - 0xE) < 3) {
-                ai_state->look_part_angles[1] = -part->unk50[1];
+                ai_state->look_part_angles[1] = -part->part_angles[1];
             } else {
                 angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
                 if (angle < -0.5235988f) {
@@ -123,7 +123,7 @@ static void GiantSpider_Animate(Entity *entity) {
                     angle = 0.5235988f;
                 }
                 EntityMath_EaseAngleToward(&ai_state->look_part_angles[1], angle, 10.0f);
-                part->unk50[1] = -ai_state->look_part_angles[1];
+                part->part_angles[1] = -ai_state->look_part_angles[1];
             }
         }
     }
@@ -376,7 +376,7 @@ static void GiantSpider_RangedAttack(Entity *entity) {
         Vector_Copy(direction, &player_state);
         direction[1] -= 160.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction, 0.2617994f, 0.2617994f);
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;

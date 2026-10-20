@@ -3641,7 +3641,7 @@ static void Menu_UpdateEquip(void) {
     sceVu0TransMatrix(weapon_matrix, weapon_matrix, equip_weapon_model_position);
     node.pool_node = &equip_weapon_pool_node;
     node.done = 1;
-    node.unk00 = 0;
+    node.reserved_header = 0;
     equip_weapon_draw_index = weapon_defs[player_state.weapon].equip_menu_motion;
     if (weapon_defs[player_state.weapon].action_handler_index == 0) {
         equip_weapon_draw_index += worn_defs[player_state.equipment[EQUIP_SHIELD]].equip_menu_motion_offset;
@@ -3774,15 +3774,15 @@ static void Menu_UpdateEquip(void) {
         case 1:
             if (fx_table[CURRENT_ITEM->item_number].item_menu_magic == 0) {
                 magic = &fx_table[index];
-                menu_number_44 = magic->hit_checks[0].strengths.unk00[0];
-                menu_number_45 = magic->hit_checks[0].strengths.unk00[1];
-                menu_number_46 = magic->hit_checks[0].strengths.unk00[2];
-                menu_number_47 = magic->hit_checks[0].strengths.unk00[3];
-                menu_number_48 = magic->hit_checks[0].strengths.unk00[4];
-                menu_number_49 = magic->hit_checks[0].strengths.unk00[5];
-                menu_number_50 = magic->hit_checks[0].strengths.unk00[6];
-                menu_number_51 = magic->hit_checks[0].strengths.unk00[7];
-                menu_number_52 = magic->hit_checks[0].strengths.unk00[8];
+                menu_number_44 = magic->hit_checks[0].strengths.element_strengths[0];
+                menu_number_45 = magic->hit_checks[0].strengths.element_strengths[1];
+                menu_number_46 = magic->hit_checks[0].strengths.element_strengths[2];
+                menu_number_47 = magic->hit_checks[0].strengths.element_strengths[3];
+                menu_number_48 = magic->hit_checks[0].strengths.element_strengths[4];
+                menu_number_49 = magic->hit_checks[0].strengths.element_strengths[5];
+                menu_number_50 = magic->hit_checks[0].strengths.element_strengths[6];
+                menu_number_51 = magic->hit_checks[0].strengths.element_strengths[7];
+                menu_number_52 = magic->hit_checks[0].strengths.element_strengths[8];
                 menu_number_54 = magic->mp_cost;
                 if (equip_panel_state == 1) {
                     RESET_ALPHAS(equip_m_parts, equip_m_part_count);
@@ -4350,7 +4350,7 @@ static void Menu_UpdateKeyItems(void) {
             pool_slots[31].part = part;
             // match: both words are read through unions, which keeps the two NULL stores below them
             pool_slots[31].tex0 = TEXTURE_HEADER_BITS(texture)->tex0.raw;
-            pool_slots[31].unk60 = TEXTURE_HEADER_BITS(texture)->unk18.raw;
+            pool_slots[31].tex1 = TEXTURE_HEADER_BITS(texture)->tex1_register.raw;
             pool_slots[31].part_record = NULL;
             pool_slots[31].parent = NULL;
             MenuTexture_Upload(texture, NULL);
@@ -4576,7 +4576,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
         *D2_CHCR = D_CHCR_STR;
         chunk = (PackageChunk *)((char *)npc_package_load.pool_node->buffer + 0x10);
         for (i = 0; i < recollection_page; i++) {
-            chunk = (PackageChunk *)((char *)chunk + chunk->unk0C + chunk->unk08);
+            chunk = (PackageChunk *)((char *)chunk + chunk->chunk_padding_size + chunk->chunk_data_size);
         }
         if (equip_state != 2 && equip_state != 3 && model_load_shown.done != 0) {
             screen_part_alphas[254] += 12.8f;
@@ -4770,7 +4770,7 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
         *D2_CHCR = D_CHCR_STR;
         chunk = (PackageChunk *)((char *)npc_package_load.pool_node->buffer + 0x10);
         for (i = 0; (s32)i < page; i++) {
-            chunk = (PackageChunk *)((char *)chunk + chunk->unk0C + chunk->unk08);
+            chunk = (PackageChunk *)((char *)chunk + chunk->chunk_padding_size + chunk->chunk_data_size);
         }
         model_load_shown.pool_node = &model_node; // match: a local of this function; the node keeps the address after it returns
         model_load_shown.done = 1;
