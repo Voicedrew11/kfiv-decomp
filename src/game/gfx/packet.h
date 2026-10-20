@@ -326,6 +326,7 @@ void Packet_OnFrameEnd(void);
 void Packet_SwapBuffers(void);
 void Packet_SendChain(void);
 void Packet_GetSpareArea(int *addr, int *size);
+void Packet_UploadVu1Programs(void);
 
 /* data still in asm */
 extern u32 vu1_packed_vertex_program[];  /* 0x000: triangles of packed vertices (ModelScreen_QueueCutTriangle) */
@@ -339,5 +340,8 @@ extern int packet_quadwords_used;  /* quadwords handed out */
 extern int packet_buffers_size;  /* bytes in both buffers together */
 extern u32 *gs_register_list;  /* the register list being built, NULL: none */
 extern int gs_register_count;  /* registers in it */
+
+/* gfx/packet_buffer.c */
+void Packet_WaitForSend(void);
 
 #endif

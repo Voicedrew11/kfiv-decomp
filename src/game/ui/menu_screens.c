@@ -3,6 +3,10 @@
    and brightness screens, which Menu_Run also runs on their own. The file starts with the rings of items the lists
    walk and with the loader of the models the screens show: load nodes chained at model_load_chain, each loading one
    file in stages. Every screen is a handler in menu_screen_handler that is called once a frame. */
+#include <libgraph.h>
+#include <libcdvd.h>
+#include <time.h>
+#include "core/timer.h"
 #include "ui/menu_screens.h"
 #include "ui/menu.h"
 #include "map/map.h"
@@ -36,12 +40,9 @@
 #include "sound/sound_game.h"
 #include <stdio.h>
 #include "ui/title.h"
+#include "save/save_state.h"
+#include "ui/menu_draw.h"
 
-extern LevelRecord weapon_level_records[70];
-extern LevelRecord worn_item_level_records[160];
-extern u8 spell_levels[6][5];
-extern u8 item_counts[380];
-extern LevelDef item_name_defs[380];
 /* Appends node to the ring being built. */
 #define LINK_ITEM(node)                     \
     if (last != NULL) {                     \
@@ -64,8 +65,8 @@ extern LevelDef item_name_defs[380];
     last = NULL;                                                                                         \
     first = NULL;                                                                                        \
     for (i = 0; i < (item_count); i++) {                                                                 \
-        if (item_counts[(item_base) + i] != 0 && (item_name_defs[(item_base) + i].state & 1) &&               \
-            (records)[(record_base) + i].in_smith_rings == 0) {                                                   \
+        if (item_counts.bytes[(item_base) + i] != 0 && (item_level_defs[(item_base) + i].state & 1) &&         \
+            (records)[(record_base) + i].in_smith_rings == 0) {                                             \
             LINK_ITEM(&(nodes)[i])                                                                       \
         }                                                                                                \
     }                                                                                                    \
@@ -76,93 +77,21 @@ extern LevelDef item_name_defs[380];
 #define SPELL_IS_SET(spell) (spell_levels[((spell) - 1) / 15][(((spell) - 1) / 3) % 5] == ((spell) - 1) % 3 + 1)
 /* the loads of the model shown and of the four the cursor brings on with up (0x10), down (0x40), left (0x80) and
    right (0x20): in a list a row and a page either way, on the equipment screen the next list and the next item */
-void PoolPartFile_Relocate(char *);
-void PoolSlot_LoadGroup(PoolPartSource *, u32);
-int MenuArena_Init(int); // match: this file only matches with an int result
-void *MenuArena_Alloc(s32, s32);
-void *MenuHeap_Alloc(int);
-int MenuFile_Load(char *, void *);
-extern LoadedTexture menu_font_texture;
-int sceGsResetGraph(int, int, int, int);
-void sceGsSetDefDBuffDc(void *, s16, s16, s16, s16, s16, s16);
-void MenuHeap_Reset(void);
-void MenuFile_IndexBlocks(char *);
-void MenuHeap_Mark(void);
-void MenuTexture_GetRegisters(TextureHeader *, u64 *, u64 *);
-void MenuHeap_FreeToMark(void);
-s32 PoolNodeFile_Relocate(RelocFile *);
-struct sceCdCLOCK;
-int sceCdReadClock(struct sceCdCLOCK *);
-int sceGsSyncV(int);
-int mktime(int *);
-s16 MenuPad_Update(void);
-extern u16 menu_buttons;
-extern f32 menu_view_screen_matrix[16];
-void MenuModel_DrawTinted(ChunkUpload *upload, s32 draw_param, RenderSlotArg slot_arg);
 // match: called with the node, a matrix and the colour, not as the definition has it (the colour is loaded unaligned)
 #define DRAW_NODE_MODEL(node, matrix, colour) ((void (*)(LinkNode *, f32 *, ColorBytes))MenuModel_DrawTinted)(node, matrix, colour)
-extern u8 game_options[0x10];  /* the options block */
-void Menu_DrawBrightness(s32);
-int Timer_GetTicks(void);
-int Timer_Restart(void); // match: an int result keeps $2 clear of the pad test after the call
-void sceGsSetHalfOffset(void *, int, int, s16); // match: void, so the test after the call uses $2
-int sceGsSetHalfOffset2(void *, int, int, s16);
-int sceGsSwapDBuffDc(GsDoubleBufferDc *, int);
 
 // match: called as a void function, so the result register is free at once
 #define SET_TEST(value) ((void (*)(int, s64))MenuDraw_SetGsRegister)(GS_REG_TEST_1, value)
 
-extern ColorBytes backdrop_shade_color[]; // match: the initialiser of the local below ({ 0x10, 0x10, 0x10 }); an array so it is not reached through $gp
-void MenuSprite_DrawPlain(int owner, int index, int param);
-extern u8 brightness_option[];
-extern LoadedBlockRef menu_file_blocks[];
-extern float pulse_sprite_alpha;
-extern char pulse_sprite_falling;
-extern s32 menu_file_block_count;
-void Packet_WaitForSend(void);
-void MenuTexture_Upload(TextureHeader *, LoadedBlockRef *);
-void MenuSprite_Draw(int, int, int, int);
-extern GameStatus game_status;
-extern s32 menu_number_44;
-void MenuDraw_Bar(MenuCursorBar *);
-s32 MenuText_SetColor(ColorBytes bytes);
-s32 MenuText_DrawWrapped(u16 *, s32);
-s32 MenuText_DrawWordWrappedLong(u16 *, s32);
 /* an angle brought back into -pi..pi (for angles above -pi) */
 static inline f32 wrap_angle(f32 angle) {
     angle += PI;
     return angle - (f32)(s32)(angle / TWO_PI) * TWO_PI - PI;
 }
-extern s32 menu_number_45;
-int MenuText_SetGlyphSize(GsPackedWord);
-s32 MenuText_DrawLine(u16 *text, s32 limit);
 extern void (*pool_slot_drawers[])(PoolSlot *, ColorBytes);
-extern PoolSlot pool_slots[32];
-extern u8 detail_panel_open; // match: a byte here; ui/trade.c reads and writes it as a word
-extern s32 menu_number_46;
-extern s32 menu_number_47;
-extern s32 menu_number_48;
-extern s32 menu_number_49;
-extern s32 menu_number_50;
-extern s32 menu_number_51;
-extern s32 menu_number_52;
-extern s32 menu_number_53;
-extern s32 menu_number_54;
-extern s32 menu_number_70;
-extern s32 menu_number_71;
-extern s32 menu_number_72;
-extern s32 menu_number_74;
 // match: equip_panel_state is the second byte of what the symbol list has as one two-byte object. It has to be a variable of
 // its own: a store to `equip_state[1]` is never put in a delay slot, and retail has it there.
 __asm__("equip_panel_state = equip_state + 1");
-int Menu_IsEquipped(u32, s32, s32);
-s8 MenuDraw_GetWordStart(s32);
-void MenuDraw_Word(KindObject *);
-s32 MenuText_DrawLineCentered(u16 *, s32);
-void PoolSlot_Draw(RenderSlot *, RenderSlotArg);
-s32 PoolSlot_ClearParts(void);
-void PoolNode_Pose(RelocEntry *, PoolSlot *, f32 *, s32);
-s32 MenuDraw_SetGsRegister(int, s64);
 /* the item the cursor is on in the category shown */
 // match: the category is a MenuItem whose first word is a MenuItem pointer; read as an int it cannot pass the GS stores
 // match: the list read as a MenuItem (next, prev and group are at the same offsets)
@@ -201,14 +130,8 @@ s32 MenuDraw_SetGsRegister(int, s64);
         MenuSprite_Draw((int)&parts[i], parts[i].handler_index + 1000, variant, (int)panel_part_alphas[i]);         \
         SET_BLEND(0);                                                                                \
     }
-extern s32 key_item_slots[12];
 #define LIST_PAGES 50
 #define LIST_ROWS 7
-extern u8 recollection_flags[LIST_PAGES][8];
-extern u8 recollection_pages[50];
-int sceCdBreak(void);
-s32 MenuText_DrawWrappedLong(u16 *, s32);
-s32 MenuText_DrawLineShortened(u16 *, s32);
 /* The offset of text `number` in the text table, 0 when it has none. */
 static inline s32 GetListTextOffset(s32 table, s32 number) {
     return ((s32 *)table)[number];
@@ -217,7 +140,6 @@ static inline s32 GetListTextOffset(s32 table, s32 number) {
 static inline s32 GetPageTextOffset(s32 table, s32 number) {
     return ((s32 *)table)[number];
 }
-extern s32 menu_number_73;
 static inline s32 ScaleValue(s32 value, s32 percent, s32 divisor) {
     return value * percent / divisor;
 }
@@ -265,28 +187,6 @@ static inline s32 ScrollAllItemsDown(void) {
     owned_list_current[0] = owned_list_top[0];
     return owned_list_top[0] != owned_list_first;
 }
-s32 SaveCard_Update(void); // match: the result is used here
-extern u8 save_image[];
-extern s32 menu_number_75;
-extern s32 menu_number_76;
-extern s32 menu_number_77;
-extern s32 menu_number_78;
-extern s32 menu_number_79;
-extern s32 menu_number_80;
-extern s32 menu_number_81;
-extern s32 menu_number_82;
-extern s32 menu_number_83;
-extern s32 menu_number_84;
-extern s32 menu_number_85;
-extern s32 menu_number_86;
-extern s32 menu_number_87;
-extern s32 menu_number_88;
-extern s32 menu_number_89;
-extern s32 menu_number_90;
-extern s32 menu_number_91;
-extern s32 menu_number_92;
-extern s32 menu_number_93;
-extern s32 menu_number_94;
 /* Runs SET with the choice number that goes with a pad button bit. */
 #define FOR_PAD_BIT(bit, SET) \
     switch (bit) {            \
@@ -442,7 +342,7 @@ static void Menu_BuildItemRings(void) {
     first = NULL;
     count = 0;
     for (i = 1; i < 150; i++) {
-        if (item_counts[i] != 0 && (item_name_defs[i].state & 1)) {
+        if (item_counts.bytes[i] != 0 && (item_level_defs[i].state & 1)) {
             LINK_COUNTED_ITEM(&common_item_entries[i], item_list_page_mark)
         }
     }
@@ -473,7 +373,7 @@ static void Menu_BuildItemRings(void) {
     first = NULL;
     count = 0;
     for (i = 1; i < 380; i++) {
-        if (item_counts[i] != 0 && !(item_name_defs[i].state & 2)) {
+        if (item_counts.bytes[i] != 0 && !(item_level_defs[i].state & 2)) {
             if ((i >= 0 && i < 150) || (i >= 150 && i < 220 && weapon_level_records[i - 150].in_smith_rings == 0) ||
                 (i >= 220 && i < 250 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
                 (i >= 250 && i < 275 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
@@ -519,7 +419,7 @@ static void Menu_BuildItemRings(void) {
     last = NULL;
     first = NULL;
     for (i = 0; i < 150; i++) {
-        if (item_counts[i] != 0 && (item_name_defs[i].state & 1) && !((u8)item_common_defs[i].flags & 1) && !(i >= 145 && i < 148)) {
+        if (item_counts.bytes[i] != 0 && (item_level_defs[i].state & 1) && !((u8)item_common_defs[i].flags & 1) && !(i >= 145 && i < 148)) {
             LINK_ITEM(&shortcut_entries[i])
         }
     }
@@ -537,7 +437,7 @@ static void Menu_BuildItemRings(void) {
         equip_shortcut_list.item = equipped_shortcut.item = shortcut_entries;
         // match: no break, case 0 goes on into case 1, which sets both again
     case 1:
-        if (item_counts[player_state.shortcut] != 0) {
+        if (item_counts.bytes[player_state.shortcut] != 0) {
             equip_shortcut_list.item = equipped_shortcut.item = &shortcut_entries[player_state.shortcut];
         } else {
             player_state.shortcut = 0;
@@ -552,7 +452,7 @@ static void Menu_BuildItemRings(void) {
     last = NULL;
     first = NULL;
     for (i = 0; i < 70; i++) {
-        if (item_counts[150 + i] != 0 && (item_name_defs[150 + i].state & 1) && weapon_level_records[i].in_smith_rings == 0) {
+        if (item_counts.bytes[150 + i] != 0 && (item_level_defs[150 + i].state & 1) && weapon_level_records[i].in_smith_rings == 0) {
             LINK_ITEM(&weapon_entries[i])
         }
     }
@@ -917,7 +817,7 @@ static void Menu_FinishModelLoad(ChunkUpload *upload) {
     LinkFile *file;
 
     file = upload->pool_node->buffer;
-    PoolPartFile_Relocate((char *)file + file->first_offset);
+    PoolPartFile_Relocate((PoolPartFile *)((char *)file + file->first_offset));
     FlushCache(0);
     upload->done = 1;
     upload->stage = 0;
@@ -1004,7 +904,7 @@ static void Menu_FinishWornModelLoad(LinkNode *node) {
     file = ((ChunkPoolNode *)node->pool_node)->buffer;
     pool_part_sources[target->slot]->texture = (char *)file + file->second_offset;
     pool_part_sources[target->slot]->file = (PoolPartFile *)((char *)file + file->first_offset);
-    PoolPartFile_Relocate((char *)pool_part_sources[target->slot]->file);
+    PoolPartFile_Relocate(pool_part_sources[target->slot]->file);
     pool_node = node->target_node->pool_node;
     node->target_node->pool_node = node->pool_node;
     node->pool_node = pool_node;
@@ -1083,7 +983,7 @@ static void Menu_FinishPackageLoad(ChunkUpload *upload) {
     chunk = (char *)header + 0x10;
     for (i = 0; i < *header; i++) {
         next = chunk + ((int *)chunk)[3];
-        PoolPartFile_Relocate(chunk + ((int *)chunk)[1]);
+        PoolPartFile_Relocate((PoolPartFile *)(chunk + ((int *)chunk)[1]));
         chunk = next + ((int *)chunk)[2];
     }
     FlushCache(0);
@@ -1150,7 +1050,7 @@ void Menu_ResetLoadBuffers(s32 unused) {
 
 /* Writes the model file name of a menu item that has a definition (its LevelDef's file number). */
 static void Menu_WriteItemModelName(char *buffer, MenuItem *item) {
-    sprintf(buffer, "menu/select2/i%04d.mod", item_name_defs[item->item_number].file_number);
+    sprintf(buffer, "menu/select2/i%04d.mod", item_level_defs[item->item_number].file_number);
 }
 
 /* Writes the model file name of a spell (group 1): its own number. */
@@ -1160,7 +1060,7 @@ static void Menu_WriteSpellModelName(char *buffer, MenuItem *item) {
 
 /* A copy of Menu_WriteItemModelName, the entry of group 10 in item_model_name_writers; no item has that group. */
 static void Menu_WriteGroup10ModelName(char *buffer, MenuItem *item) {
-    sprintf(buffer, "menu/select2/i%04d.mod", item_name_defs[item->item_number].file_number);
+    sprintf(buffer, "menu/select2/i%04d.mod", item_level_defs[item->item_number].file_number);
 }
 
 /* per MenuItem.group, the function that writes the item's model file name */
@@ -1199,15 +1099,15 @@ static void Menu_SetEquipModelNames(void) {
 
 /* Writes the model file names of the player's weapon and the eight things worn into their upload nodes. */
 static void Menu_SetWornModelNames(void) {
-    sprintf(weapon_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.weapon + ITEM_WEAPON_FIRST].file_number);
-    sprintf(shield_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST].file_number);
-    sprintf(armor_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST].file_number);
-    sprintf(helm_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_HELM] + ITEM_WORN_FIRST].file_number);
-    sprintf(gauntlet_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST].file_number);
-    sprintf(boot_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST].file_number);
-    sprintf(ring_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_RING] + ITEM_WORN_FIRST].file_number);
-    sprintf(bracelet_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST].file_number);
-    sprintf(amulet_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST].file_number);
+    sprintf(weapon_model_name, "menu/equip/i%04d.mod", item_level_defs[player_state.weapon + ITEM_WEAPON_FIRST].file_number);
+    sprintf(shield_model_name, "menu/equip/i%04d.mod", item_level_defs[player_state.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST].file_number);
+    sprintf(armor_model_name, "menu/equip/i%04d.mod", item_level_defs[player_state.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST].file_number);
+    sprintf(helm_model_name, "menu/equip/i%04d.mod", item_level_defs[player_state.equipment[EQUIP_HELM] + ITEM_WORN_FIRST].file_number);
+    sprintf(gauntlet_model_name, "menu/equip/i%04d.mod", item_level_defs[player_state.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST].file_number);
+    sprintf(boot_model_name, "menu/equip/i%04d.mod", item_level_defs[player_state.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST].file_number);
+    sprintf(ring_model_name, "menu/equip/i%04d.mod", item_level_defs[player_state.equipment[EQUIP_RING] + ITEM_WORN_FIRST].file_number);
+    sprintf(bracelet_model_name, "menu/equip/i%04d.mod", item_level_defs[player_state.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST].file_number);
+    sprintf(amulet_model_name, "menu/equip/i%04d.mod", item_level_defs[player_state.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST].file_number);
     worn_model_loader.done = 0;
 }
 
@@ -1326,11 +1226,11 @@ static void Menu_SetAllItemsModelNames(void) {
     } else {
         ahead = behind = owned_list_first;
     }
-    sprintf(model_name_shown, "menu/select2/i%04d.mod", item_name_defs[owned_list_current[0]->item_number].file_number);
-    sprintf(model_name_down, "menu/select2/i%04d.mod", item_name_defs[owned_list_current[0]->prev->item_number].file_number);
-    sprintf(model_name_up, "menu/select2/i%04d.mod", item_name_defs[owned_list_current[0]->next->item_number].file_number);
-    sprintf(model_name_left, "menu/select2/i%04d.mod", item_name_defs[ahead->item_number].file_number);
-    sprintf(model_name_right, "menu/select2/i%04d.mod", item_name_defs[behind->item_number].file_number);
+    sprintf(model_name_shown, "menu/select2/i%04d.mod", item_level_defs[owned_list_current[0]->item_number].file_number);
+    sprintf(model_name_down, "menu/select2/i%04d.mod", item_level_defs[owned_list_current[0]->prev->item_number].file_number);
+    sprintf(model_name_up, "menu/select2/i%04d.mod", item_level_defs[owned_list_current[0]->next->item_number].file_number);
+    sprintf(model_name_left, "menu/select2/i%04d.mod", item_level_defs[ahead->item_number].file_number);
+    sprintf(model_name_right, "menu/select2/i%04d.mod", item_level_defs[behind->item_number].file_number);
 }
 
 /* Opens main menu line 5: names the five models of the list of everything owned and chains their loads. */
@@ -1419,8 +1319,8 @@ static void Menu_ChainKeyItemModels(s32 unused_arg) {
         key_item_model_loads[i].callback = Menu_StepModelLoad;
         key_item_model_loads[i].stage = 0;
         key_item_model_loads[i].done = 0;
-        if (item_counts[numbers.number[i]] != 0) {
-            sprintf(key_item_model_loads[i].name, "menu/select/i%04d.mod", item_name_defs[numbers.number[i]].file_number);
+        if (item_counts.bytes[numbers.number[i]] != 0) {
+            sprintf(key_item_model_loads[i].name, "menu/select/i%04d.mod", item_level_defs[numbers.number[i]].file_number);
         } else {
             sprintf(key_item_model_loads[i].name, "menu/equip/i7000.mod");
         }
@@ -1829,7 +1729,7 @@ static const MenuWeekdayNames weekday_names_table = { {
    card_screen_state.unk16 was set. */
 int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign-extends a byte here
     ClockTime clock;
-    int tm_fields[9];
+    struct tm calendar;
     MenuWeekdayNames weekday_names;
     u32 *packet;
     s32 status; // match: one variable for the card state in the loop and the menu number after it
@@ -1841,16 +1741,16 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
     Sound_UpdateTagged();
     Sound_MuteTracked();
     Sound_MuteTagged();
-    sceCdReadClock((struct sceCdCLOCK *)&clock);
+    sceCdReadClock(&clock);
     weekday_names = weekday_names_table; // match: never read
     // match: the clock bytes are BCD and are used as they are, the day is lowered by one, and the result is not used
-    tm_fields[0] = clock.sec;
-    tm_fields[1] = clock.min;
-    tm_fields[2] = clock.hour;
-    tm_fields[3] = clock.mday - 1;
-    tm_fields[4] = clock.mon - 1;
-    tm_fields[5] = clock.year + 100;
-    mktime(tm_fields);
+    calendar.tm_sec = clock.sec;
+    calendar.tm_min = clock.min;
+    calendar.tm_hour = clock.hour;
+    calendar.tm_mday = clock.mday - 1;
+    calendar.tm_mon = clock.mon - 1;
+    calendar.tm_year = clock.year + 100;
+    mktime(&calendar);
     menu_mode = mode;
     pad_mode = pad_mode_before = Pad_GetMode(0, 0);
     while (SoundDriver_FlushCommands(), menu_run_steps[menu_run_step]() != 0) {
@@ -2378,7 +2278,7 @@ s32 Menu_EndFrame(s32 run_handler) {
     sceGsSyncPath(0, 0);
     menu_frame_ticks = Timer_GetTicks();
     even_field = sceGsSyncV(0) == 0;
-    Timer_Restart();
+    ((int (*)(void))Timer_Restart)(); // match: called for an int result, which keeps $2 clear of the pad test
     if (menu_buttons & PAD_L2) {
         menu_l2_cycle_step++;
     }
@@ -2817,7 +2717,7 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         Menu_MoveItemListCursor(context, menu_input_enabled == 0);
     }
     if (item_list_cursor[0] != NULL) {
-        menu_number_44 = item_counts[item_list_cursor[0]->item_number];
+        menu_number_44 = item_counts.bytes[item_list_cursor[0]->item_number];
     } else {
         menu_number_44 = 0;
     }
@@ -2866,7 +2766,7 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         item = item_list_top[0];
         MenuText_SetColor(menu_draw_color);
         for (row = 0; row < 7; row++, item = item->prev) {
-            text = (s32)&item_name_defs[item->item_number];
+            text = (s32)&item_level_defs[item->item_number];
             MenuText_SetPen(word);
             ((s32 (*)(s32, s32))MenuText_DrawWrapped)(text, 0x1A); // match: called as if it took and returned a number
             word.f.mid16 += 0xB0;
@@ -3395,7 +3295,7 @@ static void Menu_UpdateEquip(void) {
     if (CURRENT_ITEM->group == 1) {
         definition = &fx_table[CURRENT_ITEM->item_number];
     } else {
-        definition = &item_name_defs[CURRENT_ITEM->item_number];
+        definition = &item_level_defs[CURRENT_ITEM->item_number];
     }
     if (detail_panel_open != 0) {
         switch (CURRENT_ITEM->group) {
@@ -3411,7 +3311,7 @@ static void Menu_UpdateEquip(void) {
             menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
             menu_number_54 = (s32)(weapon_defs[index].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_70 = weapon_level_records[index].level;
-            menu_number_53 = item_name_defs[CURRENT_ITEM->item_number].weight_tenths_of_pound;
+            menu_number_53 = item_level_defs[CURRENT_ITEM->item_number].weight_tenths_of_pound;
             menu_number_71 = 100;
             menu_number_72 = player_weapon[EQUIP_LIST->group];
             if (equip_panel_state == 1) {
@@ -3508,7 +3408,7 @@ static void Menu_UpdateEquip(void) {
             menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
             menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
             menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            menu_number_53 = item_name_defs[CURRENT_ITEM->item_number].weight_tenths_of_pound;
+            menu_number_53 = item_level_defs[CURRENT_ITEM->item_number].weight_tenths_of_pound;
             menu_number_54 = player_weapon[EQUIP_LIST->group];
             menu_number_70 = worn_item_level_records[index].level;
             menu_number_71 = 100;
@@ -3539,7 +3439,7 @@ static void Menu_UpdateEquip(void) {
             menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
             menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
             menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            menu_number_53 = item_name_defs[CURRENT_ITEM->item_number].weight_tenths_of_pound;
+            menu_number_53 = item_level_defs[CURRENT_ITEM->item_number].weight_tenths_of_pound;
             menu_number_54 = player_weapon[EQUIP_LIST->group];
             if (index != 130 && index != 140 && index != 150) {
                 if (detail_panel_sound_pending != 0) {
@@ -3671,10 +3571,10 @@ static void Menu_UpdateEquip(void) {
                 if ((*equipped_item_refs[10])->group == 1) {
                     listed = &fx_table[(*equipped_item_refs[10])->item_number];
                 } else {
-                    listed = &item_name_defs[(*equipped_item_refs[10])->item_number];
+                    listed = &item_level_defs[(*equipped_item_refs[10])->item_number];
                 }
             } else {
-                listed = &item_name_defs[(*equipped_item_refs[i])->item_number];
+                listed = &item_level_defs[(*equipped_item_refs[i])->item_number];
             }
             MenuText_SetPen(word);
             MenuText_SetColor(panel_text_color);
@@ -4015,9 +3915,9 @@ static void Menu_UpdateKeyItems(void) {
             sceVu0TransMatrix((f32 *)&pool_slots[31], view, positions.position[i]);
             PoolSlot_Draw((RenderSlot *)&pool_slots[31], slot_arg); // match: slot_arg is never set
             number = &numbers.number[key_item_slots[i + key_item_row * 3]];
-            if (item_counts[*number] != 0) {
+            if (item_counts.bytes[*number] != 0) {
                 KeyItemNameWords words = key_item_name_pens;
-                LevelDef *def = &item_name_defs[*number];
+                LevelDef *def = &item_level_defs[*number];
 
                 MenuText_SetColor(menu_draw_color);
                 MenuText_SetPen(words.word[i]);
@@ -4162,7 +4062,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
     row_count = 0;
     counter = 3;
     for (i = 3; i < LIST_PAGES - 1; i++) {
-        if ((recollection_flags[recollection_page][i / 8] >> counter) & 1) {
+        if ((recollection_flags[recollection_page].bits[i / 8] >> counter) & 1) {
             rows[row_count] = i;
             row_count++;
         }
@@ -4514,9 +4414,9 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     if ((menu_buttons & PAD_CROSS) && menu_input_enabled != 0) {
         {
             // match: the value read first is used only to set the bit; the test and the clearing read the field again
-            u8 state = item_name_defs[selected->item_number].state;
-            item_name_defs[selected->item_number].state =
-                (item_name_defs[selected->item_number].state & 1) ? item_name_defs[selected->item_number].state & ~1 : state | 1;
+            u8 state = item_level_defs[selected->item_number].state;
+            item_level_defs[selected->item_number].state =
+                (item_level_defs[selected->item_number].state & 1) ? item_level_defs[selected->item_number].state & ~1 : state | 1;
         }
         Sound_PlayMenu(0);
         number = selected->item_number;
@@ -4558,7 +4458,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     }
 
     record = owned_list_current[0]->item_number - bases.first_item[owned_list_current[0]->group];
-    menu_number_44 = item_counts[owned_list_current[0]->item_number];
+    menu_number_44 = item_counts.bytes[owned_list_current[0]->item_number];
     if (owned_list_current[0]->group == 0) {
         menu_number_74 = weapon_level_records[record].level_index + 1;
     }
@@ -4574,7 +4474,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     }
 
     for (i = 0; i < 7; i++, item = item->prev) {
-        if (item_name_defs[item->item_number].state & 1) {
+        if (item_level_defs[item->item_number].state & 1) {
             worn_mask |= 1 << worn_bit;
         }
         worn_bit++;
@@ -4609,7 +4509,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         visible_names_top = node;
     }
     for (row = 0; row < 7; row++, node = node->prev) {
-        def = &item_name_defs[node->item_number];
+        def = &item_level_defs[node->item_number];
         MenuText_SetPen(position);
         MenuText_SetColor(menu_draw_color);
         MenuText_DrawLine((u16 *)def, 0x1A);
@@ -4692,7 +4592,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             menu_number_53 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
             menu_number_71 = worn_item_level_records[record].level;
             menu_number_72 = 100;
-            menu_number_54 = item_name_defs[owned_list_current[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[owned_list_current[0]->item_number].weight_tenths_of_pound;
             if (visible_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, recol_g_parts, recol_g_part_count)
             }
@@ -4712,7 +4612,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             menu_number_51 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
             menu_number_52 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
             menu_number_53 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
-            menu_number_54 = item_name_defs[owned_list_current[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[owned_list_current[0]->item_number].weight_tenths_of_pound;
             if (visible_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, recol_g2_parts, recol_g2_part_count)
             }
@@ -4732,7 +4632,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             menu_number_53 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
             menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[record].level;
-            menu_number_54 = item_name_defs[owned_list_current[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[owned_list_current[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[owned_list_current[0]->group];
             menu_number_73 = 100;
             if (visible_panel_state == 1) {
@@ -6832,11 +6732,11 @@ static void Menu_SetItemListModelNames(void) {
     } else {
         forward = backward = item_list_first;
     }
-    sprintf(model_name_shown, "menu/select2/i%04d.mod", item_name_defs[item_list_cursor[0]->item_number].file_number);
-    sprintf(model_name_down, "menu/select2/i%04d.mod", item_name_defs[item_list_cursor[0]->prev->item_number].file_number);
-    sprintf(model_name_up, "menu/select2/i%04d.mod", item_name_defs[item_list_cursor[0]->next->item_number].file_number);
-    sprintf(model_name_left, "menu/select2/i%04d.mod", item_name_defs[forward->item_number].file_number);
-    sprintf(model_name_right, "menu/select2/i%04d.mod", item_name_defs[backward->item_number].file_number);
+    sprintf(model_name_shown, "menu/select2/i%04d.mod", item_level_defs[item_list_cursor[0]->item_number].file_number);
+    sprintf(model_name_down, "menu/select2/i%04d.mod", item_level_defs[item_list_cursor[0]->prev->item_number].file_number);
+    sprintf(model_name_up, "menu/select2/i%04d.mod", item_level_defs[item_list_cursor[0]->next->item_number].file_number);
+    sprintf(model_name_left, "menu/select2/i%04d.mod", item_level_defs[forward->item_number].file_number);
+    sprintf(model_name_right, "menu/select2/i%04d.mod", item_level_defs[backward->item_number].file_number);
 }
 
 /* A list cursor went on one row: the model shown moves to node 2, node 1's becomes the one shown, nodes 1, 3

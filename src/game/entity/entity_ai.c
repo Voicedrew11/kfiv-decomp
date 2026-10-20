@@ -12,6 +12,7 @@
 #include "gfx/gs.h"
 #include "core/file.h"
 #include "core/game.h"
+#include "save/save_state.h"
 #include "enemy/enemy.h"
 #include "entity/entity_aim.h"
 #include "entity/entity_collision.h"
@@ -42,7 +43,6 @@ typedef union {
     u32 word;
 } EntityParamsFirstWord;
 #define ENTITY_PARAMS_WORD(params) (((EntityParamsFirstWord *)(params))->word)
-extern u8 item_counts[ITEM_COUNT];
 /* Moves *level by delta, keeping it between 0x40 and max.
    match: max is a parameter so the 0xC0 cap stays in a register (slt/movn), as in EntityAi_RaiseAttackWeight */
 static inline void adjust_level(u8 *level, s32 delta, s32 max) {
@@ -56,7 +56,6 @@ static inline void adjust_level(u8 *level, s32 delta, s32 max) {
     }
     *level = value;
 }
-extern char fire_lord_model_matrix[];
 
 static s32 EntityAi_CheckMeleeAilment(Entity *entity, EntityParamsUnk240 *record, s32 index, s32 frame_min, s32 frame_max);
 static void EntityAi_Kill(Entity *entity);
@@ -90,8 +89,8 @@ float EntityAi_RandomAngle(void) {
 /* Starts the second camera shake (GameLoop_UpdateCameraShake plays it): its reach (CameraState.entity_shake_reach) and its frames
    (unk7C). The Giant Beetle's ranged attack uses it. */
 void EntityAi_ShakeCamera(int float_value, int int_value) {
-    camera_state[30] = float_value;
-    *(int *)&camera_state[31] = int_value;
+    camera_state.entity_shake_reach = float_value;
+    camera_state.entity_shake_frames = int_value;
 }
 
 /* Sets Entity.state and keeps the old value in prev_state. */
@@ -241,7 +240,7 @@ int EntityAi_LaunchShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 elapsed
 }
 
 /* Spawns an effect at a model point, facing along the line to the next point. */
-void EntityAi_SpawnBoneEffect(char **model, int effect_id, int point) {
+void EntityAi_SpawnBoneEffect(Entity *entity, int effect_id, int point) {
     f32 *from;
     f32 *tip;
     f32 angles[4];
@@ -251,8 +250,8 @@ void EntityAi_SpawnBoneEffect(char **model, int effect_id, int point) {
     f32 yaw;
     f32 turns;
 
-    from = (f32 *)Model_GetSkinnedBonePoint(*model, point);
-    tip = (f32 *)Model_GetSkinnedBonePoint(*model, point + 1);
+    from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, point);
+    tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, point + 1);
     if (from != NULL && tip != NULL) {
         delta_x = tip[0] - from[0];
         delta_y = tip[1] - from[1];
@@ -268,7 +267,7 @@ void EntityAi_SpawnBoneEffect(char **model, int effect_id, int point) {
         }
         angles[1] = yaw;
         angles[2] = angles[3] = 0.0f;
-        Effect_StartSpawner(effect_id, from, angles, model);
+        Effect_StartSpawner(effect_id, from, angles, entity);
     }
 }
 
@@ -1198,7 +1197,7 @@ int EntityAi_CanUseMelee(Entity *entity, int index) {
 }
 
 /* As EntityAi_CanUseMelee for the entity facing yaw. */
-int EntityAi_CanUseMeleeFacing(Entity *entity, int index, float yaw) {
+int EntityAi_CanUseMeleeFacing(Entity *entity, float yaw, int index) {
     EntityParams *params;
     EntityModel *model;
     EntityParamsUnk240 *record;
@@ -1488,7 +1487,7 @@ s32 EntityAi_CanUseRanged(Entity *entity, s32 index) {
 }
 
 /* As EntityAi_CanUseRanged for the entity facing yaw. */
-int EntityAi_CanUseRangedFacing(Entity *entity, int index, float yaw) {
+int EntityAi_CanUseRangedFacing(Entity *entity, float yaw, int index) {
     EntityParams *params;
     EntityModel *model;
     float angle;
@@ -1798,10 +1797,10 @@ void EntityAi_SetAttackDelay(Entity *entity, s32 base) {
     s32 delay;
 
     delay = (player_state.hp_now * 100) / player_state.hp_max;
-    delay = (item_counts[ITEM_HERB] == 0) ? delay : delay + 5;
-    delay = (item_counts[ITEM_HERBAL_LIQUID] != 0) ? delay + 0xF : delay;
-    delay = (item_counts[ITEM_FOREST_FRUIT] != 0) ? delay + 0x1E : delay;
-    delay = (item_counts[ITEM_DRAGON_FLOWER] != 0) ? delay + 0x32 : delay;
+    delay = (item_counts.bytes[ITEM_HERB] == 0) ? delay : delay + 5;
+    delay = (item_counts.bytes[ITEM_HERBAL_LIQUID] != 0) ? delay + 0xF : delay;
+    delay = (item_counts.bytes[ITEM_FOREST_FRUIT] != 0) ? delay + 0x1E : delay;
+    delay = (item_counts.bytes[ITEM_DRAGON_FLOWER] != 0) ? delay + 0x32 : delay;
     entity->attack_delay_frames = base + (delay * 0x1E) / 200;
 }
 
@@ -1967,7 +1966,7 @@ void Entity_DrawPoolModels(void) {
             dst++;
             src++;
         }
-        Matrix_Multiply(model->model_matrix, ENTITY_MODEL(entity)->model_matrix, fire_lord_model_matrix);
+        Matrix_Multiply(model->model_matrix, ENTITY_MODEL(entity)->model_matrix, &fire_lord_model_matrix);
         model->light_block = ENTITY_MODEL(entity)->light_block;
         model->fog_block = ENTITY_MODEL(entity)->fog_block;
         Packet_BeginGsRegisters();

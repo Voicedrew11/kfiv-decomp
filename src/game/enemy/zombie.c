@@ -9,28 +9,11 @@
 #include "math/vu0.h"
 #include "model/motion.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "player/player.h"
 
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityAi_LowerWeightsAfterHit(char *);
-void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
-void EntityAi_StepState(void *);
-extern float player_state[];
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-void EntityAi_ClearTurnInPlace(Entity *);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
 
 static void Zombie_OnHit(Entity *entity);
 static void Zombie_Think(Entity *entity, s32 unknown);
@@ -50,7 +33,7 @@ void Zombie_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Zombie_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = Zombie_OnHit;
@@ -86,13 +69,13 @@ static void Zombie_OnHit(Entity *entity) {
     EntityAiState *sub = &entity->ai_state;
     u64 hit_strength;
 
-    EntityAi_LowerWeightsAfterHit((char *)entity);
+    EntityAi_LowerWeightsAfterHit(entity);
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     hit_strength = ENTITY_FLAG_BITS(entity)->hit_strength;
     if (hit_strength == 2) {
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
     sub->pause_timer = 0;
 }
 
@@ -105,7 +88,7 @@ static void Zombie_Think(Entity *entity, s32 unknown) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {
-        EntityAi_CheckFarFromSpawn((char *)entity);
+        EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -157,7 +140,7 @@ static void Zombie_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
@@ -165,7 +148,7 @@ static void Zombie_ThinkCombat(Entity *entity, s32 unknown) {
             ai_state->pause_timer = entity->params->action_frames + rand() % 30;
             return;
         case 1:
-            entity->target = player_state;
+            entity->target = &player_state;
             entity->action_timer = rand() % 60 + 0x78;
             ai_state->move_choice = 0;
             break;

@@ -14,36 +14,12 @@
 #include "math/vu0.h"
 #include "model/model.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "model/motion.h"
+#include "player/player.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
-extern s32 entity_type_handlers[][2];
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
-void EntityAi_StepState(void *);
-extern PlayerData player_state;
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-void EntityAi_ClearTurnInPlace(Entity *);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-int Motion_Step(void *, int);
-int Motion_BlendToPose(EntityModel *, f32);
-void EntityAi_LowerWeightsAfterHit(char *);
-void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-int Motion_Start(void *, int, int, u32, int);
-void EntityAi_SetAttackDelay(Entity *, s32);
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-s32 EntityAi_CheckMeleeHitAt(Entity *, void *, s32, s32, s32, f32);
-s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 
 static void LivingArmor_Think(Entity *entity, s32 unknown);
 static void LivingArmor_ThinkCombat(Entity *entity, s32 unknown);
@@ -70,7 +46,7 @@ void LivingArmor_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = LivingArmor_Think;
     ai_state->animate = LivingArmor_Animate;
     ai_state->on_hit = LivingArmor_OnHit;
@@ -109,7 +85,7 @@ static void LivingArmor_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags != 0) {
         return;
     }
-    EntityAi_CheckFarFromSpawn((char *)entity);
+    EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -158,7 +134,7 @@ static void LivingArmor_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
                 EntityAi_StartAction(entity, LivingArmor_MeleeAttack0, unknown);
@@ -224,7 +200,7 @@ static void LivingArmor_AimPart3AtPlayer(Entity *actor) {
     model = ENTITY_MODEL(actor);
     joint = &model->parts[3];
     if (joint != NULL && actor->animation_index == 0x11) {
-        Bone_TurnPartToLook(model, (int)joint, (int)actor->ai_state.target_point, 1, player_state.position, 0, 10.0f);
+        Bone_TurnPartToLook(model, (int)joint, (int)actor->ai_state.target_point, 1, &player_state.position, 0, 10.0f);
         angle = joint->rotation_x - DEG_TO_RAD(120);
         joint->rotation_x = angle;
         joint->rotation_x = EntityMath_WrapAngle(angle);
@@ -248,7 +224,7 @@ static void LivingArmor_Animate(Entity *entity) {
         }
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
@@ -271,10 +247,10 @@ static void LivingArmor_OnHit(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit20 = 1;
     ENTITY_FLAG_BITS(entity)->bit18 = 1;
     ENTITY_FLAG_BITS(entity)->bit21 = 1;
-    EntityAi_LowerWeightsAfterHit((char *)entity);
+    EntityAi_LowerWeightsAfterHit(entity);
     entity->target = NULL;
     EntityAi_SetReaction(entity, LivingArmor_ReactionHeavy, 0);
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
 }
 
 /* The reaction to a hit of either strength (busy bit 4): as EntityAi_ReactionHeavy with animation
@@ -476,7 +452,7 @@ static void LivingArmor_Dormant(Entity *entity) {
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
-            EntityAi_SetState((char *)entity, 2);
+            EntityAi_SetState(entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
             ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;

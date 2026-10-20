@@ -8,32 +8,11 @@
 #include "math/vu0.h"
 #include "model/motion.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_math.h"
+#include "player/player.h"
 
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
-void EntityAi_StepState(void *);
-extern PlayerData player_state;
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-void EntityAi_ClearTurnInPlace(Entity *);
-float EntityMath_AngleXZ(float *, char *);
-float EntityMath_AngleDifference(float, float);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-void EntityAi_LowerWeightsAfterHit(char *);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-void EntityAi_SetState(char *, u8);
-float EntityMath_HeadingTo(float *, float *);
-float EntityMath_DistanceXZ(void *, void *);
 
 static void Mummy_Think(Entity *entity, s32 unknown);
 static void Mummy_ThinkCombat(Entity *entity, s32 unknown);
@@ -49,7 +28,7 @@ void Mummy_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Mummy_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = Mummy_OnHit;
@@ -91,7 +70,7 @@ static void Mummy_Think(Entity *entity, s32 unknown) {
         ai_state->step_index = 1;
     }
     if (entity->busy_flags == 0) {
-        EntityAi_CheckFarFromSpawn((char *)entity);
+        EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -150,7 +129,7 @@ static void Mummy_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
@@ -171,7 +150,7 @@ static void Mummy_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     if (ai_state->move_choice != 1) {
-        angle = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
+        angle = EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position));
         if (entity->distance_to_player_3d - entity->radius - 100.0f < 200.0f && ABS(angle) < DEG_TO_RAD(40)) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(angle) > DEG_TO_RAD(40) && ABS(angle) < HALF_PI) {
@@ -238,13 +217,13 @@ static void Mummy_ThinkCombat(Entity *entity, s32 unknown) {
    reaction (EntityAi_ReactionHeavy). */
 static void Mummy_OnHit(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
-        EntityAi_LowerWeightsAfterHit((char *)entity);
+        EntityAi_LowerWeightsAfterHit(entity);
         ENTITY_FLAG_BITS(entity)->attacking = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->target = NULL;
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
 }
 
 /* The movement command for going backwards: a turn bit (0x100 / 0x200) while the target is off the heading by

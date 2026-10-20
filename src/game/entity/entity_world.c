@@ -17,16 +17,9 @@
 #include "model/model_matrix.h"
 #include "model/motion.h"
 #include <stdlib.h>
-
-extern char *entity_params;
-extern s32 entity_type_handlers[][2];
-extern PlayerData player_state;
-extern MapDrawState map_draw_state;
-extern u8 player_floor_block[];
-
-s32 EntityAi_ShouldRespawn(Entity *);
-void EntityEvent_Respawn(char *);
-s32 EntityAi_RemoveIfFallen(Entity *);
+#include "entity/entity_events.h"
+#include "entity/entity_ai.h"
+#include "player/player.h"
 
 #define SCRATCH_MATRIX ((f32 *)0x70000000)
 #define SCRATCH_VECTOR ((f32 *)0x70000040)
@@ -39,8 +32,6 @@ static void Entity_RebuildModelMatrices(Entity *entity);
 static int Entity_IsMapRecordActive(Entity *entity);
 static MapRecordBounds *Entity_FindMapRecordUnder(Entity *entity);
 static inline void entity_draw_set_model_tint(Entity *entity, f32 red, f32 green, f32 blue);
-
-void EntityAi_SetUpdate(char *, s32);
 
 /* The set-up function entity_type_handlers gives types 27 and 83 to 95, which have no AI: puts the motion at
    animation 0, clears the work area, sets flags 22-28 and installs the table's update (Entity_UpdateInert).
@@ -55,7 +46,7 @@ void Entity_InitInert(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
     ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
     ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
 }
 
 /* The per-frame update entity_type_handlers gives the types Entity_InitInert sets up: does nothing. */
@@ -269,7 +260,7 @@ void Entity_UpdateAll(void) {
             if (!EntityAi_ShouldRespawn(entity)) {
                 continue;
             }
-            EntityEvent_Respawn((char *)entity);
+            EntityEvent_Respawn(entity);
         }
         if (EntityAi_RemoveIfFallen(entity)) {
             continue;
@@ -285,9 +276,9 @@ void Entity_UpdateAll(void) {
             entity->ailment_3_frames = 0;
             entity->ailment_4_frames = 0;
         }
-        entity->distance_to_player_3d = EntityMath_Distance(entity->model->position, player_state.position);
-        entity->distance_to_player = EntityMath_DistanceXZ(entity->model->position, player_state.position);
-        entity->heading_to_player = EntityMath_HeadingTo(entity->model->position, player_state.position);
+        entity->distance_to_player_3d = EntityMath_Distance(entity->model->position, &player_state.position.x);
+        entity->distance_to_player = EntityMath_DistanceXZ(entity->model->position, &player_state.position.x);
+        entity->heading_to_player = EntityMath_HeadingTo(entity->model->position, &player_state.position.x);
         entity->move_delta_x = entity->move_delta_y = entity->move_delta_z = entity->turn_delta_pitch = entity->turn_delta_yaw = entity->turn_delta_roll = 0.0f;
         if (!Entity_IsMapRecordActive(entity)) {
             if (!ENTITY_FLAG_BITS(entity)->map_record_inactive) {

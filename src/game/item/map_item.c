@@ -1,3 +1,4 @@
+#include "save/save_state.h"
 #include "model/model.h"
 #include "player/player.h"
 #include "core/game.h"
@@ -13,6 +14,8 @@
 #include "gfx/gs_draw.h"
 #include "gfx/packet.h"
 #include "item/item.h"
+#include "gfx/texture.h"
+#include <stdlib.h>
 #include <libvu0.h>
 #include <math.h>
 #include "math/angle.h"
@@ -23,43 +26,8 @@
 /* Radians the held item turns each frame while the pickup is held. */
 #define PICKUP_HOLD_SPIN_PER_FRAME 0.08377580f
 
-void MapItem_ClearMap(int);
-s32 MapItem_Drop(s32, s32, s32, f32 *, f32, f32 *, f32 *, f32 *, u32);
-ItemModelSource *MapItem_FindModelSource(int, int);
-void Model_SetTextureBase(char *, int, int);
-void Model_SetVertexColour(void *, int, int, int, int);
-void TextureTable_SetBasePointers(char *, int, int);
-void MapItem_PrepareDraw(ModelInstance *model);
-
-void MapItem_PickupAim(void);
-void MapItem_PickupBringUp(void);
-void MapItem_PickupHold(void);
-void MapItem_PickupTake(void);
-void MapItem_PickupPutBack(void);
-
 /* 0x4147E0 the steps of the item pickup in progress, MapItem_UpdatePickup runs the current one */
 void (*pickup_step_handlers[6])(void) = { MapItem_PickupAim, MapItem_PickupBringUp, MapItem_PickupHold, MapItem_PickupTake, MapItem_PickupPutBack, 0 };
-
-int MapItem_PlaceFixed(int, int);
-ItemNode *MapItem_Unlink(ItemNode *);
-int MapItem_GetFixedIndex(int, int);
-void MapItem_Link(ListNode *);
-int MapItem_UniqueNotCarried(int);
-int MapItem_UniqueNotInTradeStock(int);
-int MapItem_UniqueNotDropped(int);
-
-extern GameDefinition item_name_defs[380];
-extern DroppedItemRecord dropped_item_records[0x80][16];
-extern u8 map_item_pickup_counts[0x80][0x40];
-extern MapDrawState map_draw_state;
-extern GameStatus game_status;
-extern EventRunner view_ray_status;
-extern u8 item_counts[];
-extern u8 trade_stock_1[];
-extern u8 trade_stock_2[];
-extern u8 trade_stock_3[];
-extern u8 trade_stock_4[];
-extern u8 trade_stock_5[];
 
 /* The per-map item blocks: nodes, models and the model data behind them, one set for each map. */
 static ItemModelSource item_model_sources[2][32];   /* 0x57E040 where the model and texture of each item kind lie */
@@ -149,12 +117,12 @@ void MapItem_InitMap(int map) {
             model_data = source->model_data;
             cursor = fixed_item_model_data[map][i];
             Model_SetUpPosed(node->model, &model_data, &cursor);
-            Model_SetTextureBase((char *)node->model, 0x3B40, 0x3EC0);
+            Model_SetTextureBase(node->model, 0x3B40, 0x3EC0);
             Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
             node->model->draw = MapItem_PrepareDraw;
             node->model->texture_data = (int)source->texture;
             node->model->texture_slot = 2;
-            TextureTable_SetBasePointers(source->texture, 0x3B40, 0x3EC0);
+            TextureTable_SetBasePointers((TextureTableHeader *)source->texture, 0x3B40, 0x3EC0);
         }
     }
     saved = *(DroppedItemRecords *)dropped_item_records[map_slots[map].tag];
@@ -409,11 +377,11 @@ s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f3
     model_data = source->model_data;
     buffer = dropped_item_model_data[map][index];
     Model_SetUpPosed(node->model, &model_data, &buffer);
-    Model_SetTextureBase((char *)node->model, 0x3B40, 0x3EC0);
+    Model_SetTextureBase(node->model, 0x3B40, 0x3EC0);
     Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
     node->model->texture_slot = 2;
     node->model->texture_data = (int)source->texture;
-    TextureTable_SetBasePointers(source->texture, 0x3B40, 0x3EC0);
+    TextureTable_SetBasePointers((TextureTableHeader *)source->texture, 0x3B40, 0x3EC0);
     if (order == 0xFFFFFFFF) {
         order = item_drop_counter++;
     }
@@ -480,11 +448,11 @@ ItemNode *MapItem_PutOutForObject(int map, int item, void *position, void *rotat
     sources[0] = source->model_data;
     sources[1] = object_item_model_data[map][i];
     Model_SetUpPosed(node->model, &sources[0], &sources[1]);
-    Model_SetTextureBase((char *)node->model, 0x3B40, 0x3EC0);
+    Model_SetTextureBase(node->model, 0x3B40, 0x3EC0);
     Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
     node->model->texture_slot = 2;
     node->model->texture_data = (int)source->texture;
-    TextureTable_SetBasePointers(source->texture, 0x3B40, 0x3EC0);
+    TextureTable_SetBasePointers((TextureTableHeader *)source->texture, 0x3B40, 0x3EC0);
     MapItem_Link((ListNode *)node);
     return node;
 }
@@ -907,7 +875,7 @@ int MapItem_GetFixedIndex(int slot, int object_id) {
 /* Returns FALSE when the player carries the item and it is one of a kind (equipment, or ItemCommonDef.flags
    bit 1). */
 int MapItem_UniqueNotCarried(int item) {
-    if (item_counts[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
+    if (item_counts.bytes[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
         return 0;
     }
     return 1;
@@ -915,19 +883,19 @@ int MapItem_UniqueNotCarried(int item) {
 
 /* Returns FALSE when one of the five tables after item_counts holds the item and it is one of a kind. */
 int MapItem_UniqueNotInTradeStock(int item) {
-    if (trade_stock_1[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
+    if (trade_stock_1.bytes[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
         return FALSE;
     }
-    if (trade_stock_2[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
+    if (trade_stock_2.bytes[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
         return FALSE;
     }
-    if (trade_stock_3[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
+    if (trade_stock_3.bytes[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
         return FALSE;
     }
-    if (trade_stock_4[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
+    if (trade_stock_4.bytes[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
         return FALSE;
     }
-    if (trade_stock_5[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
+    if (trade_stock_5.bytes[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
         return FALSE;
     }
     return TRUE;

@@ -11,36 +11,10 @@
 #include "math/vu0.h"
 #include "model/motion.h"
 #include <stdlib.h>
-
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-extern PlayerData player_state;
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(void *);
-void EntityAi_StepState(void *);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-void EntityAi_ClearTurnInPlace(Entity *);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-float EntityMath_AngleXZ(float *, char *);
-float EntityMath_AngleDifference(float, float);
-float EntityMath_WrapAngle(float);
-extern u8 player_weapon_step[];
-float EntityMath_HeadingTo(float *, float *);
-float EntityMath_DistanceXZ(float *a, float *b);
-void EntityAi_LowerWeightsAfterHit(char *);
-void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-/* "<< !!!??? >>", printed when unkCD is not 0 again after EntityAi_LowerChoiceWeight */
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-void EntityAi_SetAttackDelay(Entity *, s32);
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_math.h"
+#include "player/player.h"
 
 static void EarthElemental_Think(Entity *entity, s32 unknown);
 static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown);
@@ -63,7 +37,7 @@ void EarthElemental_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = EarthElemental_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = EarthElemental_OnHit;
@@ -106,7 +80,7 @@ static void EarthElemental_Think(Entity *entity, s32 unknown) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (player_state.magic_shot_launched != 0) {
+    if (player_state.cast_launched_shot != 0) {
         ai_state->action_flags = rand() % 10 + 25;
     }
     if (ai_state->action_flags > 0) {
@@ -196,14 +170,14 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             ai_state->reload_timer = entity->params->near_distance;
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             }
             return;
         case 1:
-            player_angle = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
+            player_angle = EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position));
             if (ABS(player_angle) > DEG_TO_RAD(35)) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 30 + 60;
@@ -346,7 +320,7 @@ static s32 EarthElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32
     }
     distance = entity->distance_to_player - (entity->radius + 100.0f);
     angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-    player_angle = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
+    player_angle = EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position));
     if (distance < min_distance) {
         return FALSE;
     }
@@ -389,7 +363,7 @@ static void EarthElemental_Move(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 turn;
 
-    if (entity == player_state.stood_on_entity && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
+    if (entity == player_state.stepped_on_entity && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
         entity->move_command = 0;
     }
     if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
@@ -476,7 +450,7 @@ static void EarthElemental_AlertSameKind(Entity *entity) {
             if (ai_state->pause_timer == 0
                 && EntityMath_DistanceXZ(entity->model->position, other->model->position)
                        < (s16)entity->params->action_frames
-                && EntityMath_DistanceXZ((float *)other->spawn_info, player_state.position) < other->spawn_info->wander_radius) {
+                && EntityMath_DistanceXZ((float *)other->spawn_info, &player_state.position.x) < other->spawn_info->wander_radius) {
                 ai_state->pause_timer = 1;
             }
         }
@@ -485,7 +459,7 @@ static void EarthElemental_AlertSameKind(Entity *entity) {
 
 /* The on_hit handler: as EntityAi_OnHit, then EarthElemental_AlertSameKind. */
 static void EarthElemental_OnHit(Entity *entity) {
-    EntityAi_LowerWeightsAfterHit((char *)entity);
+    EntityAi_LowerWeightsAfterHit(entity);
     entity->target = NULL;
     ENTITY_FLAG_BITS(entity)->attacking = FALSE;
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
@@ -498,7 +472,7 @@ static void EarthElemental_OnHit(Entity *entity) {
     } else if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
     EarthElemental_AlertSameKind(entity);
 }
 
@@ -563,7 +537,7 @@ static void EarthElemental_BackAwayOrRunAtPlayer(Entity *entity) {
             EntityAi_LowerChoiceWeight(entity, 0);
             if (entity->combat_choice == 0) {
                 ai_state->pause_timer = 2;
-                if (EntityAi_PickAttack((char *)entity)) {
+                if (EntityAi_PickAttack(entity)) {
                     EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
                 } else {
                     EntityAi_StartAction(entity, EntityAi_MeleeAttack, 1);
@@ -574,7 +548,7 @@ static void EarthElemental_BackAwayOrRunAtPlayer(Entity *entity) {
             break;
         }
         entity->target = &player_state;
-        angle = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
+        angle = EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position));
         side = EntityAi_TurnFromPush(entity, direction);
         if (ABS(angle) > DEG_TO_RAD(45)) {
             entity->move_command = MOVE_COMMAND_BACK;

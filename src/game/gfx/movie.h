@@ -4,6 +4,7 @@
 #define KF_MOVIE_H
 
 #include "common.h"
+#include <libmpeg.h>
 
 /* the sound stream's state on its way to the IOP (the SDK sample's AudioDec, movie_audio) */
 typedef struct {
@@ -32,14 +33,6 @@ typedef struct {
 typedef struct {
     u8 bytes[4];                    /* 0x00 */
 } MovieEndCode;
-
-/* a block of data handed to the IOP with sceSifSetDma (the SDK's sceSifDmaData) */
-typedef struct {
-    void *data;                     /* 0x00 */
-    void *addr;                     /* 0x04 IOP address */
-    int size;                       /* 0x08 */
-    int attr;                       /* 0x0C */
-} MovieSifDmaData;
 
 /* the ring the movie file is read into before it is demultiplexed (the SDK sample's ReadBuf) */
 typedef struct {
@@ -195,7 +188,7 @@ typedef struct {
 
 /* movie_decoder: the libmpeg handle, its stream buffer and the decoder state (the SDK sample's VideoDec) */
 typedef struct {
-    char mpeg[0x48];                /* 0x00 an sceMpeg */
+    sceMpeg mpeg;                   /* 0x00 */
     MovieStreamBuffer stream;       /* 0x48 */
     s32 state;                      /* 0xA8 MOVIE_VIDEO_STATE_* */
     s32 unkAC;                      /* 0xAC */

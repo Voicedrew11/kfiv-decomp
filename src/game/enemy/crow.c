@@ -7,18 +7,11 @@
 #include "entity/entity_ai_handlers.h"
 #include "entity/entity_events.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "model/motion.h"
+#include "entity/entity_math.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
-extern s32 entity_type_handlers[][2];
-int Motion_Step(void *, int);
-int Motion_BlendToPose(EntityModel *, f32);
-float EntityMath_EaseAngleToward(float *, float, float);
-float EntityMath_DistanceXZ(void *, void *);
-int Motion_Start(void *, int, int, u32, int);
 
 static void Crow_Animate(Entity *entity);
 static void Crow_Think(Entity *entity, int frame);
@@ -41,7 +34,7 @@ void Crow_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Crow_Think;
     ai_state->animate = Crow_Animate;
     ai_state->on_hit = NULL;
@@ -65,7 +58,7 @@ void Crow_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate without the head turn. */
@@ -77,7 +70,7 @@ static void Crow_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
@@ -161,7 +154,7 @@ static void Crow_MoveOffAndRemove(Entity *entity, s32 unknown) {
         EntityMath_EaseAngleToward(&turn, 0.0f, 20.0f);
         entity->turn_delta_pitch += turn - entity->model->rotation[0];
     }
-    if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) > 10000.0f) {
+    if (EntityMath_DistanceXZ(entity->model->position, &entity->spawn_info->spawn_x) > 10000.0f) {
         ENTITY_FLAG_BITS(entity)->live = FALSE;
     }
     EntityAi_StartAction(entity, ai_state->move, unknown);

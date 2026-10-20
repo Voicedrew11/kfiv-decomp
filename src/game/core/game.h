@@ -5,9 +5,9 @@
 #include "common.h"
 #include "gfx/gs.h"
 #include "model/model.h"
+#include "math/camera.h"
 
-/* game_status (cleared as 0x48 bytes by Map_ResetGameState). Other files still
-   declare it as char[]/int[], so the extern stays in each file. */
+/* game_status (cleared as 0x48 bytes by Map_ResetGameState) */
 typedef struct {
     char player_control;            /* 0x00 nonzero: script blends are skipped */
     char set_on_map_reset;          /* 0x01 Flag set to 1 after the map state reset */
@@ -80,10 +80,19 @@ typedef struct {
 
 #define UPDATE_HOLD_MAP_OBJECTS 0x8        /* holds back MapObject_UpdateAll, the map objects' update */
 
-/* current_play_time: the play time as PlayTime_ComputeCurrent splits it (byte 1 seconds, 2 minutes, 3 and 5 hours), passed by value */
-typedef struct {
-    char bytes[8];
-} PlayTime;
+/* an 8-byte time passed by value: the wall clock (PlayTime_DayOfYear, PlayTime_ClockSecondsBetween), and the play time
+   current_play_time, which PlayTime_ComputeCurrent splits the same way (mday counts hundreds of hours); the record
+   sceCdReadClock fills in */
+typedef struct sceCdCLOCK {
+    char pad0;                      /* 0x00 */
+    u8 sec;                         /* 0x01 */
+    u8 min;                         /* 0x02 */
+    u8 hour;                        /* 0x03 */
+    char pad4;                      /* 0x04 */
+    u8 mday;                        /* 0x05 */
+    u8 mon;                         /* 0x06 */
+    u8 year;                        /* 0x07 years since 2000 */
+} ClockTime;
 
 /* the first 8 bytes of the save buffer save_image (Game_WriteSaveImage writes them, Game_CheckSaveImage checks them) */
 typedef struct {
@@ -94,28 +103,6 @@ typedef struct {
 
 #define SAVE_MAGIC      0x15400
 #define SAVE_BLOCK_SIZE 0x80
-
-/* camera_state (the camera, it seems). Other files still declare it as float[],
-   so the extern stays in each file. */
-typedef struct {
-    f32 position[4];                /* 0x00 */
-    f32 pitch;                      /* 0x10 rotation about x */
-    f32 yaw;                        /* 0x14 rotation about y */
-    f32 roll;                       /* 0x18 rotation about z */
-    char pad1C[0x04];
-    f32 look_at_point[4];           /* 0x20 the point to look at (GameStatus.camera_look_mode) */
-    f32 move_to_point[4];           /* 0x30 the point to move to (GameStatus.camera_move_enabled) */
-    f32 turn_speed;                 /* 0x40 how fast it turns to unk20 */
-    f32 move_speed;                 /* 0x44 how far it moves to unk30 in a frame */
-    f32 screen_scale;               /* 0x48 512.0 after Map_ResetGameState */
-    f32 height_offset;              /* 0x4C added to the height above the player */
-    f32 script_shake_offset[4];     /* 0x50 the first shake's offset (GameLoop_UpdateCameraShake) */
-    f32 entity_shake_offset[4];     /* 0x60 the second shake's offset */
-    f32 script_shake_reach;         /* 0x70 how far the first shake reaches */
-    s32 script_shake_frames;        /* 0x74 frames of it left */
-    f32 entity_shake_reach;         /* 0x78 how far the second shake reaches (EntityAi_ShakeCamera) */
-    s32 entity_shake_frames;        /* 0x7C frames of it left */
-} CameraState;
 
 /* view_ray_status: the view ray from the player's eyes and what it finds in front of him (Interact_UpdateViewRay,
    Interact_FindTarget), and the event being run */
@@ -151,31 +138,6 @@ typedef struct {
 typedef struct {
     s32 values[4];                  /* 0x00 */
 } ViewerCornerTable;
-
-/* an 8-byte wall-clock time passed by value (PlayTime_DayOfYear, PlayTime_ClockSecondsBetween, PlayTime_ClockMinutesBetween) */
-typedef struct {
-    char pad0;                      /* 0x00 */
-    u8 sec;                         /* 0x01 */
-    u8 min;                         /* 0x02 */
-    u8 hour;                        /* 0x03 */
-    char pad4;                      /* 0x04 */
-    u8 mday;                        /* 0x05 */
-    u8 mon;                         /* 0x06 */
-    u8 year;                        /* 0x07 years since 2000 */
-} ClockTime;
-
-/* the C library's struct tm, which mktime fills in (PlayTime_GetWeekday) */
-typedef struct {
-    int tm_sec;                     /* 0x00 */
-    int tm_min;                     /* 0x04 */
-    int tm_hour;                    /* 0x08 */
-    int tm_mday;                    /* 0x0C */
-    int tm_mon;                     /* 0x10 0 to 11 */
-    int tm_year;                    /* 0x14 years since 1900 */
-    int tm_wday;                    /* 0x18 0: Sunday */
-    int tm_yday;                    /* 0x1C */
-    int tm_isdst;                   /* 0x20 */
-} CalendarTime;
 
 /* game_clock: the game clock (core/game_clock.c) */
 typedef struct {
@@ -256,7 +218,10 @@ typedef struct {
     u16 model_file_number;          /* 0x30 the number in the name of its item_arm file (Player_LoadArmModels) */
     char pad32[0x01];
     u8 weight_tenths_of_kilogram;   /* 0x33 the item's weight in tenths of a kilogram */
-    char pad34[0x08];
+    char pad34[0x02];
+    u8 upgrade_wait_minutes;        /* 0x36 minutes that must pass since LevelRecord.last_upgraded (Smith_BuildItemRings) */
+    u8 exp_per_level;               /* 0x37 wear (experience) that costs a weapon or worn item a level (Attack_WearWeapon) */
+    u32 unk38;                      /* 0x38 */
     u8 starting_level_percent;      /* 0x3C the percent a level record's level starts at for it */
     char pad3D[0x01];
     u16 weight_tenths_of_pound;     /* 0x3E unk33 scaled by kilograms_to_pounds_factor, worked out after loading */
@@ -657,6 +622,15 @@ void GameLoop_RunSoundLoads(void);
 void GameLoop_DrawFrame(int arg);
 void GameLoop_ResetSystems(int arg);
 void GameLoop_CancelMenuRequests(void);
+void GameLoop_UpdateCameraShake(void);
+void GameLoop_UpdateCamera(void);
+void GameLoop_SetCameraMatrices(int projection, int mode);
+void GameLoop_OpenRequestedMenu(void);
+void GameLoop_UpdatePause(void);
+void GameLoop_DrawFrameWithoutHud(void);
+void GameLoop_ShowGrabbedFrame(int divisor);
+void GameLoop_RedrawFrame(void);
+void GameLoop_ClearBothBuffers(void);
 
 /* core/game_state.c */
 extern u8 player_can_walk[];
@@ -707,5 +681,13 @@ extern int fade_frames_left;
 extern int fade_frames;
 
 void Map_UpdateDrawState(void);
+
+/* core/game_state.c */
+extern GameStatus game_status;
+extern MapProp *map_slot_props[2][0xFF];
+
+/* data still in asm */
+extern ClockTime current_play_time;
+extern s32 key_item_slots[12];
 
 #endif

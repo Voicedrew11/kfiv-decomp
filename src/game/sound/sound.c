@@ -6,6 +6,9 @@
 #include "sound/sound.h"
 #include <eeregs.h>
 #include "core/file.h"
+#include <eekernel.h>
+#include <sifrpc.h>
+#include <sifdev.h>
 
 /* EE EABI varargs: the register save area a1..a7 is spilled to, as in libsdr.c */
 typedef char *va_list;
@@ -13,21 +16,8 @@ typedef char *va_list;
 #define va_arg(ap, type) (*(type *)((ap += 8) - 8))
 
 static void SoundDriver_DisableOutput(void);
-void FlushCache(int); // match: void as in eekernel.h; an int result changes SoundDriver_Init's registers
-int sceSifBindRpc(int *, int, int);
-int sceSifCheckStatRpc(int *);
-int sceSifCallRpc(int *, int, int, char *, int, int *, int, int, int);
-int sceSifSetDma(int *, int);
-int sceSifDmaStat(int);
-static int SoundDriver_GetFileSize(const char *);
+static int SoundDriver_GetFileSize(char *);
 static int SoundDriver_LoadIopFile(char *, void *);
-int sceSifAllocIopHeap(int);
-int sceSifFreeIopHeap(int);
-int sceClose(int);
-int sceLseek(int, int, int);
-int sceOpen(const char *, int);
-/* SDK: loads an IOP heap file, returns below zero until the IOP is ready */
-int sceSifLoadIopHeap(char *name, void *addr);
 extern int (*const voice_load_steps[])(int *, int *);
 
 
@@ -45,7 +35,7 @@ static SoundRpcRequest sound_rpc_buffer;        /* 0x5BF280 */
 static SoundState sound_state_storage;          /* 0x5BF380 */
 static SoundDmaRequest sound_dma;               /* 0x5BF860 */
 static SoundUpload sound_upload;                /* 0x5BF870 */
-static int sound_rpc_client[10];                /* 0x5BF890 sceSifClientData of the driver's RPC service */
+static sceSifRpcClientData sound_rpc_client;    /* 0x5BF890 the driver's RPC service */
 static SoundDmaRequest sound_command_dma;       /* 0x5BF8B8 sends sound_command_list */
 
 /* Starts the sound driver: binds its RPC service on the IOP, then resets the driver state,
@@ -58,13 +48,13 @@ int SoundDriver_Init(void) {
     int i;
 
     do {
-        if (sceSifBindRpc(sound_rpc_client, 0x1010, 0) < 0) {
+        if (sceSifBindRpc(&sound_rpc_client, 0x1010, 0) < 0) {
             while (TRUE) {
             }
         }
         for (i = 10000; i != -1; i--) {
         }
-    } while (sound_rpc_client[9] == 0);
+    } while (sound_rpc_client.serve == 0);
     FlushCache(0);
     sound_state = &sound_state_storage;
     sound_state->dma_src = SoundDriver_Remote(1, 0x10);
@@ -141,7 +131,7 @@ void SoundDriver_ReleaseAll(void) {
 static int SoundDriver_WaitRpc(void) {
     int retries = 0x989680;
 
-    while (sceSifCheckStatRpc(sound_rpc_client) == 1) {
+    while (sceSifCheckStatRpc(&sound_rpc_client) == 1) {
         if (retries < 0) {
             printf(rpc_timeout_message);
             return -1;
@@ -153,7 +143,7 @@ static int SoundDriver_WaitRpc(void) {
 
 /* The state of the sound driver's RPC client: 1 while a call is still running. */
 int SoundDriver_IsBusy(void) {
-    return sceSifCheckStatRpc(sound_rpc_client);
+    return sceSifCheckStatRpc(&sound_rpc_client);
 }
 
 /* Sends a command and its arguments to the sound driver on the IOP (the game's own sceSdRemote;
@@ -182,15 +172,15 @@ int SoundDriver_Remote(int blocking, ...) {
         return result;
     }
     if (command & SOUND_COMMAND_REPLY) {
-        sceSifCallRpc(sound_rpc_client, command, no_wait, (char *)&sound_rpc_buffer, 0xA0, (int *)sound_rpc_buffer.args[0], 0xA0, 0,
-                      sound_rpc_buffer.args[0]);
+        sceSifCallRpc(&sound_rpc_client, command, no_wait, &sound_rpc_buffer, 0xA0, (void *)sound_rpc_buffer.args[0], 0xA0, 0,
+                      (void *)sound_rpc_buffer.args[0]);
     } else if (command & SOUND_COMMAND_SENDS_BUFFER) {
-        sceSifCallRpc(sound_rpc_client, command, no_wait, (char *)sound_rpc_buffer.args[0], 0x40, (int *)&sound_rpc_buffer, 0x10, 0,
-                      (int)sound_rpc_buffer.self);
+        sceSifCallRpc(&sound_rpc_client, command, no_wait, (void *)sound_rpc_buffer.args[0], 0x40, &sound_rpc_buffer, 0x10, 0,
+                      sound_rpc_buffer.self);
         result = (int)sound_rpc_buffer.self;
     } else {
-        sceSifCallRpc(sound_rpc_client, command, no_wait, (char *)&sound_rpc_buffer, 0x40, (int *)&sound_rpc_buffer, 0x10, 0,
-                      (int)&sound_rpc_buffer);
+        sceSifCallRpc(&sound_rpc_client, command, no_wait, &sound_rpc_buffer, 0x40, &sound_rpc_buffer, 0x10, 0,
+                      &sound_rpc_buffer);
         result = (int)sound_rpc_buffer.self;
     }
     return result;
@@ -225,7 +215,7 @@ static int SoundDriver_StartUpload(int dest, int src, u32 size) {
     dma->size = sound_upload.padded_size;
     dma->mode = 0;
     FlushCache(0);
-    dma_id = sceSifSetDma((int *)dma, 1);
+    dma_id = sceSifSetDma((struct sceSifDmaData *)dma, 1);
     sound_upload.dma_id = dma_id;
     return (dma_id != 0) ? 0 : -1;
 }
@@ -269,7 +259,7 @@ int SoundDriver_StepUpload(void) {
     dma->size = sound_upload.padded_size;
     dma->mode = 0;
     FlushCache(0);
-    dma_id = sceSifSetDma((int *)dma, 1);
+    dma_id = sceSifSetDma((struct sceSifDmaData *)dma, 1);
     sound_upload.dma_id = dma_id;
     return 0;
 }
@@ -711,7 +701,7 @@ int SoundDriver_LoadVoiceBuffered(int voice_id, int header_data, int header_size
             sound_dma.dest = heap;
             sound_dma.mode = 0;
             SoundDriver_Remote(1, 0x80, voice->dma_channel, 1);
-            i = sceSifSetDma((int *)&sound_dma, 1); // match: the loop counter doubles as the DMA id
+            i = sceSifSetDma((struct sceSifDmaData *)&sound_dma, 1); // match: the loop counter doubles as the DMA id
             if (i == 0) {
                 sceSifFreeIopHeap(heap);
                 SoundDriver_FreeVoice(voice_index);
@@ -835,7 +825,7 @@ int SoundDriver_VoiceLoadSendPiece(SoundLoadArgs *args, SoundReloadRequest *requ
         printf(voice_load_waiting_message);
         return 0;
     }
-    dma_id = sceSifSetDma((int *)&sound_dma, 1);
+    dma_id = sceSifSetDma((struct sceSifDmaData *)&sound_dma, 1);
     if (dma_id == 0) {
         sceSifFreeIopHeap(request->heap_addr);
         SoundDriver_FreeVoice(request->voice_index);
@@ -982,7 +972,7 @@ int SoundDriver_LoadVoiceAt(int voice_index, int header_data, int header_size, i
             sound_dma.dest = heap;
             sound_dma.mode = 0;
             SoundDriver_Remote(1, 0x80, voice->dma_channel, 1);
-            i = sceSifSetDma((int *)&sound_dma, 1); // match: the loop counter doubles as the DMA id
+            i = sceSifSetDma((struct sceSifDmaData *)&sound_dma, 1); // match: the loop counter doubles as the DMA id
             if (i == 0) {
                 sceSifFreeIopHeap(heap);
                 SoundDriver_FreeVoice(voice_index);
@@ -1969,7 +1959,7 @@ int SoundDriver_FlushCommands(void) {
     sound_command_dma.src = dest;
     sound_command_dma.size = size;
     sound_command_dma.mode = 0;
-    transfer_id = sceSifSetDma((int *)&sound_command_dma, 1);
+    transfer_id = sceSifSetDma((struct sceSifDmaData *)&sound_command_dma, 1);
     if (transfer_id == 0) {
         return -1;
     }
@@ -1986,7 +1976,7 @@ int SoundDriver_FlushCommands(void) {
 int SoundDriver_OpenStreamFile(int stream, char *file_name, int value) {
     strcpy(sound_rpc_file_name, file_name);
     stream &= 1;
-    sceSifCallRpc(sound_rpc_client, stream | 0x3000, 0, sound_rpc_file_name, 0x100, (int *)&sound_rpc_buffer, 1, 0, 0);
+    sceSifCallRpc(&sound_rpc_client, stream | 0x3000, 0, sound_rpc_file_name, 0x100, &sound_rpc_buffer, 1, 0, 0);
     if (sound_rpc_buffer.self == 0) {
         if (SoundDriver_Remote(1, 0x3040, stream, value) != 0) {
             SoundDriver_Remote(1, 0x3030, stream);
@@ -2005,7 +1995,7 @@ int SoundDriver_PlayStreamFile(int stream, char *file_name, int value) {
         return -1;
     }
     strcpy(sound_rpc_file_name, file_name);
-    sceSifCallRpc(sound_rpc_client, stream | 0x30A0, 0, sound_rpc_file_name, 0x100, (int *)&sound_rpc_buffer, 1, 0, 0);
+    sceSifCallRpc(&sound_rpc_client, stream | 0x30A0, 0, sound_rpc_file_name, 0x100, &sound_rpc_buffer, 1, 0, 0);
     if (sound_rpc_buffer.self != 0) {
         SoundDriver_Remote(1, 0x3030, stream);
         return -1;
@@ -2082,7 +2072,7 @@ void SoundDriver_ApplyReverbNoWait(u32 index) {
 }
 
 /* Opens the file (retrying until it works), takes its size, and rounds it up to a multiple of 64. */
-static int SoundDriver_GetFileSize(const char *name) {
+static int SoundDriver_GetFileSize(char *name) {
     int handle;
     int size;
 

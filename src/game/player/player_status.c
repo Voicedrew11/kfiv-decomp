@@ -12,19 +12,21 @@
 #include "model/motion.h"
 #include "player/player_update.h"
 #include "save/save_state.h"
+#include "sound/sound_game.h"
+#include "enemy/enemy.h"
+
+/* the held item's model, as the bounce reads it */
+#define HELD_ITEM_DISPLAY ((DisplayContext *)held_item_model_ptr)
+
+// match: retail calls these two for an int result (the definitions are void), which keeps $2 and $3 busy
+#define SOUND_STOP_VOICE(slot) ((int (*)(int))Sound_StopVoice)(slot)
+#define SOUND_PLAY_SW(mode) ((int (*)(int))Sound_PlaySw)(mode)
 
 /* one of the nine values: the item's base plus what it gained, scaled by LevelRecord.level in percent */
 #define ADD_SCALED(n) totals[n] += (def->base_values[n] + record->gained_values[n]) * record->level / 100
 
-void Player_AddItemBonuses(int);
-int Sound_PlaySw(int); // match: an int return (the definition is void) keeps $2 busy in Player_BounceWeapon
-int Sound_PlayCommon(int);
-
 /* 0x414580 the tint the damage and the statuses fade the screen with (Player_DrawScreenTints draws it) */
 PlayerScreenTint player_screen_tint = { 0 };
-extern GameStatus game_status;
-extern DisplayContext *held_item_model_ptr;
-extern int current_map_slot;
 
 /* Works out what the worn items add: clears unkDC to unk10C, lets every worn item add its part, then
    turns the four rates into frame counts. */
@@ -246,12 +248,10 @@ void Player_TiltViewFromHit(int damage) {
     }
 }
 
-int Sound_StopVoice(int); // match: an int return (the definition is void) keeps -1 in $3
-
 /* Stops the last footstep sound (footstep_voice), if one plays. */
 void Player_StopFootstepSound(void) {
     if (footstep_voice >= 0) {
-        Sound_StopVoice(footstep_voice);
+        SOUND_STOP_VOICE(footstep_voice);
         footstep_voice = -1;
     }
 }
@@ -499,10 +499,10 @@ void Player_CountWeaponUse(int weapon) {
    model goes back to motion 0; the swing hits nothing more (unk261). */
 void Player_BounceWeapon(void) {
     if (player_state.weapon_bounced == 0 && weapon_defs[player_state.weapon].action_handler_index != 2) {
-        Sound_StopVoice(2);
-        Sound_PlaySw(1);
+        SOUND_STOP_VOICE(2);
+        SOUND_PLAY_SW(1);
         player_state.weapon_bounced = 1;
-        ModelMotion_BlendInto((ModelInstance *)held_item_model_ptr, 0, held_item_model_ptr->settings->blend_speed);
+        ModelMotion_BlendInto((ModelInstance *)held_item_model_ptr, 0, HELD_ITEM_DISPLAY->settings->blend_speed);
     }
 }
 
@@ -511,8 +511,8 @@ void Player_BounceWeaponQuietly(void) {
     DisplayContext *display;
 
     if (player_state.weapon_bounced == 0 && weapon_defs[player_state.weapon].action_handler_index != 2) {
-        Sound_StopVoice(2);
-        display = held_item_model_ptr;
+        SOUND_STOP_VOICE(2);
+        display = HELD_ITEM_DISPLAY;
         player_state.weapon_bounced = 1;
         ModelMotion_BlendInto((ModelInstance *)display, 0, display->settings->blend_speed);
     }

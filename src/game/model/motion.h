@@ -52,5 +52,7 @@ void ModelMotion_Select(ModelInstance *model, int index);
 MotionData *ModelMotion_LoadFile(MotionFile *file, ModelChannel **alloc, ModelInstance *model, int mode);
 int ModelMotion_BlendInto(ModelInstance *model, u8 index, u16 speed);
 u16 ModelMotion_GetLastFrame(char *model_arg);
+void ModelMotion_Hermite(void *result, void *point0, void *point1, void *tangent0, void *tangent1, f32 ratio);
+void ModelMotion_StepBlend(ModelInstance *model);
 
 #endif

@@ -11,21 +11,6 @@
 
 #define TEX0_BITS(header) ((TextureTex0Bits *)&(header)->tex0)
 
-extern char tm2_tbp_zero_message[]; /* "load_tm2() tbp:0 !!!!" */
-extern char tm2_header_label[];     /* "load_tm2()" */
-extern char tex0_tbp_format[];      /* "TBP[%u] " */
-extern char tex0_tbw_format[];      /* "TBW[%u] " */
-extern char tex0_psm_format[];      /* "PSM[0x%x] " */
-extern char tex0_tw_format[];       /* "TW[%u] " */
-extern char tex0_th_format[];       /* "TH[%u] " */
-extern char tex0_tcc_format[];      /* "TCC[%u] " */
-extern char tex0_tfx_format[];      /* "TFX[0x%x] " */
-extern char tex0_cbp_format[];      /* "CBP[%u] " */
-extern char tex0_cpsm_format[];     /* "CPSM[0x%x] " */
-extern char tex0_csm_format[];      /* "CSM[%u] " */
-extern char tex0_csa_format[];      /* "CSA[%u] " */
-extern char tex0_cld_format[];      /* "CLD[0x%x]
-" */
 static u32 texflush_packet[0xC];    /* 0x1DFAF80 where Texture_SendTexFlush builds its DMA packet */
 
 static void Texture_LoadTm2(TextureHeader *header);

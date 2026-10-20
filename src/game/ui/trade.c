@@ -1,3 +1,4 @@
+#include <libgraph.h>
 /* Three modal menus that share one source file: the trade screens (Trade_), the smith's screens (Smith_) and the
    save screen (SaveScreen_). Each has a function that runs it until it is left (_Run): every frame that grabs the
    frame buffer and calls the current step, and the steps call the handler of the list or question on screen. */
@@ -27,12 +28,9 @@
 #include <libvu0.h>
 #include "sound/sound_game.h"
 #include <stdio.h>
+#include "save/save_state.h"
 #include "ui/menu_draw.h"
 
-extern u8 item_counts[380];
-extern LevelDef item_name_defs[380];
-extern LevelRecord weapon_level_records[70];
-extern LevelRecord worn_item_level_records[160];
 /* Appends node to the ring being built; the seventh one becomes the page mark. */
 #define LINK_ITEM(node, page_mark)          \
     count++;                                \
@@ -49,21 +47,18 @@ extern LevelRecord worn_item_level_records[160];
 /* Lists the owned, unlocked items of one group that the table gives a value for and whose record is not in use. */
 #define LINK_OWNED_GROUP(nodes, records, record_base, item_base, item_count)                                       \
     for (i = 1; i < (item_count); i++) {                                                                           \
-        if (item_counts[(item_base) + i] != 0 && !(item_name_defs[(item_base) + i].state & 2) &&                        \
+        if (item_counts.bytes[(item_base) + i] != 0 && !(item_level_defs[(item_base) + i].state & 2) &&                        \
             values.values[table][(item_base) + i].give_value != 0 && (records)[(record_base) + i].in_smith_rings == 0) {    \
             LINK_ITEM(&(nodes)[i], item_list_page_mark)                                                                     \
         }                                                                                                          \
     }
-int sceGsSyncV(int);
 /* the ring the list on screen walks: a copy of the handover_list_* or the owned_list_* three */
-void Packet_WaitForSend(void);
 /* the loads of the model shown and of the four the cursor brings on with up (0x10), down (0x40), left (0x80) and
    right (0x20): in a list a row and a page either way, on the equipment screen the next list and the next item */
 /* match: the part number is passed sign-extended and no result is kept (the definition takes a u8 and returns int) */
 #define SELECT_PART(part) ((void (*)(s32))Menu_SetBlendMode)(part)
 /* the three kind words table 4's stock list shows: "Bones", "Scales", "Claws" in half-width glyph codes
    (0x800 | character - 0x20; MenuText_DrawWrapped draws code 0x800 + n as half-width cell n) */
-int Menu_DrawItemModel(f32 *); // match: an int result keeps $2 for the load after the call
 /* value * percent / divisor. match: an inline function, so every use loads its own divisor (the dead `li 100`s) */
 static inline s32 ScaleValue(s32 value, s32 percent, s32 divisor) {
     return value * percent / divisor;
@@ -101,7 +96,6 @@ static inline s32 Trade_StockListScrollDown(void) {
     trade_stock_list_cursor[0] = trade_stock_list_top[0];
     return trade_stock_list_top[0] != item_list_first;
 }
-extern ClockTime current_play_time;
 /* Adds a node to the end of the ring being built; `seventh` remembers the seventh one added. */
 #define APPEND(node, seventh) \
     count++; \
@@ -118,7 +112,7 @@ extern ClockTime current_play_time;
 /* The owned, usable items of one run of definitions whose record is idle and below level 100. */
 #define APPEND_UPGRADABLE(nodes, records, base, first_item, limit) \
     for (i = 1; i < limit; i++) { \
-        if (item_counts[first_item + i] != 0 && !(item_name_defs[first_item + i].state & 2) && \
+        if (item_counts.bytes[first_item + i] != 0 && !(item_level_defs[first_item + i].state & 2) && \
             records[base + i].in_smith_rings == 0 && records[base + i].level < 100) { \
             APPEND(&nodes[i], item_list_page_mark[0]) \
         } \
@@ -126,12 +120,13 @@ extern ClockTime current_play_time;
 /* The owned, usable items of one run of definitions whose record is idle. */
 #define APPEND_IDLE(nodes, records, base, first_item, limit) \
     for (i = 1; i < limit; i++) { \
-        if (item_counts[first_item + i] != 0 && !(item_name_defs[first_item + i].state & 2) && \
+        if (item_counts.bytes[first_item + i] != 0 && !(item_level_defs[first_item + i].state & 2) && \
             records[base + i].in_smith_rings == 0) { \
             APPEND(&nodes[i], item_list_page_mark[0]) \
         } \
     }
-extern s32 detail_panel_open; // match: this file reads and writes it as a word
+// match: this file reads and writes detail_panel_open (a byte to ui/menu_screens.c) as a word
+asm(".globl detail_panel_open_word\ndetail_panel_open_word = detail_panel_open\n");
 /* match: the two level lookups are inline functions taking the record index, so the subtraction is not folded into
    the table address; each caller picks the table itself and uses the level inside its own branch. */
 static inline u8 GetWeaponLevel(s32 index) {
@@ -173,7 +168,6 @@ static inline s32 Smith_CollectListScrollDown(void) {
     smith_collect_list_cursor[0] = smith_collect_list_top[0];
     return smith_collect_list_top[0] != item_list_first;
 }
-extern u8 save_image[];
 // match: called as a void function, so the result register is free at once
 #define SET_PART_MODE(mode) ((void (*)(u8))Menu_SetBlendMode)(mode)
 // match: this file hands Menu_SetBlendMode a signed byte
@@ -218,11 +212,6 @@ static void SaveScreen_UpdateSaveList(void);
 
 /* the six value tables (trade_value_tables), numbered from 1 like trade_stock_1...: trade_values_N is the one
    of trade table N - 1, the number the script hands Trade_Run */
-extern u8 trade_stock_1[];
-extern u8 trade_stock_2[];
-extern u8 trade_stock_3[];
-extern u8 trade_stock_4[];
-extern u8 trade_stock_5[];
 
 // match: only a named section keeps a table of eight bytes out of small data; retail has these in .rodata
 // and reaches them without the global pointer
@@ -245,7 +234,7 @@ static void (*const trade_list_handlers[2])(HandlerContext *) IN_RODATA = {
     Trade_UpdateOwnedList,
 };
 static const TradeValueTables trade_value_tables = { { trade_values_1, trade_values_2, trade_values_3, trade_values_4, trade_values_5, trade_values_6 } };
-static const TradeStockTables trade_stock_tables = { { trade_stock_1, trade_stock_2, trade_stock_3, trade_stock_4, trade_stock_5 } };
+static const TradeStockTables trade_stock_tables = { { trade_stock_1.bytes, trade_stock_2.bytes, trade_stock_3.bytes, trade_stock_4.bytes, trade_stock_5.bytes } };
 static const TradeGroupBases item_group_bases = { { 150, 0, 220, 220, 220, 220, 220, 220, 220, 220, 0, 0, 0 } };
 static const TradeValueSlots trade_value_slots = {
     { &menu_number_87, &menu_number_88, &menu_number_89, &menu_number_90, &menu_number_91, &menu_number_92, &menu_number_93 }
@@ -270,7 +259,7 @@ static void Trade_BuildItemRings(s32 table) {
     first = NULL;
     count = 0;
     for (i = 1; i < 150; i++) {
-        if (item_counts[i] != 0 && !(item_name_defs[i].state & 2) && values.values[table][i].give_value != 0) {
+        if (item_counts.bytes[i] != 0 && !(item_level_defs[i].state & 2) && values.values[table][i].give_value != 0) {
             LINK_ITEM(&common_item_entries[i], item_list_page_mark)
         }
     }
@@ -311,7 +300,7 @@ static void Trade_BuildItemRings(s32 table) {
     first = NULL;
     count = 0;
     for (i = 1; i < 0x17C; i++) {
-        if (stock_counts[i] != 0 && values.values[table][i].take_value != 0 && !(item_name_defs[i].state & 2)) {
+        if (stock_counts[i] != 0 && values.values[table][i].take_value != 0 && !(item_level_defs[i].state & 2)) {
             LINK_ITEM(&all_item_entries[i], trade_stock_list_page_mark)
         }
     }
@@ -801,15 +790,15 @@ static void Trade_UpdateStockList(HandlerContext *context) {
     }
     record = trade_stock_list_cursor[0]->item_number - bases.first_item[trade_stock_list_cursor[0]->group];
     if (context->arg == 4) {
-        switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
+        switch (item_level_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
         case 1:
-            menu_number_94 = item_counts[ITEM_BONE];
+            menu_number_94 = item_counts.bytes[ITEM_BONE];
             break;
         case 2:
-            menu_number_94 = item_counts[ITEM_SCALE];
+            menu_number_94 = item_counts.bytes[ITEM_SCALE];
             break;
         case 3:
-            menu_number_94 = item_counts[ITEM_CLAW];
+            menu_number_94 = item_counts.bytes[ITEM_CLAW];
             break;
         }
     }
@@ -874,7 +863,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
 
     if (context->arg == 4) {
         position.raw = 0x000DBBA079E08A30L;
-        switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
+        switch (item_level_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
         case 1:
             label = bones_label;
             break;
@@ -897,7 +886,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
     MenuText_SetColor(menu_draw_color);
     row_position.raw = 0x0C7A12007C307080L;
     for (row = 0, node = trade_stock_list_top[0]; row < 7; node = node->prev, row++) {
-        item = &item_name_defs[node->item_number];
+        item = &item_level_defs[node->item_number];
         MenuText_SetPen(row_position);
         MenuText_DrawLine((u16 *)item, 0x1A);
         row_position.f.mid16 += 0xB0;
@@ -989,7 +978,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
             menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
             menu_number_71 = worn_item_level_records[record].level;
             menu_number_72 = 100;
-            menu_number_54 = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             glow = player_weapon[trade_stock_list_cursor[0]->group];
             if (trade_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, shop_g_parts, shop_g_part_count)
@@ -1014,7 +1003,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
             menu_number_50 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
             menu_number_51 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
             menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
-            menu_number_54 = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             glow = player_weapon[trade_stock_list_cursor[0]->group];
             if (trade_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, shop_g2_parts, shop_g2_part_count)
@@ -1039,7 +1028,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
             menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
             menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[record].level;
-            menu_number_54 = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[trade_stock_list_cursor[0]->group];
             menu_number_73 = 100;
             if (trade_panel_state == 1) {
@@ -1222,8 +1211,8 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             context->active_list--;
         }
     }
-    if (context->active_list + item_counts[trade_stock_list_cursor[0]->item_number] >= 100) {
-        if (item_counts[trade_stock_list_cursor[0]->item_number] != 99) {
+    if (context->active_list + item_counts.bytes[trade_stock_list_cursor[0]->item_number] >= 100) {
+        if (item_counts.bytes[trade_stock_list_cursor[0]->item_number] != 99) {
             context->active_list = 1;
         } else {
             context->active_list = 0;
@@ -1233,29 +1222,29 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         context->active_list = 1;
     } else if (context->active_list <= 0) {
         context->active_list = stock.counts[context->arg][trade_stock_list_cursor[0]->item_number];
-        if (context->active_list + item_counts[trade_stock_list_cursor[0]->item_number] >= 100) {
-            context->active_list = 99 - item_counts[trade_stock_list_cursor[0]->item_number];
+        if (context->active_list + item_counts.bytes[trade_stock_list_cursor[0]->item_number] >= 100) {
+            context->active_list = 99 - item_counts.bytes[trade_stock_list_cursor[0]->item_number];
         }
     }
     if (context->arg != 4) {
-        menu_number_79 = item_counts[trade_stock_list_cursor[0]->item_number];
+        menu_number_79 = item_counts.bytes[trade_stock_list_cursor[0]->item_number];
         menu_number_80 = stock.counts[context->arg][trade_stock_list_cursor[0]->item_number];
         menu_number_81 = context->active_list;
         menu_number_82 = context->active_list * values.values[context->arg][trade_stock_list_cursor[0]->item_number].take_value;
     } else {
-        menu_number_79 = item_counts[trade_stock_list_cursor[0]->item_number];
+        menu_number_79 = item_counts.bytes[trade_stock_list_cursor[0]->item_number];
         menu_number_80 = stock.counts[4][trade_stock_list_cursor[0]->item_number];
         menu_number_81 = context->active_list;
         menu_number_82 = context->active_list * values.values[4][trade_stock_list_cursor[0]->item_number].take_value;
-        switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
+        switch (item_level_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
         case 1:
-            menu_number_74 = item_counts[ITEM_BONE];
+            menu_number_74 = item_counts.bytes[ITEM_BONE];
             break;
         case 2:
-            menu_number_74 = item_counts[ITEM_SCALE];
+            menu_number_74 = item_counts.bytes[ITEM_SCALE];
             break;
         case 3:
-            menu_number_74 = item_counts[ITEM_CLAW];
+            menu_number_74 = item_counts.bytes[ITEM_CLAW];
             break;
         }
     }
@@ -1339,7 +1328,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
             menu_number_71 = worn_item_level_records[record].level;
             menu_number_72 = 100;
-            menu_number_54 = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             kind = player_weapon[trade_stock_list_cursor[0]->group];
             if (trade_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, shop_g_parts, shop_g_part_count)
@@ -1364,7 +1353,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             menu_number_50 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
             menu_number_51 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
             menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
-            menu_number_54 = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             kind = player_weapon[trade_stock_list_cursor[0]->group];
             if (trade_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, shop_g2_parts, shop_g2_part_count)
@@ -1389,7 +1378,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
             menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[record].level;
-            menu_number_54 = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[trade_stock_list_cursor[0]->group];
             menu_number_73 = 100;
             if (trade_panel_state == 1) {
@@ -1430,7 +1419,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
     MenuText_SetColor(menu_draw_color);
     position.raw = 0x0C7A12007C307080L;
     for (row = 0; row < 7; row++) {
-        item = &item_name_defs[node->item_number];
+        item = &item_level_defs[node->item_number];
         MenuText_SetPen(position);
         MenuText_DrawLine((u16 *)item, 0x1A);
         position.f.mid16 += 0xB0;
@@ -1469,7 +1458,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         SELECT_PART(0);
     }
 
-    chosen = &item_name_defs[trade_stock_list_cursor[0]->item_number];
+    chosen = &item_level_defs[trade_stock_list_cursor[0]->item_number];
     MenuText_SetColor(menu_draw_color);
     position.raw = 0x0A2DC6C07DB078C0L;
     MenuText_SetPen(position);
@@ -1478,7 +1467,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         position.raw = 0x000DBBA079E08A30L;
         label_position.raw = 0x000DBBA081807C60L;
         MenuText_SetPen(position);
-        switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
+        switch (item_level_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
         case 1:
             label = bones_label;
             break;
@@ -1591,22 +1580,22 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
                         trade_handler = Trade_UpdateSelectScreen;
                         Menu_ResetLoadBuffers(0);
                     } else {
-                        switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
+                        switch (item_level_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
                         case 1:
-                            item_counts[ITEM_BONE] -= menu_number_82;
+                            item_counts.bytes[ITEM_BONE] -= menu_number_82;
                             break;
                         case 2:
-                            item_counts[ITEM_SCALE] -= menu_number_82;
+                            item_counts.bytes[ITEM_SCALE] -= menu_number_82;
                             break;
                         case 3:
-                            item_counts[ITEM_CLAW] -= menu_number_82;
+                            item_counts.bytes[ITEM_CLAW] -= menu_number_82;
                             break;
                         }
                         trade_handler = trade_list_handlers[0];
                     }
-                    item_counts[trade_stock_list_cursor[0]->item_number] += context->active_list;
-                    if (item_counts[trade_stock_list_cursor[0]->item_number] >= 100) {
-                        item_counts[trade_stock_list_cursor[0]->item_number] = 99;
+                    item_counts.bytes[trade_stock_list_cursor[0]->item_number] += context->active_list;
+                    if (item_counts.bytes[trade_stock_list_cursor[0]->item_number] >= 100) {
+                        item_counts.bytes[trade_stock_list_cursor[0]->item_number] = 99;
                     }
                     if (stock.counts[context->arg][trade_stock_list_cursor[0]->item_number] != 0xFF) {
                         stock.counts[context->arg][trade_stock_list_cursor[0]->item_number] -= context->active_list;
@@ -1746,7 +1735,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
     Menu_DrawItemModel((f32 *)local_matrix);
 
     for (; row < 7; node = node->prev, row++) {
-        item = &item_name_defs[node->item_number];
+        item = &item_level_defs[node->item_number];
         MenuText_SetPen(position);
         MenuText_DrawLine((u16 *)item, 0x1A);
         position.f.mid16 += 0xB0;
@@ -1815,7 +1804,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
             menu_number_71 = worn_item_level_records[record].level;
             menu_number_72 = 100;
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             worn = player_weapon[item_list_cursor[0]->group];
             if (trade_panel_state == 1) {
                 FILL_FADE_2(panel_part_alphas, shop_g_parts, shop_g_part_count)
@@ -1839,7 +1828,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             menu_number_50 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
             menu_number_51 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
             menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             worn = player_weapon[item_list_cursor[0]->group];
             if (trade_panel_state == 1) {
                 FILL_FADE_2(panel_part_alphas, shop_g2_parts, shop_g2_part_count)
@@ -1863,7 +1852,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
             menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[record].level;
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
             menu_number_73 = 100;
             if (trade_panel_state == 1) {
@@ -2033,12 +2022,12 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             context->active_list--;
         }
     }
-    if (item_counts[item_list_cursor[0]->item_number] < context->active_list) {
+    if (item_counts.bytes[item_list_cursor[0]->item_number] < context->active_list) {
         context->active_list = 1;
     } else if (context->active_list <= 0) {
-        context->active_list = item_counts[item_list_cursor[0]->item_number];
+        context->active_list = item_counts.bytes[item_list_cursor[0]->item_number];
     }
-    menu_number_79 = item_counts[item_list_cursor[0]->item_number];
+    menu_number_79 = item_counts.bytes[item_list_cursor[0]->item_number];
     menu_number_80 = stock.counts[context->arg][item_list_cursor[0]->item_number];
     menu_number_81 = context->active_list;
     menu_number_82 = context->active_list * values.values[context->arg][item_list_cursor[0]->item_number].give_value;
@@ -2127,7 +2116,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
             menu_number_71 = worn_item_level_records[record].level;
             menu_number_72 = 100;
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             glow = player_weapon[item_list_cursor[0]->group];
             if (trade_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, shop_g_parts, shop_g_part_count)
@@ -2151,7 +2140,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             menu_number_50 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
             menu_number_51 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
             menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             glow = player_weapon[item_list_cursor[0]->group];
             if (trade_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, shop_g2_parts, shop_g2_part_count)
@@ -2175,7 +2164,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
             menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[record].level;
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
             menu_number_73 = 100;
             if (trade_panel_state == 1) {
@@ -2216,7 +2205,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
     position.raw = 0x0C0975E07C307080L;
     MenuText_SetPen(position);
     for (row = 0; row < 7; row++) {
-        MenuText_DrawLine((u16 *)&item_name_defs[node->item_number], 0x1A);
+        MenuText_DrawLine((u16 *)&item_level_defs[node->item_number], 0x1A);
         if (item_list_page_mark[0]->prev == node) {
             break;
         }
@@ -2248,7 +2237,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
         SELECT_PART(0);
     }
 
-    chosen = &item_name_defs[item_list_cursor[0]->item_number];
+    chosen = &item_level_defs[item_list_cursor[0]->item_number];
     MenuText_SetColor(menu_draw_color);
     position.raw = 0x0A2DC6C07DB078C0L;
     MenuText_SetPen(position);
@@ -2271,13 +2260,13 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             if (player_state.gold > 999999) {
                 player_state.gold = 999999;
             }
-            item_counts[item_list_cursor[0]->item_number] -= context->active_list;
+            item_counts.bytes[item_list_cursor[0]->item_number] -= context->active_list;
             if (item_list_cursor[0]->item_number == player_state.weapon + ITEM_WEAPON_FIRST || item_list_cursor[0]->item_number == player_state.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST ||
                 item_list_cursor[0]->item_number == player_state.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST || item_list_cursor[0]->item_number == player_state.equipment[EQUIP_HELM] + ITEM_WORN_FIRST ||
                 item_list_cursor[0]->item_number == player_state.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST || item_list_cursor[0]->item_number == player_state.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST ||
                 item_list_cursor[0]->item_number == player_state.equipment[EQUIP_RING] + ITEM_WORN_FIRST || item_list_cursor[0]->item_number == player_state.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST ||
                 item_list_cursor[0]->item_number == player_state.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST || item_list_cursor[0]->item_number == player_state.shortcut) {
-                if (item_counts[item_list_cursor[0]->item_number] == 0) {
+                if (item_counts.bytes[item_list_cursor[0]->item_number] == 0) {
                     Menu_ClearEquipSlot(item_list_cursor[0]->group);
                 }
             }
@@ -2410,11 +2399,11 @@ static void Trade_SetModelNames(void) {
     } else {
         forward = backward = item_list_first;
     }
-    sprintf(model_name_shown, "menu/select2/i%04d.mod", item_name_defs[trade_stock_list_cursor[0]->item_number].file_number);
-    sprintf(model_name_down, "menu/select2/i%04d.mod", item_name_defs[trade_stock_list_cursor[0]->prev->item_number].file_number);
-    sprintf(model_name_up, "menu/select2/i%04d.mod", item_name_defs[trade_stock_list_cursor[0]->next->item_number].file_number);
-    sprintf(model_name_left, "menu/select2/i%04d.mod", item_name_defs[forward->item_number].file_number);
-    sprintf(model_name_right, "menu/select2/i%04d.mod", item_name_defs[backward->item_number].file_number);
+    sprintf(model_name_shown, "menu/select2/i%04d.mod", item_level_defs[trade_stock_list_cursor[0]->item_number].file_number);
+    sprintf(model_name_down, "menu/select2/i%04d.mod", item_level_defs[trade_stock_list_cursor[0]->prev->item_number].file_number);
+    sprintf(model_name_up, "menu/select2/i%04d.mod", item_level_defs[trade_stock_list_cursor[0]->next->item_number].file_number);
+    sprintf(model_name_left, "menu/select2/i%04d.mod", item_level_defs[forward->item_number].file_number);
+    sprintf(model_name_right, "menu/select2/i%04d.mod", item_level_defs[backward->item_number].file_number);
 }
 
 /* Moves the list cursor one row (0x10, 0x40) or one page (0x20, 0x80, lists of 8 and more), scrolling the window. */
@@ -2546,8 +2535,8 @@ static void Smith_BuildItemRings(s32 mode) {
     for (i = 1; i < 380; i++) {
         if (i >= 150) {
             if (i < 220) {
-                if (i != 150 && weapon_level_records[i - 150].in_smith_rings != 0 && !(item_name_defs[i].state & 2) &&
-                    PlayTime_SecondsBetween(weapon_level_records[i - 150].last_upgraded.time, current_play_time) >= item_name_defs[i].upgrade_wait_minutes * 60) {
+                if (i != 150 && weapon_level_records[i - 150].in_smith_rings != 0 && !(item_level_defs[i].state & 2) &&
+                    PlayTime_SecondsBetween(weapon_level_records[i - 150].last_upgraded.time, current_play_time) >= item_level_defs[i].upgrade_wait_minutes * 60) {
                     // match: written out; through APPEND's `(node)->next` the item pointer is reduced differently
                     count++;
                     if (count == 7) {
@@ -2562,8 +2551,8 @@ static void Smith_BuildItemRings(s32 mode) {
                     last = &all_item_entries[i];
                 }
             } else {
-                if (i != 220 && worn_item_level_records[i - 220].in_smith_rings != 0 && !(item_name_defs[i].state & 2) &&
-                    PlayTime_SecondsBetween(worn_item_level_records[i - 220].last_upgraded.time, current_play_time) >= item_name_defs[i].upgrade_wait_minutes * 60) {
+                if (i != 220 && worn_item_level_records[i - 220].in_smith_rings != 0 && !(item_level_defs[i].state & 2) &&
+                    PlayTime_SecondsBetween(worn_item_level_records[i - 220].last_upgraded.time, current_play_time) >= item_level_defs[i].upgrade_wait_minutes * 60) {
                     count++;
                     if (count == 7) {
                         smith_collect_list_page_mark[0] = &all_item_entries[i];
@@ -2954,7 +2943,7 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
                 Sound_PlayMenu(0);
                 smith_choices_active = 1;
             } else {
-                detail_panel_open = 0;
+                detail_panel_open_word = 0;
                 switch (context->active_list) {
                 case 0:
                     Smith_BuildItemRings(0);
@@ -2969,7 +2958,7 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
                 case 1:
                     Sound_PlayMenu(0);
                     Smith_BuildItemRings(1);
-                    if (item_counts[ITEM_EARTH_STONE] != 0) {
+                    if (item_counts.bytes[ITEM_EARTH_STONE] != 0) {
                         modal_input_locked = 1;
                         smith_screen_state = 3;
                     } else {
@@ -3090,11 +3079,11 @@ static void Smith_SetModelNames(void) {
     } else {
         after = before = item_list_first;
     }
-    sprintf(model_name_shown, "menu/select2/i%04d.mod", item_name_defs[smith_collect_list_cursor[0]->item_number].file_number);
-    sprintf(model_name_down, "menu/select2/i%04d.mod", item_name_defs[smith_collect_list_cursor[0]->prev->item_number].file_number);
-    sprintf(model_name_up, "menu/select2/i%04d.mod", item_name_defs[smith_collect_list_cursor[0]->next->item_number].file_number);
-    sprintf(model_name_left, "menu/select2/i%04d.mod", item_name_defs[after->item_number].file_number);
-    sprintf(model_name_right, "menu/select2/i%04d.mod", item_name_defs[before->item_number].file_number);
+    sprintf(model_name_shown, "menu/select2/i%04d.mod", item_level_defs[smith_collect_list_cursor[0]->item_number].file_number);
+    sprintf(model_name_down, "menu/select2/i%04d.mod", item_level_defs[smith_collect_list_cursor[0]->prev->item_number].file_number);
+    sprintf(model_name_up, "menu/select2/i%04d.mod", item_level_defs[smith_collect_list_cursor[0]->next->item_number].file_number);
+    sprintf(model_name_left, "menu/select2/i%04d.mod", item_level_defs[after->item_number].file_number);
+    sprintf(model_name_right, "menu/select2/i%04d.mod", item_level_defs[before->item_number].file_number);
 }
 
 /* The smith's list of items that can be handed in: draws the screen parts, the cursor bar, the seven rows, the
@@ -3189,7 +3178,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
     MenuText_SetColor(menu_draw_color);
     word.raw = 0x0C7A12007C307080;
     for (line = 0, node = item_list_top[0]; line < 7; node = node->prev, line++) {
-        def = &item_name_defs[node->item_number];
+        def = &item_level_defs[node->item_number];
         MenuText_SetPen(word);
         MenuText_DrawLine((u16 *)def, 0x1A);
         word.f.mid16 += 0xB0;
@@ -3208,13 +3197,13 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
     Menu_DrawItemModel(rotation);
     if ((menu_buttons & PAD_TRIANGLE) && modal_input_locked == 0 && Menu_IsEquipSlotFilled(index, item_list_cursor[0]->group)) {
         smith_upgrade_list_panel_sound_pending = 1;
-        if (detail_panel_open == 0) {
-            detail_panel_open = 1;
+        if (detail_panel_open_word == 0) {
+            detail_panel_open_word = 1;
         } else {
             smith_panel_state = 2;
         }
     }
-    if (detail_panel_open != 0) {
+    if (detail_panel_open_word != 0) {
         switch (item_list_cursor[0]->group) { // match: groups 1 and 10 have no case, so parts and count stay unset for the fade below
         case 11:
         case 12:
@@ -3241,7 +3230,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
             menu_number_71 = worn_item_level_records[index].level;
             menu_number_72 = 100;
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_g_part_count; i++) {
@@ -3273,7 +3262,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
             menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
             menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_g2_part_count; i++) {
@@ -3305,7 +3294,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
             menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[index].level;
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
             menu_number_73 = 100;
             if (smith_panel_state == 1) {
@@ -3344,7 +3333,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
                 if (panel_part_alphas[i] < 0.0f) {
                     memset(panel_part_alphas, 0, 0x400);
                     if (smith_panel_state == 2) {
-                        detail_panel_open = 0;
+                        detail_panel_open_word = 0;
                     }
                     smith_panel_state = 0;
                     break;
@@ -3523,13 +3512,13 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
     Menu_DrawItemModel(rotation);
     if ((menu_buttons & PAD_TRIANGLE) && modal_input_locked == 0 && Menu_IsEquipSlotFilled(index, item_list_cursor[0]->group)) {
         smith_upgrade_confirm_panel_sound_pending = 1;
-        if (detail_panel_open == 0) {
-            detail_panel_open = 1;
+        if (detail_panel_open_word == 0) {
+            detail_panel_open_word = 1;
         } else {
             smith_panel_state = 2;
         }
     }
-    if (detail_panel_open != 0) {
+    if (detail_panel_open_word != 0) {
         switch (item_list_cursor[0]->group) { // match: groups 1 and 10 have no case, so parts and count stay unset for the fade below
         case 11:
         case 12:
@@ -3556,7 +3545,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
             menu_number_71 = worn_item_level_records[index].level;
             menu_number_72 = 100;
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_g_part_count; i++) {
@@ -3588,7 +3577,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
             menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
             menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_g2_part_count; i++) {
@@ -3621,7 +3610,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
             menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[index].level;
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
             menu_number_73 = 100;
             if (smith_panel_state == 1) {
@@ -3659,7 +3648,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
                 if (panel_part_alphas[i] < 0.0f) {
                     memset(panel_part_alphas, 0, 0x400);
                     smith_panel_state = 0;
-                    detail_panel_open = 0;
+                    detail_panel_open_word = 0;
                     break;
                 }
             }
@@ -3668,7 +3657,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
     }
     word.raw = 0x0C0975E07C307080;
     for (row = 0, item = item_list_top[0]; row < 7; item = item->prev, row++) {
-        def = &item_name_defs[item->item_number];
+        def = &item_level_defs[item->item_number];
         MenuText_SetPen(word);
         MenuText_DrawLine((u16 *)def, 0x1A);
         word.f.mid16 += 0xB0;
@@ -3676,14 +3665,14 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             break;
         }
     }
-    menu_number_76 = item_name_defs[item_list_cursor[0]->item_number].upgrade_wait_minutes;
+    menu_number_76 = item_level_defs[item_list_cursor[0]->item_number].upgrade_wait_minutes;
     for (i = 0; i < tune_mess_part_count; i++) {
         kind = tune_mess_parts[i].handler_index;
         SELECT_PART((s8)tune_mess_parts[i].blend_mode);
         MenuSprite_Draw((int)&tune_mess_parts[i], kind + 1000, 0, (int)message_part_alphas[i]);
         SELECT_PART(0);
     }
-    selected_def = &item_name_defs[item_list_cursor[0]->item_number];
+    selected_def = &item_level_defs[item_list_cursor[0]->item_number];
     MenuText_SetColor(menu_draw_color);
     word.raw = 0x0A2DC6C07F5078C0;
     MenuText_SetPen(word);
@@ -3780,8 +3769,8 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
                     bought = item_list_cursor[0];
                     if (bought->item_number < 220) {
                         if (bought->item_number == ITEM_BROKEN_KATANA) {
-                            item_counts[ITEM_BROKEN_KATANA] = 0;
-                            item_counts[bought->item_number + 1] = 1;
+                            item_counts.bytes[ITEM_BROKEN_KATANA] = 0;
+                            item_counts.bytes[bought->item_number + 1] = 1;
                             // match: "- 150 + 1" wraps the constant offset around, which keeps the compiler from
                             // forming the table's address out of this one (it does for "- 149")
                             *(ClockTime *)weapon_level_records[bought->item_number - 150 + 1].last_upgraded.bytes = current_play_time;
@@ -3937,7 +3926,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
     MenuText_SetColor(menu_draw_color);
     word.raw = 0x0C0975E07C307080;
     for (line = 0, node = item_list_top[0]; line < 7; node = node->prev, line++) {
-        def = &item_name_defs[node->item_number];
+        def = &item_level_defs[node->item_number];
         MenuText_SetPen(word);
         MenuText_DrawLine((u16 *)def, 0x1A);
         word.f.mid16 += 0xB0;
@@ -3955,9 +3944,9 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
     sceVu0TransMatrix(rotation, rotation, smith_confirm_list_model_position);
     Menu_DrawItemModel(rotation);
     if ((menu_buttons & PAD_TRIANGLE) && modal_input_locked == 0 && Menu_IsEquipSlotFilled(index, item_list_cursor[0]->group)) {
-        if (detail_panel_open == 0) {
+        if (detail_panel_open_word == 0) {
             smith_confirm_list_panel_sound_pending = 1;
-            detail_panel_open = 1;
+            detail_panel_open_word = 1;
         } else if (smith_panel_state != 2) {
             smith_panel_state = 2;
             Sound_PlayMenu(1);
@@ -3965,7 +3954,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             smith_panel_state = 0;
         }
     }
-    if (detail_panel_open != 0) {
+    if (detail_panel_open_word != 0) {
         switch (item_list_cursor[0]->group) { // match: groups 1 and 10 have no case, so parts and count stay unset for the fade below
         case 11:
         case 12:
@@ -3992,7 +3981,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
             menu_number_71 = worn_item_level_records[index].level;
             menu_number_72 = 100;
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_g_part_count; i++) {
@@ -4024,7 +4013,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
             menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
             menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_g2_part_count; i++) {
@@ -4056,7 +4045,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
             menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[index].level;
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
             menu_number_73 = 100;
             if (smith_panel_state == 1) {
@@ -4094,7 +4083,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                 if (panel_part_alphas[i] < 0.0f) {
                     memset(panel_part_alphas, 0, 0x400);
                     smith_panel_state = 0;
-                    detail_panel_open = 0;
+                    detail_panel_open_word = 0;
                     break;
                 }
             }
@@ -4102,14 +4091,14 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
         }
     }
     if (smith_confirm_shown != 0) {
-        menu_number_76 = item_name_defs[item_list_cursor[0]->item_number].upgrade_wait_minutes;
+        menu_number_76 = item_level_defs[item_list_cursor[0]->item_number].upgrade_wait_minutes;
         for (i = 0; i < tune_mess_part_count; i++) {
             kind = tune_mess_parts[i].handler_index;
             SELECT_PART((s8)tune_mess_parts[i].blend_mode);
             MenuSprite_Draw((int)&tune_mess_parts[i], kind + 1000, 0, (int)message_part_alphas[i]);
             SELECT_PART(0);
         }
-        chosen = &item_name_defs[item_list_cursor[0]->item_number];
+        chosen = &item_level_defs[item_list_cursor[0]->item_number];
         MenuText_SetColor(menu_draw_color);
         word.raw = 0x0A2DC6C07F5078C0;
         MenuText_SetPen(word);
@@ -4277,7 +4266,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                         Menu_ClearEquipSlot(item_list_cursor[0]->group);
                     }
                     smith_handler = Smith_UpdateSelectScreen;
-                    item_counts[ITEM_EARTH_STONE]--;
+                    item_counts.bytes[ITEM_EARTH_STONE]--;
                     context->active_list = 1;
                     Menu_ResetLoadBuffers(0);
                 } else if (smith_screen_state == 8) {
@@ -4396,9 +4385,9 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
     sceVu0TransMatrix(rotation, rotation, smith_item_screen_model_position);
     Menu_DrawItemModel(rotation);
     if ((menu_buttons & PAD_TRIANGLE) && modal_input_locked == 0 && Menu_IsEquipSlotFilled(index, item_list_cursor[0]->group)) {
-        if (detail_panel_open == 0) {
+        if (detail_panel_open_word == 0) {
             play_sound = TRUE;
-            detail_panel_open = 1;
+            detail_panel_open_word = 1;
         } else if (smith_panel_state != 2) { // match: this way round for the branch sense
             smith_panel_state = 2;
             Sound_PlayMenu(1);
@@ -4406,7 +4395,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             smith_panel_state = 0;
         }
     }
-    if (detail_panel_open != 0) {
+    if (detail_panel_open_word != 0) {
         switch (item_list_cursor[0]->group) { // match: groups 1 and 10 have no case, so parts and count stay unset for the fade below
         case 11:
         case 12:
@@ -4432,7 +4421,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
             menu_number_71 = worn_item_level_records[index].level;
             menu_number_72 = 100;
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
             for (i = 0; i < shop_g_part_count; i++) {
                 SELECT_PART((s8)shop_g_parts[i].blend_mode);
@@ -4457,7 +4446,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
             menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
             menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
             for (i = 0; i < shop_g2_part_count; i++) {
                 SELECT_PART((s8)shop_g2_parts[i].blend_mode);
@@ -4482,7 +4471,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
             menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[index].level;
-            menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
             menu_number_73 = 100;
             for (i = 0; i < shop_a_part_count; i++) {
@@ -4514,7 +4503,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
                 if (panel_part_alphas[i] < 0.0f) {
                     memset(panel_part_alphas, 0, 0x400);
                     smith_panel_state = 0;
-                    detail_panel_open = 0;
+                    detail_panel_open_word = 0;
                     break;
                 }
             }
@@ -4706,7 +4695,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
     MenuText_SetColor(menu_draw_color);
     word.raw = 0x0C7A12007C307080;
     for (line = 0, node = smith_collect_list_top[0]; line < 7; node = node->prev, line++) {
-        def = &item_name_defs[node->item_number];
+        def = &item_level_defs[node->item_number];
         MenuText_SetPen(word);
         MenuText_DrawLine((u16 *)def, 0x1A);
         word.f.mid16 += 0xB0;
@@ -4725,13 +4714,13 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
     Menu_DrawItemModel(rotation);
     if ((menu_buttons & PAD_TRIANGLE) && modal_input_locked == 0 && Menu_IsEquipSlotFilled(index, smith_collect_list_cursor[0]->group)) {
         smith_collect_list_panel_sound_pending = 1;
-        if (detail_panel_open == 0) {
-            detail_panel_open = 1;
+        if (detail_panel_open_word == 0) {
+            detail_panel_open_word = 1;
         } else {
             smith_panel_state = 2;
         }
     }
-    if (detail_panel_open != 0) {
+    if (detail_panel_open_word != 0) {
         switch (smith_collect_list_cursor[0]->group) { // match: groups 1 and 10 have no case, so parts and count stay unset for the fade below
         case 11:
         case 12:
@@ -4758,7 +4747,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
             menu_number_71 = worn_item_level_records[index].level;
             menu_number_72 = 100;
-            menu_number_54 = item_name_defs[smith_collect_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[smith_collect_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[smith_collect_list_cursor[0]->group];
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_g_part_count; i++) {
@@ -4790,7 +4779,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             menu_number_50 = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
             menu_number_51 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
             menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
-            menu_number_54 = item_name_defs[smith_collect_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[smith_collect_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[smith_collect_list_cursor[0]->group];
             if (smith_panel_state == 1) {
                 for (i = 0; i < shop_g2_part_count; i++) {
@@ -4822,7 +4811,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
             menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[index].level;
-            menu_number_54 = item_name_defs[smith_collect_list_cursor[0]->item_number].weight_tenths_of_pound;
+            menu_number_54 = item_level_defs[smith_collect_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[smith_collect_list_cursor[0]->group];
             menu_number_73 = 100;
             if (smith_panel_state == 1) {
@@ -4860,7 +4849,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
                 panel_part_alphas[i] -= parts[i].alpha / 10.0f;
                 if (panel_part_alphas[i] < 0.0f) {
                     memset(panel_part_alphas, 0, 0x400);
-                    detail_panel_open = 0;
+                    detail_panel_open_word = 0;
                     smith_panel_state = 0;
                     break;
                 }

@@ -12,30 +12,12 @@
 #include <libvu0.h>
 #include "math/vu0.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "model/motion.h"
+#include "player/player.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
-extern s32 entity_type_handlers[][2];
-int Motion_Step(void *, int);
-int Motion_BlendToPose(EntityModel *, f32);
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn3D(char *);
-void EntityAi_StepState(void *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand3D(Entity *, s32, f32);
-int EntityAi_PushTurnCommand3D(Entity *, int);
-extern PlayerData player_state;
-s32 EntityAi_CanAttack(Entity *);
-int EntityAi_PickAttack(char *);
-float EntityAi_Accelerate(Entity *, float);
-int Motion_Start(void *, int, int, u32, int);
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
-void EntityAi_SetAttackDelay(Entity *, s32);
-int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
 
 static void DragonFly_Animate(Entity *entity);
 static void DragonFly_Think(Entity *entity, s32 unknown);
@@ -59,7 +41,7 @@ void DragonFly_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = DragonFly_Think;
     ai_state->animate = DragonFly_Animate;
     ai_state->on_hit = EntityAi_OnHit;
@@ -96,7 +78,7 @@ static void DragonFly_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
@@ -116,7 +98,7 @@ static void DragonFly_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags != 0) {
         return;
     }
-    EntityAi_CheckFarFromSpawn3D((char *)entity);
+    EntityAi_CheckFarFromSpawn3D(entity);
     EntityAi_StepState(entity);
     floor_distance = EntityCollision_DistanceToGround(entity->model->position);
     if (floor_distance < entity->collision_radius) {
@@ -245,7 +227,7 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     if (ai_state->move_choice != 4 && entity->attack_delay_frames == 0 && EntityAi_CanAttack(entity)) {
-        if (EntityAi_PickAttack((char *)entity)) {
+        if (EntityAi_PickAttack(entity)) {
             EntityAi_StartAction(entity, DragonFly_RangedAttack, unknown);
         } else {
             EntityAi_StartAction(entity, DragonFly_MeleeAttack, unknown);
@@ -260,7 +242,7 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
             ai_state->move_choice = 1;
             ai_state->action_flags = roll;
         } else {
-            ai_state->part_angle_y = player_state.position[1] - 220.0f - (f32)(rand() % 700);
+            ai_state->part_angle_y = player_state.position.y - 220.0f - (f32)(rand() % 700);
             if (entity->radius + 100.0f + 200.0f < entity->distance_to_player) {
                 ai_state->step_index = 1;
             } else {
@@ -284,7 +266,7 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
                     entity->move_command |= MOVE_COMMAND_TURN_LEFT;
                 }
             }
-            delta = player_state.position[1] - 190.0f + (f32)ai_state->action_flags - entity->model->position[1];
+            delta = player_state.position.y - 190.0f + (f32)ai_state->action_flags - entity->model->position[1];
             if (delta > 10.0f) {
                 entity->move_command |= MOVE_COMMAND_UP;
             } else if (delta < -10.0f) {
@@ -348,7 +330,7 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
                     entity->move_command |= MOVE_COMMAND_TURN_LEFT;
                 }
             }
-            delta = player_state.position[1] - entity->model->position[1];
+            delta = player_state.position.y - entity->model->position[1];
             entity->move_command |= (MOVE_COMMAND_FORWARD | MOVE_COMMAND_DOWN | MOVE_COMMAND_RUN);
             if (delta > 700.0f) {
                 ai_state->move_choice = 0;

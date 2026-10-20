@@ -8,39 +8,7 @@
 #include "collision/collision.h"
 #include "effect/effect.h"
 #include "item/item.h"
-
-void MapSetup_Armory(int);
-void MapSetup_Forge017(int);
-void MapSetup_Forge018(int);
-void MapSetup_Forge019(int);
-void MapSetup_EarthFolksVillage(int);
-void MapSetup_CavernOfLava(int);
-void MapSetup_FireLordsDomain(int);
-void MapSetup_OceanShore(int);
-void MapSetup_UndergroundCanal(int);
-void MapSetup_GuardiansRoom(int);
-void MapSetup_DarkSanctuary(int);
-void MapSetup_KingsThroneAlcoves(int);
-void MapSetup_SanctuaryOfLight(int);
-void MapSetup_CentralTowerLevel3(int);
-void MapSetup_CraftsmansRoom(int);
-void MapSetup_CentralTowerLevel2(int);
-void MapSetup_PlaceItemLowered(int);
-void MapSetup_OceanShoreFrame(int);
-void *Map_GetRecordById(int, int);
-void *MapItem_GetFixedById(int);
-extern u8 map_script_flags[];
-extern u8 entity_group_state[];
-extern u8 forge_door_open[];
-extern u8 forge_stage[];
-extern u8 ocean_shore_icon_of_fire_placed[];
-extern f32 map_record_height[];
-extern u8 guardians_room_water_purified[];
-extern u8 dark_sanctuary_fog_lifted[];
-extern u8 kings_throne_alcoves_story_flag[];
-extern u8 craftsmans_room_door_unlocked[];
-
-void MapSetup_Map252(int);
+#include "save/save_state.h"
 
 /* Runs the set-up function of the map in the slot, picked by the map's number (its tag): it puts the map's
    records, objects, fog and lights in the state the story flags call for. */
@@ -125,7 +93,7 @@ void MapSetup_Armory(int map) {
     if (map_script_flags[0x2C5] != 0) {
         MapItem_PlaceFixedById(map, 0x46);
     }
-    if (entity_group_state[0x5C6] == 1 && map_script_flags[0x2C5] == 0) {
+    if (entity_group_state[23].unk06 == 1 && map_script_flags[0x2C5] == 0) {
         object = MapObject_GetById(map, 0xA);
         if (object != NULL) {
             MapObject_SetScripted(object, 1);
@@ -135,7 +103,7 @@ void MapSetup_Armory(int map) {
             MapObject_SetScripted(object, 1);
         }
         MapItem_PlaceFixedById(map, 0x46);
-        if (entity_group_state[0x5C0] == 0) {
+        if (entity_group_state[23].death_kind == 0) {
             entity = Entity_GetBySpawnIdForMap(map, 0x17);
             if (entity != NULL) {
                 entity->flags |= ENTITY_FLAG_LIVE;
@@ -508,14 +476,14 @@ void MapSetup_CentralTowerLevel3(int map_slot) {
     Entity *entity;
 
     entity = Entity_GetBySpawnIdForMap(map_slot, 1);
-    if (entity_group_state[0x340] == 0) {
-        if (entity_group_state[0x345] != 0 && entity_group_state[0x346] == 0) {
-            entity_group_state[0x346] = 1;
+    if (entity_group_state[13].death_kind == 0) {
+        if (entity_group_state[13].unk05 != 0 && entity_group_state[13].unk06 == 0) {
+            entity_group_state[13].unk06 = 1;
         }
-        if (entity_group_state[0x346] == 1) {
+        if (entity_group_state[13].unk06 == 1) {
             if (map_script_flags[0x1905] == 0) {
                 map_script_flags[0x1905] = 1;
-                entity_group_state[0x345] = 0x11;
+                entity_group_state[13].unk05 = 0x11;
             }
             return;
         }

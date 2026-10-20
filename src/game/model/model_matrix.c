@@ -2,17 +2,13 @@
    sceVu0 matrix functions, most then multiplied by one of the view matrices through Matrix_Multiply; and the two
    matrices a model is drawn with. Several builders are not called by anything. */
 #include "model/model_matrix.h"
+#include "math/camera.h"
 #include "core/game.h"
 #include "core/file.h"
 #include <libvu0.h>
 #include <math.h>
 #include "math/vu0.h"
 
-extern f32 view_screen_matrix[16];
-extern f32 model_extra_transform_matrix[16];
-extern f32 world_screen_matrix[16];
-extern f32 flagged_model_transform_matrix[16];
-extern CameraState camera_state;
 
 #define SCRATCH_MATRIX MODEL_MATRIX_SCRATCH
 

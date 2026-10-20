@@ -1,4 +1,6 @@
 #include "core/game.h"
+#include "model/motion.h"
+#include "math/camera.h"
 #include "player/player.h"
 #include "map/map.h"
 #include "entity/entity.h"
@@ -14,13 +16,6 @@
 
 #define INTERACT_CONE_COS 0.866025f /* cos 30 degrees: objects further off the view direction are skipped */
 
-float Interact_GetDistanceWithin(float, float *, float *);
-void Collision_RayCylinder(f32, f32, f32, void *, void *, void *);
-int MapItem_IsPickable(void *);
-int ModelMotion_GetLastFrame(char *); // match: its u16 is halved as an int
-extern GameStatus game_status;
-extern EventRunner view_ray_status;
-extern CameraState camera_state;
 
 /* Keep last frame's view ray, then rebuild it: from the player's eyes (or the camera, in a cutscene) along the
    direction looked in. */
@@ -100,7 +95,7 @@ void Interact_FindTarget(void) {
             continue;
         }
         reach = entity->radius + 100.0f + 200.0f;
-        distance = Interact_GetDistanceWithin(reach, (float *)&player_state, (float *)&ENTITY_MODEL(entity)->position);
+        distance = Interact_GetDistanceWithin(reach, &player_state.position.x, &ENTITY_MODEL(entity)->position.x);
         if (distance < nearest) {
             nearest = distance;
         }
@@ -110,8 +105,8 @@ void Interact_FindTarget(void) {
         if (view_ray_status.target_distance <= distance) {
             continue;
         }
-        Collision_RayCylinder(entity->radius, entity->height, reach, &ENTITY_MODEL(entity)->position, view_ray_status.view_origin,
-                      view_ray_status.view_direction);
+        Collision_RayCylinder(entity->radius, entity->height, reach, &ENTITY_MODEL(entity)->position.x, view_ray_status.view_origin,
+                          view_ray_status.view_direction);
         if (COLLISION_RESULT->hit != 0) {
             view_ray_status.target_distance = distance;
             view_ray_status.facing_entity = entity;
@@ -223,7 +218,7 @@ void Interact_FindTarget(void) {
                         continue;
                     }
                     frame = MODEL_CHANNEL(object->model)->frame;
-                    if (frame != 1 && !(ModelMotion_GetLastFrame((char *)object->model) / 2 < frame)) {
+                    if (frame != 1 && !(((int (*)(char *))ModelMotion_GetLastFrame)((char *)object->model) / 2 < frame)) { // match: its u16 is halved as an int
                         continue;
                     }
                 }

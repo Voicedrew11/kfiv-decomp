@@ -3,6 +3,8 @@
    the screen overlay. A command that names an object looks it up in the current map (current_map_slot); one
    that eases something toward a goal moves it 1/frames of the way each frame. */
 #include "script/script.h"
+#include "ui/menu_screens.h"
+#include "math/camera.h"
 #include "collision/collision.h"
 #include "effect/effect.h"
 #include "entity/entity.h"
@@ -18,25 +20,10 @@
 #include "input/input.h"
 #include "item/item.h"
 #include "math/angle.h"
+#include "save/save_state.h"
+#include "sound/sound_game.h"
 
-int Script_StoreFloatResult(ScriptArg *target, double value); // match: the definition takes a float, but retail converts the argument to double here (fptodp): there was no prototype in scope
-ItemNode *MapItem_GetFixedById(int item_id);
-MapRecordBounds *Map_GetRecordById(int map, int prop_id);
-void Model_SetVertexColour(ModelInstance *model, int red, int green, int blue, int alpha);
-int Sound_PlayCommonAt(float range, int sound, float *position);
-int Sound_PlayMapAtRange(u8 sound, u8 mode, float *position, float range);
-void Sound_StartTaggedAt(s8 sound_id, u8 voice, u8 mode, f32 volume, Vector4Arg position); // match: retail passes the position as a struct; the definition takes a pointer
-int Sound_StopTagged(char tag);
-s32 Sound_StartTaggedAlong(s8 sound_id, u8 voice, u8 mode, Vector4Arg *origin, Vector4Arg *target, f32 volume);
-int Sound_PlayMapVolume(u8 sound, int volume);
-int Sound_StartTagged(s8 sound, u8 voice, int volume);
-void Sound_StopVoice(s8 slot);
-void Menu_AddKeyItem(u32, u32, int); // match: three arguments are passed; the definition takes the first alone
 
-extern GameStatus game_status;
-extern CameraState camera_state;
-extern MapDrawStateOverlays map_draw_state;
-extern u8 item_counts[];
 
 static s32 waiting_for_menu = 0;            /* 0x446FD4 ScriptCmd_OpenMenu is waiting for the menu */
 static s32 waiting_for_trade = 0;           /* 0x446FD8 ScriptCmd_OpenTrade is waiting */
@@ -183,9 +170,9 @@ void ScriptCmd_GetItemPosition(ScriptMoveCommand *command) {
 
     node = MapItem_GetFixedById(command->target_id.value);
     if (node != NULL) {
-        Script_StoreFloatResult((ScriptArg *)&command->x, node->model->position.x);
-        Script_StoreFloatResult((ScriptArg *)&command->y, node->model->position.y);
-        Script_StoreFloatResult((ScriptArg *)&command->z, node->model->position.z);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->x, node->model->position.x);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->y, node->model->position.y);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->z, node->model->position.z);
     }
     command->active = 0;
 }
@@ -197,9 +184,9 @@ void ScriptCmd_GetItemRotation(ScriptMoveCommand *command) {
 
     node = MapItem_GetFixedById(command->target_id.value);
     if (node != NULL) {
-        Script_StoreFloatResult((ScriptArg *)&command->x, node->model->rotation.x);
-        Script_StoreFloatResult((ScriptArg *)&command->y, node->model->rotation.y);
-        Script_StoreFloatResult((ScriptArg *)&command->z, node->model->rotation.z);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->x, node->model->rotation.x);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->y, node->model->rotation.y);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->z, node->model->rotation.z);
     }
     command->active = 0;
 }
@@ -479,9 +466,9 @@ void ScriptCmd_GetMapObjectPosition(ScriptPointCommand *command) {
 
     object = MapObject_GetById(current_map_slot, command->object_id.value);
     if (object != NULL) {
-        Script_StoreFloatResult((ScriptArg *)&command->from_x, object->model->position.x);
-        Script_StoreFloatResult((ScriptArg *)&command->from_y, object->model->position.y);
-        Script_StoreFloatResult((ScriptArg *)&command->from_z, object->model->position.z);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->from_x, object->model->position.x);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->from_y, object->model->position.y);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->from_z, object->model->position.z);
     }
     command->active = 0;
 }
@@ -493,9 +480,9 @@ void ScriptCmd_GetMapObjectRotation(ScriptMoveCommand *command) {
 
     object = MapObject_GetById(current_map_slot, command->target_id.value);
     if (object != NULL) {
-        Script_StoreFloatResult((ScriptArg *)&command->x, object->model->rotation.x);
-        Script_StoreFloatResult((ScriptArg *)&command->y, object->model->rotation.y);
-        Script_StoreFloatResult((ScriptArg *)&command->z, object->model->rotation.z);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->x, object->model->rotation.x);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->y, object->model->rotation.y);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->z, object->model->rotation.z);
     }
     command->active = 0;
 }
@@ -594,7 +581,7 @@ void ScriptCmd_AddItem(ScriptPairCommand *command) {
     amount = command->second.value;
     item = command->first.value;
     if (item < 381) {
-        owned = &item_counts[item];
+        owned = &item_counts.bytes[item];
         count = *owned + amount;
         if (count >= 100) {
             *owned = 99;
@@ -607,16 +594,17 @@ void ScriptCmd_AddItem(ScriptPairCommand *command) {
             def_offset = item << 5; // match: the byte offset of the item's ItemCommonDef, kept for both reads
             def = (u8 *)item_common_defs + def_offset;
             if (((ItemCommonDef *)def)->flags >> 1 & 1) {
-                if (item_counts[item] >= 2) {
-                    item_counts[item] = 1;
+                if (item_counts.bytes[item] >= 2) {
+                    item_counts.bytes[item] = 1;
                 }
             }
             if (((u8 *)item_common_defs)[def_offset] == 3) {
-                Menu_AddKeyItem(item, item, def_offset);
+                // match: three arguments are passed; the definition takes the first alone
+                ((void (*)(u32, u32, int))Menu_AddKeyItem)(item, item, def_offset);
             }
         } else {
-            if (item_counts[item] >= 2) {
-                item_counts[item] = 1;
+            if (item_counts.bytes[item] >= 2) {
+                item_counts.bytes[item] = 1;
             }
         }
     }
@@ -630,7 +618,7 @@ void ScriptCmd_GetItemCount(ScriptQueryCommand *command) {
 
     index = command->input.value;
     if (index < 380) {
-        Script_StoreResult(&command->result, item_counts[index]);
+        Script_StoreResult(&command->result, item_counts.bytes[index]);
     } else {
         Script_StoreResult(&command->result, -1);
     }
@@ -978,9 +966,9 @@ void ScriptCmd_GetPropPosition(ScriptPointCommand *command) {
 
     prop = Map_GetRecordById(current_map_slot, command->object_id.value);
     if (prop != NULL) {
-        Script_StoreFloatResult((ScriptArg *)&command->from_x, prop->model->position.x);
-        Script_StoreFloatResult((ScriptArg *)&command->from_y, prop->model->position.y);
-        Script_StoreFloatResult((ScriptArg *)&command->from_z, prop->model->position.z);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->from_x, prop->model->position.x);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->from_y, prop->model->position.y);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->from_z, prop->model->position.z);
     }
     command->active = 0;
 }
@@ -992,9 +980,9 @@ void ScriptCmd_GetPropRotation(ScriptMoveCommand *command) {
 
     prop = Map_GetRecordById(current_map_slot, command->target_id.value);
     if (prop != NULL) {
-        Script_StoreFloatResult((ScriptArg *)&command->x, prop->model->rotation.x);
-        Script_StoreFloatResult((ScriptArg *)&command->y, prop->model->rotation.y);
-        Script_StoreFloatResult((ScriptArg *)&command->z, prop->model->rotation.z);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->x, prop->model->rotation.x);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->y, prop->model->rotation.y);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->z, prop->model->rotation.z);
     }
     command->active = 0;
 }
@@ -1107,7 +1095,7 @@ void ScriptCmd_PlaySoundAtPoint(ScriptPointSoundCommand *command) {
 void ScriptCmd_PlayVoiceSoundAt(ScriptVoiceSoundCommand *command) {
     Vector4Arg position = { command->x.value, command->y.value, command->z.value, 1.0f };
 
-    Sound_StartTaggedAt(command->sound.value, command->voice.value, 0, command->volume.value, position);
+    Sound_StartTaggedAt(command->sound.value, command->voice.value, 0, command->volume.value, &position);
     command->active = 0;
 }
 
@@ -1116,7 +1104,7 @@ void ScriptCmd_PlayVoiceSoundAt(ScriptVoiceSoundCommand *command) {
 void ScriptCmd_PlayVoiceSoundAtWithMode(ScriptVoiceSoundModeCommand *command) {
     Vector4Arg position = { command->x.value, command->y.value, command->z.value, 1.0f };
 
-    Sound_StartTaggedAt(command->sound.value, command->voice.value, command->mode.value, command->volume.value, position);
+    Sound_StartTaggedAt(command->sound.value, command->voice.value, command->mode.value, command->volume.value, &position);
     command->active = 0;
 }
 
@@ -1297,7 +1285,7 @@ void ScriptCmd_SetHudShown(ScriptValueCommand *command) {
 /* Command 197: sets the colour and alpha the screen is covered with (GsDraw_FillScreen), then finishes. The
    blend mode is meant to come from `blend`, but the switch has no breaks and it always ends as 0x44. */
 void ScriptCmd_SetScreenColor(ScriptScreenColorCommand *command) {
-    MapDrawStateOverlays *overlays = &map_draw_state;
+    MapDrawStateOverlays *overlays = MAP_DRAW_OVERLAYS;
 
     overlays->screen_fill_red = command->red.value;
     overlays->screen_fill_green = command->green.value;

@@ -1,4 +1,5 @@
 #include "effect/effect.h"
+#include <libgraph.h>
 #include <eeregs.h>
 #include "core/file.h"
 #include "gfx/gs.h"
@@ -21,11 +22,7 @@
 #include "model/model_matrix.h"
 #include "sound/sound_game.h"
 
-void sceGsSetDefStoreImage(void *, s16, s16, s16, s16, s16, s16, s16);
-void sceGsExecStoreImage(void *, void *);
 
-extern GameStatus game_status;
-extern char map_draw_slot_blocks[];
 extern void (*effect_draw_hooks[4][4])(ModelInstance *);
 extern void (*effect_kind_handlers[][2])();
 
@@ -125,7 +122,7 @@ void Effect_Init(void) {
 
 /* Builds the texture packet's DMA tags, then reads the effect textures back from the GS into it. */
 static void Effect_CaptureTextures(void) {
-    char store_image[0x70];
+    sceGsStoreImage store_image;
     u32 *packet;
 
     packet = effect_texture_packet;
@@ -161,9 +158,9 @@ static void Effect_CaptureTextures(void) {
     packet += 2;
     *(u64 *)packet = 0;
     packet += 2;
-    sceGsSetDefStoreImage(store_image, 0x2E40, 2, 0, 0, 0, 0x80, 0x380);
+    sceGsSetDefStoreImage(&store_image, 0x2E40, 2, 0, 0, 0, 0x80, 0x380);
     FlushCache(0);
-    sceGsExecStoreImage(store_image, packet);
+    sceGsExecStoreImage(&store_image, packet);
     sceGsSyncPath(0, 0);
 }
 
@@ -462,12 +459,12 @@ void Effect_DrawAll(int pass) {
         for (part_index = 0; part_index < model->part_count; part_index++, part++) {
             ModelMatrix_BuildPartLocal(model, part, part);
         }
-        model->fog_block = map_draw_slot_blocks + (current_map_slot << 10);
+        model->fog_block = map_draw_slot_blocks[current_map_slot];
         // match: the flag is read through the union so the test stays behind the unk14C store
         if (!(((EntityFlagWord *)&effect->def->sub_effect_id)->word & (0x8000L << 25))) {
             model->light_block = (s32)effect_light_block;
         } else {
-            model->light_block = (s32)(map_draw_slot_blocks - 0x1D0);
+            model->light_block = (s32)map_draw_slot_blocks - 0x1D0;
         }
         model->hit_count = 0;
         if (pass == 0 || !(EFFECT_DEF_WORD_F0(effect->def) & (0x8000L << 26))) {

@@ -13,41 +13,12 @@
 #include "model/model.h"
 #include "model/motion.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_math.h"
+#include "player/player.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityAi_LowerWeightsAfterHit(char *);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-void EntityAi_SetState(char *, u8);
-// match: the size is unknown; a complete small type would be read through $gp
-extern f32 dark_puppet_no_floor_height[];
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(void *);
-void EntityAi_StepState(void *);
-extern PlayerData player_state;
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-float EntityMath_WrapAngle(float);
-float EntityMath_AngleXZ(float *, char *);
-float EntityMath_AngleDifference(float, float);
-s32 EntityAi_IsPushedFromFront(Entity *, f32);
-int EntityAi_TurnCommand(Entity *entity);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-void EntityAi_ClearTurnInPlace(Entity *);
-extern int entity_under_player[];
-int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
-void EntityAi_SetAttackDelay(Entity *, s32);
-int EntityAi_LaunchShot(void *, int, void *, void *);
-int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
-int EntityAi_AnimationFrameCount(void *, int);
 
 static void DarkPuppet_OnHit(Entity *entity);
 static void DarkPuppet_Think(Entity *entity, s32 unknown);
@@ -74,7 +45,7 @@ void DarkPuppet_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = DarkPuppet_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = DarkPuppet_OnHit;
@@ -106,7 +77,7 @@ void DarkPuppet_Init(Entity *entity) {
 
 /* The on_hit handler: as EntityAi_OnHit, but it leaves the target and flag bit 10 as they are. */
 static void DarkPuppet_OnHit(Entity *entity) {
-    EntityAi_LowerWeightsAfterHit((char *)entity);
+    EntityAi_LowerWeightsAfterHit(entity);
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     if (ENTITY_FLAG_BITS(entity)->hit_strength == 1) {
         if ((s32)(entity->flags >> 19) & ENTITY_FLAG_ACTIVE_LIST) {
@@ -117,7 +88,7 @@ static void DarkPuppet_OnHit(Entity *entity) {
     } else if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
 }
 
 /* The think handler: as EntityAi_Think, with DarkPuppet_ThinkCombat for state 2. After that it
@@ -212,7 +183,7 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
                     EntityAi_StartAction(entity, DarkPuppet_RangedAttack0, unknown);
                 } else {
@@ -228,8 +199,8 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
                 ai_state->move_choice = 0;
             } else if (entity->distance_to_player < (f32)entity->params->near_distance) {
                 ai_state->move_choice = 1;
-            } else if (EntityMath_AngleDifference(player_state.heading,
-                                     EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) > 0.0f) {
+            } else if (EntityMath_AngleDifference(player_state.rotation.y,
+                                     EntityMath_AngleXZ(&player_state.position.x, entity->model->position)) > 0.0f) {
                 ai_state->move_choice = 2;
             } else {
                 ai_state->move_choice = 3;
@@ -352,7 +323,7 @@ static void DarkPuppet_ApplyMoveCommand(Entity *entity) {
     f32 step;
     f32 limit;
 
-    if (entity == player_state.stood_on_entity && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
+    if (entity == player_state.stepped_on_entity && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
         entity->move_command = 0;
     }
     turn = 0.0f;

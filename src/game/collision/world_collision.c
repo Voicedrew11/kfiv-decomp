@@ -1,5 +1,6 @@
 #include "collision/collision.h"
 #include "map/map.h"
+#include "map_object/map_object.h"
 #include "entity/entity.h"
 #include "player/player.h"
 #include "model/model.h"
@@ -65,44 +66,6 @@ typedef int (*CornerTest)(void *, f32, f32, void *, f32, f32);
     centre[2] = COLLISION_RESULT->point[2] + COLLISION_RESULT->normal[2] * (distance)
 #define SAME_POINT(point, position) \
     ((point)[0] == (position).x && (point)[1] == (position).y && (point)[2] == (position).z)
-
-void Collision_HitRayBoxObj(void *, f32 *, f32 *, float);
-void Collision_HitRayDoubleDoorObj(void *, f32 *, f32 *, float);
-s32 Collision_HitRayQuadObj(AnimObject *, f32 *, f32 *, f32);
-void Collision_HitRayPitfallObj(void *, f32 *, f32 *, float);
-void Collision_HitRayMeshObj(MapObject *, f32 *, f32 *, f32);
-int Collision_HitSphereBoxObj(MapObject *, f32 *, f32);
-int Collision_HitSphereDoubleDoorObj(MapObject *, f32 *, f32);
-void Collision_HitSphereQuadObj(MapObject *, f32 *, f32);
-void Collision_HitSpherePitfallObj(MapObject *, f32 *, f32);
-void Collision_HitSphereMeshObj(CollisionOwner *, f32 *, float);
-int Collision_HitCapsuleBoxObj(MapObject *, f32 *, f32, f32);
-void Collision_HitCapsuleDoubleDoorObj(MapObject *, f32 *, f32, f32);
-int Collision_HitCapsuleQuadObj(CollisionOwner *, f32 *, float, float);
-void Collision_HitCapsulePitfallObj(void);
-void Collision_HitCapsuleMeshObj(MapObject *, f32 *, f32, f32);
-void Collision_HitFanBoxObj(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
-void Collision_HitFanDoubleDoorObj(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
-void Collision_HitFanQuadObj(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
-void Collision_HitFanPitfallObj(void);
-void Collision_HitFanMeshObj(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
-void Collision_PushOutOfBoxObj(MapObject *, f32 *, f32, f32);
-void Collision_PushOutOfDoubleDoorObj(MapObject *, f32 *, f32, f32);
-void Collision_PushOutOfQuadObj(CollisionOwner *, f32 *, f32, f32);
-void Collision_PushOutOfPitfallObj(void);
-void Collision_PushOutOfMeshObj(MapObject *, f32 *, f32, f32);
-s32 Collision_StandOnQuadObj(CollisionOwner *, f32 *, f32);
-s32 Collision_StandOnPitfallObj(MapObject *, f32 *, f32);
-s32 Collision_StandOnMeshObj(CollisionOwner *, f32 *, f32);
-void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
-
-extern s32 strip_list_indices[4];
-extern s32 map_objects_started[2];
-extern s32 map_object_counts[2];
-extern MapObject map_slot_objects[];
-extern MapObject map_slot1_objects[];
-extern f32 largest_float_tested_point_distance[]; // match: the largest float; declared without a size, it is not reached through $gp
-extern f32 largest_float_stand_farthest_start[]; // match: the largest float; declared without a size, it is not reached through $gp
 
 /* Drops a vertical line through `point` onto a triangle: on a hit the scratchpad result gets the
    height where it meets the triangle and how far that is from the point (positive: below it, as y grows
@@ -866,7 +829,7 @@ static inline MapObject *map_objects(s32 map) {
         if (current_map_slot != map) {
             return map_slot1_objects;
         }
-        return map_slot_objects;
+        return map_slot_objects[0];
     }
     return NULL;
 }

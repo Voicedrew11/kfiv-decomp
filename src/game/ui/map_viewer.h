@@ -19,6 +19,9 @@ int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y);
 int MapViewer_LocateOnEarthFolksMap(int *map_x, int *map_y);
 int MapViewer_LocateOnWiddasMap(int *screen_x, int *screen_y);
 void MapViewer_RunKingsMap(void);
+int MapViewer_IsKingsMapUsable(int kind);
+void MapViewer_Reset(void);
+void MapViewer_DrawPictureMap(void);
 
 /* ui/map_viewer_tables.c */
 extern ViewerEntry viewer_entries[];

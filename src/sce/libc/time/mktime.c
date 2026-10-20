@@ -2,23 +2,10 @@
  * KFIV: not in ICO.
  * sce/libc/time/mktime.c  (newlib libc/time/mktime.c, ~1999)
  *
- * struct tm, time_t and div_t are declared here because the public
- * headers of the newlib install are not part of this tree.
+ * div_t is declared here because the public headers of the newlib install
+ * are not part of this tree.
  */
-
-typedef long time_t;
-
-struct tm {
-    int tm_sec;
-    int tm_min;
-    int tm_hour;
-    int tm_mday;
-    int tm_mon;
-    int tm_year;
-    int tm_wday;
-    int tm_yday;
-    int tm_isdst;
-};
+#include <time.h>
 
 typedef struct {
     int quot;

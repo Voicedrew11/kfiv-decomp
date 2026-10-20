@@ -65,5 +65,5 @@ void MapObject_StartSymbolOfPassage(MapObject *object) {
 }
 
 /* Does nothing: the step a symbol of passage stays in once started (the wands look for it). */
-void MapObject_IdleSymbolOfPassage(void) {
+void MapObject_IdleSymbolOfPassage(MapObject *object) {
 }

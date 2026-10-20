@@ -2,9 +2,6 @@
 #include "model/model.h"
 #include "core/game.h"
 
-extern GameStatus game_status;
-extern EventRunner view_ray_status;
-
 /* Step 0 of kind 7 (no object of param/obj.prm has it): animation 4, step 1. */
 void MapObject_StartToggle(MapObject *object) {
     MapObject_StartAnim(object, 4);

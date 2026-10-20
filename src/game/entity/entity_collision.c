@@ -10,16 +10,12 @@
 #include <math.h>
 #include "math/vu0.h"
 #include <stdlib.h>
+#include "map_object/map_object.h"
+#include "player/player.h"
 
 #define VERTICAL_FACE_NORMAL_Y_EPSILON 0.00001f
 #define EDGE_PERPENDICULAR_TO_FLAT_EPSILON 0.000001f
 
-extern PlayerData player_state;
-extern s32 map_objects_started[2];
-extern s32 map_object_counts[2];
-extern MapObject map_slot_objects[];
-extern MapObject map_slot1_objects[];
-void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
 
 /* tests the entity's upright capsule against the triangle at `point` and pushes `position`
    sideways out of it */
@@ -70,7 +66,7 @@ static inline MapObject *map_objects(s32 map) {
         if (current_map_slot != map) {
             return map_slot1_objects;
         }
-        return map_slot_objects;
+        return map_slot_objects[0];
     }
     return NULL;
 }
@@ -115,9 +111,9 @@ void EntityCollision_PushApart(Entity *entity) {
     if (!(type_id >= 0x14 && type_id <= 0x16) && (u16)type_id != 0x2D && (u16)type_id != 0x63 && (u16)type_id != 0x97
         && (ENTITY_FLAG_BITS(entity)->live) && entity->hit_points != 0 && !(entity->flags & (ENTITY_FLAG_NOT_TARGETABLE | ENTITY_FLAG_NO_PLAYER_COLLISION))) {
         if (ENTITY_PARAMS_IS_SPHERE(entity->params)) {
-            EntityCollision_SphereCylinder(entity->model->position, player_state.position, entity->radius, 100.0f, 230.0f);
+            EntityCollision_SphereCylinder(entity->model->position, (f32 *)&player_state.position, entity->radius, 100.0f, 230.0f);
         } else {
-            EntityCollision_CylinderCylinder(entity->model->position, player_state.position, entity->radius, entity->height, 100.0f, 230.0f);
+            EntityCollision_CylinderCylinder(entity->model->position, (f32 *)&player_state.position, entity->radius, entity->height, 100.0f, 230.0f);
         }
         if (COLLISION_RESULT->hit != 0) {
             entity->model->position[0] = COLLISION_RESULT->point[0];
@@ -2321,12 +2317,12 @@ static void EntityCollision_SphereMesh(CollisionOwner *owner, void *centre, f32 
 }
 
 /* Tests the line from `from` to `destination` against `target` with Collision_HitRayObj; returns the result's hit. */
-s32 EntityCollision_LineHits(Entity *target, f32 *from, PlayerData *destination) {
+s32 EntityCollision_LineHits(Entity *target, f32 *from, f32 *destination) {
     f32 direction[4];
 
     Vector_Subtract(direction, destination, from);
     Vector_Normalize(direction, direction);
-    Collision_HitRayObj((MapObject *)target, from, direction, EntityMath_Distance(from, (f32 *)destination));
+    Collision_HitRayObj((MapObject *)target, from, direction, EntityMath_Distance(from, destination));
     return COLLISION_RESULT->hit;
 }
 

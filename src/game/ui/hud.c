@@ -7,10 +7,7 @@
 #include "core/memory.h"
 #include "gfx/gs_draw.h"
 #include "map/map.h"
-
-void TextureTable_SetBasePointers(char *, int, int);
-
-extern char game_options[0x10]; // match: read as a signed byte here
+#include "save/save_state.h"
 
 static TextureTableHeader *pause_texture_table; /* 0x4471F0 pause.tx2, loaded after gage.tx2 */
 static ScreenSprite hud_sprites[10];            /* 0x5CDE18 the frame and bars of the HUD */
@@ -66,7 +63,7 @@ void Hud_Load(void) {
     file = File_Open("pause.tx2", 0, 1);
     File_Read(file, address, -1);
     File_Close(file);
-    TextureTable_SetBasePointers((char *)pause_texture_table, 0x2BC0, 0x3FE0);
+    TextureTable_SetBasePointers(pause_texture_table, 0x2BC0, 0x3FE0);
     Hud_InitSprite(&hud_sprites[0], 0x156, 0x4007DA85E1313640, 0x60, 0x5A, 0x5A, 0x5A, 0x80,
                   0, 0, 0, 0xDA, 0x5A, 0, 0, 0x100, 0x80);
     Hud_InitSprite(&hud_sprites[1], 0x156, 0x8007DC8599307780, 0x60, 0x6C, 0x2A, 0xD, 0x80,
@@ -101,7 +98,7 @@ void Hud_Draw(void) {
     ScreenSprite sprite;
     s32 fade;
 
-    if (game_options[9] != 0 && hud_visible[0] != 0) {
+    if (hud_option[0] != 0 && hud_visible[0] != 0) {
         TextureTable_QueueAll((TextureTableHeader *)hud_area);
         Packet_BeginGsRegisters();
         Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);

@@ -12,6 +12,11 @@ void Debug_EditFloat(f32 *value, f32 minimum, f32 maximum, f32 step);
 /* debug/debug.c */
 f32 Math_AbsFloat(f32 fparg0);
 float Vector_Dot3(void *left, void *right);
+void Debug_StartMenuLoopInit(void);
+void Debug_StartMenuLoopTop(void);
+void Debug_StartMenuBeforeRun(void);
+void Debug_StartMenuBetweenRuns(void);
+int Debug_RunStartMenu(void);
 
 /* data still in asm */
 extern DebugStartMenuSpacer debug_start_menu_spacer;

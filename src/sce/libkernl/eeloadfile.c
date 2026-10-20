@@ -167,10 +167,11 @@ int _sceSifLoadModule(void *name, int arglen, int args, int ret, int rpcno)
     return r;
 }
 
-int sceSifLoadModule(void *name, int arglen, int args)
+/* KFIV: the SDK's const char * parameters, which the game's callers pass */
+int sceSifLoadModule(const char *name, int arglen, const char *args)
 {
     int local;
-    return _sceSifLoadModule(name, arglen, args, (int)&local, 0);
+    return _sceSifLoadModule((void *)name, arglen, (int)args, (int)&local, 0);
 }
 
 int sceSifLoadStartModule(void *name, int arglen, int args, int ret)

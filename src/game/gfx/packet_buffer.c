@@ -3,6 +3,7 @@
 #include "common.h"
 #include <eeregs.h>
 #include <libdma.h>
+#include <eekernel.h>
 #include "gfx/gs.h"
 #include "gfx/packet.h"
 #include "core/file.h"
@@ -16,11 +17,8 @@
     while (*D1_CHCR & D_CHCR_STR) {             \
     }
 
-void FlushCache(int); // match: void, the return value is unused and int changes the code
-
 /* the VIF1 packets that upload the VU1 microprograms, by the VU1 address each one starts at (the MSCAL
    that runs it) */
-void Packet_UploadVu1Programs(void);
 
 static void *packet_chain_head[2];   /* 0x447018 first DMA tag of each buffer's chain */
 static void *packet_chain_tail[2]; /* 0x447020 last DMA tag of each buffer's chain */

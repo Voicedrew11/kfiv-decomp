@@ -5,6 +5,8 @@
 #include <libgraph.h>
 #include <libvu0.h>
 #include <eeregs.h>
+#include <eekernel.h>
+#include <sifdev.h>
 #include "ui/menu_draw.h"
 #include "player/player.h"
 #include "ui/message.h"
@@ -19,12 +21,6 @@
 #include "math/vu0.h"
 #include "save/save_state.h"
 
-void FlushCache(int); // match: an int result would keep $2 busy after the call (MenuModel_Draw, MenuModel_DrawTinted)
-int sceOpen(const char *, int);
-int sceLseek(int, int, int);
-int sceRead(int, void *, int);
-int sceClose(int);
-
 /* The module's own variables are defined where the original has them: the initialised ones in front of the
    function that first uses them (retail keeps them in that order), the others here. */
 static s64 *color_data;             /* 0x447344 set by MenuSprite_ColorFromNumber and never read */
@@ -33,10 +29,6 @@ static s32 heap_top;                /* 0x44734C where the next block of the menu
 static u32 long_text_packets[2][0x3700]; /* 0x5DDF00 the two packet buffers of the long text drawers */
 
 /* the numbers a menu sprite can stand for (MenuDraw_GetNumber) */
-extern ClockTime current_play_time;
-
-/* the models: 32 pool slots, each showing one part */
-extern void *pool_slot_free_list;   /* the head of the slots' free list */
 
 /* the loaded menu file */
 
@@ -356,8 +348,8 @@ static s32 MenuText_DrawWordWrapped(u16 *text, s32 limit);
 static void PoolSlot_SetAllParts(PoolPartFile *file);
 static void PoolSlot_InitFreeList(void);
 static void PoolNode_BlendKeys(void *out, void *start, void *end, void *start_tangent, void *end_tangent, float phase);
-static void *MenuFile_LoadFromHost(const char *name, void *buffer);
-static s32 MenuFile_LoadHostBlock(const char *name, void *buffer);
+static void *MenuFile_LoadFromHost(char *name, void *buffer);
+static s32 MenuFile_LoadHostBlock(char *name, void *buffer);
 static void MenuTexture_UploadInStrips(TextureHeader *header);
 static SpritePacket *MenuSprite_Keep(SpritePacket *packet);
 static SpritePacket *MenuSprite_Hide(void);
@@ -3225,7 +3217,7 @@ int MenuFile_Load(char *name, void *buffer) {
 }
 
 /* Reads a whole file into buffer; returns buffer, or NULL when the file does not open. */
-static void *MenuFile_LoadFromHost(const char *name, void *buffer) {
+static void *MenuFile_LoadFromHost(char *name, void *buffer) {
     s32 file_handle;
     s32 end_offset;
 
@@ -3241,7 +3233,7 @@ static void *MenuFile_LoadFromHost(const char *name, void *buffer) {
 }
 
 /* Reads the first 0x19000 bytes of a file with sceRead; returns 1, or 0 when the file does not open. */
-static s32 MenuFile_LoadHostBlock(const char *name, void *buffer) {
+static s32 MenuFile_LoadHostBlock(char *name, void *buffer) {
     s32 file_handle;
 
     file_handle = sceOpen(name, 0x8001);

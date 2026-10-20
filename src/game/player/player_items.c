@@ -10,15 +10,8 @@
 #include "player/player_update.h"
 #include "script/script.h"
 #include "ui/map_viewer.h"
-
-void Player_ApplyItem(int);
-void Player_ApplyPoisonWater(int);
-int Player_LearnSpellInRow(int);
-
-extern u8 item_counts[];
-extern GameStatus game_status;
-extern EventRunner view_ray_status;
-extern u8 spell_levels[6][5];
+#include "save/save_state.h"
+#include "ui/menu_screens.h"
 
 /* TRUE when the player cannot take one more of the item ("Can't carry any more", MapItem_PickupHold): a one-of-a-kind
    item already carried, or 99 of another. */
@@ -30,42 +23,41 @@ int Player_CannotCarryItem(int idx) {
     }
     entry = item_common_defs + idx;
     if (entry->flags >> 1 & 1) {
-        if (item_counts[idx] != 0) {
+        if (item_counts.bytes[idx] != 0) {
             return 1;
         }
     } else {
-        if (item_counts[idx] >= 0x63) {
+        if (item_counts.bytes[idx] >= 0x63) {
             return 1;
         }
     }
     return 0;
 }
 
-void Menu_AddKeyItem(int); // match: one argument is passed (ScriptCmd_AddItem declares three)
 /* Adds one of an item to what the player carries: up to 1 for weapons and worn items and for items with flag
    bit 1, up to 99 for the others ("Can't carry any more" past that). */
 void Player_AddItem(int index) {
     ItemCommonDef *def;
 
     if (index >= ITEM_WORN_FIRST) {
-        if (item_counts[index] == 0) {
-            item_counts[index] = 1;
+        if (item_counts.bytes[index] == 0) {
+            item_counts.bytes[index] = 1;
         }
     } else if (index >= ITEM_WEAPON_FIRST) {
-        if (item_counts[index] == 0) {
-            item_counts[index] = 1;
+        if (item_counts.bytes[index] == 0) {
+            item_counts.bytes[index] = 1;
         }
     } else if (index >= 0) {
         def = &item_common_defs[index];
         if (def->flags >> 1 & 1) {
-            if (item_counts[index] == 0) {
-                item_counts[index] = 1;
+            if (item_counts.bytes[index] == 0) {
+                item_counts.bytes[index] = 1;
                 if (def->type == 3) {
                     Menu_AddKeyItem(index);
                 }
             }
-        } else if (item_counts[index] < 99) {
-            item_counts[index]++;
+        } else if (item_counts.bytes[index] < 99) {
+            item_counts.bytes[index]++;
             if (def->type == 3) {
                 Menu_AddKeyItem(index);
             }
@@ -77,8 +69,8 @@ void Player_AddItem(int index) {
 
 /* Takes one of the item away, if the player has any. */
 void Player_RemoveOneItem(u32 index) {
-    if (index < 0x17C && item_counts[index] != 0) {
-        item_counts[index]--;
+    if (index < 0x17C && item_counts.bytes[index] != 0) {
+        item_counts.bytes[index]--;
     }
 }
 
@@ -98,7 +90,7 @@ void Player_UseItem(void) {
     if (game_status.bit6) {
         game_status.bit6 = FALSE;
         game_status.item_use_cooldown = 1;
-        if (item_counts[item] != 0) {
+        if (item_counts.bytes[item] != 0) {
             entity = view_ray_status.facing_entity;
             if (entity != NULL && entity->spawn_info->item_script_id != 0 && entity->group_id == current_map_slot) {
                 if (entity->spawn_info->talk_script_id != 0 && Script_IsRunning(entity->spawn_info->talk_script_id) != 0) {
@@ -183,13 +175,13 @@ void Player_UseItem(void) {
             Player_ApplyPoisonWater(item);
             switch (def->use_mode) {
             case 0:
-                item_counts[item]--;
+                item_counts.bytes[item]--;
                 break;
             case 1:
                 break;
             case 2:
-                item_counts[item]--;
-                item_counts[def->item]++;
+                item_counts.bytes[item]--;
+                item_counts.bytes[def->item]++;
                 break;
             }
         }

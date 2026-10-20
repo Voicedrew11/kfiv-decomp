@@ -164,7 +164,10 @@ int Sound_EntityBankFreeSampleBuffer(SoundJob *job);
    voice in *voice_out once done, else 1 */
 int Sound_LoadEntityBankStep(int args_addr, int index, int voice_out);
 /* Plays sound from bank with the falloff player kind of falloff_sound_players */
-void Sound_PlayFalloff(int sound, int kind, int bank);
+#ifndef SOUND_PLAY_FALLOFF_DEFINITION
+// match: the definition names only the three integer arguments, which keeps retail's registers
+void Sound_PlayFalloff(int sound, int kind, int bank, f32 range, f32 distance, f32 angle);
+#endif
 /* Map bank load step: does nothing but move on */
 s32 Sound_MapBankNoOp(SoundJob *job);
 /* Map bank load step: waits for a pending reverb change, then loads the map's voice (SoundDriver_LoadVoiceStep) */
@@ -197,6 +200,18 @@ void Sound_UnmutePositional(void);
 void Sound_MutePositional(void);
 /* Frees the IOP copy of a voice's samples; returns 0 */
 int Sound_FreeSampleBuffer(int voice_index);
+
+/* the bank buffers and load jobs (sound_tables.c) */
+extern SoundBankSlot se_com_bank;
+extern SoundBankSlot sfx_com_bank;
+extern SoundBankSlot sw_bank;
+extern SoundBankSlot mg_bank;
+extern LoadJobSlot bgm_load_job;
+extern SoundJobSlot se_com_job;
+extern SoundJobSlot sfx_com_job;
+extern SoundJobSlot map_bank_job;
+extern SoundJobSlot sw_bank_job;
+extern SoundJobSlot mg_bank_job;
 
 /* data still in asm */
 extern char rev_para_path[];

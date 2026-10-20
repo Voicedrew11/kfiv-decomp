@@ -11,40 +11,11 @@
 #include "entity/entity_aim.h"
 #include <math.h>
 #include "math/vu0.h"
-
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
-extern s32 entity_type_handlers[][2];
-void EntityAi_LowerWeightsAfterHit(char *);
-void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-void EntityAi_SensePlayer(void *, int);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-float EntityMath_DistanceXZ(void *, void *);
-s32 EntityAi_CanAttack(Entity *);
-int EntityAi_PickAttack(char *);
-float EntityMath_AngleDifference(float, float);
-void EntityAi_StepState(void *);
-void EntityAi_CheckFarFromSpawn(void *);
-extern PlayerData player_state;
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_CanShoot(Entity *);
-s32 EntityAi_CanMelee(Entity *);
-s32 EntityAi_PickRangedAttack(Entity *);
-s32 EntityAi_PickMeleeAttack(Entity *);
-void EntityAi_ClearTurnInPlace(Entity *);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_TurnFromPush(void *, void *);
-extern int entity_under_player[];
-int Motion_Start(void *, int, int, u32, int);
-float EntityMath_WrapAngle(float);
-float EntityMath_EaseAngleToward(float *, float, float);
-int Motion_Step(void *, int);
-int Motion_BlendToPose(EntityModel *, f32);
-int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_math.h"
+#include "model/motion.h"
+#include "player/player.h"
 
 static void GoldenStatue_OnHit(Entity *entity);
 static void GoldenStatue_ThinkWaitAtPost(Entity *entity, s32 unknown);
@@ -71,7 +42,7 @@ void GoldenStatue_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->animate = GoldenStatue_Animate;
     ai_state->on_hit = GoldenStatue_OnHit;
     ai_state->move = GoldenStatue_Move;
@@ -112,7 +83,7 @@ void GoldenStatue_Init(Entity *entity) {
 static void GoldenStatue_OnHit(Entity *entity) {
     u64 flags;
 
-    EntityAi_LowerWeightsAfterHit((char *)entity);
+    EntityAi_LowerWeightsAfterHit(entity);
     entity->target = NULL;
     entity->flags &= ~ENTITY_FLAG_ATTACKING;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
@@ -120,7 +91,7 @@ static void GoldenStatue_OnHit(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
 }
 
 /* The think handler of mode 1 (EntitySpawnInfo.spawn_mode is 1): no states. Once the entity
@@ -204,7 +175,7 @@ static void GoldenStatue_TurnAtPost(Entity *entity, s32 unknown) {
         ai_state->move_choice = 0;
     }
     if (EntityAi_CanAttack(entity) && !EntitySight_EntityInWay(entity)) {
-        if (EntityAi_PickAttack((char *)entity)) {
+        if (EntityAi_PickAttack(entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, 1);
@@ -233,7 +204,7 @@ static void GoldenStatue_StandAtPost(Entity *entity, s32 unknown) {
     f32 angle;
 
     if (EntityAi_CanAttack(entity) && !EntitySight_EntityInWay(entity)) {
-        if (EntityAi_PickAttack((char *)entity)) {
+        if (EntityAi_PickAttack(entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, 1);
@@ -298,7 +269,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    if (EntityMath_DistanceXZ(entity->spawn_info, &player_state) > entity->spawn_info->wander_radius) {
+    if (EntityMath_DistanceXZ(&entity->spawn_info->spawn_x, &player_state.position.x) > entity->spawn_info->wander_radius) {
         if (ENTITY_FLAG_BITS(entity)->player_in_reach) {
             if (EntityAi_CanShoot(entity) && !EntitySight_EntityInWay(entity)) {
                 EntityAi_PickRangedAttack(entity);
@@ -314,8 +285,8 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
         }
     }
     ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
-    if (player_state.position[0] < -7900.0f) {
-        Vector_Copy(post, &player_state);
+    if (player_state.position.x < -7900.0f) {
+        Vector_Copy(post, &player_state.position);
         post[0] = -8000.0f;
         if (post[2] > 3350.0f) {
             post[2] = 3550.0f;
@@ -457,7 +428,7 @@ static void GoldenStatue_AimPart15AbovePlayer(Entity *entity) {
     if (part != NULL) {
         frame = model->level_tables->frame;
         if (frame < 43) {
-            Vector_Copy(point, player_state.position);
+            Vector_Copy(point, &player_state.position);
             point[1] += 400.0f;
             pitch = EntityMath_WrapAngle(atan2(point[1] - model->position[1], entity->distance_to_player));
             EntityMath_EaseAngleToward(&ai_state->part_angle_y, pitch, 10.0f);
@@ -485,7 +456,7 @@ static void GoldenStatue_Animate(Entity *entity) {
         }
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }

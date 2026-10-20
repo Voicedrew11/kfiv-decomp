@@ -4,6 +4,9 @@
    (MovieVideo), and the sound stream, which goes to the SPU2 on the IOP (MovieAudio). Decoded pictures wait in a
    ring (MovieOut) for the vblank handler, which sends the GS packets that show them one field at a time. */
 #include "gfx/movie.h"
+#include <sifdev.h>
+#include <sifrpc.h>
+#include <libsdr.h>
 #include "gfx/gs.h"
 #include "core/file.h"
 #include <libmpeg.h>
@@ -13,23 +16,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int toupper(int);
-s32 sceSdRemote(s32, ...);
-int sceSifAllocIopHeap(int);
-int sceSifFreeIopHeap(int);
-int sceSifSetDma(void *, int);
-int sceSifDmaStat(int);
-int sceSifLoadModule(const char *, int, const char *);
-int sceCdDiskReady(int);
-int sceCdStInit(u32, u32, u32);
-int sceCdStStop(void);
-int sceCdStStart(u32, sceCdRMode *);
-int sceCdStRead(u32, u32 *, u32, u32 *);
-int sceCdStSeek(u32);
-int sceOpen(const char *, int);
-int sceRead(int, void *, int);
-int sceLseek(int, int, int);
-int sceClose(int);
+int toupper(int); // match: ctype.h would make it a macro, which changes the code of MovieFile_Open
 
 /* The movie player's .data: the flags the vblank handler shares, the picture ring and the decoder state. */
 #define MOVIE_DATA4 __attribute__((section(".data"), aligned(4)))
@@ -50,12 +37,10 @@ s32 movie_idle_vblanks MOVIE_DATA4 = { 0 };         /* 0x437A4C vblanks with no 
 static char movie_audio_zero_buffer[0x800];               /* 0x1E4F7C0 0x800 zero bytes for the IOP */
 static u32 movie_init_display_packet[0x50];                /* 0x1E4FFC0 GS packet of Movie_InitDisplay */
 static u32 movie_clear_packet[0x70];                /* 0x1E50100 GS packet of MovieDisplay_Clear */
-extern char _gp[];
+extern char _gp[]; /* the linker's $gp value, for the movie threads */
 
 /* an object of 8 bytes or less kept in .rodata, as the game keeps them, not in .sdata */
 #define IN_RODATA __attribute__((section(".rodata")))
-
-void sceMpegSetDecodeMode(void); // match: called with no arguments, the caller's own pass through
 
 static void Movie_HeapInit(u32 start, u32 size);
 static void *Movie_HeapAlloc(u32 size, u32 alignment);
@@ -274,10 +259,10 @@ static int Movie_PlayLoop(MovieVideoDecoder *decoder, MovieReadBuffer *read_buff
 
     /* the last 4 bytes are not played */
     while (write_rest > 4 && MovieVideo_GetState(decoder) != MOVIE_VIDEO_STATE_ENDED) {
-        if (skip_requested != NULL && !is_skipping && ((sceMpeg *)decoder)->frameCount > 10) {
+        if (skip_requested != NULL && !is_skipping && (&decoder->mpeg)->frameCount > 10) {
             is_skipping = skip_requested() != 0;
         }
-        if (is_skipping && ((sceMpeg *)decoder)->frameCount > 10) {
+        if (is_skipping && (&decoder->mpeg)->frameCount > 10) {
             MovieVideo_Abort(&movie_decoder);
         }
         put_size = MovieReadBuf_BeginPut(read_buffer, &put_dest);
@@ -290,7 +275,7 @@ static int Movie_PlayLoop(MovieVideoDecoder *decoder, MovieReadBuffer *read_buff
         get_size = MovieReadBuf_BeginGet(read_buffer, &get_src);
         if (get_size > 0) {
             proceeded =
-                sceMpegDemuxPssRing((sceMpeg *)decoder, get_src, get_size, (int)read_buffer, read_buffer->size);
+                sceMpegDemuxPssRing(&decoder->mpeg, get_src, get_size, (int)read_buffer, read_buffer->size);
             MovieReadBuf_EndGet(read_buffer, proceeded);
             write_rest -= proceeded;
         }
@@ -809,16 +794,16 @@ static int MovieAudio_SendTwoAreas(u8 *first_dest, int first_dest_size, u8 *seco
 /* Copies size bytes to IOP memory with sceSifSetDma and waits for the transfer (the SDK sample's sendToIOP);
    returns size. */
 static int Movie_SendToIop(void *dest, void *src, int size) {
-    MovieSifDmaData dma;
+    sceSifDmaData dma;
     int dma_id;
 
     if (size <= 0) {
         return 0;
     }
-    dma.data = src;
-    dma.addr = dest;
+    dma.src = (u32)src;
+    dma.dest = (u32)dest;
     dma.size = size;
-    dma.attr = 0;
+    dma.u.attr = 0;
     FlushCache(0);
     dma_id = sceSifSetDma(&dma, 1);
     do {
@@ -1289,27 +1274,27 @@ static int MovieStream_GetStamp(MovieStreamBuffer *stream, MovieTimeStamp *stamp
    blocks at data (videoDecCreate). */
 static int MovieVideo_Init(MovieVideoDecoder *decoder, u8 *work_area, int work_area_size, u8 *data,
                            MovieDmaTag *tags, int block_count, MovieTimeStamp *stamps, int stamp_capacity) {
-    sceMpegCreate((sceMpeg *)decoder, work_area, work_area_size);
-    sceMpegAddCallback((sceMpeg *)decoder, 0, Movie_OnMpegError, NULL);
-    sceMpegAddCallback((sceMpeg *)decoder, 1, Movie_OnMpegNoData, NULL);
-    sceMpegAddCallback((sceMpeg *)decoder, 2, Movie_OnMpegStopDma, NULL);
-    sceMpegAddCallback((sceMpeg *)decoder, 3, Movie_OnMpegRestartDma, NULL);
-    sceMpegAddCallback((sceMpeg *)decoder, 4, Movie_OnMpegBackground, NULL);
-    sceMpegAddCallback((sceMpeg *)decoder, 5, (sceMpegCallback)Movie_OnMpegTimeStamp, NULL);
+    sceMpegCreate(&decoder->mpeg, work_area, work_area_size);
+    sceMpegAddCallback(&decoder->mpeg, 0, Movie_OnMpegError, NULL);
+    sceMpegAddCallback(&decoder->mpeg, 1, Movie_OnMpegNoData, NULL);
+    sceMpegAddCallback(&decoder->mpeg, 2, Movie_OnMpegStopDma, NULL);
+    sceMpegAddCallback(&decoder->mpeg, 3, Movie_OnMpegRestartDma, NULL);
+    sceMpegAddCallback(&decoder->mpeg, 4, Movie_OnMpegBackground, NULL);
+    sceMpegAddCallback(&decoder->mpeg, 5, (sceMpegCallback)Movie_OnMpegTimeStamp, NULL);
     MovieVideo_ResetState(decoder);
     MovieStream_Init(&decoder->stream, data, tags, block_count, stamps, stamp_capacity);
     return 1;
 }
 
-/* Calls sceMpegSetDecodeMode with whatever the argument registers hold (videoDecSetDecodeMode); nothing calls it. */
-void MovieVideo_SetDecodeMode(void) {
-    sceMpegSetDecodeMode();
+/* Sets which picture types the decoder decodes (videoDecSetDecodeMode); nothing calls it. */
+void MovieVideo_SetDecodeMode(MovieVideoDecoder *decoder, int intra, int predicted, int bidirectional) {
+    sceMpegSetDecodeMode(&decoder->mpeg, intra, predicted, bidirectional);
 }
 
 /* Registers the callback that receives one elementary stream of the movie (videoDecSetStream). */
 static int MovieVideo_SetStream(MovieVideoDecoder *decoder, int type, int channel, sceMpegCallback callback,
                                 void *data) {
-    sceMpegAddStrCallback((sceMpeg *)decoder, type, channel, callback, data);
+    sceMpegAddStrCallback(&decoder->mpeg, type, channel, callback, data);
     return 1;
 }
 
@@ -1333,7 +1318,7 @@ static s32 MovieVideo_ResetState(MovieVideoDecoder *decoder) {
 /* Shuts the video decoder down: its stream buffer, then the libmpeg handle (videoDecDelete). */
 static int MovieVideo_Delete(MovieVideoDecoder *decoder) {
     MovieStream_Delete(&decoder->stream);
-    sceMpegDelete((sceMpeg *)decoder);
+    sceMpegDelete(&decoder->mpeg);
     return 1;
 }
 
@@ -1414,7 +1399,7 @@ static int MovieVideo_Flush(MovieVideoDecoder *decoder) {
 
 /* Whether the decoder has used up everything it was given (videoDecIsFlushed). */
 static int MovieVideo_IsFlushed(MovieVideoDecoder *decoder) {
-    return MovieVideo_GetInputCount(decoder) == 0 && sceMpegIsRefBuffEmpty((sceMpeg *)decoder);
+    return MovieVideo_GetInputCount(decoder) == 0 && sceMpegIsRefBuffEmpty(&decoder->mpeg);
 }
 
 /* The decode thread: empties the stream buffer and the picture ring, decodes the stream, waits for the last
@@ -1436,7 +1421,7 @@ static int MovieVideo_DecodeAll(MovieVideoDecoder *decoder) {
     int result = 1;
     MovieOutPicture *picture;
 
-    while (!sceMpegIsEnd((sceMpeg *)decoder)) {
+    while (!sceMpegIsEnd(&decoder->mpeg)) {
         if (MovieVideo_GetState(decoder) == MOVIE_VIDEO_STATE_ABORT) {
             result = -1;
             break;
@@ -1444,13 +1429,13 @@ static int MovieVideo_DecodeAll(MovieVideoDecoder *decoder) {
         while ((picture = MovieOut_GetWriteSlot(&movie_out_buffer)) == NULL) {
             Movie_Yield();
         }
-        if (sceMpegGetPicture((sceMpeg *)decoder, (u32)picture, 0x460) < 0) {
+        if (sceMpegGetPicture(&decoder->mpeg, (u32)picture, 0x460) < 0) {
             Movie_DebugPrint("sceMpegGetPicture() decode error");
         }
         MovieOut_Commit(&movie_out_buffer);
         Movie_Yield();
     }
-    sceMpegReset((sceMpeg *)decoder);
+    sceMpegReset(&decoder->mpeg);
     return result;
 }
 
@@ -1982,7 +1967,7 @@ void Movie_LoadModule(const char *path) {
 
 /* Opens a file, from the disc when the path starts with "cdrom" (any case), and gives its size; returns the
    descriptor, or a negative value when it cannot be opened or sized. Nothing calls it. */
-int Movie_OpenFileWithSize(const char *path, int *size) {
+int Movie_OpenFileWithSize(char *path, int *size) {
     int file_fd;
 
     if ((path[0] == 'c' || path[0] == 'C') &&
@@ -2051,7 +2036,7 @@ static s32 MovieFile_Open(MovieFile *file, char *path) {
             printf("SifAllocIopHeap Error\n");
             return 0;
         }
-        if (sceCdStInit(0x50, 5, ((u32)(file->iop_buffer + 0xF) >> 4) << 4) != 1) {
+        if (sceCdStInit(0x50, 5, (void *)(((u32)(file->iop_buffer + 0xF) >> 4) << 4)) != 1) {
             printf("sceCdStInit Error \n");
             if (sceSifFreeIopHeap(file->iop_buffer) < 0) {
                 printf("sceSifFreeIopHeap Error %s %d\n", "fslibmpg.c", 0xE5B);

@@ -12,31 +12,12 @@
 #include <libvu0.h>
 #include "math/vu0.h"
 #include <stdlib.h>
+#include "entity/entity_ai_choice.h"
+#include "model/motion.h"
+#include "entity/entity_events.h"
+#include "entity/entity_ai.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
-extern s32 entity_type_handlers[][2];
-int Motion_Step(void *, int);
-int Motion_BlendToPose(EntityModel *, f32);
-int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-void EntityAi_LowerWeightsAfterHit(char *);
-void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-void EntityAi_StepState(void *);
-void EntityAi_SensePlayer(void *, int);
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-int Motion_Start(void *, int, int, u32, int);
-int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
-void EntityAi_SetAttackDelay(Entity *, s32);
-void EntityEvent_OnDeath(Entity *);
-// match: the definitions take the float last, but retail sets it up before the index
-int EntityAi_CanUseMeleeFacing(Entity *, f32, s32);
-int EntityAi_CanUseRangedFacing(Entity *, f32, s32); // match: as EntityAi_CanUseMeleeFacing
-void EntityAi_LowerAttackWeight(Entity *);
-void EntityEvent_Respawn(char *);
 
 static void FireGenie_Animate(Entity *entity);
 static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode);
@@ -68,7 +49,7 @@ void FireGenie_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = FireGenie_Think;
     ai_state->animate = FireGenie_Animate;
     ai_state->on_hit = FireGenie_OnHit;
@@ -112,7 +93,7 @@ static void FireGenie_Animate(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
             FireGenie_TurnPart3ToPlayer(entity, 0);
         } else {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
@@ -194,7 +175,7 @@ static void FireGenie_OnHit(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     Entity *other;
 
-    EntityAi_LowerWeightsAfterHit((char *)entity);
+    EntityAi_LowerWeightsAfterHit(entity);
     if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         ENTITY_UNK5C(entity)->as_s32 = 0;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
@@ -207,7 +188,7 @@ static void FireGenie_OnHit(Entity *entity) {
         }
         ai_state->action_counter = 0;
     }
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
 }
 
 /* The think handler: no states; every tenth frame updates what the entity knows of the player, and
@@ -529,7 +510,7 @@ static void FireGenie_RespawnOneOther(Entity *entity) {
                 s32 other_id = i + 10;
                 Entity *other = Entity_GetBySpawnId(other_id);
                 if (other != NULL && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST)) {
-                    EntityEvent_Respawn((char *)other);
+                    EntityEvent_Respawn(other);
                     ai_state->action_flags = other_id;
                     remaining--;
                 }

@@ -1,29 +1,12 @@
 #include "script/script.h"
 #include "core/game.h"
+#include "save/save_state.h"
+#include "input/pad.h"
+#include "player/player.h"
+#include "map_object/map_object.h"
+#include "math/camera.h"
 
 /* The script interpreter's command tables (0x4331B0, 0x433440, 0x433650) and the blocks of game variables. */
-
-/* Every command a table points to, and the symbols of the variable blocks. */
-void ScriptCmd_BlendEntityMotion();
-
-extern u8 map_script_flags[];
-extern u8 story_flags[];
-extern u8 entity_group_state[];
-extern u8 story_values[];
-extern u8 weapon_level_records[];
-extern u8 trade_stock_1[];
-extern u8 trade_stock_2[];
-extern u8 trade_stock_3[];
-extern u8 trade_stock_4[];
-extern u8 game_status[];
-extern u8 pad_state[];
-extern u8 player_state[];
-extern u8 view_ray_status[];
-extern u8 camera_state[];
-extern u32 script_spare_var_block_a[0x10];
-extern u32 script_spare_var_block_b[0x10];
-extern u8 item_counts[];
-extern u8 spell_levels[];
 
 ScriptCommandHandler script_general_command_handlers[0x64] = {
     ScriptCmd_Stall, ScriptCmd_Wait, ScriptCmd_RunScript, ScriptCmd_Nop3,
@@ -54,11 +37,11 @@ ScriptCommandHandler script_general_command_handlers[0x64] = {
 }; /* 0x4331B0 commands 0 to 0x63 */
 
 u8 *script_game_var_blocks[0x40] = {
-    game_status, camera_state, player_state, view_ray_status,
-    item_counts, trade_stock_1, trade_stock_2, trade_stock_3,
-    trade_stock_4, spell_levels, map_script_flags, story_flags,
-    entity_group_state, (u8 *)script_spare_var_block_a, (u8 *)script_spare_var_block_b, story_values,
-    weapon_level_records, 0x00000000, 0x00000000, 0x00000000,
+    (u8 *)&game_status, (u8 *)&camera_state, (u8 *)&player_state, (u8 *)&view_ray_status,
+    (u8 *)&item_counts, (u8 *)&trade_stock_1, (u8 *)&trade_stock_2, (u8 *)&trade_stock_3,
+    (u8 *)&trade_stock_4, (u8 *)spell_levels, map_script_flags, story_flags,
+    (u8 *)entity_group_state, (u8 *)script_spare_var_block_a, (u8 *)script_spare_var_block_b, story_values,
+    (u8 *)weapon_level_records, 0x00000000, 0x00000000, 0x00000000,
     NULL, 0x00000000, 0x00000000, 0x00000000,
     NULL, 0x00000000, 0x00000000, 0x00000000,
     NULL, 0x00000000, 0x00000000, 0x00000000,
@@ -66,7 +49,7 @@ u8 *script_game_var_blocks[0x40] = {
     NULL, 0x00000000, 0x00000000, 0x00000000,
     NULL, 0x00000000, 0x00000000, 0x00000000,
     NULL, 0x00000000, 0x00000000, 0x00000000,
-    NULL, 0x00000000, pad_state, (u8 *)&forward_button,
+    NULL, 0x00000000, (u8 *)&pad_state, (u8 *)&forward_button,
     (u8 *)&back_button, (u8 *)&turn_right_button, (u8 *)&turn_left_button, (u8 *)&step_right_button,
     (u8 *)&step_left_button, (u8 *)&look_down_button, (u8 *)&look_up_button, (u8 *)&attack_button,
     NULL, (u8 *)&magic_button, (u8 *)&action_button, (u8 *)&shortcut_button,
@@ -114,7 +97,9 @@ ScriptCommandHandler script_entity_command_handlers[0x64] = {
     ScriptCmd_Nop200, ScriptCmd_Nop200, ScriptCmd_RandomFloat, ScriptCmd_GetPointFromPlayer,
     ScriptCmd_Atan2, ScriptCmd_Random, ScriptCmd_GivePlayerControl, ScriptCmd_TakePlayerControl,
     ScriptCmd_ShowMessageBox, ScriptCmd_ShowNotice, ScriptCmd_StartEntityMotion, ScriptCmd_PlayEntityMotion,
-    ScriptCmd_WaitEntityMotion, ScriptCmd_BlendEntityMotion, ScriptCmd_TurnEntityToPlayer, ScriptCmd_WalkEntityTo,
+    // the one command that returns a value (Motion_BlendToPose's)
+    ScriptCmd_WaitEntityMotion, (ScriptCommandHandler)ScriptCmd_BlendEntityMotion, ScriptCmd_TurnEntityToPlayer,
+    ScriptCmd_WalkEntityTo,
     ScriptCmd_WalkEntityToFlat, ScriptCmd_TurnEntityBy, ScriptCmd_TurnEntityToward, ScriptCmd_TurnEntityBack,
     ScriptCmd_SetEntitiesFlag5, ScriptCmd_IsEntityFacing, ScriptCmd_SetEntityAnimSpeed, ScriptCmd_GetEntityPosition,
     ScriptCmd_GetEntityRotation, ScriptCmd_GetEntitySpawnPosition, ScriptCmd_GetEntitySpawnRotation, ScriptCmd_Distance2D,

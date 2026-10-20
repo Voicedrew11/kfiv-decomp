@@ -11,28 +11,10 @@
 #include "model/motion.h"
 #include "player/player.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
 
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityAi_LowerWeightsAfterHit(char *);
-void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-void EntityAi_SetAttackDelay(Entity *, s32);
-void EntityAi_StepState(void *);
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(void *);
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-void EntityAi_ClearTurnInPlace(Entity *);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
 
 static void LivingDead_OnHit(Entity *entity);
 static void LivingDead_ReactionLight(Entity *entity);
@@ -48,7 +30,7 @@ void LivingDead_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = LivingDead_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = LivingDead_OnHit;
@@ -80,7 +62,7 @@ void LivingDead_Init(Entity *entity) {
 static void LivingDead_OnHit(Entity *entity) {
     u64 hit_strength;
 
-    EntityAi_LowerWeightsAfterHit((char *)entity);
+    EntityAi_LowerWeightsAfterHit(entity);
     entity->target = NULL;
     entity->flags &= ~ENTITY_FLAG_ATTACKING;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
@@ -94,7 +76,7 @@ static void LivingDead_OnHit(Entity *entity) {
     } else if (hit_strength == 2) {
         EntityAi_SetReaction(entity, LivingDead_ReactionHeavy, 0);
     }
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
 }
 
 /* The reaction to a light hit (busy bit 2): as EntityAi_ReactionLight, but when it ends and
@@ -265,7 +247,7 @@ static void LivingDead_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);

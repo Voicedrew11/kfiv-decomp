@@ -14,55 +14,29 @@
 #include "math/vu0.h"
 #include "model/motion.h"
 #include <stdlib.h>
-
-extern PlayerData player_state;
+#include "entity/entity_events.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_ai.h"
+#include "entity/entity_math.h"
+#include "player/player.h"
 
 static KfVector climb_points[3]; /* 0x4FF390 the points GreaterDemon_Think climbs over (it indexes up to 5) */
 
-void EntityAi_SetUpdate(char *, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-int EntityShot_Launch(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *);
 static void GreaterDemon_Think(Entity *entity, s32 unknown);
 static void GreaterDemon_Move(Entity *entity);
 static void GreaterDemon_OnHit(Entity *entity);
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(void *);
-void EntityAi_StepState(void *);
 static void GreaterDemon_ThinkCombat(Entity *, s32);
 static s32 GreaterDemon_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 static int GreaterDemon_SetRanged2Weight(Entity *entity);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-void EntityAi_ClearTurnInPlace(Entity *);
-float EntityMath_AngleDifference(float, float);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 static void GreaterDemon_Rise(Entity *);
 static void GreaterDemon_SlideToStop(Entity *);
 static void GreaterDemon_PlayAnim6Or7BySide(Entity *);
 static void GreaterDemon_Guard(Entity *);
 static void GreaterDemon_RangedAttack2(Entity *);
 static void GreaterDemon_RangedAttack(Entity *);
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 static void GreaterDemon_DescendAtPlayer(Entity *);
-int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
-float EntityMath_WrapAngle(float);
-float EntityMath_AngleXZ(float *, char *);
-void EntityAi_LowerWeightsAfterHit(char *);
-void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 static void GreaterDemon_ReactionHeavy(Entity *);
-void EntityAi_SetAttackDelay(Entity *, s32);
-void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
-int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
-float EntityMath_DistanceXZ(void *, void *);
-void EntityEvent_Respawn(char *);
 
 /* Set-up of a type 56 entity: clears its work area and installs the type's handlers. */
 void GreaterDemon_Init(Entity *entity) {
@@ -79,7 +53,7 @@ void GreaterDemon_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = GreaterDemon_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = GreaterDemon_OnHit;
@@ -120,7 +94,7 @@ static void GreaterDemon_Think(Entity *entity, s32 unknown) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (player_state.magic_shot_launched != 0) {
+    if (player_state.cast_launched_shot != 0) {
         ai_state->magic_alert_timer = 30;
     }
     if (ai_state->magic_alert_timer > 0) {
@@ -134,7 +108,7 @@ static void GreaterDemon_Think(Entity *entity, s32 unknown) {
     if (ai_state->climb_point_index < 5) {
         EntityPoint_PickNear(500.0f, &climb_points[ai_state->climb_point_index], &player_state, &player_state);
         slot = &map_slots[current_map_slot];
-        height = EntityCollision_DistanceToPropFloor((MapRecord *)slot->records + player_state.map_record_index, &climb_points[ai_state->climb_point_index]);
+        height = EntityCollision_DistanceToPropFloor((MapRecord *)slot->records + player_state.map_index, &climb_points[ai_state->climb_point_index]);
         no_floor = greater_demon_no_floor_height_think[0];
         if (height == no_floor) {
             height = EntityCollision_DistanceToPropFloor(entity->map_record, &climb_points[ai_state->climb_point_index]);
@@ -221,7 +195,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
         case 0:
             if (ai_state->sliding == 1) {
                 EntityAi_StartAction(entity, GreaterDemon_SlideToStop, unknown);
-            } else if (EntityAi_PickAttack((char *)entity)) {
+            } else if (EntityAi_PickAttack(entity)) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 2) {
                     EntityAi_StartAction(entity, GreaterDemon_RangedAttack2, unknown);
                 } else {
@@ -299,7 +273,7 @@ static void GreaterDemon_Move(Entity *entity) {
     EntityParams *params;
     f32 turn;
 
-    if (entity == player_state.stood_on_entity && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
+    if (entity == player_state.stepped_on_entity && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
         entity->move_command = 0;
     }
     params = entity->params;
@@ -461,12 +435,12 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
         if (ENTITY_FLAG_BITS(entity)->on_floor == 1 || ENTITY_FLAG_BITS(entity)->bit46 == 1
             || ENTITY_FLAG_BITS(entity)->wall_push == 1 || ENTITY_FLAG_BITS(entity)->player_push == 1
             || ENTITY_FLAG_BITS(entity)->entity_push == 1) {
-            char *unk350;
+            EntityParamsUnk240 *unk350;
 
             ENTITY_FLAG_BITS(entity)->animates = TRUE;
             ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
             entity->busy_flags = 0;
-            unk350 = entity->params->melee_attack_third;
+            unk350 = (EntityParamsUnk240 *)entity->params->melee_attack_third;
             entity->move_command = 0;
             entity->action_timer = 0;
             flag = ENTITY_FLAG_BITS(entity)->player_push;
@@ -497,12 +471,12 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
         if (ENTITY_FLAG_BITS(entity)->on_floor == 1 || ENTITY_FLAG_BITS(entity)->bit46 == 1
             || ENTITY_FLAG_BITS(entity)->wall_push == 1 || ENTITY_FLAG_BITS(entity)->player_push == 1
             || ENTITY_FLAG_BITS(entity)->entity_push == 1) {
-            char *unk350;
+            EntityParamsUnk240 *unk350;
 
             ENTITY_FLAG_BITS(entity)->animates = TRUE;
             ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
             entity->busy_flags = 0;
-            unk350 = entity->params->melee_attack_third;
+            unk350 = (EntityParamsUnk240 *)entity->params->melee_attack_third;
             entity->move_command = 0;
             entity->action_timer = 0;
             flag = ENTITY_FLAG_BITS(entity)->player_push;
@@ -537,7 +511,7 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
    unless GreaterDemon_DescendAtPlayer did. At the end it clears unk7B and thinks. */
 static void GreaterDemon_SlideToStop(Entity *entity) {
     EntityAiStateKind168160 *ai_state = (EntityAiStateKind168160 *)&entity->ai_state;
-    char *unk350 = entity->params->melee_attack_third;
+    EntityParamsUnk240 *unk350 = (EntityParamsUnk240 *)entity->params->melee_attack_third;
 
     entity->busy_flags |= (ENTITY_BUSY_1000 | ENTITY_BUSY_4000);
     switch (entity->action_step) {
@@ -599,7 +573,7 @@ static void GreaterDemon_PlayAnim6Or7BySide(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
-        if (0.0f < EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) * RAD_TO_DEG) {
+        if (0.0f < EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position)) * RAD_TO_DEG) {
             Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 1);
         } else {
             Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -632,16 +606,14 @@ static void GreaterDemon_PlayAnim6Or7BySide(Entity *entity) {
 /* When the state field in flags is 2, resets the entity and registers GreaterDemon_ReactionHeavy; then sets state 2. */
 static void GreaterDemon_OnHit(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
-        EntityAi_LowerWeightsAfterHit((char *)entity);
+        EntityAi_LowerWeightsAfterHit(entity);
         entity->target = NULL;
         entity->flags &= ~ENTITY_FLAG_ATTACKING;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         EntityAi_SetReaction(entity, GreaterDemon_ReactionHeavy, 0);
     }
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
 }
-
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 
 static void GreaterDemon_ReactionHeavy(Entity *entity) {
     EntityAiStateKind168160 *ai_state = (EntityAiStateKind168160 *)&entity->ai_state;
@@ -743,7 +715,7 @@ static s32 GreaterDemon_ShouldGuard(Entity *entity, f32 min_gap, f32 max_angle) 
     EntityAiStateKind168160 *ai_state = (EntityAiStateKind168160 *)&entity->ai_state;
     f32 gap = entity->distance_to_player - (entity->radius + 100.0f);
     f32 angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-    f32 facing = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
+    f32 facing = EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position));
 
     if (entity->busy_flags != 0 || gap < min_gap || max_angle < ABS(angle) || DEG_TO_RAD(45) < ABS(facing) || ai_state->magic_alert_timer <= 0) {
         return FALSE;
@@ -787,7 +759,7 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
         if (ai_state->climb_point_index < 5) {
             EntityPoint_PickNear(500.0f, &climb_points[ai_state->climb_point_index], &player_state, &player_state);
             slot = &map_slots[current_map_slot];
-            height = EntityCollision_DistanceToPropFloor((MapRecord *)slot->records + player_state.map_record_index, &climb_points[ai_state->climb_point_index]);
+            height = EntityCollision_DistanceToPropFloor((MapRecord *)slot->records + player_state.map_index, &climb_points[ai_state->climb_point_index]);
             no_floor = greater_demon_no_floor_height_attack[0];
             if (height == no_floor) {
                 height = EntityCollision_DistanceToPropFloor(entity->map_record, &climb_points[ai_state->climb_point_index]);
@@ -816,8 +788,8 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
                     if (minion != NULL && (minion->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) == 1 &&
                         (ENTITY_FLAG_BITS(minion)->dying == 0 || ENTITY_FLAG_BITS(minion)->dying == 3)) {
                         point = &climb_points[point_index];
-                        if (EntityMath_DistanceXZ(point, &player_state) > 180.0f) {
-                            EntityEvent_Respawn((char *)minion);
+                        if (EntityMath_DistanceXZ(&point->x, &player_state.position.x) > 180.0f) {
+                            EntityEvent_Respawn(minion);
                             minion->model->position[0] = point->x;
                             minion->model->position[1] = point->y;
                             minion->model->position[2] = point->z;

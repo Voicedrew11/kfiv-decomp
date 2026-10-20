@@ -6,17 +6,11 @@
 #include "common.h"
 #include "entity/entity_ai_handlers.h"
 #include "model/motion.h"
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityAi_LowerWeightsAfterHit(char *);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-s32 EntityAi_CanAttack(Entity *);
-int EntityAi_PickAttack(char *);
 
 static void Stool_OnHit(Entity *entity);
 static void Stool_Think(Entity *entity, s32 unknown);
@@ -34,7 +28,7 @@ void Stool_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Stool_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = Stool_OnHit;
@@ -67,7 +61,7 @@ void Stool_Init(Entity *entity) {
 static void Stool_OnHit(Entity *entity) {
     u64 flags;
 
-    EntityAi_LowerWeightsAfterHit((char *)entity);
+    EntityAi_LowerWeightsAfterHit(entity);
     flags = entity->flags;
     if (ENTITY_FLAG_HIT_BITS(entity)->hit_source) {
         entity->flags = (flags & ~ENTITY_FLAG_ATTACK_INDEX_MASK) | ENTITY_FLAG_RANGED_ATTACK;
@@ -94,7 +88,7 @@ static void Stool_Think(Entity *entity, s32 unknown) {
     ai_state = &entity->ai_state;
     if (entity->busy_flags == 0) {
         if (EntityAi_CanAttack(entity) != 0 && entity->attack_delay_frames == 0) {
-            if (EntityAi_PickAttack((char *)entity) != 0) {
+            if (EntityAi_PickAttack(entity) != 0) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);

@@ -13,32 +13,11 @@
 #include "math/vu0.h"
 #include "model/model.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "model/motion.h"
+#include "player/player.h"
 
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
-extern s32 entity_type_handlers[][2];
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
-void EntityAi_StepState(void *);
-extern PlayerData player_state;
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-void EntityAi_ClearTurnInPlace(Entity *);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-int Motion_Start(void *, int, int, u32, int);
-int Motion_Step(void *, int);
-int Motion_BlendToPose(EntityModel *, f32);
-int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
-void EntityAi_SetAttackDelay(Entity *, s32);
 
 static void Skull_Think(Entity *entity, s32 unknown);
 static void Skull_ThinkCombat(Entity *entity, s32 unknown);
@@ -63,7 +42,7 @@ void Skull_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Skull_Think;
     ai_state->animate = Skull_Animate;
     ai_state->on_hit = EntityAi_OnHit;
@@ -90,7 +69,7 @@ void Skull_Init(Entity *entity) {
     entity->model->alpha = entity->model_alpha;
     ai_state->sub_timer = rand() % 30;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with Skull_ThinkCombat for state 2. It keeps flag
@@ -113,7 +92,7 @@ static void Skull_Think(Entity *entity, s32 unknown) {
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
     }
     if (entity->busy_flags == 0) {
-        EntityAi_CheckFarFromSpawn((char *)entity);
+        EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -139,9 +118,9 @@ static void Skull_Think(Entity *entity, s32 unknown) {
     }
     if (ENTITY_FLAG_BITS(entity)->no_floor_lift && !(entity->busy_flags & ENTITY_BUSY_ATTACK)) {
         if (ai_state->sub_timer <= 0) {
-            if (entity->model->position[1] < player_state.position[1] - 300.0f) {
+            if (entity->model->position[1] < player_state.position.y - 300.0f) {
                 ai_state->step_index = 1;
-            } else if (player_state.position[1] - 100.0f < entity->model->position[1]) {
+            } else if (player_state.position.y - 100.0f < entity->model->position[1]) {
                 ai_state->step_index = 0;
             } else {
                 ai_state->step_index = ai_state->step_index == 0;
@@ -201,15 +180,15 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, mode);
         switch (entity->combat_choice) {
         case 0:
-            if (entity->model->position[1] < player_state.position[1] - 50.0f && player_state.position[1] - 300.0f < entity->model->position[1]) {
-                if (EntityAi_PickAttack((char *)entity)) {
+            if (entity->model->position[1] < player_state.position.y - 50.0f && player_state.position.y - 300.0f < entity->model->position[1]) {
+                if (EntityAi_PickAttack(entity)) {
                     EntityAi_StartAction(entity, Skull_RangedAttack0, unknown);
                 } else {
                     EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
                 }
                 return;
             }
-            if (entity->model->position[1] < player_state.position[1]) {
+            if (entity->model->position[1] < player_state.position.y) {
                 ai_state->step_index = 1;
             } else {
                 ai_state->step_index = 0;
@@ -498,7 +477,7 @@ static void Skull_Animate(Entity *entity) {
         }
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }

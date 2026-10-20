@@ -10,6 +10,13 @@ void PlayTime_Resume(ClockTime play_time);
 int PlayTime_Start(void);
 void PlayTime_Update(void);
 int PlayTime_SecondsBetween(ClockTime start, ClockTime end);
+int PlayTime_ReadRealTimeClock(ClockTime *time);
+int PlayTime_ReadClock(void);
+int PlayTime_ComputeCurrent(void);
+int PlayTime_ClockSecondsBetween(ClockTime start, ClockTime end);
+int PlayTime_ClockMinutesBetween(ClockTime start, ClockTime end);
+int PlayTime_ToSeconds(ClockTime play_time);
+int PlayTime_ToMinutes(ClockTime play_time);
 
 /* data still in asm */
 extern ClockTime play_clock_start;

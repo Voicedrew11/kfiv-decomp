@@ -52,8 +52,7 @@ typedef struct {
     char pad28[0x08];
 } PlayerShot;
 
-/* player_state. Files still declare it as float[]/int[]/char[] too, so the
-   extern stays in each file until they agree; player_rotation is rotation. */
+/* player_state; player_rotation is rotation */
 typedef struct {
     Vector4 position;               /* 0x00 */
     Vector4 rotation;               /* 0x10 y is the heading */
@@ -386,6 +385,9 @@ typedef struct {
     u16 weight_tenths_of_pound;     /* 0x3E summed into PlayerState.weight for everything worn */
 } LevelDef;
 
+/* item_name_defs read through LevelDef's bit-fields (the smith and the menus); an alias in item/item_defs.c */
+extern LevelDef item_level_defs[380];
+
 #define ITEM_UPGRADE_MATERIAL_MASK 3 /* LevelDef.upgrade_material_kind low two bits: 1 bone, 2 scale, 3 claw */
 
 /* ini_keys[]: the keys of ini/NNNN.ini ("hp=", "equip_weapon=", "item_", ...) and what reads each; a NULL handler ends it */
@@ -397,10 +399,26 @@ typedef struct {
 /* item/item_defs.c */
 extern PlayerItemDef weapon_defs[];
 extern LevelRecordDef worn_defs[];
-extern LevelDef worn_name_defs[];
+extern GameDefinition worn_name_defs[];
 
 /* player/attack.c */
 extern FxTableEntry fx_table[];  /* the magic table */
+s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra);
+int Attack_RunShape1Stub(void);
+int Attack_RunShape2Stub(void);
+s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra);
+void Attack_HitPlayer(Unk1B1470Request *request, Unk1B1470Extra *extra);
+void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *entity, f32 scale);
+void Attack_HitMapObject(Unk1B1470Request *request, Unk1B1470Extra *extra, MapObject *object);
+int Attack_HitMap(Unk1B1470Request *request, Unk1B1470Extra *extra);
+void Attack_GetEffectiveStrengths(EntityParamsUnk240PartUnk00 *out, Unk1B1470Request *request, Unk1B1470Extra *extra);
+int Attack_StrengthDamageToPlayer(int strength, int resistance, int stat);
+void Attack_WearArmorFromHit(int damage, Unk1B1470Request *request);
+int Attack_StrengthDamage(int strength, int base, int bonus, int resistance);
+void Attack_RollEntityAilments(Entity *entity, EntityParamsUnk240PartUnk12 *chances);
+int Attack_TestMapModel(ModelInstance *model, void *request, f32 reach);
+int Attack_TestMapModelFloors(ModelInstance *model, void *request, f32 reach);
+int Attack_TestMapModelWalls(ModelInstance *model, void *request, f32 reach);
 
 s32 Attack_Run(Unk1B1470Request *request, Unk1B1470Extra *extra);
 void Attack_RollPlayerAilments(void *attack_chances);
@@ -414,6 +432,7 @@ int Attack_RunEffectHitCheck(void *effect_actor);
 /* player/interact.c */
 void Interact_FindTarget(void);
 void Interact_OffsetViewRay(f32 *offset);
+float Interact_GetDistanceWithin(float radius, float *pos, float *target);
 
 /* player/player_collision.c */
 int Player_CollideWithMap(void);
@@ -427,6 +446,9 @@ int Player_KnowsItemMenuMagic(void);
 int Player_CannotCarryItem(int idx);
 void Player_AddItem(int index);
 void Player_UseItem(void);
+void Player_ApplyItem(int kind);
+void Player_ApplyPoisonWater(int kind);
+int Player_LearnSpellInRow(int row);
 
 /* player/player_state.c */
 extern PlayerState player_state;
@@ -443,6 +465,7 @@ extern int player_previous_fade_level[];  /* player_previous + 0x2A4 */
 
 /* player/player_status.c */
 extern PlayerScreenTint player_screen_tint;
+void Player_AddItemBonuses(int index);
 
 void Player_TakeDamage(int damage);
 void Player_TakeDamageNoRumble(int value);

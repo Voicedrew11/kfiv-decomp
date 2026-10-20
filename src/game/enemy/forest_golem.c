@@ -12,32 +12,14 @@
 #include "math/vu0.h"
 #include "script/script.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_events.h"
+#include "model/motion.h"
+#include "save/save_state.h"
+#include "player/player.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32); // match: an int result keeps $2 busy after the call
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-extern char map_script_flags[0x2000];
-int Motion_Start(void *, int, int, u32, int);
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
-void EntityAi_StepState(void *);
-extern float player_state[];
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-int EntityAi_TurnFromPush(void *, void *);
-int EntityAi_TurnCommand(Entity *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-void EntityEvent_OnDeath(Entity *);
-void EntityEvent_Respawn(char *);
-s32 EntityAi_CanAttack(Entity *);
 
 static void ForestGolem_ThinkStayInPlace(Entity *entity, int invoke_now);
 static void ForestGolem_Think(Entity *entity, s32 unknown);
@@ -69,7 +51,7 @@ void ForestGolem_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->animate = EntityAi_Animate;
     ai_state->move = ForestGolem_Move;
     ai_state->on_hit = NULL;
@@ -100,7 +82,7 @@ void ForestGolem_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
     ENTITY_FLAG_BITS(entity)->not_targetable = TRUE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
@@ -243,7 +225,7 @@ static void ForestGolem_InitByVariant(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = EntityAi_OnHit;
     ai_state->move = EntityAi_Move;
@@ -272,7 +254,7 @@ static void ForestGolem_InitByVariant(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* A think handler only ForestGolem_InitByVariant installs (for an EntitySpawnInfo.variant other than 1 and 2),
@@ -285,7 +267,7 @@ static void ForestGolem_ThinkByState(Entity *entity, s32 unknown) {
     if (entity->busy_flags != 0) {
         return;
     }
-    EntityAi_CheckFarFromSpawn((char *)entity);
+    EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -338,7 +320,7 @@ static void ForestGolem_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, next_action);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
@@ -349,14 +331,14 @@ static void ForestGolem_ThinkCombat(Entity *entity, s32 unknown) {
                 turn = EntityMath_AngleDifference(entity->heading_to_player, entity->model->rotation[1]);
                 turn = ABS(turn);
                 if (turn > DEG_TO_RAD(45)) {
-                    entity->target = player_state;
+                    entity->target = &player_state;
                     entity->action_timer = rand() % 30 + 60;
                     ai_state->move_choice = 0;
                 } else {
                     ai_state->move_choice = -1;
                 }
             } else {
-                entity->target = player_state;
+                entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 120;
                 ai_state->move_choice = 1;
             }
@@ -435,7 +417,7 @@ static void ForestGolem_Death(Entity *entity) {
             if (entity->spawn_info->spawn_mode != 0) {
                 other = Entity_GetBySpawnId(entity->spawn_info->spawn_mode);
                 if (other != NULL && ENTITY_FLAG_BITS(other)->active_list) {
-                    EntityEvent_Respawn((char *)other);
+                    EntityEvent_Respawn(other);
                     Vector_Copy(other->model->position, entity->model->position);
                 }
             }
@@ -521,7 +503,7 @@ static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown) {
         ForestGolem_WalkToMapObjectPosX(entity, unknown);
         return;
     }
-    EntityAi_CheckFarFromSpawn((char *)entity);
+    EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -549,7 +531,7 @@ static void ForestGolem_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
     f32 range;
 
     if (EntityAi_CanAttack(entity)) {
-        if (EntityAi_PickAttack((char *)entity)) {
+        if (EntityAi_PickAttack(entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, 1);
@@ -630,7 +612,7 @@ static void ForestGolem_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown) {
         ForestGolem_WalkToMapObjectNegX(entity, unknown);
         return;
     }
-    EntityAi_CheckFarFromSpawn((char *)entity);
+    EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -656,7 +638,7 @@ static void ForestGolem_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
     f32 range;
 
     if (EntityAi_CanAttack(entity)) {
-        if (EntityAi_PickAttack((char *)entity)) {
+        if (EntityAi_PickAttack(entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, 1);

@@ -12,3 +12,5 @@ LevelRecordDef worn_defs[160] = { 0 };      /* 0x41E118 param/item_pct.prm */
 /* The weapons and the worn items inside item_name_defs (items 150 and 220 on). */
 asm(".globl weapon_name_defs\nweapon_name_defs = item_name_defs + 0x2580\n");
 asm(".globl worn_name_defs\nworn_name_defs = item_name_defs + 0x3700\n");
+/* item_name_defs again, under the name the files that read it as LevelDef rows use */
+asm(".globl item_level_defs\nitem_level_defs = item_name_defs\n");

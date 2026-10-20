@@ -10,32 +10,12 @@
 #include <libvu0.h>
 #include "math/vu0.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_math.h"
+#include "model/motion.h"
+#include "player/player.h"
 
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
-extern s32 entity_type_handlers[][2];
-int Motion_Step(void *, int);
-int Motion_BlendToPose(EntityModel *, f32);
-void EntityAi_StepState(void *);
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(void *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-extern PlayerData player_state;
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-float EntityMath_WrapAngle(float);
-float EntityMath_AngleXZ(float *, char *);
-float EntityMath_AngleDifference(float, float);
-int EntityAi_TurnCommand(Entity *);
-void EntityAi_ClearTurnInPlace(Entity *);
-float EntityAi_Accelerate(Entity *, float);
-int Motion_Start(void *, int, int, u32, int);
 
 static void Scorpion_Animate(Entity *entity);
 static void Scorpion_Think(Entity *entity, s32 unknown);
@@ -56,7 +36,7 @@ void Scorpion_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Scorpion_Think;
     ai_state->animate = Scorpion_Animate;
     ai_state->on_hit = EntityAi_OnHit;
@@ -80,7 +60,7 @@ void Scorpion_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate without the test of the EntityParams kind bits and
@@ -93,7 +73,7 @@ static void Scorpion_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
@@ -201,7 +181,7 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
@@ -214,7 +194,7 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
                 entity->action_timer = rand() % 60 + 60;
                 ai_state->move_choice = 0;
             } else {
-                heading = EntityMath_AngleXZ(player_state.position, (char *)entity->model->position) - player_state.heading;
+                heading = EntityMath_AngleXZ(&player_state.position.x, entity->model->position) - player_state.rotation.y;
                 heading = EntityMath_WrapAngle(heading);
                 if (ABS(heading) > DEG_TO_RAD(45) || rand() % 100 < entity->params->pitch_limit_deg) {
                     entity->target = &player_state;
@@ -313,7 +293,7 @@ static void Scorpion_Move(Entity *entity) {
     s32 command;
     s32 first_command;
 
-    if (entity == player_state.stood_on_entity && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
+    if (entity == player_state.stepped_on_entity && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
         entity->move_command = 0;
     }
     // match: read through the union, and again below once the turn speed is stored

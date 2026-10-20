@@ -141,6 +141,8 @@ typedef struct {
     s32 previous_frame_alpha;       /* 0x88 alpha Game_BlendPreviousFrame blends the last frame with */
 } MapDrawStateOverlays;
 
+#define MAP_DRAW_OVERLAYS ((MapDrawStateOverlays *)&map_draw_state)
+
 /* a map record (MapRecord in entity/entity.h) as the code that draws the maps reads it */
 typedef struct MapDrawRecord {
     char pad00[0x34];
@@ -546,6 +548,10 @@ int Map_IsPointInRecord(f32 *point, AreaNode *node, f32 margin);
 void Map_RunFreeCamera(void);
 void Map_CoverScreenWithMapTint(void);
 void Map_QueuePacket(int *packet);
+void Map_QueueSlotPacket(int slot, int index);
+int Map_ClassifyRecordOnScreen(MapDrawRecord *draw_record, ModelInstance *model);
+void Map_InsertRecordBySize(AreaNode *node);
+void Map_DrawFreeCameraView(void);
 
 /* map/map_change.c */
 void MapChange_StartToMap(int new_value);
@@ -561,6 +567,7 @@ void MapChange_OpenFile(void);
 void MapChange_WaitForRead(void);
 void MapChange_SetUpMap(void);
 void MapChange_EndWhenTimerDone(void);
+void MapChange_CaptureFrame(void);
 
 /* map/map_draw_state.c */
 extern u32 haze_layer_distances[8];
@@ -591,6 +598,7 @@ void MapLoad_SkipStep(void);
 void MapLoad_ActivateMap(void);
 void MapLoad_RequestHold(void);
 int MapLoad_IsHeld(void);
+void MapLoad_FinishAndEnter(void);
 
 /* map/map_load_tables.c */
 extern MapLoadState map_load_state;
@@ -598,6 +606,25 @@ extern MapLoadRequest map_load_request;
 
 /* map/map_setup.c */
 void MapSetup_RunForMap(int slot);
+void MapSetup_Armory(int map);
+void MapSetup_Forge017(int map);
+void MapSetup_Forge018(int map);
+void MapSetup_Forge019(int map);
+void MapSetup_EarthFolksVillage(int map);
+void MapSetup_CavernOfLava(int map);
+void MapSetup_FireLordsDomain(int map);
+void MapSetup_OceanShore(int map);
+void MapSetup_UndergroundCanal(int map);
+void MapSetup_GuardiansRoom(int map);
+void MapSetup_DarkSanctuary(int map);
+void MapSetup_KingsThroneAlcoves(int map);
+void MapSetup_SanctuaryOfLight(int map);
+void MapSetup_CentralTowerLevel3(int map_slot);
+void MapSetup_CraftsmansRoom(int map);
+void MapSetup_CentralTowerLevel2(int map);
+void MapSetup_PlaceItemLowered(int map);
+void MapSetup_OceanShoreFrame(int map);
+void MapSetup_Map252(int map);
 
 /* data still in asm */
 extern MapSlotMemory map_slot_memory[2];
@@ -622,5 +649,18 @@ extern u32 map_work_area_size;
 extern int map_file_area_size;  /* the size it is given for that heap */
 extern char *map_file_area;  /* the memory area the movie player is given as its heap */
 extern char *map_work_area;
+
+/* core/game_state.c */
+extern MapLightBlockLights map_object_default_lights;
+
+/* map/map.c */
+void *Map_GetRecordById(int slot, int prop_id);
+
+/* map/map_draw_state.c; it defines only the block's first 0x64 bytes (MapDrawStateMirror), the fields after them
+   are objects of their own */
+#ifndef MAP_DRAW_STATE_DEFINITION
+extern MapDrawState map_draw_state;
+#endif
+extern MapFogBlock map_draw_slot_blocks[2][0x20];
 
 #endif

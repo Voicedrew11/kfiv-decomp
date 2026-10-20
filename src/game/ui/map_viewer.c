@@ -3,6 +3,7 @@
    the map records. The names are the items' own (param/item_nam.prm). */
 #include "common.h"
 #include "collision/collision.h"
+#include "ui/map_viewer.h"
 #include "entity/entity.h"
 #include "core/game.h"
 #include "gfx/gs.h"
@@ -41,33 +42,9 @@
 #define WIDDAS_MAP_X_SCALE 21.333334f
 #define WIDDAS_MAP_Z_SCALE 20.363636f
 
-int MapViewer_IsKingsMapUsable(int);
-void MapViewer_Reset(void);
 static void MapViewer_RestorePacketBuffers(void);
 static int MapViewer_Load(void);
-u8 Packet_WaitForSend(void); // match: u8 here; declared void, the call site is compiled differently
-void TextureTable_SetBasePointers(char *, int, int);
 static void MapViewer_DrawKingsMap(void);
-void MapViewer_DrawPictureMap(void);
-
-extern int game_status[];
-extern u16 pad_state[];
-extern ViewerEntry viewer_entries[];
-extern ScreenQuad viewer_marker_rect;
-extern ScreenQuad viewer_picture_rect;
-extern ScreenQuad viewer_arrow_rect_1;
-extern ScreenQuad viewer_arrow_rect_2;
-extern ScreenQuad viewer_picture_label_rect;
-extern ViewerCornerTable viewer_marker_corner_us;
-extern ViewerCornerTable viewer_marker_corner_vs;
-extern char viewer_texture_file_name_format[];       /* "map_view/%3.3d.tx2" */
-extern char viewer_pointer_model_path[];       /* "map_view/pointer.omd" */
-extern f32 float_largest_value[];        /* the largest float */
-extern f32 float_lowest_value[];        /* the lowest float */
-extern MapDrawState map_draw_state;
-extern MapLightBlock viewer_default_lights;
-extern char kings_map_overlay_rect[0x40];
-extern char kings_map_corner_rect[0x40];
 
 /* the map viewer: the picture data read into the spare area, the viewer picked, and its animation */
 static char *viewer_data;                   /* 0x44705C the spare area the viewer's textures are read into */
@@ -91,7 +68,7 @@ void MapViewer_OpenForItem(int viewer_number) {
     u32 viewer_index;
     u8 *row;
 
-    if (!(((u32)game_status[9] >> 8) & 1) && ((viewer_index = viewer_number - 1) < 5U)) {
+    if (!game_status.bit8 && ((viewer_index = viewer_number - 1) < 5U)) {
         if (viewer_number == 5) {
             row = (u8 *)map_slots + current_map_slot * 0x60;
             if (MapViewer_IsKingsMapUsable(row[1]) == 0) {
@@ -102,7 +79,7 @@ void MapViewer_OpenForItem(int viewer_number) {
         picked_viewer = viewer_index;
         pulse_frame = 0;
         square_pulse_frame = 0;
-        game_status[9] |= 0x100;
+        game_status.bit8 = 1;
     }
 }
 
@@ -125,11 +102,9 @@ void MapViewer_Run(void) {
 
 /* Forgets the viewer picked, its picture and pulses, and what it loaded. */
 void MapViewer_Reset(void) {
-    int *game_state = (int *)game_status;
-
     picked_viewer = 0;
     viewer_picture = 0;
-    game_state[9] = game_state[9] & -0x101;
+    game_status.bit8 = 0;
     viewer_data = 0;
     viewer_data_size = 0;
     pulse_frame = 0;
@@ -176,7 +151,7 @@ static int MapViewer_Load(void) {
     memset(viewer_data, 0, viewer_data_size);
     size = File_Read(file, viewer_data, -1);
     File_Close(file);
-    TextureTable_SetBasePointers(viewer_data, 0x2BC0, 0x3FE0);
+    TextureTable_SetBasePointers((TextureTableHeader *)viewer_data, 0x2BC0, 0x3FE0);
     if (picked_viewer != 4) {
         return TRUE;
     }
@@ -254,16 +229,17 @@ void MapViewer_RunPictureMap(void) {
         MapViewer_DrawPictureMap();
         Packet_OnFrameEnd();
         Input_Update();
-        if ((pad_state[1] & PAD_UP) && (viewer_picture > 0)) {
+        if ((pad_state.pressed & PAD_UP) && (viewer_picture > 0)) {
             viewer_picture -= 1;
-        } else if (pad_state[1] & PAD_DOWN) {
+        } else if (pad_state.pressed & PAD_DOWN) {
             next_picture = viewer_picture + 1;
             if (next_picture < viewer->count) {
                 viewer_picture = next_picture;
             }
         }
-        Packet_WaitForSend();
-    } while ((pad_state[1] & PAD_CIRCLE) == 0);
+        // match: it returns a value here, which keeps $2 busy
+        ((u8 (*)(void))Packet_WaitForSend)();
+    } while ((pad_state.pressed & PAD_CIRCLE) == 0);
 }
 
 /* Draws the picked viewer's picture and the player's marker on it: a turned, pulsing arrow where the
@@ -626,8 +602,8 @@ void MapViewer_RunKingsMap(void) {
             Packet_SwapBuffers();
             DrawList_Clear();
             Input_Update();
-            held = pad_state[0];
-            pressed = pad_state[1];
+            held = pad_state.held;
+            pressed = pad_state.pressed;
             move.x = move.y = move.z = move.w = 0.0f;
             if (held & PAD_CROSS) {
                 if (held & PAD_DOWN) {
@@ -811,7 +787,7 @@ static void MapViewer_DrawKingsMap(void) {
     Packet_AddGsRegister(8, 5);
     Packet_EndGsRegisters();
     GsDraw_QueueFlush();
-    GsDraw_QueueTexturedSprite(kings_map_overlay_rect);
+    GsDraw_QueueTexturedSprite(&kings_map_overlay_rect);
     TextureTable_QueueOne((TextureTableHeader *)viewer_data, 1);
     GsDraw_QueueTexFlush();
     GsDraw_QueueFlush();
@@ -821,7 +797,7 @@ static void MapViewer_DrawKingsMap(void) {
     Packet_AddGsRegister(8, 5);
     Packet_EndGsRegisters();
     GsDraw_QueueFlush();
-    GsDraw_QueueTexturedSprite(kings_map_overlay_rect);
+    GsDraw_QueueTexturedSprite(&kings_map_overlay_rect);
     TextureTable_QueueOne((TextureTableHeader *)viewer_data, 2);
     GsDraw_QueueTexFlush();
     GsDraw_QueueFlush();
@@ -831,7 +807,7 @@ static void MapViewer_DrawKingsMap(void) {
     Packet_AddGsRegister(8, 0);
     Packet_EndGsRegisters();
     GsDraw_QueueFlush();
-    GsDraw_QueueTexturedSprite(kings_map_corner_rect);
+    GsDraw_QueueTexturedSprite(&kings_map_corner_rect);
     TextureTable_QueueOne((TextureTableHeader *)viewer_data, 3);
     GsDraw_QueueTexFlush();
     GsDraw_QueueFlush();
@@ -840,7 +816,7 @@ static void MapViewer_DrawKingsMap(void) {
     Packet_AddGsRegister(GS_REG_ALPHA_1, 0x48);
     Packet_EndGsRegisters();
     GsDraw_QueueFlush();
-    GsDraw_QueueTexturedSprite(kings_map_corner_rect);
+    GsDraw_QueueTexturedSprite(&kings_map_corner_rect);
     Game_ApplyBrightness(game_options[10]);
 }
 

@@ -32,6 +32,11 @@ void Player_RecomputeStats(void);
 void Player_ResetForNewGame(void);
 void Player_ResetGauges(void);
 void Player_MoveByOffset(f32 *offset);
+void Player_ApplyGroundEffects(void);
+void Player_TakeFallDamage(float speed);
+void Player_UpdateBreath(void);
+void Player_UpdateAilmentImmunity(void);
+void Player_UpdateStatus(void);
 
 /* data still in asm */
 extern float view_ray_direction[];

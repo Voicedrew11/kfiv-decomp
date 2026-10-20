@@ -19,22 +19,11 @@
 #include "math/vu0.h"
 #include "model/model_matrix.h"
 #include "model/motion.h"
+#include "save/save_state.h"
 #include "script/script.h"
+#include "sound/sound_game.h"
 #include "ui/map_viewer.h"
 
-void MapObject_DrawModel(ModelInstance *);
-void MapObject_DrawModelWithAlpha(ModelInstance *);
-void MapObject_DrawModelNoDepthWrite(ModelInstance *);
-void MapObject_UpdateNoBonePoints(ModelInstance *);
-void *MapObject_GetPositionAsPoint(void *, int);
-void MapObject_StopSound(MapObject *);
-int Sound_PlayCommonAt(float, int, void *);
-int Sound_PlayMapAtRange(u8, u8, float *, float);
-s32 Sound_StartTaggedAt(s8, u8, u8, f32, Vector4Arg *);
-int Sound_StopTagged(char);
-
-extern MapDrawState map_draw_state;
-extern u8 item_counts[];
 extern void (*map_object_step_handlers[][16])(MapObject *);
 extern void (*map_object_end_hooks[])(MapTrigger *);
 extern int (*map_object_item_hooks[])(MapObject *, int);
@@ -396,7 +385,7 @@ void MapObject_UpdateAll(void) {
 int MapObject_UseItem(MapObject *object, int item) {
     int used;
 
-    if (item_counts[item] == 0) {
+    if (item_counts.bytes[item] == 0) {
         used = FALSE;
     } else {
         used = map_object_item_hooks[object->definition->kind](object, item) != 0;
@@ -712,7 +701,7 @@ int MapObject_StepAnim(MapObject *object) {
             }
             switch (anim->sound_kind) {
                 case 0:
-                    Sound_PlayCommonAt(range, anim->sound, &model->position);
+                    Sound_PlayCommonAt(range, anim->sound, &model->position.x);
                     break;
                 case 1:
                     // match: the range is evaluated before the position
@@ -736,7 +725,7 @@ int MapObject_StepAnim(MapObject *object) {
             MapObject_StopSound(object);
             switch (anim->sound_kind) {
                 case 0:
-                    Sound_PlayCommonAt(range, anim->sound, &object->model->position);
+                    Sound_PlayCommonAt(range, anim->sound, &object->model->position.x);
                     break;
                 case 1:
                     Sound_PlayMapAtRange(anim->sound, object->definition->sound_falloff_mode, &object->model->position.x, range);

@@ -11,8 +11,6 @@
 #include <stdio.h>
 #include <string.h>
 
-extern GameStatus game_status;
-
 static void Splash_BuildImagePacket(int tbp, int cbp);
 
 static s32 splash_state;              /* 0x447358 state machine index (0 = idle) */
@@ -30,14 +28,6 @@ static s32 splash_fade_out_counter;   /* 0x447384 */
 
 static SplashSprite splash_sprite;    /* 0x5F9B00 GS sprite packet for the splash image */
 
-void Splash_StateIdle(void);
-void Splash_StateStartDelay(void);
-void Splash_StateLoadImage(void);
-void Splash_StateFadeIn(void);
-void Splash_StateHold(void);
-void Splash_StateFadeOut(void);
-void Splash_StateClose(void);
-
 static void (*splash_state_table[8])(void) = { /* 0x42C008 */
     Splash_StateIdle,
     Splash_StateStartDelay,
@@ -53,7 +43,7 @@ static void (*splash_state_table[8])(void) = { /* 0x42C008 */
 static int psm_bits_per_pixel[6] = { 0x20, 0x18, 0x10, 0x08, 0x04, 0x00 };
 
 /* 0x446E84 where Splash_BuildImagePacket builds the image packet: 0x80000 into the file-load buffer */
-u32 *splash_image_packet = (u32 *)((char *)&file_load_buffer + 0x80000);
+u32 *splash_image_packet = (u32 *)(file_load_buffer + 0x80000);
 
 /* Clears splash state (idle, no image id, file not open). */
 void Splash_Reset(void) {
@@ -150,8 +140,8 @@ void Splash_StateLoadImage(void) {
     if (image_fd >= 0) {
         File_Lock();
         splash_image_file_open = 1;
-        memset(&file_load_buffer, 0, 0x80000);
-        File_Read(image_fd, &file_load_buffer, 0x80000);
+        memset(file_load_buffer, 0, 0x80000);
+        File_Read(image_fd, file_load_buffer, 0x80000);
         File_Close(image_fd);
         Splash_BuildImagePacket(0x2E40, 0x3D40);
         Splash_BuildSprite();
@@ -252,17 +242,17 @@ void Splash_BuildSprite(void) {
     int width;
     u64 tex0;
 
-    width = 1 << ((SplashImageBits *)&file_load_buffer)->tex0.tw;
-    height = 1 << ((SplashImageBits *)&file_load_buffer)->tex0.th;
+    width = 1 << ((SplashImageBits *)file_load_buffer)->tex0.tw;
+    height = 1 << ((SplashImageBits *)file_load_buffer)->tex0.th;
 
     memset(&splash_sprite, 0, sizeof(splash_sprite));
-    tex0 = file_load_buffer.tex0;
+    tex0 = SPLASH_IMAGE->tex0;
     tex0 &= 0xFFFFFFFFFFFFC000UL;
     tex0 |= 0x2E40;
     tex0 &= 0xFFF8001FFFFFFFFFUL;
     tex0 |= 0xF500UL << 35;
     splash_sprite.tex0 = tex0;
-    splash_sprite.tex1 = file_load_buffer.tex1;
+    splash_sprite.tex1 = SPLASH_IMAGE->tex1;
     splash_sprite.gif_reg = 0x156;
     splash_sprite.red = 0x80;
     splash_sprite.green = 0x80;
@@ -308,7 +298,7 @@ static void Splash_BuildImagePacket(int tbp, int cbp) {
     int psm;
     u64 format;
 
-    image = (SplashImageBits *)&file_load_buffer;
+    image = (SplashImageBits *)file_load_buffer;
     psm = image->tex0.psm;
     width = 1 << image->tex0.tw;
     height = 1 << image->tex0.th;
@@ -375,7 +365,7 @@ static void Splash_BuildImagePacket(int tbp, int cbp) {
     }
     *cursor++ = 0;
     *cursor++ = 0;
-    source = (char *)&file_load_buffer;
+    source = file_load_buffer;
     source += sizeof(TextureHeader);
     memcpy(cursor, source, size);
     output = (char *)cursor + size;
@@ -407,7 +397,7 @@ static void Splash_BuildImagePacket(int tbp, int cbp) {
         packet->image_tag_high[0] = 0;
         packet->image_tag_high[1] = 0;
         output += sizeof(SplashLoadPacket);
-        source = (char *)&file_load_buffer;
+        source = file_load_buffer;
         source += image->image_size + sizeof(TextureHeader);
         memcpy(output, source, palette_qwords << 4);
         // match: nothing reads this, but with no statement after it the call above becomes a tail jump

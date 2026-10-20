@@ -10,22 +10,11 @@
 #include "enemy/enemy.h"
 #include <libvu0.h>
 #include "math/vu0.h"
+#include "entity/entity_ai.h"
+#include "entity/entity.h"
+#include "player/player.h"
+#include "save/save_state.h"
 
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
-extern s32 entity_type_handlers[][2];
-int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-extern EntityGroupRecord entity_group_state[];
-int EntityAi_SetReaction(Entity *entity, void (*reaction)(Entity *entity), int run_now);
-void EntityAi_SetState(char *, u8);
-extern PlayerData player_state;
-extern u8 map_script_flags[0x80][0x40];
-int EntityAi_AnimationFrameCount(void *, int);
-void EntityAi_SetAttackDelay(Entity *, s32);
-extern char story_flags[0x40];
-float EntityAi_Accelerate(Entity *, float);
-void EntityAi_SensePlayer(Entity *, s32);
-void EntityAi_CheckFarFromSpawn(char *);
 
 static void Npc_Animate(Entity *entity);
 static void Npc_OnHit(Entity *entity);
@@ -61,7 +50,7 @@ void Npc_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Npc_Think;
     ai_state->animate = Npc_Animate;
     ai_state->on_hit = Npc_OnHit;
@@ -151,7 +140,7 @@ void Npc_Think(Entity *entity, s32 unknown) {
         case 5:
             Npc_ThinkWatchPlayer(entity, unknown);
             if (entity->params->attack_range < entity->distance_to_player) {
-                EntityAi_SetState((char *)entity, 6);
+                EntityAi_SetState(entity, 6);
             }
             break;
         case 6:
@@ -187,7 +176,7 @@ static void Npc_ThinkReactToPlayer(Entity *entity, s32 run_now) {
     f32 limit;
     f32 direction;
 
-    direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
+    direction = EntityMath_HeadingTo(entity->model->position, (float *)&player_state.position);
     angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
     limit = DEG_TO_RAD((f32)ENTITY_CONTROLLER(entity)->far_distance);
     if (0.0f <= angle ? limit < angle : limit < -angle) {
@@ -200,7 +189,7 @@ static void Npc_ThinkReactToPlayer(Entity *entity, s32 run_now) {
         ai_state->pause_timer = MOVE_COMMAND_ANIMATION_26;
     }
     entity->move_command = ai_state->pause_timer;
-    EntityAi_SetState((char *)entity, 5);
+    EntityAi_SetState(entity, 5);
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
@@ -212,7 +201,7 @@ static void Npc_ThinkTurnToPlayer(Entity *entity, s32 run_now) {
     f32 limit;
     f32 direction;
 
-    direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
+    direction = EntityMath_HeadingTo(entity->model->position, (float *)&player_state.position);
     angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
     limit = DEG_TO_RAD((f32)ENTITY_CONTROLLER(entity)->far_distance);
     if (0.0f <= angle ? limit < angle : limit < -angle) {
@@ -220,7 +209,7 @@ static void Npc_ThinkTurnToPlayer(Entity *entity, s32 run_now) {
     } else {
         ai_state->pause_timer = MOVE_COMMAND_ANIMATION_26;
         entity->move_command = MOVE_COMMAND_ANIMATION_26;
-        EntityAi_SetState((char *)entity, 5);
+        EntityAi_SetState(entity, 5);
         EntityAi_StartAction(entity, ai_state->move, run_now);
     }
 }
@@ -243,7 +232,7 @@ static void Npc_ThinkStopWatching(Entity *entity, int unknown) {
 
     ai_state->pause_timer = 0;
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
-    EntityAi_SetState((char *)entity, 0);
+    EntityAi_SetState(entity, 0);
     EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
@@ -261,7 +250,7 @@ static void Npc_ThinkTurnBack(Entity *entity, s32 run_now) {
     } else {
         ai_state->pause_timer = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
-        EntityAi_SetState((char *)entity, 0);
+        EntityAi_SetState(entity, 0);
         EntityAi_StartAction(entity, ai_state->move, run_now);
     }
 }
@@ -279,7 +268,7 @@ static void Npc_TurnToPlayer(Entity *entity) {
     case 0:
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
         if (entity->spawn_info->spawn_mode == 1
-            && map_script_flags[entity->spawn_info->variant][entity->spawn_info->map_object_id] == entity->spawn_info->second_map_object_id) {
+            && map_script_flags[entity->spawn_info->map_object_id + entity->spawn_info->variant * 0x40] == entity->spawn_info->second_map_object_id) {
             if (0.0f <= angle) {
                 Motion_Start(entity, 0x1F, 0, entity->params->motion_blend_frames, 0);
             } else {
@@ -330,7 +319,7 @@ static void Npc_TurnToSpawnHeading(Entity *entity) {
     case 0:
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->spawn_info->spawn_rotation_y);
         if (entity->spawn_info->spawn_mode == 1
-            && map_script_flags[entity->spawn_info->variant][entity->spawn_info->map_object_id] == entity->spawn_info->second_map_object_id) {
+            && map_script_flags[entity->spawn_info->map_object_id + entity->spawn_info->variant * 0x40] == entity->spawn_info->second_map_object_id) {
             if (0.0f <= angle) {
                 Motion_Start(entity, 0x1F, 0, entity->params->motion_blend_frames, 0);
             } else {
@@ -380,7 +369,7 @@ static void Npc_ReactionHeavy(Entity *entity) {
     switch (entity->reaction_step) {
     case 0:
         if (entity->spawn_info->spawn_mode == 1
-            && map_script_flags[entity->spawn_info->variant][entity->spawn_info->map_object_id] == entity->spawn_info->second_map_object_id) {
+            && map_script_flags[entity->spawn_info->map_object_id + entity->spawn_info->variant * 0x40] == entity->spawn_info->second_map_object_id) {
             Motion_Start(entity, 0x12, 0, 5, 1);
         } else {
             Motion_Start(entity, 0xF, 0, 5, 1);
@@ -439,7 +428,7 @@ static void Npc_Death(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         if (entity->spawn_info->spawn_mode == 1
-            && map_script_flags[entity->spawn_info->variant][entity->spawn_info->map_object_id] == entity->spawn_info->second_map_object_id) {
+            && map_script_flags[entity->spawn_info->map_object_id + entity->spawn_info->variant * 0x40] == entity->spawn_info->second_map_object_id) {
             Motion_Start(entity, 0x13, 0, 5, 1);
         } else {
             Motion_Start(entity, 0x10, 0, 5, 1);
@@ -552,7 +541,7 @@ static void Npc_Move(Entity *entity) {
         ai_state->move_speed = 0.0f;
     }
     if (entity->spawn_info->spawn_mode == 1
-        && map_script_flags[entity->spawn_info->variant][entity->spawn_info->map_object_id] == entity->spawn_info->second_map_object_id) {
+        && map_script_flags[entity->spawn_info->map_object_id + entity->spawn_info->variant * 0x40] == entity->spawn_info->second_map_object_id) {
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 0);
     } else if (entity->move_command & MOVE_COMMAND_FORWARD) {
         if (entity->move_command & MOVE_COMMAND_RUN) {
@@ -591,7 +580,7 @@ void Npc_InitType81(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Npc_ThinkType81;
     ai_state->animate = Npc_Animate;
     ai_state->on_hit = Npc_OnHitType81;
@@ -651,7 +640,7 @@ static void Npc_ThinkType81(Entity *entity, s32 run_now) {
     if (entity->busy_flags != 0) {
         return;
     }
-    EntityAi_CheckFarFromSpawn((char *)entity);
+    EntityAi_CheckFarFromSpawn(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, run_now);
         return;

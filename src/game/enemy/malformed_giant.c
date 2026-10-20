@@ -10,28 +10,12 @@
 #include "math/vu0.h"
 #include "player/player.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "model/motion.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityAi_StepState(Entity *);
-void EntityAi_SensePlayer(Entity *, int);
-void EntityAi_CheckFarFromSpawn(Entity *);
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-void EntityAi_ClearTurnInPlace(Entity *);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_TurnFromPush(void *entity_arg, void *heading_out);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-int Motion_Start(void *, int, int, u32, int);
 
 static void MalformedGiant_Think(Entity *entity, s32 unknown);
 static void MalformedGiant_ThinkCombat(Entity *entity, s32 unknown);
@@ -53,7 +37,7 @@ void MalformedGiant_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = MalformedGiant_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = EntityAi_OnHit;
@@ -80,7 +64,7 @@ void MalformedGiant_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The think handler: as EntityAi_Think with the type's own functions for the three states. Counts
@@ -161,7 +145,7 @@ static void MalformedGiant_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);

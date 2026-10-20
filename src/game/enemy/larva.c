@@ -15,19 +15,11 @@
 #include "math/vu0.h"
 #include "model/model.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "model/motion.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-extern s32 entity_type_handlers[][2];
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-void EntityAi_SensePlayer(void *, int);
-int Motion_Start(void *, int, int, u32, int);
-void EntityAi_SetState(char *, u8);
-s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 
 static void Larva_Think(Entity *entity, s32 unknown);
 static void Larva_Dormant(Entity *entity);
@@ -52,7 +44,7 @@ void Larva_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Larva_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = EntityAi_OnHit;
@@ -83,7 +75,7 @@ void Larva_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
     record = &((MapSlotUnk10 *)map_slots[entity->group_id].light_blocks)[(s8)((EntityFlagWord *)&entity->spawn_info->spawn_flags)->bytes[3]];
     record->ambient_green = 0.5f;
     record->ambient_red = 1.0f;
@@ -172,7 +164,7 @@ static void Larva_Dormant(Entity *entity) {
         break;
     case 3:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
-            EntityAi_SetState((char *)entity, 2);
+            EntityAi_SetState(entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
             ENTITY_FLAG_BITS(entity)->bit20 = 0;
             ENTITY_FLAG_BITS(entity)->bit22 = 0;
@@ -372,7 +364,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
             entity->model->scale[2] = ai_state->keep_min_distance;
             ai_state->action_flags = 1;
             EntityEvent_StartEffectAtPoint((char **)entity, entity->params->type_param_2, 0xFF, (int)entity->model->rotation);
-            EntityAi_SetState((char *)entity, 2);
+            EntityAi_SetState(entity, 2);
             entity->flags &= ~ENTITY_FLAG_200000;
             entity->flags &= ~ENTITY_FLAG_100000;
             entity->flags &= ~ENTITY_FLAG_40000;

@@ -79,13 +79,13 @@ u8 map_entry_flags[0x8000] = { 0 };
 u8 map_entry_counters[0x80][0x40] = { { 0 } };
 
 /* 0x356928 a byte per map object counting its item's pickups (model/model.h's required_flag) */
-u8 map_item_pickup_counts[0x2000] = { 0 };
+u8 map_item_pickup_counts[0x80][0x40] = { { 0 } };
 
 /* 0x358928 the items lying on the maps: a row of 16 per map tag (item/map_item.c) */
-u8 dropped_item_records[0xA000] = { 0 };
+DroppedItemRecord dropped_item_records[0x80][16] = { { { 0 } } };
 
 /* 0x362928 where the map objects are marked, an ObjectMarkRow per map tag (item/gold.c) */
-u8 map_object_marks[0x5000] = { 0 };
+ObjectMarkRow map_object_marks[0x80] = { { { { 0 } } } };
 
 /* 0x367928[5] which item each trigger holds */
 TriggerItemRecord trigger_items[TRIGGER_ITEM_RECORD_COUNT] = { { 0 } };

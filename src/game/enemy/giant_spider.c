@@ -11,26 +11,9 @@
 #include "math/vu0.h"
 #include "player/player.h"
 #include <stdlib.h>
-
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
-extern s32 entity_type_handlers[][2];
-int Motion_Step(void *, int);
-int Motion_BlendToPose(EntityModel *, f32);
-void EntityAi_LowerWeightsAfterHit(char *);
-void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_StepState(void *);
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-int Motion_Start(void *, int, int, u32, int);
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-void EntityAi_SetAttackDelay(Entity *, s32);
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "model/motion.h"
 
 static void GiantSpider_Animate(Entity *entity);
 static void GiantSpider_OnHit(Entity *entity);
@@ -56,7 +39,7 @@ void GiantSpider_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = GiantSpider_Think;
     ai_state->animate = GiantSpider_Animate;
     ai_state->on_hit = GiantSpider_OnHit;
@@ -100,7 +83,7 @@ static void GiantSpider_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
@@ -127,10 +110,10 @@ static void GiantSpider_Animate(Entity *entity) {
 static void GiantSpider_OnHit(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
-    EntityAi_LowerWeightsAfterHit((char *)entity);
+    EntityAi_LowerWeightsAfterHit(entity);
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
     ai_state->step_index = 1;
 }
 
@@ -203,7 +186,7 @@ static void GiantSpider_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, GiantSpider_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
@@ -366,7 +349,7 @@ static void GiantSpider_RangedAttack(Entity *entity) {
             ai_state->turn_rate = 0.0f;
         }
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
-        Vector_Copy(direction, &player_state);
+        Vector_Copy(direction, &player_state.position);
         direction[1] -= 160.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction, DEG_TO_RAD(15), DEG_TO_RAD(15));
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {

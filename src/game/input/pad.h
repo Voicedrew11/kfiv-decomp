@@ -126,4 +126,7 @@ int Pad_GetMode(int port, int slot);
 extern PadState pad_states[2];
 extern u16 pad_pressed[];
 
+/* input/pad_state.c */
+extern PadState pad_state;
+
 #endif

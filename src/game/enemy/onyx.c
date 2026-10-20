@@ -9,27 +9,11 @@
 #include "math/vu0.h"
 #include "player/player.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "model/motion.h"
+#include "entity/entity_math.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
-void EntityAi_ClearTurnInPlace(Entity *);
-float EntityMath_AngleDifference(float, float);
-int Motion_Start(void *, int, int, u32, int);
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
-void EntityAi_SetAttackDelay(Entity *, s32);
-s32 EntityAi_CanUseMelee(Entity *, s32);
-s32 EntityAi_CanUseRanged(Entity *, s32);
-float EntityMath_HeadingTo(float *, float *);
-float EntityMath_DistanceXZ(void *, void *);
 
 static void Onyx_Think(Entity *entity, s32 unknown);
 static void Onyx_ThinkCombat(Entity *entity, s32 unknown);
@@ -56,7 +40,7 @@ void Onyx_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Onyx_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = EntityAi_OnHit;
@@ -125,7 +109,7 @@ void Onyx_Init(Entity *entity) {
         ENTITY_MODEL_PART_FLAG_BITS(part)->bit41 = FALSE;
     }
     ai_state->reload_timer = entity->params->action_frames;
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with Onyx_ThinkCombat for state 2. Counts down work
@@ -148,7 +132,7 @@ static void Onyx_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags != 0) {
         return;
     }
-    EntityAi_CheckFarFromSpawn((char *)entity);
+    EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -501,7 +485,7 @@ static s32 Onyx_GetKeepRangeCommand(Entity *entity, s32 turn, f32 near_range, f3
             command |= MOVE_COMMAND_TURN_LEFT;
         }
     }
-    distance = EntityMath_DistanceXZ(entity->model->position, &player_state);
+    distance = EntityMath_DistanceXZ(entity->model->position, &player_state.position.x);
     if (distance < near_range + 100.0f + entity->radius) {
         command |= MOVE_COMMAND_BACK;
     } else if (far_range + 100.0f + entity->radius < distance) {

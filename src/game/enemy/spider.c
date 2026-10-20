@@ -13,34 +13,10 @@
 #include "math/vu0.h"
 #include "player/player.h"
 #include <stdlib.h>
-
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
-extern s32 entity_type_handlers[][2];
-int Motion_Step(void *, int);
-int Motion_BlendToPose(EntityModel *, f32);
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
-void EntityAi_StepState(void *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-float EntityMath_DistanceXZ(void *, void *);
-void EntityAi_ClearTurnInPlace(Entity *);
-float EntityMath_AngleDifference(float, float);
-int EntityAi_TurnCommand(Entity *);
-int Motion_Start(void *, int, int, u32, int);
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-void EntityAi_SetAttackDelay(Entity *, s32);
-void EntityAi_LowerWeightsAfterHit(char *);
-void EntityAi_SetState(char *, u8);
-float EntityMath_EaseAngleToward(float *, float, float);
+#include "entity/entity_math.h"
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "model/motion.h"
 
 static void Spider_Animate(Entity *entity);
 static void Spider_Think(Entity *entity, s32 unknown);
@@ -73,7 +49,7 @@ void Spider_Init(Entity *entity) {
     for (i = 6 - 1; i != -1; i--) {
         entity->attack_weights[i] = 0x80;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
@@ -97,7 +73,7 @@ void Spider_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The animate handler (installed in both branches of the set-up function): as EntityAi_Animate
@@ -111,7 +87,7 @@ static void Spider_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
@@ -141,7 +117,7 @@ static void Spider_Think(Entity *entity, s32 unknown) {
         EntityAi_StartAction(entity, Spider_LevelOut, 1);
         return;
     }
-    EntityAi_CheckFarFromSpawn((char *)entity);
+    EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -221,14 +197,14 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, Spider_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             }
             return;
         case 1:
-            if (EntityMath_DistanceXZ(&player_state, entity->spawn_info) < (f32)entity->spawn_info->wander_radius) {
+            if (EntityMath_DistanceXZ(&player_state.position.x, &entity->spawn_info->spawn_x) < (f32)entity->spawn_info->wander_radius) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 120;
                 ai_state->move_choice = 0;
@@ -364,7 +340,7 @@ static void Spider_Dormant(Entity *entity) {
         entity->action_step++;
         break;
     case 1:
-        if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) >= (f32)entity->params->pitch_limit_deg) {
+        if (EntityMath_DistanceXZ(entity->model->position, &entity->spawn_info->spawn_x) >= (f32)entity->params->pitch_limit_deg) {
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
             ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
             ENTITY_FLAG_BITS(entity)->no_second_wall_collision = FALSE;
@@ -388,10 +364,10 @@ static void Spider_Dormant(Entity *entity) {
    ended, the slot holds EntityAi_OnHit. No reaction: it starts Spider_LevelOut and goes to state 2.
    */
 static void Spider_OnHit(Entity *entity) {
-    EntityAi_LowerWeightsAfterHit((char *)entity);
+    EntityAi_LowerWeightsAfterHit(entity);
     entity->target = NULL;
     EntityAi_StartAction(entity, Spider_LevelOut, 0);
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
 }
 
 /* The death action (busy bit 0x40), installed and replaced together with Spider_OnHit

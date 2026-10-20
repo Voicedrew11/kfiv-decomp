@@ -12,23 +12,16 @@
 #include "enemy/enemy.h"
 #include "gfx/draw_list.h"
 #include "gfx/packet.h"
+#include "gfx/texture.h"
+#include "map/map.h"
+#include "map_object/map_object.h"
 #include "math/vu0.h"
 #include "model/model_matrix.h"
 #include "model/motion.h"
 #include "save/save_state.h"
 #include <stdio.h>
 
-extern char map_draw_slot_blocks[];
-extern GameStatus game_status;
-extern EventRunner view_ray_status;
-
-void TextureTable_SetBasePointers(char *, int, int);
-void Model_SetVertexColour(void *, int, int, int, int);
 static void ItemEffect_DrawModel(ModelInstance *model);
-void ItemEffect_StepRequestGameStatus(void);
-void ItemEffect_StepWaitOverlay(void);
-void ItemEffect_StepPlayMotion(void);
-void ItemEffect_StepFadeOut(void);
 
 static int item_effect_active;              /* 0x447388 nonzero while an effect runs */
 static int item_effect_kind;                /* 0x44738C the item kind (0x46..0x52) */
@@ -42,7 +35,7 @@ static int item_effect_brightness;          /* 0x4473A8 model colour alpha while
 static int item_effect_pending_effects;     /* 0x4473AC set until motion reaches def->unk08 */
 static int item_effect_marked;              /* 0x4473B0 spell slot marked by Player_LearnSpellInRow */
 
-static char *item_effect_textures[7];       /* 0x5F9B40 loaded i0040..i0046.tx2 */
+static TextureTableHeader *item_effect_textures[7];       /* 0x5F9B40 loaded i0040..i0046.tx2 */
 
 /* 0x42C040 the effect def of each item kind 0x46 to 0x52 */
 ItemUseEffectDef item_effect_defs[13] = {
@@ -157,7 +150,7 @@ void ItemEffect_Load(void) {
             buffer = align16(buffer);
             size = File_Read(file, buffer, -1);
             File_Close(file);
-            item_effect_textures[i] = buffer;
+            item_effect_textures[i] = (TextureTableHeader *)buffer;
             buffer += size;
             TextureTable_SetBasePointers(item_effect_textures[i], 0x3B40, 0x3EC0);
         }
@@ -214,7 +207,7 @@ void ItemEffect_Start(int kind, int marked) {
     item_effect_model->scale_x = item_effect_model->scale_y = item_effect_model->scale_z = 1.0f;
     item_effect_model->scale_w = 1.0f;
     item_effect_model->light_block = (s32)item_effect_light_block;
-    item_effect_model->fog_block = &map_draw_slot_blocks[current_map_slot * 0x400];
+    item_effect_model->fog_block = map_draw_slot_blocks[current_map_slot];
     for (i = 0; i < item_effect_model->part_count; i++) {
         if (i == 0) {
             MODEL_PART_FLAG_BITS(&item_effect_model->parts[0])->bit41 = TRUE;

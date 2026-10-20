@@ -202,6 +202,7 @@ extern LoadedBlockRef menu_file_blocks[];
 extern LoadedTexture menu_font_texture;
 extern PoolSlot pool_slots[32];
 extern f32 menu_view_screen_matrix[16];
+extern void *pool_slot_free_list;
 
 /* data still in asm */
 extern u64 *menu_font_page_tex0[];  /* where the TEX0 of each font page is kept */

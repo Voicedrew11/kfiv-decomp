@@ -20,7 +20,7 @@ typedef struct { /* field names derived */
 /* volatile here; cdvd000 defines it plain and releases it with plain stores */
 extern volatile int _sceCd_c_cb_sem;
 
-int sceCdRead(int lsn, int sectors, void *buf, CdRMode *mode)
+int sceCdRead(int lsn, int sectors, void *buf, sceCdRMode *mode)
 {
     CdReadCmd *sd = (CdReadCmd *)_sceCd_ncmdsdata;
     int size;

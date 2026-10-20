@@ -36,7 +36,7 @@ void EntityCollision_WalkAgainstObjects(Entity *entity);
 void EntityCollision_SphereAgainstObjects(Entity *entity);
 
 /* Tests the line from `from` to `destination` against `target`. */
-s32 EntityCollision_LineHits(Entity *target, f32 *from, PlayerData *destination);
+s32 EntityCollision_LineHits(Entity *target, f32 *from, f32 *destination);
 
 /* How far the nearest floor of the prop's mesh lies below `position`. */
 f32 EntityCollision_DistanceToPropFloor(void *prop_arg, void *position_arg);

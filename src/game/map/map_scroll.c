@@ -8,9 +8,6 @@
 static MapSlotPair map_scroll_copy_pairs[2][16]; /* 0x471F60 */
 static MapSlotPair map_scroll_draw_pairs[2][16];  /* 0x471FE0 */
 
-u32 *MapScroll_AppendBitblt(u32 *packet, int end_of_packet, int format, int buffer_width, int width, int height,
-                               int source_base, int source_x, int source_y, int dest_base, int dest_x, int dest_y);
-
 /* Clears the copy and draw scroll offsets for one map slot. */
 void MapScroll_ClearPairs(int map_slot) {
     int i;

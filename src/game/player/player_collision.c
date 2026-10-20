@@ -25,8 +25,6 @@
         player_state.position.z = COLLISION_RESULT->point[2] + COLLISION_RESULT->normal[2] * push;   \
     }
 
-void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
-
 /* Tests the player against the collision meshes of the records around him: what he touches, the walls that
    push him back, the water surface he is in and the floor he stands on. Returns TRUE when a floor was found. */
 int Player_CollideWithMap(void) {
@@ -498,7 +496,7 @@ void Player_CollideWithEntities(int climb) {
                     height = radius + radius;
                 }
                 push = 100.0f;
-                Collision_CylinderCylinder(&player_state, push, 230.0f, position, radius, height);
+                Collision_CylinderCylinder(&player_state.position.x, push, 230.0f, position, radius, height);
                 if (COLLISION_RESULT->hit != 0) {
                     PUSH_PLAYER_OUT();
                 }
@@ -506,7 +504,7 @@ void Player_CollideWithEntities(int climb) {
             break;
         default:
             push = 100.0f;
-            Collision_CylinderCylinder(&player_state, push, 230.0f, entity->model->position, entity->radius, entity->height);
+            Collision_CylinderCylinder(&player_state.position.x, push, 230.0f, entity->model->position, entity->radius, entity->height);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_PLAYER_OUT();
             }

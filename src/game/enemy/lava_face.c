@@ -9,22 +9,13 @@
 #include "math/vu0.h"
 #include "model/model.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_math.h"
+#include "model/motion.h"
+#include "player/player.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-extern float player_state[];
-float EntityMath_WrapAngle(float);
-float EntityMath_DistanceXZ(void *, void *);
-float EntityMath_AngleXZ(float *, char *);
-f32 EntityMath_Approach(f32, f32, f32);
-int EntityAi_LaunchShot(void *, int, void *, void *);
-int Motion_Start(void *, int, int, u32, int);
 
 static void LavaFace_Think(Entity *entity, s32 unknown);
 
@@ -41,7 +32,7 @@ void LavaFace_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = LavaFace_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = EntityAi_OnHit;
@@ -65,7 +56,7 @@ void LavaFace_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The think handler: each time the timer Entity.action_timer runs out (and EntityParams.action_frames is not 0)
@@ -100,10 +91,10 @@ static void LavaFace_Think(Entity *entity, s32 unknown) {
             Vector_Copy(angles, entity->model->rotation);
             angles[1] = EntityMath_WrapAngle(angles[1] + PI);
         }
-        Vector_Copy(target, player_state);
+        Vector_Copy(target, &player_state.position);
         target[1] -= 190.0f;
         pitch = EntityMath_WrapAngle(-atan2(target[1] - from[1], EntityMath_DistanceXZ(from, target)));
-        yaw = EntityMath_AngleXZ(from, (char *)target);
+        yaw = EntityMath_AngleXZ(from, target);
         angles[0] = EntityMath_Approach(angles[0], pitch, entity->params->near_distance);
         angles[1] = EntityMath_Approach(angles[1], yaw, entity->params->far_distance);
         EntityAi_LaunchShot(entity, entity->params->pitch_limit_deg, from, angles);

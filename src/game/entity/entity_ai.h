@@ -50,7 +50,7 @@ int EntityAi_LaunchShot(Entity *entity, int effect_id, void *origin, void *angle
    frame_to] */
 int EntityAi_LaunchShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 elapsed, s32 unk82);
 /* Spawns an effect at a model point, facing along the line to the next point */
-void EntityAi_SpawnBoneEffect(char **model, int effect_id, int point);
+void EntityAi_SpawnBoneEffect(Entity *entity, int effect_id, int point);
 /* Turns the model part at EntityModel.look_at_part to look at target (Bone_TurnPartToLook) while params flag 0x2000 is
    set; FALSE without it */
 int EntityAi_LookAtPoint(Entity *entity, int angles, int mode, int target, int limits, float rate);
@@ -86,14 +86,14 @@ s32 EntityAi_CanMelee(Entity *entity);
 /* Whether the player is inside the reach (distance, angle and height) of melee record index */
 int EntityAi_CanUseMelee(Entity *entity, int index);
 /* As EntityAi_CanUseMelee for the entity facing yaw */
-int EntityAi_CanUseMeleeFacing(Entity *entity, int index, float yaw);
+int EntityAi_CanUseMeleeFacing(Entity *entity, float yaw, int index);
 /* Whether the player is inside the reach (distance, angle and height) of any of the entity's three ranged
    attacks */
 s32 EntityAi_CanShoot(Entity *entity);
 /* Whether the player is inside the reach (distance, angle and height) of ranged record index */
 s32 EntityAi_CanUseRanged(Entity *entity, s32 index);
 /* As EntityAi_CanUseRanged for the entity facing yaw */
-int EntityAi_CanUseRangedFacing(Entity *entity, int index, float yaw);
+int EntityAi_CanUseRangedFacing(Entity *entity, float yaw, int index);
 /* Per-frame collision of an entity: clears its push and state bits, sets bits 22-27 from its params, then
    runs its entity, map object and map piece checks */
 void EntityAi_UpdateCollision(Entity *entity);

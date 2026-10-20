@@ -1,4 +1,5 @@
 #include "core/game.h"
+#include "math/camera.h"
 #include "core/file.h"
 #include "item/gold.h"
 #include "map/map.h"
@@ -18,12 +19,6 @@
 #include <stdio.h>
 
 
-extern GameDefinition item_name_defs[380];
-extern GameStatus game_status;
-extern CameraState camera_state;
-extern MapProp *map_slot_props[2][0xFF];
-extern MapDrawState map_draw_state;
-extern SoundLoadQueue sound_load_queue;
 
 /* Reads the six parameter files (param/obj.prm, chr.prm, item_nam.prm, item_cmn.prm, item_wpn.prm and
    item_pct.prm), then turns each item's weight from kilograms into pounds. */

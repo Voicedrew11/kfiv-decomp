@@ -15,20 +15,16 @@
 #include <math.h>
 #include "model/motion.h"
 #include <stdio.h>
+#include "player/player.h"
 
 #define ENTITY_POOL_BLOCK_SIZE  0x80000
 
+
 /* the game's own data and functions, outside this file */
-extern float player_state[];
-extern char file_load_buffer[0x80000];
-extern SoundLoadQueue sound_load_queue;
 
 static EntityTypeFileHeader entity_type_file_header;                            /* 0x474B70 the loaded type file's first 0x20 bytes */
 static char entity_pool_slot_buffers[ENTITY_POOL_SLOT_COUNT][0x2000];            /* 0x474B90 the type data of each slot */
 char character_params[0x80000] __attribute__((section(".bss")));         /* 0x47EB90 param/chr.prm, read whole */
-
-void Model_SetBlockGsWords(void *, s64, s64, s64, s64);
-void Model_RestoreGsWordsAndUvs(void *);
 
 /* file-local functions, in order of definition */
 static int Entity_TryActivate(Entity *entity);
@@ -194,7 +190,7 @@ static void Entity_StartLoadsInRange(void) {
 
         distance = Entity_SpawnDistanceToPlayer(entity);
         entity->distance_to_player = distance;
-        height_difference = ABS(player_state[1] - entity->spawn_info->spawn_y);
+        height_difference = ABS(player_state.position.y - entity->spawn_info->spawn_y);
         if (entity->pool_slot_index >= 0 ||
             (distance <= (float)entity->spawn_info->despawn_range &&
              (entity->spawn_info->vertical_despawn_range == 0 ||
@@ -282,7 +278,7 @@ void Entity_DespawnOutOfRange(void) {
         distance = Entity_SpawnDistanceToPlayer(entity);
         entity->distance_to_player = distance;
         spawn_info = entity->spawn_info;
-        height_difference = player_state[1] - spawn_info->spawn_y;
+        height_difference = player_state.position.y - spawn_info->spawn_y;
         height_difference = ABS(height_difference);
         out_of_range = FALSE;
         if ((float)spawn_info->despawn_range + ENTITY_DESPAWN_MARGIN < distance ||
@@ -1154,7 +1150,7 @@ float Entity_SpawnDistanceToPlayer(Entity *entity) {
     float delta_x;
     float delta_z;
 
-    delta_x = entity->spawn_info->spawn_x - player_state[0];
-    delta_z = entity->spawn_info->spawn_z - player_state[2];
+    delta_x = entity->spawn_info->spawn_x - player_state.position.x;
+    delta_z = entity->spawn_info->spawn_z - player_state.position.z;
     return sqrtf(delta_x * delta_x + delta_z * delta_z);
 }
