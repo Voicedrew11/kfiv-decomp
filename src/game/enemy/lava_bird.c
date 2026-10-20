@@ -22,6 +22,12 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
+/* Entity.action_step and reaction_step values past the shared ones */
+#define LAVA_BIRD_DORMANT_STEP_EMERGE       2   /* rises out of the ground, then starts the rising motion */
+#define LAVA_BIRD_DORMANT_STEP_EMERGE_BLEND 3   /* keeps rising until the motion blends in */
+#define LAVA_BIRD_DORMANT_STEP_EMERGE_PLAY  4   /* plays the rest of the rising motion, then the bird is awake */
+#define LAVA_BIRD_REACTION_STEP_END         2   /* ends the light reaction and thinks again */
+
 static void LavaBird_Think(Entity *entity, s32 run_now);
 static void LavaBird_ThinkCombat(Entity *entity, s32 run_now);
 static void LavaBird_ThinkPursue(Entity *entity, s32 run_now);
@@ -503,7 +509,7 @@ static void LavaBird_Dormant(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case LAVA_BIRD_DORMANT_STEP_EMERGE:
         entity->model->position[1] -= ai_state->part_angle_z;
         ai_state->part_angle_z -= 3.0f;
         if (ai_state->part_angle_z <= 0.0f) {
@@ -512,14 +518,14 @@ static void LavaBird_Dormant(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case LAVA_BIRD_DORMANT_STEP_EMERGE_BLEND:
         entity->model->position[1] -= ai_state->part_angle_z;
         ai_state->part_angle_z -= 1.0f;
         if (slots->motion_slot_0.frames_left == 0) {
             entity->action_step++;
         }
         break;
-    case 4:
+    case LAVA_BIRD_DORMANT_STEP_EMERGE_PLAY:
         if (slots->motion_slot_0.frame < 0x32) {
             entity->model->position[1] -= ai_state->part_angle_z;
             ai_state->part_angle_z -= 0.1f;
@@ -565,7 +571,7 @@ static void LavaBird_RangedAttack(Entity *entity) {
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, ENTITY_FLAG_BITS(entity)->attack_index + ENTITY_MOTION_RANGED_ATTACK, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (slots->motion_slot_0.frames_left == 0) {
             entity->action_step++;
         }
@@ -573,7 +579,7 @@ static void LavaBird_RangedAttack(Entity *entity) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (slots->motion_slot_0.frame <= unk3D8->turn_frames) {
             EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
         } else {
@@ -688,12 +694,12 @@ static void LavaBird_ReactionLight(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->reaction_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (ai_state->motion_slot_0.frames_left == 0) {
             entity->reaction_step++;
         }
         break;
-    case 2:
+    case LAVA_BIRD_REACTION_STEP_END:
         EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
         EntityAi_SetReaction(entity, NULL, 0);
         entity->busy_flags = 0;
@@ -730,12 +736,12 @@ static void LavaBird_ReactionHeavy(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->reaction_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (ai_state->motion_slot_0.frames_left == 0) {
             entity->reaction_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
             EntityAi_SetReaction(entity, NULL, 0);
@@ -774,12 +780,12 @@ static void LavaBird_Death(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (ai_state->motion_slot_0.frames_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;
@@ -789,7 +795,7 @@ static void LavaBird_Death(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DEATH_STEP_FADE_OUT:
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
