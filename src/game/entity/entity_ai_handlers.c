@@ -15,6 +15,11 @@
 #include "entity/entity.h"
 #include "player/player.h"
 
+/* the last steps of the actions here that have their own: each waits for its motion or timer, then ends */
+#define FINISH_MOTION_STEP_WAIT_MOTION_END  1       /* waits for the motion to end, then thinks */
+#define REACTION_LIGHT_STEP_END             2       /* the light reaction is over: sets the attack delay and thinks */
+#define GUARD_STEP_HOLD                     2       /* holds the guard until action_timer runs out, then ends it */
+
 
 /* An action that starts no motion of its own: it waits until the current motion has blended in and played to
    its end, then ends as the other actions do (think, or the move action). Nothing refers to it. */
@@ -28,7 +33,7 @@ void EntityAi_FinishMotion(Entity *entity, s32 unused) {
             entity->action_step++;
         }
         break;
-    case 1:
+    case FINISH_MOTION_STEP_WAIT_MOTION_END:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
@@ -214,7 +219,7 @@ void EntityAi_ReactionLight(Entity *entity) {
             entity->reaction_step++;
         }
         break;
-    case 2:
+    case REACTION_LIGHT_STEP_END:
         EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
         EntityAi_SetReaction(entity, NULL, 0);
         entity->busy_flags = 0;
@@ -396,7 +401,7 @@ void EntityAi_Guard(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case GUARD_STEP_HOLD:
         if (entity->action_timer == 0) {
             ENTITY_FLAG_BITS(entity)->guarding = 0;
             ENTITY_FLAG_BITS(entity)->animates = TRUE;
@@ -722,13 +727,13 @@ void EntityAi_Think(Entity *entity, s32 run_now) {
         return;
     }
     switch (entity->state) {
-    case 0:
+    case ENTITY_STATE_UNAWARE:
         EntityAi_ThinkIdle(entity, run_now);
         return;
-    case 1:
+    case ENTITY_STATE_SEARCHING:
         EntityAi_ThinkPursue(entity, run_now);
         return;
-    case 2:
+    case ENTITY_STATE_NOTICED:
         EntityAi_ThinkCombat(entity, run_now);
         return;
     }
