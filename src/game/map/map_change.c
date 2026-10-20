@@ -324,7 +324,7 @@ void MapChange_SetUpMap(void) {
             player_state.rotation.y = object->model->rotation.y;
             break;
         }
-    case 0:
+    case SCREEN_FADE_KIND_TO_MAP:
         header = slot->header;
         player_state.position.x = header->player_start_x;
         player_state.position.y = header->player_start_y;

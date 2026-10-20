@@ -10,6 +10,16 @@
 #include <sifrpc.h>
 #include <sifdev.h>
 
+/* sequence_load_step: the steps of SoundDriver_LoadSequenceStep */
+#define SEQUENCE_LOAD_STEP_START            0       /* takes a sequence slot and starts uploading the data */
+#define SEQUENCE_LOAD_STEP_UPLOAD_WAIT      1       /* waits for the upload to the IOP */
+#define SEQUENCE_LOAD_STEP_HAND_OVER        2       /* hands the sequence and voice to the driver */
+
+/* SoundDriver_SetNoteControl's kind: the note control change it queues */
+#define SOUND_NOTE_CONTROL_VOLUME           0
+#define SOUND_NOTE_CONTROL_PAN              1
+#define SOUND_NOTE_CONTROL_BEND             2
+
 /* SoundDmaRequest.mode: the SIF DMA attribute word, none set */
 #define SOUND_DMA_ATTR_NONE 0
 
@@ -1462,7 +1472,7 @@ int SoundDriver_LoadSequenceStep(int bank_id, int voice_index, int data, u32 siz
     int iop_heap;
 
     switch (sequence_load_step) {
-    case 0:
+    case SEQUENCE_LOAD_STEP_START:
         bank_load_bank = sound_state->banks;
         for (index = 0; index < 4; index++) {
             if (bank_load_bank->iop_heap == 0) {
@@ -1495,12 +1505,12 @@ int SoundDriver_LoadSequenceStep(int bank_id, int voice_index, int data, u32 siz
         SoundDriver_StartUpload(iop_heap, data, bank_load_bank->iop_size);
         sequence_load_step++;
         break;
-    case 1:
+    case SEQUENCE_LOAD_STEP_UPLOAD_WAIT:
         if (SoundDriver_StepUpload() != 0) {
             sequence_load_step++;
         }
         break;
-    case 2:
+    case SEQUENCE_LOAD_STEP_HAND_OVER:
         if (bank_load_voice->stereo_selected != 0) {
             bank_load_voice_data = bank_load_voice->stereo_header_block;
         } else {
@@ -1877,7 +1887,7 @@ int SoundDriver_SetNoteControl(int kind, u32 slot, int value) {
     *out++ = voice->driver_voice_id;
     *out++ = 7;
     switch (kind) {
-    case 0:
+    case SOUND_NOTE_CONTROL_VOLUME:
         *out++ = 0xFD;
         *out++ = 0;
         *out++ = key->channel;
@@ -1886,7 +1896,7 @@ int SoundDriver_SetNoteControl(int kind, u32 slot, int value) {
         out[0] = value;
         out[1] = 0;
         break;
-    case 1:
+    case SOUND_NOTE_CONTROL_PAN:
         // match: the u16 at 0x4D4; the header has six chars there
         if (*(u16 *)&sound_state->volume_and_stereo[4] == 0 || voice->stereo_selected == 0) {
             value = 0x3F;
@@ -1899,7 +1909,7 @@ int SoundDriver_SetNoteControl(int kind, u32 slot, int value) {
         out[0] = value;
         out[1] = 0;
         break;
-    case 2:
+    case SOUND_NOTE_CONTROL_BEND:
         *out++ = 0xFD;
         *out++ = kind;
         *out++ = key->channel;

@@ -17,6 +17,17 @@
 #define MC_INFO_ERROR                       -1
 #define MC_INFO_BAD_CHECK_BYTE              -399
 
+/* mc_request.info_step: the steps of Mc_StepGetInfo, three calls each with its wait (0 is the first call) */
+#define MC_INFO_STEP_FIRST_WAIT             1
+#define MC_INFO_STEP_SECOND_CALL            2
+#define MC_INFO_STEP_SECOND_WAIT            3
+#define MC_INFO_STEP_THIRD_CALL             4
+#define MC_INFO_STEP_THIRD_WAIT             5
+
+/* the sceMcGetInfo-side results Mc_GetCardStatus switches on, negated (0 is success) */
+#define MC_RESULT_SUCCEED                   0
+#define MC_RESULT_UNFORMATTED               2
+
 /* mc_request.step of the requests that make one library call and wait for its answer */
 #define MC_CALL_STEP_CALL                   1
 #define MC_CALL_STEP_WAIT                   2
@@ -148,9 +159,9 @@ static int Mc_StepGetInfo(int port, int slot, int *type, int *free_clusters, int
     int result;
 
     switch (step) {
-    case 0:
-    case 2:
-    case 4:
+    case MC_INFO_STEP_START:
+    case MC_INFO_STEP_SECOND_CALL:
+    case MC_INFO_STEP_THIRD_CALL:
         if (sceMcGetInfo(port, slot, type, free_clusters, format) != 0) {
             if (step == 4) {
                 return -100;
@@ -160,8 +171,8 @@ static int Mc_StepGetInfo(int port, int slot, int *type, int *free_clusters, int
             step++;
         }
         break;
-    case 1:
-    case 3:
+    case MC_INFO_STEP_FIRST_WAIT:
+    case MC_INFO_STEP_SECOND_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result != 0) {
                 return result;
@@ -169,7 +180,7 @@ static int Mc_StepGetInfo(int port, int slot, int *type, int *free_clusters, int
             step++;
         }
         break;
-    case 5:
+    case MC_INFO_STEP_THIRD_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             MC_CARD_INFO->result[port][slot] = result;
             return result;
@@ -2235,13 +2246,13 @@ int Mc_GetCardStatus(int port, int slot) {
         }
     } else {
         switch (result) {
-        case 0:
+        case MC_RESULT_SUCCEED:
             mc_request.status = MC_STATUS_OK;
             break;
         case 1:
             mc_request.status = 2;
             break;
-        case 2:
+        case MC_RESULT_UNFORMATTED:
             mc_request.status = MC_STATUS_UNFORMATTED;
             break;
         default:
