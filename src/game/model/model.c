@@ -620,7 +620,7 @@ void Model_SetUvsFromScreen(void *model_arg) {
         s32 *cursor;
 
         matrix = scratch->matrices[i];
-        parent = (s32)(MODEL_PART_WORD(part) >> 46) & 0x7F; /* ModelPart.pad78_46: the parent part */
+        parent = MODEL_PART_PARENT(part);
         if (parent != -1) { // match: always true, the 7-bit field holds 0x7F for "no parent" (see Model_SetUpSkinned)
             parent_matrix = scratch->matrices[parent];
         }
@@ -636,7 +636,7 @@ void Model_SetUvsFromScreen(void *model_arg) {
             ModelWideVertex *vertex;
 
             cursor = &block->vertex_count;
-            vertex_count = *cursor & 0x7FFF;
+            vertex_count = *cursor & GIF_TAG_NLOOP_MASK;
             vertex = block->vertices;
             for (; k < vertex_count; k++, vertex++) {
                 if (last != vertex->on_parent) {
@@ -684,7 +684,7 @@ s64 *Model_SaveGsWordsAndUvs(ModelInstance *model, s64 *save) {
 
             cursor += 6;
             *out++ = *cursor;
-            vertex_count = ((ModelWideData *)block)->vertex_count & 0x7FFF;
+            vertex_count = ((ModelWideData *)block)->vertex_count & GIF_TAG_NLOOP_MASK;
             vertex_words = (s64 *)((ModelWideData *)block)->vertices;
             cursor += 2;
             *out++ = *cursor;
@@ -724,7 +724,7 @@ void Model_RestoreGsWordsAndUvs(ModelInstance *model) {
 
             cursor += 0x30;
             *(s64 *)cursor = *saved++;
-            vertex_count = ((ModelWideData *)block)->vertex_count & 0x7FFF;
+            vertex_count = ((ModelWideData *)block)->vertex_count & GIF_TAG_NLOOP_MASK;
             vertex = ((ModelWideData *)block)->vertices;
             cursor += 0x10;
             *(s64 *)cursor = *saved++;
@@ -1317,10 +1317,10 @@ void Model_SetPrimBits(ModelInstance *model, s64 clear_mask, s64 set_value) {
     int clear_bits;
 
     set_bits = set_value;
-    set_bits &= 0x7FF;
+    set_bits &= GIF_TAG_PRIM_MASK >> 15;
     set_bits <<= 15;
     clear_bits = clear_mask;
-    clear_bits &= 0x7FF;
+    clear_bits &= GIF_TAG_PRIM_MASK >> 15;
     clear_bits <<= 15;
     part = model->parts;
     part_count = model->part_count;
@@ -1351,7 +1351,7 @@ void Model_SetTexture(ModelInstance *model, u64 unk40, s64 unk30) {
     s32 j;
     u16 length;
 
-    first = (s32)((unk40 >> 37) & 0x3FFF) != 0;
+    first = ((ModelPartDataBits30 *)&unk40)->clut_base != 0;
     part = model->parts;
     part_count = model->part_count;
     for (i = 0; i < part_count; i++, part++) {
@@ -1435,7 +1435,7 @@ void Model_SetVertexColour(void *model_arg, int red, int green, int blue, int al
             ModelPartVertex *vertex;
 
             cursor = &block->vertex_count;
-            vertex_count = *cursor & 0x7FFF;
+            vertex_count = *cursor & GIF_TAG_NLOOP_MASK;
             vertex = block->vertices;
             for (; k < vertex_count; k++, vertex++) {
                 if ((u32)red < 0x100) {
@@ -1494,7 +1494,7 @@ int Model_FadeVertexColoursNear(int model_arg, void *centre_arg, int *steps, int
             length = block->length;
             k = 0;
             cursor = &block->vertex_count;
-            vertex_count = *cursor & 0x7FFF;
+            vertex_count = *cursor & GIF_TAG_NLOOP_MASK;
             vertex = block->vertices;
             for (; k < vertex_count; k++, vertex++) {
                 distance = NOT_MEASURED;

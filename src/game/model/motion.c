@@ -231,8 +231,8 @@ static s32 Motion_PoseSlot(ModelInstance *model, s32 type, s32 table, s32 frame_
             if (record->count == 0) {
                 continue;
             }
-            key = (MotionKey *)record->thresholds + ((u32)(MODEL_PART_WORD(part) >> 39) & 0x7F);
-            level = (u32)(MODEL_PART_WORD(part) >> 39) & 0x7F;
+            key = (MotionKey *)record->thresholds + MODEL_PART_LEVEL(part);
+            level = MODEL_PART_LEVEL(part);
             while (level < record->count && frame >= key->frame) {
                 level++;
                 key++;
@@ -344,8 +344,8 @@ s32 Motion_BlendSlotToPose(ModelInstance *model, s32 type, s32 table, s16 frame,
         if (part->motion_slot == type) {
             if (record->thresholds != NULL) {
                 if (record->count != 0) {
-                    key = (MotionKey *)record->thresholds + ((u32)(MODEL_PART_WORD(part) >> 39) & 0x7F);
-                    level = (u32)(MODEL_PART_WORD(part) >> 39) & 0x7F;
+                    key = (MotionKey *)record->thresholds + MODEL_PART_LEVEL(part);
+                    level = MODEL_PART_LEVEL(part);
                     while (level < record->count && frame >= key->frame) {
                         level++;
                         key++;
@@ -746,8 +746,8 @@ s32 Motion_StepModel(ModelInstance *model, s32 step, s32 backwards) {
             if (record->count == 0) {
                 continue;
             }
-            key = (MotionKey *)record->thresholds + ((u32)(MODEL_PART_WORD(part) >> 39) & 0x7F);
-            level = (u32)(MODEL_PART_WORD(part) >> 39) & 0x7F;
+            key = (MotionKey *)record->thresholds + MODEL_PART_LEVEL(part);
+            level = MODEL_PART_LEVEL(part);
             while (level < record->count && channel->frame >= key->frame) {
                 level++;
                 key++;
@@ -882,8 +882,8 @@ s32 Motion_StepModelBlended(ModelInstance *model, s32 step, s32 backwards, f32 w
             if (record->count == 0) {
                 continue;
             }
-            key = (MotionKey *)record->thresholds + ((u32)(MODEL_PART_WORD(part) >> 39) & 0x7F);
-            level = (u32)(MODEL_PART_WORD(part) >> 39) & 0x7F;
+            key = (MotionKey *)record->thresholds + MODEL_PART_LEVEL(part);
+            level = MODEL_PART_LEVEL(part);
             while (level < record->count && channel->frame >= key->frame) {
                 level++;
                 key++;
@@ -1027,8 +1027,8 @@ s32 Motion_BlendToPose(ModelInstance *model, f32 weight) {
     for (i = 0; i < model->part_count; i++, record++) {
         part = &model->parts[i];
         if (record->thresholds != NULL && record->count != 0) {
-            key = (MotionKey *)record->thresholds + ((u32)(MODEL_PART_WORD(part) >> 39) & 0x7F);
-            level = (u32)(MODEL_PART_WORD(part) >> 39) & 0x7F;
+            key = (MotionKey *)record->thresholds + MODEL_PART_LEVEL(part);
+            level = MODEL_PART_LEVEL(part);
             while (level < record->count && channel->frame >= key->frame) {
                 level++;
                 key++;

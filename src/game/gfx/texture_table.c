@@ -10,7 +10,7 @@ typedef union {
 } AliasedWord;
 
 /* a GS BITBLTBUF value with its destination base pointer (bits 32-45, in 64-word blocks) set to `base` */
-#define SET_DESTINATION_BASE(bitbltbuf, base)     ((bitbltbuf) = ((bitbltbuf) & ~((u64)0x3FFF << 32)) | ((s64)((base) & 0x3FFF) << 32))
+#define SET_DESTINATION_BASE(bitbltbuf, base)     ((bitbltbuf) = ((bitbltbuf) & ~((u64)GS_BITBLTBUF_DBP_MASK << 32)) | ((s64)((base) & GS_BITBLTBUF_DBP_MASK) << 32))
 
 u32 *Packet_Alloc(int);
 void Packet_AppendToChain(u32 *, u32 *);
