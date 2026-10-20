@@ -124,7 +124,7 @@ void Gold_InitMap(int map) {
         model->fog_block = &map_draw_state.current_fog_block;
         model->texture_data = (int)map_gold_texture;
         model->texture_slot = 2;
-        model->draw = (void (*)(ModelInstance *))Gold_PrepareFadedDraw;
+        model->draw = Gold_PrepareFadedDraw;
     }
     tag = map_slots[map].tag; // match: kept in a variable, retail does not read it again after the copy
     marks = map_object_marks[tag];

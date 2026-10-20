@@ -136,7 +136,7 @@ void MapSetup_Armory(int map) {
         if (object != NULL) {
             MapObject_SetScripted(object, 1);
         }
-        ((int (*)(int, int))MapItem_PlaceFixedById)(map, 0x46); // match: called as returning a value, so the next test uses $3
+        MapItem_PlaceFixedById(map, 0x46);
         if (entity_group_state[0x5C0] == 0) {
             entity = Entity_GetBySpawnIdForMap(map, 0x17);
             if (entity != NULL) {

@@ -9,14 +9,14 @@
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);
 void EntityAi_LowerWeightsAfterHit(char *);
-int EntityAi_SetReaction(char *, void (*)(void), int);
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityAi_SetState(char *, u8);
 void EntityAi_ReactionHeavy(Entity *);
 extern u32 frame_counter;
@@ -70,12 +70,12 @@ void Slime_Init(Entity *entity) {
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    ai_state->think = (void (*)(Entity *, s32))Slime_Think;
-    ai_state->animate = (void (*)(void))Slime_Animate;
-    ai_state->on_hit = (void (*)(void))Slime_OnHit;
-    ai_state->move = (void (*)(void))Slime_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->think = Slime_Think;
+    ai_state->animate = Slime_Animate;
+    ai_state->on_hit = Slime_OnHit;
+    ai_state->move = Slime_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -85,15 +85,15 @@ void Slime_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate without the test of the EntityParams kind bits and
@@ -119,7 +119,7 @@ static void Slime_Animate(Entity *entity) {
    and flag bits 9 and 10 are left as they are. */
 static void Slime_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
-    EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
+    EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     EntityAi_SetState((char *)entity, 2);
 }
 
@@ -158,7 +158,7 @@ static void Slime_ThinkReturn(Entity *entity, s32 unknown) {
     entity->target = entity->spawn_info;
     entity->move_command = MOVE_COMMAND_FORWARD;
     entity->action_timer = 0;
-    EntityAi_StartAction(entity, (void (*)(Entity *))entity->ai_state.move, unknown);
+    EntityAi_StartAction(entity, entity->ai_state.move, unknown);
 }
 
 /* The think function of every state but 2 (Slime_Think calls it): wanders. Each time the
@@ -200,7 +200,7 @@ static void Slime_ThinkWander(Entity *entity, s32 unknown) {
             entity->move_command = (turn >= 0.0f) ? MOVE_COMMAND_TURN_RIGHT : MOVE_COMMAND_TURN_LEFT;
         }
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The think function of state 2 (called under `entity->state == 2`, not from a switch): guards the
@@ -270,7 +270,7 @@ static void Slime_ThinkCombat(Entity *entity, s32 unknown) {
         }
         break;
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The move handler: turns as the command bits in Entity.move_command say and, with command bit 1, moves
@@ -401,7 +401,7 @@ static void Slime_MeleeAttack(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;

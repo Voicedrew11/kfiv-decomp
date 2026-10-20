@@ -9,7 +9,7 @@ void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
-void EntityAi_OnHit(char *);
+void EntityAi_OnHit(Entity *);
 void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
@@ -91,19 +91,19 @@ void Spider_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         ai_state->think = Spider_Think;
-        ai_state->animate = (void (*)(void))Spider_Animate;
-        ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
-        ai_state->move = (void (*)(void))EntityAi_Move;
-        ai_state->dormant = (void (*)(void))Spider_Dormant;
-        ai_state->death = (void (*)(void))EntityAi_Death;
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        ai_state->animate = Spider_Animate;
+        ai_state->on_hit = EntityAi_OnHit;
+        ai_state->move = EntityAi_Move;
+        ai_state->dormant = Spider_Dormant;
+        ai_state->death = EntityAi_Death;
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
         ai_state->think = Spider_Think;
-        ai_state->animate = (void (*)(void))Spider_Animate;
-        ai_state->on_hit = (void (*)(void))Spider_OnHit;
-        ai_state->move = (void (*)(void))EntityAi_Move;
-        ai_state->dormant = (void (*)(void))Spider_Dormant;
-        ai_state->death = (void (*)(void))Spider_Death;
+        ai_state->animate = Spider_Animate;
+        ai_state->on_hit = Spider_OnHit;
+        ai_state->move = EntityAi_Move;
+        ai_state->dormant = Spider_Dormant;
+        ai_state->death = Spider_Death;
         EntityAi_StartAction(entity, Spider_DropToFloor, 1);
     }
     ai_state->pose_blend_weight = 0.5f;
@@ -199,7 +199,7 @@ static void Spider_ThinkWander(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The think function of state 2 (called under `entity->state == 2`, not from a switch): as
@@ -301,7 +301,7 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, the shots turned towards a point 30
@@ -355,7 +355,7 @@ static void Spider_RangedAttack(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -393,7 +393,7 @@ static void Spider_Dormant(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -500,15 +500,15 @@ static void Spider_DropToFloor(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
         ai_state->step_index = 0;
-        ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
-        ai_state->death = (void (*)(void))EntityAi_Death;
+        ai_state->on_hit = EntityAi_OnHit;
+        ai_state->death = EntityAi_Death;
         entity->busy_flags = 0;
         entity->move_command = 0;
         entity->action_timer = 0;
         if (ENTITY_FLAG_BITS(entity)->bit5) {
             ai_state->think(entity, 1);
         } else {
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+            EntityAi_StartAction(entity, ai_state->move, 1);
         }
     } else if (hit == 2 || hit == 3) {
         Vector_Copy(entity->model->position, landing);
@@ -518,15 +518,15 @@ static void Spider_DropToFloor(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
         ai_state->step_index = 1;
-        ai_state->on_hit = (void (*)(void))Spider_OnHit;
-        ai_state->death = (void (*)(void))Spider_Death;
+        ai_state->on_hit = Spider_OnHit;
+        ai_state->death = Spider_Death;
         entity->busy_flags = 0;
         entity->move_command = 0;
         entity->action_timer = 0;
         if (ENTITY_FLAG_BITS(entity)->bit5) {
             ai_state->think(entity, 1);
         } else {
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+            EntityAi_StartAction(entity, ai_state->move, 1);
         }
     } else {
         Vector_Scale(direction, direction, 20.0f);
@@ -562,9 +562,9 @@ static void Spider_LevelOut(Entity *entity) {
             entity->action_timer = 0;
             ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
-            ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
-            ai_state->death = (void (*)(void))EntityAi_Death;
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+            ai_state->on_hit = EntityAi_OnHit;
+            ai_state->death = EntityAi_Death;
+            EntityAi_StartAction(entity, ai_state->move, 1);
         }
     }
 }

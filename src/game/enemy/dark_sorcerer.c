@@ -8,16 +8,16 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
+int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(void);
+void EntityAi_Animate(Entity *);
 extern s32 entity_type_handlers[][2];
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(char *, void (*)(void), int);
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
@@ -101,10 +101,10 @@ void DarkSorcerer_Init(Entity *entity) {
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = DarkSorcerer_Think;
     ai_state->animate = EntityAi_Animate;
-    ai_state->on_hit = (void (*)(void))DarkSorcerer_OnHit;
-    ai_state->move = (void (*)(void))DarkSorcerer_Move;
-    ai_state->dormant = (void (*)(void))DarkSorcerer_Dormant;
-    ai_state->death = (void (*)(void))DarkSorcerer_Death;
+    ai_state->on_hit = DarkSorcerer_OnHit;
+    ai_state->move = DarkSorcerer_Move;
+    ai_state->dormant = DarkSorcerer_Dormant;
+    ai_state->death = DarkSorcerer_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -113,13 +113,13 @@ void DarkSorcerer_Init(Entity *entity) {
     }
     entity->target = NULL;
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+    EntityAi_StartAction(entity, ai_state->dormant, 1);
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
     ai_state->pose_blend_weight = 0.5f;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The on_hit handler: as EntityAi_OnHit, but it leaves the target and flag bit 10 as they are. */
@@ -133,12 +133,12 @@ static void DarkSorcerer_OnHit(Entity *entity) {
     hit_strength = (flags >> 36) & 3;
     if (hit_strength == 1) {
         if ((s32)(flags >> 19) & 1) {
-            EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionRewind, 0);
+            EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
-            EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionLight, 0);
+            EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);
         }
     } else if (hit_strength == 2) {
-        EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
+        EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
 }
@@ -303,7 +303,7 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 unknown) {
         entity->move_command |= EntityAi_TurnCommand(entity);
         break;
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The move handler: only picks the animation, 6 or 7 for command bits 4 and 8, 3 forward, 5
@@ -468,7 +468,7 @@ static void DarkSorcerer_Dormant(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -534,7 +534,7 @@ static void DarkSorcerer_MeleeAttack(Entity *entity) {
                 ai_state->think(entity, 1);
                 return;
             }
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+            EntityAi_StartAction(entity, ai_state->move, 1);
             return;
         }
         break;
@@ -592,7 +592,7 @@ static void DarkSorcerer_RangedAttack(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
             return;
         }
@@ -719,7 +719,7 @@ static void DarkSorcerer_PlayAnim17AndShoot(Entity *entity) {
                 ai_state->think(entity, 1);
                 return;
             }
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+            EntityAi_StartAction(entity, ai_state->move, 1);
             return;
         }
         break;
@@ -848,7 +848,7 @@ static void DarkSorcerer_PlayAnim18AndShoot(Entity *entity) {
                 ai_state->think(entity, 1);
                 return;
             }
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+            EntityAi_StartAction(entity, ai_state->move, 1);
             return;
         }
         break;
@@ -890,7 +890,7 @@ static void DarkSorcerer_PlayAnim19StartScripts(Entity *entity) {
                 ai_state->think(entity, 1);
                 return;
             }
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+            EntityAi_StartAction(entity, ai_state->move, 1);
             return;
         }
         break;

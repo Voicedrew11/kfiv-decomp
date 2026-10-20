@@ -54,9 +54,9 @@ void Ini_SetMagicWind(char *text);
 void Ini_SetMagicWater(char *text);
 void Ini_SetMagicHoly(char *text);
 void Ini_SetMagicDark(char *text);
-void Ini_SetDebugAutoRecv(void);
-void Ini_SetDebugDash(void);
-void Ini_SetDebugMagicRapidFire(void);
+void Ini_SetDebugAutoRecv(char *text);
+void Ini_SetDebugDash(char *text);
+void Ini_SetDebugMagicRapidFire(char *text);
 
 /* 0x42B810 the keys of ini/NNNN.ini and what reads each, ended by a NULL handler */
 IniKeyHandler ini_keys[30] = {
@@ -86,9 +86,9 @@ IniKeyHandler ini_keys[30] = {
     { "magic_water", Ini_SetMagicWater },
     { "magic_holy", Ini_SetMagicHoly },
     { "magic_dark", Ini_SetMagicDark },
-    { "debug_auto_recv", (void (*)(char *))Ini_SetDebugAutoRecv },
-    { "debug_dash", (void (*)(char *))Ini_SetDebugDash },
-    { "debug_magic_rapid_fire", (void (*)(char *))Ini_SetDebugMagicRapidFire },
+    { "debug_auto_recv", Ini_SetDebugAutoRecv },
+    { "debug_dash", Ini_SetDebugDash },
+    { "debug_magic_rapid_fire", Ini_SetDebugMagicRapidFire },
     { "", NULL },
 };
 /* 0x42BBE0 effect/item_effect.c's item_effect_defs as indexed from item kind 0 */
@@ -421,15 +421,15 @@ static void Ini_SetMagicSchool(int school, char *text) {
 }
 
 /* ini/NNNN.ini, key "debug_auto_recv=": empty in retail. */
-void Ini_SetDebugAutoRecv(void) {
+void Ini_SetDebugAutoRecv(char *text) {
 }
 
 /* ini/NNNN.ini, key "debug_dash=": empty in retail. */
-void Ini_SetDebugDash(void) {
+void Ini_SetDebugDash(char *text) {
 }
 
 /* ini/NNNN.ini, key "debug_magic_rapid_fire=": empty in retail. */
-void Ini_SetDebugMagicRapidFire(void) {
+void Ini_SetDebugMagicRapidFire(char *text) {
 }
 
 /* Sets the text Ini_ReadLine reads lines from. */

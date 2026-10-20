@@ -6,7 +6,7 @@
 
 int Game_GetTriggerItem(int, int);
 void MapObject_ShowMarkerStone(MapObject *, int);
-void MapObject_RebuildMatrices(char *);
+void MapObject_RebuildMatrices(MapObject *object);
 void Matrix_Multiply(void *, void *, void *);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Copy(void *, void *);
@@ -17,7 +17,7 @@ void Vector_Scale(float *, float *, float);
 void Vector_Add(void *, void *, void *);
 int Game_ClearTriggerItem(int, int);
 void Player_AddItem(int);
-void MapObject_RebuildMarkerMatrices(char *);
+void MapObject_RebuildMarkerMatrices(MapObject *object);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 int Game_AddTriggerItem(int, int, int);
@@ -81,7 +81,7 @@ void MapObject_UpdateEmptyMarker(MapObject *object) {
         object->state_flags |= MAP_OBJECT_ON;
         MAP_OBJECT_BYTES(object)->step = 3;
         MapObject_StepAnim(object);
-        MapObject_RebuildMatrices((char *)object);
+        MapObject_RebuildMatrices(object);
         Vector_Copy(&origin, part->position);
         origin.w = 1.0f;
         Vector_Copy(&target, player_state);
@@ -149,7 +149,7 @@ void MapObject_UpdateFilledMarker(MapObject *object) {
         item = ((int (*)(int, int, void *, int))Game_GetTriggerItem)(tag, object->source->spawn_flags.bytes[2], work, timer);
         Game_ClearTriggerItem(tag, object->source->spawn_flags.bytes[2]);
         MapObject_StepAnim(object);
-        MapObject_RebuildMatrices((char *)object);
+        MapObject_RebuildMatrices(object);
         Player_AddItem(item);
         object->state_flags &= ~MAP_OBJECT_ON;
         game_status.update_hold_flags |= 1;
@@ -175,7 +175,7 @@ void MapObject_LiftMarkerStone(MapObject *object) {
         return;
     }
     MAP_OBJECT_BYTES(object)->step = 6;
-    MapObject_RebuildMarkerMatrices((char *)object);
+    MapObject_RebuildMarkerMatrices(object);
     object->model->update_bone_points(object->model);
     point = (void *)object->model->get_point(object->model, 0);
     Vector_Copy(&origin, point);
@@ -211,7 +211,7 @@ void MapObject_MoveMarkerStoneOut(MapObject *object) {
 }
 
 /* Every-frame hook of the markers: MapObject_RebuildMatrices. */
-void MapObject_RebuildMarkerMatrices(char *object) {
+void MapObject_RebuildMarkerMatrices(MapObject *object) {
     MapObject_RebuildMatrices(object);
 }
 

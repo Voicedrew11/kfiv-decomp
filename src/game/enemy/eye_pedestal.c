@@ -11,7 +11,7 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void Vector_Copy(void *, void *);
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
@@ -22,7 +22,7 @@ int Motion_Start(void *, int, int, u32, int);
 extern PlayerData player_state;
 
 static void EyePedestal_Animate(Entity *entity);
-static void EyePedestal_Think(Entity *entity);
+static void EyePedestal_Think(Entity *entity, s32 run_now);
 
 /* Set-up of a type 31 entity: clears its work area and installs the type's handlers. */
 void EyePedestal_Init(Entity *entity) {
@@ -39,8 +39,8 @@ void EyePedestal_Init(Entity *entity) {
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    ai_state->think = (void (*)(Entity *, s32))EyePedestal_Think;
-    ai_state->animate = (void (*)(void))EyePedestal_Animate;
+    ai_state->think = EyePedestal_Think;
+    ai_state->animate = EyePedestal_Animate;
     ai_state->on_hit = NULL;
     ai_state->move = NULL;
     ai_state->dormant = NULL;
@@ -60,7 +60,7 @@ void EyePedestal_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate, but the motion never moves the entity, and with flag
@@ -106,7 +106,7 @@ static void EyePedestal_Animate(Entity *entity) {
    frames (counted in work byte unk7A) it puts the player's position, 220 less in y, in work floats
    unk48 to unk50. It keeps flag bits 16, 18 and 21 set, flag bit 9 set unless EntitySpawnInfo.spawn_mode
    is, and plays animation 0 while flag bit 29 is set and animation 1 otherwise. */
-static void EyePedestal_Think(Entity *entity) {
+static void EyePedestal_Think(Entity *entity, s32 run_now) {
     EntityAiStateKind1740A8 *ai_state = (EntityAiStateKind1740A8 *)&entity->ai_state;
 
     if (ai_state->think_flag != 0) {

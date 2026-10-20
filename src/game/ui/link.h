@@ -10,7 +10,7 @@ typedef struct LinkNode {
     void *pool_node;                /* 0x0C */
     struct LinkNode *target_node;   /* 0x10 the node this load is for: its model file is read and the buffer goes to it */
     struct LinkNode *next;          /* 0x14 */
-    void (*callback)(void);         /* 0x18 */
+    void (*callback)(struct LinkNode *node); /* 0x18 */
     s32 stage;                      /* 0x1C which stage of the load runs next */
     s32 done;                       /* 0x20 1 once the load has finished */
     s8 slot;                        /* 0x24 which pool_part_sources entry its file is for (Menu_FinishWornModelLoad) */

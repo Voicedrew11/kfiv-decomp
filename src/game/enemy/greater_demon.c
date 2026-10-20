@@ -18,10 +18,10 @@ static KfVector climb_points[3]; /* 0x4FF390 the points GreaterDemon_Think climb
 
 void EntityAi_SetUpdate(char *, s32);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(void);
+void EntityAi_Animate(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
@@ -45,7 +45,7 @@ static int GreaterDemon_SetRanged2Weight(Entity *entity);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
-int EntitySight_EntityInWay(int *);
+s32 EntitySight_EntityInWay(Entity *);
 void EntityAi_ClearTurnInPlace(Entity *);
 float EntityMath_AngleDifference(float, float);
 int EntityAi_TurnCommand(Entity *);
@@ -70,7 +70,7 @@ float cosf(float);
 float EntityMath_AngleXZ(float *, char *);
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(char *, void (*)(void), int); // match: an int result keeps $2 busy after the call
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 static void GreaterDemon_ReactionHeavy(Entity *);
 void EntityAi_SetAttackDelay(Entity *, s32);
 void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
@@ -96,10 +96,10 @@ void GreaterDemon_Init(Entity *entity) {
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = GreaterDemon_Think;
     ai_state->animate = EntityAi_Animate;
-    ai_state->on_hit = (void (*)(void))GreaterDemon_OnHit;
-    ai_state->move = (void (*)(void))GreaterDemon_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->on_hit = GreaterDemon_OnHit;
+    ai_state->move = GreaterDemon_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = EntityAi_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -109,9 +109,9 @@ void GreaterDemon_Init(Entity *entity) {
     entity->target = NULL;
     entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -121,7 +121,7 @@ void GreaterDemon_Init(Entity *entity) {
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     ai_state->mode_timer = entity->params->ranged_attacks[2].record.ranged_weight;
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 static void GreaterDemon_Think(Entity *entity, s32 unknown) {
@@ -246,7 +246,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            if (ai_state->player_far == 1 && ai_state->sliding == 0 && EntitySight_EntityInWay((int *)entity) == 0) {
+            if (ai_state->player_far == 1 && ai_state->sliding == 0 && EntitySight_EntityInWay(entity) == 0) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 0xF0;
                 ai_state->move_choice = 0;
@@ -282,7 +282,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
                 ai_state->turn_in_place = 0;
             }
         } else if (ai_state->player_far == 1) {
-            if (EntitySight_EntityInWay((int *)entity) == 0 && ai_state->sliding == 0) {
+            if (EntitySight_EntityInWay(entity) == 0 && ai_state->sliding == 0) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 0xF0;
                 ai_state->move_choice = 0;
@@ -307,7 +307,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 static void GreaterDemon_Move(Entity *entity) {
@@ -593,7 +593,7 @@ static void GreaterDemon_SlideToStop(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         entity->move_delta_x = -sinf(EntityMath_WrapAngle(entity->model->rotation[1])) * ai_state->unk44;
@@ -638,7 +638,7 @@ static void GreaterDemon_PlayAnim6Or7BySide(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -652,12 +652,12 @@ static void GreaterDemon_OnHit(Entity *entity) {
         entity->target = NULL;
         entity->flags &= ~ENTITY_FLAG_400;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
-        EntityAi_SetReaction((char *)entity, (void (*)(void))GreaterDemon_ReactionHeavy, 0);
+        EntityAi_SetReaction(entity, GreaterDemon_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
 }
 
-int EntityAi_SetReaction(char *, void (*)(void), int); // match: an int result keeps $2 busy after the call
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 
 static void GreaterDemon_ReactionHeavy(Entity *entity) {
     EntityAiStateKind168160 *ai_state = (EntityAiStateKind168160 *)&entity->ai_state;
@@ -691,14 +691,14 @@ static void GreaterDemon_ReactionHeavy(Entity *entity) {
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
-            EntityAi_SetReaction((char *)entity, NULL, 0);
+            EntityAi_SetReaction(entity, NULL, 0);
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -744,7 +744,7 @@ static void GreaterDemon_Guard(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -863,7 +863,7 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -945,7 +945,7 @@ static void GreaterDemon_RangedAttack(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;

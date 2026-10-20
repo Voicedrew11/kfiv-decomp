@@ -7,9 +7,9 @@
 #include "entity/entity_world.h"
 
 void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
+int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_Think(Entity *, s32);
 void EntityAi_Dormant(Entity *);
@@ -17,14 +17,14 @@ void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(char *, void (*)(void), int);
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 extern void EntityAi_ReactionHeavy(Entity *);
 extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
 float EntityMath_DistanceXZ(void *, void *);
 s32 EntityAi_CanAttack(Entity *);
-int EntitySight_EntityInWay(int *);
+s32 EntitySight_EntityInWay(Entity *);
 int EntityAi_PickAttack(char *);
 float EntityMath_AngleDifference(float, float);
 void EntityAi_MeleeAttack(Entity *);
@@ -81,15 +81,15 @@ void GoldenStatue_Init(Entity *entity) {
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    ai_state->animate = (void (*)(void))GoldenStatue_Animate;
-    ai_state->on_hit = (void (*)(void))GoldenStatue_OnHit;
-    ai_state->move = (void (*)(void))GoldenStatue_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->animate = GoldenStatue_Animate;
+    ai_state->on_hit = GoldenStatue_OnHit;
+    ai_state->move = GoldenStatue_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = EntityAi_Death;
     if (entity->spawn_info->spawn_mode == 1) {
-        ai_state->think = (void (*)(Entity *, s32))GoldenStatue_ThinkWaitAtPost;
+        ai_state->think = GoldenStatue_ThinkWaitAtPost;
     } else if (entity->spawn_info->spawn_mode == 2) {
-        ai_state->think = (void (*)(Entity *, s32))GoldenStatue_ThinkNoStates;
+        ai_state->think = GoldenStatue_ThinkNoStates;
     } else {
         ai_state->think = EntityAi_Think;
     }
@@ -102,9 +102,9 @@ void GoldenStatue_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -113,7 +113,7 @@ void GoldenStatue_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The on_hit handler: as EntityAi_OnHit, but only a heavy hit starts a reaction
@@ -127,7 +127,7 @@ static void GoldenStatue_OnHit(Entity *entity) {
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     flags = entity->flags;
     if (((flags >> 36) & 3) == 2) {
-        EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
+        EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
 }
@@ -191,7 +191,7 @@ static void GoldenStatue_WalkToPost(Entity *entity, s32 unknown) {
     if (EntityMath_DistanceXZ(entity->model->position, point) < limit) {
         ai_state->move_choice = 1;
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* Helper of GoldenStatue_ThinkWaitAtPost, called while work bytes unk78 and unk79 are set: clears unk78
@@ -212,8 +212,7 @@ static void GoldenStatue_TurnAtPost(Entity *entity, s32 unknown) {
     if (EntityMath_DistanceXZ(entity->model->position, home) > range) {
         ai_state->move_choice = 0;
     }
-    // match: EntityAi_CanAttack takes the entity
-    if (((int (*)(Entity *))EntityAi_CanAttack)(entity) && !EntitySight_EntityInWay((int *)entity)) {
+    if (EntityAi_CanAttack(entity) && !EntitySight_EntityInWay(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -232,7 +231,7 @@ static void GoldenStatue_TurnAtPost(Entity *entity, s32 unknown) {
     } else {
         ai_state->turn_in_place = 0;
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* Helper of GoldenStatue_ThinkWaitAtPost, called while work byte unk78 is set and unk79 is 0: attacks as
@@ -242,8 +241,7 @@ static void GoldenStatue_StandAtPost(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 angle;
 
-    // match: EntityAi_CanAttack takes the entity
-    if (((int (*)(Entity *))EntityAi_CanAttack)(entity) && !EntitySight_EntityInWay((int *)entity)) {
+    if (EntityAi_CanAttack(entity) && !EntitySight_EntityInWay(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -256,7 +254,7 @@ static void GoldenStatue_StandAtPost(Entity *entity, s32 unknown) {
         ai_state->part_angle_x = entity->heading_to_player;
         ai_state->turn_in_place = 1;
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The think handler of mode 2 (EntitySpawnInfo.spawn_mode is 2), which GoldenStatue_ThinkWaitAtPost also
@@ -311,14 +309,14 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
     }
     if (EntityMath_DistanceXZ(entity->spawn_info, &player_state) > entity->spawn_info->wander_radius) {
         if (ENTITY_FLAG_BITS(entity)->bit32) {
-            if (EntityAi_CanShoot(entity) && !EntitySight_EntityInWay((int *)entity)) {
+            if (EntityAi_CanShoot(entity) && !EntitySight_EntityInWay(entity)) {
                 EntityAi_PickRangedAttack(entity);
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
                 return;
             }
         }
     } else if (ENTITY_FLAG_BITS(entity)->bit32) {
-        if (EntityAi_CanMelee(entity) && !EntitySight_EntityInWay((int *)entity)) {
+        if (EntityAi_CanMelee(entity) && !EntitySight_EntityInWay(entity)) {
             EntityAi_PickMeleeAttack(entity);
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             return;
@@ -356,7 +354,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
                 } else {
                     entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
                 }
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+                EntityAi_StartAction(entity, ai_state->move, unknown);
                 return;
             }
         } else {
@@ -366,7 +364,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
                 ai_state->move_choice = 0;
                 return;
             }
-            if (ENTITY_FLAG_BITS(entity)->bit32 && EntityAi_CanShoot(entity) && !EntitySight_EntityInWay((int *)entity)) {
+            if (ENTITY_FLAG_BITS(entity)->bit32 && EntityAi_CanShoot(entity) && !EntitySight_EntityInWay(entity)) {
                 EntityAi_PickRangedAttack(entity);
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
                 return;
@@ -377,7 +375,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
                 } else {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
                 }
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+                EntityAi_StartAction(entity, ai_state->move, unknown);
                 return;
             }
         }
@@ -408,7 +406,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The move handler: turns as the command says and does not move the entity itself; picks animation

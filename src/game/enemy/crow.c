@@ -45,11 +45,11 @@ void Crow_Init(Entity *entity) {
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Crow_Think;
-    ai_state->animate = (void (*)(void))Crow_Animate;
+    ai_state->animate = Crow_Animate;
     ai_state->on_hit = NULL;
-    ai_state->move = (void (*)(void))EntityAi_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))Crow_Death;
+    ai_state->move = EntityAi_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = Crow_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -58,9 +58,9 @@ void Crow_Init(Entity *entity) {
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     ai_state->pose_blend_weight = 0.5f;
@@ -137,7 +137,7 @@ static void Crow_PickAction(Entity *entity, s32 unknown) {
             entity->action_timer = rand() % 60 + 0x78;
         }
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
     return;
 }
 
@@ -168,7 +168,7 @@ static void Crow_MoveOffAndRemove(Entity *entity, s32 unknown) {
     if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) > 10000.0f) {
         ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The death action (busy bit 0x40): as EntityAi_Death; all the while it pitches the entity towards
@@ -259,7 +259,7 @@ static void Crow_PlayAnim20(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -291,7 +291,7 @@ static void Crow_PlayAnim21(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;

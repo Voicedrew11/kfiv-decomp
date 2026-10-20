@@ -10,7 +10,7 @@ void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
-void EntityAi_OnHit(char *);
+void EntityAi_OnHit(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
@@ -70,12 +70,12 @@ void BloodBat_Init(Entity *entity) {
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    ai_state->think = (void (*)(Entity *, s32))BloodBat_Think;
-    ai_state->animate = (void (*)(void))BloodBat_Animate;
-    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
-    ai_state->move = (void (*)(void))BloodBat_Move;
-    ai_state->dormant = (void (*)(void))BloodBat_Dormant;
-    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->think = BloodBat_Think;
+    ai_state->animate = BloodBat_Animate;
+    ai_state->on_hit = EntityAi_OnHit;
+    ai_state->move = BloodBat_Move;
+    ai_state->dormant = BloodBat_Dormant;
+    ai_state->death = EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -84,9 +84,9 @@ void BloodBat_Init(Entity *entity) {
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     ai_state->pose_blend_weight = 0.5f;
@@ -207,7 +207,7 @@ static int BloodBat_ThinkReturn(void *entity_arg, int unknown) {
             entity->move_command = EntityAi_MoveCommand3D(entity, 0, 50.0f);
         }
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The think function of every state but 2 (BloodBat_Think calls it): wanders. Each time the
@@ -235,7 +235,7 @@ static void BloodBat_ThinkWander(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand3D(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The think function of state 2: guard, dodge and the choice among attacking, closing in and
@@ -319,7 +319,7 @@ static int BloodBat_ThinkCombat(void *entity_arg, int unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The move handler: as EntityAi_Move, with the y part of the movement eased in work float unk48,
@@ -455,7 +455,7 @@ static void BloodBat_Dormant(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;

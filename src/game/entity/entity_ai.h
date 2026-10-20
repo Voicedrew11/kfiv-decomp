@@ -106,7 +106,7 @@ int EntityAi_TurnToPoint(Entity *entity, f32 *turn_rate, f32 *target);
 void EntityAi_SetAttackDelay(Entity *entity, s32 base);
 /* Sets the entity's reaction, the handler that runs in place of its action until it clears itself (NULL
    clears it), and puts the reaction's step, Entity.reaction_step, back to 0; optionally runs it now */
-int EntityAi_SetReaction(Entity *entity, void (*reaction)(void), int run_now);
+int EntityAi_SetReaction(Entity *entity, void (*reaction)(Entity *entity), int run_now);
 /* Raises the weight factor (Entity.attack_weights) of the attack in flag bits 58-59 by 5, kept within 0x40..0xC0 */
 void EntityAi_RaiseAttackWeight(Entity *entity);
 /* Raises the weight factors of the three ranged attacks (Entity.attack_weights[3..5]) by 2, kept within 0x40..0xC0 */

@@ -8,7 +8,7 @@
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
@@ -19,7 +19,7 @@ float EntityMath_AngleDifference(float, float);
 float EntityMath_EaseAngleToward(float *, float, float);
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(char *, void (*)(void), int);
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityAi_ReactionHeavy(Entity *);
 extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
@@ -63,11 +63,11 @@ void GiantSpider_Init(Entity *entity) {
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = GiantSpider_Think;
-    ai_state->animate = (void (*)(void))GiantSpider_Animate;
-    ai_state->on_hit = (void (*)(void))GiantSpider_OnHit;
-    ai_state->move = (void (*)(void))GiantSpider_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->animate = GiantSpider_Animate;
+    ai_state->on_hit = GiantSpider_OnHit;
+    ai_state->move = GiantSpider_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -76,9 +76,9 @@ void GiantSpider_Init(Entity *entity) {
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     if (unk138 != NULL) {
@@ -88,7 +88,7 @@ void GiantSpider_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate, but in place of the head turn it turns the part
@@ -136,7 +136,7 @@ static void GiantSpider_OnHit(Entity *entity) {
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
-    EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
+    EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     EntityAi_SetState((char *)entity, 2);
     ai_state->step_index = 1;
 }
@@ -181,7 +181,7 @@ static void GiantSpider_ThinkTurnToPlayer(Entity *entity, s32 unknown) {
             EntityAi_StartAction(entity, GiantSpider_PlayTurnAnim6Or11, unknown);
         }
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+        EntityAi_StartAction(entity, ai_state->move, unknown);
     }
 }
 
@@ -239,7 +239,7 @@ static void GiantSpider_ThinkCombat(Entity *entity, s32 unknown) {
             break;
         }
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The move handler: only picks the animation: 12 or 11 for command bit 0x100 or 0x200, 7 or 6 when
@@ -299,7 +299,7 @@ static void GiantSpider_PlayTurnAnim6Or11(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -336,7 +336,7 @@ static void GiantSpider_PlayTurnAnim7Or12(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -389,7 +389,7 @@ static void GiantSpider_RangedAttack(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;

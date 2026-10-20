@@ -310,7 +310,7 @@ void Entity_UpdateAll(void) {
             entity->ailment_3_frames = 0;
             entity->ailment_4_frames = 0;
         }
-        entity->distance_to_player_3d = ((f32 (*)(f32 *, f32 *))EntityMath_Distance)(entity->model->position, player_state.position); // match: returns the distance (other files declare it void)
+        entity->distance_to_player_3d = EntityMath_Distance(entity->model->position, player_state.position);
         entity->distance_to_player = EntityMath_DistanceXZ(entity->model->position, player_state.position);
         entity->heading_to_player = EntityMath_HeadingTo(entity->model->position, player_state.position);
         entity->move_delta_x = entity->move_delta_y = entity->move_delta_z = entity->turn_delta_pitch = entity->turn_delta_yaw = entity->turn_delta_roll = 0.0f;
@@ -678,7 +678,7 @@ static MapRecordBounds *Entity_FindMapRecordUnder(Entity *entity) {
                 middle[0] = (record->box_lowest[0] + record->box_highest[0]) * 0.5f;
                 middle[1] = (record->box_lowest[1] + record->box_highest[1]) * 0.5f;
                 middle[2] = (record->box_lowest[2] + record->box_highest[2]) * 0.5f;
-                distance = ((f32 (*)(f32 *, f32 *))EntityMath_Distance)(middle, entity->model->position); // match: returns the distance (other files declare it void)
+                distance = EntityMath_Distance(middle, entity->model->position);
                 if (distance < nearest_distance) {
                     nearest_distance = distance;
                     nearest = record;

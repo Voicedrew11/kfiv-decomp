@@ -2,8 +2,8 @@
 #include "model/model.h"
 #include "core/game.h"
 
-void MapObject_UpdateOffSwitch(void *);
-void MapObject_UpdateOnSwitch(void *);
+void MapObject_UpdateOffSwitch(MapObject *switch_object);
+void MapObject_UpdateOnSwitch(MapObject *switch_object);
 extern u32 game_status_flags[];
 extern void *faced_object[];
 extern GameStatus game_status;
@@ -58,10 +58,10 @@ void MapObject_StartSwitch(MapObject *object) {
 }
 
 /* Update handler of a switch that is off: used by the player, it starts turning on. */
-void MapObject_UpdateOffSwitch(void *arg) {
+void MapObject_UpdateOffSwitch(MapObject *switch_object) {
     MapObject *object;
 
-    if (((game_status_flags[0] >> 1) & 1) && (object = faced_object[0]) == arg) {
+    if (((game_status_flags[0] >> 1) & 1) && (object = faced_object[0]) == switch_object) {
         MAP_OBJECT_BYTES(object)->step = 2;
         object->state_flags |= MAP_OBJECT_ON;
     }
@@ -78,10 +78,10 @@ void MapObject_UpdateSwitchTurningOn(MapObject *object) {
 }
 
 /* Update handler of a switch that is on: used by the player, it starts turning off. */
-void MapObject_UpdateOnSwitch(void *arg) {
+void MapObject_UpdateOnSwitch(MapObject *switch_object) {
     MapObject *object;
 
-    if (((game_status_flags[0] >> 1) & 1) && (object = faced_object[0]) == arg) {
+    if (((game_status_flags[0] >> 1) & 1) && (object = faced_object[0]) == switch_object) {
         MAP_OBJECT_BYTES(object)->step = 4;
         object->state_flags &= ~MAP_OBJECT_ON;
     }

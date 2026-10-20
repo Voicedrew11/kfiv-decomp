@@ -12,7 +12,7 @@ void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 void Motion_SetPartSlots(EntityModel *, s32, s32, s32);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_Dormant(Entity *);
 extern u32 frame_counter;
@@ -55,7 +55,7 @@ float EntityMath_AngleXZ(float *, char *);
 f32 EntityMath_Approach(f32, f32, f32);
 int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
 void EntityAi_LowerWeightsAfterHit(char *);
-int EntityAi_SetReaction(char *, void (*)(void), int); // match: an int result keeps $2 busy after the call
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
 void EntityEvent_OnDeath(Entity *);
 int EntityAi_StepSlotMotion(Entity *, EntityMotionSlot *, int, f32);
@@ -69,7 +69,7 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 unknown);
 static void DarkBird_ThinkIdle(Entity *entity, s32 unknown);
 static void DarkBird_Move(Entity *entity);
 static void DarkBird_ApplyMoveCommand(Entity *entity);
-static int DarkBird_SteerToTargetCommand(Entity *entity);
+static int DarkBird_SteerToTargetCommand(Entity *entity, s32 unused, f32 unused_weight);
 static void DarkBird_DormantMoveToCircle(Entity *entity);
 static void DarkBird_ApproachForMelee(Entity *entity);
 static void DarkBird_MeleeAttack(Entity *entity);
@@ -100,14 +100,14 @@ void DarkBird_Init(Entity *entity) {
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = DarkBird_Think;
-    ai_state->animate = (void (*)(void))DarkBird_Animate;
-    ai_state->on_hit = (void (*)(void))DarkBird_OnHit;
-    ai_state->move = (void (*)(void))DarkBird_Move;
-    ai_state->death = (void (*)(void))DarkBird_Death;
+    ai_state->animate = DarkBird_Animate;
+    ai_state->on_hit = DarkBird_OnHit;
+    ai_state->move = DarkBird_Move;
+    ai_state->death = DarkBird_Death;
     if (entity->spawn_info->spawn_mode == 1) {
-        ai_state->dormant = (void (*)(void))DarkBird_DormantMoveToCircle;
+        ai_state->dormant = DarkBird_DormantMoveToCircle;
     } else {
-        ai_state->dormant = (void (*)(void))EntityAi_Dormant;
+        ai_state->dormant = EntityAi_Dormant;
     }
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
@@ -118,9 +118,9 @@ void DarkBird_Init(Entity *entity) {
     entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
     entity->target = NULL;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -133,7 +133,7 @@ void DarkBird_Init(Entity *entity) {
     slots->motion_slot_0.bit5 = TRUE;
     slots->motion_slot_0.bit6 = TRUE;
     slots->motion_slot_1.bit6 = TRUE;
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with DarkBird_ThinkIdle for state 0 and
@@ -316,10 +316,10 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 unknown) {
             entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
         } else {
             // match: retail passes two more arguments here and takes the result as 16 bits
-            entity->move_command = ((s16 (*)(Entity *, s32, f32))DarkBird_SteerToTargetCommand)(entity, 0, 0.0f);
+            entity->move_command = DarkBird_SteerToTargetCommand(entity, 0, 0.0f);
         }
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The think function of state 0: as EntityAi_ThinkIdle, always with a point to go to, the head
@@ -397,9 +397,9 @@ static void DarkBird_ThinkIdle(Entity *entity, s32 unknown) {
         entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
     } else {
         // match: retail passes two more arguments here and takes the result as 16 bits
-        entity->move_command = ((s16 (*)(Entity *, s32, f32))DarkBird_SteerToTargetCommand)(entity, 0, 0.0f);
+        entity->move_command = DarkBird_SteerToTargetCommand(entity, 0, 0.0f);
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The move handler: keeps animation 3 on both motion slots, flag bits 11 to 13 at 0. DarkBird_ApplyMoveCommand
@@ -515,7 +515,7 @@ static void DarkBird_ApplyMoveCommand(Entity *entity) {
 
 /* The movement command for flying at the target: forward (1) always, with a turn bit (0x101 / 0x201) while the
    target is off the heading by more than the turn limit; 0 without a target. */
-static int DarkBird_SteerToTargetCommand(Entity *entity) {
+static int DarkBird_SteerToTargetCommand(Entity *entity, s32 unused, f32 unused_weight) {
     float angle;
     float limit;
     int result;
@@ -581,7 +581,7 @@ static void DarkBird_DormantMoveToCircle(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -628,7 +628,7 @@ static void DarkBird_ApproachForMelee(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
             return;
         }
@@ -639,7 +639,7 @@ static void DarkBird_ApproachForMelee(Entity *entity) {
             entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
         } else {
             // match: retail passes two more arguments here and takes the result as 16 bits
-            entity->move_command = ((s16 (*)(Entity *, s32, f32))DarkBird_SteerToTargetCommand)(entity, 0, 0.0f);
+            entity->move_command = DarkBird_SteerToTargetCommand(entity, 0, 0.0f);
         }
         height = player_state.position[1] - entity->model->position[1];
         if (height < 200.0f || ENTITY_FLAG_BITS(entity)->bit44 == 1 || ENTITY_FLAG_BITS(entity)->bit45 == 1) {
@@ -713,7 +713,7 @@ static void DarkBird_MeleeAttack(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -811,7 +811,7 @@ static void DarkBird_RangedAttack(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -899,9 +899,9 @@ static void DarkBird_OnHit(Entity *entity) {
     entity->flags &= ~ENTITY_FLAG_400;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     if (((s32)(entity->flags >> 36) & 3) == 1) {
-        EntityAi_SetReaction((char *)entity, (void (*)(void))DarkBird_ReactionLight, 0);
+        EntityAi_SetReaction(entity, DarkBird_ReactionLight, 0);
     } else if (((s32)(entity->flags >> 36) & 3) == 2) {
-        EntityAi_SetReaction((char *)entity, (void (*)(void))DarkBird_ReactionHeavy, 0);
+        EntityAi_SetReaction(entity, DarkBird_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
 }
@@ -937,14 +937,14 @@ static void DarkBird_ReactionLight(Entity *entity) {
         break;
     case 2:
         EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
-        EntityAi_SetReaction((char *)entity, NULL, 0);
+        EntityAi_SetReaction(entity, NULL, 0);
         entity->busy_flags = 0;
         entity->move_command = 0;
         entity->action_timer = 0;
         if (ENTITY_FLAG_BITS(entity)->bit5) {
             ai_state->think(entity, 1);
         } else {
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+            EntityAi_StartAction(entity, ai_state->move, 1);
         }
         break;
     }
@@ -988,14 +988,14 @@ static void DarkBird_ReactionHeavy(Entity *entity) {
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
-            EntityAi_SetReaction((char *)entity, NULL, 0);
+            EntityAi_SetReaction(entity, NULL, 0);
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;

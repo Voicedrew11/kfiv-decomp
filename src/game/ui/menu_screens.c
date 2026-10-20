@@ -498,7 +498,7 @@ static inline s32 ScaleValue(s32 value, s32 percent, s32 divisor) {
     for (i = 0; i < (count); i++) {                                                                  \
         Menu_SetBlendMode((packets)[i].blend_mode);                                                  \
         MenuSprite_Draw((int)&(packets)[i], (packets)[i].handler_index + 1000, (param), (int)panel_part_alphas[i]); \
-        ((void (*)(u8))Menu_SetBlendMode)(0);                                                        \
+        Menu_SetBlendMode(0);                                                        \
     }
 extern s32 system_menu_line;
 extern s32 quit_choice;
@@ -666,7 +666,7 @@ static void Menu_FinishModelLoad(ChunkUpload *upload);
 static void Menu_OpenWornModelFile(LinkNode *node);
 static void Menu_WaitWornModelRead(ChunkUpload *upload);
 static void Menu_FinishWornModelLoad(LinkNode *node);
-static void Menu_StepWornModelLoad(ChunkUpload *upload);
+static void Menu_StepWornModelLoad(LinkNode *node);
 static void Menu_OpenPackageFile(ChunkUpload *upload);
 static void Menu_WaitPackageRead(ChunkUpload *upload);
 static void Menu_FinishPackageLoad(ChunkUpload *upload);
@@ -677,12 +677,12 @@ static void Menu_WriteSpellModelName(char *buffer, MenuItem *item);
 static void Menu_WriteGroup10ModelName(char *buffer, MenuItem *item);
 static void Menu_SetEquipModelNames(void);
 static void Menu_SetWornModelNames(void);
-static void Menu_ChainEquipModels(void);
+static void Menu_ChainEquipModels(s32 unused_arg);
 static void Menu_SetAllItemsModelNames(void);
-static void Menu_ChainAllItemsModels(void);
+static void Menu_ChainAllItemsModels(s32 unused_arg);
 static void Menu_SetSpellModelNames(void);
-static void Menu_ChainSpellModels(void);
-static void Menu_ChainKeyItemModels(void);
+static void Menu_ChainSpellModels(s32 unused_arg);
+static void Menu_ChainKeyItemModels(s32 unused_arg);
 static void Menu_ShiftSpellModelsNext(int unused);
 static void Menu_ShiftSpellModelsPrev(int unused);
 static void Menu_LoadPartFile(char *name, u32 *record_count, SpritePacket **records);
@@ -714,9 +714,9 @@ static void Menu_UpdateRecollection(HandlerContext *context);
 static void Menu_UpdateRecollectionPage(HandlerContext *context);
 static void Menu_UpdateVisibleItem(HandlerContext *context);
 static void Menu_UpdateSystem(MenuScreenContext *context);
-static int Menu_MoveSpellCursor(void);
-static int Menu_MoveEquipCursor(void);
-static s32 Menu_MoveAllItemsCursor(void);
+static int Menu_MoveSpellCursor(s32 unused_arg);
+static int Menu_MoveEquipCursor(s32 unused_arg);
+static s32 Menu_MoveAllItemsCursor(HandlerContext *context);
 static void Menu_UpdateCardSlot(void);
 static void Menu_UpdateSaveList(void);
 static void Menu_UpdateOptions(MenuScreenContext *context);
@@ -947,14 +947,14 @@ void Menu_StepModelLoads(int unused) {
 static void Menu_MoveLoadToSpare(void) {
     LinkNode *node = model_load_chain;
 
-    if (node != NULL && node->callback == (void (*)(void))Menu_StepModelLoad && node != &model_load_spare) {
+    if (node != NULL && node->callback == Menu_StepModelLoad && node != &model_load_spare) {
         model_load_spare = *node;
         Menu_TakeLoadBuffer(model_load_chain);
         model_load_chain->file_handle = -1;
         model_load_chain->done = 0;
         model_load_chain->stage = 0;
         model_load_chain = &model_load_spare;
-        if (model_load_spare.next != NULL && model_load_spare.next->callback == (void (*)(void))Menu_StepModelLoad) {
+        if (model_load_spare.next != NULL && model_load_spare.next->callback == Menu_StepModelLoad) {
             model_load_spare.next = NULL;
         }
         Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_spare);
@@ -968,14 +968,14 @@ static void Menu_CopyLoadToSpare(void) {
     LinkNode *node = model_load_chain;
 
     if (node != NULL) {
-        if (node->callback == (void (*)(void))Menu_StepModelLoad) {
+        if (node->callback == Menu_StepModelLoad) {
             if (node != &model_load_spare) {
                 model_load_spare = *node;
                 node->done = 0;
                 node->stage = 0;
                 model_load_spare.target_node = node;
                 model_load_chain = &model_load_spare;
-                if (model_load_spare.next != NULL && model_load_spare.next->callback == (void (*)(void))Menu_StepModelLoad) {
+                if (model_load_spare.next != NULL && model_load_spare.next->callback == Menu_StepModelLoad) {
                     model_load_spare.next = NULL;
                 }
                 return;
@@ -1355,11 +1355,11 @@ static const ChunkUploadStages stream_load_stages = { {
 } };
 
 /* The callback of the node that loads the worn models (worn_model_loader): runs the stage it is at, until all are loaded. */
-static void Menu_StepWornModelLoad(ChunkUpload *upload) {
+static void Menu_StepWornModelLoad(LinkNode *node) {
     ChunkUploadStages handlers = stream_load_stages;
 
-    if (upload->done == 0) {
-        handlers.stage[upload->stage](upload);
+    if (node->done == 0) {
+        handlers.stage[node->stage](node);
     }
 }
 
@@ -1452,7 +1452,7 @@ static void Menu_FreeLoadBuffer(MenuFreeRequest *request) {
 
 /* Puts every load buffer back on the free list (a screen is left); a load still in progress is kept, moved to
    the spare node, with the node it was for marked as having no slot. */
-void Menu_ResetLoadBuffers(void) {
+void Menu_ResetLoadBuffers(s32 unused) {
     LinkNode *loading = model_load_chain;
     u32 i;
 
@@ -1537,7 +1537,7 @@ static void Menu_SetWornModelNames(void) {
 /* Sets up the loads of the player's equipment models (nine nodes behind worn_model_loader) and of the five
    menu item models, and chains them all for the loader. */
 // match: the order of the statements decides which node address gets which register (and worn_model_loader gets none)
-static void Menu_ChainEquipModels(void) {
+static void Menu_ChainEquipModels(s32 unused_arg) {
     Menu_TakeLoadBuffer(&worn_model_loader);
     Menu_TakeLoadBuffer(&weapon_model_load);
     Menu_TakeLoadBuffer(&shield_model_load);
@@ -1557,16 +1557,16 @@ static void Menu_ChainEquipModels(void) {
     ring_model_load.slot = 7;
     bracelet_model_load.slot = 8;
     amulet_model_load.slot = 9;
-    worn_model_loader.callback = (void (*)(void))Menu_StepWornModelLoad;
-    weapon_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
-    shield_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
-    armor_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
-    helm_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
-    gauntlet_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
-    boot_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
-    ring_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
-    bracelet_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
-    amulet_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
+    worn_model_loader.callback = Menu_StepWornModelLoad;
+    weapon_model_load.callback = Menu_StepWornModelLoad;
+    shield_model_load.callback = Menu_StepWornModelLoad;
+    armor_model_load.callback = Menu_StepWornModelLoad;
+    helm_model_load.callback = Menu_StepWornModelLoad;
+    gauntlet_model_load.callback = Menu_StepWornModelLoad;
+    boot_model_load.callback = Menu_StepWornModelLoad;
+    ring_model_load.callback = Menu_StepWornModelLoad;
+    bracelet_model_load.callback = Menu_StepWornModelLoad;
+    amulet_model_load.callback = Menu_StepWornModelLoad;
     weapon_model_load.slot = 0;
     weapon_model_load.stage = 0;
     shield_model_load.stage = 0;
@@ -1596,15 +1596,15 @@ static void Menu_ChainEquipModels(void) {
     Menu_TakeLoadBuffer(&model_load_left);
     Menu_TakeLoadBuffer(&model_load_right);
     model_load_shown.next = &model_load_up;
-    model_load_shown.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_shown.callback = Menu_StepModelLoad;
     model_load_up.next = &model_load_down;
-    model_load_up.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_up.callback = Menu_StepModelLoad;
     model_load_down.next = &model_load_left;
-    model_load_down.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_down.callback = Menu_StepModelLoad;
     model_load_left.next = &model_load_right;
-    model_load_left.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_left.callback = Menu_StepModelLoad;
     model_load_right.next = NULL;
-    model_load_right.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_right.callback = Menu_StepModelLoad;
     model_load_shown.done = 0;
     model_load_up.done = 0;
     model_load_down.done = 0;
@@ -1657,7 +1657,7 @@ static void Menu_SetAllItemsModelNames(void) {
 }
 
 /* Opens main menu line 5: names the five models of the list of everything owned and chains their loads. */
-static void Menu_ChainAllItemsModels(void) {
+static void Menu_ChainAllItemsModels(s32 unused_arg) {
     if (owned_list_current[0] != 0) {
         Menu_SetAllItemsModelNames();
         Menu_TakeLoadBuffer(&model_load_shown);
@@ -1666,22 +1666,22 @@ static void Menu_ChainAllItemsModels(void) {
         Menu_TakeLoadBuffer(&model_load_left);
         Menu_TakeLoadBuffer(&model_load_right);
         model_load_shown.next = &model_load_up;
-        model_load_shown.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_shown.callback = Menu_StepModelLoad;
         model_load_shown.done = 0;
         model_load_up.next = &model_load_down;
-        model_load_up.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_up.callback = Menu_StepModelLoad;
         model_load_up.done = 0;
         model_load_up.stage = 0;
         model_load_down.next = &model_load_left;
-        model_load_down.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_down.callback = Menu_StepModelLoad;
         model_load_down.done = 0;
         model_load_down.stage = 0;
         model_load_left.next = &model_load_right;
-        model_load_left.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_left.callback = Menu_StepModelLoad;
         model_load_left.done = 0;
         model_load_left.stage = 0;
         model_load_right.next = NULL;
-        model_load_right.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_right.callback = Menu_StepModelLoad;
         model_load_right.done = 0;
         model_load_shown.stage = model_load_right.stage = 0;
         model_load_chain = &model_load_shown;
@@ -1696,7 +1696,7 @@ static void Menu_SetSpellModelNames(void) {
 }
 
 /* Opens main menu line 1: names the three spell models and chains the load nodes (nodes 3 and 4 apart, unused). */
-static void Menu_ChainSpellModels(void) {
+static void Menu_ChainSpellModels(s32 unused_arg) {
     Menu_SetSpellModelNames();
     Menu_TakeLoadBuffer(&model_load_shown);
     Menu_TakeLoadBuffer(&model_load_up);
@@ -1704,15 +1704,15 @@ static void Menu_ChainSpellModels(void) {
     Menu_TakeLoadBuffer(&model_load_left);
     Menu_TakeLoadBuffer(&model_load_right);
     model_load_shown.next = &model_load_up;
-    model_load_shown.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_shown.callback = Menu_StepModelLoad;
     model_load_up.next = &model_load_down;
-    model_load_up.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_up.callback = Menu_StepModelLoad;
     model_load_down.next = NULL;
-    model_load_down.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_down.callback = Menu_StepModelLoad;
     model_load_left.next = &model_load_right;
-    model_load_left.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_left.callback = Menu_StepModelLoad;
     model_load_right.next = NULL;
-    model_load_right.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_right.callback = Menu_StepModelLoad;
     model_load_shown.done = 0;
     model_load_up.done = 0;
     model_load_down.done = 0;
@@ -1732,14 +1732,14 @@ static const KeyItemNumbers key_item_unused_numbers = { { 5, 35, 36, 53, 80, 88,
 
 /* Sets up the loads of the twelve key item models (the model of each one held, a stand-in file
    for the others) and chains their nodes behind the node waiting. */
-static void Menu_ChainKeyItemModels(void) {
+static void Menu_ChainKeyItemModels(s32 unused_arg) {
     KeyItemNumbers numbers = key_item_numbers;
     KeyItemNumbers unused_numbers = key_item_unused_numbers; // match: a second table is copied and never read
     s32 i;
 
     for (i = 0; i < 12; i++) {
         Menu_TakeLoadBuffer(&key_item_model_loads[i]);
-        key_item_model_loads[i].callback = (void (*)(void))Menu_StepModelLoad;
+        key_item_model_loads[i].callback = Menu_StepModelLoad;
         key_item_model_loads[i].stage = 0;
         key_item_model_loads[i].done = 0;
         if (item_counts[numbers.number[i]] != 0) {
@@ -3036,13 +3036,13 @@ static void Menu_UpdateMain(HandlerContext *context) {
                             context->active_list = main_menu_line;
                             switch (context->active_list) {
                             case 0:
-                                ((void (*)(s32))Menu_ChainItemListModels)(0); // match: the callee takes nothing
+                                Menu_ChainItemListModels(0);
                                 break;
                             case 1:
-                                ((void (*)(s32))Menu_ChainSpellModels)(0); // match: the callee takes nothing
+                                Menu_ChainSpellModels(0);
                                 break;
                             case 2:
-                                ((void (*)(s32))Menu_ChainEquipModels)(0); // match: the callee takes nothing
+                                Menu_ChainEquipModels(0);
                                 break;
                             case 4:
                                 if (model_load_chain != NULL) {
@@ -3053,7 +3053,7 @@ static void Menu_UpdateMain(HandlerContext *context) {
                                 recollection_cursor = 0;
                                 break;
                             case 5:
-                                ((void (*)(s32))Menu_ChainAllItemsModels)(0); // match: the callee takes nothing
+                                Menu_ChainAllItemsModels(0);
                                 break;
                             }
                         }
@@ -3306,7 +3306,7 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
                     break;
                 case 7:
                     ((s32 (*)(s32))Menu_ResetLoadBuffers)(0); // match: called as if it took a number and returned one
-                    ((void (*)(s32))Menu_ChainKeyItemModels)(0); // match: the callee takes nothing
+                    Menu_ChainKeyItemModels(0);
                     menu_screen_handler = Menu_UpdateKeyItems;
                     break;
                 }
@@ -3348,7 +3348,7 @@ static void Menu_UpdateCastSpell(s32 context) {
         return;
     }
     if (cast_spell_state < 2) {
-        ((void (*)(s32))Menu_MoveSpellCursor)(context); // match: the callee takes nothing
+        Menu_MoveSpellCursor(context);
     }
     item = castable_spell_top[0];
     word.raw = 0x0C0AAE607C307080;
@@ -3585,7 +3585,7 @@ static void Menu_UpdateEquip(void) {
         equip_group_shown++;
         Sound_PlayMenu(1);
     } else if (equip_state < 2 && worn_model_loading == 0) {
-        ((void (*)(s32))Menu_MoveEquipCursor)(0); // match: the callee takes nothing
+        Menu_MoveEquipCursor(0);
     }
     if (equip_group_shown > 10) {
         equip_group_shown = 0;
@@ -4137,7 +4137,7 @@ pool_slots[15].part = NULL;
             if (screen_part_alphas[i] < 0.0f) {
                 memset(screen_part_alphas, 0, 0x400);
                 menu_screen_handler = Menu_OpenMain;
-                ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
+                Menu_ResetLoadBuffers(0);
                 PoolSlot_ClearParts();
                 panel_text_color.alpha = 0;
                 panel_text_color.red = panel_text_color.green = panel_text_color.blue = 0x80;
@@ -4204,7 +4204,7 @@ static void Menu_UpdateStatus(void) {
                 memset(screen_part_alphas, 0, 0x400);
                 if (key_items_state == 3) {
                     menu_screen_handler = (void *)Menu_OpenMain;
-                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
+                    Menu_ResetLoadBuffers(0);
                 } else {
                     menu_screen_handler = (void *)Menu_UpdateKeyItems;
                 }
@@ -4422,8 +4422,8 @@ static void Menu_UpdateKeyItems(void) {
                 memset(screen_part_alphas, 0, 0x400);
                 key_item_row = 0;
                 menu_screen_handler = (void *)Menu_UpdateUseItem;
-                ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
-                ((void (*)(s32))Menu_ChainItemListModels)(0); // match: the callee takes nothing
+                Menu_ResetLoadBuffers(0);
+                Menu_ChainItemListModels(0);
                 if (key_items_state == 5) {
                     use_item_state = 3;
                 }
@@ -4705,7 +4705,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
                     npc_package_load.done = 0;
                     npc_package_load.stage = 0;
                     model_load_chain = NULL;
-                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
+                    Menu_ResetLoadBuffers(0);
                 } else {
                     sceCdBreak();
                     File_Close(model_read_file);
@@ -4713,7 +4713,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
                     npc_package_load.done = 0;
                     npc_package_load.stage = 0;
                     model_load_chain = NULL;
-                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
+                    Menu_ResetLoadBuffers(0);
                 }
                 recollection_state = 0;
                 break;
@@ -4848,7 +4848,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     worn_bit = 0;
     bases = item_group_bases;
     if (visible_item_state < 2) {
-        ((void (*)(HandlerContext *))Menu_MoveAllItemsCursor)(context); // match: the callee takes nothing
+        Menu_MoveAllItemsCursor(context);
     }
     selected = owned_list_current[0];
     item = owned_list_top[0];
@@ -5176,7 +5176,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
                 memset(screen_part_alphas, 0, 0x400);
                 Menu_BuildItemRings();
                 menu_screen_handler = (void *)Menu_OpenMain;
-                ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
+                Menu_ResetLoadBuffers(0);
                 visible_item_state = 0;
                 visible_panel_state = 0;
                 detail_panel_open = 0;
@@ -5465,7 +5465,7 @@ s32 Menu_MoveItemListCursor(HandlerContext *context, s32 locked) {
 
 /* Moves the cursor of the spell list (castable_spell_cursor) a row, shifting the models with it. Returns 1 when a move
    button was pressed. */
-static int Menu_MoveSpellCursor(void) {
+static int Menu_MoveSpellCursor(s32 unused_arg) {
     MenuItem *cur = castable_spell_cursor[0];
     MenuItem *n;
 
@@ -5502,7 +5502,7 @@ static int Menu_MoveSpellCursor(void) {
 
 /* Moves the cursor inside the equipment list shown (buttons 0x80, 0x20), shifting the models with it. Returns 1
    when it moved. */
-static int Menu_MoveEquipCursor(void) {
+static int Menu_MoveEquipCursor(s32 unused_arg) {
     MenuItem *item = NULL;
 
     if (equip_list_shown[0] != NULL) {
@@ -5533,7 +5533,7 @@ static int Menu_MoveEquipCursor(void) {
 
 /* Moves the cursor of the list of everything owned (owned_list_current) one row (0x10, 0x40) or one page (0x20, 0x80,
    lists of 8 and more), scrolling the window and shifting the models. */
-static s32 Menu_MoveAllItemsCursor(void) {
+static s32 Menu_MoveAllItemsCursor(HandlerContext *context) {
     MenuItem *cursor = owned_list_current[0];
     MenuItem *next;
     s32 rows;
@@ -6803,7 +6803,7 @@ static void Menu_UpdateCardCheck(void) {
     MenuCursorBar bar;
     PadReport *report;
     u32 full_alpha;
-    s32 result = ((s32 (*)(void))SaveCard_Update)(); // match: its result is used here
+    s32 result = SaveCard_Update();
 
     switch (card_screen_state.check_step) {
     case 0:
@@ -7115,7 +7115,7 @@ static int Menu_DrawEquipItemText(s32 index) {
 }
 
 /* If the item list has anything: names its five models and chains the five load nodes for them. */
-void Menu_ChainItemListModels(void) {
+void Menu_ChainItemListModels(s32 unused) {
     if (item_list_cursor[0] != 0) {
         Menu_SetItemListModelNames();
         Menu_TakeLoadBuffer(&model_load_shown);
@@ -7124,22 +7124,22 @@ void Menu_ChainItemListModels(void) {
         Menu_TakeLoadBuffer(&model_load_left);
         Menu_TakeLoadBuffer(&model_load_right);
         model_load_shown.next = &model_load_up;
-        model_load_shown.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_shown.callback = Menu_StepModelLoad;
         model_load_shown.done = 0;
         model_load_up.next = &model_load_down;
-        model_load_up.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_up.callback = Menu_StepModelLoad;
         model_load_up.done = 0;
         model_load_up.stage = 0;
         model_load_down.next = &model_load_left;
-        model_load_down.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_down.callback = Menu_StepModelLoad;
         model_load_down.done = 0;
         model_load_down.stage = 0;
         model_load_left.next = &model_load_right;
-        model_load_left.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_left.callback = Menu_StepModelLoad;
         model_load_left.done = 0;
         model_load_left.stage = 0;
         model_load_right.next = NULL;
-        model_load_right.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_right.callback = Menu_StepModelLoad;
         model_load_right.done = 0;
         model_load_shown.stage = model_load_right.stage = 0;
         model_load_chain = &model_load_shown;

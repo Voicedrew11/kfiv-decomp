@@ -11,7 +11,7 @@ void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 void Motion_SetPartSlots(EntityModel *, s32, s32, s32);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_Dormant(Entity *);
 extern s32 entity_type_handlers[][2];
@@ -41,7 +41,7 @@ s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 void EntityAi_SetAttackDelay(Entity *, s32);
 void EntityAi_LowerWeightsAfterHit(char *);
-int EntityAi_SetReaction(char *entity, void (*callback)(void), int run);
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityAi_SetState(char *, u8);
 void EntityEvent_OnDeath(Entity *);
 float EntityMath_AngleXZ(float *, char *);
@@ -87,11 +87,11 @@ void Minion_Init(Entity *entity) {
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Minion_Think;
-    ai_state->animate = (void (*)(void))Minion_Animate;
-    ai_state->on_hit = (void (*)(void))Minion_OnHit;
-    ai_state->move = (void (*)(void))Minion_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))Minion_Death;
+    ai_state->animate = Minion_Animate;
+    ai_state->on_hit = Minion_OnHit;
+    ai_state->move = Minion_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = Minion_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -101,9 +101,9 @@ void Minion_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -122,7 +122,7 @@ void Minion_Init(Entity *entity) {
     ((EntityAiStateKind151D30 *)ai_state)->motion_slot_0.bit5 = 1;
     ((EntityAiStateKind151D30 *)ai_state)->motion_slot_0.bit6 = 1;
     ((EntityAiStateKind151D30 *)ai_state)->motion_slot_1.bit6 = 1;
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with Minion_ThinkCombat for state 2. Once
@@ -226,7 +226,7 @@ static void Minion_ThinkCombat(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
         }
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The animate handler: plays the two motion slots of the work area (unk80 and unk88) where
@@ -335,7 +335,7 @@ static void Minion_Guard(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -403,7 +403,7 @@ static void Minion_MeleeAttack(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -459,7 +459,7 @@ static void Minion_RangedAttack(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -525,9 +525,9 @@ static void Minion_OnHit(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit10 = 0;
     ENTITY_FLAG_BITS(entity)->bit9 = 0;
     if (ENTITY_FLAG_BITS(entity)->bits36 == 1) {
-        EntityAi_SetReaction((char *)entity, (void (*)(void))Minion_ReactionLight, 0);
+        EntityAi_SetReaction(entity, Minion_ReactionLight, 0);
     } else if (ENTITY_FLAG_BITS(entity)->bits36 == 2) {
-        EntityAi_SetReaction((char *)entity, (void (*)(void))Minion_ReactionHeavy, 0);
+        EntityAi_SetReaction(entity, Minion_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
 }
@@ -564,14 +564,14 @@ static void Minion_ReactionLight(Entity *entity) {
         break;
     case 2:
         EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
-        EntityAi_SetReaction((char *)entity, NULL, 0);
+        EntityAi_SetReaction(entity, NULL, 0);
         entity->busy_flags = 0;
         entity->move_command = 0;
         entity->action_timer = 0;
         if (ENTITY_FLAG_BITS(entity)->bit5) {
             entity->ai_state.think(entity, 1);
         } else {
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+            EntityAi_StartAction(entity, ai_state->move, 1);
         }
         break;
     }
@@ -612,14 +612,14 @@ static void Minion_ReactionHeavy(Entity *entity) {
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
-            EntityAi_SetReaction((char *)entity, NULL, 0);
+            EntityAi_SetReaction(entity, NULL, 0);
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -715,7 +715,7 @@ static void Minion_Dodge(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;

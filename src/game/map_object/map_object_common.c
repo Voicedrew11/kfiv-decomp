@@ -119,8 +119,7 @@ void MapObject_StopAmbientSound(MapTrigger *trigger) {
 
 /* Every-frame hook of most kinds: rebuilds the model matrices from the model's position and rotation (and the
    parts' animation), then updates the model's points. */
-void MapObject_RebuildMatrices(char *arg) {
-    MapObject *object = (MapObject *)arg;
+void MapObject_RebuildMatrices(MapObject *object) {
     int i;
     ModelPart *part;
     int part_count;

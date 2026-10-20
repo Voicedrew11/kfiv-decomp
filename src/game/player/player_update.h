@@ -18,9 +18,9 @@ void Player_SwingWeapon(u16 held, u16 pressed);
 void Player_InvokeTargetHandler(u16 target_id, u16 command);
 void Player_FireProjectile(u16 held, u16 pressed);
 void Player_DrawBow(u16 held, u16 pressed);
-void Player_PlayEquipSound(void);
-void Player_FinishWeaponMotion(void);
-void Player_HolsterWeapon(void);
+void Player_PlayEquipSound(u16 held, u16 pressed);
+void Player_FinishWeaponMotion(u16 held, u16 pressed);
+void Player_HolsterWeapon(u16 held, u16 pressed);
 int Player_CanFireAtAim(void);
 void Player_UpdateWeaponAim(void);
 void Player_Move(u16 held, u16 pressed); // match: retail passes both pad words; only held is used

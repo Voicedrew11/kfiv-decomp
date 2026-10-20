@@ -1684,7 +1684,7 @@ void EffectBobHoming_Update(EffectActor *effect) {
     effect->model->position.y += motion->bob_speed;
     if (effect->frame == effect->def->max_frames && effect->def->interval != 0) {
         // match: retail passes the rotation as a third argument the function does not take
-        effect->target_entity = (int)((Entity *(*)(EffectActor *, Vector4 *, Vector4 *))EffectHit_FindNearestEntity)(effect, &effect->model->position, &effect->model->rotation);
+        effect->target_entity = (int)EffectHit_FindNearestEntity(effect, &effect->model->position, &effect->model->rotation);
         motion->turn = 0.0f;
     }
     if (effect->target_entity != 0) {

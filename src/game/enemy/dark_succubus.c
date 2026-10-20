@@ -10,12 +10,12 @@
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_Dormant(Entity *);
 extern s32 entity_type_handlers[][2];
 void EntityAi_LowerWeightsAfterHit(char *);
-int EntityAi_SetReaction(char *, void (*)(void), int);
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityAi_SetState(char *, u8);
 void EntityAi_ReactionRewind(Entity *);
 int Motion_Step(void *, int);
@@ -104,11 +104,11 @@ void DarkSuccubus_Init(Entity *entity) {
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = DarkSuccubus_Think;
-    ai_state->animate = (void (*)(void))DarkSuccubus_Animate;
-    ai_state->on_hit = (void (*)(void))DarkSuccubus_OnHit;
-    ai_state->move = (void (*)(void))DarkSuccubus_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))DarkSuccubus_Death;
+    ai_state->animate = DarkSuccubus_Animate;
+    ai_state->on_hit = DarkSuccubus_OnHit;
+    ai_state->move = DarkSuccubus_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = DarkSuccubus_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -118,9 +118,9 @@ void DarkSuccubus_Init(Entity *entity) {
     entity->target = NULL;
     entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -130,7 +130,7 @@ void DarkSuccubus_Init(Entity *entity) {
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     // match: called as returning an int, which keeps $2 busy after the call
-    ((int (*)(EntityModel *, s32, s32))Motion_StepModel)(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
     entity->flags |= ENTITY_FLAG_40000;
 }
 
@@ -144,12 +144,12 @@ static void DarkSuccubus_OnHit(Entity *entity) {
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     if (((s32)(entity->flags >> 36) & 3) == 1) {
         if ((s32)(entity->flags >> 19) & 1) {
-            EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionRewind, 0);
+            EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
-            EntityAi_SetReaction((char *)entity, (void (*)(void))DarkSuccubus_ReactionLight, 0);
+            EntityAi_SetReaction(entity, DarkSuccubus_ReactionLight, 0);
         }
     } else if (((s32)(entity->flags >> 36) & 3) == 2) {
-        EntityAi_SetReaction((char *)entity, (void (*)(void))DarkSuccubus_ReactionHeavy, 0);
+        EntityAi_SetReaction(entity, DarkSuccubus_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
     ai_state->pause_timer = 0;
@@ -230,7 +230,7 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
             ENTITY_FLAGS(entity) &= ~0x3800;
             entity->target = entity->spawn_info;
             entity->move_command = EntityAi_MoveCommand(entity, 0, 500.0f) | (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST);
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, unknown);
         } else if ((s32)(ENTITY_FLAGS(entity) >> 53) & 1) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
@@ -412,7 +412,7 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
         entity->move_command |= EntityAi_TurnCommand(entity);
         break;
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The think function of state 2 while one to three of the six entities DarkSuccubus_CountLiveSpawns counts are
@@ -537,7 +537,7 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown) {
         entity->move_command |= EntityAi_TurnCommand(entity);
         break;
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The think function of state 2 while four to six of them are alive (work byte unk7C 2): as
@@ -672,7 +672,7 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknow
         entity->move_command |= EntityAi_TurnCommand(entity);
         break;
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The move handler: only picks the animation (6 or 7 sideways, 3 forwards, 5 backwards, else 0);
@@ -831,14 +831,14 @@ static void DarkSuccubus_ReactionLight(Entity *entity) {
         break;
     case 2:
         EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
-        EntityAi_SetReaction((char *)entity, NULL, 0);
+        EntityAi_SetReaction(entity, NULL, 0);
         entity->busy_flags = 0;
         entity->move_command = 0;
         entity->action_timer = 0;
         if ((s32)(entity->flags >> 5) & 1) {
             ai_state->think(entity, 1);
         } else {
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+            EntityAi_StartAction(entity, ai_state->move, 1);
         }
         break;
     }
@@ -868,14 +868,14 @@ static void DarkSuccubus_ReactionHeavy(Entity *entity) {
     case 2:
         if ((s32)(entity->flags >> 34) & 1) {
             EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
-            EntityAi_SetReaction((char *)entity, NULL, 0);
+            EntityAi_SetReaction(entity, NULL, 0);
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -986,7 +986,7 @@ static void DarkSuccubus_MeleeAttack(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -1043,7 +1043,7 @@ static void DarkSuccubus_RangedAttack(Entity *entity) {
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -1105,7 +1105,7 @@ static void DarkSuccubus_MoveAlongArc(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -1154,7 +1154,7 @@ static void DarkSuccubus_Dodge(Entity *entity) {
             } else if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -1192,7 +1192,7 @@ static void DarkSuccubus_DodgeAnim29Or30(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -1226,7 +1226,7 @@ static void DarkSuccubus_PlayAnim18Turning(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -1267,7 +1267,7 @@ static void DarkSuccubus_FadeOut(Entity *entity) {
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;

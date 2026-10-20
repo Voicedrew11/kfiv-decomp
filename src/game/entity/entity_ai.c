@@ -1829,12 +1829,13 @@ void EntityAi_SetAttackDelay(Entity *entity, s32 base) {
 
 /* Sets the entity's reaction, the handler that runs in place of its action until it clears itself (NULL
    clears it), and puts the reaction's step, Entity.reaction_step, back to 0; optionally runs it now. */
-int EntityAi_SetReaction(Entity *entity, void (*reaction)(void), int run_now) {
+int EntityAi_SetReaction(Entity *entity, void (*reaction)(Entity *entity), int run_now) {
     entity->ai_state.reaction = reaction;
     entity->reaction_step = 0;
     if (run_now != 0) {
         if (reaction != NULL) {
-            reaction();
+            // match: retail calls it without passing the entity
+            ((void (*)(void))reaction)();
         }
     }
     return 1;
