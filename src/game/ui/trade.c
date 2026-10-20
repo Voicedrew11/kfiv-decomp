@@ -41,6 +41,130 @@
 #define SAVE_SCREEN_STEP_SAVE_FAILED       11  /* the card failed during a save */
 #define SAVE_SCREEN_STEP_NO_ROOM           20  /* the card has no room, a press returns to the list */
 
+/* upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK: the material a smith upgrade of the item takes */
+#define UPGRADE_MATERIAL_BONE                 1
+#define UPGRADE_MATERIAL_SCALE                2
+#define UPGRADE_MATERIAL_CLAW                 3
+
+/* trade_screen_state: 0 fades in and 1 is open in every trade screen; the rest is per screen (its function) */
+#define TRADE_SCREEN_FADE_IN                  0
+#define TRADE_SCREEN_OPEN                     1
+
+/* trade_screen_state in Trade_UpdateSelectScreen: fades out to the owned or handover list, or leaves */
+#define TRADE_SELECT_TO_OWNED_LIST            2
+#define TRADE_SELECT_TO_HANDOVER_LIST         3
+#define TRADE_SELECT_TO_LEAVE                 4
+
+/* trade_screen_state in Trade_UpdateStockList: loads the next screen's models, then fades out to it */
+#define TRADE_STOCK_LOADING_TAKE              2
+#define TRADE_STOCK_LOADING_SELECT            3
+#define TRADE_STOCK_LOADING_LEAVE             4
+#define TRADE_STOCK_TO_TAKE_AMOUNT            5
+#define TRADE_STOCK_TO_SELECT                 6
+#define TRADE_STOCK_TO_LEAVE                  7
+
+/* trade_screen_state in Trade_UpdateTakeAmount: loads the models, then the amount was accepted or cancelled */
+#define TRADE_TAKE_LOADING_ACCEPT             3
+#define TRADE_TAKE_LOADING_CANCEL             4
+#define TRADE_TAKE_ACCEPTED                   5
+#define TRADE_TAKE_CANCELLED                  6
+
+/* trade_screen_state in Trade_UpdateOwnedList: loads the models, then fades out to the give amount or to the select screen */
+#define TRADE_OWNED_LOADING_GIVE              2
+#define TRADE_OWNED_LOADING_SELECT            3
+#define TRADE_OWNED_FADE_TO_GIVE_AMOUNT       4
+#define TRADE_OWNED_FADE_TO_SELECT            5
+
+/* trade_screen_state in Trade_UpdateGiveAmount: loads the models, then the amount was accepted or cancelled */
+#define TRADE_GIVE_LOADING_ACCEPT             3
+#define TRADE_GIVE_LOADING_CANCEL             4
+#define TRADE_GIVE_FADE_TO_SELECT             5
+#define TRADE_GIVE_FADE_TO_OWNED              6
+
+/* trade_panel_state: the panel's fade, 0 in, 1 open, 2 out and close, 3 out */
+#define TRADE_PANEL_FADE_IN                   0
+#define TRADE_PANEL_OPEN                      1
+#define TRADE_PANEL_CLOSE                     2
+#define TRADE_PANEL_FADE_OUT                  3
+
+/* smith_panel_state: the selected item's panel, 0 in, 1 open, 2 out and close, 3 out */
+#define SMITH_PANEL_FADE_IN                   0
+#define SMITH_PANEL_OPEN                      1
+#define SMITH_PANEL_CLOSE                     2
+#define SMITH_PANEL_FADE_OUT                  3
+
+/* context->active_list in Smith_UpdateSelectScreen: the line the cursor is on */
+#define SMITH_LINE_UPGRADE                    0
+#define SMITH_LINE_EARTH_STONE                1
+#define SMITH_LINE_COLLECT                    2
+
+/* smith_screen_state: 0 fades in and 1 is open in every smith screen; the rest is per screen (its function) */
+#define SMITH_SCREEN_FADE_IN                  0
+#define SMITH_SCREEN_OPEN                     1
+
+/* smith_screen_state in Smith_UpdateSelectScreen: fades out to a list or leaves */
+#define SMITH_SELECT_TO_UPGRADE_LIST          2
+#define SMITH_SELECT_TO_EARTH_STONE_LIST      3
+#define SMITH_SELECT_TO_COLLECT_LIST          4
+#define SMITH_SELECT_TO_LEAVE                 5
+
+/* smith_screen_state in Smith_UpdateUpgradeList: loads the confirm screen or the select screen, then fades out to it */
+#define SMITH_UPGRADE_LOADING_CONFIRM         2
+#define SMITH_UPGRADE_LOADING_SELECT          3
+#define SMITH_UPGRADE_FADE_TO_CONFIRM         4
+#define SMITH_UPGRADE_FADE_TO_SELECT          5
+
+/* smith_screen_state in Smith_UpdateUpgradeConfirm: the upgrade was accepted or cancelled */
+#define SMITH_CONFIRM_LOADING_ACCEPT          2
+#define SMITH_CONFIRM_LOADING_CANCEL          3
+#define SMITH_CONFIRM_ACCEPTED                4
+#define SMITH_CONFIRM_CANCELLED               5
+
+/* smith_screen_state in Smith_UpdateListWithConfirm: loads the item screen, the upgrade or the cancel, then fades out */
+#define SMITH_LIST_LOADING_ITEM               2
+#define SMITH_LIST_LOADING_UPGRADE            3
+#define SMITH_LIST_LOADING_CANCEL             4
+#define SMITH_LIST_LOADING_CLOSE_CONFIRM      5
+#define SMITH_LIST_FADE_TO_ITEM               6
+#define SMITH_LIST_UPGRADED_FADE_TO_SELECT    7
+#define SMITH_LIST_CANCELLED_FADE_TO_SELECT   8
+#define SMITH_LIST_CLOSE_CONFIRM              9
+
+/* smith_screen_state in Smith_UpdateItemScreen: loads the list, then fades back to it with or without its question */
+#define SMITH_ITEM_LOADING_LIST_WITH_CONFIRM  2
+#define SMITH_ITEM_LOADING_LIST               3
+#define SMITH_ITEM_FADE_TO_LIST_WITH_CONFIRM  4
+#define SMITH_ITEM_FADE_TO_LIST               5
+
+/* smith_screen_state in Smith_UpdateCollectList: loads the select screen, then the item was collected or the collect was cancelled */
+#define SMITH_COLLECT_LOADING_COLLECT         2
+#define SMITH_COLLECT_LOADING_BACK            3
+#define SMITH_COLLECT_COLLECTED_FADE_TO_SELECT 4
+#define SMITH_COLLECT_BACK_FADE_TO_SELECT     5
+
+/* system_screen_state: the save screen's system panel, 0 fades in and 1 is open */
+#define SYSTEM_SCREEN_FADE_IN                 0
+#define SYSTEM_SCREEN_OPEN                    1
+#define SYSTEM_SCREEN_TO_SAVE_LIST            2
+#define SYSTEM_SCREEN_TO_CARD_SELECT          3
+
+/* save_screen_state.dialog_id: the message the save screen shows (-1: none) */
+#define SAVE_DIALOG_NO_CARD_SLOT_1            4
+#define SAVE_DIALOG_NO_CARD_SLOT_2            5
+#define SAVE_DIALOG_CARD_ERROR                10
+#define SAVE_DIALOG_FORMAT_CONFIRM            12
+#define SAVE_DIALOG_FORMATTING                13
+#define SAVE_DIALOG_FORMAT_DONE               14
+#define SAVE_DIALOG_FORMAT_FAILED             15
+#define SAVE_DIALOG_NO_ROOM                   21
+
+/* handler_index of the save screen's slot_parts: the sprite kind each one draws */
+#define SAVE_SPRITE_DIALOG_FRAME              3
+#define SAVE_SPRITE_CARD_SLOT_1               26
+#define SAVE_SPRITE_CARD_SLOT_2               27
+#define SAVE_SPRITE_SELECTED_CARD             31
+#define SAVE_SPRITE_DIALOG_TEXT               28
+
 /* Appends node to the ring being built; the seventh one becomes the page mark. */
 #define LINK_ITEM(node, page_mark)          \
     count++;                                \
@@ -673,7 +797,7 @@ static void Trade_UpdateSelectScreen(HandlerContext *context) {
             bar.green = 0xFF;
             bar.blue = 0x78;
             bar_drawn = 1;
-            if (trade_screen_state == 1) {
+            if (trade_screen_state == TRADE_SCREEN_OPEN) {
                 screen_part_alphas[0xFD] = Trade_PulseValue(0x10, 0x20, screen_part_alphas[0xFD]);
             } else {
                 screen_part_alphas[0xFD] = 0.0f;
@@ -692,7 +816,7 @@ static void Trade_UpdateSelectScreen(HandlerContext *context) {
             if (context->active_list == 0) {
                 if (trade_stock_list_cursor[0] != NULL) {
                     Sound_PlayMenu(0);
-                    trade_screen_state = 2;
+                    trade_screen_state = TRADE_SELECT_TO_OWNED_LIST;
                     modal_input_locked = 1;
                 } else {
                     Sound_PlayMenu(3);
@@ -701,20 +825,20 @@ static void Trade_UpdateSelectScreen(HandlerContext *context) {
                 if (item_list_cursor[0] != NULL) {
                     Sound_PlayMenu(0);
                     modal_input_locked = 1;
-                    trade_screen_state = 3;
+                    trade_screen_state = TRADE_SELECT_TO_HANDOVER_LIST;
                 } else {
                     Sound_PlayMenu(3);
                 }
             }
         } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
-            trade_screen_state = 4;
+            trade_screen_state = TRADE_SELECT_TO_LEAVE;
             modal_input_locked = 1;
         }
     }
 
     switch (trade_screen_state) {
-    case 0:
+    case TRADE_SCREEN_FADE_IN:
         screen_part_alphas[0xFD] = 16.0f;
         for (i = 0; i < preshop_part_count; i++) {
             screen_part_alphas[i] += (f32)preshop_parts[i].alpha / 10.0f;
@@ -724,14 +848,14 @@ static void Trade_UpdateSelectScreen(HandlerContext *context) {
                     screen_part_alphas[i] = full_alpha;
                 }
                 modal_input_locked = 0;
-                trade_screen_state = 1;
+                trade_screen_state = TRADE_SCREEN_OPEN;
                 break;
             }
         }
         break;
-    case 2:
-    case 3:
-    case 4:
+    case TRADE_SELECT_TO_OWNED_LIST:
+    case TRADE_SELECT_TO_HANDOVER_LIST:
+    case TRADE_SELECT_TO_LEAVE:
         screen_part_alphas[0xFD] -= 1.6f;
         if (screen_part_alphas[0xFD] < 0.0f) {
             screen_part_alphas[0xFD] = 0.0f;
@@ -741,12 +865,12 @@ static void Trade_UpdateSelectScreen(HandlerContext *context) {
             if (screen_part_alphas[i] < 0.0f) {
                 memset(screen_part_alphas, 0, 0x400);
                 trade_handler = trade_list_handlers[context->active_list];
-                if (trade_screen_state == 2) {
+                if (trade_screen_state == TRADE_SELECT_TO_OWNED_LIST) {
                     item_list_first = owned_list_first;
                     item_list_last_page = owned_list_last_page;
                     item_list_count = owned_list_count;
                     Trade_ChainModels(0);
-                } else if (trade_screen_state == 3) {
+                } else if (trade_screen_state == TRADE_SELECT_TO_HANDOVER_LIST) {
                     item_list_first = handover_list_first;
                     item_list_last_page = handover_list_last_page;
                     item_list_count = handover_list_count;
@@ -754,7 +878,7 @@ static void Trade_UpdateSelectScreen(HandlerContext *context) {
                 } else {
                     trade_step++;
                 }
-                trade_screen_state = 0;
+                trade_screen_state = TRADE_SCREEN_FADE_IN;
                 context->active_list = 0;
                 break;
             }
@@ -801,13 +925,13 @@ static void Trade_UpdateStockList(HandlerContext *context) {
     record = trade_stock_list_cursor[0]->item_number - bases.first_item[trade_stock_list_cursor[0]->group];
     if (context->arg == 4) {
         switch (item_level_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
-        case 1:
+        case UPGRADE_MATERIAL_BONE:
             menu_number_94 = item_counts.bytes[ITEM_BONE];
             break;
-        case 2:
+        case UPGRADE_MATERIAL_SCALE:
             menu_number_94 = item_counts.bytes[ITEM_SCALE];
             break;
-        case 3:
+        case UPGRADE_MATERIAL_CLAW:
             menu_number_94 = item_counts.bytes[ITEM_CLAW];
             break;
         }
@@ -862,7 +986,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
             bar.red = 0xFF;
             bar.green = 0xFF;
             bar.blue = 0x78;
-            if (trade_screen_state == 1) {
+            if (trade_screen_state == TRADE_SCREEN_OPEN) {
                 screen_part_alphas[0xFD] = Trade_PulseValue(0x10, 0x20, screen_part_alphas[0xFD]);
             }
             bar.alpha = (s32)screen_part_alphas[0xFD];
@@ -874,14 +998,14 @@ static void Trade_UpdateStockList(HandlerContext *context) {
     if (context->arg == 4) {
         position.raw = 0x000DBBA079E08A30L;
         switch (item_level_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
-        case 1:
+        case UPGRADE_MATERIAL_BONE:
             label = bones_label;
             break;
-        case 2:
+        case UPGRADE_MATERIAL_SCALE:
             position.raw = 0x000DBBA079E089C0L;
             label = scales_label;
             break;
-        case 3:
+        case UPGRADE_MATERIAL_CLAW:
             label = claws_label;
             break;
         default:
@@ -955,7 +1079,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
             if (trade_panel_shown == 0) {
                 trade_panel_shown = 1;
             } else {
-                trade_panel_state = 2;
+                trade_panel_state = TRADE_PANEL_CLOSE;
             }
         }
     }
@@ -990,7 +1114,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
             menu_number_72 = 100;
             menu_number_54 = item_level_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             glow = player_weapon[trade_stock_list_cursor[0]->group];
-            if (trade_panel_state == 1) {
+            if (trade_panel_state == TRADE_PANEL_OPEN) {
                 FILL_FADE(panel_part_alphas, shop_g_parts, shop_g_part_count)
             }
             DRAW_PACKETS(shop_g_parts, shop_g_part_count, glow)
@@ -1015,7 +1139,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
             menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
             menu_number_54 = item_level_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             glow = player_weapon[trade_stock_list_cursor[0]->group];
-            if (trade_panel_state == 1) {
+            if (trade_panel_state == TRADE_PANEL_OPEN) {
                 FILL_FADE(panel_part_alphas, shop_g2_parts, shop_g2_part_count)
             }
             DRAW_PACKETS(shop_g2_parts, shop_g2_part_count, glow)
@@ -1041,7 +1165,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
             menu_number_54 = item_level_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[trade_stock_list_cursor[0]->group];
             menu_number_73 = 100;
-            if (trade_panel_state == 1) {
+            if (trade_panel_state == TRADE_PANEL_OPEN) {
                 FILL_FADE(panel_part_alphas, shop_a_parts, shop_a_part_count)
             }
             DRAW_PACKETS(shop_a_parts, shop_a_part_count, 0)
@@ -1051,26 +1175,26 @@ static void Trade_UpdateStockList(HandlerContext *context) {
         }
 
         switch (trade_panel_state) {
-        case 0:
+        case TRADE_PANEL_FADE_IN:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] += packets[i].alpha / 10.0f;
                 if (packets[i].alpha < panel_part_alphas[i]) {
                     FILL_FADE(panel_part_alphas, packets, count)
-                    trade_panel_state = 1;
+                    trade_panel_state = TRADE_PANEL_OPEN;
                     break;
                 }
             }
             break;
-        case 2:
-        case 3:
+        case TRADE_PANEL_CLOSE:
+        case TRADE_PANEL_FADE_OUT:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] -= packets[i].alpha / 10.0f;
                 if (panel_part_alphas[i] < 0.0f) {
                     memset(panel_part_alphas, 0, 0x400);
-                    if (trade_panel_state == 2) {
+                    if (trade_panel_state == TRADE_PANEL_CLOSE) {
                         trade_panel_shown = 0;
                     }
-                    trade_panel_state = 0;
+                    trade_panel_state = TRADE_PANEL_FADE_IN;
                     break;
                 }
             }
@@ -1092,35 +1216,35 @@ static void Trade_UpdateStockList(HandlerContext *context) {
     if (modal_input_locked == 0) {
         if (menu_buttons & PAD_CROSS) {
             Sound_PlayMenu(0);
-            trade_screen_state = 2;
-            trade_panel_state = 3;
+            trade_screen_state = TRADE_STOCK_LOADING_TAKE;
+            trade_panel_state = TRADE_PANEL_FADE_OUT;
             modal_input_locked = 1;
         } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
             if (context->arg != 4) {
-                trade_screen_state = 3;
+                trade_screen_state = TRADE_STOCK_LOADING_SELECT;
             } else {
-                trade_screen_state = 4;
+                trade_screen_state = TRADE_STOCK_LOADING_LEAVE;
             }
-            trade_panel_state = 2;
+            trade_panel_state = TRADE_PANEL_CLOSE;
             modal_input_locked = 1;
             if (model_load_chain != NULL) {
                 model_load_chain->next = NULL;
             }
         }
     }
-    if (trade_screen_state == 2 && model_load_chain == NULL) {
-        trade_screen_state = 5;
+    if (trade_screen_state == TRADE_STOCK_LOADING_TAKE && model_load_chain == NULL) {
+        trade_screen_state = TRADE_STOCK_TO_TAKE_AMOUNT;
     }
-    if (trade_screen_state == 3 && model_load_chain == NULL) {
-        trade_screen_state = 6;
+    if (trade_screen_state == TRADE_STOCK_LOADING_SELECT && model_load_chain == NULL) {
+        trade_screen_state = TRADE_STOCK_TO_SELECT;
     }
-    if (trade_screen_state == 4 && model_load_chain == NULL) {
-        trade_screen_state = 7;
+    if (trade_screen_state == TRADE_STOCK_LOADING_LEAVE && model_load_chain == NULL) {
+        trade_screen_state = TRADE_STOCK_TO_LEAVE;
     }
 
     switch (trade_screen_state) {
-    case 0:
+    case TRADE_SCREEN_FADE_IN:
         screen_part_alphas[0xFF] += 12.8f;
         if (screen_part_alphas[0xFF] > 128.0f) {
             screen_part_alphas[0xFF] = 128.0f;
@@ -1134,15 +1258,15 @@ static void Trade_UpdateStockList(HandlerContext *context) {
             screen_part_alphas[i] += shop_parts[i].alpha / 10.0f;
             if (shop_parts[i].alpha < screen_part_alphas[i]) {
                 modal_input_locked = 0;
-                trade_screen_state = 1;
+                trade_screen_state = TRADE_SCREEN_OPEN;
                 FILL_FADE(screen_part_alphas, shop_parts, shop_part_count)
                 return;
             }
         }
         break;
-    case 5:
-    case 6:
-    case 7:
+    case TRADE_STOCK_TO_TAKE_AMOUNT:
+    case TRADE_STOCK_TO_SELECT:
+    case TRADE_STOCK_TO_LEAVE:
         screen_part_alphas[0xFF] -= 12.8f;
         if (screen_part_alphas[0xFF] < 0.0f) {
             screen_part_alphas[0xFF] = 0.0f;
@@ -1160,21 +1284,21 @@ static void Trade_UpdateStockList(HandlerContext *context) {
         for (i = 0; i < shop_part_count; i++) {
             screen_part_alphas[i] -= shop_parts[i].alpha / 10.0f;
             if (screen_part_alphas[i] < 0.0f) {
-                if (trade_screen_state == 5) {
+                if (trade_screen_state == TRADE_STOCK_TO_TAKE_AMOUNT) {
                     trade_handler = Trade_UpdateTakeAmount;
                     context->active_list = 1;
                     trade_amount_down_locked = 0;
-                } else if (trade_screen_state == 6) {
+                } else if (trade_screen_state == TRADE_STOCK_TO_SELECT) {
                     context->active_list = 0;
                     trade_handler = Trade_UpdateSelectScreen;
                     Menu_ResetLoadBuffers(0);
-                } else if (trade_screen_state == 7) {
+                } else if (trade_screen_state == TRADE_STOCK_TO_LEAVE) {
                     context->active_list = 0;
                     trade_step++;
                     Menu_ResetLoadBuffers(0);
                 }
-                trade_screen_state = 0;
-                trade_panel_state = 0;
+                trade_screen_state = TRADE_SCREEN_FADE_IN;
+                trade_panel_state = TRADE_PANEL_FADE_IN;
                 memset(screen_part_alphas, 0, 0x400);
                 return;
             }
@@ -1247,13 +1371,13 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         menu_number_81 = context->active_list;
         menu_number_82 = context->active_list * values.values[4][trade_stock_list_cursor[0]->item_number].take_value;
         switch (item_level_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
-        case 1:
+        case UPGRADE_MATERIAL_BONE:
             menu_number_74 = item_counts.bytes[ITEM_BONE];
             break;
-        case 2:
+        case UPGRADE_MATERIAL_SCALE:
             menu_number_74 = item_counts.bytes[ITEM_SCALE];
             break;
-        case 3:
+        case UPGRADE_MATERIAL_CLAW:
             menu_number_74 = item_counts.bytes[ITEM_CLAW];
             break;
         }
@@ -1307,7 +1431,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         if (trade_panel_shown == 0) {
             trade_panel_shown = 1;
         } else {
-            trade_panel_state = 2;
+            trade_panel_state = TRADE_PANEL_CLOSE;
         }
     }
     if (trade_panel_shown != 0) {
@@ -1340,7 +1464,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             menu_number_72 = 100;
             menu_number_54 = item_level_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             kind = player_weapon[trade_stock_list_cursor[0]->group];
-            if (trade_panel_state == 1) {
+            if (trade_panel_state == TRADE_PANEL_OPEN) {
                 FILL_FADE(panel_part_alphas, shop_g_parts, shop_g_part_count)
             }
             DRAW_PACKETS(shop_g_parts, shop_g_part_count, kind)
@@ -1365,7 +1489,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
             menu_number_54 = item_level_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             kind = player_weapon[trade_stock_list_cursor[0]->group];
-            if (trade_panel_state == 1) {
+            if (trade_panel_state == TRADE_PANEL_OPEN) {
                 FILL_FADE(panel_part_alphas, shop_g2_parts, shop_g2_part_count)
             }
             DRAW_PACKETS(shop_g2_parts, shop_g2_part_count, kind)
@@ -1391,7 +1515,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             menu_number_54 = item_level_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[trade_stock_list_cursor[0]->group];
             menu_number_73 = 100;
-            if (trade_panel_state == 1) {
+            if (trade_panel_state == TRADE_PANEL_OPEN) {
                 FILL_FADE(panel_part_alphas, shop_a_parts, shop_a_part_count)
             }
             DRAW_PACKETS(shop_a_parts, shop_a_part_count, 0)
@@ -1401,22 +1525,22 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         }
 
         switch (trade_panel_state) {
-        case 0:
+        case TRADE_PANEL_FADE_IN:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] += (f32)packets[i].alpha / 10.0f;
                 if ((f32)packets[i].alpha < panel_part_alphas[i]) {
                     FILL_FADE(panel_part_alphas, packets, count)
-                    trade_panel_state = 1;
+                    trade_panel_state = TRADE_PANEL_OPEN;
                     break;
                 }
             }
             break;
-        case 2:
+        case TRADE_PANEL_CLOSE:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] -= (f32)packets[i].alpha / 10.0f;
                 if (panel_part_alphas[i] < 0.0f) {
                     memset(panel_part_alphas, 0, 0x400);
-                    trade_panel_state = 0;
+                    trade_panel_state = TRADE_PANEL_FADE_IN;
                     trade_panel_shown = 0;
                     break;
                 }
@@ -1452,7 +1576,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             bar.green = 0xFF;
             bar.blue = 0x78;
             bar_drawn = 1;
-            if (trade_screen_state == 1) {
+            if (trade_screen_state == TRADE_SCREEN_OPEN) {
                 screen_part_alphas[0xFD] = Trade_PulseValue(0x10, 0x20, screen_part_alphas[0xFD]);
             }
             bar.alpha = (s32)screen_part_alphas[0xFD];
@@ -1478,14 +1602,14 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         label_position.raw = 0x000DBBA081807C60L;
         MenuText_SetPen(position);
         switch (item_level_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
-        case 1:
+        case UPGRADE_MATERIAL_BONE:
             label = bones_label;
             break;
-        case 2:
+        case UPGRADE_MATERIAL_SCALE:
             label = scales_label;
             label_position.raw = 0x000DBBA081807C00L;
             break;
-        case 3:
+        case UPGRADE_MATERIAL_CLAW:
             label = claws_label;
             break;
         default: // match: a default that repeats case 3
@@ -1511,8 +1635,8 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         if (menu_buttons & PAD_CROSS) {
             if ((player_state.gold >= menu_number_82 && context->arg != 4) || (menu_number_74 >= menu_number_82 && context->arg == 4)) {
                 Sound_PlayMenu(0);
-                trade_screen_state = 3;
-                trade_panel_state = 2;
+                trade_screen_state = TRADE_TAKE_LOADING_ACCEPT;
+                trade_panel_state = TRADE_PANEL_CLOSE;
                 modal_input_locked = 1;
                 if (model_load_chain != NULL) {
                     model_load_chain->next = NULL;
@@ -1522,23 +1646,23 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             }
         } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
-            trade_screen_state = 4;
-            trade_panel_state = 2;
+            trade_screen_state = TRADE_TAKE_LOADING_CANCEL;
+            trade_panel_state = TRADE_PANEL_CLOSE;
             modal_input_locked = 1;
             if (model_load_chain != NULL) {
                 model_load_chain->next = NULL;
             }
         }
     }
-    if (trade_screen_state == 3 && model_load_chain == NULL) {
-        trade_screen_state = 5;
+    if (trade_screen_state == TRADE_TAKE_LOADING_ACCEPT && model_load_chain == NULL) {
+        trade_screen_state = TRADE_TAKE_ACCEPTED;
     }
-    if (trade_screen_state == 4 && model_load_chain == NULL) {
-        trade_screen_state = 6;
+    if (trade_screen_state == TRADE_TAKE_LOADING_CANCEL && model_load_chain == NULL) {
+        trade_screen_state = TRADE_TAKE_CANCELLED;
     }
 
     switch (trade_screen_state) {
-    case 0:
+    case TRADE_SCREEN_FADE_IN:
         screen_part_alphas[0xFF] += 12.8f;
         if (screen_part_alphas[0xFF] > 128.0f) {
             screen_part_alphas[0xFF] = 128.0f;
@@ -1552,7 +1676,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             screen_part_alphas[i] += (f32)shop_parts[i].alpha / 10.0f;
             if ((f32)shop_parts[i].alpha < screen_part_alphas[i]) {
                 modal_input_locked = 0;
-                trade_screen_state = 1;
+                trade_screen_state = TRADE_SCREEN_OPEN;
                 FILL_FADE(screen_part_alphas, shop_parts, shop_part_count)
                 break;
             }
@@ -1565,8 +1689,8 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             }
         }
         break;
-    case 5:
-    case 6:
+    case TRADE_TAKE_ACCEPTED:
+    case TRADE_TAKE_CANCELLED:
         screen_part_alphas[0xFF] -= 12.8f;
         if (screen_part_alphas[0xFF] < 0.0f) {
             screen_part_alphas[0xFF] = 0.0f;
@@ -1584,20 +1708,20 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         for (i = 0; i < shop_part_count; i++) {
             screen_part_alphas[i] -= (f32)shop_parts[i].alpha / 10.0f;
             if (screen_part_alphas[i] < 0.0f) {
-                if (trade_screen_state == 5) {
+                if (trade_screen_state == TRADE_TAKE_ACCEPTED) {
                     if (context->arg != 4) {
                         player_state.gold -= menu_number_82;
                         trade_handler = Trade_UpdateSelectScreen;
                         Menu_ResetLoadBuffers(0);
                     } else {
                         switch (item_level_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
-                        case 1:
+                        case UPGRADE_MATERIAL_BONE:
                             item_counts.bytes[ITEM_BONE] -= menu_number_82;
                             break;
-                        case 2:
+                        case UPGRADE_MATERIAL_SCALE:
                             item_counts.bytes[ITEM_SCALE] -= menu_number_82;
                             break;
-                        case 3:
+                        case UPGRADE_MATERIAL_CLAW:
                             item_counts.bytes[ITEM_CLAW] -= menu_number_82;
                             break;
                         }
@@ -1618,14 +1742,14 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
                         item_list_last_page = owned_list_last_page;
                         item_list_count = owned_list_count;
                         Trade_ChainModels(0);
-                        trade_screen_state = 0;
+                        trade_screen_state = TRADE_SCREEN_FADE_IN;
                         context->active_list = 0;
                     }
-                } else if (trade_screen_state == 6) {
+                } else if (trade_screen_state == TRADE_TAKE_CANCELLED) {
                     trade_handler = trade_list_handlers[0];
                 }
-                trade_panel_state = 0;
-                trade_screen_state = 0;
+                trade_panel_state = TRADE_PANEL_FADE_IN;
+                trade_screen_state = TRADE_SCREEN_FADE_IN;
                 memset(screen_part_alphas, 0, 0x400);
                 break;
             }
@@ -1720,7 +1844,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             bar.red = 0xFF;
             bar.green = 0xFF;
             bar.blue = 0x78;
-            if (trade_screen_state == 1) {
+            if (trade_screen_state == TRADE_SCREEN_OPEN) {
                 screen_part_alphas[0xFD] = Trade_PulseValue(0x10, 0x20, screen_part_alphas[0xFD]);
             }
             bar.alpha = (s32)screen_part_alphas[0xFD];
@@ -1782,7 +1906,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             if (trade_panel_shown == 0) {
                 trade_panel_shown = 1;
             } else {
-                trade_panel_state = 2;
+                trade_panel_state = TRADE_PANEL_CLOSE;
             }
         }
     }
@@ -1816,7 +1940,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             menu_number_72 = 100;
             menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             worn = player_weapon[item_list_cursor[0]->group];
-            if (trade_panel_state == 1) {
+            if (trade_panel_state == TRADE_PANEL_OPEN) {
                 FILL_FADE_2(panel_part_alphas, shop_g_parts, shop_g_part_count)
             }
             DRAW_PACKETS(shop_g_parts, shop_g_part_count, worn)
@@ -1840,7 +1964,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
             menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             worn = player_weapon[item_list_cursor[0]->group];
-            if (trade_panel_state == 1) {
+            if (trade_panel_state == TRADE_PANEL_OPEN) {
                 FILL_FADE_2(panel_part_alphas, shop_g2_parts, shop_g2_part_count)
             }
             DRAW_PACKETS(shop_g2_parts, shop_g2_part_count, worn)
@@ -1865,7 +1989,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
             menu_number_73 = 100;
-            if (trade_panel_state == 1) {
+            if (trade_panel_state == TRADE_PANEL_OPEN) {
                 FILL_FADE_2(panel_part_alphas, shop_a_parts, shop_a_part_count)
             }
             DRAW_PACKETS(shop_a_parts, shop_a_part_count, 0)
@@ -1875,26 +1999,26 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
         }
 
         switch (trade_panel_state) {
-        case 0:
+        case TRADE_PANEL_FADE_IN:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] += (f32)packets[i].alpha / 10.0f;
                 if ((f32)packets[i].alpha < panel_part_alphas[i]) {
                     FILL_FADE_2(panel_part_alphas, packets, count)
-                    trade_panel_state = 1;
+                    trade_panel_state = TRADE_PANEL_OPEN;
                     break;
                 }
             }
             break;
-        case 2:
-        case 3:
+        case TRADE_PANEL_CLOSE:
+        case TRADE_PANEL_FADE_OUT:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] -= (f32)packets[i].alpha / 10.0f;
                 if (panel_part_alphas[i] < 0.0f) {
                     memset(panel_part_alphas, 0, 0x400);
-                    if (trade_panel_state == 2) {
+                    if (trade_panel_state == TRADE_PANEL_CLOSE) {
                         trade_panel_shown = 0;
                     }
-                    trade_panel_state = 0;
+                    trade_panel_state = TRADE_PANEL_FADE_IN;
                     break;
                 }
             }
@@ -1915,28 +2039,28 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
     if (modal_input_locked == 0) {
         if (menu_buttons & PAD_CROSS) {
             Sound_PlayMenu(0);
-            trade_screen_state = 2;
-            trade_panel_state = 3;
+            trade_screen_state = TRADE_OWNED_LOADING_GIVE;
+            trade_panel_state = TRADE_PANEL_FADE_OUT;
             modal_input_locked = 1;
         } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
-            trade_screen_state = 3;
-            trade_panel_state = 2;
+            trade_screen_state = TRADE_OWNED_LOADING_SELECT;
+            trade_panel_state = TRADE_PANEL_CLOSE;
             modal_input_locked = 1;
             if (model_load_chain != NULL) {
                 model_load_chain->next = NULL;
             }
         }
     }
-    if (trade_screen_state == 2 && model_load_chain == NULL) {
-        trade_screen_state = 4;
+    if (trade_screen_state == TRADE_OWNED_LOADING_GIVE && model_load_chain == NULL) {
+        trade_screen_state = TRADE_OWNED_FADE_TO_GIVE_AMOUNT;
     }
-    if (trade_screen_state == 3 && model_load_chain == NULL) {
-        trade_screen_state = 5;
+    if (trade_screen_state == TRADE_OWNED_LOADING_SELECT && model_load_chain == NULL) {
+        trade_screen_state = TRADE_OWNED_FADE_TO_SELECT;
     }
 
     switch (trade_screen_state) {
-    case 0:
+    case TRADE_SCREEN_FADE_IN:
         screen_part_alphas[0xFF] += 12.8f;
         if (screen_part_alphas[0xFF] > 128.0f) {
             screen_part_alphas[0xFF] = 128.0f;
@@ -1950,14 +2074,14 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             screen_part_alphas[i] += (f32)shop_parts[i].alpha / 10.0f;
             if ((f32)shop_parts[i].alpha < screen_part_alphas[i]) {
                 modal_input_locked = 0;
-                trade_screen_state = 1;
+                trade_screen_state = TRADE_SCREEN_OPEN;
                 FILL_FADE_2(screen_part_alphas, shop_parts, shop_part_count)
                 return;
             }
         }
         break;
-    case 4:
-    case 5:
+    case TRADE_OWNED_FADE_TO_GIVE_AMOUNT:
+    case TRADE_OWNED_FADE_TO_SELECT:
         screen_part_alphas[0xFF] -= 12.8f;
         if (screen_part_alphas[0xFF] < 0.0f) {
             screen_part_alphas[0xFF] = 0.0f;
@@ -1975,17 +2099,17 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
         for (i = 0; i < shop_part_count; i++) {
             screen_part_alphas[i] -= (f32)shop_parts[i].alpha / 10.0f;
             if (screen_part_alphas[i] < 0.0f) {
-                if (trade_screen_state == 4) {
+                if (trade_screen_state == TRADE_OWNED_FADE_TO_GIVE_AMOUNT) {
                     trade_handler = Trade_UpdateGiveAmount;
                     context->active_list = 1;
                     trade_amount_down_locked = 0;
-                } else if (trade_screen_state == 5) {
+                } else if (trade_screen_state == TRADE_OWNED_FADE_TO_SELECT) {
                     context->active_list = 1;
                     trade_handler = Trade_UpdateSelectScreen;
                     Menu_ResetLoadBuffers(0);
                 }
-                trade_screen_state = 0;
-                trade_panel_state = 0;
+                trade_screen_state = TRADE_SCREEN_FADE_IN;
+                trade_panel_state = TRADE_PANEL_FADE_IN;
                 memset(screen_part_alphas, 0, 0x400);
                 return;
             }
@@ -2095,7 +2219,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             if (trade_panel_shown == 0) {
                 trade_panel_shown = 1;
             } else {
-                trade_panel_state = 2;
+                trade_panel_state = TRADE_PANEL_CLOSE;
             }
         }
     }
@@ -2128,7 +2252,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             menu_number_72 = 100;
             menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             glow = player_weapon[item_list_cursor[0]->group];
-            if (trade_panel_state == 1) {
+            if (trade_panel_state == TRADE_PANEL_OPEN) {
                 FILL_FADE(panel_part_alphas, shop_g_parts, shop_g_part_count)
             }
             DRAW_PACKETS(shop_g_parts, shop_g_part_count, glow)
@@ -2152,7 +2276,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             menu_number_52 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
             menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             glow = player_weapon[item_list_cursor[0]->group];
-            if (trade_panel_state == 1) {
+            if (trade_panel_state == TRADE_PANEL_OPEN) {
                 FILL_FADE(panel_part_alphas, shop_g2_parts, shop_g2_part_count)
             }
             DRAW_PACKETS(shop_g2_parts, shop_g2_part_count, glow)
@@ -2177,7 +2301,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
             menu_number_73 = 100;
-            if (trade_panel_state == 1) {
+            if (trade_panel_state == TRADE_PANEL_OPEN) {
                 FILL_FADE(panel_part_alphas, shop_a_parts, shop_a_part_count)
             }
             DRAW_PACKETS(shop_a_parts, shop_a_part_count, 0)
@@ -2187,22 +2311,22 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
         }
 
         switch (trade_panel_state) {
-        case 0:
+        case TRADE_PANEL_FADE_IN:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] += (f32)packets[i].alpha / 10.0f;
                 if ((f32)packets[i].alpha < panel_part_alphas[i]) {
                     FILL_FADE(panel_part_alphas, packets, count)
-                    trade_panel_state = 1;
+                    trade_panel_state = TRADE_PANEL_OPEN;
                     break;
                 }
             }
             break;
-        case 2:
+        case TRADE_PANEL_CLOSE:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] -= (f32)packets[i].alpha / 10.0f;
                 if (panel_part_alphas[i] < 0.0f) {
                     memset(panel_part_alphas, 0, 0x400);
-                    trade_panel_state = 0;
+                    trade_panel_state = TRADE_PANEL_FADE_IN;
                     trade_panel_shown = 0;
                     break;
                 }
@@ -2235,7 +2359,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             bar.green = 0xFF;
             bar.blue = 0x78;
             bar_drawn = 1;
-            if (trade_screen_state == 1) {
+            if (trade_screen_state == TRADE_SCREEN_OPEN) {
                 screen_part_alphas[0xFD] = Trade_PulseValue(0x10, 0x20, screen_part_alphas[0xFD]);
             }
             bar.alpha = (s32)screen_part_alphas[0xFD];
@@ -2286,31 +2410,31 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
                     stock.counts[context->arg][item_list_cursor[0]->item_number] = 99;
                 }
             }
-            trade_screen_state = 3;
-            trade_panel_state = 2;
+            trade_screen_state = TRADE_GIVE_LOADING_ACCEPT;
+            trade_panel_state = TRADE_PANEL_CLOSE;
             modal_input_locked = 1;
             if (model_load_chain != NULL) {
                 model_load_chain->next = NULL;
             }
         } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
-            trade_screen_state = 4;
-            trade_panel_state = 2;
+            trade_screen_state = TRADE_GIVE_LOADING_CANCEL;
+            trade_panel_state = TRADE_PANEL_CLOSE;
             modal_input_locked = 1;
             if (model_load_chain != NULL) {
                 model_load_chain->next = NULL;
             }
         }
     }
-    if (trade_screen_state == 3 && model_load_chain == NULL) {
-        trade_screen_state = 5;
+    if (trade_screen_state == TRADE_GIVE_LOADING_ACCEPT && model_load_chain == NULL) {
+        trade_screen_state = TRADE_GIVE_FADE_TO_SELECT;
     }
-    if (trade_screen_state == 4 && model_load_chain == NULL) {
-        trade_screen_state = 6;
+    if (trade_screen_state == TRADE_GIVE_LOADING_CANCEL && model_load_chain == NULL) {
+        trade_screen_state = TRADE_GIVE_FADE_TO_OWNED;
     }
 
     switch (trade_screen_state) {
-    case 0:
+    case TRADE_SCREEN_FADE_IN:
         screen_part_alphas[0xFF] += 12.8f;
         if (screen_part_alphas[0xFF] > 128.0f) {
             screen_part_alphas[0xFF] = 128.0f;
@@ -2324,7 +2448,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             screen_part_alphas[i] += (f32)shop_parts[i].alpha / 10.0f;
             if ((f32)shop_parts[i].alpha < screen_part_alphas[i]) {
                 modal_input_locked = 0;
-                trade_screen_state = 1;
+                trade_screen_state = TRADE_SCREEN_OPEN;
                 FILL_FADE(screen_part_alphas, shop_parts, shop_part_count)
                 break;
             }
@@ -2337,8 +2461,8 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             }
         }
         break;
-    case 5:
-    case 6:
+    case TRADE_GIVE_FADE_TO_SELECT:
+    case TRADE_GIVE_FADE_TO_OWNED:
         screen_part_alphas[0xFF] -= 12.8f;
         if (screen_part_alphas[0xFF] < 0.0f) {
             screen_part_alphas[0xFF] = 0.0f;
@@ -2356,16 +2480,16 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
         for (i = 0; i < shop_part_count; i++) {
             screen_part_alphas[i] -= (f32)shop_parts[i].alpha / 10.0f;
             if (screen_part_alphas[i] < 0.0f) {
-                if (trade_screen_state == 5) {
+                if (trade_screen_state == TRADE_GIVE_FADE_TO_SELECT) {
                     context->active_list = 1;
                     trade_handler = Trade_UpdateSelectScreen;
                     Trade_BuildItemRings(context->arg);
                     Menu_ResetLoadBuffers(0);
-                } else if (trade_screen_state == 6) {
+                } else if (trade_screen_state == TRADE_GIVE_FADE_TO_OWNED) {
                     trade_handler = trade_list_handlers[1];
                 }
-                trade_screen_state = 0;
-                trade_panel_state = 0;
+                trade_screen_state = TRADE_SCREEN_FADE_IN;
+                trade_panel_state = TRADE_PANEL_FADE_IN;
                 memset(screen_part_alphas, 0, 0x400);
                 break;
             }
@@ -2927,7 +3051,7 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
             bar.second.f.mid16 = bar.first.f.mid16 + 0xC0;
             bar.second.f.mid24 = bar.first.f.mid24;
             bar_drawn = TRUE;
-            if (smith_screen_state == 1) {
+            if (smith_screen_state == SMITH_SCREEN_OPEN) {
                 screen_part_alphas[253] = Trade_PulseValue(0x10, 0x20, screen_part_alphas[253]);
             } else {
                 screen_part_alphas[253] = 0.0f;
@@ -2955,32 +3079,32 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
             } else {
                 detail_panel_open_word = 0;
                 switch (context->active_list) {
-                case 0:
+                case SMITH_LINE_UPGRADE:
                     Smith_BuildItemRings(0);
                     if (item_list_cursor[0] != NULL) {
                         Sound_PlayMenu(0);
                         modal_input_locked = 1;
-                        smith_screen_state = 2;
+                        smith_screen_state = SMITH_SELECT_TO_UPGRADE_LIST;
                     } else {
                         Sound_PlayMenu(3);
                     }
                     break;
-                case 1:
+                case SMITH_LINE_EARTH_STONE:
                     Sound_PlayMenu(0);
                     Smith_BuildItemRings(1);
                     if (item_counts.bytes[ITEM_EARTH_STONE] != 0) {
                         modal_input_locked = 1;
-                        smith_screen_state = 3;
+                        smith_screen_state = SMITH_SELECT_TO_EARTH_STONE_LIST;
                     } else {
                         smith_choices_active = 0;
                     }
                     break;
-                case 2:
+                case SMITH_LINE_COLLECT:
                     Smith_BuildItemRings(2);
                     if (owned_list_count > 0) {
                         Sound_PlayMenu(0);
                         modal_input_locked = 1;
-                        smith_screen_state = 4;
+                        smith_screen_state = SMITH_SELECT_TO_COLLECT_LIST;
                     } else {
                         Sound_PlayMenu(3);
                     }
@@ -2992,14 +3116,14 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
             if (smith_choices_active == 0) {
                 smith_choices_active = 1;
             } else {
-                smith_screen_state = 5;
+                smith_screen_state = SMITH_SELECT_TO_LEAVE;
                 modal_input_locked = 1;
             }
         }
     }
 
     switch (smith_screen_state) {
-    case 0:
+    case SMITH_SCREEN_FADE_IN:
         screen_part_alphas[253] += 1.6f;
         if (screen_part_alphas[253] > 16.0f) {
             screen_part_alphas[253] = 16.0f;
@@ -3012,15 +3136,15 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
                     screen_part_alphas[i] = full_alpha;
                 }
                 modal_input_locked = 0;
-                smith_screen_state = 1;
+                smith_screen_state = SMITH_SCREEN_OPEN;
                 break;
             }
         }
         break;
-    case 2:
-    case 3:
-    case 4:
-    case 5:
+    case SMITH_SELECT_TO_UPGRADE_LIST:
+    case SMITH_SELECT_TO_EARTH_STONE_LIST:
+    case SMITH_SELECT_TO_COLLECT_LIST:
+    case SMITH_SELECT_TO_LEAVE:
         screen_part_alphas[253] -= 1.6f;
         if (screen_part_alphas[253] < 0.0f) {
             screen_part_alphas[253] = 0.0f;
@@ -3031,29 +3155,29 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
                 memset(screen_part_alphas, 0, 0x400);
                 // match: the table has two entries; line 2 reads the word after it (trade_value_tables's first pointer)
                 trade_handler = trade_list_handlers[context->active_list];
-                if (smith_screen_state == 2) {
+                if (smith_screen_state == SMITH_SELECT_TO_UPGRADE_LIST) {
                     item_list_first = handover_list_first;
                     smith_handler = smith_list_handlers[context->active_list];
                     item_list_last_page = handover_list_last_page;
                     item_list_count = handover_list_count;
                     Menu_ChainItemListModels(0);
-                } else if (smith_screen_state == 3) {
+                } else if (smith_screen_state == SMITH_SELECT_TO_EARTH_STONE_LIST) {
                     item_list_first = handover_list_first;
                     smith_handler = smith_list_handlers[context->active_list];
                     item_list_last_page = handover_list_last_page;
                     item_list_count = handover_list_count;
                     smith_confirm_shown = 0;
                     Menu_ChainItemListModels(0);
-                } else if (smith_screen_state == 4) {
+                } else if (smith_screen_state == SMITH_SELECT_TO_COLLECT_LIST) {
                     item_list_first = owned_list_first;
                     smith_handler = smith_list_handlers[context->active_list];
                     item_list_last_page = owned_list_last_page;
                     item_list_count = owned_list_count;
                     Smith_ChainModels(0);
-                } else if (smith_screen_state == 5) {
+                } else if (smith_screen_state == SMITH_SELECT_TO_LEAVE) {
                     smith_step++;
                 }
-                smith_screen_state = 0;
+                smith_screen_state = SMITH_SCREEN_FADE_IN;
                 context->active_list = 0;
                 break;
             }
@@ -3177,7 +3301,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             bar.second.f.lo16 = bar.first.f.lo16 + 0x1240;
             bar.second.f.mid16 = bar.first.f.mid16 + 0xB0;
             bar.second.f.mid24 = bar.first.f.mid24;
-            if (smith_screen_state == 1) {
+            if (smith_screen_state == SMITH_SCREEN_OPEN) {
                 screen_part_alphas[253] = Trade_PulseValue(0x10, 0x20, screen_part_alphas[253]);
             }
             bar.alpha = (s32)screen_part_alphas[253];
@@ -3210,7 +3334,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
         if (detail_panel_open_word == 0) {
             detail_panel_open_word = 1;
         } else {
-            smith_panel_state = 2;
+            smith_panel_state = SMITH_PANEL_CLOSE;
         }
     }
     if (detail_panel_open_word != 0) {
@@ -3242,7 +3366,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             menu_number_72 = 100;
             menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
-            if (smith_panel_state == 1) {
+            if (smith_panel_state == SMITH_PANEL_OPEN) {
                 for (i = 0; i < shop_g_part_count; i++) {
                     full_alpha = shop_g_parts[i].alpha;
                     panel_part_alphas[i] = full_alpha;
@@ -3274,7 +3398,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
             menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
-            if (smith_panel_state == 1) {
+            if (smith_panel_state == SMITH_PANEL_OPEN) {
                 for (i = 0; i < shop_g2_part_count; i++) {
                     full_alpha = shop_g2_parts[i].alpha;
                     panel_part_alphas[i] = full_alpha;
@@ -3307,7 +3431,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
             menu_number_73 = 100;
-            if (smith_panel_state == 1) {
+            if (smith_panel_state == SMITH_PANEL_OPEN) {
                 for (i = 0; i < shop_a_part_count; i++) {
                     full_alpha = shop_a_parts[i].alpha;
                     panel_part_alphas[i] = full_alpha;
@@ -3323,7 +3447,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             break;
         }
         switch (smith_panel_state) {
-        case 0:
+        case SMITH_PANEL_FADE_IN:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] += parts[i].alpha / 10.0f;
                 if (panel_part_alphas[i] > parts[i].alpha) {
@@ -3331,21 +3455,21 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
                         full_alpha = parts[i].alpha;
                         panel_part_alphas[i] = full_alpha;
                     }
-                    smith_panel_state = 1;
+                    smith_panel_state = SMITH_PANEL_OPEN;
                     break;
                 }
             }
             break;
-        case 2:
-        case 3:
+        case SMITH_PANEL_CLOSE:
+        case SMITH_PANEL_FADE_OUT:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] -= parts[i].alpha / 10.0f;
                 if (panel_part_alphas[i] < 0.0f) {
                     memset(panel_part_alphas, 0, 0x400);
-                    if (smith_panel_state == 2) {
+                    if (smith_panel_state == SMITH_PANEL_CLOSE) {
                         detail_panel_open_word = 0;
                     }
-                    smith_panel_state = 0;
+                    smith_panel_state = SMITH_PANEL_FADE_IN;
                     break;
                 }
             }
@@ -3366,27 +3490,27 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
                                         : GetItemLevel(item_list_cursor[0]->item_number - 220) < 100) ||
             item_list_cursor[0]->item_number == 183) {
             Sound_PlayMenu(0);
-            smith_screen_state = 2;
-            smith_panel_state = 3;
+            smith_screen_state = SMITH_UPGRADE_LOADING_CONFIRM;
+            smith_panel_state = SMITH_PANEL_FADE_OUT;
             modal_input_locked = 1;
         }
     } else if ((menu_buttons & PAD_CIRCLE) && modal_input_locked == 0) {
         Sound_PlayMenu(2);
-        smith_screen_state = 3;
-        smith_panel_state = 2;
+        smith_screen_state = SMITH_UPGRADE_LOADING_SELECT;
+        smith_panel_state = SMITH_PANEL_CLOSE;
         modal_input_locked = 1;
         if (model_load_chain != NULL) {
             model_load_chain->next = NULL;
         }
     }
-    if (smith_screen_state == 2 && model_load_chain == NULL) {
-        smith_screen_state = 4;
+    if (smith_screen_state == SMITH_UPGRADE_LOADING_CONFIRM && model_load_chain == NULL) {
+        smith_screen_state = SMITH_UPGRADE_FADE_TO_CONFIRM;
     }
-    if (smith_screen_state == 3 && model_load_chain == NULL) {
-        smith_screen_state = 5;
+    if (smith_screen_state == SMITH_UPGRADE_LOADING_SELECT && model_load_chain == NULL) {
+        smith_screen_state = SMITH_UPGRADE_FADE_TO_SELECT;
     }
     switch (smith_screen_state) {
-    case 0:
+    case SMITH_SCREEN_FADE_IN:
         screen_part_alphas[255] += 12.8f;
         if (screen_part_alphas[255] > 128.0f) {
             screen_part_alphas[255] = 128.0f;
@@ -3399,7 +3523,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
         for (i = 0; i < tune_part_count; i++) {
             screen_part_alphas[i] += tune_parts[i].alpha / 10.0f;
             if (screen_part_alphas[i] > tune_parts[i].alpha) {
-                smith_screen_state = 1;
+                smith_screen_state = SMITH_SCREEN_OPEN;
                 for (i = 0; i < tune_part_count; i++) {
                     full_alpha = tune_parts[i].alpha;
                     screen_part_alphas[i] = full_alpha;
@@ -3409,8 +3533,8 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             }
         }
         break;
-    case 4:
-    case 5:
+    case SMITH_UPGRADE_FADE_TO_CONFIRM:
+    case SMITH_UPGRADE_FADE_TO_SELECT:
         screen_part_alphas[255] -= 12.8f;
         if (screen_part_alphas[255] < 0.0f) {
             screen_part_alphas[255] = 0.0f;
@@ -3428,17 +3552,17 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
         for (i = 0; i < tune_part_count; i++) {
             screen_part_alphas[i] -= tune_parts[i].alpha / 10.0f;
             if (screen_part_alphas[i] < 0.0f) {
-                if (smith_screen_state == 4) {
+                if (smith_screen_state == SMITH_UPGRADE_FADE_TO_CONFIRM) {
                     context->active_list = 1;
                     smith_handler = Smith_UpdateUpgradeConfirm;
                     smith_confirm_shown = 0;
-                } else if (smith_screen_state == 5) {
+                } else if (smith_screen_state == SMITH_UPGRADE_FADE_TO_SELECT) {
                     context->active_list = 0;
                     smith_handler = Smith_UpdateSelectScreen;
                     Menu_ResetLoadBuffers(0);
                 }
-                smith_screen_state = 0;
-                smith_panel_state = 0;
+                smith_screen_state = SMITH_SCREEN_FADE_IN;
+                smith_panel_state = SMITH_PANEL_FADE_IN;
                 memset(screen_part_alphas, 0, 0x400);
                 return;
             }
@@ -3525,7 +3649,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
         if (detail_panel_open_word == 0) {
             detail_panel_open_word = 1;
         } else {
-            smith_panel_state = 2;
+            smith_panel_state = SMITH_PANEL_CLOSE;
         }
     }
     if (detail_panel_open_word != 0) {
@@ -3557,7 +3681,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             menu_number_72 = 100;
             menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
-            if (smith_panel_state == 1) {
+            if (smith_panel_state == SMITH_PANEL_OPEN) {
                 for (i = 0; i < shop_g_part_count; i++) {
                     full_alpha = shop_g_parts[i].alpha;
                     panel_part_alphas[i] = full_alpha;
@@ -3589,7 +3713,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
             menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
-            if (smith_panel_state == 1) {
+            if (smith_panel_state == SMITH_PANEL_OPEN) {
                 for (i = 0; i < shop_g2_part_count; i++) {
                     full_alpha = shop_g2_parts[i].alpha;
                     panel_part_alphas[i] = full_alpha;
@@ -3623,7 +3747,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
             menu_number_73 = 100;
-            if (smith_panel_state == 1) {
+            if (smith_panel_state == SMITH_PANEL_OPEN) {
                 for (i = 0; i < shop_a_part_count; i++) {
                     full_alpha = shop_a_parts[i].alpha;
                     panel_part_alphas[i] = full_alpha;
@@ -3639,7 +3763,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             break;
         }
         switch (smith_panel_state) {
-        case 0:
+        case SMITH_PANEL_FADE_IN:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] += parts[i].alpha / 10.0f;
                 if (panel_part_alphas[i] > parts[i].alpha) {
@@ -3647,17 +3771,17 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
                         full_alpha = parts[i].alpha;
                         panel_part_alphas[i] = full_alpha;
                     }
-                    smith_panel_state = 1;
+                    smith_panel_state = SMITH_PANEL_OPEN;
                     break;
                 }
             }
             break;
-        case 2:
+        case SMITH_PANEL_CLOSE:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] -= parts[i].alpha / 10.0f;
                 if (panel_part_alphas[i] < 0.0f) {
                     memset(panel_part_alphas, 0, 0x400);
-                    smith_panel_state = 0;
+                    smith_panel_state = SMITH_PANEL_FADE_IN;
                     detail_panel_open_word = 0;
                     break;
                 }
@@ -3699,30 +3823,30 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
     if (modal_input_locked == 0) {
         if (menu_buttons & PAD_CROSS) {
             Sound_PlayMenu(0);
-            smith_screen_state = 2;
-            smith_panel_state = 2;
+            smith_screen_state = SMITH_CONFIRM_LOADING_ACCEPT;
+            smith_panel_state = SMITH_PANEL_CLOSE;
             modal_input_locked = 1;
             if (model_load_chain != NULL) {
                 model_load_chain->next = NULL;
             }
         } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
-            smith_screen_state = 3;
-            smith_panel_state = 2;
+            smith_screen_state = SMITH_CONFIRM_LOADING_CANCEL;
+            smith_panel_state = SMITH_PANEL_CLOSE;
             modal_input_locked = 1;
             if (model_load_chain != NULL) {
                 model_load_chain->next = NULL;
             }
         }
     }
-    if (smith_screen_state == 2 && model_load_chain == NULL) {
-        smith_screen_state = 4;
+    if (smith_screen_state == SMITH_CONFIRM_LOADING_ACCEPT && model_load_chain == NULL) {
+        smith_screen_state = SMITH_CONFIRM_ACCEPTED;
     }
-    if (smith_screen_state == 3 && model_load_chain == NULL) {
-        smith_screen_state = 5;
+    if (smith_screen_state == SMITH_CONFIRM_LOADING_CANCEL && model_load_chain == NULL) {
+        smith_screen_state = SMITH_CONFIRM_CANCELLED;
     }
     switch (smith_screen_state) {
-    case 0:
+    case SMITH_SCREEN_FADE_IN:
         screen_part_alphas[255] += 12.8f;
         if (screen_part_alphas[255] > 128.0f) {
             screen_part_alphas[255] = 128.0f;
@@ -3735,7 +3859,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
         for (i = 0; i < tune_part_count; i++) {
             screen_part_alphas[i] += tune_parts[i].alpha / 10.0f;
             if (screen_part_alphas[i] > tune_parts[i].alpha) {
-                smith_screen_state = 1;
+                smith_screen_state = SMITH_SCREEN_OPEN;
                 modal_input_locked = 0;
                 for (i = 0; i < tune_part_count; i++) {
                     full_alpha = tune_parts[i].alpha;
@@ -3755,8 +3879,8 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             }
         }
         break;
-    case 4:
-    case 5:
+    case SMITH_CONFIRM_ACCEPTED:
+    case SMITH_CONFIRM_CANCELLED:
         screen_part_alphas[255] -= 12.8f;
         if (screen_part_alphas[255] < 0.0f) {
             screen_part_alphas[255] = 0.0f;
@@ -3774,7 +3898,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
         for (i = 0; i < tune_part_count; i++) {
             screen_part_alphas[i] -= tune_parts[i].alpha / 10.0f;
             if (screen_part_alphas[i] < 0.0f) {
-                if (smith_screen_state == 4) {
+                if (smith_screen_state == SMITH_CONFIRM_ACCEPTED) {
                     PlayTime_Update();
                     bought = item_list_cursor[0];
                     if (bought->item_number < 220) {
@@ -3806,11 +3930,11 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
                     context->active_list = 0;
                     smith_handler = Smith_UpdateSelectScreen;
                     Menu_ResetLoadBuffers(0);
-                } else if (smith_screen_state == 5) {
+                } else if (smith_screen_state == SMITH_CONFIRM_CANCELLED) {
                     smith_handler = smith_list_handlers[0];
                 }
-                smith_screen_state = 0;
-                smith_panel_state = 0;
+                smith_screen_state = SMITH_SCREEN_FADE_IN;
+                smith_panel_state = SMITH_PANEL_FADE_IN;
                 memset(screen_part_alphas, 0, 0x400);
                 break;
             }
@@ -3920,7 +4044,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                 bar.second.f.lo16 = bar.first.f.lo16 + 0x1240;
                 bar.second.f.mid16 = bar.first.f.mid16 + 0xB0;
                 bar.second.f.mid24 = bar.first.f.mid24;
-                if (smith_screen_state == 1) {
+                if (smith_screen_state == SMITH_SCREEN_OPEN) {
                     if (smith_confirm_shown == 0) {
                         screen_part_alphas[253] = Trade_PulseValue(0x10, 0x20, screen_part_alphas[253]);
                     } else { // match: never taken, the loop only runs with smith_confirm_shown clear
@@ -3957,11 +4081,11 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
         if (detail_panel_open_word == 0) {
             smith_confirm_list_panel_sound_pending = 1;
             detail_panel_open_word = 1;
-        } else if (smith_panel_state != 2) {
-            smith_panel_state = 2;
+        } else if (smith_panel_state != SMITH_PANEL_CLOSE) {
+            smith_panel_state = SMITH_PANEL_CLOSE;
             Sound_PlayMenu(1);
         } else {
-            smith_panel_state = 0;
+            smith_panel_state = SMITH_PANEL_FADE_IN;
         }
     }
     if (detail_panel_open_word != 0) {
@@ -3993,7 +4117,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             menu_number_72 = 100;
             menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
-            if (smith_panel_state == 1) {
+            if (smith_panel_state == SMITH_PANEL_OPEN) {
                 for (i = 0; i < shop_g_part_count; i++) {
                     full_alpha = shop_g_parts[i].alpha;
                     panel_part_alphas[i] = full_alpha;
@@ -4025,7 +4149,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
             menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[item_list_cursor[0]->group];
-            if (smith_panel_state == 1) {
+            if (smith_panel_state == SMITH_PANEL_OPEN) {
                 for (i = 0; i < shop_g2_part_count; i++) {
                     full_alpha = shop_g2_parts[i].alpha;
                     panel_part_alphas[i] = full_alpha;
@@ -4058,7 +4182,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             menu_number_54 = item_level_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
             menu_number_73 = 100;
-            if (smith_panel_state == 1) {
+            if (smith_panel_state == SMITH_PANEL_OPEN) {
                 for (i = 0; i < shop_a_part_count; i++) {
                     full_alpha = shop_a_parts[i].alpha;
                     panel_part_alphas[i] = full_alpha;
@@ -4074,7 +4198,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             break;
         }
         switch (smith_panel_state) {
-        case 0:
+        case SMITH_PANEL_FADE_IN:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] += parts[i].alpha / 10.0f;
                 if (panel_part_alphas[i] > parts[i].alpha) {
@@ -4082,17 +4206,17 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                         full_alpha = parts[i].alpha;
                         panel_part_alphas[i] = full_alpha;
                     }
-                    smith_panel_state = 1;
+                    smith_panel_state = SMITH_PANEL_OPEN;
                     break;
                 }
             }
             break;
-        case 2:
+        case SMITH_PANEL_CLOSE:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] -= parts[i].alpha / 10.0f;
                 if (panel_part_alphas[i] < 0.0f) {
                     memset(panel_part_alphas, 0, 0x400);
-                    smith_panel_state = 0;
+                    smith_panel_state = SMITH_PANEL_FADE_IN;
                     detail_panel_open_word = 0;
                     break;
                 }
@@ -4127,11 +4251,11 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
         if (menu_buttons & PAD_CROSS) {
             if (smith_confirm_shown == 0) {
                 Sound_PlayMenu(0);
-                smith_screen_state = 2;
+                smith_screen_state = SMITH_LIST_LOADING_ITEM;
                 modal_input_locked = 1;
             } else {
                 Sound_PlayMenu(0);
-                smith_screen_state = 3;
+                smith_screen_state = SMITH_LIST_LOADING_UPGRADE;
                 modal_input_locked = 1;
                 if (model_load_chain != NULL) {
                     model_load_chain->next = NULL;
@@ -4140,13 +4264,13 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
         } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
             if (smith_confirm_shown == 0) {
-                smith_screen_state = 4;
+                smith_screen_state = SMITH_LIST_LOADING_CANCEL;
                 modal_input_locked = 1;
                 if (model_load_chain != NULL) {
                     model_load_chain->next = NULL;
                 }
             } else {
-                smith_screen_state = 5;
+                smith_screen_state = SMITH_LIST_LOADING_CLOSE_CONFIRM;
                 modal_input_locked = 1;
                 if (model_load_chain != NULL) {
                     model_load_chain->next = NULL;
@@ -4154,20 +4278,20 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             }
         }
     }
-    if (smith_screen_state == 2 && model_load_chain == NULL) {
-        smith_screen_state = 6;
+    if (smith_screen_state == SMITH_LIST_LOADING_ITEM && model_load_chain == NULL) {
+        smith_screen_state = SMITH_LIST_FADE_TO_ITEM;
     }
-    if (smith_screen_state == 3 && model_load_chain == NULL) {
-        smith_screen_state = 7;
+    if (smith_screen_state == SMITH_LIST_LOADING_UPGRADE && model_load_chain == NULL) {
+        smith_screen_state = SMITH_LIST_UPGRADED_FADE_TO_SELECT;
     }
-    if (smith_screen_state == 4 && model_load_chain == NULL) {
-        smith_screen_state = 8;
+    if (smith_screen_state == SMITH_LIST_LOADING_CANCEL && model_load_chain == NULL) {
+        smith_screen_state = SMITH_LIST_CANCELLED_FADE_TO_SELECT;
     }
-    if (smith_screen_state == 5 && model_load_chain == NULL) {
-        smith_screen_state = 9;
+    if (smith_screen_state == SMITH_LIST_LOADING_CLOSE_CONFIRM && model_load_chain == NULL) {
+        smith_screen_state = SMITH_LIST_CLOSE_CONFIRM;
     }
     switch (smith_screen_state) {
-    case 0:
+    case SMITH_SCREEN_FADE_IN:
         screen_part_alphas[255] += 12.8f;
         if (screen_part_alphas[255] > 128.0f) {
             screen_part_alphas[255] = 128.0f;
@@ -4185,7 +4309,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             screen_part_alphas[i] += tune_parts[i].alpha / 10.0f;
             if (screen_part_alphas[i] > tune_parts[i].alpha) {
                 modal_input_locked = 0;
-                smith_screen_state = 1;
+                smith_screen_state = SMITH_SCREEN_OPEN;
                 for (i = 0; i < tune_part_count; i++) {
                     full_alpha = tune_parts[i].alpha;
                     screen_part_alphas[i] = full_alpha;
@@ -4204,10 +4328,10 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             }
         }
         break;
-    case 6:
-    case 7:
-    case 8:
-    case 9:
+    case SMITH_LIST_FADE_TO_ITEM:
+    case SMITH_LIST_UPGRADED_FADE_TO_SELECT:
+    case SMITH_LIST_CANCELLED_FADE_TO_SELECT:
+    case SMITH_LIST_CLOSE_CONFIRM:
         screen_part_alphas[255] -= 12.8f;
         if (screen_part_alphas[255] < 0.0f) {
             screen_part_alphas[255] = 0.0f;
@@ -4229,11 +4353,11 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
         for (i = 0; i < tune_part_count; i++) {
             screen_part_alphas[i] -= tune_parts[i].alpha / 10.0f;
             if (screen_part_alphas[i] < 0.0f) {
-                if (smith_screen_state == 6) {
+                if (smith_screen_state == SMITH_LIST_FADE_TO_ITEM) {
                     smith_handler = Smith_UpdateItemScreen;
                     context->active_list = 1;
                     smith_upgrade_choice = 0;
-                } else if (smith_screen_state == 7) {
+                } else if (smith_screen_state == SMITH_LIST_UPGRADED_FADE_TO_SELECT) {
                     PlayTime_Update();
                     if (item_list_cursor[0]->item_number < 220) {
                         *(ClockTime *)weapon_level_records[item_list_cursor[0]->item_number - 150].last_upgraded.bytes = current_play_time;
@@ -4279,16 +4403,16 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                     item_counts.bytes[ITEM_EARTH_STONE]--;
                     context->active_list = 1;
                     Menu_ResetLoadBuffers(0);
-                } else if (smith_screen_state == 8) {
+                } else if (smith_screen_state == SMITH_LIST_CANCELLED_FADE_TO_SELECT) {
                     context->active_list = 1;
                     smith_handler = Smith_UpdateSelectScreen;
                     Menu_ResetLoadBuffers(0);
-                } else if (smith_screen_state == 9) {
+                } else if (smith_screen_state == SMITH_LIST_CLOSE_CONFIRM) {
                     smith_confirm_shown = 0;
                 }
                 smith_unread_flag = 0;
-                smith_screen_state = 0;
-                smith_panel_state = 0;
+                smith_screen_state = SMITH_SCREEN_FADE_IN;
+                smith_panel_state = SMITH_PANEL_FADE_IN;
                 memset(screen_part_alphas, 0, 0x400);
                 break;
             }
@@ -4373,7 +4497,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             bar.second.f.lo16 = bar.first.f.lo16 + 0x8B0;
             bar.second.f.mid16 = bar.first.f.mid16 + 0xB0;
             bar.second.f.mid24 = bar.first.f.mid24;
-            if (smith_screen_state == 1) {
+            if (smith_screen_state == SMITH_SCREEN_OPEN) {
                 screen_part_alphas[253] = Trade_PulseValue(0x10, 0x20, screen_part_alphas[253]);
             }
             bar.alpha = (s32)screen_part_alphas[253];
@@ -4398,11 +4522,11 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
         if (detail_panel_open_word == 0) {
             play_sound = TRUE;
             detail_panel_open_word = 1;
-        } else if (smith_panel_state != 2) { // match: this way round for the branch sense
-            smith_panel_state = 2;
+        } else if (smith_panel_state != SMITH_PANEL_CLOSE) { // match: this way round for the branch sense
+            smith_panel_state = SMITH_PANEL_CLOSE;
             Sound_PlayMenu(1);
         } else {
-            smith_panel_state = 0;
+            smith_panel_state = SMITH_PANEL_FADE_IN;
         }
     }
     if (detail_panel_open_word != 0) {
@@ -4494,7 +4618,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             break;
         }
         switch (smith_panel_state) {
-        case 0:
+        case SMITH_PANEL_FADE_IN:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] += parts[i].alpha / 10.0f;
                 if (panel_part_alphas[i] > parts[i].alpha) {
@@ -4502,17 +4626,17 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
                         full_alpha = parts[i].alpha;
                         panel_part_alphas[i] = full_alpha;
                     }
-                    smith_panel_state = 1;
+                    smith_panel_state = SMITH_PANEL_OPEN;
                     break;
                 }
             }
             break;
-        case 2:
+        case SMITH_PANEL_CLOSE:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] -= parts[i].alpha / 10.0f;
                 if (panel_part_alphas[i] < 0.0f) {
                     memset(panel_part_alphas, 0, 0x400);
-                    smith_panel_state = 0;
+                    smith_panel_state = SMITH_PANEL_FADE_IN;
                     detail_panel_open_word = 0;
                     break;
                 }
@@ -4532,28 +4656,28 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
     if (modal_input_locked == 0) {
         if (menu_buttons & PAD_CROSS) {
             Sound_PlayMenu(0);
-            smith_screen_state = 2;
+            smith_screen_state = SMITH_ITEM_LOADING_LIST_WITH_CONFIRM;
             modal_input_locked = 1;
             if (model_load_chain != NULL) {
                 model_load_chain->next = NULL;
             }
         } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
-            smith_screen_state = 3;
+            smith_screen_state = SMITH_ITEM_LOADING_LIST;
             modal_input_locked = 1;
             if (model_load_chain != NULL) {
                 model_load_chain->next = NULL;
             }
         }
     }
-    if (smith_screen_state == 2 && model_load_chain == NULL) {
-        smith_screen_state = 4;
+    if (smith_screen_state == SMITH_ITEM_LOADING_LIST_WITH_CONFIRM && model_load_chain == NULL) {
+        smith_screen_state = SMITH_ITEM_FADE_TO_LIST_WITH_CONFIRM;
     }
-    if (smith_screen_state == 3 && model_load_chain == NULL) {
-        smith_screen_state = 5;
+    if (smith_screen_state == SMITH_ITEM_LOADING_LIST && model_load_chain == NULL) {
+        smith_screen_state = SMITH_ITEM_FADE_TO_LIST;
     }
     switch (smith_screen_state) {
-    case 0:
+    case SMITH_SCREEN_FADE_IN:
         screen_part_alphas[255] += 12.8f;
         if (screen_part_alphas[255] > 128.0f) {
             screen_part_alphas[255] = 128.0f;
@@ -4566,7 +4690,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
         for (i = 0; i < tune_s_part_count; i++) {
             screen_part_alphas[i] += tune_s_parts[i].alpha / 10.0f;
             if (screen_part_alphas[i] > tune_s_parts[i].alpha) {
-                smith_screen_state = 1;
+                smith_screen_state = SMITH_SCREEN_OPEN;
                 modal_input_locked = 0;
                 for (i = 0; i < tune_s_part_count; i++) {
                     full_alpha = tune_s_parts[i].alpha;
@@ -4576,8 +4700,8 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             }
         }
         break;
-    case 4:
-    case 5:
+    case SMITH_ITEM_FADE_TO_LIST_WITH_CONFIRM:
+    case SMITH_ITEM_FADE_TO_LIST:
         screen_part_alphas[255] -= 12.8f;
         if (screen_part_alphas[255] < 0.0f) {
             screen_part_alphas[255] = 0.0f;
@@ -4595,15 +4719,15 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
         for (i = 0; i < tune_s_part_count; i++) {
             screen_part_alphas[i] -= tune_s_parts[i].alpha / 10.0f;
             if (screen_part_alphas[i] < 0.0f) {
-                if (smith_screen_state == 4) {
+                if (smith_screen_state == SMITH_ITEM_FADE_TO_LIST_WITH_CONFIRM) {
                     smith_confirm_shown = 1;
                     smith_handler = smith_list_handlers[1];
-                } else if (smith_screen_state == 5) {
+                } else if (smith_screen_state == SMITH_ITEM_FADE_TO_LIST) {
                     smith_confirm_shown = 0;
                     smith_handler = smith_list_handlers[1];
                 }
-                smith_screen_state = 0;
-                smith_panel_state = 0;
+                smith_screen_state = SMITH_SCREEN_FADE_IN;
+                smith_panel_state = SMITH_PANEL_FADE_IN;
                 memset(screen_part_alphas, 0, 0x400);
                 return;
             }
@@ -4694,7 +4818,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             bar.second.f.lo16 = bar.first.f.lo16 + 0x1240;
             bar.second.f.mid16 = bar.first.f.mid16 + 0xB0;
             bar.second.f.mid24 = bar.first.f.mid24;
-            if (smith_screen_state == 1) {
+            if (smith_screen_state == SMITH_SCREEN_OPEN) {
                 screen_part_alphas[253] = Trade_PulseValue(0x10, 0x20, screen_part_alphas[253]);
             }
             bar.alpha = (s32)screen_part_alphas[253];
@@ -4727,7 +4851,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
         if (detail_panel_open_word == 0) {
             detail_panel_open_word = 1;
         } else {
-            smith_panel_state = 2;
+            smith_panel_state = SMITH_PANEL_CLOSE;
         }
     }
     if (detail_panel_open_word != 0) {
@@ -4759,7 +4883,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             menu_number_72 = 100;
             menu_number_54 = item_level_defs[smith_collect_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[smith_collect_list_cursor[0]->group];
-            if (smith_panel_state == 1) {
+            if (smith_panel_state == SMITH_PANEL_OPEN) {
                 for (i = 0; i < shop_g_part_count; i++) {
                     full_alpha = shop_g_parts[i].alpha;
                     panel_part_alphas[i] = full_alpha;
@@ -4791,7 +4915,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             menu_number_52 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
             menu_number_54 = item_level_defs[smith_collect_list_cursor[0]->item_number].weight_tenths_of_pound;
             variant = player_weapon[smith_collect_list_cursor[0]->group];
-            if (smith_panel_state == 1) {
+            if (smith_panel_state == SMITH_PANEL_OPEN) {
                 for (i = 0; i < shop_g2_part_count; i++) {
                     full_alpha = shop_g2_parts[i].alpha;
                     panel_part_alphas[i] = full_alpha;
@@ -4824,7 +4948,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             menu_number_54 = item_level_defs[smith_collect_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[smith_collect_list_cursor[0]->group];
             menu_number_73 = 100;
-            if (smith_panel_state == 1) {
+            if (smith_panel_state == SMITH_PANEL_OPEN) {
                 for (i = 0; i < shop_a_part_count; i++) {
                     full_alpha = shop_a_parts[i].alpha;
                     panel_part_alphas[i] = full_alpha;
@@ -4840,7 +4964,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             break;
         }
         switch (smith_panel_state) {
-        case 0:
+        case SMITH_PANEL_FADE_IN:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] += parts[i].alpha / 10.0f;
                 if (panel_part_alphas[i] > parts[i].alpha) {
@@ -4848,19 +4972,19 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
                         full_alpha = parts[i].alpha;
                         panel_part_alphas[i] = full_alpha;
                     }
-                    smith_panel_state = 1;
+                    smith_panel_state = SMITH_PANEL_OPEN;
                     break;
                 }
             }
             break;
-        case 2:
-        case 3:
+        case SMITH_PANEL_CLOSE:
+        case SMITH_PANEL_FADE_OUT:
             for (i = 0; i < count; i++) {
                 panel_part_alphas[i] -= parts[i].alpha / 10.0f;
                 if (panel_part_alphas[i] < 0.0f) {
                     memset(panel_part_alphas, 0, 0x400);
                     detail_panel_open_word = 0;
-                    smith_panel_state = 0;
+                    smith_panel_state = SMITH_PANEL_FADE_IN;
                     break;
                 }
             }
@@ -4879,30 +5003,30 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
     if (modal_input_locked == 0) {
         if (menu_buttons & PAD_CROSS) {
             Sound_PlayMenu(0);
-            smith_screen_state = 2;
-            smith_panel_state = 3;
+            smith_screen_state = SMITH_COLLECT_LOADING_COLLECT;
+            smith_panel_state = SMITH_PANEL_FADE_OUT;
             modal_input_locked = 1;
             if (model_load_chain != NULL) {
                 model_load_chain->next = NULL;
             }
         } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
-            smith_screen_state = 3;
-            smith_panel_state = 2;
+            smith_screen_state = SMITH_COLLECT_LOADING_BACK;
+            smith_panel_state = SMITH_PANEL_CLOSE;
             modal_input_locked = 1;
             if (model_load_chain != NULL) {
                 model_load_chain->next = NULL;
             }
         }
     }
-    if (smith_screen_state == 2 && model_load_chain == NULL) {
-        smith_screen_state = 4;
+    if (smith_screen_state == SMITH_COLLECT_LOADING_COLLECT && model_load_chain == NULL) {
+        smith_screen_state = SMITH_COLLECT_COLLECTED_FADE_TO_SELECT;
     }
-    if (smith_screen_state == 3 && model_load_chain == NULL) {
-        smith_screen_state = 5;
+    if (smith_screen_state == SMITH_COLLECT_LOADING_BACK && model_load_chain == NULL) {
+        smith_screen_state = SMITH_COLLECT_BACK_FADE_TO_SELECT;
     }
     switch (smith_screen_state) {
-    case 0:
+    case SMITH_SCREEN_FADE_IN:
         screen_part_alphas[255] += 12.8f;
         if (screen_part_alphas[255] > 128.0f) {
             screen_part_alphas[255] = 128.0f;
@@ -4915,7 +5039,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
         for (i = 0; i < tune_part_count; i++) {
             screen_part_alphas[i] += tune_parts[i].alpha / 10.0f;
             if (screen_part_alphas[i] > tune_parts[i].alpha) {
-                smith_screen_state = 1;
+                smith_screen_state = SMITH_SCREEN_OPEN;
                 modal_input_locked = 0;
                 for (i = 0; i < tune_part_count; i++) {
                     full_alpha = tune_parts[i].alpha;
@@ -4925,8 +5049,8 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             }
         }
         break;
-    case 4:
-    case 5:
+    case SMITH_COLLECT_COLLECTED_FADE_TO_SELECT:
+    case SMITH_COLLECT_BACK_FADE_TO_SELECT:
         screen_part_alphas[255] -= 12.8f;
         if (screen_part_alphas[255] < 0.0f) {
             screen_part_alphas[255] = 0.0f;
@@ -4944,7 +5068,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
         for (i = 0; i < tune_part_count; i++) {
             screen_part_alphas[i] -= tune_parts[i].alpha / 10.0f;
             if (screen_part_alphas[i] < 0.0f) {
-                if (smith_screen_state == 4) {
+                if (smith_screen_state == SMITH_COLLECT_COLLECTED_FADE_TO_SELECT) {
                     if (smith_collect_list_cursor[0]->item_number < 220) {
                         ClearWeaponMark(smith_collect_list_cursor[0]->item_number - 150);
                     } else {
@@ -4953,13 +5077,13 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
                     context->active_list = 2;
                     smith_handler = Smith_UpdateSelectScreen;
                     Menu_ResetLoadBuffers(0);
-                } else if (smith_screen_state == 5) {
+                } else if (smith_screen_state == SMITH_COLLECT_BACK_FADE_TO_SELECT) {
                     context->active_list = 2;
                     smith_handler = Smith_UpdateSelectScreen;
                     Menu_ResetLoadBuffers(0);
                 }
-                smith_screen_state = 0;
-                smith_panel_state = 0;
+                smith_screen_state = SMITH_SCREEN_FADE_IN;
+                smith_panel_state = SMITH_PANEL_FADE_IN;
                 memset(screen_part_alphas, 0, 0x400);
                 return;
             }
@@ -5317,7 +5441,7 @@ static void SaveScreen_UpdateCardSelect(void) {
     PadReport *report;
 
     card_result = SaveCard_Update();
-    if (SaveCard_HasCard(save_screen_state.selected_card) == 0 && save_screen_state.dialog_id == 14) {
+    if (SaveCard_HasCard(save_screen_state.selected_card) == 0 && save_screen_state.dialog_id == SAVE_DIALOG_FORMAT_DONE) {
         card_result = -1;
     }
     if (save_screen_state.check_finished == 0 && SaveCard_IsCheckRunning() == 0) {
@@ -5341,79 +5465,79 @@ static void SaveScreen_UpdateCardSelect(void) {
                 MenuSprite_Draw((int)&slot_parts[i], kind + 1000, slot, screen_part_alphas[i]);
             }
             break;
-        case 31:
+        case SAVE_SPRITE_SELECTED_CARD:
             if (save_screen_state.check_finished != 0) {
-                if (system_screen_state != 1) {
+                if (system_screen_state != SYSTEM_SCREEN_OPEN) {
                     MenuSprite_Draw((int)&slot_parts[i], kind + 1000, save_screen_state.selected_card, screen_part_alphas[i]);
                 } else {
                     MenuSprite_Draw((int)&slot_parts[i], kind, save_screen_state.selected_card, screen_part_alphas[i]);
                 }
             }
             break;
-        case 3:
+        case SAVE_SPRITE_DIALOG_FRAME:
             switch (save_screen_state.dialog_id) {
-            case 4:
-            case 5:
-            case 10:
-            case 12:
-            case 13:
-            case 14:
-            case 15:
-            case 21:
+            case SAVE_DIALOG_NO_CARD_SLOT_1:
+            case SAVE_DIALOG_NO_CARD_SLOT_2:
+            case SAVE_DIALOG_CARD_ERROR:
+            case SAVE_DIALOG_FORMAT_CONFIRM:
+            case SAVE_DIALOG_FORMATTING:
+            case SAVE_DIALOG_FORMAT_DONE:
+            case SAVE_DIALOG_FORMAT_FAILED:
+            case SAVE_DIALOG_NO_ROOM:
                 MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0, screen_part_alphas[i]);
                 break;
             }
             break;
-        case 26:
+        case SAVE_SPRITE_CARD_SLOT_1:
             if (SaveCard_IsPresent(0) == 0) {
-                if (system_screen_state == 0) {
+                if (system_screen_state == SYSTEM_SCREEN_FADE_IN) {
                     MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0x20, screen_part_alphas[i]);
                 } else if (system_screen_state < 2) {
                     MenuSprite_DrawPlain((int)&slot_parts[i], kind, 0x20);
                 }
-            } else if (system_screen_state != 1) {
+            } else if (system_screen_state != SYSTEM_SCREEN_OPEN) {
                 MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0x80, screen_part_alphas[i]);
             } else {
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 0x80);
             }
             break;
-        case 27:
+        case SAVE_SPRITE_CARD_SLOT_2:
             if (SaveCard_IsPresent(1) == 0) {
-                if (system_screen_state == 0) {
+                if (system_screen_state == SYSTEM_SCREEN_FADE_IN) {
                     MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0x20, screen_part_alphas[i]);
                 } else if (system_screen_state < 2) {
                     MenuSprite_DrawPlain((int)&slot_parts[i], kind, 0x20);
                 }
-            } else if (system_screen_state != 1) {
+            } else if (system_screen_state != SYSTEM_SCREEN_OPEN) {
                 MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0x80, screen_part_alphas[i]);
             } else {
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 0x80);
             }
             break;
-        case 28:
+        case SAVE_SPRITE_DIALOG_TEXT:
             switch (save_screen_state.dialog_id) {
-            case 4:
+            case SAVE_DIALOG_NO_CARD_SLOT_1:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 4);
                 break;
-            case 5:
+            case SAVE_DIALOG_NO_CARD_SLOT_2:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 5);
                 break;
-            case 12:
+            case SAVE_DIALOG_FORMAT_CONFIRM:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 12);
                 break;
-            case 13:
+            case SAVE_DIALOG_FORMATTING:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 13);
                 break;
-            case 14:
+            case SAVE_DIALOG_FORMAT_DONE:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 14);
                 break;
-            case 15:
+            case SAVE_DIALOG_FORMAT_FAILED:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 15);
                 break;
-            case 21:
+            case SAVE_DIALOG_NO_ROOM:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 21);
                 break;
-            case 10:
+            case SAVE_DIALOG_CARD_ERROR:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 10);
                 break;
             case 22:
@@ -5428,7 +5552,7 @@ static void SaveScreen_UpdateCardSelect(void) {
         SELECT_PART(0);
     }
 
-    if (save_screen_state.dialog_id == 12) {
+    if (save_screen_state.dialog_id == SAVE_DIALOG_FORMAT_CONFIRM) {
         // match: a depth nothing reads; without it the 64-bit mask of the bar's depth field is loaded after the branch below
         unused_corner.f.mid24 = 0x5F370;
         bar.first.f.lo16 = 0x7580;
@@ -5452,56 +5576,56 @@ static void SaveScreen_UpdateCardSelect(void) {
         if (SaveCard_IsCheckRunning() == 0) {
             save_screen_state.confirm_pending = 0;
             save_screen_state.input_locked = 0;
-            if (save_screen_state.dialog_id == 12) {
+            if (save_screen_state.dialog_id == SAVE_DIALOG_FORMAT_CONFIRM) {
                 if (save_screen_state.selected_save == 0) {
                     SaveCard_StartFormat(save_screen_state.selected_card);
-                    save_screen_state.dialog_id = 13;
+                    save_screen_state.dialog_id = SAVE_DIALOG_FORMATTING;
                     save_screen_state.card_op_running = 1;
                 } else {
                     save_screen_state.dialog_id = -1;
                 }
-            } else if (save_screen_state.dialog_id == 14) {
+            } else if (save_screen_state.dialog_id == SAVE_DIALOG_FORMAT_DONE) {
                 if (SaveCard_StartReadList(save_screen_state.selected_card, 0) == 0) {
                     save_screen_state.card_op_running = 1;
                 }
-            } else if (save_screen_state.dialog_id == 21) {
+            } else if (save_screen_state.dialog_id == SAVE_DIALOG_NO_ROOM) {
                 save_screen_state.dialog_id = -1;
             } else if (save_screen_state.dialog_id != -1) {
                 save_screen_state.dialog_id = -1;
             } else if (SaveCard_IsPresent(save_screen_state.selected_card) != 0) {
                 if (SaveCard_IsFormatted(save_screen_state.selected_card) == 0) {
-                    save_screen_state.dialog_id = 12;
+                    save_screen_state.dialog_id = SAVE_DIALOG_FORMAT_CONFIRM;
                 } else if (SaveCard_HasSaveFolder(save_screen_state.selected_card) == 0 && SaveCard_HasRoomForFolder(save_screen_state.selected_card) < 0) {
-                    save_screen_state.dialog_id = 21;
+                    save_screen_state.dialog_id = SAVE_DIALOG_NO_ROOM;
                     SaveCard_StartCheck(1);
                 } else if (SaveCard_StartReadList(save_screen_state.selected_card, 1) == 0) {
                     save_screen_state.card_op_running = 1;
                 }
             } else if (save_screen_state.selected_card == 0) {
-                save_screen_state.dialog_id = 4;
+                save_screen_state.dialog_id = SAVE_DIALOG_NO_CARD_SLOT_1;
             } else if (save_screen_state.selected_card == 1) {
-                save_screen_state.dialog_id = 5;
+                save_screen_state.dialog_id = SAVE_DIALOG_NO_CARD_SLOT_2;
             }
         }
     } else if (save_screen_state.card_op_running != 0) {
         if (SaveCard_CheckBusy() == 0) {
-            if (save_screen_state.dialog_id == 13) {
-                save_screen_state.dialog_id = 14;
+            if (save_screen_state.dialog_id == SAVE_DIALOG_FORMATTING) {
+                save_screen_state.dialog_id = SAVE_DIALOG_FORMAT_DONE;
                 save_screen_state.selected_save = 1;
                 save_screen_state.list_step = SAVE_SCREEN_STEP_WAIT_INPUT;
             } else if (SaveCard_HasAnySave() != 0 || SaveCard_HasRoomForFolder(save_screen_state.selected_card) > 0) {
                 save_screen_state.input_locked = 1;
                 save_screen_state.list_step = SAVE_SCREEN_STEP_WAIT_INPUT;
-                system_screen_state = 2;
+                system_screen_state = SYSTEM_SCREEN_TO_SAVE_LIST;
                 save_screen_state.selected_save = 0;
             } else {
-                save_screen_state.dialog_id = 21;
+                save_screen_state.dialog_id = SAVE_DIALOG_NO_ROOM;
                 SaveCard_StartCheck(1);
             }
             save_screen_state.card_op_running = 0;
         } else if (card_result < 0) {
-            if (save_screen_state.dialog_id == 13) {
-                save_screen_state.dialog_id = 15;
+            if (save_screen_state.dialog_id == SAVE_DIALOG_FORMATTING) {
+                save_screen_state.dialog_id = SAVE_DIALOG_FORMAT_FAILED;
                 save_screen_state.card_op_running = 0;
                 save_screen_state.selected_save = 1;
                 SaveCard_StartCheck(1);
@@ -5510,16 +5634,16 @@ static void SaveScreen_UpdateCardSelect(void) {
                 if (SaveCard_IsDamaged(save_screen_state.selected_card) != 0) {
                     if (SaveCard_HasAnySave() != 0 || SaveCard_HasRoomForFolder(save_screen_state.selected_card) > 0) {
                         save_screen_state.input_locked = 1;
-                        system_screen_state = 2;
+                        system_screen_state = SYSTEM_SCREEN_TO_SAVE_LIST;
                         save_screen_state.list_step = SAVE_SCREEN_STEP_WAIT_INPUT;
                         save_screen_state.selected_save = 0;
                         SaveCard_Cancel(save_screen_state.selected_card);
                     } else {
-                        save_screen_state.dialog_id = 21;
+                        save_screen_state.dialog_id = SAVE_DIALOG_NO_ROOM;
                         SaveCard_StartCheck(1);
                     }
                 } else {
-                    save_screen_state.dialog_id = 10;
+                    save_screen_state.dialog_id = SAVE_DIALOG_CARD_ERROR;
                 }
                 card_result = 0;
                 save_screen_state.card_op_running = 0;
@@ -5530,13 +5654,13 @@ static void SaveScreen_UpdateCardSelect(void) {
     if (save_screen_state.is_leaving != 0) {
         if (card_result < 0) {
             save_screen_state.input_locked = 1;
-            system_screen_state = 3;
+            system_screen_state = SYSTEM_SCREEN_TO_CARD_SELECT;
         }
-    } else if (save_screen_state.dialog_id == 12 && SaveCard_IsPresent(save_screen_state.selected_card) == 0) {
-        save_screen_state.dialog_id = 10;
+    } else if (save_screen_state.dialog_id == SAVE_DIALOG_FORMAT_CONFIRM && SaveCard_IsPresent(save_screen_state.selected_card) == 0) {
+        save_screen_state.dialog_id = SAVE_DIALOG_CARD_ERROR;
         save_screen_state.selected_save = 1;
     } else if (card_result < 0) {
-        save_screen_state.dialog_id = 10;
+        save_screen_state.dialog_id = SAVE_DIALOG_CARD_ERROR;
         save_screen_state.selected_save = 1;
         save_screen_state.card_op_running = 0;
         SaveCard_StartCheck(1);
@@ -5554,7 +5678,7 @@ static void SaveScreen_UpdateCardSelect(void) {
                 report = Pad_GetReport(0, 0);
                 if ((report->pressed & PAD_CIRCLE) && modal_pad_mode != 0xFF) {
                     Sound_PlayMenu(2);
-                    if (save_screen_state.dialog_id == 14) {
+                    if (save_screen_state.dialog_id == SAVE_DIALOG_FORMAT_DONE) {
                         if (SaveCard_StartReadList(save_screen_state.selected_card, 0) == 0) {
                             save_screen_state.card_op_running = 1;
                         }
@@ -5565,10 +5689,10 @@ static void SaveScreen_UpdateCardSelect(void) {
                         save_screen_state.is_leaving = 1;
                         SaveCard_Close();
                     }
-                } else if ((menu_buttons & PAD_UP) && modal_pad_mode != 0xFF && save_screen_state.dialog_id == 12) {
+                } else if ((menu_buttons & PAD_UP) && modal_pad_mode != 0xFF && save_screen_state.dialog_id == SAVE_DIALOG_FORMAT_CONFIRM) {
                     Sound_PlayMenu(1);
                     save_screen_state.selected_save = (save_screen_state.selected_save + 1) & 1;
-                } else if ((menu_buttons & PAD_DOWN) && modal_pad_mode != 0xFF && save_screen_state.dialog_id == 12) {
+                } else if ((menu_buttons & PAD_DOWN) && modal_pad_mode != 0xFF && save_screen_state.dialog_id == SAVE_DIALOG_FORMAT_CONFIRM) {
                     Sound_PlayMenu(1);
                     save_screen_state.selected_save = (save_screen_state.selected_save - 1) & 1;
                 }
@@ -5577,20 +5701,20 @@ static void SaveScreen_UpdateCardSelect(void) {
     }
 
     switch (system_screen_state) {
-    case 0:
+    case SYSTEM_SCREEN_FADE_IN:
         for (i = 0; i < slot_part_count; i++) {
             // match: the cursor bar's level is stepped once for every part, inside the loop
             screen_part_alphas[0xFF] += 1.6f;
             if (screen_part_alphas[0xFF] > 16.0f) {
                 screen_part_alphas[0xFF] = 16.0f;
             }
-            if (slot_parts[i].handler_index == 26) {
+            if (slot_parts[i].handler_index == SAVE_SPRITE_CARD_SLOT_1) {
                 if (SaveCard_IsPresent(0) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x80;
                 } else {
                     SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x20;
                 }
-            } else if (slot_parts[i].handler_index == 27) {
+            } else if (slot_parts[i].handler_index == SAVE_SPRITE_CARD_SLOT_2) {
                 if (SaveCard_IsPresent(1) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x80;
                 } else {
@@ -5602,7 +5726,7 @@ static void SaveScreen_UpdateCardSelect(void) {
                 for (i = 0; i < slot_part_count; i++) {
                     screen_part_alphas[i] = SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha;
                 }
-                system_screen_state = 1;
+                system_screen_state = SYSTEM_SCREEN_OPEN;
                 if (save_screen_state.check_finished != 0) {
                     save_screen_state.input_locked = 0;
                 }
@@ -5610,20 +5734,20 @@ static void SaveScreen_UpdateCardSelect(void) {
             }
         }
         break;
-    case 2:
-    case 3:
+    case SYSTEM_SCREEN_TO_SAVE_LIST:
+    case SYSTEM_SCREEN_TO_CARD_SELECT:
         for (i = 0; i < slot_part_count; i++) {
             screen_part_alphas[0xFF] -= 1.6f; // match: stepped once for every part here too
             if (screen_part_alphas[0xFF] < 0.0f) {
                 screen_part_alphas[0xFF] = 0.0f;
             }
-            if (slot_parts[i].handler_index == 26) {
+            if (slot_parts[i].handler_index == SAVE_SPRITE_CARD_SLOT_1) {
                 if (SaveCard_IsPresent(0) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x80;
                 } else {
                     SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x20;
                 }
-            } else if (slot_parts[i].handler_index == 27) {
+            } else if (slot_parts[i].handler_index == SAVE_SPRITE_CARD_SLOT_2) {
                 if (SaveCard_IsPresent(1) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x80;
                 } else {
@@ -5633,7 +5757,7 @@ static void SaveScreen_UpdateCardSelect(void) {
             screen_part_alphas[i] -= SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha / 10.0f;
             if (screen_part_alphas[i] < 0.0f) {
                 memset(screen_part_alphas, 0, 0x400);
-                if (system_screen_state == 2) {
+                if (system_screen_state == SYSTEM_SCREEN_TO_SAVE_LIST) {
                     save_screen_state.confirm_press_state = CONFIRM_PRESS_IDLE;
                     save_screen_handler = SaveScreen_UpdateSaveList;
                     save_screen_state.free_clusters = 0;
@@ -5658,13 +5782,13 @@ static void SaveScreen_UpdateCardSelect(void) {
                     save_line_slots[0] = 0;
                     save_line_slots[1] = 1;
                     save_line_slots[2] = 2;
-                } else if (system_screen_state == 3) {
+                } else if (system_screen_state == SYSTEM_SCREEN_TO_CARD_SELECT) {
                     save_screen_state.selected_save = 0;
                     save_screen_step++;
                     MenuHeap_FreeToMark();
                 }
                 save_screen_state.dialog_id = -1;
-                system_screen_state = 0;
+                system_screen_state = SYSTEM_SCREEN_FADE_IN;
                 break;
             }
         }
@@ -6016,7 +6140,7 @@ static void SaveScreen_UpdateSaveList(void) {
             case SAVE_SCREEN_STEP_CARD_ERROR:
             case SAVE_SCREEN_STEP_SAVE_FAILED:
                 Sound_PlayMenu(0);
-                system_screen_state = 3;
+                system_screen_state = SYSTEM_SCREEN_TO_CARD_SELECT;
                 save_screen_state.input_locked = 1;
                 break;
             }
@@ -6026,12 +6150,12 @@ static void SaveScreen_UpdateSaveList(void) {
                 Sound_PlayMenu(2);
                 switch (save_screen_state.list_step) {
                 case SAVE_SCREEN_STEP_WAIT_INPUT:
-                    system_screen_state = 2;
+                    system_screen_state = SYSTEM_SCREEN_TO_SAVE_LIST;
                     save_screen_state.input_locked = 1;
                     break;
                 case SAVE_SCREEN_STEP_CARD_ERROR:
                 case SAVE_SCREEN_STEP_SAVE_FAILED:
-                    system_screen_state = 3;
+                    system_screen_state = SYSTEM_SCREEN_TO_CARD_SELECT;
                     save_screen_state.input_locked = 1;
                     break;
                 case SAVE_SCREEN_STEP_CONFIRM_EMPTY:
@@ -6085,7 +6209,7 @@ static void SaveScreen_UpdateSaveList(void) {
     }
 
     switch (system_screen_state) {
-    case 0:
+    case SYSTEM_SCREEN_FADE_IN:
         screen_part_alphas[0xFF] += 12.8f;
         if (screen_part_alphas[0xFF] > 128.0f) {
             screen_part_alphas[0xFF] = 128.0f;
@@ -6097,14 +6221,14 @@ static void SaveScreen_UpdateSaveList(void) {
                 for (i = 0; i < data_part_count; i++) {
                     screen_part_alphas[i] = SPRITE_PACKET_COLOR_VIEW(&data_parts[i])->alpha;
                 }
-                system_screen_state = 1;
+                system_screen_state = SYSTEM_SCREEN_OPEN;
                 save_screen_state.input_locked = 0;
                 break;
             }
         }
         break;
-    case 2:
-    case 3:
+    case SYSTEM_SCREEN_TO_SAVE_LIST:
+    case SYSTEM_SCREEN_TO_CARD_SELECT:
         screen_part_alphas[0xFF] -= 12.8f;
         if (screen_part_alphas[0xFF] < 0.0f) {
             screen_part_alphas[0xFF] = 0.0f;
@@ -6119,12 +6243,12 @@ static void SaveScreen_UpdateSaveList(void) {
                 pulse_sprite_falling = 0;
                 save_screen_state.selected_save = 1;
                 save_screen_state.confirm_choice = CONFIRM_CHOICE_NO;
-                if (system_screen_state == 2) {
+                if (system_screen_state == SYSTEM_SCREEN_TO_SAVE_LIST) {
                     SaveCard_StartCheck(0);
                 } else {
                     SaveCard_StartCheck(1);
                 }
-                system_screen_state = 0;
+                system_screen_state = SYSTEM_SCREEN_FADE_IN;
                 break;
             }
         }
