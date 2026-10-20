@@ -134,30 +134,30 @@ static page) and the table below; commit those with each batch of work.
 <!-- progress:start -->
 | | code | linked | functions | named | units linked |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| overall | 99.58% | 99.58% | 3837 / 3839 | 3838 / 3839 | 411 / 455 |
-| game | 99.53% | 99.53% | 2990 / 2991 | 2991 / 2991 | 207 / 249 |
+| overall | 99.58% | 99.58% | 3837 / 3839 | 3838 / 3839 | 411 / 456 |
+| game | 99.53% | 99.53% | 2990 / 2991 | 2991 / 2991 | 207 / 250 |
 | sce | 100.00% | 100.00% | 847 / 848 | 847 / 848 | 204 / 206 |
 
 | game readability | | |
 | --- | ---: | ---: |
-| structs recovered | 97.02% | 587 of 605 |
-| struct fields named | 99.27% | 3112 of 3135 |
+| structs recovered | 96.83% | 581 of 600 |
+| struct fields named | 99.17% | 3110 of 3136 |
 | padding fields | 624 | unused by game code |
-| field uses named | 99.96% | 58700 of 58726 |
-| globals named | 94.35% | 1385 of 1468 |
-| bit operations named | 92.16% | 3081 of 3343 |
-| function-pointer casts | 164 | left |
-| `// match:` comments | 940 | left |
+| field uses named | 99.95% | 59192 of 59224 |
+| globals named | 94.28% | 1385 of 1469 |
+| bit operations named | 92.22% | 3081 of 3341 |
+| function-pointer casts | 171 | left |
+| `// match:` comments | 872 | left |
 | gotos | 14 | left |
-| multi-line comments | 1798 | left |
-| unkXX names in comments | 798 | left |
+| multi-line comments | 1797 | left |
+| unkXX names in comments | 792 | left |
 | raw `case N:` labels | 2525 | left |
-| raw state/mode values | 1397 | left |
-| plain pointer casts | 2117 | left |
+| raw state/mode values | 1399 | left |
+| plain pointer casts | 1527 | left |
 | placeholder parameters | 220 | left |
 | raw float constants | 21 | left |
-| local declarations | 2613 | left |
-|   of them in a header | 2180 | left |
+| local declarations | 3 | left |
+|   of them in a header | 2 | left |
 <!-- progress:end -->
 
 ## Contributing
