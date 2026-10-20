@@ -95,12 +95,12 @@ void Zombie_Init(Entity *entity) {
    (EntityAi_ReactionHeavy), the target is kept, and work word unk68 is cleared. */
 static void Zombie_OnHit(Entity *entity) {
     EntityAiState *sub = &entity->ai_state;
-    u64 state;
+    u64 hit_strength;
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
-    state = ENTITY_FLAG_BITS(entity)->hit_strength;
-    if (state == 2) {
+    hit_strength = ENTITY_FLAG_BITS(entity)->hit_strength;
+    if (hit_strength == 2) {
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);

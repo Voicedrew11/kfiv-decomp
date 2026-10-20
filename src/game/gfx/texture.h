@@ -4,9 +4,6 @@
 
 #include "common.h"
 
-/* the destination base pointer field of a GS BITBLTBUF (bits 32-45, in 64-word blocks) */
-#define GS_BITBLTBUF_DBP_MASK 0x3FFF
-
 /* a 0x20-byte image header; the image (and then its CLUT) follows it */
 typedef struct {
     int data_offset;                /* 0x00 from this header */

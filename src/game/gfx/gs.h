@@ -35,6 +35,8 @@
 
 #define GIF_TAG_EOP         0x8000  /* GIF tag bit 15: the last tag of the packet */
 #define GIF_TAG_PRIM_MASK   0x03FF8000 /* the PRIM field of a GIF tag: bits 47-57, bits 15-25 of its second word */
+#define GIF_TAG_NLOOP_MASK  0x7FFF  /* GIF tag bits 0-14, NLOOP: the loop count (a model block's vertex count) */
+#define GS_PRIM_MASK        0x7FF   /* the 11 bits of a PRIM value, which GIF_TAG_PRIM_MASK holds from bit 15 */
 #define GS_PRIM_TME         0x10    /* PRIM bit 4: texture mapping */
 #define GS_PRIM_CTXT_2      0x200   /* PRIM bit 9 (CTXT): the primitive draws with drawing context 2 */
 #define GS_PRIM_SPRITE      6       /* the PRIM type of a sprite (bits 0-2) */
@@ -43,23 +45,24 @@
 #define GS_ALPHA_CS_FIX_CD  0x68    /* ALPHA (Cs * FIX) + Cd: the blend that sets a frame's alpha */
 #define GS_FRAME_FBW_640    0xA0000 /* FRAME FBW field (bits 16-21) of the 640-pixel-wide frame */
 #define GS_DISPFB_FBW_MASK  0x7E00  /* DISPFB FBW field, bits 9-14 */
-#define GS_FBW_MASK        0x3F        /* a buffer width value (FRAME, DISPFB), 6 bits */
+#define GS_FBW_MASK         0x3F    /* a buffer width value (FRAME, DISPFB), 6 bits */
 #define GS_DISPFB_FBP_MASK  0x1FF   /* DISPFB FBP field, bits 0-8 */
 #define GS_DISPFB_FBW_SHIFT 9       /* DISPFB FBW field, bits 9-14 */
-#define GS_TEX0_BASE_MASK   0x3FFF      /* a 14-bit TEX0 base pointer value (TBP0 or CBP) */
-#define GS_TEX0_TBP0(tex0)  ((tex0) & 0x3FFF)           /* TEX0 TBP0: texture base pointer, bits 0-13 */
+#define GS_TEX0_BASE_MASK   0x3FFF  /* a 14-bit TEX0 base pointer value (TBP0 or CBP) */
+#define GS_TEX0_TBP0(tex0)  ((tex0) & GS_TEX0_BASE_MASK) /* TEX0 TBP0: texture base pointer, bits 0-13 */
 #define GS_TEX0_TBW(tex0)   (((tex0) >> 14) & 0x3F)     /* TEX0 TBW: texture buffer width, bits 14-19 */
 #define GS_TEX0_PSM(tex0)   (((tex0) >> 20) & 0x3F)     /* TEX0 PSM: texture pixel format, bits 20-25 */
 #define GS_TEX0_TW(tex0)    (((tex0) >> 26) & 0xF)      /* TEX0 TW: texture width as log2, bits 26-29 */
-#define GS_TEX0_CBP(tex0)   (((tex0) >> 37) & 0x3FFF)   /* TEX0 CBP: CLUT base pointer, bits 37-50 */
+#define GS_TEX0_CBP(tex0)   (((tex0) >> 37) & GS_TEX0_BASE_MASK) /* TEX0 CBP: CLUT base pointer, bits 37-50 */
 #define GS_TEX0_TH_WORDS(low, high) (((low) >> 30) | (((high) & 3) << 2)) /* TEX0 TH, bits 30-33, from the two words */
 #define GS_TEX0_HI_TCC(high)  (((high) >> 2) & 1)      /* TEX0 TCC, bit 34 (bit 2 of the high word) */
 #define GS_TEX0_HI_TFX(high)  (((high) >> 3) & 3)      /* TEX0 TFX, bits 35-36 */
-#define GS_TEX0_HI_CBP(high)  (((high) >> 5) & 0x3FFF) /* TEX0 CBP, bits 37-50 */
+#define GS_TEX0_HI_CBP(high)  (((high) >> 5) & GS_TEX0_BASE_MASK) /* TEX0 CBP, bits 37-50 */
 #define GS_TEX0_HI_CPSM(high) (((high) >> 19) & 0xF)   /* TEX0 CPSM: CLUT pixel format, bits 51-54 */
 #define GS_TEX0_HI_CSM(high)  (((high) >> 23) & 1)     /* TEX0 CSM: CLUT storage mode, bit 55 */
 #define GS_TEX0_HI_CSA(high)  (((high) >> 24) & 0x1F)  /* TEX0 CSA: CLUT entry offset, bits 56-60 */
 #define GS_TEX0_HI_CLD(high)  ((high) >> 29)           /* TEX0 CLD: CLUT load control, bits 61-63 */
+#define GS_BITBLTBUF_DBP_MASK 0x3FFF /* BITBLTBUF DBP: the destination base pointer (bits 32-45), in 64-word blocks */
 #define SCREEN_XY_OUTSIDE_MASK 0xFFFF0000 /* x or y bits above the GS's 16-bit window: the point is outside it */
 #define GIF_TAG_FLG_IMAGE   0x800000000000000 /* GIF tag FLG (bits 58-59) at 2, image mode: the qwords after the tag are image data */
 #define GIF_TAG_PRIM_TME    0x80000 /* PRIM's TME bit in a GIF tag's second word (PRIM sits at bit 15): texture mapping */

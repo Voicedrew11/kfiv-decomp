@@ -40,7 +40,7 @@
 #define IPU_BP_BIT_POSITION_MASK 0x7F /* IPU_BP bits 0-6, BP: the bit position in the current qword */
 #define IPU_BP_IFC_SHIFT 8 /* IPU_BP bits 8-11, IFC: the input FIFO's qword count */
 #define IPU_BP_IFC_MASK 0xF
-#define IPU_BP_FP_SHIFT 16 /* IPU_BP bits 16-17, FP: the FIFO's pending count */
+#define IPU_BP_FP_SHIFT 16 /* IPU_BP bits 16-17, FP: the qwords held in the bit decoder's buffer (0 to 2) */
 #define IPU_BP_FP_MASK 0x3
 #define IPU_in_FIFO ((volatile void *)0x10007010)
 

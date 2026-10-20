@@ -86,9 +86,6 @@ typedef struct ModelPart {
     u64 data_count : 11;
 } ModelPart;
 
-/* low 15 bits of a block's GIF tag (bits 0-14, NLOOP): the block's vertex count */
-#define GIF_TAG_NLOOP_MASK 0x7FFF
-
 /* one vertex of a ModelPartData block */
 typedef struct {
     s16 x;                          /* 0x00 */

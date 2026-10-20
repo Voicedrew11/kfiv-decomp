@@ -419,8 +419,6 @@ typedef struct {
     f32 color[4];                   /* 0x10 */
 } PoolPartPoint;
 
-/* the 11 GS PRIM bits of PoolPartMaterial.prim */
-#define POOL_PART_PRIM_MASK 0x7FF
 /* what a PoolPart draws with: the first of its strips; each strip's points follow it, then the next strip */
 typedef struct {
     u16 point_count;                /* 0x00 */

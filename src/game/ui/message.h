@@ -12,7 +12,7 @@
 #define GLYPH_END -1
 #define GLYPH_FIELD_MASK 0xF00      /* the colour or the width of a control code, bits 8-11 */
 #define GLYPH_CODE_MASK 0x7FF       /* the font cell of a glyph, bits 0-10 */
-#define GLYPH_HIGH_BITS ~0xFFF       /* bits 12 and up: set on a control code, clear on a glyph */
+#define GLYPH_HIGH_BITS (~0xFFF)    /* bits 12 and up: set on a control code, clear on a glyph */
 #define GLYPH_CONTROL_MASK 0xF000   /* set on every control code (number, raw number, colour, new line) */
 
 /* one of the six notices of the ring, the short messages Message_ShowNotice puts on screen */

@@ -1040,7 +1040,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
     }
     record = trade_stock_list_cursor[0]->item_number - bases.first_item[trade_stock_list_cursor[0]->group];
     if (context->arg == 4) {
-        switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & UPGRADE_MATERIAL_MASK) {
+        switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
         case 1:
             menu_number_94 = item_counts[ITEM_BONE];
             break;
@@ -1113,7 +1113,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
 
     if (context->arg == 4) {
         position.raw = 0x000DBBA079E08A30L;
-        switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & UPGRADE_MATERIAL_MASK) {
+        switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
         case 1:
             label = bones_label;
             break;
@@ -1486,7 +1486,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         menu_number_80 = stock.counts[4][trade_stock_list_cursor[0]->item_number];
         menu_number_81 = context->active_list;
         menu_number_82 = context->active_list * values.values[4][trade_stock_list_cursor[0]->item_number].take_value;
-        switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & UPGRADE_MATERIAL_MASK) {
+        switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
         case 1:
             menu_number_74 = item_counts[ITEM_BONE];
             break;
@@ -1717,7 +1717,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         position.raw = 0x000DBBA079E08A30L;
         label_position.raw = 0x000DBBA081807C60L;
         MenuText_SetPen(position);
-        switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & UPGRADE_MATERIAL_MASK) {
+        switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
         case 1:
             label = bones_label;
             break;
@@ -1830,7 +1830,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
                         trade_handler = Trade_UpdateSelectScreen;
                         Menu_ResetLoadBuffers(0);
                     } else {
-                        switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & UPGRADE_MATERIAL_MASK) {
+                        switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & ITEM_UPGRADE_MATERIAL_MASK) {
                         case 1:
                             item_counts[ITEM_BONE] -= menu_number_82;
                             break;

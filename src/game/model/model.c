@@ -1317,10 +1317,10 @@ void Model_SetPrimBits(ModelInstance *model, s64 clear_mask, s64 set_value) {
     int clear_bits;
 
     set_bits = set_value;
-    set_bits &= GIF_TAG_PRIM_MASK >> 15;
+    set_bits &= GS_PRIM_MASK;
     set_bits <<= 15;
     clear_bits = clear_mask;
-    clear_bits &= GIF_TAG_PRIM_MASK >> 15;
+    clear_bits &= GS_PRIM_MASK;
     clear_bits <<= 15;
     part = model->parts;
     part_count = model->part_count;

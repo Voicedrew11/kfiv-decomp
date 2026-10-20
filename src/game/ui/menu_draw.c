@@ -12,6 +12,7 @@
 #include "ui/splash.h"
 #include "effect/effect.h"
 #include "input/pad.h"
+#include "gfx/gs.h"
 
 void FlushCache(int); // match: an int result would keep $2 busy after the call (MenuModel_Draw, MenuModel_DrawTinted)
 void sceVu0TransMatrix(void *, void *, void *);
@@ -2321,7 +2322,7 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
         *scratch->cursor++ = 0;
         scratch->prim_tag[0] = scratch->strip_at->point_count | GIF_TAG_EOP;
         scratch->prim_tag[1] = 0x31004000;
-        scratch->prim_tag[1] |= (scratch->strip_at->prim & POOL_PART_PRIM_MASK) << 15;
+        scratch->prim_tag[1] |= (scratch->strip_at->prim & GS_PRIM_MASK) << 15;
         *scratch->cursor++ = scratch->prim_tag[0];
         *scratch->cursor++ = scratch->prim_tag[1];
         *scratch->cursor++ = scratch->prim_tag[2];
@@ -2374,7 +2375,7 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
             *scratch->cursor++ = 0;
             scratch->prim_tag[0] = scratch->strip_at->point_count | GIF_TAG_EOP;
             scratch->prim_tag[1] = 0x31004000;
-            scratch->prim_tag[1] |= (scratch->strip_at->prim & POOL_PART_PRIM_MASK) << 15;
+            scratch->prim_tag[1] |= (scratch->strip_at->prim & GS_PRIM_MASK) << 15;
             scratch->prim_tag[1] |= GIF_TAG_PRIM_ABE;
             scratch->prim_tag[1] |= GIF_TAG_PRIM_TME;
             *scratch->cursor++ = scratch->prim_tag[0];
@@ -2548,7 +2549,7 @@ void PoolPart_Draw(PoolPart *part, s32 parent) {
         *scratch->cursor++ = 0;
         scratch->prim_tag[0] = scratch->strip_at->point_count | GIF_TAG_EOP;
         scratch->prim_tag[1] = 0x31004000; // match: two statements, or the constant is not kept in a register across the loop
-        scratch->prim_tag[1] |= (scratch->strip_at->prim & POOL_PART_PRIM_MASK) << 15;
+        scratch->prim_tag[1] |= (scratch->strip_at->prim & GS_PRIM_MASK) << 15;
         *scratch->cursor++ = scratch->prim_tag[0];
         *scratch->cursor++ = scratch->prim_tag[1];
         *scratch->cursor++ = scratch->prim_tag[2];
@@ -2847,7 +2848,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
         *scratch->cursor++ = 0;
         scratch->prim_tag[0] = scratch->strip_at->point_count | GIF_TAG_EOP;
         scratch->prim_tag[1] = 0x30004000;
-        scratch->prim_tag[1] |= (scratch->strip_at->prim & POOL_PART_PRIM_MASK) << 15;
+        scratch->prim_tag[1] |= (scratch->strip_at->prim & GS_PRIM_MASK) << 15;
         *scratch->cursor++ = scratch->prim_tag[0];
         *scratch->cursor++ = scratch->prim_tag[1];
         *scratch->cursor++ = scratch->prim_tag[2];
@@ -2897,7 +2898,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
             *scratch->cursor++ = 0;
             scratch->prim_tag[0] = scratch->strip_at->point_count | GIF_TAG_EOP;
             scratch->prim_tag[1] = 0x30004000;
-            scratch->prim_tag[1] |= (scratch->strip_at->prim & POOL_PART_PRIM_MASK) << 15;
+            scratch->prim_tag[1] |= (scratch->strip_at->prim & GS_PRIM_MASK) << 15;
             scratch->prim_tag[1] |= GIF_TAG_PRIM_ABE;
             scratch->prim_tag[1] |= GIF_TAG_PRIM_TME;
             *scratch->cursor++ = scratch->prim_tag[0];

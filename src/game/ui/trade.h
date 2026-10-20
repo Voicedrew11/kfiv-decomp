@@ -4,9 +4,6 @@
 
 #include "common.h"
 
-/* the smith material of an item: the low two bits of upgrade_material_kind (1 bone, 2 scale, 3 claw) */
-#define UPGRADE_MATERIAL_MASK 3
-
 /* Runs the trade screens of trade table `value` until they are left. */
 void Trade_Run(s32 value);
 
