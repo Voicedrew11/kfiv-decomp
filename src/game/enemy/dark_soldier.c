@@ -662,13 +662,13 @@ static void DarkSoldier_OnHit(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
-    if (((entity->flags >> 36) & 3) == 1) {
+    if (ENTITY_FLAG_BITS(entity)->hit_strength == 1) {
         if ((s32)((s64)(entity->flags << 13) >> 32) & ENTITY_FLAG_ACTIVE_LIST) {
             EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
             EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);
         }
-    } else if (((entity->flags >> 36) & 3) == 2) {
+    } else if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);

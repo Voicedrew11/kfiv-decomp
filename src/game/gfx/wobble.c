@@ -135,7 +135,7 @@ void Wobble_DrawRippledModel(ModelInstance *model, int unk1, int unk2, int unk3,
                 flags = 0;
                 length = next->length;
                 data = next;
-                vertex_count = next->vertex_count & 0x7FFF;
+                vertex_count = next->vertex_count & GIF_TAG_NLOOP_MASK;
                 next = (ModelPartData *)next->vertices; // match: the cursor steps on; data keeps the block's start
                 vertex = (ModelPartVertex *)next;
                 packet = Packet_Alloc(vertex_count * 2 + 3);
@@ -270,7 +270,7 @@ int Wobble_ModelUsesTextures(ModelInstance *model, int first, int last) {
         count = part->data_count;
         data = (ModelPartData *)(int)part->data_addr;
         for (j = 0; j < count; j++) {
-            texture = data->tex0 & 0x3FFF;
+            texture = ((ModelPartDataBits30 *)&data->tex0)->texture_base;
             length = data->length;
             if (texture >= first && texture <= last) {
                 return TRUE;
@@ -354,7 +354,7 @@ void Wobble_BuildWaveUvs(ModelInstance *model, u32 *alloc) {
             data = next_data;
             next_data = (ModelPartData *)next_data->vertices; // match: the cursor steps on to the vertices
             vertex = (ModelPartVertex *)next_data;
-            vertex_count = data->vertex_count & 0x7FFF;
+            vertex_count = data->vertex_count & GIF_TAG_NLOOP_MASK;
             length = data->length;
             for (k = 0; k < vertex_count; k++) {
                 wave_uv->tex_u = vertex->tex_u;
@@ -402,7 +402,7 @@ void Wobble_ApplyWaveUvs(ModelInstance *model) {
             data = next_data;
             next_data = (ModelPartData *)next_data->vertices; // match: the cursor steps on to the vertices
             vertex = (ModelPartVertex *)next_data;
-            vertex_count = data->vertex_count & 0x7FFF;
+            vertex_count = data->vertex_count & GIF_TAG_NLOOP_MASK;
             length = data->length;
             for (k = 0; k < vertex_count; k++) {
                 vertex->tex_u = wave_uv->tex_u + (u16)wobble_oscillators[wave_uv->wave].x;
@@ -450,7 +450,7 @@ void Wobble_SetUvsFromJitteredScreen(ModelInstance *model) {
             data = next_data;
             next_data = (ModelPartData *)next_data->vertices; // match: the cursor steps on to the vertices
             vertex = (ModelPartVertex *)next_data;
-            vertex_count = data->vertex_count & 0x7FFF;
+            vertex_count = data->vertex_count & GIF_TAG_NLOOP_MASK;
             length = data->length;
             for (k = 0; k < vertex_count; k++) {
                 *&MODEL_PROJECT_SCRATCH->point[0] = vertex->x + (rand() - 1073741824.0f) * 2.0f * 9.313226e-10f;

@@ -286,13 +286,13 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
-                if (((s32)(entity->flags >> 58) & 3) == 1) {
+                if (ENTITY_FLAG_BITS(entity)->attack_index == 1) {
                     EntityAi_StartAction(entity, DarkKnight_RangedAttack1, unknown);
                 } else {
                     EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
                 }
             } else {
-                if (((s32)(entity->flags >> 58) & 3) == 3) {
+                if (ENTITY_FLAG_BITS(entity)->attack_index == 3) {
                     EntityAi_StartAction(entity, DarkKnight_MeleeAttack2, unknown);
                 } else {
                     EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);

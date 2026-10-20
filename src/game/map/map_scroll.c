@@ -234,7 +234,7 @@ void MapScroll_UpdateDraw(int map, int mode) {
                 Packet_BeginGsRegisters();
                 // match: A is read from the byte, the others from the word
                 Packet_AddGsRegister(GS_REG_ALPHA_1,
-                              (s64)(texture->blend & 3) | ((s64)MAP_SCROLL_BLEND_BITS(texture)->b << 2) |
+                              (s64)(texture->blend & MAP_SCROLL_BLEND_A_MASK) | ((s64)MAP_SCROLL_BLEND_BITS(texture)->b << 2) |
                                   ((s64)MAP_SCROLL_BLEND_BITS(texture)->c << 4) |
                                   ((s64)MAP_SCROLL_BLEND_BITS(texture)->d << 6) | ((s64)texture->blend_fix << 32));
                 Packet_AddGsRegister(GS_REG_TEST_1, 0x51001);

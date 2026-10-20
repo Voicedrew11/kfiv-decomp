@@ -126,7 +126,7 @@ static void GoldenStatue_OnHit(Entity *entity) {
     entity->flags &= ~ENTITY_FLAG_ATTACKING;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     flags = entity->flags;
-    if (((flags >> 36) & 3) == 2) {
+    if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);

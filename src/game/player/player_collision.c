@@ -414,7 +414,7 @@ void Player_CollideWithEntities(int climb) {
                 if (!(ENTITY_FLAG_BITS(entity)->live)) {
                     continue;
                 }
-                if (((s32)(entity->flags >> 2) & 3) >= 2) {
+                if (ENTITY_FLAG_BITS(entity)->dying >= 2) {
                     continue;
                 }
                 if (ENTITY_FLAG_BITS(entity)->no_player_collision) {
@@ -480,7 +480,7 @@ void Player_CollideWithEntities(int climb) {
         if (!(ENTITY_FLAG_BITS(entity)->live)) {
             continue;
         }
-        if (((s32)(entity->flags >> 2) & 3) >= 2) {
+        if (ENTITY_FLAG_BITS(entity)->dying >= 2) {
             continue;
         }
         if (ENTITY_FLAG_BITS(entity)->no_player_collision) {

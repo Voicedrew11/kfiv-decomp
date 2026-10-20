@@ -96,7 +96,7 @@ void ModelScreen_CutClippedTriangles(ModelInstance *model) {
         count = (s32)(MODEL_PART_WORD(part) >> 53);
         block = *(ModelPartData **)&MODEL_PART_WORD(part);
         for (; j < count; j++) {
-            s32 vertex_count = block->vertex_count & 0x7FFF;
+            s32 vertex_count = block->vertex_count & GIF_TAG_NLOOP_MASK;
             ModelPartVertexWords *vertex = (ModelPartVertexWords *)block->vertices;
             s32 setup = 2;
             ModelScreenPoint *screen;
@@ -627,7 +627,7 @@ void ModelScreen_SetUvsFromScreen(ModelInstance *model) {
             length = next_data->length;
             data = next_data;
             next_data = (ModelPartData *)&next_data->vertex_count; // match: the cursor steps on to the vertex count
-            vertex_count = ((ModelPartDataTail *)next_data)->vertex_count & 0x7FFF;
+            vertex_count = ((ModelPartDataTail *)next_data)->vertex_count & GIF_TAG_NLOOP_MASK;
             vertex = ((ModelPartDataTail *)next_data)->vertices;
             for (k = 0; k < vertex_count; k++) {
                 point[0] = vertex->x;

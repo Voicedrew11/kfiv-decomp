@@ -149,6 +149,9 @@ typedef struct {
     ModelPartVertex vertices[1];    /* 0x90 */
 } ModelPartData;
 
+#define MODEL_RECORD_ID_MASK 0x3FFF          /* ModelPartRecord.id_word: the record id, low 14 bits */
+#define MODEL_RECORD_PAYLOAD_MASK 0x7FFF     /* ModelPartRecord.payload_size: low 15 bits */
+
 /* one record of a part's data (ModelPart.data_addr): 0x80 bytes plus its payload */
 typedef struct {
     char pad00[0x40];
@@ -176,8 +179,16 @@ typedef union {
 
 #define MODEL_PART_WORD_ANY(part) (((ModelPartWordUnion *)&MODEL_PART_WORD(part))->word)
 
-/* ModelPart.pad78_46, the part this one hangs off, read that way */
-#define MODEL_PART_PARENT_ANY(part) ((s32)(MODEL_PART_WORD_ANY(part) >> 46) & 0x7F)
+#define MODEL_PART_PARENT_MASK 0x7F     /* ModelPart.parent_index: 7 bits */
+#define MODEL_PART_LEVEL_MASK 0x7F      /* ModelPart.level: 7 bits */
+
+/* the part this one hangs off (ModelPart.parent_index) */
+#define MODEL_PART_PARENT(part) ((s32)(MODEL_PART_WORD(part) >> 46) & MODEL_PART_PARENT_MASK)
+/* the part's detail level (ModelPart.level) */
+#define MODEL_PART_LEVEL(part) ((u32)(MODEL_PART_WORD(part) >> 39) & MODEL_PART_LEVEL_MASK)
+
+/* the part this one hangs off, read through the union */
+#define MODEL_PART_PARENT_ANY(part) ((s32)(MODEL_PART_WORD_ANY(part) >> 46) & MODEL_PART_PARENT_MASK)
 
 /* one 0x40-byte vertex of a ModelWideData block */
 typedef struct {

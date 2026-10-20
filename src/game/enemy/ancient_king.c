@@ -785,7 +785,7 @@ static s32 AncientKing_ShouldRespawnOthers(Entity *entity) {
     ai_state->sub_timer = 0;
     for (i = 0; i < 6; i++) {
         Entity *other = Entity_GetBySpawnId(i + 10);
-        if (other != NULL && (other->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) == 3 && ((s32)(other->flags >> 2) & 3) < 3) {
+        if (other != NULL && (other->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) == (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE) && ENTITY_FLAG_BITS(other)->dying < 3) {
             ai_state->sub_timer |= 1 << i;
             count++;
         }

@@ -287,9 +287,9 @@ int Game_GetSpawnDeathCount(int map, int entry) {
     if ((u32)map < 0x80U && entry >= 0 && entry < 0x80) {
         count = map_entry_counters[map][entry / 2];
         if (entry & 1) {
-            count >>= 4;
+            count >>= SPAWN_COUNTER_HIGH_SHIFT;
         } else {
-            count &= 0xF;
+            count &= SPAWN_COUNTER_LOW_MASK;
         }
         return count;
     }
@@ -307,15 +307,15 @@ void Game_CountSpawnDeath(u32 map, int entry) {
     if (map < 0x80 && entry >= 0 && entry < 0x80) {
         count = (old_byte = ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)]);
         if (entry & 1) {
-            count >>= 4;
+            count >>= SPAWN_COUNTER_HIGH_SHIFT;
             count++;
             shifted = count << 4;
-            ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)] = (low_nibble = old_byte & 0xF);
+            ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)] = (low_nibble = old_byte & SPAWN_COUNTER_LOW_MASK);
             count = shifted & 0xFF;
         } else {
-            count &= 0xF;
+            count &= SPAWN_COUNTER_LOW_MASK;
             count++;
-            ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)] = old_byte & 0xF0;
+            ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)] = old_byte & SPAWN_COUNTER_HIGH_MASK;
         }
         merged = count | ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)]; // match: merged in an int
         ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)] = merged;
@@ -429,7 +429,7 @@ void Game_MarkMessageHeard(int flag) {
     flag %= 50;
     mask = 1 << (flag % 8);
     if (flag < 3) {
-        recollection_flags[page].bits[0] = (recollection_flags[page].bits[0] & 0xF8) | mask;
+        recollection_flags[page].bits[0] = (recollection_flags[page].bits[0] & ~RECOLLECTION_DESCRIPTION_MASK) | mask;
     } else {
         recollection_flags[page].bits[flag / 8] |= mask;
     }
@@ -644,7 +644,7 @@ void Game_WriteSaveImage(void) {
     mask = 1;
     for (i = 0; i < 380; i++) {
         flags = ((GameDefinitionFlags *)item_name_defs)[i].flags >> 18;
-        if ((flags & 3) < 2 && (flags & 1)) {
+        if ((flags & GAME_DEFINITION_STATE_VALUE_MASK) < 2 && (flags & 1)) {
             bit_byte |= mask;
         }
         if (i % 8 != 7) {
@@ -772,7 +772,7 @@ void Game_ReadSaveImage(void) {
             save_cursor++;
         }
         flags = ((GameDefinitionFlags *)item_name_defs)[i].flags;
-        if (((flags >> 18) & 3) < 2) {
+        if (((flags >> GAME_DEFINITION_STATE_SHIFT) & GAME_DEFINITION_STATE_VALUE_MASK) < 2) {
             if (flag_bits & 1) {
                 ((GameDefinitionFlags *)item_name_defs)[i].flags = (flags & ~GAME_DEFINITION_STATE_MASK) | 0x40000;
             } else {

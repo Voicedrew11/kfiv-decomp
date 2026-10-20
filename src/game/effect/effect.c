@@ -1,4 +1,5 @@
 #include "effect/effect.h"
+#include <eeregs.h>
 #include "core/file.h"
 #include "gfx/gs.h"
 #include "core/game.h"
@@ -404,7 +405,7 @@ void Effect_UploadTextures(void) {
 
     GsDraw_QueueFlush();
     first_word = cursor = Packet_Alloc(2);
-    *cursor++ = effect_texture_packet[0] | 0x30000000;
+    *cursor++ = effect_texture_packet[0] | DMA_TAG_ID_REF;
     *cursor++ = (u32)(effect_texture_packet + 4);
     *cursor++ = 0;
     *cursor = 0;
@@ -693,9 +694,9 @@ static void Effect_SetupModel(int index) {
     def = effect->def;
     if (EFFECT_DEF_FLAGS(def) & 0x20000) {
         if ((EFFECT_DEF_FLAGS(def) & EFFECT_DEF_PLACEMENT_MASK) == 0 || (EFFECT_DEF_FLAGS(def) & EFFECT_DEF_PLACEMENT_MASK) == EFFECT_DEF_PLACEMENT_MASK) {
-            model->draw_flags |= 0x300;
+            model->draw_flags |= MODEL_DRAW_FACE_CAMERA;
         } else {
-            model->draw_flags |= 0x400;
+            model->draw_flags |= MODEL_DRAW_TURN_Z_ONLY;
         }
     }
     model->model_flags |= 0x1800;
@@ -741,10 +742,10 @@ static void Effect_FindModelRecord(ModelInstance *model, int unused_arg1, int re
 
         record = (char *)(int)part->data_addr;
         for (record_index = 0; record_index < record_count; record_index++, record += 0x10) {
-            if ((((ModelPartRecord *)record)->id_word & 0x3FFF) == record_id) {
+            if ((((ModelPartRecord *)record)->id_word & MODEL_RECORD_ID_MASK) == record_id) {
                 *(UnalignedQword *)model->found_record = *(UnalignedQword *)&((ModelPartRecord *)record)->id_word;
                 model->found_record_id = record_id;
-                model->found_record[0] = (model->found_record[0] & 0xFFFFC000) | id_bits;
+                model->found_record[0] = (model->found_record[0] & (u32)~MODEL_RECORD_ID_MASK) | id_bits;
                 return;
             }
             // match: the record is walked as bytes, its payload size read mid-step
@@ -753,7 +754,7 @@ static void Effect_FindModelRecord(ModelInstance *model, int unused_arg1, int re
                 int payload_size = *(int *)record;
 
                 record += 0x10;
-                record += (payload_size & 0x7FFF) << 6;
+                record += (payload_size & MODEL_RECORD_PAYLOAD_MASK) << 6;
             }
         }
     }

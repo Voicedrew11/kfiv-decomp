@@ -114,7 +114,7 @@ FxTableEntry fx_table[256] = { 0 };
    0 and 3 do anything. */
 s32 Attack_Run(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     COLLISION_RESULT->floor_material = 6;
-    switch ((u8)((Unk1B1470RequestWord *)request)->flags & 3) {
+    switch (((Unk1B1470RequestBits *)request)->shape) {
     case 0:
         return Attack_RunSphere(request, extra);
     case 1:
@@ -196,7 +196,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             if ((s32)(entity->flags >> 20) & ENTITY_FLAG_ACTIVE_LIST) {
                 continue;
             }
-            if (((s32)(entity->flags >> 2) & 3) >= 2) {
+            if (ENTITY_FLAG_BITS(entity)->dying >= 2) {
                 continue;
             }
             if ((request->target_mask & HIT_TARGET_SKIP_OWNER) && request->owner == entity) {
@@ -347,7 +347,7 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             if ((s32)(entity->flags >> 20) & ENTITY_FLAG_ACTIVE_LIST) {
                 continue;
             }
-            if (((s32)(entity->flags >> 2) & 3) >= 2) {
+            if (ENTITY_FLAG_BITS(entity)->dying >= 2) {
                 continue;
             }
             if ((request->target_mask & HIT_TARGET_SKIP_OWNER) && request->owner == entity) {

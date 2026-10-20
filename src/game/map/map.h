@@ -211,6 +211,7 @@ typedef struct {
 } MapScrollBlendBits;
 
 #define MAP_SCROLL_BLEND_BITS(texture) ((MapScrollBlendBits *)&(texture)->blend)
+#define MAP_SCROLL_BLEND_A_MASK 0x3 /* the A field, bits 0-1, read from the byte (MapScroll_Draw) */
 
 /* MapSlot+0x40: prebuilt packets, each a tag word and 0x10 further on its data */
 typedef struct {

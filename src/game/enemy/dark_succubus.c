@@ -142,13 +142,13 @@ static void DarkSuccubus_OnHit(Entity *entity) {
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
-    if (((s32)(entity->flags >> 36) & 3) == 1) {
+    if (ENTITY_FLAG_BITS(entity)->hit_strength == 1) {
         if ((s32)(entity->flags >> 19) & ENTITY_FLAG_ACTIVE_LIST) {
             EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
             EntityAi_SetReaction(entity, DarkSuccubus_ReactionLight, 0);
         }
-    } else if (((s32)(entity->flags >> 36) & 3) == 2) {
+    } else if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_SetReaction(entity, DarkSuccubus_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
@@ -174,7 +174,7 @@ static void DarkSuccubus_Animate(Entity *entity) {
         if (blend_frames != 0) {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
         look_at_target = ENTITY_FLAG_BITS(entity)->look_at_target;
         limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
@@ -998,7 +998,7 @@ static void DarkSuccubus_MeleeAttack(Entity *entity) {
    the player's position, within 45 and 10 degrees (EntityShot_LaunchAimed). */
 static void DarkSuccubus_RangedAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    s32 attack_index = (s32)(entity->flags >> 58) & 3;
+    s32 attack_index = ENTITY_FLAG_BITS(entity)->attack_index;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, attack_index);
     f32 target[4];
     s32 elapsed;
@@ -1316,7 +1316,7 @@ static void DarkSuccubus_CountLiveSpawns(Entity *entity) {
         object = Entity_GetBySpawnId(i + 0x65);
         if (object != NULL) {
             next = count + 1;
-            count = ((object->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE | ENTITY_FLAG_DYING_MASK)) ^ 3) ? count : next;
+            count = ((object->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE | ENTITY_FLAG_DYING_MASK)) ^ (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) ? count : next;
         }
         i += 1;
     } while (i < 6);

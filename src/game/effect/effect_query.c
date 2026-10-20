@@ -35,7 +35,7 @@ int Effect_IsNearAnyEntity(float radius, void *point) {
 
     for (entity = active_entities_head; entity != NULL; entity = entity->next) {
         if ((ENTITY_FLAG_BITS(entity)->live) == 0) continue;
-        if (((int)(entity->flags >> 2) & 3) > 0) continue;
+        if (ENTITY_FLAG_BITS(entity)->dying > 0) continue;
         Vector_Copy(position, &ENTITY_MODEL(entity)->position);
         position[1] -= entity->height * 0.5f;
         if (Effect_Distance(point, position) <= radius + entity->radius) return TRUE;

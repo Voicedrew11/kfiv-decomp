@@ -385,6 +385,8 @@ typedef struct {
     u16 weight_tenths_of_pound;     /* 0x3E summed into PlayerState.weight for everything worn */
 } LevelDef;
 
+#define ITEM_UPGRADE_MATERIAL_MASK 3 /* LevelDef.upgrade_material_kind low two bits: 1 bone, 2 scale, 3 claw */
+
 /* ini_keys[]: the keys of ini/NNNN.ini ("hp=", "equip_weapon=", "item_", ...) and what reads each; a NULL handler ends it */
 typedef struct {
     char key[0x40];                 /* 0x00 the start of the line */

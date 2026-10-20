@@ -107,17 +107,15 @@ static void Npc_Animate(Entity *entity) {
     f32 limits[4];
     s32 look_at_target;
     u32 blend_frames; // match: converted to float as unsigned
-    s64 flags;
     EntityAiState *ai_state;
 
-    flags = entity->flags;
     ai_state = &entity->ai_state;
     if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
         look_at_target = ENTITY_FLAG_BITS(entity)->look_at_target;
         limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
@@ -481,8 +479,8 @@ static void Npc_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->dying = 2;
             ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             EntityEvent_OnDeath(entity);
-            entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].death_kind = ((s32)(entity->flags >> 38) & 3) ? 1 : 2;
-            if ((s32)(entity->flags >> 38) & 3) {
+            entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].death_kind = ENTITY_FLAG_HIT_BITS(entity)->hit_source ? 1 : 2;
+            if (ENTITY_FLAG_HIT_BITS(entity)->hit_source) {
                 story_flags[0xD] = 1;
             }
             entity->action_step++;
@@ -642,7 +640,7 @@ static void Npc_OnHitType81(Entity *entity) {
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     EntityAi_SetReaction(entity, Npc_ReactionHeavy, 0);
     entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].member_died = 1;
-    if (((u64)entity->flags >> 38) & 3) {
+    if (ENTITY_FLAG_HIT_BITS(entity)->hit_source) {
         entity->flags |= ENTITY_FLAG_20000000;
     }
 }

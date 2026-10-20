@@ -1808,8 +1808,8 @@ int SoundDriver_NoteOn(u32 slot, int voice_index, char channel, char program, ch
     *out++ = 0xF9;
     *out++ = 2;
     *out++ = channel;
-    *out++ = bend & 0x7F;
-    *out++ = ((bend >> 7) + 0x40) & 0x7F;
+    *out++ = bend & MIDI_DATA_MASK;
+    *out++ = ((bend >> 7) + 0x40) & MIDI_DATA_MASK;
     *out++ = 0xF9;
     *out++ = 0;
     *out++ = channel;
@@ -1922,8 +1922,8 @@ int SoundDriver_SetNoteControl(int kind, u32 slot, int value) {
         *out++ = key->channel;
         *out++ = key->note;
         *out++ = slot;
-        out[0] = value & 0x7F;
-        out[1] = ((value >> 7) + 0x40) & 0x7F;
+        out[0] = value & MIDI_DATA_MASK;
+        out[1] = ((value >> 7) + 0x40) & MIDI_DATA_MASK;
         break;
     }
     *queue_size += 0xA;

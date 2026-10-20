@@ -411,7 +411,7 @@ void EffectAimedHoming_Update(EffectActor *actor) {
     EffectKeys_ApplySpin(actor);
     EffectKeys_ApplyColour(actor);
     if (actor->target_entity != 0) {
-        if (((u32)(((Entity *)actor->target_entity)->flags >> 2) & 3) == 0) {
+        if (ENTITY_FLAG_BITS((Entity *)actor->target_entity)->dying == 0) {
             Vector_Subtract(&vec, &((Entity *)actor->target_entity)->model->position, &actor->model->position);
             motion->fall_speed += actor->def->ground_height;
             vec.y -= ((Entity *)actor->target_entity)->height * 0.5f;
@@ -1688,7 +1688,7 @@ void EffectBobHoming_Update(EffectActor *effect) {
         motion->turn = 0.0f;
     }
     if (effect->target_entity != 0) {
-        if (((s32)(((EffectTarget *)effect->target_entity)->flags >> 2) & 3) == 0) {
+        if (ENTITY_FLAG_BITS((EffectTarget *)effect->target_entity)->dying == 0) {
             Vector_Subtract(&to_target, &((EffectTarget *)effect->target_entity)->model->position, &effect->model->position);
             to_target.y -= ((EffectTarget *)effect->target_entity)->height * 0.5f;
             if (effect->def->ground_height < motion->turn) {
@@ -1818,12 +1818,10 @@ void EffectHoverShot_Update(EffectActor *effect) {
     Vector4 offset;
     int timer;
     int hit;
-    int gone_bits;
 
     motion = (TimerMotion *)&effect->motion;
     if (effect->target_entity != 0) {
-        gone_bits = (int)(((EffectTarget *)effect->target_entity)->flags << 30 >> 32);
-        if ((gone_bits & 3) == 0) {
+        if (ENTITY_FLAG_BITS((EffectTarget *)effect->target_entity)->dying == 0) {
             Vector_Subtract(&offset, &((EffectTarget *)effect->target_entity)->model->position, &effect->model->position);
             offset.y -= ((EffectTarget *)effect->target_entity)->height * 0.5f;
             EffectSteer_Toward(&motion->velocity, &offset, effect->def->speed, effect->def->turn_rate);

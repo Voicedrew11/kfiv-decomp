@@ -176,13 +176,13 @@ static void Salamander_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
-    if (((s32)(entity->flags >> 36) & 3) == 1) {
+    if (ENTITY_FLAG_BITS(entity)->hit_strength == 1) {
         if ((s32)(entity->flags >> 19) & ENTITY_FLAG_ACTIVE_LIST) {
             EntityAi_SetReaction(entity, Salamander_ReactionRewind, 0);
         } else {
             EntityAi_SetReaction(entity, Salamander_ReactionLight, 0);
         }
-    } else if (((s32)(entity->flags >> 36) & 3) == 2) {
+    } else if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_SetReaction(entity, Salamander_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);

@@ -122,7 +122,7 @@ static void ExpeditionArcher_Animate(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
             flags = entity->flags;
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
             flags = entity->flags;
         }
     }
@@ -292,7 +292,7 @@ done:
    ExpeditionArcher_ThinkCombat starts it for records 0 and 2. */
 static void ExpeditionArcher_RangedAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    s32 attack_index = (s32)(entity->flags >> 58) & 3;
+    s32 attack_index = ENTITY_FLAG_BITS(entity)->attack_index;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, attack_index);
     f32 target[4];
     s32 elapsed;

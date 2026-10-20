@@ -10,7 +10,7 @@ typedef union {
 } AliasedWord;
 
 /* a GS BITBLTBUF value with its destination base pointer (bits 32-45, in 64-word blocks) set to `base` */
-#define SET_DESTINATION_BASE(bitbltbuf, base)     ((bitbltbuf) = ((bitbltbuf) & ~((u64)0x3FFF << 32)) | ((s64)((base) & 0x3FFF) << 32))
+#define SET_DESTINATION_BASE(bitbltbuf, base)     ((bitbltbuf) = ((bitbltbuf) & ~((u64)GS_BITBLTBUF_DBP_MASK << 32)) | ((s64)((base) & GS_BITBLTBUF_DBP_MASK) << 32))
 
 u32 *Packet_Alloc(int);
 void Packet_AppendToChain(u32 *, u32 *);
@@ -118,7 +118,7 @@ void TextureTable_SetBasePointers(TextureTableHeader *table, int texture_base, i
         image_tag = ((AliasedWord *)cursor)[8].value; /* the GIF tag of the image data */
         cursor += 0x50;
         if ((int)((image_tag >> 15) & 1) == 0) { /* not the end of the packet: a CLUT upload follows */
-            cursor += (int)(image_tag & 0x7FFF) * 16;
+            cursor += (int)(image_tag & GIF_TAG_NLOOP_MASK) * 16;
             cursor += 0x20;
             if (clut_base != 0) {
                 SET_DESTINATION_BASE(((AliasedWord *)cursor)->value, clut_base);

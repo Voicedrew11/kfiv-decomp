@@ -11,6 +11,9 @@
 #define SOUND_COMMAND_REPLY        0x80000
 #define SOUND_COMMAND_SENDS_BUFFER 0x40000
 
+/* a MIDI data byte: 7 bits, the low half of a 14-bit bend or value */
+#define MIDI_DATA_MASK             0x7F
+
 /* one of the 16 voices, SoundState.voices[n]: a header (two copies on the IOP) and its sample data
    (an IOP copy at iop_heap, sent on to sound memory at unk0C) */
 typedef struct {

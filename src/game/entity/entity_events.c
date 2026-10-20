@@ -248,7 +248,7 @@ void EntityEvent_StartFrameEffects(Entity *entity, s32 animation, s32 frame_from
                 continue;
             }
             if (record->use_variant != 0) {
-                Effect_StartSpawner(entity->params->variant_effect_ids[(s32)(entity->flags >> 60) & 7], from, angles, entity);
+                Effect_StartSpawner(entity->params->variant_effect_ids[ENTITY_FLAG_BITS(entity)->floor_material], from, angles, entity);
             } else {
                 Effect_StartSpawner(record->effect_id, from, angles, entity);
             }
@@ -347,7 +347,7 @@ void EntityEvent_Respawn(Entity *entity) {
 void EntityEvent_OnDeath(Entity *entity) {
     MapItem_DropFromEnemy(entity);
     Gold_DropFromEntity(entity);
-    if ((s32)(entity->flags >> 38) & 3) {
+    if (ENTITY_FLAG_HIT_BITS(entity)->hit_source) {
         Player_AddExperience(entity->params->experience_reward);
     }
     Game_CountSpawnDeath(map_slots[entity->group_id].tag, entity->spawn_info - map_spawn_infos[entity->group_id]);

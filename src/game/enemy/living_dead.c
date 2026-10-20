@@ -89,22 +89,20 @@ void LivingDead_Init(Entity *entity) {
 /* The on_hit handler: as EntityAi_OnHit with the type's own reactions to a light and a heavy hit.
    */
 static void LivingDead_OnHit(Entity *entity) {
-    u64 flags;
-    u64 kind;
+    u64 hit_strength;
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
     entity->flags &= ~ENTITY_FLAG_ATTACKING;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
-    flags = entity->flags;
-    kind = (flags >> 36) & 3;
-    if (kind == 1) {
+    hit_strength = ENTITY_FLAG_BITS(entity)->hit_strength;
+    if (hit_strength == 1) {
         if (ENTITY_FLAG_BITS(entity)->attack_window) {
             EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
             EntityAi_SetReaction(entity, LivingDead_ReactionLight, 0);
         }
-    } else if (kind == 2) {
+    } else if (hit_strength == 2) {
         EntityAi_SetReaction(entity, LivingDead_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
