@@ -109,13 +109,13 @@ static void Malice_Think(Entity *entity, s32 run_now) {
             EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 EntityAi_ThinkIdle(entity, run_now);
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 Malice_ThinkCombat(entity, run_now);
                 break;
             default:
@@ -199,15 +199,15 @@ static void Malice_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             model = entity->model;
             height_difference = player_state.position.y - model->position[1];
             if (ABS(height_difference) > 200.0f) {
                 EntityPoint_PickNearFromDistance(retreat_point, model->position, EntityMath_DistanceXZ(model->position, &entity->spawn_info->spawn_x), entity->radius * 4.0f);
                 entity->target = retreat_point;
                 entity->action_timer = rand() % 30 + 30;
-                ai_state->move_choice = 0;
-                entity->combat_choice = 1;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
+                entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
             } else if (ai_state->action_flags == 0) {
                 if (EntityAi_PickAttack(entity)) {
                     if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
@@ -223,25 +223,25 @@ static void Malice_ThinkCombat(Entity *entity, s32 run_now) {
                 EntityPoint_PickNearFromDistance(destination, model->position, EntityMath_DistanceXZ(model->position, &entity->spawn_info->spawn_x), entity->radius * 4.0f);
                 entity->target = destination;
                 entity->action_timer = rand() % 30 + 60;
-                ai_state->move_choice = 0;
-                entity->combat_choice = 1;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
+                entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
             }
             break;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 30 + 60;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -683,7 +683,7 @@ static void Malice_Death(Entity *entity) {
         if (ENTITY_PARAMS_MOVEMENT_KIND(params) == ENTITY_PARAMS_MOVEMENT_FLY) {
             entity->collision_radius = 20.0f;
         }
-        ENTITY_FLAG_BITS(entity)->animates = 1;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
         ENTITY_FLAG_BITS(entity)->dying = 1;
         ENTITY_FLAG_BITS(entity)->no_player_collision = 1;
@@ -701,7 +701,7 @@ static void Malice_Death(Entity *entity) {
     case 2:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->action_timer = 20;
-            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;
             ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             EntityEvent_OnDeath(entity);

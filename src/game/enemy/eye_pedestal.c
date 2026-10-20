@@ -14,6 +14,9 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
+/* EntitySpawnInfo.spawn_mode: 0 looks at the target, else it does not */
+#define EYE_PEDESTAL_SPAWN_MODE_NORMAL 0
+
 static void EyePedestal_Animate(Entity *entity);
 static void EyePedestal_Think(Entity *entity, s32 run_now);
 
@@ -111,7 +114,7 @@ static void EyePedestal_Think(Entity *entity, s32 run_now) {
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
     ENTITY_FLAG_BITS(entity)->not_targetable = TRUE;
-    if (entity->spawn_info->spawn_mode != 0) {
+    if (entity->spawn_info->spawn_mode != EYE_PEDESTAL_SPAWN_MODE_NORMAL) {
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     } else {
         ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;

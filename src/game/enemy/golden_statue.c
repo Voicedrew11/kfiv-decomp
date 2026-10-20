@@ -17,6 +17,13 @@
 #include "model/motion.h"
 #include "player/player.h"
 
+/* EntitySpawnInfo.spawn_mode: 1 waits at the post, 2 runs no states (else EntityAi_Think) */
+#define GOLDEN_STATUE_SPAWN_MODE_WAIT_AT_POST 1
+#define GOLDEN_STATUE_SPAWN_MODE_NO_STATES    2
+/* EntityAiState.move_choice: 0 walks back to the post, 1 is at the post */
+#define GOLDEN_STATUE_MOVE_CHOICE_WALK_TO_POST 0
+#define GOLDEN_STATUE_MOVE_CHOICE_AT_POST      1
+
 static void GoldenStatue_OnHit(Entity *entity);
 static void GoldenStatue_ThinkWaitAtPost(Entity *entity, s32 run_now);
 static void GoldenStatue_WalkToPost(Entity *entity, s32 run_now);
@@ -48,9 +55,9 @@ void GoldenStatue_Init(Entity *entity) {
     ai_state->move = GoldenStatue_Move;
     ai_state->dormant = EntityAi_Dormant;
     ai_state->death = EntityAi_Death;
-    if (entity->spawn_info->spawn_mode == 1) {
+    if (entity->spawn_info->spawn_mode == GOLDEN_STATUE_SPAWN_MODE_WAIT_AT_POST) {
         ai_state->think = GoldenStatue_ThinkWaitAtPost;
-    } else if (entity->spawn_info->spawn_mode == 2) {
+    } else if (entity->spawn_info->spawn_mode == GOLDEN_STATUE_SPAWN_MODE_NO_STATES) {
         ai_state->think = GoldenStatue_ThinkNoStates;
     } else {
         ai_state->think = EntityAi_Think;
@@ -119,7 +126,7 @@ static void GoldenStatue_ThinkWaitAtPost(Entity *entity, s32 run_now) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {
-        if (ai_state->move_choice == 0) {
+        if (ai_state->move_choice == GOLDEN_STATUE_MOVE_CHOICE_WALK_TO_POST) {
             GoldenStatue_WalkToPost(entity, run_now);
         } else {
             if (ai_state->turn_in_place != 0) {
@@ -151,7 +158,7 @@ static void GoldenStatue_WalkToPost(Entity *entity, s32 run_now) {
     entity->target = target;
     entity->move_command = EntityAi_MoveCommand(entity, 0, 25.0f);
     if (EntityMath_DistanceXZ(entity->model->position, point) < limit) {
-        ai_state->move_choice = 1;
+        ai_state->move_choice = GOLDEN_STATUE_MOVE_CHOICE_AT_POST;
     }
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
@@ -172,7 +179,7 @@ static void GoldenStatue_TurnAtPost(Entity *entity, s32 run_now) {
     home[2] = 3050.0f;
     home[3] = 0.0f;
     if (EntityMath_DistanceXZ(entity->model->position, home) > range) {
-        ai_state->move_choice = 0;
+        ai_state->move_choice = GOLDEN_STATUE_MOVE_CHOICE_WALK_TO_POST;
     }
     if (EntityAi_CanAttack(entity) && !EntitySight_EntityInWay(entity)) {
         if (EntityAi_PickAttack(entity)) {
@@ -302,9 +309,9 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 run_no
                 }
             }
         }
-        if (ai_state->move_choice == 0) {
+        if (ai_state->move_choice == GOLDEN_STATUE_MOVE_CHOICE_WALK_TO_POST) {
             if (EntityMath_DistanceXZ(entity->model->position, post) < margin + 60.0f) {
-                ai_state->move_choice = 1;
+                ai_state->move_choice = GOLDEN_STATUE_MOVE_CHOICE_AT_POST;
                 printf(golden_statue_arrived_message);
             } else {
                 entity->target = post;
@@ -323,7 +330,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 run_no
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (EntityMath_DistanceXZ(entity->model->position, post) > margin + 150.0f) {
                 entity->target = post;
-                ai_state->move_choice = 0;
+                ai_state->move_choice = GOLDEN_STATUE_MOVE_CHOICE_WALK_TO_POST;
                 return;
             }
             if (ENTITY_FLAG_BITS(entity)->player_in_reach && EntityAi_CanShoot(entity) && !EntitySight_EntityInWay(entity)) {
@@ -470,7 +477,7 @@ static void GoldenStatue_Animate(Entity *entity) {
         } else {
             EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, 0, NULL, 8.0f);
         }
-        if ((entity->busy_flags & ENTITY_BUSY_ATTACK) && entity->animation_index == 0x17) {
+        if ((entity->busy_flags & ENTITY_BUSY_ATTACK) && entity->animation_index == ENTITY_MOTION_RANGED_ATTACK) {
             GoldenStatue_AimPart15AbovePlayer(entity);
         } else {
             ai_state->part_angle_y = 0.0f;

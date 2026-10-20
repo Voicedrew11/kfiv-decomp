@@ -19,6 +19,9 @@
 #include "model/motion.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
+
+/* EntitySpawnInfo.spawn_mode: 0 is the normal dormant, else Larva_DormantHeldAtModelPoint */
+#define LARVA_SPAWN_MODE_NORMAL 0
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void Larva_Think(Entity *entity, s32 run_now);
@@ -49,7 +52,7 @@ void Larva_Init(Entity *entity) {
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = EntityAi_OnHit;
     ai_state->move = EntityAi_Move;
-    if (entity->spawn_info->spawn_mode != 0) {
+    if (entity->spawn_info->spawn_mode != LARVA_SPAWN_MODE_NORMAL) {
         ai_state->dormant = Larva_DormantHeldAtModelPoint;
     } else {
         ai_state->dormant = Larva_Dormant;
@@ -215,7 +218,7 @@ static void Larva_Death(Entity *entity) {
             if (entity->params->respawn_effect_id != 0 && entity->params->respawn_effect_id != 0xFFFF) {
                 Effect_FreeForOwner(entity);
             }
-            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;
             ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             entity->action_timer = 20;
