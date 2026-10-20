@@ -149,6 +149,12 @@ static page) and the table below; commit those with each batch of work.
 | `// match:` comments | 941 | left |
 | gotos | 14 | left |
 | multi-line comments | 1798 | left |
+| unkXX names in comments | 799 | left |
+| raw `case N:` labels | 2525 | left |
+| raw state/mode values | 1397 | left |
+| plain pointer casts | 2172 | left |
+| placeholder parameters | 220 | left |
+| raw float constants | 7185 | left |
 <!-- progress:end -->
 
 ## Contributing
