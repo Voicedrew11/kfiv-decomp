@@ -121,8 +121,10 @@ added needs `tools/setup.sh` run once more.
 local per-function page (not committed). Before that it runs
 `tools/readability_scan.py`, which measures how readable the game C is past
 its function names: structs with no `unkXX` field left, named fields (padding,
-`padXX` bytes no game code touches, is counted apart), globals and flag bits, and counts of casts, `// match:` comments, gotos and
-long comments still to clean up. `tools/progress.py --write` refreshes
+`padXX` bytes no game code touches, is counted apart), globals and flag bits, and counts of what still reads as machine output:
+casts, `// match:` comments, gotos, long comments, stale `unkXX` names in
+comments, raw case labels and state values (enum candidates), `unknown`
+parameters and raw float constants. `tools/progress.py --write` refreshes
 `docs/progress/` (a summary without per-function data, shields badges and a
 static page) and the table below; commit those with each batch of work.
 `docs/progress/index.html` can be served with GitHub Pages (Settings → Pages →

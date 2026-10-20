@@ -47,6 +47,12 @@ READABILITY_ROWS = [
     ("`// match:` comments", "match_comments", None),
     ("gotos", "gotos", None),
     ("multi-line comments", "long_comments", None),
+    ("unkXX names in comments", "comment_unk_names", None),
+    ("raw `case N:` labels", "raw_case_labels", None),
+    ("raw state/mode values", "raw_state_values", None),
+    ("plain pointer casts", "plain_pointer_casts", None),
+    ("placeholder parameters", "placeholder_params", None),
+    ("raw float constants", "raw_float_constants", None),
 ]
 AUTO_NAME = re.compile(r"(func|sub|D)_[0-9A-Fa-f]{8}$")
 
