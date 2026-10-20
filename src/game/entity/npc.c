@@ -153,10 +153,10 @@ void Npc_Think(Entity *entity, s32 run_now) {
                 Npc_ThinkStopWatching(entity, run_now);
             }
             break;
-        case 0:
-        case 1:
-        case 2:
-        case 3:
+        case ENTITY_STATE_UNAWARE:
+        case ENTITY_STATE_SEARCHING:
+        case ENTITY_STATE_NOTICED:
+        case ENTITY_STATE_HELD:
         default:
             Npc_ThinkStand(entity, run_now);
             break;
@@ -292,7 +292,7 @@ static void Npc_TurnToPlayer(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         yaw = entity->model->rotation[1];
         EntityMath_EaseAngleToward(&yaw, entity->heading_to_player, entity->action_timer);
         entity->turn_delta_yaw += yaw - entity->model->rotation[1];
@@ -343,7 +343,7 @@ static void Npc_TurnToSpawnHeading(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         yaw = entity->model->rotation[1];
         EntityMath_EaseAngleToward(&yaw, entity->spawn_info->spawn_rotation_y, entity->action_timer);
         entity->turn_delta_yaw += yaw - entity->model->rotation[1];

@@ -11,6 +11,10 @@
 #include "math/angle.h"
 #include "math/vu0.h"
 
+/* MapTriggerShotKind121660.player_on: whether the player stands on the sinking platform */
+#define SINKING_PLATFORM_PLAYER_OFF 0
+#define SINKING_PLATFORM_PLAYER_ON  1
+
 /* MapObject.step of a ladder (kind 0xF) */
 #define LADDER_STEP_ACTIVE          1       /* the update checks the player against its two points */
 /* MapObject.step of a shooter (kind 0x10) */
@@ -46,7 +50,7 @@ void MapObject_UpdateSinkingPlatform(MapObject *object) {
         shot->frames_to_wait = MAP_OBJECT_WORDS(object)->kind_param_5;
     }
     switch (shot->player_on) {
-        case 0:
+        case SINKING_PLATFORM_PLAYER_OFF:
             source = MAP_OBJECT_WORDS(object);
             if (source->kind_param_4 == 0) {
                 ((MapTriggerShotKind121660 *)object->work)->speed = source->kind_param_2;
@@ -59,7 +63,7 @@ void MapObject_UpdateSinkingPlatform(MapObject *object) {
                 model->position.y = object->source->position.y;
             }
             break;
-        case 1:
+        case SINKING_PLATFORM_PLAYER_ON:
             if (shot->frames_to_wait > 0) {
                 shot->frames_to_wait--;
                 return;
