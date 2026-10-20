@@ -142,28 +142,9 @@
 #define SMITH_COLLECT_COLLECTED_FADE_TO_SELECT 4
 #define SMITH_COLLECT_BACK_FADE_TO_SELECT     5
 
-/* system_screen_state: the save screen's system panel, 0 fades in and 1 is open */
-#define SYSTEM_SCREEN_FADE_IN                 0
-#define SYSTEM_SCREEN_OPEN                    1
-#define SYSTEM_SCREEN_TO_SAVE_LIST            2
-#define SYSTEM_SCREEN_TO_CARD_SELECT          3
-
-/* save_screen_state.dialog_id: the message the save screen shows (-1: none) */
-#define SAVE_DIALOG_NO_CARD_SLOT_1            4
-#define SAVE_DIALOG_NO_CARD_SLOT_2            5
-#define SAVE_DIALOG_CARD_ERROR                10
-#define SAVE_DIALOG_FORMAT_CONFIRM            12
-#define SAVE_DIALOG_FORMATTING                13
-#define SAVE_DIALOG_FORMAT_DONE               14
-#define SAVE_DIALOG_FORMAT_FAILED             15
-#define SAVE_DIALOG_NO_ROOM                   21
-
-/* handler_index of the save screen's slot_parts: the sprite kind each one draws */
-#define SAVE_SPRITE_DIALOG_FRAME              3
-#define SAVE_SPRITE_CARD_SLOT_1               26
-#define SAVE_SPRITE_CARD_SLOT_2               27
-#define SAVE_SPRITE_SELECTED_CARD             31
-#define SAVE_SPRITE_DIALOG_TEXT               28
+/* system_screen_state in the save screen's system panel */
+#define SYSTEM_SCREEN_STATE_TO_SAVE_LIST      2
+#define SYSTEM_SCREEN_STATE_TO_CARD_SELECT    3
 
 /* Appends node to the ring being built; the seventh one becomes the page mark. */
 #define LINK_ITEM(node, page_mark)          \
@@ -5441,7 +5422,7 @@ static void SaveScreen_UpdateCardSelect(void) {
     PadReport *report;
 
     card_result = SaveCard_Update();
-    if (SaveCard_HasCard(save_screen_state.selected_card) == 0 && save_screen_state.dialog_id == SAVE_DIALOG_FORMAT_DONE) {
+    if (SaveCard_HasCard(save_screen_state.selected_card) == 0 && save_screen_state.dialog_id == CARD_DIALOG_FORMAT_DONE) {
         card_result = -1;
     }
     if (save_screen_state.check_finished == 0 && SaveCard_IsCheckRunning() == 0) {
@@ -5465,79 +5446,79 @@ static void SaveScreen_UpdateCardSelect(void) {
                 MenuSprite_Draw((int)&slot_parts[i], kind + 1000, slot, screen_part_alphas[i]);
             }
             break;
-        case SAVE_SPRITE_SELECTED_CARD:
+        case CARD_SLOT_PART_SELECTED_CARD:
             if (save_screen_state.check_finished != 0) {
-                if (system_screen_state != SYSTEM_SCREEN_OPEN) {
+                if (system_screen_state != SYSTEM_SCREEN_STATE_OPEN) {
                     MenuSprite_Draw((int)&slot_parts[i], kind + 1000, save_screen_state.selected_card, screen_part_alphas[i]);
                 } else {
                     MenuSprite_Draw((int)&slot_parts[i], kind, save_screen_state.selected_card, screen_part_alphas[i]);
                 }
             }
             break;
-        case SAVE_SPRITE_DIALOG_FRAME:
+        case CARD_SLOT_PART_DIALOG_BOX:
             switch (save_screen_state.dialog_id) {
-            case SAVE_DIALOG_NO_CARD_SLOT_1:
-            case SAVE_DIALOG_NO_CARD_SLOT_2:
-            case SAVE_DIALOG_CARD_ERROR:
-            case SAVE_DIALOG_FORMAT_CONFIRM:
-            case SAVE_DIALOG_FORMATTING:
-            case SAVE_DIALOG_FORMAT_DONE:
-            case SAVE_DIALOG_FORMAT_FAILED:
-            case SAVE_DIALOG_NO_ROOM:
+            case CARD_DIALOG_NO_CARD_SLOT_1:
+            case CARD_DIALOG_NO_CARD_SLOT_2:
+            case CARD_DIALOG_CARD_FAILED:
+            case CARD_DIALOG_FORMAT_CONFIRM:
+            case CARD_DIALOG_FORMATTING:
+            case CARD_DIALOG_FORMAT_DONE:
+            case CARD_DIALOG_FORMAT_FAILED:
+            case CARD_DIALOG_NO_ROOM:
                 MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0, screen_part_alphas[i]);
                 break;
             }
             break;
-        case SAVE_SPRITE_CARD_SLOT_1:
+        case CARD_SLOT_PART_CARD_SLOT_1:
             if (SaveCard_IsPresent(0) == 0) {
-                if (system_screen_state == SYSTEM_SCREEN_FADE_IN) {
+                if (system_screen_state == SYSTEM_SCREEN_STATE_FADE_IN) {
                     MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0x20, screen_part_alphas[i]);
                 } else if (system_screen_state < 2) {
                     MenuSprite_DrawPlain((int)&slot_parts[i], kind, 0x20);
                 }
-            } else if (system_screen_state != SYSTEM_SCREEN_OPEN) {
+            } else if (system_screen_state != SYSTEM_SCREEN_STATE_OPEN) {
                 MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0x80, screen_part_alphas[i]);
             } else {
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 0x80);
             }
             break;
-        case SAVE_SPRITE_CARD_SLOT_2:
+        case CARD_SLOT_PART_CARD_SLOT_2:
             if (SaveCard_IsPresent(1) == 0) {
-                if (system_screen_state == SYSTEM_SCREEN_FADE_IN) {
+                if (system_screen_state == SYSTEM_SCREEN_STATE_FADE_IN) {
                     MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0x20, screen_part_alphas[i]);
                 } else if (system_screen_state < 2) {
                     MenuSprite_DrawPlain((int)&slot_parts[i], kind, 0x20);
                 }
-            } else if (system_screen_state != SYSTEM_SCREEN_OPEN) {
+            } else if (system_screen_state != SYSTEM_SCREEN_STATE_OPEN) {
                 MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0x80, screen_part_alphas[i]);
             } else {
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 0x80);
             }
             break;
-        case SAVE_SPRITE_DIALOG_TEXT:
+        case CARD_SLOT_PART_DIALOG_TEXT:
             switch (save_screen_state.dialog_id) {
-            case SAVE_DIALOG_NO_CARD_SLOT_1:
+            case CARD_DIALOG_NO_CARD_SLOT_1:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 4);
                 break;
-            case SAVE_DIALOG_NO_CARD_SLOT_2:
+            case CARD_DIALOG_NO_CARD_SLOT_2:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 5);
                 break;
-            case SAVE_DIALOG_FORMAT_CONFIRM:
+            case CARD_DIALOG_FORMAT_CONFIRM:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 12);
                 break;
-            case SAVE_DIALOG_FORMATTING:
+            case CARD_DIALOG_FORMATTING:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 13);
                 break;
-            case SAVE_DIALOG_FORMAT_DONE:
+            case CARD_DIALOG_FORMAT_DONE:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 14);
                 break;
-            case SAVE_DIALOG_FORMAT_FAILED:
+            case CARD_DIALOG_FORMAT_FAILED:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 15);
                 break;
-            case SAVE_DIALOG_NO_ROOM:
+            case CARD_DIALOG_NO_ROOM:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 21);
                 break;
-            case SAVE_DIALOG_CARD_ERROR:
+            case CARD_DIALOG_CARD_FAILED:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 10);
                 break;
             case 22:
@@ -5552,7 +5533,7 @@ static void SaveScreen_UpdateCardSelect(void) {
         SELECT_PART(0);
     }
 
-    if (save_screen_state.dialog_id == SAVE_DIALOG_FORMAT_CONFIRM) {
+    if (save_screen_state.dialog_id == CARD_DIALOG_FORMAT_CONFIRM) {
         // match: a depth nothing reads; without it the 64-bit mask of the bar's depth field is loaded after the branch below
         unused_corner.f.mid24 = 0x5F370;
         bar.first.f.lo16 = 0x7580;
@@ -5576,56 +5557,56 @@ static void SaveScreen_UpdateCardSelect(void) {
         if (SaveCard_IsCheckRunning() == 0) {
             save_screen_state.confirm_pending = 0;
             save_screen_state.input_locked = 0;
-            if (save_screen_state.dialog_id == SAVE_DIALOG_FORMAT_CONFIRM) {
+            if (save_screen_state.dialog_id == CARD_DIALOG_FORMAT_CONFIRM) {
                 if (save_screen_state.selected_save == 0) {
                     SaveCard_StartFormat(save_screen_state.selected_card);
-                    save_screen_state.dialog_id = SAVE_DIALOG_FORMATTING;
+                    save_screen_state.dialog_id = CARD_DIALOG_FORMATTING;
                     save_screen_state.card_op_running = 1;
                 } else {
                     save_screen_state.dialog_id = -1;
                 }
-            } else if (save_screen_state.dialog_id == SAVE_DIALOG_FORMAT_DONE) {
+            } else if (save_screen_state.dialog_id == CARD_DIALOG_FORMAT_DONE) {
                 if (SaveCard_StartReadList(save_screen_state.selected_card, 0) == 0) {
                     save_screen_state.card_op_running = 1;
                 }
-            } else if (save_screen_state.dialog_id == SAVE_DIALOG_NO_ROOM) {
+            } else if (save_screen_state.dialog_id == CARD_DIALOG_NO_ROOM) {
                 save_screen_state.dialog_id = -1;
             } else if (save_screen_state.dialog_id != -1) {
                 save_screen_state.dialog_id = -1;
             } else if (SaveCard_IsPresent(save_screen_state.selected_card) != 0) {
                 if (SaveCard_IsFormatted(save_screen_state.selected_card) == 0) {
-                    save_screen_state.dialog_id = SAVE_DIALOG_FORMAT_CONFIRM;
+                    save_screen_state.dialog_id = CARD_DIALOG_FORMAT_CONFIRM;
                 } else if (SaveCard_HasSaveFolder(save_screen_state.selected_card) == 0 && SaveCard_HasRoomForFolder(save_screen_state.selected_card) < 0) {
-                    save_screen_state.dialog_id = SAVE_DIALOG_NO_ROOM;
+                    save_screen_state.dialog_id = CARD_DIALOG_NO_ROOM;
                     SaveCard_StartCheck(1);
                 } else if (SaveCard_StartReadList(save_screen_state.selected_card, 1) == 0) {
                     save_screen_state.card_op_running = 1;
                 }
             } else if (save_screen_state.selected_card == 0) {
-                save_screen_state.dialog_id = SAVE_DIALOG_NO_CARD_SLOT_1;
+                save_screen_state.dialog_id = CARD_DIALOG_NO_CARD_SLOT_1;
             } else if (save_screen_state.selected_card == 1) {
-                save_screen_state.dialog_id = SAVE_DIALOG_NO_CARD_SLOT_2;
+                save_screen_state.dialog_id = CARD_DIALOG_NO_CARD_SLOT_2;
             }
         }
     } else if (save_screen_state.card_op_running != 0) {
         if (SaveCard_CheckBusy() == 0) {
-            if (save_screen_state.dialog_id == SAVE_DIALOG_FORMATTING) {
-                save_screen_state.dialog_id = SAVE_DIALOG_FORMAT_DONE;
+            if (save_screen_state.dialog_id == CARD_DIALOG_FORMATTING) {
+                save_screen_state.dialog_id = CARD_DIALOG_FORMAT_DONE;
                 save_screen_state.selected_save = 1;
                 save_screen_state.list_step = SAVE_SCREEN_STEP_WAIT_INPUT;
             } else if (SaveCard_HasAnySave() != 0 || SaveCard_HasRoomForFolder(save_screen_state.selected_card) > 0) {
                 save_screen_state.input_locked = 1;
                 save_screen_state.list_step = SAVE_SCREEN_STEP_WAIT_INPUT;
-                system_screen_state = SYSTEM_SCREEN_TO_SAVE_LIST;
+                system_screen_state = SYSTEM_SCREEN_STATE_TO_SAVE_LIST;
                 save_screen_state.selected_save = 0;
             } else {
-                save_screen_state.dialog_id = SAVE_DIALOG_NO_ROOM;
+                save_screen_state.dialog_id = CARD_DIALOG_NO_ROOM;
                 SaveCard_StartCheck(1);
             }
             save_screen_state.card_op_running = 0;
         } else if (card_result < 0) {
-            if (save_screen_state.dialog_id == SAVE_DIALOG_FORMATTING) {
-                save_screen_state.dialog_id = SAVE_DIALOG_FORMAT_FAILED;
+            if (save_screen_state.dialog_id == CARD_DIALOG_FORMATTING) {
+                save_screen_state.dialog_id = CARD_DIALOG_FORMAT_FAILED;
                 save_screen_state.card_op_running = 0;
                 save_screen_state.selected_save = 1;
                 SaveCard_StartCheck(1);
@@ -5634,16 +5615,16 @@ static void SaveScreen_UpdateCardSelect(void) {
                 if (SaveCard_IsDamaged(save_screen_state.selected_card) != 0) {
                     if (SaveCard_HasAnySave() != 0 || SaveCard_HasRoomForFolder(save_screen_state.selected_card) > 0) {
                         save_screen_state.input_locked = 1;
-                        system_screen_state = SYSTEM_SCREEN_TO_SAVE_LIST;
+                        system_screen_state = SYSTEM_SCREEN_STATE_TO_SAVE_LIST;
                         save_screen_state.list_step = SAVE_SCREEN_STEP_WAIT_INPUT;
                         save_screen_state.selected_save = 0;
                         SaveCard_Cancel(save_screen_state.selected_card);
                     } else {
-                        save_screen_state.dialog_id = SAVE_DIALOG_NO_ROOM;
+                        save_screen_state.dialog_id = CARD_DIALOG_NO_ROOM;
                         SaveCard_StartCheck(1);
                     }
                 } else {
-                    save_screen_state.dialog_id = SAVE_DIALOG_CARD_ERROR;
+                    save_screen_state.dialog_id = CARD_DIALOG_CARD_FAILED;
                 }
                 card_result = 0;
                 save_screen_state.card_op_running = 0;
@@ -5654,13 +5635,13 @@ static void SaveScreen_UpdateCardSelect(void) {
     if (save_screen_state.is_leaving != 0) {
         if (card_result < 0) {
             save_screen_state.input_locked = 1;
-            system_screen_state = SYSTEM_SCREEN_TO_CARD_SELECT;
+            system_screen_state = SYSTEM_SCREEN_STATE_TO_CARD_SELECT;
         }
-    } else if (save_screen_state.dialog_id == SAVE_DIALOG_FORMAT_CONFIRM && SaveCard_IsPresent(save_screen_state.selected_card) == 0) {
-        save_screen_state.dialog_id = SAVE_DIALOG_CARD_ERROR;
+    } else if (save_screen_state.dialog_id == CARD_DIALOG_FORMAT_CONFIRM && SaveCard_IsPresent(save_screen_state.selected_card) == 0) {
+        save_screen_state.dialog_id = CARD_DIALOG_CARD_FAILED;
         save_screen_state.selected_save = 1;
     } else if (card_result < 0) {
-        save_screen_state.dialog_id = SAVE_DIALOG_CARD_ERROR;
+        save_screen_state.dialog_id = CARD_DIALOG_CARD_FAILED;
         save_screen_state.selected_save = 1;
         save_screen_state.card_op_running = 0;
         SaveCard_StartCheck(1);
@@ -5678,7 +5659,7 @@ static void SaveScreen_UpdateCardSelect(void) {
                 report = Pad_GetReport(0, 0);
                 if ((report->pressed & PAD_CIRCLE) && modal_pad_mode != 0xFF) {
                     Sound_PlayMenu(2);
-                    if (save_screen_state.dialog_id == SAVE_DIALOG_FORMAT_DONE) {
+                    if (save_screen_state.dialog_id == CARD_DIALOG_FORMAT_DONE) {
                         if (SaveCard_StartReadList(save_screen_state.selected_card, 0) == 0) {
                             save_screen_state.card_op_running = 1;
                         }
@@ -5689,10 +5670,10 @@ static void SaveScreen_UpdateCardSelect(void) {
                         save_screen_state.is_leaving = 1;
                         SaveCard_Close();
                     }
-                } else if ((menu_buttons & PAD_UP) && modal_pad_mode != 0xFF && save_screen_state.dialog_id == SAVE_DIALOG_FORMAT_CONFIRM) {
+                } else if ((menu_buttons & PAD_UP) && modal_pad_mode != 0xFF && save_screen_state.dialog_id == CARD_DIALOG_FORMAT_CONFIRM) {
                     Sound_PlayMenu(1);
                     save_screen_state.selected_save = (save_screen_state.selected_save + 1) & 1;
-                } else if ((menu_buttons & PAD_DOWN) && modal_pad_mode != 0xFF && save_screen_state.dialog_id == SAVE_DIALOG_FORMAT_CONFIRM) {
+                } else if ((menu_buttons & PAD_DOWN) && modal_pad_mode != 0xFF && save_screen_state.dialog_id == CARD_DIALOG_FORMAT_CONFIRM) {
                     Sound_PlayMenu(1);
                     save_screen_state.selected_save = (save_screen_state.selected_save - 1) & 1;
                 }
@@ -5701,20 +5682,20 @@ static void SaveScreen_UpdateCardSelect(void) {
     }
 
     switch (system_screen_state) {
-    case SYSTEM_SCREEN_FADE_IN:
+    case SYSTEM_SCREEN_STATE_FADE_IN:
         for (i = 0; i < slot_part_count; i++) {
             // match: the cursor bar's level is stepped once for every part, inside the loop
             screen_part_alphas[0xFF] += 1.6f;
             if (screen_part_alphas[0xFF] > 16.0f) {
                 screen_part_alphas[0xFF] = 16.0f;
             }
-            if (slot_parts[i].handler_index == SAVE_SPRITE_CARD_SLOT_1) {
+            if (slot_parts[i].handler_index == CARD_SLOT_PART_CARD_SLOT_1) {
                 if (SaveCard_IsPresent(0) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x80;
                 } else {
                     SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x20;
                 }
-            } else if (slot_parts[i].handler_index == SAVE_SPRITE_CARD_SLOT_2) {
+            } else if (slot_parts[i].handler_index == CARD_SLOT_PART_CARD_SLOT_2) {
                 if (SaveCard_IsPresent(1) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x80;
                 } else {
@@ -5726,7 +5707,7 @@ static void SaveScreen_UpdateCardSelect(void) {
                 for (i = 0; i < slot_part_count; i++) {
                     screen_part_alphas[i] = SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha;
                 }
-                system_screen_state = SYSTEM_SCREEN_OPEN;
+                system_screen_state = SYSTEM_SCREEN_STATE_OPEN;
                 if (save_screen_state.check_finished != 0) {
                     save_screen_state.input_locked = 0;
                 }
@@ -5734,20 +5715,20 @@ static void SaveScreen_UpdateCardSelect(void) {
             }
         }
         break;
-    case SYSTEM_SCREEN_TO_SAVE_LIST:
-    case SYSTEM_SCREEN_TO_CARD_SELECT:
+    case SYSTEM_SCREEN_STATE_TO_SAVE_LIST:
+    case SYSTEM_SCREEN_STATE_TO_CARD_SELECT:
         for (i = 0; i < slot_part_count; i++) {
             screen_part_alphas[0xFF] -= 1.6f; // match: stepped once for every part here too
             if (screen_part_alphas[0xFF] < 0.0f) {
                 screen_part_alphas[0xFF] = 0.0f;
             }
-            if (slot_parts[i].handler_index == SAVE_SPRITE_CARD_SLOT_1) {
+            if (slot_parts[i].handler_index == CARD_SLOT_PART_CARD_SLOT_1) {
                 if (SaveCard_IsPresent(0) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x80;
                 } else {
                     SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x20;
                 }
-            } else if (slot_parts[i].handler_index == SAVE_SPRITE_CARD_SLOT_2) {
+            } else if (slot_parts[i].handler_index == CARD_SLOT_PART_CARD_SLOT_2) {
                 if (SaveCard_IsPresent(1) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x80;
                 } else {
@@ -5757,7 +5738,7 @@ static void SaveScreen_UpdateCardSelect(void) {
             screen_part_alphas[i] -= SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha / 10.0f;
             if (screen_part_alphas[i] < 0.0f) {
                 memset(screen_part_alphas, 0, 0x400);
-                if (system_screen_state == SYSTEM_SCREEN_TO_SAVE_LIST) {
+                if (system_screen_state == SYSTEM_SCREEN_STATE_TO_SAVE_LIST) {
                     save_screen_state.confirm_press_state = CONFIRM_PRESS_IDLE;
                     save_screen_handler = SaveScreen_UpdateSaveList;
                     save_screen_state.free_clusters = 0;
@@ -5782,13 +5763,13 @@ static void SaveScreen_UpdateCardSelect(void) {
                     save_line_slots[0] = 0;
                     save_line_slots[1] = 1;
                     save_line_slots[2] = 2;
-                } else if (system_screen_state == SYSTEM_SCREEN_TO_CARD_SELECT) {
+                } else if (system_screen_state == SYSTEM_SCREEN_STATE_TO_CARD_SELECT) {
                     save_screen_state.selected_save = 0;
                     save_screen_step++;
                     MenuHeap_FreeToMark();
                 }
                 save_screen_state.dialog_id = -1;
-                system_screen_state = SYSTEM_SCREEN_FADE_IN;
+                system_screen_state = SYSTEM_SCREEN_STATE_FADE_IN;
                 break;
             }
         }
@@ -6140,7 +6121,7 @@ static void SaveScreen_UpdateSaveList(void) {
             case SAVE_SCREEN_STEP_CARD_ERROR:
             case SAVE_SCREEN_STEP_SAVE_FAILED:
                 Sound_PlayMenu(0);
-                system_screen_state = SYSTEM_SCREEN_TO_CARD_SELECT;
+                system_screen_state = SYSTEM_SCREEN_STATE_TO_CARD_SELECT;
                 save_screen_state.input_locked = 1;
                 break;
             }
@@ -6150,12 +6131,12 @@ static void SaveScreen_UpdateSaveList(void) {
                 Sound_PlayMenu(2);
                 switch (save_screen_state.list_step) {
                 case SAVE_SCREEN_STEP_WAIT_INPUT:
-                    system_screen_state = SYSTEM_SCREEN_TO_SAVE_LIST;
+                    system_screen_state = SYSTEM_SCREEN_STATE_TO_SAVE_LIST;
                     save_screen_state.input_locked = 1;
                     break;
                 case SAVE_SCREEN_STEP_CARD_ERROR:
                 case SAVE_SCREEN_STEP_SAVE_FAILED:
-                    system_screen_state = SYSTEM_SCREEN_TO_CARD_SELECT;
+                    system_screen_state = SYSTEM_SCREEN_STATE_TO_CARD_SELECT;
                     save_screen_state.input_locked = 1;
                     break;
                 case SAVE_SCREEN_STEP_CONFIRM_EMPTY:
@@ -6209,7 +6190,7 @@ static void SaveScreen_UpdateSaveList(void) {
     }
 
     switch (system_screen_state) {
-    case SYSTEM_SCREEN_FADE_IN:
+    case SYSTEM_SCREEN_STATE_FADE_IN:
         screen_part_alphas[0xFF] += 12.8f;
         if (screen_part_alphas[0xFF] > 128.0f) {
             screen_part_alphas[0xFF] = 128.0f;
@@ -6221,14 +6202,14 @@ static void SaveScreen_UpdateSaveList(void) {
                 for (i = 0; i < data_part_count; i++) {
                     screen_part_alphas[i] = SPRITE_PACKET_COLOR_VIEW(&data_parts[i])->alpha;
                 }
-                system_screen_state = SYSTEM_SCREEN_OPEN;
+                system_screen_state = SYSTEM_SCREEN_STATE_OPEN;
                 save_screen_state.input_locked = 0;
                 break;
             }
         }
         break;
-    case SYSTEM_SCREEN_TO_SAVE_LIST:
-    case SYSTEM_SCREEN_TO_CARD_SELECT:
+    case SYSTEM_SCREEN_STATE_TO_SAVE_LIST:
+    case SYSTEM_SCREEN_STATE_TO_CARD_SELECT:
         screen_part_alphas[0xFF] -= 12.8f;
         if (screen_part_alphas[0xFF] < 0.0f) {
             screen_part_alphas[0xFF] = 0.0f;
@@ -6243,12 +6224,12 @@ static void SaveScreen_UpdateSaveList(void) {
                 pulse_sprite_falling = 0;
                 save_screen_state.selected_save = 1;
                 save_screen_state.confirm_choice = CONFIRM_CHOICE_NO;
-                if (system_screen_state == SYSTEM_SCREEN_TO_SAVE_LIST) {
+                if (system_screen_state == SYSTEM_SCREEN_STATE_TO_SAVE_LIST) {
                     SaveCard_StartCheck(0);
                 } else {
                     SaveCard_StartCheck(1);
                 }
-                system_screen_state = SYSTEM_SCREEN_FADE_IN;
+                system_screen_state = SYSTEM_SCREEN_STATE_FADE_IN;
                 break;
             }
         }

@@ -145,7 +145,7 @@ typedef struct {
     char pad0F[0x01];
     s8 card_saves_found;            /* 0x10 1: the card's save list was read and has saves */
     s8 is_leaving;                  /* 0x11 1: the screen is being left (the cards were closed) */
-    s8 dialog_id;                   /* 0x12 starts as -1 */
+    s8 dialog_id;                   /* 0x12 CARD_DIALOG_*, -1: none */
     s8 list_step;                   /* 0x13 step of the screen Menu_UpdateSaveList runs, -1: waiting for input */
     s8 card_op_running;             /* 0x14 1 while a card operation the screen started runs */
     char pad15[0x01];
@@ -161,6 +161,29 @@ typedef struct {
     s8 save_state_1;                /* 0x1F what SaveCard_GetSaveState says of save 1 */
     s8 save_state_2;                /* 0x20 what SaveCard_GetSaveState says of save 2 */
 } MenuScreenState;
+
+/* MenuScreenState.dialog_id and save_screen_state.dialog_id: the message a memory card screen shows */
+#define CARD_DIALOG_NO_CARD_SLOT_1              4
+#define CARD_DIALOG_NO_CARD_SLOT_2              5
+#define CARD_DIALOG_NO_SAVES                    9
+#define CARD_DIALOG_CARD_FAILED                 10
+#define CARD_DIALOG_FORMAT_CONFIRM              12
+#define CARD_DIALOG_FORMATTING                  13
+#define CARD_DIALOG_FORMAT_DONE                 14
+#define CARD_DIALOG_FORMAT_FAILED               15
+#define CARD_DIALOG_BOTH_PROBLEM                0x10
+#define CARD_DIALOG_FIRST_FORMAT_SECOND_PROBLEM 0x11
+#define CARD_DIALOG_FIRST_PROBLEM_SECOND_FORMAT 0x12
+#define CARD_DIALOG_BOTH_FORMAT                 0x13
+#define CARD_DIALOG_NO_ROOM                     21
+
+/* the sprites of the memory card screens (slot_parts handler_index) */
+#define CARD_SLOT_PART_DIALOG_BOX       3
+#define CARD_SLOT_PART_CARD_SLOT_1      26
+#define CARD_SLOT_PART_CARD_SLOT_2      27
+#define CARD_SLOT_PART_DIALOG_TEXT      28
+#define CARD_SLOT_PART_SLOT_NUMBER      29
+#define CARD_SLOT_PART_SELECTED_CARD    31
 
 /* one item's two values in a trade table (0x17C entries each, the first at 0x00426650); looks like a shop's prices */
 typedef struct {

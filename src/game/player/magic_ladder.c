@@ -14,21 +14,21 @@
 #define LADDER_TURN_SPEED_RAD 0.029088821f /* 5/3 degrees per frame, in radians */
 
 /* magic numbers (Player_CastMagic) the switches below name; a spell's levels are consecutive */
-#define MAGIC_HEAL_LEVEL_1                  0x10    /* counted only while hurt */
-#define MAGIC_HEAL_LEVEL_2                  0x11
-#define MAGIC_HEAL_LEVEL_3                  0x12
-#define MAGIC_CURE_POISON_LEVEL_1           0x2E    /* counted only while poisoned; also slows the poison ticks */
-#define MAGIC_CURE_POISON_LEVEL_2           0x2F
-#define MAGIC_CURE_POISON_LEVEL_3           0x30
-#define MAGIC_LIGHT_LEVEL_1                 0x3D    /* the map glow and light_spell_timer */
-#define MAGIC_LIGHT_LEVEL_2                 0x3E
-#define MAGIC_LIGHT_LEVEL_3                 0x3F
-#define MAGIC_INTIMIDATE_LEVEL_1            0x4C    /* weaker enemies within intimidate_range attack from half as far */
-#define MAGIC_INTIMIDATE_LEVEL_2            0x4D
-#define MAGIC_INTIMIDATE_LEVEL_3            0x4E
-#define MAGIC_RAGE_LEVEL_1                  0x52    /* raises rage_power_bonus to 10, 20 or 30 */
-#define MAGIC_RAGE_LEVEL_2                  0x53
-#define MAGIC_RAGE_LEVEL_3                  0x54
+#define MAGIC_EARTH_HEAL_LEVEL_1            0x10    /* counted only while hurt */
+#define MAGIC_EARTH_HEAL_LEVEL_2            0x11
+#define MAGIC_EARTH_HEAL_LEVEL_3            0x12
+#define MAGIC_PURITY_LEVEL_1                0x2E    /* counted only while poisoned; also slows the poison ticks */
+#define MAGIC_PURITY_LEVEL_2                0x2F
+#define MAGIC_PURITY_LEVEL_3                0x30
+#define MAGIC_DIVINE_LIGHT_LEVEL_1          0x3D    /* the map glow and light_spell_timer */
+#define MAGIC_DIVINE_LIGHT_LEVEL_2          0x3E
+#define MAGIC_DIVINE_LIGHT_LEVEL_3          0x3F
+#define MAGIC_SHADOW_SKIN_LEVEL_1           0x4C    /* weaker enemies within intimidate_range attack from half as far */
+#define MAGIC_SHADOW_SKIN_LEVEL_2           0x4D
+#define MAGIC_SHADOW_SKIN_LEVEL_3           0x4E
+#define MAGIC_RECKLESS_STRENGTH_LEVEL_1     0x52    /* raises rage_power_bonus to 10, 20 or 30 */
+#define MAGIC_RECKLESS_STRENGTH_LEVEL_2     0x53
+#define MAGIC_RECKLESS_STRENGTH_LEVEL_3     0x54
 
 /* 0x4145C8 the ladder's state handlers, one per LadderState (Ladder_DispatchPad picks one) */
 void (*ladder_state_handlers[6])(u16, u16) = {
@@ -294,33 +294,33 @@ int Player_CastMagic(int magic_id) {
             }
         }
         switch (magic_id) {
-        case MAGIC_CURE_POISON_LEVEL_1:
+        case MAGIC_PURITY_LEVEL_1:
             player_state.ailment0_slow_timer = stats->duration;
             break;
-        case MAGIC_LIGHT_LEVEL_1:
-        case MAGIC_LIGHT_LEVEL_2:
-        case MAGIC_LIGHT_LEVEL_3:
+        case MAGIC_DIVINE_LIGHT_LEVEL_1:
+        case MAGIC_DIVINE_LIGHT_LEVEL_2:
+        case MAGIC_DIVINE_LIGHT_LEVEL_3:
             player_state.light_spell_timer = stats->duration;
             break;
-        case MAGIC_INTIMIDATE_LEVEL_1:
-        case MAGIC_INTIMIDATE_LEVEL_2:
-        case MAGIC_INTIMIDATE_LEVEL_3:
+        case MAGIC_SHADOW_SKIN_LEVEL_1:
+        case MAGIC_SHADOW_SKIN_LEVEL_2:
+        case MAGIC_SHADOW_SKIN_LEVEL_3:
             player_state.intimidate_timer = stats->duration;
-            if (magic_id >= MAGIC_INTIMIDATE_LEVEL_2) {
+            if (magic_id >= MAGIC_SHADOW_SKIN_LEVEL_2) {
                 player_state.intimidate_range = 1000.0f;
             } else {
                 player_state.intimidate_range = 600.0f;
             }
             break;
-        case MAGIC_RAGE_LEVEL_1:
+        case MAGIC_RECKLESS_STRENGTH_LEVEL_1:
             player_state.rage_timer = stats->duration;
             player_state.rage_power_bonus = 10;
             break;
-        case MAGIC_RAGE_LEVEL_2:
+        case MAGIC_RECKLESS_STRENGTH_LEVEL_2:
             player_state.rage_timer = stats->duration;
             player_state.rage_power_bonus = 20;
             break;
-        case MAGIC_RAGE_LEVEL_3:
+        case MAGIC_RECKLESS_STRENGTH_LEVEL_3:
             player_state.rage_timer = stats->duration;
             player_state.rage_power_bonus = 30;
             break;
@@ -328,9 +328,9 @@ int Player_CastMagic(int magic_id) {
         Effect_FreeByParam(magic_id);
         Effect_Spawn(entry->effect_id, &origin_point, &origin_point, (Entity *)&player_state, magic_id, NULL);
         switch (magic_id) {
-        case MAGIC_HEAL_LEVEL_1:
-        case MAGIC_HEAL_LEVEL_2:
-        case MAGIC_HEAL_LEVEL_3:
+        case MAGIC_EARTH_HEAL_LEVEL_1:
+        case MAGIC_EARTH_HEAL_LEVEL_2:
+        case MAGIC_EARTH_HEAL_LEVEL_3:
         case 0x38:
         case 0x39:
         case 0x3A:
@@ -338,9 +338,9 @@ int Player_CastMagic(int magic_id) {
                 Player_CountMagicUse(magic_id);
             }
             break;
-        case MAGIC_CURE_POISON_LEVEL_1:
-        case MAGIC_CURE_POISON_LEVEL_2:
-        case MAGIC_CURE_POISON_LEVEL_3:
+        case MAGIC_PURITY_LEVEL_1:
+        case MAGIC_PURITY_LEVEL_2:
+        case MAGIC_PURITY_LEVEL_3:
             if ((u16)player_previous.timed_flags[0] != 0) { // match: read unsigned here
                 Player_CountMagicUse(magic_id);
             }

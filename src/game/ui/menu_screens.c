@@ -129,9 +129,7 @@
 #define SYSTEM_MENU_LINE_BRIGHTNESS    3
 #define SYSTEM_MENU_LINE_QUIT          4
 
-/* system_screen_state: the fades of the menu screens (the card check's 4 and 5 are CARD_CHECK_STATE_*) */
-#define SYSTEM_SCREEN_STATE_FADE_IN              0
-#define SYSTEM_SCREEN_STATE_OPEN                 1
+/* system_screen_state in the menu screens: the fades (the card check's 4 and 5 are CARD_CHECK_STATE_*) */
 #define SYSTEM_SCREEN_STATE_FADE_OUT_FORWARD     2
 #define SYSTEM_SCREEN_STATE_FADE_OUT_BACK        3
 #define SYSTEM_SCREEN_STATE_QUIT_ASK             4
@@ -140,24 +138,6 @@
 /* system_screen_state in the card check: the fades that leave a step forward or back */
 #define CARD_CHECK_STATE_FADE_OUT_NEXT_STEP    4
 #define CARD_CHECK_STATE_FADE_OUT_PREV_STEP    5
-
-/* the sprites of the memory card slot screen (slot_parts handler_index) */
-#define CARD_SLOT_PART_DIALOG_BOX          3
-#define CARD_SLOT_PART_SLOT_NUMBER         29
-#define CARD_SLOT_PART_CARD_FIRST          26
-#define CARD_SLOT_PART_CARD_SECOND         27
-#define CARD_SLOT_PART_SELECTED_CARD       31
-#define CARD_SLOT_PART_DIALOG_TEXT         28
-
-/* card_screen_state.dialog_id: the dialog a memory card screen shows, -1 for none */
-#define CARD_DIALOG_NO_CARD_FIRST_SLOT             4
-#define CARD_DIALOG_NO_CARD_SECOND_SLOT            5
-#define CARD_DIALOG_NO_SAVES                       9
-#define CARD_DIALOG_CARD_FAILED                    10
-#define CARD_DIALOG_BOTH_PROBLEM                   0x10
-#define CARD_DIALOG_FIRST_FORMAT_SECOND_PROBLEM    0x11
-#define CARD_DIALOG_FIRST_PROBLEM_SECOND_FORMAT    0x12
-#define CARD_DIALOG_BOTH_FORMAT                    0x13
 
 /* the sprites of the save list (data_parts handler_index) */
 #define DATA_PART_GROUP_HEADER         3
@@ -5318,8 +5298,8 @@ static void Menu_UpdateCardSlot(void) {
             break;
         case CARD_SLOT_PART_DIALOG_BOX:
             switch (card_screen_state.dialog_id) {
-            case CARD_DIALOG_NO_CARD_FIRST_SLOT:
-            case CARD_DIALOG_NO_CARD_SECOND_SLOT:
+            case CARD_DIALOG_NO_CARD_SLOT_1:
+            case CARD_DIALOG_NO_CARD_SLOT_2:
             case CARD_DIALOG_NO_SAVES:
             case CARD_DIALOG_CARD_FAILED:
                 MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0, screen_part_alphas[i]);
@@ -5335,7 +5315,7 @@ static void Menu_UpdateCardSlot(void) {
                 }
             }
             break;
-        case CARD_SLOT_PART_CARD_FIRST:
+        case CARD_SLOT_PART_CARD_SLOT_1:
             if (SaveCard_IsPresent(0) == 0) {
                 if (system_screen_state == SYSTEM_SCREEN_STATE_FADE_IN) {
                     MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0x20, screen_part_alphas[i]);
@@ -5350,7 +5330,7 @@ static void Menu_UpdateCardSlot(void) {
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 0x80);
             }
             break;
-        case CARD_SLOT_PART_CARD_SECOND:
+        case CARD_SLOT_PART_CARD_SLOT_2:
             if (SaveCard_IsPresent(1) == 0) {
                 if (system_screen_state == SYSTEM_SCREEN_STATE_FADE_IN) {
                     MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0x20, screen_part_alphas[i]);
@@ -5367,10 +5347,10 @@ static void Menu_UpdateCardSlot(void) {
             break;
         case CARD_SLOT_PART_DIALOG_TEXT:
             switch (card_screen_state.dialog_id) {
-            case CARD_DIALOG_NO_CARD_FIRST_SLOT:
+            case CARD_DIALOG_NO_CARD_SLOT_1:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 4);
                 break;
-            case CARD_DIALOG_NO_CARD_SECOND_SLOT:
+            case CARD_DIALOG_NO_CARD_SLOT_2:
                 MenuSprite_DrawPlain((int)&slot_parts[i], kind, 5);
                 break;
             case CARD_DIALOG_NO_SAVES:
@@ -5441,10 +5421,10 @@ static void Menu_UpdateCardSlot(void) {
                     }
                 } else if (card_screen_state.selected_card == 0) {
                     Sound_PlayMenu(0);
-                    card_screen_state.dialog_id = CARD_DIALOG_NO_CARD_FIRST_SLOT;
+                    card_screen_state.dialog_id = CARD_DIALOG_NO_CARD_SLOT_1;
                 } else if (card_screen_state.selected_card == 1) {
                     Sound_PlayMenu(0);
-                    card_screen_state.dialog_id = CARD_DIALOG_NO_CARD_SECOND_SLOT;
+                    card_screen_state.dialog_id = CARD_DIALOG_NO_CARD_SLOT_2;
                 }
             } else {
                 report = Pad_GetReport(0, 0);
