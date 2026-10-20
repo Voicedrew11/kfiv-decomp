@@ -5,6 +5,9 @@
 #include "gfx/gs_draw.h"
 #include "map/map.h"
 
+/* ModelInstance.texture_slot 3: the packet is sent every time, not from a texture slot */
+#define TEXTURE_SLOT_ALWAYS_SENT    3
+
 static int sent_texture_19C;        /* 0x447048 last model texture sent from unk19C */
 static int sent_texture_1A0;        /* 0x44704C last model texture sent from unk1A0 */
 /* 0x447050 the model texture taken as sent from unk198, by unk192; only [0] is read, and nothing but the reset
@@ -43,7 +46,7 @@ void ModelTexture_SendForModel(void *model_arg) {
                 changed = TRUE;
                 TextureTable_QueueEnabled((TextureTableHeader *)model->texture_data, (s32)model->chunk_skip_mask);
                 break;
-            case 3:
+            case TEXTURE_SLOT_ALWAYS_SENT:
                 Map_QueuePacket((int *)model->texture_data);
                 break;
             }

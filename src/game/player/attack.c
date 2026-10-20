@@ -36,6 +36,12 @@
     }
 #define SHOT_REQUEST ((Unk1B1470Request *)shot->attack_request)
 
+/* Unk1B1470Request.shape (entity.h): the hit's shape; shapes 1 and 2 do nothing */
+#define ATTACK_SHAPE_SPHERE 0
+#define ATTACK_SHAPE_SWEPT  3
+/* the strip list of a map model that Attack_TestMapModel touched: a floor (list 1) */
+#define ATTACK_LIST_FLOOR   1
+
 
 /* 0x402D88 the three hit checks of a swing, one per kind of collision shape class */
 int (*swing_hit_checks[3])(ModelInstance *, void *, f32) = { Attack_TestMapModel, Attack_TestMapModelFloors, Attack_TestMapModelWalls };
@@ -48,13 +54,13 @@ FxTableEntry fx_table[256] = { 0 };
 s32 Attack_Run(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     COLLISION_RESULT->floor_material = 6;
     switch (((Unk1B1470RequestBits *)request)->shape) {
-    case 0:
+    case ATTACK_SHAPE_SPHERE:
         return Attack_RunSphere(request, extra);
     case 1:
         return Attack_RunShape1Stub();
     case 2:
         return Attack_RunShape2Stub();
-    case 3:
+    case ATTACK_SHAPE_SWEPT:
         return Attack_RunSwept(request, extra);
     }
     return 0;
@@ -203,7 +209,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                     // match: called as void, retail reuses $2 at once
                     ((void (*)(Unk1B1470Request *, Unk1B1470Extra *))Attack_HitMap)(request, extra);
                     switch (result) {
-                    case 1:
+                    case ATTACK_LIST_FLOOR:
                         result = 8;
                         break;
                     case 0:
@@ -1413,10 +1419,10 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
         check = &fx_table[effect->effect_param].hit_checks[effect->def->hit_check_index];
         memset(&request, 0, sizeof(request));
         switch (check->shape) {
-        case 0:
+        case ATTACK_SHAPE_SPHERE:
             position = &effect->saved_position;
             request.radius = check->radius;
-            request.shape = 0;
+            request.shape = ATTACK_SHAPE_SPHERE;
             break;
         case 1:
             position = &effect->saved_position;

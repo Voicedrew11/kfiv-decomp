@@ -28,6 +28,19 @@
 /* one of the nine values: the item's base plus what it gained, scaled by LevelRecord.level in percent */
 #define ADD_SCALED(n) totals[n] += (def->base_values[n] + record->gained_values[n]) * record->level / 100
 
+/* item bonus kinds (ItemDef bonus_kinds, applied by Player_AddItemBonuses); 11 does nothing as well */
+#define ITEM_BONUS_NONE               0
+#define ITEM_BONUS_KIND1_ACTIVE       1
+#define ITEM_BONUS_WORN_DRAIN         2
+#define ITEM_BONUS_HP_REGEN           3
+#define ITEM_BONUS_HP_DRAIN           4
+#define ITEM_BONUS_MP_REGEN           5
+#define ITEM_BONUS_MP_DRAIN           6
+#define ITEM_BONUS_DAMAGE_TO_HP       7
+#define ITEM_BONUS_DAMAGE_TO_MP       8
+#define ITEM_BONUS_POWER              9
+#define ITEM_BONUS_MAGIC             10
+
 /* 0x414580 the tint the damage and the statuses fade the screen with (Player_DrawScreenTints draws it) */
 PlayerScreenTint player_screen_tint = { 0 };
 
@@ -101,37 +114,37 @@ void Player_AddItemBonuses(int index) {
     }
     for (i = 0; i < 2; i++) {
         switch (kinds[i]) {
-        case 1:
+        case ITEM_BONUS_KIND1_ACTIVE:
             player_state.item_bonus_kind1_active = 1;
             break;
-        case 2:
+        case ITEM_BONUS_WORN_DRAIN:
             player_state.worn_drain_active = 1;
             break;
-        case 3:
+        case ITEM_BONUS_HP_REGEN:
             player_state.hp_regen_period += amounts[i];
             break;
-        case 4:
+        case ITEM_BONUS_HP_DRAIN:
             player_state.hp_drain_period += amounts[i];
             break;
-        case 5:
+        case ITEM_BONUS_MP_REGEN:
             player_state.mp_regen_period += amounts[i];
             break;
-        case 6:
+        case ITEM_BONUS_MP_DRAIN:
             player_state.mp_drain_period += amounts[i];
             break;
-        case 7:
+        case ITEM_BONUS_DAMAGE_TO_HP:
             player_state.damage_to_hp_percent = amounts[i];
             break;
-        case 8:
+        case ITEM_BONUS_DAMAGE_TO_MP:
             player_state.damage_to_mp_percent = amounts[i];
             break;
-        case 9:
+        case ITEM_BONUS_POWER:
             player_state.power += amounts[i];
             break;
-        case 10:
+        case ITEM_BONUS_MAGIC:
             player_state.magic += amounts[i];
             break;
-        case 0:
+        case ITEM_BONUS_NONE:
         case 11:
             break;
         }

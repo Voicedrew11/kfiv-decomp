@@ -10,62 +10,87 @@
 #include "item/item.h"
 #include "save/save_state.h"
 
+/* map tags (the map file number) the switch in MapSetup_RunForMap picks a set-up by */
+#define MAP_TAG_ARMORY                 0xB
+#define MAP_TAG_FORGE_017              0x11
+#define MAP_TAG_FORGE_018              0x12
+#define MAP_TAG_FORGE_019              0x13
+#define MAP_TAG_EARTH_FOLKS_VILLAGE    0x14
+#define MAP_TAG_CAVERN_OF_LAVA         0x18
+#define MAP_TAG_FIRE_LORDS_DOMAIN      0x19
+#define MAP_TAG_OCEAN_SHORE            0x1B
+#define MAP_TAG_UNDERGROUND_CANAL      0x1D
+#define MAP_TAG_GUARDIANS_ROOM         0x23
+#define MAP_TAG_DARK_SANCTUARY         0x26
+#define MAP_TAG_KINGS_THRONE_ALCOVES   0x29
+#define MAP_TAG_SANCTUARY_OF_LIGHT     0x2A
+#define MAP_TAG_CENTRAL_TOWER_LEVEL3   0x64
+#define MAP_TAG_CRAFTSMANS_ROOM        0x68
+#define MAP_TAG_CENTRAL_TOWER_LEVEL2   0x6B
+#define MAP_TAG_PLACE_ITEM_LOWERED     0xFB
+#define MAP_TAG_252_EMPTY              0xFC
+
+/* forge_stage: which Forge map (017-019) is in use */
+#define FORGE_MAP_017   0
+#define FORGE_MAP_018   1
+#define FORGE_MAP_019   2
+
 /* Runs the set-up function of the map in the slot, picked by the map's number (its tag): it puts the map's
    records, objects, fog and lights in the state the story flags call for. */
 void MapSetup_RunForMap(int slot) {
     switch (map_slots[slot].tag) {
-    case 0xB:
+    case MAP_TAG_ARMORY:
         MapSetup_Armory(slot);
         break;
-    case 0x11:
+    case MAP_TAG_FORGE_017:
         MapSetup_Forge017(slot);
         break;
-    case 0x12:
+    case MAP_TAG_FORGE_018:
         MapSetup_Forge018(slot);
         break;
-    case 0x13:
+    case MAP_TAG_FORGE_019:
         MapSetup_Forge019(slot);
         break;
-    case 0x14:
+    case MAP_TAG_EARTH_FOLKS_VILLAGE:
         MapSetup_EarthFolksVillage(slot);
         break;
-    case 0x18:
+    case MAP_TAG_CAVERN_OF_LAVA:
         MapSetup_CavernOfLava(slot);
         break;
-    case 0x19:
+    case MAP_TAG_FIRE_LORDS_DOMAIN:
         MapSetup_FireLordsDomain(slot);
         break;
-    case 0x1B:
+    case MAP_TAG_OCEAN_SHORE:
         MapSetup_OceanShore(slot);
         break;
-    case 0x1D:
+    case MAP_TAG_UNDERGROUND_CANAL:
         MapSetup_UndergroundCanal(slot);
         break;
-    case 0x23:
+    case MAP_TAG_GUARDIANS_ROOM:
         MapSetup_GuardiansRoom(slot);
         break;
-    case 0x26:
+    case MAP_TAG_DARK_SANCTUARY:
         MapSetup_DarkSanctuary(slot);
         break;
-    case 0x29:
+    case MAP_TAG_KINGS_THRONE_ALCOVES:
         MapSetup_KingsThroneAlcoves(slot);
         break;
-    case 0x2A:
+    case MAP_TAG_SANCTUARY_OF_LIGHT:
         MapSetup_SanctuaryOfLight(slot);
         break;
-    case 0x64:
+    case MAP_TAG_CENTRAL_TOWER_LEVEL3:
         MapSetup_CentralTowerLevel3(slot);
         break;
-    case 0x68:
+    case MAP_TAG_CRAFTSMANS_ROOM:
         MapSetup_CraftsmansRoom(slot);
         break;
-    case 0x6B:
+    case MAP_TAG_CENTRAL_TOWER_LEVEL2:
         MapSetup_CentralTowerLevel2(slot);
         break;
-    case 0xFB:
+    case MAP_TAG_PLACE_ITEM_LOWERED:
         MapSetup_PlaceItemLowered(slot);
         break;
-    case 0xFC:
+    case MAP_TAG_252_EMPTY:
         MapSetup_Map252(slot);
         break;
     }
@@ -189,7 +214,7 @@ void MapSetup_EarthFolksVillage(int map) {
     MapSlotUnk10 *light;
 
     switch (forge_stage[0]) {
-    case 0:
+    case FORGE_MAP_017:
         target = Map_GetRecordById(map, 0x33);
         show_found_record(target);
         target = Map_GetRecordById(map, 0x6D);
@@ -197,7 +222,7 @@ void MapSetup_EarthFolksVillage(int map) {
         target = Map_GetRecordById(map, 0x6E);
         hide_found_record(target);
         return;
-    case 1:
+    case FORGE_MAP_018:
         target = Map_GetRecordById(map, 2);
         hide_found_record(target);
         target = Map_GetRecordById(map, 0x33);
@@ -243,7 +268,7 @@ void MapSetup_CavernOfLava(int map) {
     MapFogBlockValues *fog;
     MapLightBlockLights *lights;
 
-    if (forge_stage[0] == 0) {
+    if (forge_stage[0] == FORGE_MAP_017) {
         ((MapFogBlockValues *)slot->fog_blocks)[5].always_zero_a = ((MapFogBlockValues *)slot->fog_blocks)[5].always_zero_b = 0.0f;
         ((MapFogBlockValues *)slot->fog_blocks)[5].fog_base_value = -28.333328f;
         ((MapFogBlockValues *)slot->fog_blocks)[5].fog_inverse_depth_scale = 113333.336f;
@@ -302,7 +327,7 @@ void MapSetup_FireLordsDomain(int map) {
     f32 position[4];
     f32 rotation[4];
 
-    if (forge_stage[0] != 2) {
+    if (forge_stage[0] != FORGE_MAP_019) {
         hide_record(map, 0x42);
         hide_record(map, 0x43);
         hide_record(map, 0x44);
