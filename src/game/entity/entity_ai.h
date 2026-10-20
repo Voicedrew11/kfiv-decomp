@@ -18,6 +18,7 @@ typedef struct {
     s32 frame_fixed;                /* 0x04 the frame times 256 */
 } EntityMotionSlotWord;
 
+#define ENTITY_MOTION_SLOT_INDEX_MASK   0x1F /* the motion index in the slot's first byte (EntityMotionSlotWord.index) */
 #define ENTITY_MOTION_SLOT_MOVES_ENTITY 0x20 /* the root part's movement in the motion is handed to the entity (EntityMotionSlotWord.moves_entity) */
 
 /* A random whole number of degrees as an angle in radians, wrapped to -pi..pi */

@@ -716,7 +716,7 @@ void EntityAi_LowerWeightsAfterHit(Entity *entity) {
                 first = 0;
             }
             for (i = 0, weights = entity->attack_weights; i < 6; i++) {
-                if (((s32)(entity->flags >> 58) & 3) + first == i) {
+                if (ENTITY_FLAG_BITS(entity)->attack_index + first == i) {
                     adjust_level(&weights[i], -10, 0xC0);
                 } else {
                     adjust_level(&weights[i], 5, 0xC0);

@@ -225,19 +225,12 @@ typedef struct {
 /* Unk1B1470Request with the bits at 0x4C as byte-sized fields: Attack_HitEntity reads unk4C_3 as a u8 */
 typedef struct {
     char pad00[0x4C];
-    u8 unk4C_0 : 3;                 /* 0x4C */
+    u8 shape : 2;                   /* 0x4C the request shape 0 to 3 (Attack_Run) */
+    u8 unk4C_2 : 1;
     u8 unk4C_3 : 1;
     u8 unk4C_4 : 4;
     char pad4D[0x33];
 } __attribute__((aligned(8))) Unk1B1470RequestBits;
-
-/* Unk1B1470Request with the four flag bytes from 0x4C as one 32-bit field, the way
-   Attack_Run reads the shape in the low two bits */
-typedef struct {
-    char pad00[0x48];
-    struct Entity *owner;           /* 0x48 */
-    u64 flags : 32;                 /* 0x4C */
-} Unk1B1470RequestWord;
 
 /* Unk1B1470Request with the owner and the flag bytes after it as the one 64-bit word
    Attack_RunSphere and Attack_HitPlayer test bits of (the flag bytes are its upper half) */

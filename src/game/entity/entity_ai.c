@@ -1892,7 +1892,7 @@ void Motion_SetPartSlot(ModelInstance *model, int index, u8 value) {
 int EntityAi_StartSlotMotion(Entity *entity, EntityMotionSlotWord *slot, int channel, int animation, int frame, int frames, int force) {
     u8 *table = entity->params->motion_ids;
     int wanted = table[animation];
-    int current = table[*(u8 *)slot & 0x1F];
+    int current = table[*(u8 *)slot & ENTITY_MOTION_SLOT_INDEX_MASK];
 
     if (force == 0 && current == wanted) {
         return 1;

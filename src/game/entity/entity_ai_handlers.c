@@ -507,7 +507,7 @@ void EntityAi_MeleeAttack(Entity *entity) {
    its shots on their frames. */
 void EntityAi_RangedAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    s32 kind = (s32)(ENTITY_FLAG_WORD(entity->flags) >> 58) & 3;
+    s32 kind = ENTITY_FLAG_BITS(entity)->attack_index;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;

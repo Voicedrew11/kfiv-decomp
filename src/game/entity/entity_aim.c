@@ -476,7 +476,7 @@ s32 EntitySight_EntityInWay(Entity *entity) {
     other = active_entities_head;
     while (other != NULL) {
         flags = other->flags;
-        if (((s32)(flags >> 1) & 1) && ((s32)(flags >> 2) & 3) < 2 && other != entity) {
+        if (((s32)(flags >> 1) & 1) && ENTITY_FLAG_BITS(other)->dying < 2 && other != entity) {
             if (EntityCollision_PointNearSegment(other->radius, (int *)&player_state, (int)entity->model->position, (int)other->model->position)) {
                 return TRUE;
             }
