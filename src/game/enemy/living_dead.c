@@ -12,7 +12,6 @@
 #include "player/player.h"
 
 /* Entity.reaction_step values past the shared ones */
-#define LIVING_DEAD_REACTION_STEP_END 2   /* ends the reaction and picks a ranged or melee attack */
 #include <stdlib.h>
 #include "entity/entity_ai.h"
 #include "entity/entity_ai_choice.h"
@@ -114,7 +113,7 @@ static void LivingDead_ReactionLight(Entity *entity) {
             entity->reaction_step++;
         }
         break;
-    case LIVING_DEAD_REACTION_STEP_END:
+    case REACTION_LIGHT_STEP_END:
         EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
         EntityAi_SetReaction(entity, NULL, 0);
         entity->busy_flags = 0;

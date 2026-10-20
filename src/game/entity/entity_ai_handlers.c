@@ -15,11 +15,8 @@
 #include "entity/entity.h"
 #include "player/player.h"
 
-/* the last steps of the actions here that have their own: each waits for its motion or timer, then ends */
+/* EntityAi_FinishMotion: its last step */
 #define FINISH_MOTION_STEP_WAIT_MOTION_END  1       /* waits for the motion to end, then thinks */
-#define REACTION_LIGHT_STEP_END             2       /* the light reaction is over: sets the attack delay and thinks */
-#define GUARD_STEP_HOLD                     2       /* holds the guard until action_timer runs out, then ends it */
-
 
 /* An action that starts no motion of its own: it waits until the current motion has blended in and played to
    its end, then ends as the other actions do (think, or the move action). Nothing refers to it. */

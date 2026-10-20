@@ -20,7 +20,6 @@
 #define SALAMANDER_MOVE_CHOICE_BACK_OFF        2
 
 /* Salamander_ReactionLight: Entity.reaction_step */
-#define SALAMANDER_REACTION_LIGHT_STEP_END      2       /* ends the reaction and whatever action ran */
 /* Salamander_Death: Entity.action_step */
 #define SALAMANDER_DEATH_STEP_FALL              2       /* waits for frame 30, then the body falls free */
 #define SALAMANDER_DEATH_STEP_LEVEL             3       /* eases the body level while the fall plays */
@@ -214,7 +213,7 @@ static void Salamander_ReactionLight(Entity *entity) {
             entity->reaction_step++;
         }
         break;
-    case SALAMANDER_REACTION_LIGHT_STEP_END:
+    case REACTION_LIGHT_STEP_END:
         EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
         EntityAi_SetReaction(entity, NULL, 0);
         entity->busy_flags = 0;

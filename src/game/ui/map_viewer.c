@@ -42,7 +42,6 @@
 #define WIDDAS_MAP_X_SCALE 21.333334f
 #define WIDDAS_MAP_Z_SCALE 20.363636f
 
-
 /* The Caretaker's Map pictures: fixed spots for each map, or a spot from the player's position. */
 #define CARETAKERS_MAP_PICTURE_FIXED_SPOTS    0
 #define CARETAKERS_MAP_PICTURE_PLAYER_SPOTS   1

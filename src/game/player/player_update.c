@@ -987,7 +987,6 @@ void Player_UpdateWeaponAim(void) {
     weapon_tip_angles[1] = atan2f(vec[0], vec[2]);
 }
 
-
 #define PLAYER_FLAG_32 0x100000000L /* the view is levelling out */
 #define PLAYER_FLAG_37 0x2000000000L /* the view dips after a landing */
 

@@ -25,7 +25,6 @@
 
 /* Entity.action_step and reaction_step values past the shared ones */
 #define DARK_BIRD_APPROACH_STEP_FLY 1   /* flies towards the player until a melee attack starts or the approach times out */
-#define DARK_BIRD_REACTION_STEP_END 2   /* ends the light reaction and thinks again */
 
 /* EntitySpawnInfo.spawn_mode: how the spawn is placed and held */
 #define DARK_BIRD_SPAWN_MODE_FLOOR    0
@@ -903,7 +902,7 @@ static void DarkBird_ReactionLight(Entity *entity) {
             entity->reaction_step++;
         }
         break;
-    case DARK_BIRD_REACTION_STEP_END:
+    case REACTION_LIGHT_STEP_END:
         EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
         EntityAi_SetReaction(entity, NULL, 0);
         entity->busy_flags = 0;

@@ -69,7 +69,6 @@
 #define MENU_MODE_CARD_CHECK           4
 #define MENU_MODE_BRIGHTNESS           5
 
-
 /* main_menu_state: the fades of the main menu */
 #define MAIN_MENU_STATE_FADE_IN                0
 #define MAIN_MENU_STATE_FADE_OUT_TO_SCREEN     2

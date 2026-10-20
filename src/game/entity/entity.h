@@ -795,6 +795,9 @@ typedef struct {
 #define ACTION_STEP_PLAY            2       /* the motion plays (hit windows) until it ends */
 /* EntityAi_Death and its copies: the step after the motion */
 #define DEATH_STEP_FADE_OUT         3       /* fades the model out over action_timer, then frees it */
+/* EntityAi_ReactionLight and EntityAi_Guard and their copies: the step after the blend-in */
+#define REACTION_LIGHT_STEP_END     2       /* the reaction is over: sets the attack delay and thinks */
+#define GUARD_STEP_HOLD             2       /* holds the guard until action_timer runs out, then ends it */
 /* EntityAi_Dormant and its copies */
 #define DORMANT_STEP_SLEEP          1       /* waits for the player to come near or hit it */
 #define DORMANT_STEP_BLEND_IN       2       /* waits for the wake motion's blend-in to end */

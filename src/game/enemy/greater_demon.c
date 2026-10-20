@@ -28,8 +28,6 @@
 #define GREATER_DEMON_DESCEND_STEP_LUNGE    4       /* plays the lunge, then starts the dive and moves on */
 #define GREATER_DEMON_DESCEND_STEP_DIVE     5       /* dives along the heading until it hits or the dive ends */
 #define GREATER_DEMON_DESCEND_STEP_CARRY_ON 6       /* carries on until it hits something, then slides to a stop */
-/* GreaterDemon_Guard: Entity.action_step */
-#define GREATER_DEMON_GUARD_STEP_HOLD       2       /* holds the guard for action_timer; a magic hit renews it */
 
 static KfVector climb_points[3]; /* 0x4FF390 the points GreaterDemon_Think climbs over (it indexes up to 5) */
 
@@ -696,7 +694,7 @@ static void GreaterDemon_Guard(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case GREATER_DEMON_GUARD_STEP_HOLD:
+    case GUARD_STEP_HOLD:
         if (ENTITY_FLAG_BITS(entity)->hit_by_player && ENTITY_FLAG_BITS(entity)->hit_source_magic && !ENTITY_FLAG_BITS(entity)->hit_source_weapon) {
             entity->flags &= ~ENTITY_FLAG_HIT_BY_PLAYER;
             entity->action_timer = entity->params->guard_frames;

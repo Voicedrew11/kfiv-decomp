@@ -19,10 +19,6 @@
 #include "entity/entity_ai.h"
 #include "model/motion.h"
 
-/* Entity.state of an NPC (the states npc.c runs), set by the commands below */
-
-
-
 /* the steps of ScriptCmd_TurnEntityToPlayer (ScriptStateWaitCommand.step) */
 #define TURN_ENTITY_TO_PLAYER_STEP_TURN     0       /* sets the entity to turn to the player */
 #define TURN_ENTITY_TO_PLAYER_STEP_WAIT     1       /* waits for the turn to finish */

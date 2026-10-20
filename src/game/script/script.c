@@ -45,7 +45,6 @@
 #define SCRIPT_SET_OPERATOR             4       /* the next word is an operator */
 #define SCRIPT_SET_END                  0xFF    /* the set ends */
 
-
 static ScriptThread *current_thread = NULL; /* 0x446FD0 the thread being stepped */
 static int command_count;                   /* 0x4473E4 commands in use, as Script_StepHeldCommands counts them */
 static u32 *script_top;                     /* 0x4473E8 the current map's script */

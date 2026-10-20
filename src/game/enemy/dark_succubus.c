@@ -20,7 +20,6 @@
 #include "save/save_state.h"
 
 /* Entity.action_step values past the shared ones */
-#define DARK_SUCCUBUS_REACTION_STEP_END         2   /* ends the light reaction and thinks again */
 #define DARK_SUCCUBUS_ARC_STEP_RISE             1   /* flies up along the arc until it is high enough */
 #define DARK_SUCCUBUS_ARC_STEP_DIVE             2   /* dives along the arc until it lands on the floor */
 #define DARK_SUCCUBUS_ARC_STEP_LAND             3   /* plays the landing motion, then ends the action */
@@ -801,7 +800,7 @@ static void DarkSuccubus_ReactionLight(Entity *entity) {
             entity->reaction_step++;
         }
         break;
-    case DARK_SUCCUBUS_REACTION_STEP_END:
+    case REACTION_LIGHT_STEP_END:
         EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
         EntityAi_SetReaction(entity, NULL, 0);
         entity->busy_flags = 0;

@@ -23,8 +23,6 @@
 /* Minion_Guard: Entity.action_step */
 #define MINION_GUARD_STEP_HOLD              1       /* holds the guard pose while action_timer runs */
 #define MINION_GUARD_STEP_RELEASE           2       /* ends the guard once action_timer runs out */
-/* Minion_ReactionLight: Entity.reaction_step */
-#define MINION_REACTION_LIGHT_STEP_END      2       /* ends the reaction and whatever action ran */
 
 static void Minion_Think(Entity *entity, s32 run_now);
 static void Minion_ThinkCombat(Entity *entity, s32 run_now);
@@ -527,7 +525,7 @@ static void Minion_ReactionLight(Entity *entity) {
             entity->reaction_step++;
         }
         break;
-    case MINION_REACTION_LIGHT_STEP_END:
+    case REACTION_LIGHT_STEP_END:
         EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
         EntityAi_SetReaction(entity, NULL, 0);
         entity->busy_flags = 0;

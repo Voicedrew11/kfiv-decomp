@@ -26,7 +26,6 @@
 #define LAVA_BIRD_DORMANT_STEP_EMERGE       2   /* rises out of the ground, then starts the rising motion */
 #define LAVA_BIRD_DORMANT_STEP_EMERGE_BLEND 3   /* keeps rising until the motion blends in */
 #define LAVA_BIRD_DORMANT_STEP_EMERGE_PLAY  4   /* plays the rest of the rising motion, then the bird is awake */
-#define LAVA_BIRD_REACTION_STEP_END         2   /* ends the light reaction and thinks again */
 
 static void LavaBird_Think(Entity *entity, s32 run_now);
 static void LavaBird_ThinkCombat(Entity *entity, s32 run_now);
@@ -699,7 +698,7 @@ static void LavaBird_ReactionLight(Entity *entity) {
             entity->reaction_step++;
         }
         break;
-    case LAVA_BIRD_REACTION_STEP_END:
+    case REACTION_LIGHT_STEP_END:
         EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
         EntityAi_SetReaction(entity, NULL, 0);
         entity->busy_flags = 0;

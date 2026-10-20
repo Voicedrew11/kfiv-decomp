@@ -21,7 +21,6 @@
 /* EntitySpawnInfo.spawn_mode: which dormant hold it starts in */
 #define SNAKE_SPAWN_MODE_HOLD_ANIM2       0
 #define SNAKE_SPAWN_MODE_HOLD_ANIM8_THEN_MOVE 1
-/* MapObject step of a broken map object (MapObject_Break sets it) */
 
 /* Snake_DormantHoldAnim8ThenMove: Entity.action_step */
 #define SNAKE_LEAP_STEP_WAKE                1       /* waits for the player to come near, then animates */
