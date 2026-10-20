@@ -15,6 +15,7 @@
 #include "script/script.h"
 
 #define INTERACT_CONE_COS 0.866025f /* cos 30 degrees: objects further off the view direction are skipped */
+#define CAMERA_MODE_FOLLOW_PLAYER 0 /* game_status.camera_mode: the camera follows the player, not a script */
 
 
 /* Keep last frame's view ray, then rebuild it: from the player's eyes (or the camera, in a cutscene) along the
@@ -27,7 +28,7 @@ void Interact_UpdateViewRay(void) {
     Vector_Copy(view_ray_status.prev_view_origin, view_ray_status.view_origin);
     Vector_Copy(view_ray_status.prev_view_direction, view_ray_status.view_direction);
     view_ray_status.prev_view_distance = view_ray_status.view_distance;
-    if (game_status.camera_mode == 0) {
+    if (game_status.camera_mode == CAMERA_MODE_FOLLOW_PLAYER) {
         Vector_Copy(view_ray_status.view_origin, &player_state);
         view_ray_status.view_origin[1] = view_ray_status.view_origin[1] - 220.0f + player_state.landing_dip_offset + camera_state.height_offset;
         pitch = player_state.rotation.x - player_state.view_tilt_pitch;

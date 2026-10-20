@@ -102,8 +102,8 @@ void Player_LoadArmModels(void) {
 
     if (loaded_held_weapon != player_state.weapon) {
         loaded_held_weapon = player_state.weapon;
-        if (player_state.item_action_step != 0) {
-            player_state.item_action_step = 0;
+        if (player_state.item_action_step != PLAYER_ITEM_ACTION_IDLE) {
+            player_state.item_action_step = PLAYER_ITEM_ACTION_IDLE;
             Effect_FreePlayerWeaponKinds();
         }
         memset((void *)held_item_file, 0, 0x30000);
@@ -119,7 +119,7 @@ void Player_LoadArmModels(void) {
         File_Read(handle, file_load_buffer, -1);
         File_Close(handle);
         file = (PlayerArmFile *)file_load_buffer;
-        if (file->motion_size != 0) {
+        if (file->motion_size) {
             size = file->motion_offset + file->motion_size;
         } else if (file->model_size != 0) {
             size = file->model_offset + file->model_size;
@@ -135,7 +135,7 @@ void Player_LoadArmModels(void) {
             buffer = (int)held_item_setup;
             Model_SetUpSkinned(&held_item_model, &data, &buffer);
         }
-        if (file->motion_size != 0) {
+        if (file->motion_size) {
             data = held_item_file + file->motion_offset;
             buffer = (int)held_item_channels;
             ModelMotion_LoadFile(data, &buffer, &held_item_model, 1);
@@ -204,7 +204,7 @@ void Player_UpdateArmModels(void) {
 
     held_item_arm_points_prev = held_item_arm_points;
     memset(&held_item_arm_points, 0, 0x20);
-    if (player_state.item_action_step != 0) {
+    if (player_state.item_action_step != PLAYER_ITEM_ACTION_IDLE) {
         sceVu0RotMatrixY(matrix, identity_matrix, PI);
         sceVu0TransMatrix(matrix, matrix, held_item_offsets);
         pitch = player_state.rotation.x - player_state.view_tilt_pitch;
@@ -263,7 +263,7 @@ void WeaponTrail_Update(void) {
     s32 item;
 
     WeaponTrail_Age();
-    if (player_state.item_action_step != 0) {
+    if (player_state.item_action_step != PLAYER_ITEM_ACTION_IDLE) {
         weapon = &held_item_model;
         weapon->update_bone_points(weapon);
         if (weapon_defs[player_state.weapon].action_handler_index == 2) {
@@ -309,7 +309,7 @@ void Player_DrawArm(void) {
     s32 size;
     u64 tag;
 
-    if (player_state.item_action_step != 0) {
+    if (player_state.item_action_step != PLAYER_ITEM_ACTION_IDLE) {
         TextureTable_QueueAll((TextureTableHeader *)shared_texture_table);
         GsDraw_QueueTexFlush();
         Packet_BeginGsRegisters();

@@ -22,6 +22,10 @@
 
 
 #define GOLD_MAX 999999
+/* MapActor.step of a gold pile: fading in, lying on the floor, fading out after it is taken */
+#define GOLD_STEP_FADE_IN   0
+#define GOLD_STEP_LYING     1
+#define GOLD_STEP_FADE_OUT  2
 
 static MapActor map_actors[2][MAP_ACTOR_COUNT]; /* 0x5B6100 sixteen piles per loaded map */
 static ModelInstance map_actor_models[2][MAP_ACTOR_COUNT]; /* 0x5B6680 */
@@ -151,19 +155,19 @@ void Gold_Update(void) {
 
     while (actor != NULL) {
         switch (actor->step) {
-        case 0:
+        case GOLD_STEP_FADE_IN:
             actor->fade_timer--;
             if (actor->fade_timer != 0) {
                 actor->body->fade_alpha = ((15 - actor->fade_timer) << 7) / 15;
                 MAP_ACTOR_BITS(actor)->in_reach = actor->body->fade_alpha > 0x10;
             } else {
                 actor->body->fade_alpha = 0x80;
-                actor->step = 1;
+                actor->step = GOLD_STEP_LYING;
             }
             break;
-        case 1:
+        case GOLD_STEP_LYING:
             break;
-        case 2:
+        case GOLD_STEP_FADE_OUT:
             actor->fade_timer--;
             if (actor->fade_timer != 0) {
                 actor->body->fade_alpha = (actor->fade_timer << 7) / 15;
@@ -190,7 +194,7 @@ void Gold_Update(void) {
     }
     if (nearest != NULL && (pad_pressed[0] & action_button) && !(game_status.update_hold_flags & 1) && game_status.player_control != 0) {
         MAP_ACTOR_BITS(nearest)->in_reach = FALSE;
-        nearest->step = 2;
+        nearest->step = GOLD_STEP_FADE_OUT;
         nearest->fade_timer = 15;
         amount = MAP_ACTOR_WORDS(nearest)->amount;
         player_state.gold += amount;
@@ -252,7 +256,7 @@ int Gold_Drop(Vector4 *position, Vector4 *rotation, int map, int amount, int obj
     actor->serial = map_actor_drop_counts[map]++;
     actor->drop_unmeasured_distance = gold_drop_unmeasured_distance[0];
     actor->fade_timer = 15;
-    actor->step = 0;
+    actor->step = GOLD_STEP_FADE_IN;
     // match: read even when on_ground is not set and no test was made: then it is whatever the last test left
     actor->position_y = *&COLLISION_RESULT->point[1];
     MAP_ACTOR_WORDS(actor)->amount = amount;

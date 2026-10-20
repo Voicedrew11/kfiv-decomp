@@ -15,6 +15,9 @@
 #include "sound/sound_game.h"
 #include "enemy/enemy.h"
 
+/* the fade step when the area drops: screen_fade_step starts here and is halved every frame */
+#define SCREEN_FADE_AREA_DROP_STEP -0x30
+
 /* the held item's model, as the bounce reads it */
 #define HELD_ITEM_DISPLAY ((DisplayContext *)held_item_model_ptr)
 
@@ -352,7 +355,7 @@ void Player_UpdateScreenFade(void) {
     area = *(char *)((player->map_index << 7) + (int)slot->records + 0x4C); // match: summed as integers, index first
     player->fade_area = area;
     if (area - player_previous_fade_level[0] < 0) {
-        player->screen_fade_step = -0x30;
+        player->screen_fade_step = SCREEN_FADE_AREA_DROP_STEP;
     }
     step = player->screen_fade_step;
     if (step != 0) {
@@ -532,7 +535,7 @@ void Player_StrikeSolidObject(int with_sound) {
 
 /* While a swing runs, keeps it from hitting anything more (unk263; a map change). */
 void Player_EndSwingHits(void) {
-    if (player_state.item_action_step != 0) {
+    if (player_state.item_action_step != PLAYER_ITEM_ACTION_IDLE) {
         player_state.swing_ended = 1;
     }
 }

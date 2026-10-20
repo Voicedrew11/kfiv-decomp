@@ -43,6 +43,24 @@
 #include "save/save_state.h"
 #include "ui/menu_draw.h"
 
+/* list_step of card_screen_state, the memory card save list: -1 waits for input */
+#define MENU_SAVE_LIST_STEP_WAIT_INPUT    -1
+#define MENU_SAVE_LIST_STEP_LOADING        1  /* a load runs, the card is busy */
+#define MENU_SAVE_LIST_STEP_RESULT         3  /* a load ended, a press returns to the list */
+#define MENU_SAVE_LIST_STEP_CONFIRM_LOAD   8  /* asks yes or no before loading */
+#define MENU_SAVE_LIST_STEP_CARD_ERROR    10  /* the card reports an error */
+#define MENU_SAVE_LIST_STEP_LOAD_FAILED   23  /* a load failed, a press returns to the list */
+
+/* check_step of card_screen_state: the memory card check screen, one step per card read */
+#define CARD_CHECK_STEP_START        0  /* picks the first card to read */
+#define CARD_CHECK_STEP_READ_FIRST   1  /* reads the saves of card 0 */
+#define CARD_CHECK_STEP_READ_SECOND  2  /* reads the saves of card 1 */
+#define CARD_CHECK_STEP_RESCAN       3  /* rescans the cards, then reads their problems */
+#define CARD_CHECK_STEP_ASK          4  /* the problems are set, the screen asks */
+
+/* card0_saves_state, card1_saves_state: SaveCard_GetSavesState 0 for a card without saves */
+#define SAVES_STATE_EMPTY 0
+
 /* Appends node to the ring being built. */
 #define LINK_ITEM(node)                     \
     if (last != NULL) {                     \
@@ -3509,7 +3527,7 @@ static void Menu_UpdateEquip(void) {
         sprite.green = menu_draw_color.green;
         sprite.blue = menu_draw_color.blue;
         sprite.alpha = menu_draw_color.alpha;
-        sprite.kind = 1;
+        sprite.kind = KIND_OBJECT_WORD;
         sprite.glyph = glyph;
         sprite.first.f.lo16 = (1865 << 4) - (offset << 4);
         sprite.first.f.mid16 = 0x7B60;
@@ -4826,7 +4844,7 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
                 card_screen_state.save_state_1 = 0;
                 card_screen_state.save_state_2 = 0;
                 card_screen_state.card_update_result = 0;
-                card_screen_state.confirm_choice = 1;
+                card_screen_state.confirm_choice = CONFIRM_CHOICE_NO;
                 card_screen_state.dialog_id = -1;
                 SaveCard_Open();
                 SaveCard_StartCheck(1);
@@ -5384,11 +5402,11 @@ static void Menu_UpdateCardSlot(void) {
                     card_slot_leave_steps = 0;
                     pulse_sprite_falling = 0;
                     if (system_screen_state == 2) {
-                        card_screen_state.list_step = -1;
+                        card_screen_state.list_step = MENU_SAVE_LIST_STEP_WAIT_INPUT;
                         menu_screen_handler = (void *)Menu_UpdateSaveList;
                         save_list_opener = (void *)Menu_UpdateCardSlot;
                         card_screen_state.selected_save = 0;
-                        card_screen_state.confirm_press_state = 0;
+                        card_screen_state.confirm_press_state = CONFIRM_PRESS_IDLE;
                         SaveCard_ClearLoadFailed(0);
                         SaveCard_ClearLoadFailed(1);
                     } else if (system_screen_state == 3) {
@@ -5464,7 +5482,7 @@ static void Menu_UpdateSaveList(void) {
     menu_number_93 = info[2]->play_minutes;
     menu_number_94 = info[2]->play_seconds;
 
-    if (card_screen_state.list_step == -1) {
+    if (card_screen_state.list_step == MENU_SAVE_LIST_STEP_WAIT_INPUT) {
         for (i = 0; i < 3; i++) {
             MENU_SCREEN_SAVES(&card_screen_state)->save_state[i] = SaveCard_GetSaveState(i);
         }
@@ -5563,29 +5581,29 @@ static void Menu_UpdateSaveList(void) {
         SET_PART_MODE(mc_parts[i].blend_mode);
         if (kind == 3) {
             switch (card_screen_state.list_step) {
-            case 8:
+            case MENU_SAVE_LIST_STEP_CONFIRM_LOAD:
                 MenuSprite_DrawPlain((int)&mc_parts[i], kind, 8);
                 break;
-            case 1:
+            case MENU_SAVE_LIST_STEP_LOADING:
                 MenuSprite_DrawPlain((int)&mc_parts[i], kind, 1);
                 break;
-            case 3:
+            case MENU_SAVE_LIST_STEP_RESULT:
                 MenuSprite_DrawPlain((int)&mc_parts[i], kind, 3);
                 break;
-            case 10:
+            case MENU_SAVE_LIST_STEP_CARD_ERROR:
                 MenuSprite_DrawPlain((int)&mc_parts[i], kind, 10);
                 break;
-            case 23:
+            case MENU_SAVE_LIST_STEP_LOAD_FAILED:
                 MenuSprite_DrawPlain((int)&mc_parts[i], kind, 23);
                 break;
             }
         } else {
             switch (card_screen_state.list_step) {
-            case 1:
-            case 3:
-            case 8:
-            case 10:
-            case 23:
+            case MENU_SAVE_LIST_STEP_LOADING:
+            case MENU_SAVE_LIST_STEP_RESULT:
+            case MENU_SAVE_LIST_STEP_CONFIRM_LOAD:
+            case MENU_SAVE_LIST_STEP_CARD_ERROR:
+            case MENU_SAVE_LIST_STEP_LOAD_FAILED:
                 MenuSprite_Draw((int)&mc_parts[i], kind + 1000, 0, screen_part_alphas[i]);
                 break;
             }
@@ -5593,7 +5611,7 @@ static void Menu_UpdateSaveList(void) {
         SET_PART_MODE(0);
     }
 
-    if (card_screen_state.list_step == 8) {
+    if (card_screen_state.list_step == MENU_SAVE_LIST_STEP_CONFIRM_LOAD) {
         bar.first.f.lo16 = 0x7490;
         bar.first.f.mid16 = card_screen_state.confirm_choice * 0xC0 + 0x80A0;
         bar.first.f.mid24 = 0x5F370;
@@ -5612,22 +5630,22 @@ static void Menu_UpdateSaveList(void) {
     if (SaveCard_HasCard(card_screen_state.selected_card) == 0) {
         card_screen_state.card_update_result = -1;
     }
-    if (card_screen_state.list_step == 1 && SaveCard_CheckBusy() == 0) {
-        card_screen_state.list_step = 3;
+    if (card_screen_state.list_step == MENU_SAVE_LIST_STEP_LOADING && SaveCard_CheckBusy() == 0) {
+        card_screen_state.list_step = MENU_SAVE_LIST_STEP_RESULT;
     }
     if (card_screen_state.card_update_result < 0) {
         if (SaveCard_GetLoadFailed(card_screen_state.selected_card) != 0 && !game_status.bit9) {
-            card_screen_state.list_step = 23;
+            card_screen_state.list_step = MENU_SAVE_LIST_STEP_LOAD_FAILED;
             SaveCard_ClearLoadFailed(card_screen_state.selected_card);
             SaveCard_StartCheck(0);
-        } else if (card_screen_state.list_step != 3) {
+        } else if (card_screen_state.list_step != MENU_SAVE_LIST_STEP_RESULT) {
             if (!game_status.bit9) {
-                card_screen_state.list_step = 10;
+                card_screen_state.list_step = MENU_SAVE_LIST_STEP_CARD_ERROR;
             }
         }
     }
     if (game_status.bit9) {
-        if (card_screen_state.list_step == -1 && save_list_leave_steps == 0) {
+        if (card_screen_state.list_step == MENU_SAVE_LIST_STEP_WAIT_INPUT && save_list_leave_steps == 0) {
             SaveCard_Init();
             card_screen_state.input_locked = 1;
             system_screen_state = 2;
@@ -5637,103 +5655,103 @@ static void Menu_UpdateSaveList(void) {
 
     report = Pad_GetReport(0, 0);
     if ((report->pressed & PAD_CROSS) && pad_mode != 0xFF) {
-        if (card_screen_state.list_step != 1) {
+        if (card_screen_state.list_step != MENU_SAVE_LIST_STEP_LOADING) {
             report = Pad_GetReport(0, 0);
             if (report->held & (PAD_UP | PAD_DOWN)) {
-                card_screen_state.confirm_press_state = 1;
+                card_screen_state.confirm_press_state = CONFIRM_PRESS_WAIT_DIRECTION;
             } else {
-                card_screen_state.confirm_press_state = 3;
+                card_screen_state.confirm_press_state = CONFIRM_PRESS_FIRE;
             }
         }
     }
-    if (card_screen_state.confirm_press_state == 2) {
-        card_screen_state.confirm_press_state = 3;
+    if (card_screen_state.confirm_press_state == CONFIRM_PRESS_WAIT_FRAME) {
+        card_screen_state.confirm_press_state = CONFIRM_PRESS_FIRE;
     }
-    if (card_screen_state.confirm_press_state == 1) {
+    if (card_screen_state.confirm_press_state == CONFIRM_PRESS_WAIT_DIRECTION) {
         report = Pad_GetReport(0, 0);
         if (report->held & (PAD_UP | PAD_DOWN)) {
             if (menu_buttons & (PAD_UP | PAD_DOWN)) {
-                card_screen_state.confirm_press_state = 2;
+                card_screen_state.confirm_press_state = CONFIRM_PRESS_WAIT_FRAME;
             }
         } else {
-            card_screen_state.confirm_press_state = 3;
+            card_screen_state.confirm_press_state = CONFIRM_PRESS_FIRE;
         }
     }
 
-    if (card_screen_state.list_step != 1 && card_screen_state.input_locked == 0) {
-        if (card_screen_state.confirm_press_state == 3) {
-            card_screen_state.confirm_press_state = 0;
+    if (card_screen_state.list_step != MENU_SAVE_LIST_STEP_LOADING && card_screen_state.input_locked == 0) {
+        if (card_screen_state.confirm_press_state == CONFIRM_PRESS_FIRE) {
+            card_screen_state.confirm_press_state = CONFIRM_PRESS_IDLE;
             switch (card_screen_state.list_step) {
-            case -1:
+            case MENU_SAVE_LIST_STEP_WAIT_INPUT:
                 Sound_PlayMenu(0);
-                card_screen_state.list_step = 8;
+                card_screen_state.list_step = MENU_SAVE_LIST_STEP_CONFIRM_LOAD;
                 break;
-            case 8:
-                if (card_screen_state.confirm_choice == 0) {
+            case MENU_SAVE_LIST_STEP_CONFIRM_LOAD:
+                if (card_screen_state.confirm_choice == CONFIRM_CHOICE_YES) {
                     Sound_PlayMenu(0);
-                    card_screen_state.list_step = 1;
+                    card_screen_state.list_step = MENU_SAVE_LIST_STEP_LOADING;
                     memset(save_image, 0, 0x20000);
                     SaveCard_StartLoad(card_screen_state.selected_card, card_screen_state.selected_save, (s32 *)save_image, 0x20000);
                 } else {
                     Sound_PlayMenu(2);
-                    card_screen_state.list_step = -1;
-                    card_screen_state.confirm_choice = 1;
+                    card_screen_state.list_step = MENU_SAVE_LIST_STEP_WAIT_INPUT;
+                    card_screen_state.confirm_choice = CONFIRM_CHOICE_NO;
                 }
                 break;
-            case 3:
+            case MENU_SAVE_LIST_STEP_RESULT:
                 Sound_PlayMenu(0);
-                card_screen_state.list_step = -1;
+                card_screen_state.list_step = MENU_SAVE_LIST_STEP_WAIT_INPUT;
                 break;
-            case 10:
+            case MENU_SAVE_LIST_STEP_CARD_ERROR:
                 Sound_PlayMenu(0);
                 card_screen_state.input_locked = 1;
                 if (!game_status.bit9) {
                     system_screen_state = 3;
                     SaveCard_ResetCard(card_screen_state.selected_card);
                 } else {
-                    card_screen_state.list_step = -1;
+                    card_screen_state.list_step = MENU_SAVE_LIST_STEP_WAIT_INPUT;
                     system_screen_state = 2;
                     save_list_leave_steps = 1;
                 }
                 break;
-            case 23:
+            case MENU_SAVE_LIST_STEP_LOAD_FAILED:
                 Sound_PlayMenu(0);
-                card_screen_state.list_step = -1;
-                card_screen_state.confirm_choice = 1;
+                card_screen_state.list_step = MENU_SAVE_LIST_STEP_WAIT_INPUT;
+                card_screen_state.confirm_choice = CONFIRM_CHOICE_NO;
                 break;
             }
         } else {
             report = Pad_GetReport(0, 0);
-            if ((report->pressed & PAD_CIRCLE) && pad_mode != 0xFF && card_screen_state.confirm_press_state == 0) {
+            if ((report->pressed & PAD_CIRCLE) && pad_mode != 0xFF && card_screen_state.confirm_press_state == CONFIRM_PRESS_IDLE) {
                 Sound_PlayMenu(2);
                 switch (card_screen_state.list_step) {
-                case 10:
+                case MENU_SAVE_LIST_STEP_CARD_ERROR:
                     card_screen_state.input_locked = 1;
                     if (!game_status.bit9) {
                         system_screen_state = 3;
                         SaveCard_ResetCard(card_screen_state.selected_card);
                     } else {
-                        card_screen_state.list_step = -1;
+                        card_screen_state.list_step = MENU_SAVE_LIST_STEP_WAIT_INPUT;
                         system_screen_state = 2;
                         save_list_leave_steps = 1;
                     }
                     break;
-                case -1:
+                case MENU_SAVE_LIST_STEP_WAIT_INPUT:
                     card_screen_state.input_locked = 1;
                     system_screen_state = 3;
                     break;
-                case 3:
-                    card_screen_state.list_step = -1;
+                case MENU_SAVE_LIST_STEP_RESULT:
+                    card_screen_state.list_step = MENU_SAVE_LIST_STEP_WAIT_INPUT;
                     break;
-                case 8:
-                case 23:
-                    card_screen_state.list_step = -1;
-                    card_screen_state.confirm_choice = 1;
+                case MENU_SAVE_LIST_STEP_CONFIRM_LOAD:
+                case MENU_SAVE_LIST_STEP_LOAD_FAILED:
+                    card_screen_state.list_step = MENU_SAVE_LIST_STEP_WAIT_INPUT;
+                    card_screen_state.confirm_choice = CONFIRM_CHOICE_NO;
                     break;
                 }
             } else if ((menu_buttons & PAD_DOWN) && card_screen_state.input_locked == 0) {
                 switch (card_screen_state.list_step) {
-                case -1:
+                case MENU_SAVE_LIST_STEP_WAIT_INPUT:
                     card_screen_state.selected_save++;
                     for (i = 0; i < 3; i++) {
                         if (SaveCard_GetSaveState((card_screen_state.selected_save + i) % 3) != 0) {
@@ -5745,14 +5763,14 @@ static void Menu_UpdateSaveList(void) {
                     }
                     card_screen_state.selected_save = (card_screen_state.selected_save + i) % 3;
                     break;
-                case 8:
+                case MENU_SAVE_LIST_STEP_CONFIRM_LOAD:
                     Sound_PlayMenu(1);
                     card_screen_state.confirm_choice = (card_screen_state.confirm_choice + 1) & 1;
                     break;
                 }
             } else if ((menu_buttons & PAD_UP) && card_screen_state.input_locked == 0) {
                 switch (card_screen_state.list_step) {
-                case -1:
+                case MENU_SAVE_LIST_STEP_WAIT_INPUT:
                     card_screen_state.selected_save--;
                     for (i = 0; i < 3; i++) {
                         if (SaveCard_GetSaveState((card_screen_state.selected_save - i + 3) % 3) != 0) {
@@ -5764,7 +5782,7 @@ static void Menu_UpdateSaveList(void) {
                     }
                     card_screen_state.selected_save = (card_screen_state.selected_save - i + 3) % 3;
                     break;
-                case 8:
+                case MENU_SAVE_LIST_STEP_CONFIRM_LOAD:
                     Sound_PlayMenu(1);
                     card_screen_state.confirm_choice = (card_screen_state.confirm_choice + 1) & 1;
                     break;
@@ -5816,7 +5834,7 @@ static void Menu_UpdateSaveList(void) {
                         menu_step++;
                     }
                 } else if (system_screen_state == 3) {
-                    card_screen_state.confirm_choice = 1;
+                    card_screen_state.confirm_choice = CONFIRM_CHOICE_NO;
                     menu_screen_handler = (void *)Menu_UpdateCardSlot;
                     system_screen_state = 0;
                     save_list_leave_steps = 0;
@@ -6340,7 +6358,7 @@ static void Menu_OpenCardCheck(void) {
         SaveCard_Update();
         memset(screen_part_alphas, 0, 0x400);
         menu_screen_handler = (void *)Menu_UpdateCardCheck;
-        card_screen_state.check_step = 0;
+        card_screen_state.check_step = CARD_CHECK_STEP_START;
         system_screen_state = 0;
         pulse_value_falling = 0;
         card_screen_state.is_leaving = 0;
@@ -6348,8 +6366,8 @@ static void Menu_OpenCardCheck(void) {
         card_screen_state.check_finished = 0;
         card_screen_state.skip_drawing = 0;
         card_screen_state.card_problem_codes = 0;
-        card_screen_state.card0_saves_state = 0;
-        card_screen_state.card1_saves_state = 0;
+        card_screen_state.card0_saves_state = SAVES_STATE_EMPTY;
+        card_screen_state.card1_saves_state = SAVES_STATE_EMPTY;
         card_screen_state.dialog_id = -1;
     }
 }
@@ -6364,56 +6382,56 @@ static void Menu_UpdateCardCheck(void) {
     s32 result = SaveCard_Update();
 
     switch (card_screen_state.check_step) {
-    case 0:
+    case CARD_CHECK_STEP_START:
         if (SaveCard_IsCheckDone() == 0) {
             return;
         }
         if (SaveCard_IsPresent(0) != 0 && SaveCard_IsFormatted(0) != 0) {
             SaveCard_StartReadList(0, 0);
-            card_screen_state.check_step = 1;
+            card_screen_state.check_step = CARD_CHECK_STEP_READ_FIRST;
         } else if (SaveCard_IsPresent(1) != 0 && SaveCard_IsFormatted(1) != 0) {
-            card_screen_state.check_step = 2;
+            card_screen_state.check_step = CARD_CHECK_STEP_READ_SECOND;
             SaveCard_StartReadList(1, 0);
         } else {
-            card_screen_state.check_step = 3;
+            card_screen_state.check_step = CARD_CHECK_STEP_RESCAN;
             SaveCard_StartRescan();
         }
         return;
-    case 1:
+    case CARD_CHECK_STEP_READ_FIRST:
         if (SaveCard_CheckBusy() == 0) {
             card_screen_state.card0_saves_state = SaveCard_GetSavesState();
             if (SaveCard_IsPresent(1) != 0 && SaveCard_IsFormatted(1) != 0) {
-                card_screen_state.check_step = 2;
+                card_screen_state.check_step = CARD_CHECK_STEP_READ_SECOND;
                 SaveCard_StartReadList(1, 0);
             } else {
-                card_screen_state.check_step = 3;
+                card_screen_state.check_step = CARD_CHECK_STEP_RESCAN;
                 SaveCard_StartRescan();
             }
         } else if (result < 0) {
-            card_screen_state.card0_saves_state = 0;
+            card_screen_state.card0_saves_state = SAVES_STATE_EMPTY;
             if (SaveCard_IsPresent(1) != 0 && SaveCard_IsFormatted(1) != 0) {
-                card_screen_state.check_step = 2;
+                card_screen_state.check_step = CARD_CHECK_STEP_READ_SECOND;
                 SaveCard_StartReadList(1, 0);
             } else {
-                card_screen_state.check_step = 3;
+                card_screen_state.check_step = CARD_CHECK_STEP_RESCAN;
                 SaveCard_StartRescan();
             }
         }
         return;
-    case 2:
+    case CARD_CHECK_STEP_READ_SECOND:
         if (SaveCard_CheckBusy() == 0) {
             card_screen_state.card1_saves_state = SaveCard_GetSavesState();
-            card_screen_state.check_step = 3;
+            card_screen_state.check_step = CARD_CHECK_STEP_RESCAN;
             SaveCard_StartRescan();
         } else if (result < 0) {
-            card_screen_state.card1_saves_state = 0;
-            card_screen_state.check_step = 3;
+            card_screen_state.card1_saves_state = SAVES_STATE_EMPTY;
+            card_screen_state.check_step = CARD_CHECK_STEP_RESCAN;
             SaveCard_StartRescan();
         }
         return;
-    case 3:
+    case CARD_CHECK_STEP_RESCAN:
         if (result > 0) {
-            card_screen_state.check_step = 4;
+            card_screen_state.check_step = CARD_CHECK_STEP_ASK;
             for (i = 0; (s32)i < 2; i++) {
                 switch (SaveCard_GetCardProblem(i)) {
                 case 0:
@@ -6947,7 +6965,7 @@ static void Menu_OpenCardSlot(void) {
     card_screen_state.save_state_1 = 0;
     card_screen_state.save_state_2 = 0;
     card_screen_state.card_update_result = 0;
-    card_screen_state.confirm_choice = 1;
+    card_screen_state.confirm_choice = CONFIRM_CHOICE_NO;
     card_screen_state.dialog_id = -1;
     SaveCard_Open();
     SaveCard_ClearLoadFailed(0);

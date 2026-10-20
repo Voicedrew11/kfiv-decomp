@@ -8,6 +8,7 @@
 #include "map/map.h"
 #include "model/model.h"
 #include "player/player.h"
+#include "map_object/map_object.h"
 #include "effect/shot.h"
 #include "sound/sound.h"
 #include "math/vu0.h"
@@ -201,7 +202,7 @@ void Player_Update(void) {
     player_previous = player_state;
 
     PLAYER_STATUS(&player_state)->running = FALSE;
-    player_state.ground_effect_kind = 6;
+    player_state.ground_effect_kind = GROUND_EFFECT_NONE;
     player_state.ground_kills = 0;
     player_state.ground_effect_active = 0;
     if (game_status.player_control != 0 && !(game_status.update_hold_flags & 1)) {
@@ -282,7 +283,7 @@ void Player_Update(void) {
             PLAYER_STATUS(&player_state)->running = FALSE;
         } else if (player_state.weight > player_state.max_weight) {
             PLAYER_STATUS(&player_state)->running = FALSE;
-        } else if (item_def->action_handler_index == 2 && player_state.item_action_step != 0) {
+        } else if (item_def->action_handler_index == 2 && player_state.item_action_step != PLAYER_ITEM_ACTION_IDLE) {
             PLAYER_STATUS(&player_state)->running = FALSE;
         } else if ((u16)player_state.timed_flags[4] != 0) {
             PLAYER_STATUS(&player_state)->running = FALSE;
@@ -380,7 +381,7 @@ void Player_Update(void) {
         } else if ((s32)(player_state.status_bits >> 38) & 1) {
             PLAYER_STATUS(&player_state)->step_sounded = TRUE;
             footstep_voice = Sound_PlayFootstep(0x24);
-        } else if (player_state.ground_effect_active != 0 && player_state.ground_effect_kind == 4) {
+        } else if (player_state.ground_effect_active != 0 && player_state.ground_effect_kind == GROUND_EFFECT_DAMAGE) {
             PLAYER_STATUS(&player_state)->step_sounded = TRUE;
             if (sound_free) {
                 footstep_voice = Sound_PlayFootstep(0x27);
@@ -460,28 +461,35 @@ void Player_Update(void) {
     game_status.movement_input_enabled = 1;
 }
 
+/* player_screen_tint.kind: which timed tint is shown, by its colour */
+#define SCREEN_TINT_GREEN       0
+#define SCREEN_TINT_DARK_YELLOW 1
+#define SCREEN_TINT_PURPLE      3
+#define SCREEN_TINT_WHITE       4
+#define SCREEN_TINT_CYCLING     5
+
 /* Draws the colours that lie over the screen (PlayerScreenTint). */
 void Player_DrawScreenTints(void) {
-    if (player_screen_tint.green_tint_alpha != 0 && player_screen_tint.kind == 0) {
+    if (player_screen_tint.green_tint_alpha != 0 && player_screen_tint.kind == SCREEN_TINT_GREEN) {
         GsDraw_FillScreen(0, 0xFF, 0, player_screen_tint.green_tint_alpha, 0x48);
     }
-    if (player_screen_tint.dark_yellow_tint_alpha != 0 && player_screen_tint.kind == 1) {
+    if (player_screen_tint.dark_yellow_tint_alpha != 0 && player_screen_tint.kind == SCREEN_TINT_DARK_YELLOW) {
         GsDraw_FillScreen(0x80, 0x80, 0, player_screen_tint.dark_yellow_tint_alpha, 0x44);
     }
-    if (player_screen_tint.purple_tint_alpha != 0 && player_screen_tint.kind == 3) {
+    if (player_screen_tint.purple_tint_alpha != 0 && player_screen_tint.kind == SCREEN_TINT_PURPLE) {
         GsDraw_FillScreen(0xA0, 0, 0xA0, player_screen_tint.purple_tint_alpha, 0x48);
     }
-    if (player_screen_tint.white_tint_alpha != 0 && player_screen_tint.kind == 4) {
+    if (player_screen_tint.white_tint_alpha != 0 && player_screen_tint.kind == SCREEN_TINT_WHITE) {
         GsDraw_FillScreen(0xFF, 0xFF, 0xFF, player_screen_tint.white_tint_alpha, 0x48);
     }
-    if (player_screen_tint.cycling_tint_alpha != 0 && player_screen_tint.kind == 5) {
+    if (player_screen_tint.cycling_tint_alpha != 0 && player_screen_tint.kind == SCREEN_TINT_CYCLING) {
         GsDraw_FillScreen(player_screen_tint.red, player_screen_tint.green, player_screen_tint.blue, player_screen_tint.cycling_tint_alpha, 0x48);
     }
     if (player_screen_tint.darkness_tint_alpha > 0) {
         GsDraw_FillScreen(0, 0, 0, player_screen_tint.darkness_tint_alpha, 0x44);
     }
     if (player_screen_tint.damage_flash_alpha != 0) {
-        if (player_screen_tint.purple_tint_alpha != 0 && player_screen_tint.kind == 3) {
+        if (player_screen_tint.purple_tint_alpha != 0 && player_screen_tint.kind == SCREEN_TINT_PURPLE) {
             GsDraw_FillScreen(0x60, 0, 0, player_screen_tint.damage_flash_alpha, 0x48);
         } else {
             GsDraw_FillScreen(0xFF, 0, 0, player_screen_tint.damage_flash_alpha, 0x48);
@@ -503,28 +511,28 @@ void Player_UpdateScreenTints(void) {
     s32 blend;
     u16 cycling;
 
-    player_screen_tint.kind = 0;
+    player_screen_tint.kind = SCREEN_TINT_GREEN;
     if (newest < (s32)player_state.ailment0_start_frame && (u16)player_state.timed_flags[0] != 0) {
-        player_screen_tint.kind = 0;
+        player_screen_tint.kind = SCREEN_TINT_GREEN;
         newest = player_state.ailment0_start_frame;
     }
     if (newest < (s32)player_state.ailment1_start_frame && (u16)player_state.timed_flags[1] != 0) {
-        player_screen_tint.kind = 1;
+        player_screen_tint.kind = SCREEN_TINT_DARK_YELLOW;
         newest = player_state.ailment1_start_frame;
     }
     if (newest < (s32)player_state.ailment2_start_frame && (u16)player_state.timed_flags[2] != 0) {
         darkened = TRUE;
     }
     if (newest < (s32)player_state.ailment3_start_frame && (u16)player_state.timed_flags[3] != 0) {
-        player_screen_tint.kind = 3;
+        player_screen_tint.kind = SCREEN_TINT_PURPLE;
         newest = player_state.ailment3_start_frame;
     }
     if (newest < (s32)player_state.ailment4_start_frame && (u16)player_state.timed_flags[4] != 0) {
-        player_screen_tint.kind = 4;
+        player_screen_tint.kind = SCREEN_TINT_WHITE;
         newest = player_state.ailment4_start_frame;
     }
     if (newest < (s32)player_state.ailment5_start_frame && (u16)player_state.timed_flags[5] != 0) {
-        player_screen_tint.kind = 5;
+        player_screen_tint.kind = SCREEN_TINT_CYCLING;
     }
 
     player_screen_tint.damage_flash_alpha = player_screen_tint.damage_flash_frames * 8;
@@ -659,7 +667,7 @@ void Player_UpdateActions(u16 held, u16 pressed) {
     player_state.cast_launched_shot = 0;
     def = &weapon_defs[player_state.weapon];
     player_state.magic1_asked = 0;
-    if (player_state.item_action_step != 0) {
+    if (player_state.item_action_step != PLAYER_ITEM_ACTION_IDLE) {
         if (game_status.player_control == 0 || (game_status.update_hold_flags & 1) || player_state.death_timer != 0 ||
             (u16)player_state.timed_flags[1] != 0) {
             player_state.swing_ended = 1;
@@ -667,7 +675,7 @@ void Player_UpdateActions(u16 held, u16 pressed) {
         }
     }
     item_action_handlers[def->action_handler_index](held, pressed);
-    if (player_state.item_action_step == 0 || (player_state.magic2_asked == 0 && player_state.magic1_asked == 0)) {
+    if (player_state.item_action_step == PLAYER_ITEM_ACTION_IDLE || (player_state.magic2_asked == 0 && player_state.magic1_asked == 0)) {
         if (magic_button & pressed) {
             Player_CastMagic(player_state.equipped_magic);
         }
@@ -675,7 +683,7 @@ void Player_UpdateActions(u16 held, u16 pressed) {
             Player_HoldMagic(player_state.equipped_magic);
         }
     }
-    if (player_state.item_action_step != 0) {
+    if (player_state.item_action_step != PLAYER_ITEM_ACTION_IDLE) {
         player_state.frames_since_item_action = 0;
     } else {
         player_state.frames_since_item_action++;
@@ -692,7 +700,7 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
     s32 level = record->level_index;
     PlayerShot *shot;
 
-    if (player_state.item_action_step == 0) {
+    if (player_state.item_action_step == PLAYER_ITEM_ACTION_IDLE) {
         if (def->first_magic_id != 0 && def->first_magic_id != 0xFFFF && player_state.power >= def->first_magic_min_power && player_state.magic >= def->first_magic_min_magic) {
             if (player_state.magic1_window != 0) {
                 player_state.magic1_window--;
@@ -714,9 +722,9 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             shot->weapon_index = player_state.weapon;
             ModelMotion_Select(WEAPON_MODEL, 0);
             player_state.draw_sound_played = 0;
-            player_state.magic1_motion_reached = 0;
-            player_state.magic2_motion_reached = 0;
-            player_state.item_action_step = 1;
+            player_state.magic1_motion_reached = FALSE;
+            player_state.magic2_motion_reached = FALSE;
+            player_state.item_action_step = PLAYER_ITEM_ACTION_SWING;
             player_state.power_gauge_delay = def->swing_gauge_delay_frames;
             swing_magic_frames = 0;
             player_state.power_gauge = 0;
@@ -724,8 +732,8 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             player_state.magic2_asked = 0;
             player_state.weapon_bounced = 0;
             player_state.struck_solid_object = 0;
-            player_state.magic2_state = 0;
-            player_state.magic1_state = 0;
+            player_state.magic2_state = PLAYER_MAGIC_STATE_NONE;
+            player_state.magic1_state = PLAYER_MAGIC_STATE_NONE;
             player_state.swing_ended = 0;
             WeaponTrail_PickKind();
         }
@@ -747,7 +755,7 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             }
         }
         if (MODEL_CHANNEL(WEAPON_MODEL)->frame_fixed <= 0) {
-            player_state.item_action_step = 0;
+            player_state.item_action_step = PLAYER_ITEM_ACTION_IDLE;
             return;
         }
         if (player_state.swing_ended != 0) {
@@ -779,46 +787,46 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             player_state.draw_sound_played = 1;
         }
         if (magic_button & pressed) {
-            if (player_state.magic1_window != 0 && player_state.magic1_state == 0 && def->first_magic_id != 0xFFFF &&
+            if (player_state.magic1_window != 0 && player_state.magic1_state == PLAYER_MAGIC_STATE_NONE && def->first_magic_id != 0xFFFF &&
                 MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->first_magic_window_start_frame && MODEL_CHANNEL(WEAPON_MODEL)->frame <= def->first_magic_window_end_frame) {
                 player_state.magic2_armed = 0;
                 player_state.magic1_asked = 1;
-                player_state.magic1_state = 1;
+                player_state.magic1_state = PLAYER_MAGIC_STATE_ASKED;
             }
             if (player_state.magic2_armed != 0 && player_state.magic2_asked == 0 && def->second_magic_id != 0xFFFF &&
                 MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->second_magic_window_start_frame && MODEL_CHANNEL(WEAPON_MODEL)->frame <= def->second_magic_window_end_frame) {
                 player_state.magic2_asked = 1;
-                player_state.magic2_state = 1;
+                player_state.magic2_state = PLAYER_MAGIC_STATE_ASKED;
             }
             player_state.magic1_window = 0;
             player_state.magic2_armed = 0;
         }
-        if (player_state.magic1_state == 1 && MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->first_magic_cast_frame) {
-            player_state.magic1_state = 2;
+        if (player_state.magic1_state == PLAYER_MAGIC_STATE_ASKED && MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->first_magic_cast_frame) {
+            player_state.magic1_state = PLAYER_MAGIC_STATE_CAST;
             if (Player_CastMagic(def->first_magic_id)) {
                 swing_magic_id = def->first_magic_id;
                 swing_magic_frames = def->first_magic_effect_frames;
             }
         }
-        if (player_state.magic2_state == 1 && MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->second_magic_cast_frame) {
-            player_state.magic2_state = 2;
+        if (player_state.magic2_state == PLAYER_MAGIC_STATE_ASKED && MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->second_magic_cast_frame) {
+            player_state.magic2_state = PLAYER_MAGIC_STATE_CAST;
             if (Player_CastMagic(def->second_magic_id)) {
                 swing_magic_id = def->second_magic_id;
                 swing_magic_frames = def->second_magic_effect_frames;
             }
         }
-        if (player_state.magic1_state != 0 && !player_state.magic1_motion_reached && def->first_magic_motion_id != 0xFFFF &&
+        if (player_state.magic1_state != PLAYER_MAGIC_STATE_NONE && !player_state.magic1_motion_reached && def->first_magic_motion_id != PLAYER_MAGIC_MOTION_NONE &&
             MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->first_magic_latch_frame) {
-            player_state.magic1_motion_reached = 1;
+            player_state.magic1_motion_reached = TRUE;
         }
-        if (player_state.magic2_state != 0 && !player_state.magic2_motion_reached && def->second_magic_motion_id != 0xFFFF &&
+        if (player_state.magic2_state != PLAYER_MAGIC_STATE_NONE && !player_state.magic2_motion_reached && def->second_magic_motion_id != PLAYER_MAGIC_MOTION_NONE &&
             MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->second_magic_latch_frame) {
-            player_state.magic1_motion_reached = 1; // match: bit 1 again, though bit 2 was tested
+            player_state.magic1_motion_reached = TRUE; // match: bit 1 again, though bit 2 was tested
         }
     } else {
         ModelMotion_Step(WEAPON_MODEL);
         if (MODEL_CHANNEL(WEAPON_MODEL)->blend_left == 0) {
-            player_state.item_action_step = 0;
+            player_state.item_action_step = PLAYER_ITEM_ACTION_IDLE;
         }
     }
 }
@@ -839,7 +847,7 @@ void Player_FireProjectile(u16 held, u16 pressed) {
         ModelMotion_Step(WEAPON_MODEL);
         ((int (*)(ModelInstance *))WEAPON_MODEL->update_bone_points)(WEAPON_MODEL); // match: called as if it returned a value
         player_state.draw_sound_played = 0;
-        player_state.draw_motion_complete = 0;
+        player_state.draw_motion_complete = FALSE;
         player_state.item_action_step++;
         player_state.swing_ended = 0;
         item_shot = Shot_Alloc();
@@ -867,7 +875,7 @@ void Player_DrawBow(u16 held, u16 pressed) {
     if (MODEL_CHANNEL(WEAPON_MODEL)->frame != 0 && MODEL_CHANNEL(WEAPON_MODEL)->frame < def->draw_last_frame) {
         ModelMotion_Step(WEAPON_MODEL);
     }
-    if (player_state.draw_motion_complete == 0) {
+    if (player_state.draw_motion_complete == FALSE) {
         player_state.draw_motion_complete = MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->draw_ready_frame;
     }
     if (player_state.swing_ended == 0 && !((s32)(player_state.status_bits >> 39) & 1) && Player_CanFireAtAim()) {
@@ -886,7 +894,7 @@ void Player_DrawBow(u16 held, u16 pressed) {
             }
             return;
         }
-        if (player_state.draw_motion_complete != 0) {
+        if (player_state.draw_motion_complete != FALSE) {
             if (player_state.draw_sound_played) {
                 Sound_StopVoice(2);
             }
@@ -917,7 +925,7 @@ void Player_DrawBow(u16 held, u16 pressed) {
     }
     ModelMotion_BlendInto(WEAPON_MODEL, 0, 0xF);
     MODEL_CHANNEL(WEAPON_MODEL)->blend_speed = 0;
-    player_state.draw_motion_complete = 0;
+    player_state.draw_motion_complete = FALSE;
     player_state.power_gauge = 0;
     player_state.item_action_step += 3;
 }
@@ -937,8 +945,8 @@ void Player_FinishWeaponMotion(u16 held, u16 pressed) {
     } else if (MODEL_CHANNEL(WEAPON_MODEL)->frame_fixed > 0) {
         ModelMotion_Step(WEAPON_MODEL);
     } else {
-        player_state.item_action_step = 0;
-        player_state.draw_motion_complete = 0;
+        player_state.item_action_step = PLAYER_ITEM_ACTION_IDLE;
+        player_state.draw_motion_complete = FALSE;
     }
 }
 
@@ -1034,7 +1042,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
     }
     Vector_Add(&player_state, &player_state, &player_state.floor_push);
 
-    if (player_previous.ground_effect_active != 0 && player_previous.ground_effect_kind == 4) {
+    if (player_previous.ground_effect_active != 0 && player_previous.ground_effect_kind == GROUND_EFFECT_DAMAGE) {
         row = 4;
     } else if ((s32)(player_previous.status_bits >> 39) & 1) {
         row = 3;
@@ -1315,7 +1323,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
         if (!((s32)(player_state.status_bits >> 36) & 1)) {
             Player_CollideWithMap();
             Player_CollideWithMapObjects(1);
-            if (player_state.floor_material == 6 && player_state.floor_map_object != 0 && player_state.floor_map_object->definition->kind == 12) {
+            if (player_state.floor_material == 6 && player_state.floor_map_object != 0 && player_state.floor_map_object->definition->kind == MAP_OBJECT_KIND_SYMBOL_OF_PASSAGE) {
                 Player_FindFloorMaterial();
             }
             if (!((s32)(player_state.status_bits >> 34) & 1)) {
@@ -1329,7 +1337,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
                     }
                     if (player_previous.fall_speed >= FALL_DAMAGE_MIN_SPEED) {
                         Player_TakeFallDamage(player_previous.fall_speed);
-                        if (!((s32)(player_state.status_bits >> 38) & 1) && player_state.ground_effect_kind != 4) {
+                        if (!((s32)(player_state.status_bits >> 38) & 1) && player_state.ground_effect_kind != GROUND_EFFECT_DAMAGE) {
                             player_state.status_bits |= PLAYER_FLAG_37;
                             player_state.landing_dip_depth = player_previous.fall_speed * 0.5f;
                             if (player_state.landing_dip_depth > 150.0f) {
@@ -1426,7 +1434,7 @@ void Player_ApplyGroundEffects(void) {
         return;
     }
     switch (player_state.ground_effect_kind) {
-    case 1:
+    case GROUND_EFFECT_POISON_LOW_CHANCE:
         if ((u16)player_state.timed_flags[0] == 0 && player_state.flag_timers[0] == 0) {
             if (player_state.ground_effect_frames % 60 == 0) {
                 // match: the chance (at least 5 in 100) is worked out after the roll, inside the comparison
@@ -1437,7 +1445,7 @@ void Player_ApplyGroundEffects(void) {
             }
         }
         break;
-    case 2:
+    case GROUND_EFFECT_POISON_HIGH_CHANCE:
         if ((u16)player_state.timed_flags[0] == 0 && player_state.flag_timers[0] == 0) {
             if (player_state.ground_effect_frames % 60 == 0) {
                 // match: the chance (at least 5 in 100) is worked out after the roll, inside the comparison
@@ -1448,16 +1456,16 @@ void Player_ApplyGroundEffects(void) {
             }
         }
         break;
-    case 3:
+    case GROUND_EFFECT_POISON_CERTAIN:
         if ((u16)player_state.timed_flags[0] == 0) {
             player_state.timed_flags[0] = 1800;
             player_state.ailment0_start_frame = frame_counter;
         }
         break;
-    case 4:
+    case GROUND_EFFECT_DAMAGE:
         Player_TakeDamageNoRumble(10);
         break;
-    case 5:
+    case GROUND_EFFECT_WEAR_DAMAGE:
         Player_TakeDamageNoRumble(1);
         Attack_WearWeapon(player_state.weapon, 1);
         Attack_WearWornItem(player_state.equipment[EQUIP_SHIELD], 1);
@@ -1734,7 +1742,7 @@ void Player_UpdateStatus(void) {
         player_state.mp_now = 0;
     }
 
-    if (player_state.death_timer == 0 && player_state.item_action_step == 0) {
+    if (player_state.death_timer == 0 && player_state.item_action_step == PLAYER_ITEM_ACTION_IDLE) {
         if ((s32)(player_state.status_bits >> 35) & 1) {
             player_state.power_gauge -= 83;
             if (player_state.power_gauge < 0) {

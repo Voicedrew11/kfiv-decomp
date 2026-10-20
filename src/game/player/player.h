@@ -8,6 +8,26 @@
 #include "item/item.h"
 #include "effect/effect.h"
 
+/* PlayerState.item_action_step: 0 when no item action runs, 1 while the swing's motion runs (Player_SwingWeapon) */
+#define PLAYER_ITEM_ACTION_IDLE   0
+#define PLAYER_ITEM_ACTION_SWING  1
+
+/* PlayerState.magic1_state and magic2_state: the magic of the swing is not asked for, asked for, or cast */
+#define PLAYER_MAGIC_STATE_NONE   0
+#define PLAYER_MAGIC_STATE_ASKED  1
+#define PLAYER_MAGIC_STATE_CAST   2
+
+/* PlayerItemDef.first_magic_motion_id and second_magic_motion_id: no motion gates the magic */
+#define PLAYER_MAGIC_MOTION_NONE  0xFFFF
+
+/* PlayerState.ground_effect_kind: what the ground does, from Collision_GetSurfaceEffect (6: no effect) */
+#define GROUND_EFFECT_POISON_LOW_CHANCE   1  /* poison, the chance less the ailment defence */
+#define GROUND_EFFECT_POISON_HIGH_CHANCE  2  /* poison, a higher chance less the ailment defence */
+#define GROUND_EFFECT_POISON_CERTAIN      3  /* poison, every time */
+#define GROUND_EFFECT_DAMAGE              4  /* 10 damage */
+#define GROUND_EFFECT_WEAR_DAMAGE         5  /* 1 damage and wear on the gear */
+#define GROUND_EFFECT_NONE                6  /* no effect */
+
 /* the slots of PlayerState.equipment, in the order of the ini presets' equip_ keys */
 #define EQUIP_SHIELD    0
 #define EQUIP_HELM      1
