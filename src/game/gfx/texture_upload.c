@@ -11,6 +11,21 @@
 
 #define TEX0_BITS(header) ((TextureTex0Bits *)&(header)->tex0)
 
+/* GS TEX0 PSM values: the texture pixel format (TEX0_BITS(header)->pixel_format) */
+#define GS_PSM_CT32   0x00
+#define GS_PSM_CT24   0x01
+#define GS_PSM_CT16   0x02
+#define GS_PSM_CT16S  0x0A
+#define GS_PSM_T8     0x13
+#define GS_PSM_T8H    0x1B
+#define GS_PSM_T4     0x14
+#define GS_PSM_T4HL   0x24
+#define GS_PSM_T4HH   0x2C
+#define GS_PSM_Z32    0x30
+#define GS_PSM_Z24    0x31
+#define GS_PSM_Z16    0x32
+#define GS_PSM_Z16S   0x3A
+
 static u32 texflush_packet[0xC];    /* 0x1DFAF80 where Texture_SendTexFlush builds its DMA packet */
 
 static void Texture_LoadTm2(TextureHeader *header);
@@ -50,13 +65,13 @@ static void Texture_LoadTm2(TextureHeader *header) {
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
     pixel_format = TEX0_BITS(header)->pixel_format;
-    if (pixel_format == 0x13 || pixel_format == 0x1B) {
+    if (pixel_format == GS_PSM_T8 || pixel_format == GS_PSM_T8H) {
         sceGsSetDefLoadImage(&load_image, (u16)TEX0_BITS(header)->clut_pointer, 1, (u16)TEX0_BITS(header)->clut_format, 0, 0, 16, 16);
         FlushCache(0);
         sceGsExecLoadImage(&load_image, (char *)header + (header->image_size + sizeof(TextureHeader)));
         while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
         }
-    } else if (pixel_format == 0x14 || pixel_format == 0x24 || pixel_format == 0x2C) {
+    } else if (pixel_format == GS_PSM_T4 || pixel_format == GS_PSM_T4HL || pixel_format == GS_PSM_T4HH) {
         sceGsSetDefLoadImage(&load_image, (u16)TEX0_BITS(header)->clut_pointer, 1, (u16)TEX0_BITS(header)->clut_format, 0, 0, 8, 2);
         FlushCache(0);
         sceGsExecLoadImage(&load_image, (char *)header + (header->image_size + sizeof(TextureHeader)));
@@ -140,27 +155,27 @@ static void Texture_BuildPacket(char **texture, char **packet) {
     width = 1 << TEX0_BITS(header)->width_log2;
     height = 1 << TEX0_BITS(header)->height_log2;
     switch (TEX0_BITS(header)->pixel_format) {
-    case 0x00:
-    case 0x30:
+    case GS_PSM_CT32:
+    case GS_PSM_Z32:
         bits = 32;
         break;
-    case 0x01:
-    case 0x31:
+    case GS_PSM_CT24:
+    case GS_PSM_Z24:
         bits = 24;
         break;
-    case 0x02:
-    case 0x0A:
-    case 0x32:
-    case 0x3A:
+    case GS_PSM_CT16:
+    case GS_PSM_CT16S:
+    case GS_PSM_Z16:
+    case GS_PSM_Z16S:
         bits = 16;
         break;
-    case 0x13:
-    case 0x1B:
+    case GS_PSM_T8:
+    case GS_PSM_T8H:
         bits = 8;
         break;
-    case 0x14:
-    case 0x24:
-    case 0x2C:
+    case GS_PSM_T4:
+    case GS_PSM_T4HL:
+    case GS_PSM_T4HH:
         bits = 4;
         break;
     default:
