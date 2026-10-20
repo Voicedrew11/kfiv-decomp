@@ -10,6 +10,9 @@
 #include "model/linked_point.h"
 #include "collision/collision.h"
 
+#define RAND_16BIT_SCALE (1.0f / 32768.0f)
+#define PI_APPROX 3.1415f /* pi as retail writes it (not PI: the bits differ) */
+
 extern PlayerState player_state;
 extern float identity_matrix[16];
 int Attack_RunEffectHitCheck(void *);
@@ -408,8 +411,8 @@ void EffectConverge_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     motion = &effect->motion;
     offset.x = offset.y = offset.w = 0.0f;
     offset.z = (float)effect->def->radius_half;
-    effect->model->rotation.x = ((float)(rand() & 0xFFFF) * 3.0517578125e-05f - 1.0f) * 3.1415f;
-    random_angle_y = ((float)(rand() & 0xFFFF) * 3.0517578125e-05f - 1.0f) * 3.1415f;
+    effect->model->rotation.x = ((float)(rand() & 0xFFFF) * RAND_16BIT_SCALE - 1.0f) * PI_APPROX;
+    random_angle_y = ((float)(rand() & 0xFFFF) * RAND_16BIT_SCALE - 1.0f) * PI_APPROX;
     effect->model->rotation.w = effect->model->rotation.z = 0.0f;
     effect->model->rotation.y = random_angle_y;
     sceVu0RotMatrixX(rotation_matrix, identity_matrix, effect->model->rotation.x);
@@ -433,8 +436,8 @@ void EffectConverge_StartInSpread(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectStart_TurnModel(effect, spawn_slot);
     offset.x = offset.y = offset.w = 0.0f;
     offset.z = (float)effect->def->radius_half;
-    effect->model->rotation.x += ((float)(rand() & 0xFFFF) * 3.0517578125e-05f - 1.0f) * effect->def->turn_rate;
-    random_angle_y = ((float)(rand() & 0xFFFF) * 3.0517578125e-05f - 1.0f) * effect->def->ground_height;
+    effect->model->rotation.x += ((float)(rand() & 0xFFFF) * RAND_16BIT_SCALE - 1.0f) * effect->def->turn_rate;
+    random_angle_y = ((float)(rand() & 0xFFFF) * RAND_16BIT_SCALE - 1.0f) * effect->def->ground_height;
     effect->model->rotation.w = effect->model->rotation.z = 0.0f;
     effect->model->rotation.y += random_angle_y;
     sceVu0RotMatrixX(rotation_matrix, identity_matrix, effect->model->rotation.x);
@@ -1538,7 +1541,7 @@ void EffectSurroundPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot) {
 
     motion = (TurningMotion *)&effect->motion;
     offset.x = 0.0f;
-    offset.y = ((f32)(rand() & 0xFFFF) * 0.000030517578f - 1.0f) * 50.0f;
+    offset.y = ((f32)(rand() & 0xFFFF) * RAND_16BIT_SCALE - 1.0f) * 50.0f;
     offset.y = (f32)(-effect->def->interval) + offset.y;
     offset.z = (f32)effect->def->radius_half;
     offset.w = 0.0f;
@@ -2149,7 +2152,7 @@ void EffectRepeater_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     motion = (HeadingWordMotion *)&actor->motion;
     EffectStart_TurnModel(actor, spawn_slot);
     EffectStart_PlaceModel(actor, spawn_slot);
-    degrees = (actor->model->rotation.x * 180.0f) / 3.1415f;
+    degrees = (actor->model->rotation.x * 180.0f) / PI_APPROX;
     motion->heading = degrees;
     motion->heading_word = motion->heading;
 }
@@ -2279,7 +2282,7 @@ void EffectFollowPoseScaled_Update(EffectActor *effect) {
     EffectKeys_ApplyScale(effect);
     EffectKeys_ApplySpin(effect);
     EffectKeys_ApplyColour(effect);
-    effect->scale *= effect->target->scale * 0.0078125f;
+    effect->scale *= effect->target->scale * (1.0f / 128.0f);
     Vector_Copy(&effect->model->position, &motion->velocity);
     Vector_Copy(&effect->model->rotation, motion_rotation);
     Vector_Copy(&motion->velocity, &effect->target->model->position);
@@ -2348,8 +2351,8 @@ void EffectJitterOrbit_Update(EffectActor *effect) {
     EffectKeys_ApplyScale(effect);
     EffectKeys_ApplySpin(effect);
     EffectKeys_ApplyColour(effect);
-    motion->yaw = motion->yaw + ((float)(rand() & 0xFFFF) * 0.000030517578125f - 1.0f) * effect->def->turn_rate;
-    motion->pitch = motion->pitch + ((float)(rand() & 0xFFFF) * 0.000030517578125f - 1.0f) * effect->def->turn_rate;
+    motion->yaw = motion->yaw + ((float)(rand() & 0xFFFF) * RAND_16BIT_SCALE - 1.0f) * effect->def->turn_rate;
+    motion->pitch = motion->pitch + ((float)(rand() & 0xFFFF) * RAND_16BIT_SCALE - 1.0f) * effect->def->turn_rate;
     if (motion->yaw > 0.15f) {
         motion->yaw = 0.15f;
     }

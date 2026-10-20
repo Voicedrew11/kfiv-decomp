@@ -4,6 +4,8 @@
 #include "effect/shot.h"
 #include "entity/entity.h"
 
+#define LADDER_TURN_SPEED_RAD 0.029088821f /* 5/3 degrees per frame, in radians */
+
 void *memset(void *, s32, u32);
 float sqrtf(float);
 float sinf(float);
@@ -496,7 +498,7 @@ void Ladder_WalkToFoot(void) {
             Vector_Copy(&player_state.position, &ladder_foot_position);
         }
     }
-    if (Angle_Approach(&player_state.rotation.y, ladder_facing_y, 0.029088821f) && ladder_walk_frames_remaining <= 0) {
+    if (Angle_Approach(&player_state.rotation.y, ladder_facing_y, LADDER_TURN_SPEED_RAD) && ladder_walk_frames_remaining <= 0) {
         ladder_state_index++;
     }
 }

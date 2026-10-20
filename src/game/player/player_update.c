@@ -23,6 +23,9 @@ static f32 movement_top_speed;                    /* 0x447124 top walk speed thi
 extern struct PlayerWeaponModel *held_item_model_ptr;
 
 #define WEAPON_MODEL ((ModelInstance *)held_item_model_ptr)
+#define FALL_DAMAGE_MIN_SPEED 66.666664f
+#define SCREEN_TINT_STEP_PER_FRAME (1.0f / 128.0f)
+#define KILOGRAMS_TO_POUNDS 2.2046
 
 extern PlayerState player_state;
 extern PlayerState player_previous;      /* the player as of the frame before */
@@ -398,7 +401,7 @@ void Player_Update(void) {
         if ((s32)(player_state.status_bits >> 39) & 1) {
             stride_speed *= 0.5f;
         } else if ((s32)(player_state.status_bits >> 38) & 1) {
-            stride_speed *= 0.6666667f;
+            stride_speed *= 2.0f / 3.0f;
         }
         stride_step = stride_speed * 256.0f;
         if (player_state.strafe_speed != 0.0f || player_state.walk_speed != 0.0f) {
@@ -664,7 +667,7 @@ void Player_UpdateScreenTints(void) {
     }
 
     if (player_state.light_spell_timer != 0 || player_state.ring_of_sight_active != 0) {
-        map_draw_state.screen_tint_amount += 0.0078125f;
+        map_draw_state.screen_tint_amount += SCREEN_TINT_STEP_PER_FRAME;
         if (map_draw_state.screen_tint_amount > 0.25f) {
             map_draw_state.screen_tint_amount = 0.25f;
         }
@@ -673,7 +676,7 @@ void Player_UpdateScreenTints(void) {
             player_screen_tint.magic_glow_strength = 0xA0;
         }
     } else {
-        map_draw_state.screen_tint_amount -= 0.0078125f;
+        map_draw_state.screen_tint_amount -= SCREEN_TINT_STEP_PER_FRAME;
         if (map_draw_state.screen_tint_amount < 0.0f) {
             map_draw_state.screen_tint_amount = 0.0f;
         }
@@ -1183,19 +1186,19 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
     if (player_state.view_tilt_frames != 0) {
         player_state.view_tilt_frames--;
         player_state.view_tilt_pitch += DEG_TO_RAD(2);
-        player_state.view_tilt_roll += 0.0017453292f;
+        player_state.view_tilt_roll += DEG_TO_RAD(0.1f);
         if (player_state.view_tilt_pitch > DEG_TO_RAD(58)) {
             player_state.view_tilt_frames = 0;
         }
     } else {
         if (player_state.view_tilt_pitch > 0.0f) {
-            player_state.view_tilt_pitch -= 0.008726646f;
+            player_state.view_tilt_pitch -= DEG_TO_RAD(0.5f);
             if (player_state.view_tilt_pitch < 0.0f) {
                 player_state.view_tilt_pitch = 0.0f;
             }
         }
         if (player_state.view_tilt_roll > 0.0f) {
-            player_state.view_tilt_roll -= 0.0008726646f;
+            player_state.view_tilt_roll -= DEG_TO_RAD(0.05f);
             if (player_state.view_tilt_roll < 0.0f) {
                 player_state.view_tilt_roll = 0.0f;
             }
@@ -1421,7 +1424,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
                             Sound_PlayMap(0x38);
                         }
                     }
-                    if (player_previous.fall_speed >= 66.666664f) {
+                    if (player_previous.fall_speed >= FALL_DAMAGE_MIN_SPEED) {
                         Player_TakeFallDamage(player_previous.fall_speed);
                         if (!((s32)(player_state.status_bits >> 38) & 1) && player_state.ground_effect_kind != 4) {
                             player_state.status_bits |= PLAYER_FLAG_37;
@@ -1568,7 +1571,7 @@ void Player_ApplyGroundEffects(void) {
 void Player_TakeFallDamage(float speed) {
     int amount;
 
-    if (speed < 66.666664f) {
+    if (speed < FALL_DAMAGE_MIN_SPEED) {
         return;
     }
     amount = speed * speed / (1800.0f / (speed / 6.6666665f - 9.0f));
@@ -1962,7 +1965,7 @@ void Player_RecomputeStats(void) {
     player_state.magic = player_state.magic_base;
     Player_SumWornBonuses();
     player_state.max_weight = player_state.power * 3 + 80;
-    player_state.max_weight = (f32)player_state.max_weight * 2.2046;
+    player_state.max_weight = (f32)player_state.max_weight * KILOGRAMS_TO_POUNDS;
     player_state.weight = item_name_defs[player_state.weapon + ITEM_WEAPON_FIRST].weight_tenths_of_pound;
     player_state.weight += item_name_defs[player_state.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST].weight_tenths_of_pound;
     player_state.weight += item_name_defs[player_state.equipment[EQUIP_HELM] + ITEM_WORN_FIRST].weight_tenths_of_pound;

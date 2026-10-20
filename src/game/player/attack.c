@@ -8,6 +8,7 @@
 #include "effect/effect.h"
 
 #define IS_PLAYER(owner) ((owner) == (Entity *)&player_state)
+#define HIT_STRENGTH_LIGHT_MAX_PERCENT 33.3334f
 #define LARGER(first, second) ((first) < (second) ? (second) : (first))
 /* rand() scaled to 0-99 (the factor is 2 to the power -31) */
 #define ROLL_PERCENT() ((s32)(rand() * 100.0f * RAND_SCALE))
@@ -1037,7 +1038,7 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
     entity->hit_cooldown_frames = 15;
 
     percent = damage * 100.0f / entity->params->hit_points;
-    ENTITY_FLAG_HIT_BITS(entity)->hit_strength = percent < 33.3334f ? 1 : 2;
+    ENTITY_FLAG_HIT_BITS(entity)->hit_strength = percent < HIT_STRENGTH_LIGHT_MAX_PERCENT ? 1 : 2;
     ENTITY_FLAG_HIT_BITS(entity)->hit_source = by_weapon ? 1 : by_magic ? 2 : 0; // match: a shift of by_magic in retail too
 
     // match: three stores to unk6C, one per arm, give retail's single shared call and store

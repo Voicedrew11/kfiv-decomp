@@ -5,6 +5,9 @@
 #include "player/player.h"
 #include "math/vu0.h"
 
+#define RAND_16BIT_SCALE (1.0f / 32768.0f)
+#define PI_APPROX 3.1415f /* pi as retail writes it (not PI: the bits differ) */
+
 extern PlayerState player_state;
 extern f32 identity_matrix[16];
 extern Entity *active_entities_head;
@@ -119,7 +122,7 @@ void EffectFly_StartGrowing(EffectActor *effect, EffectSlot *spawn_slot) {
 
     EffectFly_Start(effect, spawn_slot);
     motion = (ScaledFallMotion *)&effect->motion;
-    motion->growth = ((float)(rand() & 0xFFFF) * 0.000030517578f - 1.0f) * effect->def->turn_rate + 1.0f;
+    motion->growth = ((float)(rand() & 0xFFFF) * RAND_16BIT_SCALE - 1.0f) * effect->def->turn_rate + 1.0f;
 }
 
 /* EffectFly_Update, then multiplies the model's scale by the growth factor (kind 49). */
@@ -233,7 +236,7 @@ void EffectLoop_Start(EffectActor *effect, EffectSlot *spawn_slot) {
 /* EffectLoop_Update; on the first frame gives the model a random roll (kind 48). */
 void EffectLoop_UpdateRandomRoll(EffectActor *effect) {
     if (effect->frame == 0) {
-        effect->model->rotation.z = ((float)(rand() & 0xFFFF) * 0.000030517578125f - 1.0f) * 3.1415f;
+        effect->model->rotation.z = ((float)(rand() & 0xFFFF) * RAND_16BIT_SCALE - 1.0f) * PI_APPROX;
     }
     EffectLoop_Update(effect);
 }
@@ -332,8 +335,8 @@ void EffectTrailHoming_Update(EffectActor *actor) {
             delta.y -= ((Entity *)actor->target_entity)->height * 0.8f;
         } else {
             if (actor->frame & 1) {
-                motion->wobble_x = (((rand() & 0xFFFF) * 0.000030517578f) - 1.0f) * 200.0f;
-                motion->wobble_z = (((rand() & 0xFFFF) * 0.000030517578f) - 1.0f) * 200.0f;
+                motion->wobble_x = (((rand() & 0xFFFF) * RAND_16BIT_SCALE) - 1.0f) * 200.0f;
+                motion->wobble_z = (((rand() & 0xFFFF) * RAND_16BIT_SCALE) - 1.0f) * 200.0f;
             }
             delta.y -= ((Entity *)actor->target_entity)->height;
             if (Vector_Dot3(&delta, motion) < 0.0f) {
@@ -1416,9 +1419,9 @@ void EffectBeam_Start(EffectActor *actor, EffectSlot *spawn_slot) {
         EffectBeam_AnglesToward(&actor->model->rotation, ((Entity *)actor->target_entity)->model->position, &actor->model->position);
         return;
     }
-    offset[0] = ((rand() & 0xFFFF) * 3.0517578e-05f - 1.0f) * 0.7f;
+    offset[0] = ((rand() & 0xFFFF) * RAND_16BIT_SCALE - 1.0f) * 0.7f;
     offset[1] = 1.0f;
-    offset[2] = ((rand() & 0xFFFF) * 3.0517578e-05f - 1.0f) * 0.7f;
+    offset[2] = ((rand() & 0xFFFF) * RAND_16BIT_SCALE - 1.0f) * 0.7f;
     Collision_CastRayAtMap(1500.0f, &actor->model->position, offset);
     if (COLLISION_RESULT->hit != 0) {
         EffectBeam_AnglesToward(&actor->model->rotation, COLLISION_RESULT->point, &actor->model->position);
@@ -1604,8 +1607,8 @@ void EffectBobHoming_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     sceVu0ApplyMatrix(&motion->velocity, rotation, &motion->velocity);
     actor->flags |= EFFECT_FLAG_HAS_TARGETERS;
     actor->target->flags &= ~EFFECT_FLAG_HAS_TARGETERS;
-    motion->bob_speed = (((rand() & 0xFFFF) * 0.000030517578125f) - 1.0f) * 0.5f;
-    motion->bob_limit = (((rand() & 0xFFFF) * 0.000030517578125f) - 1.0f) * 0.1f + 0.6f;
+    motion->bob_speed = (((rand() & 0xFFFF) * RAND_16BIT_SCALE) - 1.0f) * 0.5f;
+    motion->bob_limit = (((rand() & 0xFFFF) * RAND_16BIT_SCALE) - 1.0f) * 0.1f + 0.6f;
     motion->bob_rising = FALSE;
     actor->target_entity = 0;
     motion->velocity_scale = 1.0f;
@@ -1739,9 +1742,9 @@ void EffectBobFly_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectStart_PlaceModel(effect, spawn_slot);
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
     effect->flags |= EFFECT_FLAG_HAS_TARGETERS;
-    motion->bob_speed = (((float)(rand() & 0xFFFF) * 0.000030517578f) - 1.0f) * 0.5f;
+    motion->bob_speed = (((float)(rand() & 0xFFFF) * RAND_16BIT_SCALE) - 1.0f) * 0.5f;
     random_fraction = (float)(rand() & 0xFFFF);
-    bob_limit = ((random_fraction * 0.000030517578f) - 1.0f) * 0.1f + 0.6f;
+    bob_limit = ((random_fraction * RAND_16BIT_SCALE) - 1.0f) * 0.1f + 0.6f;
     motion->velocity_scale = 1.0f;
     motion->bob_rising = FALSE;
     motion->bob_limit = bob_limit;

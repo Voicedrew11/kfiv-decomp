@@ -5,6 +5,8 @@
 #include "effect/effect.h"
 #include "math/vu0.h"
 
+#define PLAYER_STEP_HEIGHT 16.666666f
+
 /* moves the player out of the body just hit: to `push` from it, but by no more than 50 a frame */
 #define PUSH_PLAYER_OUT()                                                                          \
     Vector_Scale(offset, COLLISION_RESULT->normal, push);                                       \
@@ -223,13 +225,13 @@ int Player_CollideWithMap(void) {
     if (!stepping) {
         if (found) {
             drop = player_state.position.y - floor_height;
-            if (drop < 16.666666f) {
+            if (drop < PLAYER_STEP_HEIGHT) {
                 player_state.position.y = floor_height;
             } else {
                 player_state.status_bits |= 0x8000L << 18;
-                player_state.step_per_frame = 16.666666f;
-                player_state.position.y -= 16.666666f;
-                player_state.step_remainder = drop - 16.666666f + 5.0f;
+                player_state.step_per_frame = PLAYER_STEP_HEIGHT;
+                player_state.position.y -= PLAYER_STEP_HEIGHT;
+                player_state.step_remainder = drop - PLAYER_STEP_HEIGHT + 5.0f;
             }
             player_state.fall_speed = 0.0f;
         } else if (player_state.death_timer == 0) {
@@ -464,7 +466,7 @@ void Player_CollideWithEntities(int climb) {
         }
         player_state.position.y -= 1.0f;
         if (stepped) {
-            step = 16.666666f;
+            step = PLAYER_STEP_HEIGHT;
             rise = old_position[1] - player_state.position.y;
             if (step < rise) {
                 player_state.position.y = old_position[1] - step;
@@ -557,7 +559,7 @@ void Player_CollideWithMapObjects(s32 climb) {
             hit = Collision_StandOnObjects((f32 *)&player_state, 1, reach, 100.0f);
         }
         if (hit) {
-            step = 16.666666f;
+            step = PLAYER_STEP_HEIGHT;
             rise = old_position[1] - player_state.position.y;
             if (step < rise && player_previous.floor_map_object != player_state.floor_map_object) {
                 player_state.position.y = old_position[1] - step;
