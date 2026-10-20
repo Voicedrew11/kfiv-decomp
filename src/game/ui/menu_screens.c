@@ -88,6 +88,8 @@ extern MenuItem *castable_spell_cursor[];
 extern MenuItem *castable_spell_top[];
 extern MenuItem *castable_spell_page_mark[];
 /* Appends node to the ring being built. */
+/* Feet per centimetre, rounded the way the retail code has it. */
+#define CM_TO_FEET 0.03281f
 #define LINK_ITEM(node)                     \
     if (last != NULL) {                     \
         (node)->next = last;                \
@@ -3751,7 +3753,7 @@ static void Menu_UpdateEquip(void) {
             menu_number_50 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
             menu_number_51 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
             menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
-            menu_number_54 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_54 = (s32)(weapon_defs[index].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_70 = weapon_level_records[index].level;
             menu_number_53 = item_name_defs[CURRENT_ITEM->item_number].weight_tenths_of_pound;
             menu_number_71 = 100;
@@ -5072,7 +5074,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             menu_number_51 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
             menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
             menu_number_53 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
-            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[record].level;
             menu_number_54 = item_name_defs[owned_list_current[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[owned_list_current[0]->group];

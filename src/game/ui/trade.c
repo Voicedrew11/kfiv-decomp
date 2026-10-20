@@ -48,6 +48,8 @@ extern MenuItem *owned_list_last_page;
 extern s32 handover_list_count;        /* how many nodes the ring has */
 extern s32 owned_list_count;
 /* Appends node to the ring being built; the seventh one becomes the page mark. */
+/* Feet per centimetre, rounded the way the retail code has it. */
+#define CM_TO_FEET 0.03281f
 #define LINK_ITEM(node, page_mark)          \
     count++;                                \
     if (count == 7) {                       \
@@ -1276,7 +1278,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
             menu_number_50 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
             menu_number_51 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
             menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
-            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[record].level;
             menu_number_54 = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[trade_stock_list_cursor[0]->group];
@@ -1626,7 +1628,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             menu_number_50 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
             menu_number_51 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
             menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
-            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[record].level;
             menu_number_54 = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[trade_stock_list_cursor[0]->group];
@@ -2100,7 +2102,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             menu_number_50 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
             menu_number_51 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
             menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
-            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[record].level;
             menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
@@ -2412,7 +2414,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             menu_number_50 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
             menu_number_51 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
             menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
-            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[record].level;
             menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
@@ -3542,7 +3544,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             menu_number_50 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
             menu_number_51 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
             menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
-            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[index].level;
             menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
@@ -3858,7 +3860,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             menu_number_50 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
             menu_number_51 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
             menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
-            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[index].level;
             menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
@@ -4293,7 +4295,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             menu_number_50 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
             menu_number_51 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
             menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
-            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[index].level;
             menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
@@ -4719,7 +4721,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             menu_number_50 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
             menu_number_51 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
             menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
-            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[index].level;
             menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
@@ -5059,7 +5061,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             menu_number_50 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
             menu_number_51 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
             menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
-            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[index].level;
             menu_number_54 = item_name_defs[smith_collect_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[smith_collect_list_cursor[0]->group];
