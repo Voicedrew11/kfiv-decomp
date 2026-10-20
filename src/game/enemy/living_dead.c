@@ -14,6 +14,9 @@
 #include "entity/entity_ai.h"
 #include "entity/entity_ai_choice.h"
 
+/* EntitySpawnInfo.spawn_mode: 0 lets the spawn start a ranged attack */
+#define LIVING_DEAD_SPAWN_MODE_RANGED 0
+
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void LivingDead_OnHit(Entity *entity);
@@ -96,7 +99,7 @@ static void LivingDead_ReactionLight(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAG_BITS(entity)->animates = 1;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->attack_window = 0;
         ENTITY_FLAG_BITS(entity)->guarding = 0;
         ENTITY_FLAG_BITS(entity)->attacking = 0;
@@ -114,7 +117,7 @@ static void LivingDead_ReactionLight(Entity *entity) {
         entity->busy_flags = 0;
         entity->move_command = 0;
         entity->action_timer = 0;
-        if (entity->spawn_info->spawn_mode == 0 && rand() % 100 < entity->params->near_distance) {
+        if (entity->spawn_info->spawn_mode == LIVING_DEAD_SPAWN_MODE_RANGED && rand() % 100 < entity->params->near_distance) {
             ENTITY_FLAG_BITS(entity)->ranged_attack = 1;
             ENTITY_FLAG_BITS(entity)->attack_index = 0;
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
@@ -143,7 +146,7 @@ static void LivingDead_ReactionHeavy(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAG_BITS(entity)->animates = 1;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->attack_window = 0;
         ENTITY_FLAG_BITS(entity)->guarding = 0;
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
@@ -165,7 +168,7 @@ static void LivingDead_ReactionHeavy(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (entity->spawn_info->spawn_mode == 0 && rand() % 100 < entity->params->near_distance) {
+            if (entity->spawn_info->spawn_mode == LIVING_DEAD_SPAWN_MODE_RANGED && rand() % 100 < entity->params->near_distance) {
                 ENTITY_FLAG_BITS(entity)->ranged_attack = 1;
                 ENTITY_FLAG_BITS(entity)->attack_index = 0;
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
@@ -198,10 +201,10 @@ static void LivingDead_Think(Entity *entity, s32 run_now) {
         return;
     }
     switch (entity->state) {
-    case 0:
-    case 1:
+    case ENTITY_STATE_UNAWARE:
+    case ENTITY_STATE_SEARCHING:
         break;
-    case 2:
+    case ENTITY_STATE_NOTICED:
         LivingDead_ThinkCombat(entity, run_now);
         return;
     }
@@ -228,7 +231,7 @@ static void LivingDead_ThinkCombat(Entity *entity, s32 run_now) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    if (entity->spawn_info->spawn_mode == 0 && frame_counter % (u32)(ai_state->step_index + 0x78) == 0) {
+    if (entity->spawn_info->spawn_mode == LIVING_DEAD_SPAWN_MODE_RANGED && frame_counter % (u32)(ai_state->step_index + 0x78) == 0) {
         ai_state->step_index = rand() % 60;
         if (rand() % 100 < (s16)entity->params->action_frames) {
             ENTITY_FLAG_BITS(entity)->ranged_attack = 1;
@@ -246,28 +249,28 @@ static void LivingDead_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 0x78;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 0x3C;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);

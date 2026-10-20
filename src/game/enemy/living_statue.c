@@ -8,6 +8,9 @@
 #include "model/motion.h"
 #include "entity/entity_ai.h"
 
+/* EntitySpawnInfo.spawn_mode: 0 is the normal spawn, else the statue holds animation 1 */
+#define LIVING_STATUE_SPAWN_MODE_NORMAL 0
+
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void LivingStatue_ThinkHoldAnim1(Entity *entity, s32 run_now);
@@ -27,7 +30,7 @@ void LivingStatue_Init(Entity *entity) {
         dest[i] = 0;
     }
     EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
-    if (entity->spawn_info->spawn_mode != 0) {
+    if (entity->spawn_info->spawn_mode != LIVING_STATUE_SPAWN_MODE_NORMAL) {
         ai_state->animate = EntityAi_Animate;
         ai_state->think = LivingStatue_ThinkHoldAnim1;
     } else {

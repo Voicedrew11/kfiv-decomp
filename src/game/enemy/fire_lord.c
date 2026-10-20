@@ -137,11 +137,11 @@ static void FireLord_Think(Entity *entity, s32 run_now) {
             EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 1:
-            case 2:
+            case ENTITY_STATE_SEARCHING:
+            case ENTITY_STATE_NOTICED:
                 FireLord_ThinkCombat(entity, run_now);
                 break;
-            case 0:
+            case ENTITY_STATE_UNAWARE:
             default:
                 FireLord_ThinkIdle(entity, run_now);
                 break;
@@ -252,7 +252,7 @@ static void FireLord_ThinkCombatSideAnimOrApproach(Entity *entity, s32 run_now) 
     ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
     if (!(ABS(angle) > DEG_TO_RAD(20))) {
-        ai_state->alternate_anim_flag = ai_state->alternate_anim_flag == 0;
+        ai_state->alternate_anim_flag = ai_state->alternate_anim_flag == FALSE;
         EntityAi_StartAction(entity, FireLord_PlayAnim6Or7Alternately, run_now);
         return;
     }
@@ -291,7 +291,7 @@ static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
@@ -302,21 +302,21 @@ static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 run_now) {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -372,7 +372,7 @@ static void FireLord_ThinkCombatBackAway(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
@@ -383,21 +383,21 @@ static void FireLord_ThinkCombatBackAway(Entity *entity, s32 run_now) {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -444,7 +444,7 @@ static void FireLord_PlayAnim6Or7Alternately(Entity *entity) {
     EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
     switch (entity->action_step) {
     case 0:
-        if (ai_state->alternate_anim_flag != 0) {
+        if (ai_state->alternate_anim_flag != FALSE) {
             Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 0);
         } else {
             Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 0);

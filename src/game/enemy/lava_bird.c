@@ -118,13 +118,13 @@ static void LavaBird_Think(Entity *entity, s32 run_now) {
             EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 LavaBird_ThinkIdle(entity, run_now);
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 LavaBird_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 LavaBird_ThinkCombat(entity, run_now);
                 break;
             default:
@@ -167,14 +167,14 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 run_now) {
             if (!(rand() & 1)) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 30 + 30;
-                ai_state->move_choice = 0;
-                entity->combat_choice = 1;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
+                entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
                 ai_state->turn_in_place = 1;
             } else {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 30 + 30;
-                ai_state->move_choice = 0;
-                entity->combat_choice = 1;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
+                entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
                 ai_state->turn_in_place = -1;
             }
         } else if (entity->action_timer == 0) {
@@ -185,7 +185,7 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 run_now) {
     if (player_state.position.y - entity->model->position[1] < entity->params->near_distance) {
         entity->target = &player_state;
         entity->action_timer = rand() % 30 + 30;
-        ai_state->move_choice = 0;
+        ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
         next_action = 1;
         entity->combat_choice = next_action;
         ai_state->turn_in_place = 2;
@@ -193,7 +193,7 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 run_now) {
     if (player_state.position.y - entity->model->position[1] > (s16)entity->params->action_frames) { // match: read signed here
         entity->target = &player_state;
         entity->action_timer = rand() % 30 + 30;
-        ai_state->move_choice = 0;
+        ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
         next_action = 1;
         entity->combat_choice = next_action;
         ai_state->turn_in_place = -2;
@@ -207,26 +207,26 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, next_action);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, LavaBird_RangedAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 30 + 60;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
         default:
             entity->target = &player_state;
             entity->action_timer = rand() % 30 + 60;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
         }
     }
-    if (entity->combat_choice == 1) {
+    if (entity->combat_choice == COMBAT_CHOICE_CLOSE_IN) {
         side = EntityAi_TurnFromPush(entity, direction);
-        if (ai_state->move_choice == 0) {
+        if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
             if (side > 0) {
                 entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
             } else if (side < 0) {
@@ -281,29 +281,29 @@ static void LavaBird_ThinkIdle(Entity *entity, s32 run_now) {
         if (player_state.position.y - entity->model->position[1] < entity->params->near_distance) {
             entity->target = &player_state;
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = 0;
-            entity->combat_choice = 1;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
+            entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
             ai_state->turn_in_place = 2;
         }
         if (player_state.position.y - entity->model->position[1] > (s16)entity->params->action_frames) { // match: read signed here
             entity->target = &player_state;
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = 0;
-            entity->combat_choice = 1;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
+            entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
             ai_state->turn_in_place = -2;
         }
         if (rand() % 100 < entity->params->far_distance) {
             if (!(rand() & 1)) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 30 + 30;
-                ai_state->move_choice = 0;
-                entity->combat_choice = 1;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
+                entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
                 ai_state->turn_in_place = 1;
             } else {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 30 + 30;
-                ai_state->move_choice = 0;
-                entity->combat_choice = 1;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
+                entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
                 ai_state->turn_in_place = -1;
             }
         } else {

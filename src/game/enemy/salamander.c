@@ -15,6 +15,10 @@
 #include "entity/entity_ai_choice.h"
 #include "entity/entity_ai.h"
 
+/* ai_state->move_choice: 1 waits in view and attacks, 2 backs off from the player */
+#define SALAMANDER_MOVE_CHOICE_ATTACK_IN_VIEW 1
+#define SALAMANDER_MOVE_CHOICE_BACK_OFF        2
+
 
 static void Salamander_Animate(Entity *entity);
 static void Salamander_OnHit(Entity *entity);
@@ -460,10 +464,10 @@ static void Salamander_Think(Entity *entity, s32 run_now) {
         return;
     }
     switch (entity->state) {
-    case 0:
+    case ENTITY_STATE_UNAWARE:
         break;
-    case 1:
-    case 2:
+    case ENTITY_STATE_SEARCHING:
+    case ENTITY_STATE_NOTICED:
         Salamander_ThinkCombat(entity, run_now);
         return;
     }
@@ -598,7 +602,7 @@ static void Salamander_ThinkCombat(Entity *entity, s32 run_now) {
         entity->move_command = EntityAi_PushTurnCommand3D(entity, turn);
     } else {
         switch (ai_state->move_choice) {
-        case 0: {
+        case MOVE_CHOICE_CLOSE_IN: {
             f32 *point = ai_state->target_point;
 
             Vector_Copy(point, &player_state);
@@ -610,7 +614,7 @@ static void Salamander_ThinkCombat(Entity *entity, s32 run_now) {
             }
             break;
         }
-        case 1: {
+        case SALAMANDER_MOVE_CHOICE_ATTACK_IN_VIEW: {
             f32 *point = ai_state->target_point;
 
             Vector_Copy(point, &player_state);
@@ -630,7 +634,7 @@ static void Salamander_ThinkCombat(Entity *entity, s32 run_now) {
             entity->move_command = EntityAi_MoveCommand3D(entity, 0, entity->radius + 100.0f + 30.0f);
             break;
         }
-        case 2: {
+        case SALAMANDER_MOVE_CHOICE_BACK_OFF: {
             f32 *point = ai_state->target_point;
 
             direction[0] = EntityMath_WrapAngle(entity->heading_to_player + PI);
@@ -641,7 +645,7 @@ static void Salamander_ThinkCombat(Entity *entity, s32 run_now) {
             ai_state->target_point[1] = entity->spawn_info->spawn_y;
             entity->move_command = EntityAi_MoveCommand3D(entity, 0, 50.0f);
             if (entity->distance_to_player >= (f32)ENTITY_CONTROLLER(entity)->action_frames || ai_state->pause_timer <= 0) {
-                ai_state->move_choice = 0;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             }
             break;
         }
