@@ -112,12 +112,12 @@ static void Slasher_Think(Entity *entity, s32 run_now) {
             EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 1:
-            case 2:
+            case ENTITY_STATE_SEARCHING:
+            case ENTITY_STATE_NOTICED:
                 EntityAi_ThinkCombat(entity, run_now);
                 ai_state->step_index = 0;
                 break;
-            case 0:
+            case ENTITY_STATE_UNAWARE:
             default:
                 EntityAi_StartAction(entity, Slasher_WaitForPlayerNear, run_now);
                 break;
