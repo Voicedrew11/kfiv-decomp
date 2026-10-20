@@ -111,9 +111,9 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 run_now) {
     s32 mode;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     } else {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     }
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
@@ -259,7 +259,7 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames, 0);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->hit_strength = 0;
         ai_state->turn_rate = 0.0f;
         ai_state->mode_timer = entity->params->far_distance;
@@ -338,7 +338,7 @@ static void AncientMummy_FadeBackIn(Entity *entity) {
     case 0:
         ENTITY_FLAG_BITS(entity)->hit_strength = 0;
         ai_state->sub_timer = 0;
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         entity->action_step++;
         break;
     case 1:

@@ -105,9 +105,9 @@ static void Crow_PickAction(Entity *entity, s32 run_now) {
     s32 roll;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     } else {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     }
     if (entity->action_timer == 0) {
         roll = entity->params->yaw_limit_deg + (s16)entity->params->action_frames + entity->params->near_distance;
@@ -138,7 +138,7 @@ static void Crow_MoveOffAndRemove(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 turn;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     entity->move_command |= MOVE_COMMAND_FORWARD;
     if (ai_state->pause_timer < entity->params->type_param_0) {
         EntityEvent_StartEffectAtPoint((char **)entity, entity->params->far_distance, 0xFF, (int)entity->model->rotation);
@@ -180,7 +180,7 @@ static void Crow_Death(Entity *entity) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
             s32 kind = 2;
 
@@ -232,7 +232,7 @@ static void Crow_PlayAnim20(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         entity->action_step++;
         break;
     case 1:
@@ -264,7 +264,7 @@ static void Crow_PlayAnim21(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x15, 0, entity->params->motion_blend_frames, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         entity->action_step++;
         break;
     case 1:

@@ -119,9 +119,9 @@ static int Scorpion_ThinkWander(Entity *entity, s32 run_now) {
     s32 turn;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     } else {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     }
     if (entity->action_timer == 0) {
         if (rand() % 100 <= 20) {
@@ -159,9 +159,9 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 run_now) {
     s32 mode;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     } else {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     }
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
@@ -249,7 +249,7 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 run_now) {
                 if (ABS(angle) <= DEG_TO_RAD(10)) {
                     entity->action_timer = 0;
                 }
-                ENTITY_FLAG_BITS(entity)->motion_step_mode = 3;
+                ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_TURN;
                 break;
             case 1:
                 if (turn > 0) {
@@ -321,7 +321,7 @@ static void Scorpion_Move(Entity *entity) {
     } else {
         command = first_command;
     }
-    if (ENTITY_FLAG_BITS(entity)->motion_step_mode == 0) {
+    if (ENTITY_FLAG_BITS(entity)->motion_step_mode == MOTION_STEP_IN_PLACE) {
         vector = ENTITY_SCRATCH_VECTOR;
         vector[0] = vector[1] = vector[2] = vector[3] = 0.0f;
         if (command & MOVE_COMMAND_FORWARD_BACK) {

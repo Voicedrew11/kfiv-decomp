@@ -192,9 +192,9 @@ static void GiantLeader_ThinkCombat(Entity *entity, s32 run_now) {
     s32 turn;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     } else {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     }
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
@@ -278,7 +278,7 @@ static void GiantLeader_MeleeAttack0(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
@@ -399,7 +399,7 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
             break;
         }
         Motion_Start(entity, 0x11, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -437,14 +437,14 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 1);
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
             entity->action_step++;
         }
         break;
     case 3:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         }
         break;
     case 4:
@@ -493,7 +493,7 @@ static void GiantLeader_MeleeAttack1(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x15, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->action_counter = 0;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;

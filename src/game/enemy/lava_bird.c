@@ -161,7 +161,7 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 run_now) {
     s32 next_action = 0; // match: the unused initial value changes the instruction count that sizes a compiler hash table, and with it two registers
     s32 side;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     if (entity->action_timer == 0) {
         if (rand() % 100 < entity->params->far_distance) {
             if (!(rand() & 1)) {
@@ -247,7 +247,7 @@ static void LavaBird_ThinkPursue(Entity *entity, s32 run_now) {
     f32 direction[2];
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     ENTITY_FLAG_BITS(entity)->attacking = FALSE;
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     if (entity->action_timer == 0) {
@@ -272,7 +272,7 @@ static void LavaBird_ThinkIdle(Entity *entity, s32 run_now) {
     f32 direction[4];
     s32 side;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     if (entity->action_timer == 0) {
         EntityPoint_PickNear((f32)entity->spawn_info->wander_radius, ai_state->target_point, entity->spawn_info, entity->model->position);
@@ -340,7 +340,7 @@ static void LavaBird_ApplyMoveCommand(Entity *entity) {
     f32 roll;
     f32 step;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         ai_state->turn_rate -= entity->params->turn_step_per_frame;
         if (ai_state->turn_rate < -entity->params->turn_limit) {
@@ -485,7 +485,7 @@ static void LavaBird_Dormant(Entity *entity) {
     case 0:
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&slots->motion_slot_0, 0, 1, 0, 0, 1);
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&slots->motion_slot_1, 1, 1, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
@@ -563,7 +563,7 @@ static void LavaBird_RangedAttack(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, ENTITY_FLAG_BITS(entity)->attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         entity->action_step++;
     case 1:
         if (slots->motion_slot_0.frames_left == 0) {
@@ -679,7 +679,7 @@ static void LavaBird_ReactionLight(Entity *entity) {
     case 0:
         EntityEvent_StartFrameCues(entity, 0xE, 0, 0);
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&((EntityAiStateKind1740A8 *)&entity->ai_state)->motion_slot_0, 0, 0xE, 0, 5, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ai_state->turn_rate = 0;
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->attack_window = FALSE;
@@ -718,7 +718,7 @@ static void LavaBird_ReactionHeavy(Entity *entity) {
     case 0:
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&((EntityAiStateKind1740A8 *)&entity->ai_state)->motion_slot_0, 0, 0xF, 0, 5, 1);
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&((EntityAiStateKind1740A8 *)&entity->ai_state)->motion_slot_1, 1, 0xF, 0, 5, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ai_state->turn_rate = 0;
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->attack_window = FALSE;
@@ -762,7 +762,7 @@ static void LavaBird_Death(Entity *entity) {
     case 0:
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&((EntityAiStateKind1740A8 *)&entity->ai_state)->motion_slot_0, 0, 0x10, 0, 5, 1);
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&((EntityAiStateKind1740A8 *)&entity->ai_state)->motion_slot_1, 1, 0x10, 0, 5, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         if (!ENTITY_PARAMS_BITS(entity)->bit25 && ENTITY_PARAMS_BITS(entity)->bit26) {
             entity->collision_radius = 20.0f;
         }
@@ -811,7 +811,7 @@ static void LavaBird_Animate(Entity *entity) {
     s32 previous;
     f32 rate;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     if (!ENTITY_FLAG_BITS(entity)->animates) {
         return;
     }

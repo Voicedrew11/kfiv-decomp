@@ -788,6 +788,40 @@ typedef struct {
 /* groups of the direction and turn bits the move handlers test together */
 #define MOVE_COMMAND_FORWARD_BACK   0x3     /* the forward/back axis */
 #define MOVE_COMMAND_SIDEWAYS       0xC     /* the step left/right axis */
+
+/* Entity.state: what the entity knows of the player (EntityAi_StepState) */
+#define ENTITY_STATE_UNAWARE        0       /* the player is not noticed */
+#define ENTITY_STATE_SEARCHING      1       /* the player was noticed and Entity.timer still runs */
+#define ENTITY_STATE_NOTICED        2       /* the player is noticed (flag bit 33) */
+#define ENTITY_STATE_HELD           3       /* set by scripts or the type; EntityAi_StepState keeps it */
+
+/* Entity.combat_choice: the four choices EntityAi_PickCombatChoice draws from */
+#define COMBAT_CHOICE_NONE          -1      /* none could be chosen */
+#define COMBAT_CHOICE_ATTACK        0
+#define COMBAT_CHOICE_CLOSE_IN      1
+#define COMBAT_CHOICE_WAIT          2
+#define COMBAT_CHOICE_OTHER         3       /* the fourth choice; most types treat it as waiting */
+
+/* EntityAiState.move_choice: how the entity moves while it is not attacking; types add their own above 0 */
+#define MOVE_CHOICE_NONE            -1      /* stands */
+#define MOVE_CHOICE_CLOSE_IN        0       /* turns to and walks at the player */
+
+/* EntityFlagBits.motion_step_mode: what Motion_StepSlot does with the root part's movement */
+#define MOTION_STEP_IN_PLACE        0       /* nothing: the move handler moves the entity */
+#define MOTION_STEP_MOVE            1       /* moves and turns the entity with it */
+#define MOTION_STEP_MOVE_FLAT       2       /* moves the entity along x and z only */
+#define MOTION_STEP_TURN            3       /* turns the entity with it (yaw only) */
+
+/* Entity.animation_index: the animations Motion_Start plays (EntityParams.motion_ids entries) */
+#define ENTITY_MOTION_STAND         0
+#define ENTITY_MOTION_WALK          3
+#define ENTITY_MOTION_RUN           4
+#define ENTITY_MOTION_BACK          5
+#define ENTITY_MOTION_STEP_LEFT     6
+#define ENTITY_MOTION_STEP_RIGHT    7
+#define ENTITY_MOTION_DOWN          8
+#define ENTITY_MOTION_UP            9
+#define ENTITY_MOTION_RANGED_ATTACK 0x17    /* the ranged attack: ENTITY_MOTION_ATTACK_BASE + 3 */
 #define MOVE_COMMAND_UP_DOWN        0x30    /* the up/down axis */
 #define MOVE_COMMAND_DIRECTIONS     0x3F    /* all six direction bits: the command moves the entity */
 #define MOVE_COMMAND_TURNS          0x300   /* either turn bit */

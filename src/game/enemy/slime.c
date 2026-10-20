@@ -122,7 +122,7 @@ static void Slime_Think(Entity *entity, s32 run_now) {
 static void Slime_ThinkReturn(Entity *entity, s32 run_now) {
     f32 unused[8]; // match: retail reserves 0x20 bytes, which also keeps the call from being a jump
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     entity->target = entity->spawn_info;
     entity->move_command = MOVE_COMMAND_FORWARD;
     entity->action_timer = 0;
@@ -138,7 +138,7 @@ static void Slime_ThinkWander(Entity *entity, s32 run_now) {
     s32 roll;
     f32 turn;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     if (entity->action_timer == 0) {
         roll = rand() % 100;
         if (roll > 60) {
@@ -180,7 +180,7 @@ static void Slime_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 side;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -314,7 +314,7 @@ static void Slime_MeleeAttack(Entity *entity) {
     case 0:
         Motion_Start(entity, ENTITY_FLAG_BITS(entity)->attack_index | ENTITY_MOTION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }

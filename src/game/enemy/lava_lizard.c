@@ -115,7 +115,7 @@ static void LavaLizard_ThinkCombat(Entity *entity, s32 run_now) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -203,7 +203,7 @@ static void LavaLizard_RunAtPlayer(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 4, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_timer = entity->params->near_distance;
         entity->action_step++;
@@ -298,7 +298,7 @@ static void LavaLizard_ThinkDecideShootOrTurn(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 angle;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;

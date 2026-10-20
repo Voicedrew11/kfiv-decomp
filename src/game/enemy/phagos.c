@@ -113,9 +113,9 @@ static void Phagos_RunAwayAndRemove(Entity *entity) {
     case 0:
         Motion_Start(entity, 4, 0, entity->params->motion_blend_frames, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         }
         ai_state->part_angle_x = entity->heading_to_player + HALF_PI + DEG_TO_RAD((f32)(rand() % 180));
         ai_state->part_angle_x = EntityMath_WrapAngle(ai_state->part_angle_x);

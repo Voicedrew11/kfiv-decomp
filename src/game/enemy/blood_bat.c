@@ -130,7 +130,7 @@ static int BloodBat_ThinkReturn(void *entity_arg, int run_now) {
     s32 turn;
 
     entity->action_timer = 0;
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn == 0) {
         entity->target = entity->spawn_info;
@@ -191,7 +191,7 @@ static void BloodBat_ThinkWander(Entity *entity, s32 run_now) {
     f32 *point;
     EntitySpawnInfo *spawn_info;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     if (entity->action_timer == 0) {
         spawn_info = entity->spawn_info;
         point = entity->ai_state.target_point;
@@ -221,7 +221,7 @@ static int BloodBat_ThinkCombat(void *entity_arg, int run_now) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -321,7 +321,7 @@ static void BloodBat_Move(Entity *entity) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
-    if (ENTITY_FLAG_BITS(entity)->motion_step_mode == 0) {
+    if (ENTITY_FLAG_BITS(entity)->motion_step_mode == MOTION_STEP_IN_PLACE) {
         vector = ENTITY_SCRATCH_VECTOR;
         vector[0] = vector[1] = vector[2] = vector[3] = 0.0f;
         if (entity->move_command & MOVE_COMMAND_FORWARD_BACK) {
@@ -403,7 +403,7 @@ static void BloodBat_Dormant(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
         ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;

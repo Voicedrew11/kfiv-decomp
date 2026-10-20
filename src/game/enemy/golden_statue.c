@@ -142,7 +142,7 @@ static void GoldenStatue_WalkToPost(Entity *entity, s32 run_now) {
     limit = 50.0f;
     target = entity->ai_state.target_point;
     ai_state = &entity->ai_state;
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     point[0] = -7900.0f;
     point[1] = entity->spawn_info->spawn_y;
     point[2] = 3050.0f;
@@ -182,7 +182,7 @@ static void GoldenStatue_TurnAtPost(Entity *entity, s32 run_now) {
         }
         return;
     }
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     angle = EntityMath_AngleDifference(entity->model->rotation[1], ai_state->part_angle_x);
     if (ABS(angle) > entity->params->turn_limit) {
         if (angle >= 0.0f) {
@@ -260,7 +260,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 run_no
     Entity *other;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;

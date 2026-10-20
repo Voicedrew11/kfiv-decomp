@@ -148,7 +148,7 @@ static void GiantSpider_ThinkTurnToPlayer(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 angle;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
     if (ABS(angle) > DEG_TO_RAD(25)) {
         if (angle >= 0.0f) {
@@ -171,7 +171,7 @@ static void GiantSpider_ThinkCombat(Entity *entity, s32 run_now) {
     s32 side;
     f32 angle;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -258,7 +258,7 @@ static void GiantSpider_PlayTurnAnim6Or11(Entity *entity) {
         } else {
             Motion_Start(entity, 0xB, 0, entity->params->motion_blend_frames, 1);
         }
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 3;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_TURN;
         ENTITY_UNK5C(entity)->as_s32 = 0;
         entity->action_step++;
         break;
@@ -295,7 +295,7 @@ static void GiantSpider_PlayTurnAnim7Or12(Entity *entity) {
         } else {
             Motion_Start(entity, 0xC, 0, entity->params->motion_blend_frames, 1);
         }
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 3;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_TURN;
         ENTITY_UNK5C(entity)->as_s32 = 0;
         entity->action_step++;
         break;

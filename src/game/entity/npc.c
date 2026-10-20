@@ -280,7 +280,7 @@ static void Npc_TurnToPlayer(Entity *entity) {
                 Motion_Start(entity, 0x1B, 0, entity->params->motion_blend_frames, 0);
             }
         }
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -331,7 +331,7 @@ static void Npc_TurnToSpawnHeading(Entity *entity) {
                 Motion_Start(entity, 0x1B, 0, entity->params->motion_blend_frames, 0);
             }
         }
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -375,7 +375,7 @@ static void Npc_ReactionHeavy(Entity *entity) {
         }
         params = entity->params;
         if (params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
             kind = 1;
             if (ENTITY_PARAMS_MOVEMENT_KIND(params) == ENTITY_PARAMS_MOVEMENT_1) {
@@ -434,7 +434,7 @@ static void Npc_Death(Entity *entity) {
         }
         params = entity->params;
         if (params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
             kind = 1;
             if (ENTITY_PARAMS_MOVEMENT_KIND(params) == ENTITY_PARAMS_MOVEMENT_1) {
@@ -506,7 +506,7 @@ static void Npc_Move(Entity *entity) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
-    if (ENTITY_FLAG_BITS(entity)->motion_step_mode == 0) {
+    if (ENTITY_FLAG_BITS(entity)->motion_step_mode == MOTION_STEP_IN_PLACE) {
         vector = ENTITY_SCRATCH_VECTOR;
         vector[0] = vector[1] = vector[2] = vector[3] = 0.0f;
         if (entity->move_command & MOVE_COMMAND_FORWARD_BACK) {

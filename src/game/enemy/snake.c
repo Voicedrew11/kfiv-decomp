@@ -87,7 +87,7 @@ static void Snake_DormantHoldAnim2(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 2, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
@@ -149,7 +149,7 @@ static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 8, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
@@ -225,7 +225,7 @@ static void Snake_Dormant(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 3, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
@@ -317,7 +317,7 @@ static void Snake_Death(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
         ENTITY_FLAG_BITS(entity)->dying = 1;

@@ -137,7 +137,7 @@ static void Larva_Dormant(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, entity->params->motion_blend_frames, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
@@ -152,7 +152,7 @@ static void Larva_Dormant(Entity *entity) {
     case 1:
         if (entity->distance_to_player < (f32)entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
             Motion_Start(entity, 2, 0, entity->params->motion_blend_frames, 0);
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
             ENTITY_FLAG_BITS(entity)->hit_strength = 0;
             entity->action_step++;
         }
@@ -301,7 +301,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
         half = 0.5f;
         Motion_Start(entity, 0x12, 0, entity->params->motion_blend_frames, 1);
         degree = DEG_TO_RAD(1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
         ENTITY_FLAG_BITS(entity)->bit18 = 1;

@@ -164,7 +164,7 @@ static void MasterFadin_Dormant(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
         ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
@@ -177,7 +177,7 @@ static void MasterFadin_Dormant(Entity *entity) {
     case 1:
         if (entity->distance_to_player < entity->spawn_info->wake_distance) {
             Motion_Start(entity, 2, 0, entity->params->motion_blend_frames, 0);
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
             ENTITY_FLAG_BITS(entity)->hit_strength = 0;
             entity->action_step++;
         }

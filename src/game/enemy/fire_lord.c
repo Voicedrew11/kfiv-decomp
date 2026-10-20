@@ -156,7 +156,7 @@ static void FireLord_Think(Entity *entity, s32 run_now) {
 /* The think function of state 0: no command, flag bit 9 clear; starts the move action. */
 static void FireLord_ThinkIdle(Entity *entity, s32 run_now) {
     entity->move_command = 0;
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     EntityAi_StartAction(entity, entity->ai_state.move, run_now);
 }
@@ -218,7 +218,7 @@ static void FireLord_ThinkCombatApproach(Entity *entity, int invoke_now) {
     EntityAiState *sub = &entity->ai_state;
 
     entity->target = &player_state;
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     ENTITY_FLAG_BITS(entity)->look_at_target = 1;
     entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f);
     EntityAi_StartAction(entity, sub->move, invoke_now);
@@ -235,7 +235,7 @@ static void FireLord_ThinkCombatShootOrApproach(Entity *entity, s32 run_now) {
         EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
         return;
     }
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     entity->target = &player_state;
     entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f);
@@ -248,7 +248,7 @@ static void FireLord_ThinkCombatSideAnimOrApproach(Entity *entity, s32 run_now) 
     EntityAiStateKind131390 *ai_state = (EntityAiStateKind131390 *)&entity->ai_state;
     f32 angle;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
     if (!(ABS(angle) > DEG_TO_RAD(20))) {
@@ -272,7 +272,7 @@ static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 run_now) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     if (FireLord_ShouldEvadeSwingOrMagic(entity, 600.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, FireLord_PlayAnim6Or7ThenMelee0, 1);
         return;
@@ -353,7 +353,7 @@ static void FireLord_ThinkCombatBackAway(Entity *entity, s32 run_now) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     if (FireLord_ShouldEvadeSwingOrMagic(entity, 600.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, FireLord_PlayAnim6Or7ThenMelee0, 1);
         return;
@@ -449,7 +449,7 @@ static void FireLord_PlayAnim6Or7Alternately(Entity *entity) {
         } else {
             Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 0);
         }
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -493,7 +493,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
@@ -613,7 +613,7 @@ static void FireLord_MeleeAttack1(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x15, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
@@ -709,7 +709,7 @@ static void FireLord_PlayAnim6Or7ThenMelee0(Entity *entity) {
         } else {
             Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 0);
         }
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {

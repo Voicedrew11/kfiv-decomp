@@ -157,7 +157,7 @@ static void ForestGolem_StartScriptAndRumble(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -205,7 +205,7 @@ static void ForestGolem_StartScriptAndRumble(Entity *entity) {
    entity. */
 static void ForestGolem_Move(Entity *entity) {
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
 }
 
 /* A set-up function nothing refers to: as ForestGolem_Init, but it installs EntityAi_OnHit, EntityAi_Move and
@@ -298,7 +298,7 @@ static void ForestGolem_ThinkCombat(Entity *entity, s32 run_now) {
     s32 next_action;
     s32 side;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     range = 300.0f;
     angle = DEG_TO_RAD(30);
     if (EntityAi_ShouldGuard(entity, range, angle)) {
@@ -390,7 +390,7 @@ static void ForestGolem_Death(Entity *entity) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
@@ -446,7 +446,7 @@ static void ForestGolem_SignalMapObject(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 0);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0.0f;
         entity->action_step++;
         break;
@@ -538,7 +538,7 @@ static void ForestGolem_WalkToMapObjectPosX(Entity *entity, s32 run_now) {
         }
         return;
     }
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     range = 100.0f;
     if (entity->model->position[0] > 1200.0f || entity->model->position[0] < 800.0f) {
         ai_state->target_point[0] = 950.0f;
@@ -570,7 +570,7 @@ static void ForestGolem_WalkToMapObjectPosX(Entity *entity, s32 run_now) {
             ai_state->action_flags = entity->spawn_info->second_map_object_id;
         }
         if (EntityMath_DistanceXZ(entity->model->position, near_point) < range) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
             Vector_Copy(ai_state->target_point, far_point);
             entity->target = ai_state->target_point;
             entity->move_command = EntityAi_TurnCommand(entity);
@@ -645,7 +645,7 @@ static void ForestGolem_WalkToMapObjectNegX(Entity *entity, s32 run_now) {
         }
         return;
     }
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     range = 100.0f;
     if (entity->model->position[0] > -800.0f || entity->model->position[0] < -1200.0f) {
         ai_state->target_point[0] = -950.0f;
@@ -677,7 +677,7 @@ static void ForestGolem_WalkToMapObjectNegX(Entity *entity, s32 run_now) {
             ai_state->action_flags = entity->spawn_info->second_map_object_id;
         }
         if (EntityMath_DistanceXZ(entity->model->position, near_point) < range) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
             Vector_Copy(ai_state->target_point, far_point);
             entity->target = ai_state->target_point;
             entity->move_command = EntityAi_TurnCommand(entity);

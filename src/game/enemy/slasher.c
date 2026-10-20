@@ -134,7 +134,7 @@ static void Slasher_Think(Entity *entity, s32 run_now) {
    starts the move action. */
 static void Slasher_ThinkStandStill(Entity *entity, s32 run_now) {
     entity->move_command = 0;
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     EntityAi_StartAction(entity, entity->ai_state.move, run_now);
 }
@@ -147,7 +147,7 @@ static void Slasher_WaitForPlayerNear(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     if (entity->distance_to_player < entity->params->near_distance || ai_state->step_index != 0) {
         ENTITY_FLAG_BITS(entity)->player_in_reach = TRUE;
