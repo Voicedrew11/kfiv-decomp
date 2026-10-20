@@ -18,6 +18,15 @@
 /* EntityAiState.move_choice 1 (0 is MOVE_CHOICE_CLOSE_IN): keeps 200 to 800 from the player */
 #define ONYX_MOVE_CHOICE_KEEP_RANGE 1
 
+/* ai_state->step_index: the attack group, which sets the parts that take part (Onyx_SwitchAttack) */
+#define ONYX_ATTACK_RANGED          0       /* ranged record 0: parts 22 to 31 */
+#define ONYX_ATTACK_MELEE_RECORD_1  1       /* melee record 1: parts 11 and 12 */
+#define ONYX_ATTACK_MELEE_RECORD_2  2       /* melee record 2: parts 13 to 21 */
+#define ONYX_ATTACK_NONE            3       /* no attack group yet: parts 8 to 10 */
+/* Onyx_SwitchAttack: Entity.action_step (steps 0 to 2 are the shared ones) */
+#define ONYX_SWITCH_STEP_BLEND_IN   3       /* waits for animation 18 to blend in */
+#define ONYX_SWITCH_STEP_END        4       /* ends once animation 18 ends, then sets the reload timer */
+
 static void Onyx_Think(Entity *entity, s32 run_now);
 static void Onyx_ThinkCombat(Entity *entity, s32 run_now);
 static void Onyx_RangedAttack0(Entity *entity);
@@ -73,7 +82,7 @@ void Onyx_Init(Entity *entity) {
     ai_state->pause_timer = entity->params->ranged_attacks[0].record.ranged_weight;
     ai_state->sub_timer = entity->params->melee_attacks[1].attack_weight;
     ai_state->mode_timer = (u8)entity->params->melee_attack_third[0];
-    ai_state->step_index = 3;
+    ai_state->step_index = ONYX_ATTACK_NONE;
     for (part_index = 0; part_index < 25; part_index++) {
         part = &((EntityModelPart80 *)entity->model->parts)[part_index + 8];
         ENTITY_MODEL_PART_FLAG_BITS(part)->bit40 = TRUE;
@@ -83,17 +92,17 @@ void Onyx_Init(Entity *entity) {
         ai_state->mode_timer = 0;
     }
     switch (ai_state->step_index) {
-    case 0:
+    case ONYX_ATTACK_RANGED:
         first_part = 0x16;
         part_count = 10;
         ai_state->pause_timer = entity->params->ranged_attacks[0].record.ranged_weight;
         break;
-    case 1:
+    case ONYX_ATTACK_MELEE_RECORD_1:
         first_part = 0xB;
         part_count = 2;
         ai_state->sub_timer = entity->params->melee_attacks[1].attack_weight;
         break;
-    case 2:
+    case ONYX_ATTACK_MELEE_RECORD_2:
         first_part = 0xD;
         part_count = 9;
         ai_state->mode_timer = (u8)entity->params->melee_attack_third[0];
@@ -214,7 +223,7 @@ static void Onyx_ThinkCombat(Entity *entity, s32 run_now) {
             return;
         case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
-            if (ai_state->step_index == 0) {
+            if (ai_state->step_index == ONYX_ATTACK_RANGED) {
                 entity->action_timer = rand() % 30 + 0x1E;
                 ai_state->move_choice = ONYX_MOVE_CHOICE_KEEP_RANGE;
             } else {
@@ -289,7 +298,7 @@ static void Onyx_RangedAttack0(Entity *entity) {
         }
         EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
         if (entity->model->level_tables->frame >= entity->params->near_distance
             && entity->model->level_tables->frame <= entity->params->far_distance) {
@@ -354,17 +363,17 @@ static void Onyx_SwitchAttack(Entity *entity) {
                 ai_state->mode_timer = 0;
             }
             switch (ai_state->step_index) {
-            case 0:
+            case ONYX_ATTACK_RANGED:
                 first_part = 0x16;
                 part_count = 10;
                 ai_state->pause_timer = entity->params->ranged_attacks[0].record.ranged_weight;
                 break;
-            case 1:
+            case ONYX_ATTACK_MELEE_RECORD_1:
                 first_part = 0xB;
                 part_count = 2;
                 ai_state->sub_timer = entity->params->melee_attacks[1].attack_weight;
                 break;
-            case 2:
+            case ONYX_ATTACK_MELEE_RECORD_2:
                 first_part = 0xD;
                 part_count = 9;
                 ai_state->mode_timer = (u8)entity->params->melee_attack_third[0];
@@ -382,12 +391,12 @@ static void Onyx_SwitchAttack(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case ONYX_SWITCH_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 4:
+    case ONYX_SWITCH_STEP_END:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;

@@ -17,6 +17,10 @@
 /* EntitySpawnInfo.spawn_mode: the default spawn, which keeps the think handler with states */
 #define HIGH_SKELETON_SPAWN_MODE_DEFAULT 0
 
+/* HighSkeleton_DormantScaleUp: Entity.action_step (step 0 is the shared start) */
+#define HIGH_SKELETON_SCALE_UP_STEP_EFFECT 1        /* starts the rising effect */
+#define HIGH_SKELETON_SCALE_UP_STEP_GROW 2          /* grows the model over near_distance frames, then restores its scale */
+
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void HighSkeleton_Think(Entity *entity, s32 run_now);
@@ -204,11 +208,11 @@ static void HighSkeleton_DormantScaleUp(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
         break;
-    case 1:
+    case HIGH_SKELETON_SCALE_UP_STEP_EFFECT:
         EntityEvent_StartEffectAtPoint((char **)entity, 0x22F, 0xFF, (int)entity->model->rotation);
         entity->action_step++;
         break;
-    case 2:
+    case HIGH_SKELETON_SCALE_UP_STEP_GROW:
         duration = entity->params->near_distance;
         entity->model->scale[0] = (f32)(duration - entity->action_timer) / (f32)duration;
         entity->model->scale[2] = (f32)(duration - entity->action_timer) / (f32)duration;

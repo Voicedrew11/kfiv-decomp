@@ -20,6 +20,9 @@
 #define EARTH_ELEMENTAL_MOVE_CHOICE_BACK  1
 #define EARTH_ELEMENTAL_MOVE_CHOICE_STAND 2
 
+/* EarthElemental_BackAwayOrRunAtPlayer: Entity.action_step */
+#define EARTH_ELEMENTAL_RUN_STEP_PURSUE 2           /* each frame guards or dodges, then backs away or runs at the player */
+
 static void EarthElemental_Think(Entity *entity, s32 run_now);
 static void EarthElemental_ThinkCombat(Entity *entity, s32 run_now);
 static void EarthElemental_PlayTurnAnim(Entity *entity);
@@ -504,7 +507,7 @@ static void EarthElemental_BackAwayOrRunAtPlayer(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case EARTH_ELEMENTAL_RUN_STEP_PURSUE:
         if (EarthElemental_ShouldDodgeMagic(entity, 200.0f, DEG_TO_RAD(60))) {
             EntityAi_StartAction(entity, EntityAi_Dodge, 1);
             break;

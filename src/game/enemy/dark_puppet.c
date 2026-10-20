@@ -26,6 +26,9 @@
 #define DARK_PUPPET_MOVE_CHOICE_STEP_RIGHT  3   /* steps right round the player */
 #define DARK_PUPPET_MOVE_CHOICE_TURN        4   /* turns to the player in place */
 
+/* DarkPuppet_Death: Entity.action_step (steps 0, 1 and 3 are the shared ones) */
+#define DARK_PUPPET_DEATH_STEP_DIE 2                /* waits for frame action_frames, then counts as dead */
+
 static void DarkPuppet_OnHit(Entity *entity);
 static void DarkPuppet_Think(Entity *entity, s32 run_now);
 static void DarkPuppet_ThinkCombat(Entity *entity, s32 run_now);
@@ -630,7 +633,7 @@ static void DarkPuppet_Death(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case DARK_PUPPET_DEATH_STEP_DIE:
         if ((s16)entity->params->action_frames < entity->model->level_tables->frame) {
             entity->action_timer = ai_state->pause_timer = EntityAi_AnimationFrameCount(entity, entity->animation_index) - entity->model->level_tables->frame;
             ENTITY_FLAG_BITS(entity)->dying = 2;
@@ -639,7 +642,7 @@ static void DarkPuppet_Death(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DEATH_STEP_FADE_OUT:
         entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / (f32)ai_state->pause_timer;
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ENTITY_FLAG_BITS(entity)->animates = FALSE;

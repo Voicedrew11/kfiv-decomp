@@ -25,6 +25,11 @@
 #define EXPEDITION_SOLDIER_MOVE_CHOICE_APPROACH 1
 /* AiState map_object_42_state and map_object_43_state: 0 until the soldier has operated the map object */
 #define EXPEDITION_SOLDIER_MAP_OBJECT_UNOPERATED 0
+/* EntitySpawnInfo.variant: the think handler the set-up function installs */
+#define EXPEDITION_SOLDIER_VARIANT_HOLD_18              1       /* holds animation 18 */
+#define EXPEDITION_SOLDIER_VARIANT_HOLD_19              2       /* holds animation 19 */
+#define EXPEDITION_SOLDIER_VARIANT_USE_MAP_OBJECTS_POS_X 3      /* operates the map objects on the +x side */
+#define EXPEDITION_SOLDIER_VARIANT_USE_MAP_OBJECTS_NEG_X 4      /* operates the map objects on the -x side */
 
 static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity, s32 run_now);
 static void ExpeditionSoldier_Think(Entity *entity, s32 run_now);
@@ -52,12 +57,12 @@ void ExpeditionSoldier_Init(Entity *entity) {
     }
     EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     switch (entity->spawn_info->variant) {
-    case 1:
-    case 2:
+    case EXPEDITION_SOLDIER_VARIANT_HOLD_18:
+    case EXPEDITION_SOLDIER_VARIANT_HOLD_19:
         ai_state->think = ExpeditionSoldier_ThinkHoldAnim18Or19;
         ai_state->animate = EntityAi_Animate;
         break;
-    case 3:
+    case EXPEDITION_SOLDIER_VARIANT_USE_MAP_OBJECTS_POS_X:
         ai_state->think = ExpeditionSoldier_ThinkUseMapObjectsPosX;
         ai_state->animate = EntityAi_Animate;
         ai_state->on_hit = EntityAi_OnHit;
@@ -65,7 +70,7 @@ void ExpeditionSoldier_Init(Entity *entity) {
         ai_state->dormant = EntityAi_Dormant;
         ai_state->death = ExpeditionSoldier_Death;
         break;
-    case 4:
+    case EXPEDITION_SOLDIER_VARIANT_USE_MAP_OBJECTS_NEG_X:
         ai_state->think = ExpeditionSoldier_ThinkUseMapObjectsNegX;
         ai_state->animate = EntityAi_Animate;
         ai_state->on_hit = EntityAi_OnHit;
@@ -110,7 +115,7 @@ void ExpeditionSoldier_Init(Entity *entity) {
    starts no action. The set-up function installs no other handler but EntityAi_Animate for these.
    */
 static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity, s32 run_now) {
-    if (entity->spawn_info->variant == 1) {
+    if (entity->spawn_info->variant == EXPEDITION_SOLDIER_VARIANT_HOLD_18) {
         Motion_Start(entity, 0x12, 0, 0, 0);
     } else {
         Motion_Start(entity, 0x13, 0, 0, 0);
@@ -338,7 +343,7 @@ static void ExpeditionSoldier_SignalMapObject(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (entity->model->level_tables->frame == 20) {
             map_object = MapObject_GetById(entity->group_id, ai_state->map_object_to_operate_id);
             if (map_object != NULL) {

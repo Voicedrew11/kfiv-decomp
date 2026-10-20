@@ -22,6 +22,14 @@
 #define GIANT_LEADER_BREAK_SECOND 2
 #define GIANT_LEADER_BREAK_THIRD  4
 
+/* ai_state->step_index: the map object GiantLeader_BreakMapObject goes past (0xA0, 0xA1, 0xA2) */
+#define GIANT_LEADER_TARGET_THIRD             1       /* map object 0xA2 */
+#define GIANT_LEADER_TARGET_FIRST             2       /* map object 0xA0 */
+#define GIANT_LEADER_TARGET_SECOND            3       /* map object 0xA1 */
+/* GiantLeader_BreakMapObject: Entity.action_step (steps 1 and 2 are ACTION_STEP_BLEND_IN and ACTION_STEP_PLAY) */
+#define GIANT_LEADER_BREAK_STEP_WALK_BLEND_IN 3       /* waits for the walk's blend-in to end */
+#define GIANT_LEADER_BREAK_STEP_WALK_TO_POINT 4       /* walks to target_point, then ends the action */
+
 static void GiantLeader_Think(Entity *entity, s32 run_now);
 static void GiantLeader_ThinkCombat(Entity *entity, s32 run_now);
 static void GiantLeader_MeleeAttack0(Entity *entity);
@@ -103,7 +111,7 @@ static void GiantLeader_Think(Entity *entity, s32 run_now) {
                     && (EntityMath_DistanceXZ(&player_state.position.x, first->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, first->model->position) < entity->radius + 400.0f)
                     && player_state.map_index == 0x14) {
-                    ai_state->step_index = 2;
+                    ai_state->step_index = GIANT_LEADER_TARGET_FIRST;
                     ai_state->action_flags |= GIANT_LEADER_BREAK_FIRST;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, run_now);
                     return;
@@ -112,7 +120,7 @@ static void GiantLeader_Think(Entity *entity, s32 run_now) {
                     && (EntityMath_DistanceXZ(&player_state.position.x, second->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, second->model->position) < entity->radius + 400.0f)
                     && player_state.map_index == 0x16) {
-                    ai_state->step_index = 3;
+                    ai_state->step_index = GIANT_LEADER_TARGET_SECOND;
                     ai_state->action_flags |= GIANT_LEADER_BREAK_SECOND;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, run_now);
                     return;
@@ -122,7 +130,7 @@ static void GiantLeader_Think(Entity *entity, s32 run_now) {
                     && (EntityMath_DistanceXZ(&player_state.position.x, first->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, first->model->position) < entity->radius + 400.0f)
                     && player_state.map_index == 0x11) {
-                    ai_state->step_index = 2;
+                    ai_state->step_index = GIANT_LEADER_TARGET_FIRST;
                     ai_state->action_flags |= GIANT_LEADER_BREAK_FIRST;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, run_now);
                     return;
@@ -131,7 +139,7 @@ static void GiantLeader_Think(Entity *entity, s32 run_now) {
                     && (EntityMath_DistanceXZ(&player_state.position.x, third->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, third->model->position) < entity->radius + 400.0f)
                     && player_state.map_index == 0x16) {
-                    ai_state->step_index = 1;
+                    ai_state->step_index = GIANT_LEADER_TARGET_THIRD;
                     ai_state->action_flags |= GIANT_LEADER_BREAK_THIRD;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, run_now);
                     return;
@@ -141,7 +149,7 @@ static void GiantLeader_Think(Entity *entity, s32 run_now) {
                     && (EntityMath_DistanceXZ(&player_state.position.x, second->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, second->model->position) < entity->radius + 400.0f)
                     && player_state.map_index == 0x11) {
-                    ai_state->step_index = 3;
+                    ai_state->step_index = GIANT_LEADER_TARGET_SECOND;
                     ai_state->action_flags |= GIANT_LEADER_BREAK_SECOND;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, run_now);
                     return;
@@ -150,7 +158,7 @@ static void GiantLeader_Think(Entity *entity, s32 run_now) {
                     && (EntityMath_DistanceXZ(&player_state.position.x, third->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, third->model->position) < entity->radius + 400.0f)
                     && player_state.map_index == 0x14) {
-                    ai_state->step_index = 1;
+                    ai_state->step_index = GIANT_LEADER_TARGET_THIRD;
                     ai_state->action_flags |= GIANT_LEADER_BREAK_THIRD;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, run_now);
                     return;
@@ -289,7 +297,7 @@ static void GiantLeader_MeleeAttack0(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         ai_state->turn_rate = 0.0f;
         frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
@@ -348,7 +356,7 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
         switch (ai_state->step_index) {
-        case 1:
+        case GIANT_LEADER_TARGET_THIRD:
             centre = 4200.0f;
             coord = (entity->model->position[0] > centre ? entity->radius + 50.0f : -(entity->radius + 50.0f)) + centre;
             entity->model->position[0] = coord;
@@ -367,7 +375,7 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
             ai_state->target_point[2] = -2400.0f;
             ai_state->target_point[3] = 0.0f;
             break;
-        case 2:
+        case GIANT_LEADER_TARGET_FIRST:
             centre = -1650.0f;
             coord = (entity->model->position[2] > centre ? entity->radius + 50.0f : -(entity->radius + 50.0f)) + centre;
             limit = -1650.0f;
@@ -382,7 +390,7 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
             ai_state->target_point[2] = coord;
             ai_state->target_point[3] = 0.0f;
             break;
-        case 3:
+        case GIANT_LEADER_TARGET_SECOND:
             centre = -1650.0f;
             coord = (entity->model->position[2] > centre ? entity->radius + 50.0f : -(entity->radius + 50.0f)) + centre;
             limit = -1650.0f;
@@ -406,10 +414,10 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (entity->model->level_tables->frame == entity->params->type_param_1) {
             switch (ai_state->step_index) {
-            case 1:
+            case GIANT_LEADER_TARGET_THIRD:
                 if (entity->group_id == current_map_slot) {
                     map_object = MapObject_GetById(entity->group_id, 0xA2);
                     if (map_object != NULL) {
@@ -417,7 +425,7 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
                     }
                 }
                 break;
-            case 2:
+            case GIANT_LEADER_TARGET_FIRST:
                 if (entity->group_id == current_map_slot) {
                     map_object = MapObject_GetById(entity->group_id, 0xA0);
                     if (map_object != NULL) {
@@ -425,7 +433,7 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
                     }
                 }
                 break;
-            case 3:
+            case GIANT_LEADER_TARGET_SECOND:
                 if (entity->group_id == current_map_slot) {
                     map_object = MapObject_GetById(entity->group_id, 0xA1);
                     if (map_object != NULL) {
@@ -441,13 +449,13 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case GIANT_LEADER_BREAK_STEP_WALK_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         }
         break;
-    case 4:
+    case GIANT_LEADER_BREAK_STEP_WALK_TO_POINT:
         coord = 100.0f;
         if (EntityMath_DistanceXZ(entity->model->position, ai_state->target_point) < coord) {
             ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;

@@ -19,6 +19,11 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
+/* FireGenie_RespawnOther: Entity.action_step (steps 0 and 1 are the shared ones) */
+#define FIRE_GENIE_RESPAWN_STEP_SPAWN_OTHER 2       /* waits for frame far_distance, then respawns the other genie */
+#define FIRE_GENIE_RESPAWN_STEP_SIGNAL      3       /* waits for frame type_param_0, then signals the respawn */
+#define FIRE_GENIE_RESPAWN_STEP_END         4       /* ends the action once the motion ends */
+
 static void FireGenie_Animate(Entity *entity);
 static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode);
 static void FireGenie_OnHit(Entity *entity);
@@ -256,7 +261,7 @@ static void FireGenie_RangedAttack0(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (entity->model->level_tables->frame >= (s16)entity->params->action_frames
             && entity->model->level_tables->frame <= entity->params->near_distance) {
             ENTITY_FLAGS(entity) |= ENTITY_FLAG_LOOK_AT_TARGET;
@@ -303,7 +308,7 @@ static void FireGenie_RespawnOther(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case FIRE_GENIE_RESPAWN_STEP_SPAWN_OTHER:
         if (entity->params->far_distance < entity->model->level_tables->frame) {
             FireGenie_RespawnOneOther(entity);
             ENTITY_FLAGS(entity) |= ENTITY_FLAG_LOOK_AT_TARGET;
@@ -311,14 +316,14 @@ static void FireGenie_RespawnOther(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case FIRE_GENIE_RESPAWN_STEP_SIGNAL:
         if (entity->params->type_param_0 < entity->model->level_tables->frame) {
             FireGenie_SignalRespawned(entity);
             ai_state->action_counter = 0;
             entity->action_step++;
         }
         break;
-    case 4:
+    case FIRE_GENIE_RESPAWN_STEP_END:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
