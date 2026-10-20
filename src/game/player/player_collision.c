@@ -94,8 +94,8 @@ int Player_CollideWithMap(void) {
     reach = player_state.fall_speed + 75.0f;
     Vector_Copy(&raised_point, &player_state.position);
     floor_map = current_map_slot;
-    player_state.unk211 = player_state.floor_material = 6;
-    player_state.unk214 = 0.0f;
+    player_state.floor_material_before_search = player_state.floor_material = 6;
+    player_state.collision_base_y = 0.0f;
     raised_point.y += 3.0f; // match: the raised point is never used
     for (map = 0; map < 2; map++) {
         slot = current_map_slot == map ? &map_slots[0] : &map_slots[1];
@@ -498,15 +498,15 @@ void Player_CollideWithEntities(int climb) {
             body = entity->params->body_points;
             for (i = 0; i < 4; i++, body++) {
                 COLLISION_RESULT->hit = 0;
-                if (!(body->unk00.flags & ENTITY_BODY_USED)) {
+                if (!(body->flags_or_model_point.flags & ENTITY_BODY_USED)) {
                     continue;
                 }
                 if (entity->spawn_info->type_id == 0x9B && i != 3) {
                     continue;
                 }
-                point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->unk00.point);
+                point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->flags_or_model_point.point);
                 Vector_Copy(position, point);
-                if (!(body->unk00.flags & ENTITY_BODY_ROUND)) {
+                if (!(body->flags_or_model_point.flags & ENTITY_BODY_ROUND)) {
                     radius = body->radius * ENTITY_MODEL(entity)->scale_x;
                     height = body->height * ENTITY_MODEL(entity)->scale_y;
                 } else {

@@ -303,7 +303,7 @@ static void EarthKing_RangedAttack0(Entity *entity) {
                 EntityAi_LaunchShots(entity, unk3D8, (s16)entity->params->action_frames, entity->params->near_distance);
             }
         }
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
@@ -362,7 +362,7 @@ static void EarthKing_RangedAttack1(Entity *entity) {
                 ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_SendMeleeHit(entity, unk240, 0, entity->model->rotation[1]);
             }
         }
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;

@@ -475,7 +475,7 @@ void Effect_DrawAll(int pass) {
                 break;
             }
             record_id = effect->def->texture_record_base + record_id * effect->def->texture_frame_stride;
-            Effect_FindModelRecord(model, model->unk104, effect->def->texture_record_base, record_id);
+            Effect_FindModelRecord(model, model->effect_record_hint, effect->def->texture_record_base, record_id);
         }
         Vector_Copy(&model->colour_red, effect);
         // match: it returns a value

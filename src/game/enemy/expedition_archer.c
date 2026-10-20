@@ -173,9 +173,9 @@ static void ExpeditionArcher_PitchPartToPlayer(Entity *actor) {
 static void ExpeditionArcher_Think(Entity *entity, s32 unknown) {
     if (((u8)entity->animation_index == 0x17 || (u8)entity->animation_index == 0x18) && entity->model->level_tables->blend_left == 0 &&
         entity->model->level_tables->frame >= 9 && entity->model->level_tables->frame < 0x2F) {
-        entity->model->parts[5].unk68 &= ~(0x8000L << 25);
+        entity->model->parts[5].part_flags &= ~(0x8000L << 25);
     } else {
-        entity->model->parts[5].unk68 |= 0x8000L << 25;
+        entity->model->parts[5].part_flags |= 0x8000L << 25;
     }
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
@@ -332,7 +332,7 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
         Vector_Copy(target, player_state.position);
         target[1] -= 170.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, 0.17453294f, 0.17453294f);
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
@@ -384,7 +384,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
     case 2:
         ENTITY_FLAG_BITS(entity)->bit10 = TRUE;
         EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;

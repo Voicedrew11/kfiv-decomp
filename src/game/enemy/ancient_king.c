@@ -327,7 +327,7 @@ static void AncientKing_RangedAttack0(Entity *entity) {
         elapsed = (((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame_fixed -
                    entity->params->motion_speeds[((EntityAiMotionSlotBits *)ai_state->motion_slot_1)->index]) >> 8;
         for (i = 0; i < 5; i++) {
-            if (entity->ailment_4_frames == 0 || unk3D8->unk0C != 0) {
+            if (entity->ailment_4_frames == 0 || unk3D8->ignores_ailment_4 != 0) {
                 if (elapsed < launch_frames.frames[i] && ((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame >= launch_frames.frames[i]) {
                     Vector_Copy(target, player_state.position);
                     target[0] += rand() % 1201 - 600;
@@ -646,7 +646,7 @@ static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
     case 2:
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         for (i = 0; i < 5; i++) {
-            if (entity->ailment_4_frames == 0 || unk3D8->unk0C != 0) {
+            if (entity->ailment_4_frames == 0 || unk3D8->ignores_ailment_4 != 0) {
                 if (elapsed < launch_frames.frames[i] && entity->model->level_tables->frame >= launch_frames.frames[i]) {
                     Vector_Copy(target, player_state.position);
                     target[0] += rand() % 401 - 200;
@@ -700,7 +700,7 @@ static void AncientKing_RangedAttack1(Entity *entity) {
     case 2:
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         for (i = 0; i < 4; i++) {
-            if (entity->ailment_4_frames == 0 || unk3D8->unk0C != 0) {
+            if (entity->ailment_4_frames == 0 || unk3D8->ignores_ailment_4 != 0) {
                 if (elapsed < launch_frames.frames[i] && entity->model->level_tables->frame >= launch_frames.frames[i]) {
                     source = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->type_param_2);
                     if (source != NULL) {

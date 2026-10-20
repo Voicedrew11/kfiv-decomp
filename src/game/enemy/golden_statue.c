@@ -477,7 +477,7 @@ static void GoldenStatue_AimPart15AbovePlayer(Entity *entity) {
         } else if (frame >= 54) {
             ai_state->part_angle_y *= (f32)(67 - frame) / 14.0f;
         }
-        part->unk50[0] += ai_state->part_angle_y;
+        part->part_angles[0] += ai_state->part_angle_y;
     }
 }
 

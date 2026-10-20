@@ -1392,7 +1392,7 @@ void Collision_HitRayPitfallObj(void *target, f32 *from, f32 *direction, float d
     }
     if (!(object->state_flags & MAP_OBJECT_ON)) {
         list = object->model->strips;
-        if (list != NULL && list->unk0C >= 4U) {
+        if (list != NULL && list->total_vertex_count >= 4U) {
             Collision_TransformMeshPoints(object->model);
             strip = list->strips;
             strips_left = list->strip_count;
@@ -1400,7 +1400,7 @@ void Collision_HitRayPitfallObj(void *target, f32 *from, f32 *direction, float d
                 vertex = strip->vertices;
                 triangles_left = strip->vertex_count - 2;
                 do {
-                    Collision_RayTriangle(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, from, direction, distance);
+                    Collision_RayTriangle(vertex[0].position, vertex[1].position, vertex[2].position, from, direction, distance);
                     if (COLLISION_RESULT->hit != 0) {
                         return;
                     }
@@ -1450,7 +1450,7 @@ void Collision_HitSphereMeshObj(CollisionOwner *owner, f32 *point, float factor)
 
     if (owner->flags & 0x10000) {
         list = owner->model->strips;
-        if (list != NULL && list->unk0C >= 4U) {
+        if (list != NULL && list->total_vertex_count >= 4U) {
             Collision_TransformMeshPoints(owner->model);
             strip = list->strips;
             i = list->strip_count;
@@ -1458,7 +1458,7 @@ void Collision_HitSphereMeshObj(CollisionOwner *owner, f32 *point, float factor)
                 vertex = strip->vertices;
                 j = strip->vertex_count - 2;
                 do {
-                    Collision_PointTriangle(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, point, factor);
+                    Collision_PointTriangle(vertex[0].position, vertex[1].position, vertex[2].position, point, factor);
                     if (COLLISION_RESULT->hit != 0) {
                         COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(vertex->x, vertex->y, vertex->z);
                         return;
@@ -1703,7 +1703,7 @@ void Collision_HitSpherePitfallObj(MapObject *object, f32 *point, f32 reach) {
     }
     if (!(object->state_flags & MAP_OBJECT_ON)) {
         list = object->model->strips;
-        if (list != NULL && list->unk0C >= 4U) {
+        if (list != NULL && list->total_vertex_count >= 4U) {
             Collision_TransformMeshPoints(object->model);
             strip = list->strips;
             strips_left = list->strip_count;
@@ -1711,7 +1711,7 @@ void Collision_HitSpherePitfallObj(MapObject *object, f32 *point, f32 reach) {
                 vertex = strip->vertices;
                 triangles_left = strip->vertex_count - 2;
                 do {
-                    Collision_PointTriangle(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, point, reach);
+                    Collision_PointTriangle(vertex[0].position, vertex[1].position, vertex[2].position, point, reach);
                     if (COLLISION_RESULT->hit != 0) {
                         COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(vertex->x, vertex->y, vertex->z);
                         return;

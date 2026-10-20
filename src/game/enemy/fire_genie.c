@@ -179,9 +179,9 @@ static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode) {
             parent[13] = 0.0f;
             parent[14] = 0.0f;
             parent[15] = 1.0f;
-            sceVu0RotMatrixX(rotation, identity_matrix, bone->unk50[0]);
-            sceVu0RotMatrixZ(rotation, rotation, bone->unk50[2]);
-            sceVu0RotMatrixY(rotation, rotation, bone->unk50[1]);
+            sceVu0RotMatrixX(rotation, identity_matrix, bone->part_angles[0]);
+            sceVu0RotMatrixZ(rotation, rotation, bone->part_angles[2]);
+            sceVu0RotMatrixY(rotation, rotation, bone->part_angles[1]);
             Matrix_Multiply(rotation, parent, rotation);
             sceVu0RotMatrixY(twist, identity_matrix, ai_state->part_angle_x);
             Matrix_Multiply(rotation, twist, rotation);
@@ -191,13 +191,13 @@ static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode) {
             EntityMath_EaseAngleToward(&ai_state->part_angle_y, angles[0], rate);
             EntityMath_EaseAngleToward(&ai_state->part_angle_z, angles[1], rate);
             EntityMath_EaseAngleToward(&ai_state->pitch_speed, angles[2], rate);
-            bone->unk50[0] = ai_state->part_angle_y;
-            bone->unk50[1] = ai_state->part_angle_z;
-            bone->unk50[2] = ai_state->pitch_speed;
+            bone->part_angles[0] = ai_state->part_angle_y;
+            bone->part_angles[1] = ai_state->part_angle_z;
+            bone->part_angles[2] = ai_state->pitch_speed;
         } else {
-            bone->unk50[0] = ai_state->part_angle_y;
-            bone->unk50[1] = ai_state->part_angle_z;
-            bone->unk50[2] = ai_state->pitch_speed;
+            bone->part_angles[0] = ai_state->part_angle_y;
+            bone->part_angles[1] = ai_state->part_angle_z;
+            bone->part_angles[2] = ai_state->pitch_speed;
         }
     }
 }
@@ -300,7 +300,7 @@ static void FireGenie_RangedAttack0(Entity *entity) {
                 EntityAi_LaunchShots(entity, unk3D8, (s16)entity->params->action_frames, entity->params->near_distance);
             }
         }
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
@@ -472,13 +472,13 @@ static s32 FireGenie_PickAttack(Entity *entity) {
     chance = EntityAi_CanUseMeleeFacing(entity, angle, 2) ? (entity->attack_weights[2] * ((EntityParamsUnk240 *)entity->params->melee_attack_third)->attack_weight) >> 6 : 0;
     chances[2] = chance;
     total += chance;
-    chance = EntityAi_CanUseRangedFacing(entity, angle, 0) ? (entity->attack_weights[3] * ENTITY_PARAMS_UNK3D8(entity->params, 0)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseRangedFacing(entity, angle, 0) ? (entity->attack_weights[3] * ENTITY_PARAMS_UNK3D8(entity->params, 0)->ranged_weight) >> 6 : 0;
     chances[3] = chance;
     total += chance;
-    chance = EntityAi_CanUseRangedFacing(entity, angle, 1) ? (entity->attack_weights[4] * ENTITY_PARAMS_UNK3D8(entity->params, 1)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseRangedFacing(entity, angle, 1) ? (entity->attack_weights[4] * ENTITY_PARAMS_UNK3D8(entity->params, 1)->ranged_weight) >> 6 : 0;
     chances[4] = chance;
     total += chance;
-    chance = EntityAi_CanUseRangedFacing(entity, angle, 2) ? (entity->attack_weights[5] * ENTITY_PARAMS_UNK3D8(entity->params, 2)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseRangedFacing(entity, angle, 2) ? (entity->attack_weights[5] * ENTITY_PARAMS_UNK3D8(entity->params, 2)->ranged_weight) >> 6 : 0;
     chances[5] = chance;
     total += chance;
     if (total == 0) {

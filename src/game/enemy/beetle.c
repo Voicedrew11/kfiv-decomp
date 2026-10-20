@@ -286,7 +286,7 @@ static void Beetle_TurnParts7And12(void *entity_arg) {
     part = (EntityModelPart80 *)entity->model->parts;
     for (i = 0; i < ENTITY_MODEL(entity)->part_count; i++) {
         if (i == 7 || i == 12) {
-            part->unk50[1] = ai_state->part_angle_x * 0.5f;
+            part->part_angles[1] = ai_state->part_angle_x * 0.5f;
         }
         part++;
     }
@@ -322,7 +322,7 @@ static void Beetle_TurnParts23To32(Entity *entity) {
     part = (EntityModelPart80 *)entity->model->parts;
     for (i = 0; i < part_count; i++) {
         if (i == 0x17 || i == 0x1C || i == 0x1F || i == 0x20) {
-            part->unk50[1] = -ai_state->part_angle_y * 0.5f;
+            part->part_angles[1] = -ai_state->part_angle_y * 0.5f;
         }
         part++;
     }
@@ -365,7 +365,7 @@ static void Beetle_RangedAttack0(Entity *entity) {
                 EntityAi_LaunchShots(entity, unk3D8, entity->params->pitch_limit_deg, entity->params->yaw_limit_deg);
             }
         }
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;

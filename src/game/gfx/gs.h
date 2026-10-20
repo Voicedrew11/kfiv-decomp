@@ -190,7 +190,7 @@ typedef struct {
 /* a GIF packet drawing one sprite, sent by GsDraw_QueueTexturedSprite */
 typedef struct {
     u64 tex0;                       /* 0x00 the TEX0 register */
-    u64 unk08;                      /* 0x08 */
+    u64 gif_register_list;          /* 0x08 GS register list word of the sprite packet */
     int prim;                       /* 0x10 */
     u8 rgba[4];                     /* 0x14 */
     u64 pad18;
@@ -232,7 +232,7 @@ typedef struct {
     u64 pos_x : 16;                 /* 0x00 12.4 fixed point */
     u64 pos_y : 16;                 /* 0x02 */
     u64 depth : 24;                 /* 0x04 */
-    u64 pad07 : 8;
+    u64 top_byte : 8;  /* top byte of the packed GS word */
 } GsCornerBits;
 
 /* the textured rectangle MenuDraw_Sprite draws (a KindObject of kind 0): two corners with their texture

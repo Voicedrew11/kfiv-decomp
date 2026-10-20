@@ -46,7 +46,7 @@ void EntityAi_FinishMotion(Entity *entity, s32 unused) {
 
     switch (entity->action_step) {
     case 0:
-        ((EntityAiStateKind150588 *)ai_state)->unk1C = 0;
+        ((EntityAiStateKind150588 *)ai_state)->cleared_on_motion_finish = 0;
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
@@ -537,7 +537,7 @@ void EntityAi_RangedAttack(Entity *entity) {
         }
         EntityAi_LaunchShots(entity, unk3D8, (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8,
                       entity->model->level_tables->frame);
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;

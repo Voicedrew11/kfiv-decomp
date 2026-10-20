@@ -339,20 +339,20 @@ static void IceGolem_RangedAttack0(Entity *entity) {
         }
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         for (frame = (s16)entity->params->action_frames; frame < entity->params->near_distance; frame += entity->params->far_distance) {
-            if ((entity->ailment_4_frames == 0 || unk3D8->unk0C != 0) && elapsed < frame && entity->model->level_tables->frame >= frame) {
-                base = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, unk3D8->unk11);
-                tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, unk3D8->unk11 + 1);
+            if ((entity->ailment_4_frames == 0 || unk3D8->ignores_ailment_4 != 0) && elapsed < frame && entity->model->level_tables->frame >= frame) {
+                base = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, unk3D8->bone_index);
+                tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, unk3D8->bone_index + 1);
                 if (base != NULL && tip != NULL) {
                     delta_x = tip[0] - base[0];
                     delta_z = tip[2] - base[2];
                     direction[0] = -0.08726646f;
                     direction[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
                     direction[2] = direction[3] = 0.0f;
-                    EntityAi_LaunchShot(entity, unk3D8->unk10, base, direction);
+                    EntityAi_LaunchShot(entity, unk3D8->magic_effect, base, direction);
                 }
             }
         }
-        if (entity->model->level_tables->frame > 0 && unk3D8->record.unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->record.attack_end_frame >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;

@@ -233,7 +233,7 @@ int Movie_Play(char *path, u32 heap, u32 heap_size, int (*skip_requested)(void),
         (movie_thread.out_pictures = Movie_HeapAlloc(0x578000, 0x40)) == NULL ||
         (movie_thread.out_tags = Movie_HeapAlloc(0x10AF40, 0x40)) == NULL ||
         (movie_thread.time_stamps = Movie_HeapAlloc(0x3C00, 0x40)) == NULL ||
-        (movie_thread.unk34 = Movie_HeapAlloc(0x100, 0x40)) == NULL ||
+        (movie_thread.spare_buffer = Movie_HeapAlloc(0x100, 0x40)) == NULL ||
         (movie_thread.read_buffer = (s32)Movie_HeapAlloc(0x5000C, 0x40)) == 0) {
         return -1;
     }

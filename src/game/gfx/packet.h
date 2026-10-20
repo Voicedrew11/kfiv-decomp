@@ -65,8 +65,8 @@ typedef struct {
 typedef struct {
     s32 id_and_qwc;                 /* 0x00 the DMA tag ID (bits 28-30) and quadword count */
     s32 address;                    /* 0x04 the next packet, or 0 */
-    s32 unk08;                      /* 0x08 */
-    s32 unk0C;                      /* 0x0C */
+    s32 spare_word_low;             /* 0x08 upper DMA tag word, zeroed when linking */
+    s32 spare_word_high;            /* 0x0C upper DMA tag word, zeroed when linking */
 } DmaTag;
 
 /* one corner of a ScreenSprite */
@@ -91,7 +91,7 @@ typedef struct {
 /* a screen rectangle with two corners, as GsDraw_QueueTexturedSprite draws it */
 typedef struct {
     s64 tag;                        /* 0x00 */
-    s64 unk08;                      /* 0x08 */
+    s64 gif_register_list;          /* 0x08 GIF tag register list for the quad */
     s32 prim;                       /* 0x10 GS PRIM: a textured, alpha-blended sprite (0x156) */
     u8 red;                         /* 0x14 */
     u8 green;                       /* 0x15 */

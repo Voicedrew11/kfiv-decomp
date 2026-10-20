@@ -237,7 +237,7 @@ static void Reaper_RangedAttack(Entity *entity) {
         direction[0] = direction[2] = direction[3] = 0.0f;
         direction[1] = EntityMath_WrapAngle(entity->heading_to_player + 3.1415927f);
         EntityShot_Launch(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction);
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;

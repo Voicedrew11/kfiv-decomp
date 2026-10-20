@@ -151,9 +151,9 @@ static void WiddaQueen_TurnPart9ToPlayer(Entity *entity, s32 mode) {
     }
     if (mode == 1) {
         EntityMath_EaseAngleToward(&ai_state->part_angle_x, angle, rate);
-        part->unk50[1] = ai_state->part_angle_x;
+        part->part_angles[1] = ai_state->part_angle_x;
     } else if (mode == 2) {
-        part->unk50[1] = ai_state->part_angle_x;
+        part->part_angles[1] = ai_state->part_angle_x;
     } else {
         ai_state->part_angle_x = 0.0f;
     }
@@ -349,7 +349,7 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
         } else {
             ai_state->step_index = 2;
         }
-        if (entity->model->level_tables->frame == 0x16 && (entity->ailment_4_frames == 0 || unk3D8->unk0C != 0)) {
+        if (entity->model->level_tables->frame == 0x16 && (entity->ailment_4_frames == 0 || unk3D8->ignores_ailment_4 != 0)) {
             EntityEvent_StartEffectAtPoint((char **)entity, 0x373, 4, (int)entity->model->rotation);
             EntityEvent_StartEffectAtPoint((char **)entity, 0x373, 8, (int)entity->model->rotation);
         }
@@ -357,7 +357,7 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
         Vector_Copy(target, player_state.position);
         target[1] -= 190.0f;
         EntityShot_LaunchAimed(entity, (EntityParamsUnk3D8 *)unk3D8, elapsed, entity->model->level_tables->frame, target, 1.5707964f, 1.5707964f);
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
@@ -409,7 +409,7 @@ static void WiddaQueen_RangedAttack1(Entity *entity) {
                 EntityAi_LaunchShots(entity, unk3D8, entity->params->far_distance, entity->params->type_param_0);
             }
         }
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
@@ -480,13 +480,13 @@ static s32 WiddaQueen_PickAttack(Entity *entity) {
     chance = EntityAi_CanUseMeleeFacing(entity, angle, 2) ? (entity->attack_weights[2] * ((EntityParamsUnk240 *)entity->params->melee_attack_third)->attack_weight) >> 6 : 0;
     chances[2] = chance;
     total += chance;
-    chance = EntityAi_CanUseRangedFacing(entity, angle, 0) ? (entity->attack_weights[3] * ENTITY_PARAMS_UNK3D8(entity->params, 0)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseRangedFacing(entity, angle, 0) ? (entity->attack_weights[3] * ENTITY_PARAMS_UNK3D8(entity->params, 0)->ranged_weight) >> 6 : 0;
     chances[3] = chance;
     total += chance;
-    chance = EntityAi_CanUseRangedFacing(entity, angle, 1) ? (entity->attack_weights[4] * ENTITY_PARAMS_UNK3D8(entity->params, 1)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseRangedFacing(entity, angle, 1) ? (entity->attack_weights[4] * ENTITY_PARAMS_UNK3D8(entity->params, 1)->ranged_weight) >> 6 : 0;
     chances[4] = chance;
     total += chance;
-    chance = EntityAi_CanUseRangedFacing(entity, angle, 2) ? (entity->attack_weights[5] * ENTITY_PARAMS_UNK3D8(entity->params, 2)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseRangedFacing(entity, angle, 2) ? (entity->attack_weights[5] * ENTITY_PARAMS_UNK3D8(entity->params, 2)->ranged_weight) >> 6 : 0;
     chances[5] = chance;
     total += chance;
     if (total == 0) {

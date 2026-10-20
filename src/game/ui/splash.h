@@ -10,13 +10,13 @@ typedef struct {
     u64 unk00;                      /* 0x00 */
     u64 unk08;                      /* 0x08 */
     u64 tex0;                       /* 0x10 GS TEX0 of the image */
-    u64 unk18;                      /* 0x18 */
+    u64 tex1;                       /* 0x18 GS TEX1 of the image, copied to the sprite */
 } SplashImage;
 
 /* the 0x40-byte GS sprite packet for the splash image */
 typedef struct {
     u64 tex0;                       /* 0x00 GS TEX0 */
-    u64 unk08;                      /* 0x08 */
+    u64 tex1;                       /* 0x08 GS TEX1 for the sprite packet */
     int gif_reg;                    /* 0x10 GIF register field (0x156) */
     u8 red;                         /* 0x14 */
     u8 green;                       /* 0x15 */

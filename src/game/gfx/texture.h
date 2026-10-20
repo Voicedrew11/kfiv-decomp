@@ -45,7 +45,7 @@ typedef struct {
     union {
         u64 raw;
         s64 as_signed;
-    } unk18;                        /* 0x18 a union so that, like tex0, reading it counts as touching anything (Menu_UpdateKeyItems) */
+    } tex1_register;                /* 0x18 second GS texture register word (TEX1) */
 } TextureHeaderBits;
 
 #define TEXTURE_HEADER_BITS(header) ((TextureHeaderBits *)(header))
@@ -61,8 +61,8 @@ typedef struct {
 typedef struct {
     int packet_size;                /* 0x00 the bytes of the built packets */
     u32 entry_count;                /* 0x04 */
-    int unk08;                      /* 0x08 Texture_BuildPacketTable clears it */
-    int unk0C;                      /* 0x0C Texture_BuildPacketTable clears it */
+    int spare_word_a;               /* 0x08 word zeroed when a packet table is built */
+    int spare_word_b;               /* 0x0C word zeroed when a packet table is built */
 } TextureTableHeader;
 
 /* a texture GsDraw_DrawScrollingTexture redraws into another one every frame, scrolled (scroll_textures in gfx/scroll_texture.c) */
@@ -99,8 +99,8 @@ typedef struct {
 
 typedef struct {
     int offset;                     /* 0x00 from the table base, to a chunk: its size in quadwords, 12 bytes, the data */
-    int unk04;                      /* 0x04 Texture_BuildPacketTable clears it */
-    int unk08;                      /* 0x08 Texture_BuildPacketTable clears it */
+    int spare_word_a;               /* 0x04 word zeroed when a packet table is built */
+    int spare_word_b;               /* 0x08 word zeroed when a packet table is built */
     int disabled;                   /* 0x0C nonzero: TextureTable_QueueEnabled skips the chunk */
 } TextureTableEntry;
 

@@ -167,7 +167,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
     for (i = 0; i < file->part_count; i++, part++, file_part++) {
         part->data_count = file_part->data_count;
         part->data_addr = *file_cursor + file_part->data_offset;
-        part->pad78_46 = file_part->parent;
+        part->parent_index = file_part->parent;
         MODEL_PART_FLAG_BITS(part)->bit41 = TRUE;
         // match: retail keeps only the empty loop; a walk whose result nothing uses is deleted like this one
         data = (ModelPartData *)(u32)part->data_addr;
@@ -189,10 +189,10 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
     model->update_bone_points = Model_UpdateSkinnedBonePoints;
     model->get_point = (void *(*)(void *, int))Model_GetSkinnedBonePoint;
     first = TRUE;
-    model->unk160[0] = 0;
-    model->unk160[1] = 0;
-    model->unk160[2] = 0;
-    model->unk160[3] = 0;
+    model->draw_header_vector[0] = 0;
+    model->draw_header_vector[1] = 0;
+    model->draw_header_vector[2] = 0;
+    model->draw_header_vector[3] = 0;
     model->colour_red = 128.0f;
     model->colour_green = 128.0f;
     model->colour_blue = 128.0f;
@@ -204,7 +204,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
             length = data->length;
             if (first && data->texture_word.clut_base != 0) {
                 first = FALSE;
-                data->texture_word.unk61 = 2;
+                data->texture_word.clut_load_mode = 2;
             }
             data = (ModelPartData *)((char *)data + length * 16);
         }
@@ -275,7 +275,7 @@ void Model_DrawSkinned(ModelInstance *model) {
     packet += 2;
     *(u64 *)packet = 0xE;
     packet += 2;
-    *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
+    *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->fog_colour;
     packet += 2;
     *packet++ = 0x3D;
     *packet++ = 0;
@@ -302,7 +302,7 @@ void Model_DrawSkinned(ModelInstance *model) {
     *packet++ = 0;
     *packet++ = 0;
     *packet++ = 0x6C020064;
-    Vector_Copy(packet, model->unk160);
+    Vector_Copy(packet, model->draw_header_vector);
     Vector_Copy(packet + 4, &model->colour_red);
     part = model->parts;
     for (i = 0; i < model->part_count; i++, part++) {
@@ -412,7 +412,7 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
     packet += 2;
     *(u64 *)packet = 0xE;
     packet += 2;
-    *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
+    *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->fog_colour;
     packet += 2;
     *packet++ = 0x3D;
     *packet++ = 0;
@@ -439,7 +439,7 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
     *packet++ = 0;
     *packet++ = 0;
     *packet++ = 0x6C020064;
-    Vector_Copy(packet, model->unk160);
+    Vector_Copy(packet, model->draw_header_vector);
     Vector_Copy(packet + 4, &model->colour_red);
     packet = Packet_Alloc(1); // match: packet named after packet_start's last use, or the stores go through packet_start
     Packet_AppendToChain(packet_start, packet);
@@ -791,7 +791,7 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
                 for (j = 0; j < count; j++) {
                     length = data->length;
                     if (((ModelPartDataBits30 *)&data->tex0)->clut_base != 0) {
-                        ((ModelPartDataBits30 *)&data->tex0)->unk61 = 2;
+                        ((ModelPartDataBits30 *)&data->tex0)->clut_load_mode = 2;
                         first = FALSE;
                         break;
                     }
@@ -872,7 +872,7 @@ void Model_DrawPosed(ModelInstance *model) {
         packet += 2;
         *(u64 *)packet = 0xE;
         packet += 2;
-        *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
+        *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->fog_colour;
         packet += 2;
         *packet++ = 0x3D;
         *packet++ = 0;
@@ -974,7 +974,7 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
         packet += 2;
         *(u64 *)packet = 0xE;
         packet += 2;
-        *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
+        *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->fog_colour;
         packet += 2;
         *packet++ = 0x3D;
         *packet++ = 0;
@@ -1077,7 +1077,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
         packet += 2;
         *(u64 *)packet = 0xE;
         packet += 2;
-        *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
+        *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->fog_colour;
         packet += 2;
         *packet++ = 0x3D;
         *packet++ = 0;
@@ -1190,7 +1190,7 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
         packet += 2;
         *(u64 *)packet = 0xE;
         packet += 2;
-        *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
+        *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->fog_colour;
         packet += 2;
         *packet++ = 0x3D;
         *packet++ = 0;
@@ -1362,7 +1362,7 @@ void Model_SetTexture(ModelInstance *model, u64 unk40, s64 unk30) {
             *(s64 *)&block->texture_word = unk30;
             block->tex0 = unk40;
             if (first) {
-                ((ModelPartDataBits30 *)&block->tex0)->unk61 = 2;
+                ((ModelPartDataBits30 *)&block->tex0)->clut_load_mode = 2;
                 first = FALSE;
             }
             data = (ModelPartData *)((char *)block + (length + 1) * 16);
@@ -1564,7 +1564,7 @@ void Model_SetTextureBase(ModelInstance *model, int texture_base, int clut_base)
             }
             if (first) {
                 first = 0;
-                ((ModelPartDataBits30 *)cursor)->unk61 = 2;
+                ((ModelPartDataBits30 *)cursor)->clut_load_mode = 2;
             }
             cursor = block + (length + 1) * 16;
         }

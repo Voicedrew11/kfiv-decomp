@@ -43,7 +43,7 @@ void Motion_ClearPartSlots(EntityModel *model) {
         do {
             part = (EntityModelPart80Byte *)((i << 7) + (s32)model->parts);
             i += 1;
-            part->unk6C = 0;
+            part->motion_slot = 0;
         } while (i < instance->part_count);
     }
 }
@@ -56,7 +56,7 @@ void Motion_SetPartSlots(EntityModel *model, s32 first, s32 last, s32 value) {
         do {
             part = (EntityModelPart80Byte *)((first << 7) + (s32)model->parts);
             first += 1;
-            part->unk6C = value;
+            part->motion_slot = value;
         } while (first <= last);
     }
 }

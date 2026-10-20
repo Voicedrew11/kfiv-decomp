@@ -579,7 +579,7 @@ static void DarkSorcerer_RangedAttack(Entity *entity) {
         Vector_Copy(target, &player_state);
         target[1] -= 190.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, 0.7853982f, 0.0f);
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;

@@ -94,7 +94,7 @@ void Map_ResetGameState(void) {
     memset(&game_status, 0, 0x48);
     game_status.movement_input_enabled = 1;
     game_status.player_control = 1;
-    game_status.unk01 = 1;
+    game_status.set_on_map_reset = 1;
     memset(&map_draw_state, 0, sizeof(MapDrawState));
     map_draw_state.draw_flags |= (s64)0x8000 << 31;
     map_draw_state.draw_flags |= (s64)0x8000 << 27;
@@ -157,9 +157,9 @@ void Map_LoadAtOnce(int map) {
     map_draw_state.current_light_block = *(MapLightBlock *)slot->light_blocks;
     fog = &map_draw_state.current_fog_color;
     *fog = ((MapSlotUnk08 *)map_slots[0].header)->fog_color;
-    map_draw_state.unk9A = 0;
-    map_draw_state.unk9B = 0;
-    map_draw_state.unk9C = 0;
+    map_draw_state.map_init_byte_a = 0;
+    map_draw_state.map_init_byte_b = 0;
+    map_draw_state.map_init_byte_c = 0;
     MapObject_StartMap(0);
     Entity_InitFromMapSpawns(0);
     Entity_AddGroupToWaiting(0);

@@ -25,7 +25,7 @@ typedef struct {
 typedef struct {
     Vector4 position;               /* 0x00 where the player goes in the new map */
     s32 kind;                       /* 0x10 1: MapChange_StartToPosition started it, 2: MapChange_StartPassage */
-    s32 unk14;                      /* 0x14 */
+    s32 target_object_id;           /* 0x14 object id the passage starts from */
     s32 step;                       /* 0x18 index into screen_fade_steps, 0: no map change running */
     s32 map;                        /* 0x1C the map to change to */
     s32 file_handle;                /* 0x20 */
@@ -45,7 +45,7 @@ typedef struct {
 /* what held_item_model_ptr points at */
 typedef struct {
     char pad00[0x82];
-    u16 unk82;                      /* 0x82 */
+    u16 blend_speed;                /* 0x82 speed passed to ModelMotion_BlendInto */
 } DisplaySettings;
 
 typedef struct {
@@ -70,9 +70,9 @@ typedef struct AreaNode {
 /* an AreaNode with the doubleword its flags are the high half of; bit 27 is the map slot it belongs to */
 typedef struct {
     char pad00[0x38];
-    u64 unk38;                      /* 0x38 */
+    u64 flags_doubleword;           /* 0x38 flags doubleword; bit 27 is the map slot */
 } AreaNodeWords;
 
-#define AREA_NODE_WORD(node) (((AreaNodeWords *)(node))->unk38)
+#define AREA_NODE_WORD(node) (((AreaNodeWords *)(node))->flags_doubleword)
 
 #endif

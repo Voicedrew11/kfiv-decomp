@@ -293,9 +293,9 @@ void ModelScreen_StepVertices(ModelPartVertexWords *out, ModelPartVertexWords *f
     step.colour[3] = (last->colour[3] - from->colour[3]) / steps;
     previous = out;
     *out = *from;
-    out->unk14 = 0x1000;
+    out->unit_weight = 0x1000;
     out->cut_flag = 0;
-    out->unk16 = 0;
+    out->blend_fraction = 0;
     out++;
     for (i = 1; i < steps; i++) {
         Vector_Add(position, position, delta);
@@ -309,8 +309,8 @@ void ModelScreen_StepVertices(ModelPartVertexWords *out, ModelPartVertexWords *f
         out->cut_flag = 0;
         out->tex_u = previous->tex_u + step.tex_u;
         out->tex_v = previous->tex_v + step.tex_v;
-        out->unk14 = 0x1000;
-        out->unk16 = 0x7FFF;
+        out->unit_weight = 0x1000;
+        out->blend_fraction = 0x7FFF;
         out->colour[0] = previous->colour[0] + step.colour[0];
         out->colour[1] = previous->colour[1] + step.colour[1];
         out->colour[2] = previous->colour[2] + step.colour[2];
@@ -319,9 +319,9 @@ void ModelScreen_StepVertices(ModelPartVertexWords *out, ModelPartVertexWords *f
         out++;
     }
     *out = *last;
-    out->unk14 = 0x1000;
+    out->unit_weight = 0x1000;
     out->cut_flag = 0;
-    out->unk16 = 0;
+    out->blend_fraction = 0;
 }
 
 /* Writes steps + 1 vertices that lead from one vertex to another in equal steps; the position is
@@ -353,9 +353,9 @@ void ModelScreen_StepVerticesRounded(ModelPartVertexWords *out, ModelPartVertexW
     step.colour[3] = (last->colour[3] - from->colour[3]) / steps;
     previous = out;
     *out = *from;
-    out->unk14 = 0x1000;
+    out->unit_weight = 0x1000;
     out->cut_flag = 0;
-    out->unk16 = 0;
+    out->blend_fraction = 0;
     out++;
     for (i = 1; i < steps; i++) {
         current[0] = position[0] + delta[0] * i / steps;
@@ -371,8 +371,8 @@ void ModelScreen_StepVerticesRounded(ModelPartVertexWords *out, ModelPartVertexW
         out->cut_flag = 0;
         out->tex_u = previous->tex_u + step.tex_u;
         out->tex_v = previous->tex_v + step.tex_v;
-        out->unk14 = 0x1000;
-        out->unk16 = 0x7FFF;
+        out->unit_weight = 0x1000;
+        out->blend_fraction = 0x7FFF;
         out->colour[0] = previous->colour[0] + step.colour[0];
         out->colour[1] = previous->colour[1] + step.colour[1];
         out->colour[2] = previous->colour[2] + step.colour[2];
@@ -381,9 +381,9 @@ void ModelScreen_StepVerticesRounded(ModelPartVertexWords *out, ModelPartVertexW
         out++;
     }
     *out = *last;
-    out->unk14 = 0x1000;
+    out->unit_weight = 0x1000;
     out->cut_flag = 0;
-    out->unk16 = 0;
+    out->blend_fraction = 0;
 }
 
 /* Queues one triangle of a block, the one that ends at `vertex`, cut up into 16 smaller ones and
@@ -630,7 +630,7 @@ void ModelScreen_SetUvsFromScreen(ModelInstance *model) {
                 Vu0_ProjectToScreen(screen, point);
                 vertex->tex_u = (s16)(screen[0] - 0x6C00) * 6.1035156e-05f;
                 vertex->tex_v = (s16)(screen[1] - 0x7200) * 0.00012207031f;
-                vertex->unk14 = 1;
+                vertex->uvs_set_from_screen = 1;
                 vertex++;
             }
             next_data = (ModelPartData *)((char *)data + (length + 1) * 0x10);

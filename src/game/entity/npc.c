@@ -90,7 +90,7 @@ void Npc_Init(Entity *entity) {
         EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
     if (part != NULL) {
-        Vector_Copy(ai_state->look_part_angles, part->unk50);
+        Vector_Copy(ai_state->look_part_angles, part->part_angles);
     }
     ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
@@ -481,7 +481,7 @@ static void Npc_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = 1;
             EntityEvent_OnDeath(entity);
-            entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].unk00 = ((s32)(entity->flags >> 38) & 3) ? 1 : 2;
+            entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].death_kind = ((s32)(entity->flags >> 38) & 3) ? 1 : 2;
             if ((s32)(entity->flags >> 38) & 3) {
                 story_flags[0xD] = 1;
             }
@@ -622,7 +622,7 @@ void Npc_InitType81(Entity *entity) {
         EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
     if (part != NULL) {
-        Vector_Copy(ai_state->look_part_angles, part->unk50);
+        Vector_Copy(ai_state->look_part_angles, part->part_angles);
     }
     ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;

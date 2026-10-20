@@ -621,7 +621,7 @@ static void LavaBird_RangedAttack(Entity *entity) {
         if (launch_frame != 0 && frame < launch_frame && launch_frame <= current_frame) {
             LavaBird_LaunchBothShots(entity, unk3D8, frame, current_frame, player_state.position, 0.7853982f, 0.7853982f);
         }
-        if (slots->motion_slot_0.frame > 0 && unk3D8->unk03 >= slots->motion_slot_0.frame) {
+        if (slots->motion_slot_0.frame > 0 && unk3D8->attack_end_frame >= slots->motion_slot_0.frame) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
@@ -656,14 +656,14 @@ static s32 LavaBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
     f32 yaw;
     s32 i;
 
-    if (entity->ailment_4_frames != 0 && record->unk0C == 0) {
+    if (entity->ailment_4_frames != 0 && record->ignores_ailment_4 == 0) {
         return 0;
     }
     for (i = 0; i < 2; i++) {
         shot = Shot_Alloc();
-        shot->unk22 = shot->unk20 = 0;
-        shot->unk00 = 1;
-        shot->unk28 = entity->params->unk238;
+        shot->player_magic = shot->player_power = 0;
+        shot->is_magic_shot = 1;
+        shot->shot_params = entity->params->shot_params;
         from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone);
         tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone + 1);
         if (from != NULL && tip != NULL) {

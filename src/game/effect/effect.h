@@ -76,7 +76,7 @@ typedef struct {
    are those views, reached by a cast (a union changes gcc's scheduling). */
 typedef struct {
     Vector4 velocity;               /* 0x00 (EffectActor+0x10) */
-    Vector4 unk10;                  /* 0x10 per-kind state */
+    Vector4 kind_state_vector;      /* 0x10 Per-kind Vector4: copied rotation, spawn point or scale */
     char unk20[0x10];               /* 0x20 */
 } EffectMotion;
 
@@ -93,7 +93,7 @@ typedef struct {
     int mode;                       /* 0x10 3 or 5: spawn effect 0x15 on landing */
     u16 end_frame;                  /* 0x14 */
     s8 spawned;                     /* 0x16 a follow-up effect has been spawned */
-    char unk17[0x19];               /* 0x17 passed by address */
+    char hit_end_state[0x19];       /* 0x17 Hit-check state byte, 1 once the end effect spawned */
 } FallingMotion;
 
 /* EffectMotion as EffectGroundFan_Update uses it: checks for hits every interval frames */
@@ -101,7 +101,7 @@ typedef struct {
     Vector4 velocity;               /* 0x00 */
     char pad10[0x04];
     int countdown;                  /* 0x14 frames to the next check */
-    char unk18[0x18];               /* 0x18 passed by address */
+    char hit_end_state[0x18];       /* 0x18 Hit-check state block, state byte first */
 } EmitterMotion;
 
 /* EffectMotion as EffectBeam_Update, EffectRay_Update and EffectBeamStretch_Update use it: scales its model */
@@ -115,12 +115,12 @@ typedef struct {
 /* EffectMotion as EffectFall_Start, EffectFloorSkim_Start and others use it: turn toward a point */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    char unk10[0x10];               /* 0x10 passed by address */
-    s16 unk20;                      /* 0x20 */
+    char impact_point[0x10];        /* 0x10 Where the path lands, set by the frames-to-impact cast */
+    s16 end_effect_id;              /* 0x20 Effect id to spawn at the end, or a frame count */
     s16 frames_to_impact;           /* 0x22 frames until the shot reaches what lies ahead */
-    u8 unk24;                       /* 0x24 */
+    u8 hit_end_state;               /* 0x24 Hit-check state byte, set once the end spawned */
     u8 ends_next_frame;             /* 0x25 set once a hit spawned its effects: the effect ends next frame */
-    u8 unk26;                       /* 0x26 */
+    u8 cleared_on_start;            /* 0x26 Byte zeroed at spawn, otherwise unused */
     char pad27[0x09];
 } TurningMotion;
 
@@ -136,15 +136,15 @@ typedef struct {
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     ModelInstance **anchor;         /* 0x10 the model it is attached to */
-    char unk14[0x1C];               /* 0x14 passed by address */
+    char hit_end_state[0x1C];       /* 0x14 Hit-check state block, state byte first */
 } AttachedMotion;
 
 /* EffectMotion as EffectHomeOnEntity_Start uses it: follows EffectActor.target */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 speed;                      /* 0x10 the target's velocity.x */
-    s32 unk14;                      /* 0x14 */
-    f32 unk18;                      /* 0x18 */
+    s32 cleared_on_start;           /* 0x14 Word zeroed at spawn, otherwise unused */
+    f32 scale;                      /* 0x18 Float set to 1.0 at spawn, otherwise unused */
     u8 unk1C;                       /* 0x1C */
     char pad1D[0x03];
     s8 ended;                       /* 0x20 set once the effect has ended */
@@ -155,7 +155,7 @@ typedef struct {
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     char pad10[0x0C];
-    char unk1C;                     /* 0x1C */
+    char hit_end_state;             /* 0x1C Hit-check state byte, set once the end spawned */
     char pad1D[0x13];
 } BurstMotion;
 
@@ -170,10 +170,10 @@ typedef struct {
 /* EffectMotion as EffectFly_Start and EffectHandover_Update use it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    int unk10;                      /* 0x10 */
-    f32 unk14;                      /* 0x14 */
+    int fall_speed;                 /* 0x10 Fall speed, zeroed at spawn */
+    f32 scale;                      /* 0x14 Model scale factor, starts at 1.0 */
     char pad18[0x04];
-    char unk1C;                     /* 0x1C */
+    char hit_end_state;             /* 0x1C Hit-check state byte, set once the end spawned */
 } TimedMotion;
 
 /* EffectMotion as EffectFly_Update uses it */
@@ -182,13 +182,13 @@ typedef struct {
     f32 fall_speed;                 /* 0x10 */
     f32 scale;                      /* 0x14 */
     f32 growth;                     /* 0x18 EffectFly_StartGrowing: what the model's scale is multiplied by each frame */
-    char unk1C[0x14];               /* 0x1C passed by address */
+    char hit_end_state[0x14];       /* 0x1C Hit-check state block, state byte first */
 } ScaledFallMotion;
 
 /* EffectMotion as EffectAtTarget_Start and EffectAtTargetFloor_Start use it */
 typedef struct {
     int countdown;                  /* 0x00 frames until the hit check runs (EffectDef.radius_half) */
-    u8 unk04;                       /* 0x04 */
+    u8 no_floor;                    /* 0x04 Set when no floor was found under it */
 } TargetMotion;
 
 /* EffectMotion as EffectAtTarget_Update, EffectAtTargetFloor_Update and others use it */
@@ -235,8 +235,8 @@ typedef struct {
 /* EffectMotion as EffectLob_Start uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    int unk10;                      /* 0x10 */
-    u8 unk14;                       /* 0x14 */
+    int cleared_on_start;           /* 0x10 Word zeroed at spawn, otherwise unused */
+    u8 landed;                      /* 0x14 Set once the landing effects have spawned */
 } DropMotion;
 
 /* EffectMotion as EffectLob_Update uses it */
@@ -249,7 +249,7 @@ typedef struct {
 /* EffectMotion as EffectGroundChase_Start, EffectGroundChase_Update and others use it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    float unk10;                    /* 0x10 */
+    float chase_radius;             /* 0x10 Radius copied from the definition */
     u8 links_left;                  /* 0x14 links left in the chain; the last one ends it */
     s8 state;                       /* 0x15 1: landed */
     char pad16[0x0A];
@@ -297,14 +297,14 @@ typedef struct {
 typedef struct {
     Vector4 velocity;
     f32 speed;                      /* 0x10 */
-    s32 unk14;                      /* 0x14 */
+    s32 cleared_on_start;           /* 0x14 Word zeroed at spawn, otherwise unused */
     u8 flag18;                      /* 0x18 */
 } SpeedMotion;
 
 /* EffectMotion as EffectArc_Start and EffectChain_Start use it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    u8 unk10;                       /* 0x10 */
+    u8 cleared_on_start;            /* 0x10 Byte zeroed at spawn, otherwise unused */
     char pad11[0x0F];
 } SpawnMotion;
 
@@ -333,43 +333,43 @@ typedef struct {
     Vector4 velocity;               /* 0x00 */
     Vector4 end_position;           /* 0x10 where the end effect appears */
     int links_left;                 /* 0x20 links left in the chain; the last link spawns the end effect */
-    u16 unk24;                      /* 0x24 */
+    u16 chain_enabled;              /* 0x24 Nonzero: a hit spawns a chain link, not the end */
     char pad26[0x0A];
 } SelectMotion;
 
 /* EffectMotion as EffectHoverShot_Update uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    char unk10[0x10];               /* 0x10 passed by address */
+    char player_offset[0x10];       /* 0x10 Offset from the player, turned with the player */
     int timer;                      /* 0x20 */
-    char unk24[0x0C];               /* 0x24 passed by address */
+    char hit_end_state[0x0C];       /* 0x24 Hit-check flags block, state byte first */
 } TimerMotion;
 
 /* EffectMotion as EffectSplitShot_Start uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    char unk10[0x10];               /* 0x10 passed by address */
-    int unk20;                      /* 0x20 */
+    char impact_point[0x10];        /* 0x10 Where the aimed shot lands, set by the cast */
+    int timer;                      /* 0x20 Frames until the delayed burst fires */
     s16 angle;                      /* 0x24 */
-    s16 unk26;                      /* 0x26 */
-    u8 unk28;                       /* 0x28 */
+    s16 cooldown;                   /* 0x26 Frames before the effect can fire again */
+    u8 hit_end_state;               /* 0x28 Hit-check state byte, set once the end spawned */
     char pad29[0x0F];
 } AngleAimMotion;
 
 /* EffectMotion as EffectSplitShot_Update uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    Vector4 unk10;                  /* 0x10 */
+    Vector4 end_position;           /* 0x10 Where the end effect appears */
     int timer;                      /* 0x20 */
     u16 end_frame;                  /* 0x24 */
     u16 cooldown;                   /* 0x26 */
-    char unk28[0x18];               /* 0x28 passed by address */
+    char hit_end_state[0x18];       /* 0x28 Hit-check flags block, state byte first */
 } CooldownTimerMotion;
 
 /* EffectMotion as EffectLingerShot_Start uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    char unk10[0x10];               /* 0x10 passed by address */
+    char impact_point[0x10];        /* 0x10 Where the shot lands, set by the frames cast */
     u16 count;                      /* 0x20 */
     u8 flag;                        /* 0x22 */
 } CountedMotion;
@@ -388,7 +388,7 @@ typedef struct {
     Vector4 velocity;               /* 0x00 */
     Vector4 target_position;        /* 0x10 copied from the target */
     char pad20[0x04];
-    s16 unk24;                      /* 0x24 */
+    s16 distance_scale;             /* 0x24 Scale taken from the distance to the aim target */
 } ScaledMotion;
 
 /* EffectMotion as EffectGroundFan_Start uses it: a heading in velocity.y, the frame counter and phase */
@@ -396,7 +396,7 @@ typedef struct {
     Vector4 velocity;               /* 0x00 velocity.y is the heading */
     int frame_stamp;                /* 0x10 the global spawn_slot counter when it started */
     int phase;                      /* 0x14 frame_stamp % interval */
-    u8 unk18;                       /* 0x18 */
+    u8 hit_end_state;               /* 0x18 Hit-check state byte, set once the end spawned */
 } PhaseMotion;
 
 /* EffectMotion as EffectLevelHeight_Update uses it: an int step count */
@@ -430,10 +430,10 @@ typedef struct {
 /* EffectMotion as EffectLateFall_Start uses it: a launch velocity, then the radius and flags */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    int unk10;                      /* 0x10 */
-    f32 unk14;                      /* 0x14 */
+    int cleared_on_start;           /* 0x10 Word zeroed at spawn, otherwise unused */
+    f32 scale;                      /* 0x14 Float set to 1.0 at spawn, otherwise unused */
     int radius_half;                /* 0x18 the definition's radius_half */
-    u8 unk1C;                       /* 0x1C */
+    u8 hit_end_state;               /* 0x1C Hit-check state byte, set once the end spawned */
     char pad1D[0x03];
 } RadiusMotion;
 
@@ -442,13 +442,13 @@ typedef struct {
     Vector4 velocity;               /* 0x00 */
     char pad10[0x08];
     int fall_frame;                 /* 0x18 the frame the fall starts at */
-    char unk1C[0x0C];               /* 0x1C passed by address */
+    char hit_end_state[0x0C];       /* 0x1C Hit-check state block, state byte first */
 } DelayedFallMotion;
 
 /* EffectMotion as EffectFallToFloor_Start, EffectHomeOnPlayer_Start and EffectRepeater_Start use it: a heading velocity and a flag byte */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    u8 unk10;                       /* 0x10 cleared on spawn */
+    u8 hit_end_state;               /* 0x10 Hit-check state byte, set once the end spawned */
     char pad11[0x0F];
 } HeadingMotion;
 
@@ -463,7 +463,7 @@ typedef struct {
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     u8 countdown;                   /* 0x10 */
-    u8 unk11;                       /* 0x11 */
+    u8 end_started;                 /* 0x11 Set once the end has begun */
     char pad12[0x0E];
 } FollowCountMotion;
 
@@ -485,8 +485,8 @@ typedef struct {
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     int start_frame;                /* 0x10 */
-    f32 unk14;                      /* 0x14 */
-    u8 unk18;                       /* 0x18 */
+    f32 scale;                      /* 0x14 Model scale factor, starts at 1.0 */
+    u8 hit_end_state;               /* 0x18 Hit-check state byte, set once the end spawned */
     char pad19[0x07];
 } SpinBurstMotion;
 
@@ -494,7 +494,7 @@ typedef struct {
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 scale;                      /* 0x10 */
-    u8 unk14;                       /* 0x14 */
+    u8 hit_end_state;               /* 0x14 Hit-check state byte, set once the end spawned */
     char pad15[0x1B];
 } LevelMotion;
 
@@ -502,7 +502,7 @@ typedef struct {
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 scale;                      /* 0x10 */
-    char unk14[0x1C];               /* 0x14 passed by address */
+    char hit_end_state[0x1C];       /* 0x14 Hit-check state block, state byte first */
 } GrowingMotion;
 
 /* EffectMotion as EffectRay_Start and EffectRay_StartAtPlayer use it: a float at 0x20 holding the distance to the target */
@@ -546,7 +546,7 @@ typedef struct {
     char pad10[0x10];
     u16 end_frame;                  /* 0x20 */
     u16 player_frame;               /* 0x22 */
-    char unk24[0x0C];               /* 0x24 passed by address */
+    char hit_end_state[0x0C];       /* 0x24 Hit-check state block, state byte first */
 } PlayerChaseMotion;
 
 /* EffectMotion as EffectChain_Update uses it */
@@ -560,7 +560,7 @@ typedef struct {
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     Entity *owner_entity;           /* 0x10 a copy of EffectActor.owner_entity */
-    u8 unk14;                       /* 0x14 cleared on spawn */
+    u8 hit_end_state;               /* 0x14 Hit-check state byte, set once the end spawned */
 } SavedArgMotion;
 
 /* EffectMotion as EffectBowDraw_Start uses it */
@@ -573,9 +573,9 @@ typedef struct {
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 speed;                      /* 0x10 the target's velocity.x */
-    s32 unk14;                      /* 0x14 */
-    f32 unk18;                      /* 0x18 */
-    u8 unk1C;                       /* 0x1C */
+    s32 cleared_on_start;           /* 0x14 Word zeroed at spawn, otherwise unused */
+    f32 scale;                      /* 0x18 Float set to 1.0 at spawn, otherwise unused */
+    u8 hit_end_state;               /* 0x1C Hit-check state byte, set once the end spawned */
     char pad1D[0x03];
 } TargetFollowerMotion;
 
@@ -583,13 +583,13 @@ typedef struct {
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     char pad10[0x0C];
-    char unk1C[0x14];               /* 0x1C passed by address */
+    char hit_end_state[0x14];       /* 0x1C Hit-check state block, state byte first */
 } FallingLateMotion;
 
 /* EffectMotion as EffectImpactShot_Start uses it: turns toward a point */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    char unk10[0x10];               /* 0x10 passed by address */
+    char impact_point[0x10];        /* 0x10 Where the shot lands, set by the frames cast */
     int end_frame;                  /* 0x20 */
     u8 done;                        /* 0x24 */
     char pad25[0x0B];
@@ -608,11 +608,11 @@ typedef struct {
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 start_angle;                /* 0x10 model heading plus EffectDef.ground_height */
-    int unk14;                      /* 0x14 */
-    f32 unk18;                      /* 0x18 EffectDef.radius_half over half of keyframe_end */
-    f32 unk1C;                      /* 0x1C EffectDef.interval over keyframe_end */
+    int start_counter;              /* 0x14 Int zeroed at spawn, otherwise unused */
+    f32 radius_per_frame;           /* 0x18 Radius growth per frame, from radius_half */
+    f32 interval_per_frame;         /* 0x1C Per-frame value from def->interval */
     u8 start_step;                  /* 0x20 rand() % 10 */
-    u8 unk21;                       /* 0x21 */
+    u8 cleared_on_start;            /* 0x21 Byte zeroed at spawn, otherwise unused */
     char pad22[0x0E];
 } SpiralMotion;
 
@@ -647,7 +647,7 @@ typedef struct {
 /* EffectMotion as EffectTiltFall_Start and EffectCorkscrew_Start use it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    char unk10[0x10];               /* 0x10 passed by address */
+    char centre_position[0x10];     /* 0x10 Centre the model circles, copied at spawn */
     f32 random_turn;                /* 0x20 random turn */
     f32 spin_rate;                  /* 0x24 spin rate */
 } SpreadMotion;
@@ -655,7 +655,7 @@ typedef struct {
 /* EffectMotion as EffectCorkscrew_Update uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    char unk10[0x10];               /* 0x10 passed by address */
+    char centre_position[0x10];     /* 0x10 Centre the model circles, moved by velocity */
     f32 spin_angle;                 /* 0x20 spin angle, wrapped to +-pi */
     f32 spin_speed;                 /* 0x24 spin speed */
 } SpinAngleMotion;
@@ -675,15 +675,15 @@ typedef struct {
 /* EffectMotion as EffectJitterOrbit_Start uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    char unk10[0x10];               /* 0x10 passed by address */
-    f32 unk20;                      /* 0x20 */
-    f32 unk24;                      /* 0x24 */
+    char centre_position[0x10];     /* 0x10 Centre the orbit offset is taken from */
+    f32 yaw;                        /* 0x20 Yaw of the orbit offset, starts at 0.1 */
+    f32 pitch;                      /* 0x24 Pitch of the orbit offset, starts at 0.1 */
 } StartMotion;
 
 /* EffectMotion as EffectJitterOrbit_Update uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    char unk10[0x10];               /* 0x10 passed by address */
+    char centre_position[0x10];     /* 0x10 Centre the orbit offset is added to */
     f32 yaw;                        /* 0x20 */
     f32 pitch;                      /* 0x24 */
 } YawPitchMotion;
@@ -736,7 +736,7 @@ typedef struct {
 typedef struct {
     char pad00[0x14];
     u16 landing_frame;              /* 0x14 */
-    u8 unk16;                       /* 0x16 */
+    u8 floor_material;              /* 0x16 Floor material byte under the landing spot */
     char pad17[0x19];
 } LandingFrameMotion;
 
@@ -1022,7 +1022,7 @@ typedef struct {
 /* FxTableEntry+0x34: one of the three hit checks of an effect, EffectDef.hit_check_index picks it (Attack_RunEffectHitCheck) */
 typedef struct {
     EntityParamsUnk240PartUnk00 strengths; /* 0x00 goes to Unk1B1470Request.unk50 */
-    EntityParamsUnk240PartUnk12 unk12; /* 0x12 goes to Unk1B1470Request.unk62 */
+    EntityParamsUnk240PartUnk12 secondary_strengths; /* 0x12 Second strength block, copied to the attack request */
     s16 radius;                     /* 0x1E the hit's radius (shape 0 and 1) */
     s16 height;                     /* 0x20 the hit's height (shape 1) */
     u8 shape;                       /* 0x22 0 to 2: Unk1B1470Request.shape */

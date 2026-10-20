@@ -27,7 +27,7 @@ typedef struct {
     SoundFileBuffer buffer;         /* 0x00 */
     int size_a;                     /* 0x0C */
     int size_b;                     /* 0x10 */
-    int unk14;                      /* 0x14 */
+    int extra_size;                 /* 0x14 extra size of the BGM buffers */
     char pad18[0x08];               /* 0x18 */
 } SoundBankSlot;
 
@@ -40,7 +40,7 @@ SoundBankSlot sfx_com_bank = { /* 0x3EF520 the sfx_com bank */
 };
 
 SoundBankSlot bgm_buffers = { /* 0x3EF540 the BGM's buffers (bgm_load_job's) */
-    .size_a = 0x4B000, .size_b = 0x1400, .unk14 = 0x5000,
+    .size_a = 0x4B000, .size_b = 0x1400, .extra_size = 0x5000,
 };
 asm(".globl bgm_header_buffer\nbgm_header_buffer = bgm_buffers + 0x4");  /* 0x3EF544 the BGM's second buffer (Sound_BgmReadHeader) */
 asm(".globl bgm_sequence_buffer\nbgm_sequence_buffer = bgm_buffers + 0x8");  /* 0x3EF548 the BGM's third buffer (Sound_BgmReadSequence) */
@@ -69,7 +69,7 @@ LoadJobSlot bgm_load_job = { /* 0x3EF5B8 the BGM load job */
         .buffers = (int *)&bgm_buffers, .name = bgm_bd_format, .header_format = bgm_hd_format,
         .name_format = bgm_sq_format, .file_handle = -1,
         /* 0x1C, inside the shared LoadJob's pad18: 0xBB810, the size of a BGM file */
-        .pad18 = { 0, 0, 0, 0, 0x10, 0xB8, 0x0B, 0, 0, 0, 0, 0 },
+        .file_size_area = { 0, 0, 0, 0, 0x10, 0xB8, 0x0B, 0, 0, 0, 0, 0 },
     },
     .unk28 = -1,
 };

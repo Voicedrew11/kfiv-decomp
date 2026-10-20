@@ -126,15 +126,15 @@ static inline s32 player_in_reach(Entity *entity, EntityParams *params) {
         }
     }
     if (bottom <= player_state.position.y && player_state.position.y - 230.0f <= top) {
-        if (ENTITY_PARAMS_RANGED(params)[0].record.unk00 != 0 && angles[3] < ENTITY_PARAMS_RANGED(params)[0].widest_angle && reach[0][3] <= entity->distance_to_player &&
+        if (ENTITY_PARAMS_RANGED(params)[0].record.ranged_weight != 0 && angles[3] < ENTITY_PARAMS_RANGED(params)[0].widest_angle && reach[0][3] <= entity->distance_to_player &&
             entity->distance_to_player < reach[1][3]) {
             return TRUE;
         }
-        if (ENTITY_PARAMS_RANGED(params)[1].record.unk00 != 0 && angles[4] < ENTITY_PARAMS_RANGED(params)[1].widest_angle && reach[0][4] <= entity->distance_to_player &&
+        if (ENTITY_PARAMS_RANGED(params)[1].record.ranged_weight != 0 && angles[4] < ENTITY_PARAMS_RANGED(params)[1].widest_angle && reach[0][4] <= entity->distance_to_player &&
             entity->distance_to_player < reach[1][4]) {
             return TRUE;
         }
-        if (ENTITY_PARAMS_RANGED(params)[2].record.unk00 != 0 && angles[5] < ENTITY_PARAMS_RANGED(params)[2].widest_angle && reach[0][5] <= entity->distance_to_player &&
+        if (ENTITY_PARAMS_RANGED(params)[2].record.ranged_weight != 0 && angles[5] < ENTITY_PARAMS_RANGED(params)[2].widest_angle && reach[0][5] <= entity->distance_to_player &&
             entity->distance_to_player < reach[1][5]) {
             return TRUE;
         }
@@ -431,7 +431,7 @@ s32 EntityAi_PickAttack(Entity *entity) {
             }
             weight = 0;
             if (in_reach) {
-                weight = (entity->attack_weights[i] * ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].record.unk00) >> 6;
+                weight = (entity->attack_weights[i] * ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].record.ranged_weight) >> 6;
             }
         }
         weights[i] = weight;
@@ -599,7 +599,7 @@ s32 EntityAi_PickRangedAttack(Entity *entity) {
         if (!in_reach) {
             weight = 0;
         } else {
-            weight = (entity->attack_weights[3 + i] * ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[i].record.unk00) >> 6;
+            weight = (entity->attack_weights[3 + i] * ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[i].record.ranged_weight) >> 6;
         }
         weights[i] = weight;
         total += weight;

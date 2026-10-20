@@ -313,7 +313,7 @@ static void MutantWall_RangedAttack(Entity *entity) {
         }
         EntityAi_LaunchShots(entity, unk3D8, (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8,
                       entity->model->level_tables->frame);
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
@@ -378,8 +378,8 @@ static void MutantWall_TurnPart2ToPlayer(Entity *entity) {
     f32 limit;
 
     if (entity->target == NULL) {
-        ai_state->point_x = parts[part_index].unk50[0];
-        ai_state->point_y = parts[part_index].unk50[1];
+        ai_state->point_x = parts[part_index].part_angles[0];
+        ai_state->point_y = parts[part_index].part_angles[1];
     } else {
         angle = EntityMath_HeadingTo(entity->model->position, player_state.position);
         angle = EntityMath_AngleDifference(entity->model->rotation[1], angle);
@@ -390,6 +390,6 @@ static void MutantWall_TurnPart2ToPlayer(Entity *entity) {
             angle = -limit;
         }
         EntityMath_EaseAngleToward(&ai_state->point_y, angle, 10.0f);
-        parts[part_index].unk50[1] = ai_state->point_y;
+        parts[part_index].part_angles[1] = ai_state->point_y;
     }
 }

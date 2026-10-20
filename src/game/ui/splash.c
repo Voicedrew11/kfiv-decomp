@@ -277,7 +277,7 @@ void Splash_BuildSprite(void) {
     tex0 &= 0xFFF8001FFFFFFFFFUL;
     tex0 |= 0xF500UL << 35;
     splash_sprite.tex0 = tex0;
-    splash_sprite.unk08 = file_load_buffer.unk18;
+    splash_sprite.tex1 = file_load_buffer.tex1;
     splash_sprite.gif_reg = 0x156;
     splash_sprite.red = 0x80;
     splash_sprite.green = 0x80;

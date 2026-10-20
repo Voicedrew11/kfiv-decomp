@@ -92,7 +92,7 @@ typedef struct {
     s32 weapon_use_count;           /* 0xD4 saved; every 100th swing gives "Physical UP" (Player_CountWeaponUse) */
     s32 magic_use_count;            /* 0xD8 saved; every 100th magic gives "Magic Power UP" (Player_CountMagicUse) */
     u16 ailment_defence[6];         /* 0xDC at most 100 each */
-    s32 unkE8;                      /* 0xE8 unkE8 to unk10C are worked out by Player_SumWornBonuses from what is worn */
+    s32 item_bonus_kind1_active;    /* 0xE8 Flag set by a worn item's bonus kind 1 */
     s32 worn_drain_active;          /* 0xEC nonzero: mp drops every 30 frames (Player_UpdateStatus) */
     u32 hp_regen_period;            /* 0xF0 nonzero: hp rises every that many frames */
     u32 hp_drain_period;            /* 0xF4 nonzero: hp drops every that many frames */
@@ -148,9 +148,9 @@ typedef struct {
     MapObject *floor_map_object;    /* 0x208 the map object the player stands on */
     MapObject *touched_map_object;  /* 0x20C the map object mesh wall the player touched */
     u8 floor_material;              /* 0x210 3: the second row of the movement tables is used; 6: see Player_FindFloorMaterial */
-    u8 unk211;                      /* 0x211 set to 6 with unk210 before the floors are looked for (Player_CollideWithMap) */
+    u8 floor_material_before_search; /* 0x211 Floor material set to 6 before the floor search */
     char pad212[0x02];
-    f32 unk214;                     /* 0x214 */
+    f32 collision_base_y;           /* 0x214 Height cleared each collision, moved with the map */
     char pad218[0x08];
     Vector4 aim;                    /* 0x220 direction the player is knocked back along, flattened to x/z (Player_KnockBackFromHit) */
     f32 aim_speed;                  /* 0x230 knock-back speed, lost by weight every frame; above 0: Game_BlendPreviousFrame(0x40) is drawn */
@@ -311,7 +311,7 @@ typedef struct {
     PlayerItemRates ailment_attack_rates; /* 0x36 ailment rates the item gives, copied to PlayerState.ailment_attack_rates */
     u16 first_magic_id;             /* 0x42 0xFFFF: none */
     u16 first_magic_cast_frame;     /* 0x44 the swing's motion frame on which magic unk42 is cast (Player_SwingWeapon) */
-    u16 unk46;                      /* 0x46 0xFFFF: none */
+    u16 first_magic_motion_id;      /* 0x46 Id gating the first magic's latch, 0xFFFF none */
     u16 first_magic_latch_frame;    /* 0x48 the motion frame from which PlayerState.magic1_motion_reached is set */
     u16 first_magic_window_start_frame; /* 0x4A first and last motion frame on which magic unk42 may be asked for */
     u16 first_magic_window_end_frame; /* 0x4C last motion frame on which the first magic may be asked for */
@@ -319,7 +319,7 @@ typedef struct {
     char pad50[0x02];
     u16 second_magic_id;            /* 0x52 0xFFFF: none */
     u16 second_magic_cast_frame;    /* 0x54 as unk44 to first_magic_effect_frames, for magic unk52 */
-    u16 unk56;                      /* 0x56 */
+    u16 second_magic_motion_id;     /* 0x56 Id gating the second magic's latch, 0xFFFF none */
     u16 second_magic_latch_frame;   /* 0x58 motion frame past which the second magic's latch is set */
     u16 second_magic_window_start_frame; /* 0x5A first motion frame on which the second magic may be asked for */
     u16 second_magic_window_end_frame; /* 0x5C last motion frame on which the second magic may be asked for */

@@ -1370,7 +1370,7 @@ int Sound_BgmStartCue(void *context, int cue_index) {
         SoundDriver_FreeReverb((char)bgm_reverb_slot);
     }
     cue = (SoundCue *)(bgm_cues + cue_index * 0x10);
-    bgm_reverb_slot = SoundDriver_AddReverb(cue->flags, cue->depth_l, cue->depth_r, cue->delay, cue->feedback, cue->unk0C, cue->unk0E, 0);
+    bgm_reverb_slot = SoundDriver_AddReverb(cue->flags, cue->depth_l, cue->depth_r, cue->delay, cue->feedback, cue->aux_level_l, cue->aux_level_r, 0);
     bgm_load_step += 1;
     return 0;
 }
@@ -2012,7 +2012,7 @@ int Sound_MapBankAddReverb(SoundJob *job) {
         SoundDriver_FreeReverb((char)map_reverb_slot);
     }
     cue = (SoundCue *)(map_bank_cues + state.cue_index * 0x10);
-    map_reverb_slot = SoundDriver_AddReverb(cue->flags, cue->depth_l, cue->depth_r, cue->delay, cue->feedback, cue->unk0C, cue->unk0E, 1);
+    map_reverb_slot = SoundDriver_AddReverb(cue->flags, cue->depth_l, cue->depth_r, cue->delay, cue->feedback, cue->aux_level_l, cue->aux_level_r, 1);
     map_bank_load_step += 1;
     return 0;
 }

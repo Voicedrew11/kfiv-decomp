@@ -102,7 +102,7 @@ void Packet_AppendToChain(u32 *packet, u32 *packet_end) {
                 DmaTag *tail_tag = *packet_tail;
                 tail_tag->id_and_qwc = 0x20000000;
                 tail_tag->address = (int)packet;
-                tail_tag->unk0C = tail_tag->unk08 = 0;
+                tail_tag->spare_word_high = tail_tag->spare_word_low = 0;
             } else {
                 *packet_head = packet;
             }
@@ -127,8 +127,8 @@ void Packet_SendChain(void) {
             end_tag = packet_chain_tail[packet_fill_index];
             end_tag->id_and_qwc = 0x70000000;
             end_tag->address = 0;
-            end_tag->unk08 = 0;
-            end_tag->unk0C = 0;
+            end_tag->spare_word_low = 0;
+            end_tag->spare_word_high = 0;
             FlushCache(0);
             do {
             } while (*D1_CHCR & D_CHCR_STR);

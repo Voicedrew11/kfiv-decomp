@@ -62,7 +62,7 @@ static void Vector_ProjectToScreen(void *point, int *screen) {
 
 /* Returns the index of the largest of the seven s16 values at owner->unk70. Nothing calls it. */
 static int Geometry_IndexOfLargestOfSeven(Unk20D008Owner *owner) {
-    s16 *values = owner->unk70;
+    s16 *values = owner->largest_search_values;
     int largest = values[0];
     int largest_index = 0;
     int i;

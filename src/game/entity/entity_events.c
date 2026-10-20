@@ -128,15 +128,15 @@ int EntityShot_LaunchAimed(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame
     f32 yaw;
     s32 i;
 
-    if (entity->ailment_4_frames != 0 && record->unk0C == 0) {
+    if (entity->ailment_4_frames != 0 && record->ignores_ailment_4 == 0) {
         return 0;
     }
     for (i = 0; i < 3; i++) {
         if (record->launches[i].frame != 0 && frame_from < record->launches[i].frame && record->launches[i].frame <= frame_to) {
             shot = Shot_Alloc();
-            shot->unk22 = shot->unk20 = 0;
-            shot->unk00 = 1;
-            shot->unk28 = entity->params->unk238;
+            shot->player_magic = shot->player_power = 0;
+            shot->is_magic_shot = 1;
+            shot->shot_params = entity->params->shot_params;
             from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone);
             tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone + 1);
             if (from != NULL && tip != NULL) {
@@ -172,16 +172,16 @@ int EntityShot_Launch(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame_from
     char *origin;
     s32 i;
 
-    if (entity->ailment_4_frames != 0 && record->unk0C == 0) {
+    if (entity->ailment_4_frames != 0 && record->ignores_ailment_4 == 0) {
         return 0;
     }
     for (i = 0; i < 3; i++) {
         if (record->launches[i].frame != 0 && frame_from < record->launches[i].frame && record->launches[i].frame <= frame_to) {
             shot = Shot_Alloc();
-            shot->unk00 = 1;
-            shot->unk20 = 0;
-            shot->unk22 = 0;
-            shot->unk28 = entity->params->unk238;
+            shot->is_magic_shot = 1;
+            shot->player_power = 0;
+            shot->player_magic = 0;
+            shot->shot_params = entity->params->shot_params;
             origin = Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone);
             if (origin != NULL) {
                 Attack_LaunchMagicEffect(record->launches[i].magic_effect, shot, origin, direction, entity);

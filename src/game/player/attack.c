@@ -15,7 +15,7 @@
 #define AT_LEAST_5(chance) ((chance) < 5 ? 5 : (chance))
 #define ENTITY_TYPE_LAST_BOSS 99
 /* EntityParams.unk238 as six signed bytes: tenths the six magic strengths of an entity's hit are scaled by */
-#define ENTITY_HIT_SCALES(entity) ((s8 *)&(entity)->params->unk238)
+#define ENTITY_HIT_SCALES(entity) ((s8 *)&(entity)->params->shot_params)
 /* store a strength as a whole number, rounded up when more than a thousandth is left over */
 #define STORE_ROUNDED_UP(dest, value) \
     strength = (value); \
@@ -217,11 +217,11 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                 ENTITY_MODEL(entity)->update_bone_points(ENTITY_MODEL(entity));
                 body = entity->params->body_points;
                 for (index = 0; index < 4; index++, body++) {
-                    if (!(body->unk00.flags & ENTITY_BODY_USED)) {
+                    if (!(body->flags_or_model_point.flags & ENTITY_BODY_USED)) {
                         continue;
                     }
-                    point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->unk00.point);
-                    if (!(body->unk00.flags & ENTITY_BODY_ROUND)) {
+                    point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->flags_or_model_point.point);
+                    if (!(body->flags_or_model_point.flags & ENTITY_BODY_ROUND)) {
                         Collision_SphereCylinder(point, request, body->radius * scale, body->height * ENTITY_MODEL(entity)->scale_y,
                                       request->radius);
                     } else {
@@ -378,11 +378,11 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                 ENTITY_MODEL(entity)->update_bone_points(ENTITY_MODEL(entity));
                 body = entity->params->body_points;
                 for (index = 0; index < 4; index++, body++) {
-                    if (!(body->unk00.flags & ENTITY_BODY_USED)) {
+                    if (!(body->flags_or_model_point.flags & ENTITY_BODY_USED)) {
                         continue;
                     }
-                    point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->unk00.point);
-                    if (!(body->unk00.flags & ENTITY_BODY_ROUND)) {
+                    point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->flags_or_model_point.point);
+                    if (!(body->flags_or_model_point.flags & ENTITY_BODY_ROUND)) {
                         if (IS_PLAYER(request->owner)) {
                             Collision_CylinderArcPitch(point, request, body->radius * width_scale, body->height * ENTITY_MODEL(entity)->scale_y,
                                           request->radius, request->lowest_y, request->highest_y, request->half_angle, request->facing,
@@ -774,21 +774,21 @@ void Attack_HitPlayer(Unk1B1470Request *request, Unk1B1470Extra *extra) {
         percent += 20;
     }
     Attack_GetEffectiveStrengths(&attack, request, extra); // match: attack is filled here and never read; the terms below use request->unk50
-    damage = Attack_StrengthDamageToPlayer(request->unk50.unk00[0], player_state.defence_stats.values[1], player_state.power); // match: values[1] here and on the next line; values[0] is never used
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[1], player_state.defence_stats.values[1], player_state.power); // match: values[1] a second time
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[2], player_state.defence_stats.values[2], player_state.power);
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[3], player_state.defence_stats.values[3], player_state.magic) * percent / 100;
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[4], player_state.defence_stats.values[4], player_state.magic);
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[5], player_state.defence_stats.values[5], player_state.magic);
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[6], player_state.defence_stats.values[6], player_state.magic);
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[7], player_state.defence_stats.values[7], player_state.magic);
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[8], player_state.defence_stats.values[8], player_state.magic);
+    damage = Attack_StrengthDamageToPlayer(request->strengths.element_strengths[0], player_state.defence_stats.values[1], player_state.power); // match: values[1] here and on the next line; values[0] is never used
+    damage += Attack_StrengthDamageToPlayer(request->strengths.element_strengths[1], player_state.defence_stats.values[1], player_state.power); // match: values[1] a second time
+    damage += Attack_StrengthDamageToPlayer(request->strengths.element_strengths[2], player_state.defence_stats.values[2], player_state.power);
+    damage += Attack_StrengthDamageToPlayer(request->strengths.element_strengths[3], player_state.defence_stats.values[3], player_state.magic) * percent / 100;
+    damage += Attack_StrengthDamageToPlayer(request->strengths.element_strengths[4], player_state.defence_stats.values[4], player_state.magic);
+    damage += Attack_StrengthDamageToPlayer(request->strengths.element_strengths[5], player_state.defence_stats.values[5], player_state.magic);
+    damage += Attack_StrengthDamageToPlayer(request->strengths.element_strengths[6], player_state.defence_stats.values[6], player_state.magic);
+    damage += Attack_StrengthDamageToPlayer(request->strengths.element_strengths[7], player_state.defence_stats.values[7], player_state.magic);
+    damage += Attack_StrengthDamageToPlayer(request->strengths.element_strengths[8], player_state.defence_stats.values[8], player_state.magic);
     request->landed_on_player = 1;
     if (damage <= blocked) { // match: blocked is request->unk72, which is known to be 0 here
         damage = 1;
     }
     Player_TakeDamage(damage);
-    Attack_RollPlayerAilments(&request->unk62);
+    Attack_RollPlayerAilments(&request->ailment_chances);
     if (request->mp_damage != 0) {
         if (request->mp_damage < player_state.mp_now) {
             player_state.mp_now -= request->mp_damage;
@@ -810,38 +810,38 @@ void Attack_HitPlayer(Unk1B1470Request *request, Unk1B1470Extra *extra) {
 void Attack_RollPlayerAilments(void *attack_chances) {
     EntityParamsUnk240PartUnk12 *chances = attack_chances;
 
-    if ((u16)chances->unk00[0] != 0 && player_state.flag_timers[0] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[0] - player_state.ailment_defence[0])) {
+    if ((u16)chances->chance_percent[0] != 0 && player_state.flag_timers[0] == 0) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->chance_percent[0] - player_state.ailment_defence[0])) {
             player_state.timed_flags[0] = 1800;
             player_state.ailment0_start_frame = frame_counter;
         }
     }
-    if ((u16)chances->unk00[1] != 0 && player_state.flag_timers[1] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[1] - player_state.ailment_defence[1])) {
+    if ((u16)chances->chance_percent[1] != 0 && player_state.flag_timers[1] == 0) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->chance_percent[1] - player_state.ailment_defence[1])) {
             player_state.timed_flags[1] = 150;
             player_state.ailment1_start_frame = frame_counter;
         }
     }
-    if ((u16)chances->unk00[2] != 0 && player_state.flag_timers[2] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[2] - player_state.ailment_defence[2])) {
+    if ((u16)chances->chance_percent[2] != 0 && player_state.flag_timers[2] == 0) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->chance_percent[2] - player_state.ailment_defence[2])) {
             player_state.timed_flags[2] = 3600;
             player_state.ailment2_start_frame = frame_counter;
         }
     }
-    if ((u16)chances->unk00[3] != 0 && player_state.flag_timers[3] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[3] - player_state.ailment_defence[3])) {
+    if ((u16)chances->chance_percent[3] != 0 && player_state.flag_timers[3] == 0) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->chance_percent[3] - player_state.ailment_defence[3])) {
             player_state.timed_flags[3] = 5400;
             player_state.ailment3_start_frame = frame_counter;
         }
     }
-    if ((u16)chances->unk00[4] != 0 && player_state.flag_timers[4] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[4] - player_state.ailment_defence[4])) {
+    if ((u16)chances->chance_percent[4] != 0 && player_state.flag_timers[4] == 0) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->chance_percent[4] - player_state.ailment_defence[4])) {
             player_state.timed_flags[4] = 1800;
             player_state.ailment4_start_frame = frame_counter;
         }
     }
-    if ((u16)chances->unk00[5] != 0 && player_state.flag_timers[5] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[5] - player_state.ailment_defence[5])) {
+    if ((u16)chances->chance_percent[5] != 0 && player_state.flag_timers[5] == 0) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->chance_percent[5] - player_state.ailment_defence[5])) {
             player_state.timed_flags[5] = 18000;
             player_state.ailment5_start_frame = frame_counter;
         }
@@ -943,39 +943,39 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
 
     damage = 0;
     if (entity->params->resist_slash < 100) {
-        damage = Attack_StrengthDamage(attack.unk00[0], request->unk50.unk00[0], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
+        damage = Attack_StrengthDamage(attack.element_strengths[0], request->strengths.element_strengths[0], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
                                entity->params->physical_defence + physical_bonus + entity->params->resist_slash);
     }
     if (entity->params->resist_hit < 100) {
-        damage += Attack_StrengthDamage(attack.unk00[1], request->unk50.unk00[1], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
+        damage += Attack_StrengthDamage(attack.element_strengths[1], request->strengths.element_strengths[1], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
                                 entity->params->physical_defence + physical_bonus + entity->params->resist_hit);
     }
     if (entity->params->resist_stab < 100) {
-        damage += Attack_StrengthDamage(attack.unk00[2], request->unk50.unk00[2], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
+        damage += Attack_StrengthDamage(attack.element_strengths[2], request->strengths.element_strengths[2], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
                                 entity->params->physical_defence + physical_bonus + entity->params->resist_stab);
     }
     if (entity->params->resist_fire < 100) {
-        damage += Attack_StrengthDamage(attack.unk00[3], request->unk50.unk00[3], extra->player_magic,
+        damage += Attack_StrengthDamage(attack.element_strengths[3], request->strengths.element_strengths[3], extra->player_magic,
                                 entity->params->magic_defence + magic_bonus + entity->params->resist_fire);
     }
     if (entity->params->resist_earth < 100) {
-        damage += Attack_StrengthDamage(attack.unk00[4], request->unk50.unk00[4], extra->player_magic,
+        damage += Attack_StrengthDamage(attack.element_strengths[4], request->strengths.element_strengths[4], extra->player_magic,
                                 entity->params->magic_defence + magic_bonus + entity->params->resist_earth);
     }
     if (entity->params->resist_wind < 100) {
-        damage += Attack_StrengthDamage(attack.unk00[5], request->unk50.unk00[5], extra->player_magic,
+        damage += Attack_StrengthDamage(attack.element_strengths[5], request->strengths.element_strengths[5], extra->player_magic,
                                 entity->params->magic_defence + magic_bonus + entity->params->resist_wind);
     }
     if (entity->params->resist_water < 100) {
-        damage += Attack_StrengthDamage(attack.unk00[6], request->unk50.unk00[6], extra->player_magic,
+        damage += Attack_StrengthDamage(attack.element_strengths[6], request->strengths.element_strengths[6], extra->player_magic,
                                 entity->params->magic_defence + magic_bonus + entity->params->resist_water);
     }
     if (entity->params->resist_light < 100) {
-        damage += Attack_StrengthDamage(attack.unk00[7], request->unk50.unk00[7], extra->player_magic,
+        damage += Attack_StrengthDamage(attack.element_strengths[7], request->strengths.element_strengths[7], extra->player_magic,
                                 entity->params->magic_defence + magic_bonus + entity->params->resist_light);
     }
     if (entity->params->resist_dark < 100) {
-        damage += Attack_StrengthDamage(attack.unk00[8], request->unk50.unk00[8], extra->player_magic,
+        damage += Attack_StrengthDamage(attack.element_strengths[8], request->strengths.element_strengths[8], extra->player_magic,
                                 entity->params->magic_defence + magic_bonus + entity->params->resist_dark);
     }
 
@@ -1065,9 +1065,9 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
         }
     }
 
-    Attack_RollEntityAilments(entity, &request->unk62);
+    Attack_RollEntityAilments(entity, &request->ailment_chances);
     // match: flag bit 40 (still named pad40); the source bit is read as a u8 field
-    ENTITY_FLAG_BITS(entity)->pad40 = ((Unk1B1470RequestBits *)request)->unk4C_3;
+    ENTITY_FLAG_BITS(entity)->last_hit_knockback = ((Unk1B1470RequestBits *)request)->unk4C_3;
 
     if (by_magic && request->instant_kill_chance_percent != 0 && damage > 0) {
         chance = request->instant_kill_chance_percent - entity->params->critical_defence;
@@ -1077,9 +1077,9 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
     }
 
     if (by_weapon && extra->attack_request == 0) {
-        if (attack.unk00[0] >= attack.unk00[1] && attack.unk00[0] >= attack.unk00[2]) {
+        if (attack.element_strengths[0] >= attack.element_strengths[1] && attack.element_strengths[0] >= attack.element_strengths[2]) {
             Sound_PlayCommon(0x32);
-        } else if (attack.unk00[1] >= attack.unk00[2]) {
+        } else if (attack.element_strengths[1] >= attack.element_strengths[2]) {
             Sound_PlayCommon(0x33);
         } else {
             Sound_PlayCommon(0x34);
@@ -1090,19 +1090,19 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
 /* A hit may start the entity's four ailments: each has a chance in percent in the attack,
    less the entity's resistance to it. The last one started is the one that tints the model. */
 void Attack_RollEntityAilments(Entity *entity, EntityParamsUnk240PartUnk12 *chances) {
-    if ((u16)chances->unk00[0] != 0 && ROLL_PERCENT() < (u16)chances->unk00[0] - entity->params->ailment_defence_1) {
+    if ((u16)chances->chance_percent[0] != 0 && ROLL_PERCENT() < (u16)chances->chance_percent[0] - entity->params->ailment_defence_1) {
         entity->ailment_1_frames = 1800;
         entity->ailment_tint_index = 1;
     }
-    if ((u16)chances->unk00[2] != 0 && ROLL_PERCENT() < (u16)chances->unk00[2] - entity->params->ailment_defence_2) {
+    if ((u16)chances->chance_percent[2] != 0 && ROLL_PERCENT() < (u16)chances->chance_percent[2] - entity->params->ailment_defence_2) {
         entity->ailment_2_frames = 3600;
         entity->ailment_tint_index = 2;
     }
-    if ((u16)chances->unk00[4] != 0 && ROLL_PERCENT() < (u16)chances->unk00[4] - entity->params->ailment_defence_3) {
+    if ((u16)chances->chance_percent[4] != 0 && ROLL_PERCENT() < (u16)chances->chance_percent[4] - entity->params->ailment_defence_3) {
         entity->ailment_3_frames = 1800;
         entity->ailment_tint_index = 3;
     }
-    if ((u16)chances->unk00[5] != 0 && ROLL_PERCENT() < (u16)chances->unk00[5] - entity->params->ailment_defence_4) {
+    if ((u16)chances->chance_percent[5] != 0 && ROLL_PERCENT() < (u16)chances->chance_percent[5] - entity->params->ailment_defence_4) {
         entity->ailment_4_frames = 3600;
         entity->ailment_tint_index = 4;
     }
@@ -1156,34 +1156,34 @@ void Attack_HitMapObject(Unk1B1470Request *request, Unk1B1470Extra *extra, MapOb
     Attack_GetEffectiveStrengths(&attack, request, extra);
     damage = 0;
     if (object->definition->hit_resist_percent[0] < 200) {
-        damage = Attack_StrengthDamage(attack.unk00[0], request->unk50.unk00[0], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
+        damage = Attack_StrengthDamage(attack.element_strengths[0], request->strengths.element_strengths[0], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
                                object->definition->hit_resist_percent[0]);
     }
     if (object->definition->hit_resist_percent[1] < 200) {
-        damage += Attack_StrengthDamage(attack.unk00[1], request->unk50.unk00[1], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
+        damage += Attack_StrengthDamage(attack.element_strengths[1], request->strengths.element_strengths[1], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
                                 object->definition->hit_resist_percent[1]);
     }
     if (object->definition->hit_resist_percent[2] < 200) {
-        damage += Attack_StrengthDamage(attack.unk00[2], request->unk50.unk00[2], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
+        damage += Attack_StrengthDamage(attack.element_strengths[2], request->strengths.element_strengths[2], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
                                 object->definition->hit_resist_percent[2]);
     }
     if (object->definition->hit_resist_percent[3] < 200) {
-        damage += Attack_StrengthDamage(attack.unk00[3], request->unk50.unk00[3], extra->player_magic, object->definition->hit_resist_percent[3]);
+        damage += Attack_StrengthDamage(attack.element_strengths[3], request->strengths.element_strengths[3], extra->player_magic, object->definition->hit_resist_percent[3]);
     }
     if (object->definition->hit_resist_percent[4] < 200) {
-        damage += Attack_StrengthDamage(attack.unk00[4], request->unk50.unk00[4], extra->player_magic, object->definition->hit_resist_percent[4]);
+        damage += Attack_StrengthDamage(attack.element_strengths[4], request->strengths.element_strengths[4], extra->player_magic, object->definition->hit_resist_percent[4]);
     }
     if (object->definition->hit_resist_percent[5] < 200) {
-        damage += Attack_StrengthDamage(attack.unk00[5], request->unk50.unk00[5], extra->player_magic, object->definition->hit_resist_percent[5]);
+        damage += Attack_StrengthDamage(attack.element_strengths[5], request->strengths.element_strengths[5], extra->player_magic, object->definition->hit_resist_percent[5]);
     }
     if (object->definition->hit_resist_percent[6] < 200) {
-        damage += Attack_StrengthDamage(attack.unk00[6], request->unk50.unk00[6], extra->player_magic, object->definition->hit_resist_percent[6]);
+        damage += Attack_StrengthDamage(attack.element_strengths[6], request->strengths.element_strengths[6], extra->player_magic, object->definition->hit_resist_percent[6]);
     }
     if (object->definition->hit_resist_percent[7] < 200) {
-        damage += Attack_StrengthDamage(attack.unk00[7], request->unk50.unk00[7], extra->player_magic, object->definition->hit_resist_percent[7]);
+        damage += Attack_StrengthDamage(attack.element_strengths[7], request->strengths.element_strengths[7], extra->player_magic, object->definition->hit_resist_percent[7]);
     }
     if (object->definition->hit_resist_percent[8] < 200) {
-        damage += Attack_StrengthDamage(attack.unk00[8], request->unk50.unk00[8], extra->player_magic, object->definition->hit_resist_percent[8]);
+        damage += Attack_StrengthDamage(attack.element_strengths[8], request->strengths.element_strengths[8], extra->player_magic, object->definition->hit_resist_percent[8]);
     }
 
     if (by_weapon) {
@@ -1232,55 +1232,55 @@ void Attack_GetEffectiveStrengths(EntityParamsUnk240PartUnk00 *out, Unk1B1470Req
 
     if (request->owner == (Entity *)&player_state) {
         if (extra->is_magic_shot == 0) {
-            STORE_ROUNDED_UP(out->unk00[0], (f32)request->unk50.unk00[0] + (f32)extra->player_power * (f32)request->unk50.unk00[0] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[1], (f32)request->unk50.unk00[1] + (f32)extra->player_power * (f32)request->unk50.unk00[1] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[2], (f32)request->unk50.unk00[2] + (f32)extra->player_power * (f32)request->unk50.unk00[2] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[3], (f32)request->unk50.unk00[3] + (f32)extra->player_magic * (f32)request->unk50.unk00[3] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[4], (f32)request->unk50.unk00[4] + (f32)extra->player_magic * (f32)request->unk50.unk00[4] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[5], (f32)request->unk50.unk00[5] + (f32)extra->player_magic * (f32)request->unk50.unk00[5] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[6], (f32)request->unk50.unk00[6] + (f32)extra->player_magic * (f32)request->unk50.unk00[6] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[7], (f32)request->unk50.unk00[7] + (f32)extra->player_magic * (f32)request->unk50.unk00[7] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[8], (f32)request->unk50.unk00[8] + (f32)extra->player_magic * (f32)request->unk50.unk00[8] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[0], (f32)request->strengths.element_strengths[0] + (f32)extra->player_power * (f32)request->strengths.element_strengths[0] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[1], (f32)request->strengths.element_strengths[1] + (f32)extra->player_power * (f32)request->strengths.element_strengths[1] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[2], (f32)request->strengths.element_strengths[2] + (f32)extra->player_power * (f32)request->strengths.element_strengths[2] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[3], (f32)request->strengths.element_strengths[3] + (f32)extra->player_magic * (f32)request->strengths.element_strengths[3] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[4], (f32)request->strengths.element_strengths[4] + (f32)extra->player_magic * (f32)request->strengths.element_strengths[4] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[5], (f32)request->strengths.element_strengths[5] + (f32)extra->player_magic * (f32)request->strengths.element_strengths[5] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[6], (f32)request->strengths.element_strengths[6] + (f32)extra->player_magic * (f32)request->strengths.element_strengths[6] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[7], (f32)request->strengths.element_strengths[7] + (f32)extra->player_magic * (f32)request->strengths.element_strengths[7] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[8], (f32)request->strengths.element_strengths[8] + (f32)extra->player_magic * (f32)request->strengths.element_strengths[8] / 50.0f);
         } else {
-            STORE_ROUNDED_UP(out->unk00[0], (f32)request->unk50.unk00[0] + (f32)extra->player_magic * (f32)request->unk50.unk00[0] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[1], (f32)request->unk50.unk00[1] + (f32)extra->player_magic * (f32)request->unk50.unk00[1] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[2], (f32)request->unk50.unk00[2] + (f32)extra->player_magic * (f32)request->unk50.unk00[2] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[3], request->unk50.unk00[3] + (f32)extra->player_magic * request->unk50.unk00[3] / 50.0f + extra->worn_magic_bonus[0] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[4], request->unk50.unk00[4] + (f32)extra->player_magic * request->unk50.unk00[4] / 50.0f + extra->worn_magic_bonus[1] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[5], request->unk50.unk00[5] + (f32)extra->player_magic * request->unk50.unk00[5] / 50.0f + extra->worn_magic_bonus[2] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[6], request->unk50.unk00[6] + (f32)extra->player_magic * request->unk50.unk00[6] / 50.0f + extra->worn_magic_bonus[3] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[7], request->unk50.unk00[7] + (f32)extra->player_magic * request->unk50.unk00[7] / 50.0f + extra->worn_magic_bonus[4] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[8], request->unk50.unk00[8] + (f32)extra->player_magic * request->unk50.unk00[8] / 50.0f + extra->worn_magic_bonus[5] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[0], (f32)request->strengths.element_strengths[0] + (f32)extra->player_magic * (f32)request->strengths.element_strengths[0] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[1], (f32)request->strengths.element_strengths[1] + (f32)extra->player_magic * (f32)request->strengths.element_strengths[1] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[2], (f32)request->strengths.element_strengths[2] + (f32)extra->player_magic * (f32)request->strengths.element_strengths[2] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[3], request->strengths.element_strengths[3] + (f32)extra->player_magic * request->strengths.element_strengths[3] / 50.0f + extra->worn_magic_bonus[0] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[4], request->strengths.element_strengths[4] + (f32)extra->player_magic * request->strengths.element_strengths[4] / 50.0f + extra->worn_magic_bonus[1] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[5], request->strengths.element_strengths[5] + (f32)extra->player_magic * request->strengths.element_strengths[5] / 50.0f + extra->worn_magic_bonus[2] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[6], request->strengths.element_strengths[6] + (f32)extra->player_magic * request->strengths.element_strengths[6] / 50.0f + extra->worn_magic_bonus[3] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[7], request->strengths.element_strengths[7] + (f32)extra->player_magic * request->strengths.element_strengths[7] / 50.0f + extra->worn_magic_bonus[4] / 50.0f);
+            STORE_ROUNDED_UP(out->element_strengths[8], request->strengths.element_strengths[8] + (f32)extra->player_magic * request->strengths.element_strengths[8] / 50.0f + extra->worn_magic_bonus[5] / 50.0f);
         }
     } else if (request->owner >= entity_pool[0] && request->owner <= &entity_pool_last) {
         if (extra->is_magic_shot == 0) {
-            *out = request->unk50;
+            *out = request->strengths;
         } else {
             Entity *owner = request->owner;
 
-            out->unk00[0] = 0;
-            out->unk00[2] = 0;
-            out->unk00[1] = 0;
-            STORE_ROUNDED_UP(out->unk00[3], request->unk50.unk00[3] * (f32)ENTITY_HIT_SCALES(owner)[0] / 10.0f);
-            STORE_ROUNDED_UP(out->unk00[4], request->unk50.unk00[4] * (f32)ENTITY_HIT_SCALES(owner)[1] / 10.0f);
-            STORE_ROUNDED_UP(out->unk00[5], request->unk50.unk00[5] * (f32)ENTITY_HIT_SCALES(owner)[2] / 10.0f);
-            STORE_ROUNDED_UP(out->unk00[6], request->unk50.unk00[6] * (f32)ENTITY_HIT_SCALES(owner)[3] / 10.0f);
-            STORE_ROUNDED_UP(out->unk00[7], request->unk50.unk00[7] * (f32)ENTITY_HIT_SCALES(owner)[4] / 10.0f);
-            STORE_ROUNDED_UP(out->unk00[8], request->unk50.unk00[8] * (f32)ENTITY_HIT_SCALES(owner)[5] / 10.0f);
+            out->element_strengths[0] = 0;
+            out->element_strengths[2] = 0;
+            out->element_strengths[1] = 0;
+            STORE_ROUNDED_UP(out->element_strengths[3], request->strengths.element_strengths[3] * (f32)ENTITY_HIT_SCALES(owner)[0] / 10.0f);
+            STORE_ROUNDED_UP(out->element_strengths[4], request->strengths.element_strengths[4] * (f32)ENTITY_HIT_SCALES(owner)[1] / 10.0f);
+            STORE_ROUNDED_UP(out->element_strengths[5], request->strengths.element_strengths[5] * (f32)ENTITY_HIT_SCALES(owner)[2] / 10.0f);
+            STORE_ROUNDED_UP(out->element_strengths[6], request->strengths.element_strengths[6] * (f32)ENTITY_HIT_SCALES(owner)[3] / 10.0f);
+            STORE_ROUNDED_UP(out->element_strengths[7], request->strengths.element_strengths[7] * (f32)ENTITY_HIT_SCALES(owner)[4] / 10.0f);
+            STORE_ROUNDED_UP(out->element_strengths[8], request->strengths.element_strengths[8] * (f32)ENTITY_HIT_SCALES(owner)[5] / 10.0f);
         }
     } else {
         if (extra->is_magic_shot == 0) {
-            *out = request->unk50;
+            *out = request->strengths;
         } else {
-            out->unk00[0] = 0;
-            out->unk00[2] = 0;
-            out->unk00[1] = 0;
-            STORE_ROUNDED_UP(out->unk00[3], request->unk50.unk00[3] * 100.0f / 10.0f);
-            STORE_ROUNDED_UP(out->unk00[4], request->unk50.unk00[4] * 100.0f / 10.0f);
-            STORE_ROUNDED_UP(out->unk00[5], request->unk50.unk00[5] * 100.0f / 10.0f);
-            STORE_ROUNDED_UP(out->unk00[6], request->unk50.unk00[6] * 100.0f / 10.0f);
-            STORE_ROUNDED_UP(out->unk00[7], request->unk50.unk00[7] * 100.0f / 10.0f);
-            STORE_ROUNDED_UP(out->unk00[8], request->unk50.unk00[8] * 100.0f / 10.0f);
+            out->element_strengths[0] = 0;
+            out->element_strengths[2] = 0;
+            out->element_strengths[1] = 0;
+            STORE_ROUNDED_UP(out->element_strengths[3], request->strengths.element_strengths[3] * 100.0f / 10.0f);
+            STORE_ROUNDED_UP(out->element_strengths[4], request->strengths.element_strengths[4] * 100.0f / 10.0f);
+            STORE_ROUNDED_UP(out->element_strengths[5], request->strengths.element_strengths[5] * 100.0f / 10.0f);
+            STORE_ROUNDED_UP(out->element_strengths[6], request->strengths.element_strengths[6] * 100.0f / 10.0f);
+            STORE_ROUNDED_UP(out->element_strengths[7], request->strengths.element_strengths[7] * 100.0f / 10.0f);
+            STORE_ROUNDED_UP(out->element_strengths[8], request->strengths.element_strengths[8] * 100.0f / 10.0f);
         }
     }
 }
@@ -1505,7 +1505,7 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
     Vector_Copy(request.position, &effect->model->position);
     Vector_Copy(request.previous_position, position);
     request.owner = effect->owner_entity;
-    request.unk4C_2 = 0;
+    request.cleared_on_effect_check = 0;
     request.target_mask = 0;
     if (check->target_mask & 1) {
         request.target_mask = 1;
@@ -1530,8 +1530,8 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
     }
     shot = effect->owner;
     if (shot->attack_request == 0) {
-        request.unk50 = check->strengths;
-        request.unk62 = check->unk12;
+        request.strengths = check->strengths;
+        request.ailment_chances = check->secondary_strengths;
         request.knockback = check->knockback != 0;
         request.stun_frames = check->stun_frames;
         request.instant_kill_chance_percent = check->instant_kill_chance_percent;
@@ -1542,8 +1542,8 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
             EFFECT_FLAG_PARTS(effect)->frames_left = check->frames_left_on_hit;
         }
     } else {
-        request.unk50 = SHOT_REQUEST->unk50;
-        request.unk62 = SHOT_REQUEST->unk62;
+        request.strengths = SHOT_REQUEST->strengths;
+        request.ailment_chances = SHOT_REQUEST->ailment_chances;
         request.knockback = ((Unk1B1470RequestBits *)SHOT_REQUEST)->unk4C_3;
         request.instant_kill_chance_percent = 0;
         request.stun_frames = 0;

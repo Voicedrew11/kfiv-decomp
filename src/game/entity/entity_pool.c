@@ -135,7 +135,7 @@ void Entity_ResetAllLists(void) {
         block->base_address = block_address;
         blocks_left -= 1;
         block->head.fields.kind = ENTITY_POOL_FREE;
-        block->head.fields.unk2 = 0xFFFF;
+        block->head.fields.type_id = 0xFFFF;
         block_address += ENTITY_POOL_BLOCK_SIZE;
         block->entity_count = 0;
         block->reuse_delay = 0;
@@ -356,18 +356,18 @@ static void EntityPool_StepLoads(void) {
             break;
         case ENTITY_POOL_READING:
             if (File_Sync(chr_file_slot, 1) == 0) {
-                if (((EntityController *)(entity_params + slot->head.fields.unk2 * 0x450))->flags & CONTROLLER_FLAG_TWO_BLOCKS) {
+                if (((EntityController *)(entity_params + slot->head.fields.type_id * 0x450))->flags & CONTROLLER_FLAG_TWO_BLOCKS) {
                     slot[1].head.fields.kind = ENTITY_POOL_EXTENSION;
-                    slot[1].head.fields.unk2 = 0xFFFF;
+                    slot[1].head.fields.type_id = 0xFFFF;
                 }
                 File_Close(chr_file_slot);
                 EntityPool_CopyLoadedFile(slot);
                 EntityPool_BuildBlockModel(i);
                 entity_type_file_header = *(EntityTypeFileHeader *)file_load_buffer;
                 chr_file_slot = -1;
-                if (entity_type_file_header.unk18 != 0 && entity_type_file_header.unk14 != 0) {
-                    entity_type_file_header.unk18 += (int)file_load_buffer;
-                    entity_type_file_header.unk14 += (int)file_load_buffer;
+                if (entity_type_file_header.sound_buffer_a_offset != 0 && entity_type_file_header.sound_buffer_b_offset != 0) {
+                    entity_type_file_header.sound_buffer_a_offset += (int)file_load_buffer;
+                    entity_type_file_header.sound_buffer_b_offset += (int)file_load_buffer;
                     slot->head.fields.kind = ENTITY_POOL_UNPACKING;
                     sound_load_queue.entity_bank_args = (int)&entity_type_file_header;
                     sound_load_queue.entity_bank_load_pending = 1;
@@ -412,7 +412,7 @@ static void EntityPool_StepLoads(void) {
     if (File_IsLocked() != 0) {
         return;
     }
-    sprintf(path, chr_file_path_format, chr_directory, ((EntityParams *)(entity_params + queued->head.fields.unk2 * 0x450))->model_number);
+    sprintf(path, chr_file_path_format, chr_directory, ((EntityParams *)(entity_params + queued->head.fields.type_id * 0x450))->model_number);
     chr_file_slot = File_Open(path, 1, 1);
     if (chr_file_slot < 0) {
         EntityPool_AbandonLoad(queued);
@@ -482,7 +482,7 @@ static int EntityPool_FindType(int type_id) {
 
     for (i = 0; i < ENTITY_POOL_SLOT_COUNT; i++) {
         slot = &entity_pool_slots[i];
-        if ((u32)(slot->head.fields.kind - 1) < 4 && slot->head.fields.unk2 == type_id) {
+        if ((u32)(slot->head.fields.kind - 1) < 4 && slot->head.fields.type_id == type_id) {
             return i;
         }
     }
@@ -584,7 +584,7 @@ static int EntityPool_ClaimFixedBlock(int idx) {
         EntityPool_EmptyBlock(idx);
         if (idx < 4 && slot[1].head.fields.kind == ENTITY_POOL_EXTENSION) {
             slot++;
-            slot->head.fields.unk2 = 0xFFFF;
+            slot->head.fields.type_id = 0xFFFF;
             slot->head.fields.kind = ENTITY_POOL_FREE;
             slot->entity_count = 0;
             slot->head.bits.flag_100 = 0;
@@ -636,10 +636,10 @@ static int EntityPool_ClaimFixedBlockPair(int pool_size) {
     }
     EntityPool_EvictBlockUsers(pool_size);
     EntityPool_EvictBlockUsers(pool_size + 1);
-    slot->head.fields.unk2 = 0xFFFF;
+    slot->head.fields.type_id = 0xFFFF;
     slot->entity_count = 0;
     slot->head.bits.flag_100 = TRUE;
-    next->head.fields.unk2 = 0xFFFF;
+    next->head.fields.type_id = 0xFFFF;
     next->entity_count = 0;
     next->head.bits.flag_100 = TRUE;
     return pool_size;
@@ -768,7 +768,7 @@ static void EntityPool_EmptyBlock(int slot_index) {
     }
 
     slot->entity_count = 0;
-    slot->head.fields.unk2 = 0xFFFF;
+    slot->head.fields.type_id = 0xFFFF;
     slot->head.word |= ENTITY_POOL_FLAG_100;
 }
 
@@ -777,14 +777,14 @@ static void EntityPool_QueueLoad(int slot_index, int type_id, int two_blocks) {
     EntityPoolSlot *slot = &entity_pool_slots[slot_index];
 
     slot->head.fields.kind = ENTITY_POOL_QUEUED;
-    slot->head.fields.unk2 = type_id;
+    slot->head.fields.type_id = type_id;
     slot->entity_count = 0;
     slot->reuse_delay = 0;
     slot->age = 0;
     if (two_blocks) {
         slot++;
         slot->head.fields.kind = ENTITY_POOL_EXTENSION;
-        slot->head.fields.unk2 = 0xFFFF;
+        slot->head.fields.type_id = 0xFFFF;
         slot->entity_count = 0;
         slot->reuse_delay = 0;
         slot->age = 0;
@@ -821,7 +821,7 @@ static void EntityPool_CopyLoadedFile(EntityPoolSlot *slot) {
     int table_offset;
     int size;
 
-    controller = (EntityController *)(entity_params + slot->head.fields.unk2 * 0x450);
+    controller = (EntityController *)(entity_params + slot->head.fields.type_id * 0x450);
     file = (int *)file_load_buffer;
     size = 0;
     // match: header words of the loaded file, no named struct yet
@@ -851,7 +851,7 @@ static void EntityPool_AbandonLoad(EntityPoolSlot *slot) {
 
     entity = waiting_entities_head;
     while (entity != NULL) {
-        if (entity->spawn_info->type_id == slot->head.fields.unk2) {
+        if (entity->spawn_info->type_id == slot->head.fields.type_id) {
             entity = Entity_UnlinkWaiting(entity);
         } else {
             entity = entity->next;
@@ -860,7 +860,7 @@ static void EntityPool_AbandonLoad(EntityPoolSlot *slot) {
 
     entity = loading_entities_head;
     while (entity != NULL) {
-        if (entity->spawn_info->type_id == slot->head.fields.unk2) {
+        if (entity->spawn_info->type_id == slot->head.fields.type_id) {
             entity = Entity_UnlinkLoading(entity);
         } else {
             entity = entity->next;
@@ -868,7 +868,7 @@ static void EntityPool_AbandonLoad(EntityPoolSlot *slot) {
     }
 
     slot->head.fields.kind = ENTITY_POOL_FREE;
-    slot->head.fields.unk2 = 0xFFFF;
+    slot->head.fields.type_id = 0xFFFF;
     slot->head.bits.flag_100 = 0;
     slot->head.bits.flag_200 = 0;
 }
@@ -890,27 +890,27 @@ static void EntityPool_FreeUnusedBlocks(void) {
     while (slot_index < ENTITY_POOL_SLOT_COUNT) {
         if ((slot->head.word & 0x2FF) == (ENTITY_POOL_FLAG_200 | ENTITY_POOL_READY)) {
             for (entity = list_a; entity != NULL; entity = entity->next) {
-                if (entity->spawn_info->type_id == slot->head.fields.unk2) {
+                if (entity->spawn_info->type_id == slot->head.fields.type_id) {
                     goto in_use;
                 }
             }
             for (entity = list_b; entity != NULL; entity = entity->next) {
-                if (entity->spawn_info->type_id == slot->head.fields.unk2) {
+                if (entity->spawn_info->type_id == slot->head.fields.type_id) {
                     goto in_use;
                 }
             }
             for (entity = list_c; entity != NULL; entity = entity->next) {
-                if (entity->spawn_info->type_id == slot->head.fields.unk2) {
+                if (entity->spawn_info->type_id == slot->head.fields.type_id) {
                     goto in_use;
                 }
             }
             slot->head.fields.kind = ENTITY_POOL_FREE;
-            slot->head.fields.unk2 = 0xFFFF;
+            slot->head.fields.type_id = 0xFFFF;
             slot->head.bits.flag_100 = 0;
             slot->head.bits.flag_200 = 0;
             if (slot_index < 4 && slot[1].head.fields.kind == ENTITY_POOL_EXTENSION) {
                 slot[1].head.fields.kind = ENTITY_POOL_FREE;
-                slot[1].head.fields.unk2 = 0xFFFF;
+                slot[1].head.fields.type_id = 0xFFFF;
                 slot[1].head.bits.flag_100 = 0;
                 slot[1].head.bits.flag_200 = 0;
             }

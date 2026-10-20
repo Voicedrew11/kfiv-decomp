@@ -243,7 +243,7 @@ void MapScroll_UpdateDraw(int map, int mode) {
                 quad.tag = (s64)texture->base | ((s64)texture->width >> 6 << 14) | ((s64)texture->format << 20) |
                            ((s64)width_log << 26) | ((s64)height_log << 30) | (1L << 34) |
                            ((s64)texture->clut_base << 37) | ((s64)texture->clut_format << 51) | (4L << 61);
-                quad.unk08 = 0x60;
+                quad.gif_register_list = 0x60;
                 quad.prim = 0x156;
                 half = texture->target_width >> 1;
                 quad.red = texture->red;

@@ -48,7 +48,7 @@ extern u16 spell_experience[6][5];
 /* Works out what the worn items add: clears unkDC to unk10C, lets every worn item add its part, then
    turns the four rates into frame counts. */
 void Player_SumWornBonuses(void) {
-    player_state.unkE8 = 0;
+    player_state.item_bonus_kind1_active = 0;
     player_state.worn_drain_active = 0;
     player_state.hp_regen_period = 0;
     player_state.hp_drain_period = 0;
@@ -116,7 +116,7 @@ void Player_AddItemBonuses(int index) {
     for (i = 0; i < 2; i++) {
         switch (kinds[i]) {
         case 1:
-            player_state.unkE8 = 1;
+            player_state.item_bonus_kind1_active = 1;
             break;
         case 2:
             player_state.worn_drain_active = 1;
@@ -521,7 +521,7 @@ void Player_BounceWeapon(void) {
         Sound_StopVoice(2);
         Sound_PlaySw(1);
         player_state.weapon_bounced = 1;
-        ModelMotion_BlendInto((ModelInstance *)held_item_model_ptr, 0, held_item_model_ptr->settings->unk82);
+        ModelMotion_BlendInto((ModelInstance *)held_item_model_ptr, 0, held_item_model_ptr->settings->blend_speed);
     }
 }
 
@@ -533,7 +533,7 @@ void Player_BounceWeaponQuietly(void) {
         Sound_StopVoice(2);
         display = held_item_model_ptr;
         player_state.weapon_bounced = 1;
-        ModelMotion_BlendInto((ModelInstance *)display, 0, display->settings->unk82);
+        ModelMotion_BlendInto((ModelInstance *)display, 0, display->settings->blend_speed);
     }
 }
 

@@ -38,11 +38,11 @@ typedef struct {
 
 /* a MapFogBlock block as the per-map set-up functions (MapSetup_RunForMap) fill it */
 typedef struct {
-    f32 unk00;                      /* 0x00 */
-    f32 unk04;                      /* 0x04 */
-    f32 unk08;                      /* 0x08 */
-    f32 unk0C;                      /* 0x0C */
-    s64 unk10;                      /* 0x10 */
+    f32 always_zero_a;              /* 0x00 float that fog setup always writes as 0.0 */
+    f32 always_zero_b;              /* 0x04 float that fog setup always writes as 0.0 */
+    f32 fog_base_value;             /* 0x08 constant term of the fog curve */
+    f32 fog_inverse_depth_scale;    /* 0x0C 1/depth term of the fog curve */
+    s64 fog_colour;                 /* 0x10 fog colour, sent as a GS fog word */
     char pad18[0x08];
 } MapFogBlockValues;
 
@@ -90,9 +90,9 @@ typedef struct {
     s64 screen_fill_blend;          /* 0x80 the GS ALPHA register GsDraw_FillScreen is handed */
     s32 previous_frame_alpha;       /* 0x88 alpha Game_BlendPreviousFrame blends the last frame with */
     char pad8C[0x0E];
-    u8 unk9A;                       /* 0x9A */
-    u8 unk9B;                       /* 0x9B */
-    u8 unk9C;                       /* 0x9C */
+    u8 map_init_byte_a;             /* 0x9A byte zeroed on map init */
+    u8 map_init_byte_b;             /* 0x9B byte zeroed on map init */
+    u8 map_init_byte_c;             /* 0x9C byte zeroed on map init */
     char pad9D[0x03];
     MapFogBlock current_fog_block; /* 0xA0 the current map's first fog block */
     MapLightBlock current_light_block; /* 0xC0 the current map's first light block */
@@ -356,7 +356,7 @@ typedef struct {
 
 /* the trigger's one-shot state, MapTrigger+0x40 */
 typedef struct {
-    int unk00[6];                   /* 0x00 */
+    int shot_state[6];              /* 0x00 six ints; element 0 flags a started ambient sound */
     int fired;                      /* 0x18 the type it fired for, 0 before */
 } MapTriggerShot;
 
@@ -377,7 +377,7 @@ typedef struct {
 /* a map event trigger (MapObject_PlaceStoneOnMarker) */
 typedef struct {
     ModelInstance *model;           /* 0x00 */
-    u8 *unk04;                      /* 0x04 */
+    u8 *stop_block_flag;            /* 0x04 pointer to a byte; nonzero blocks the stop */
     char *source;                   /* 0x08 TriggerSource; byte 0x3A is passed to Game_AddTriggerItem */
     char pad0C[0x04];
     u8 flags;                       /* 0x10 bit 0 picks the MapSlot */
@@ -457,14 +457,14 @@ typedef struct MapActor {
     s8 step;                        /* 0x04 0: fading in, 1: lying there, 2: fading out */
     u8 fade_timer;                  /* 0x05 frames left of the fade */
     char pad06[0x02];
-    f32 unk08;                      /* 0x08 gold_drop_unmeasured_distance when it was dropped */
+    f32 drop_unmeasured_distance;   /* 0x08 distance when this gold was dropped */
     u32 serial;                     /* 0x0C the slot's count of drops when it was dropped: the lowest is the oldest */
     ModelInstance *body;            /* 0x10 */
     f32 position_y;                 /* 0x14 the y position */
     struct MapActor *prev;          /* 0x18 */
     struct MapActor *next;          /* 0x1C the list of the ones in use starts at map_actors_in_use */
     char pad20[0x04];
-    u8 unk24;                       /* 0x24 */
+    u8 object_id;                   /* 0x24 map object that dropped the gold */
     char pad25[0x07];
 } MapActor;
 

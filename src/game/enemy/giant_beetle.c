@@ -298,7 +298,7 @@ static void GiantBeetle_TurnParts7And12(Entity *entity) {
     part = (EntityModelPart80 *)entity->model->parts;
     for (i = 0; i < ENTITY_MODEL(entity)->part_count; i++) {
         if (i == 7 || i == 12) {
-            part->unk50[1] = ai_state->part_angle_x * 0.5f;
+            part->part_angles[1] = ai_state->part_angle_x * 0.5f;
         }
         part++;
     }
@@ -443,7 +443,7 @@ static void GiantBeetle_ShotAttackShakingCamera(Entity *entity) {
             EntityAi_ShakeCamera(10, 0x1A);
             Input_StartRumble(0x80, 0xD, 0);
         }
-        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
+        if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
