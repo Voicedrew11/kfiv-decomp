@@ -3545,7 +3545,7 @@ void MenuTexture_GetRegisters(TextureHeader *tex, u64 *tex0_out, u64 *trailer_ou
     if (tex0_out != NULL) {
         *tex0_out = tex->tex0;
     }
-    psm = (int)((tex->tex0 >> 20) & 0x3F);
+    psm = (int)GS_TEX0_PSM(tex->tex0);
     if ((psm >> 4) == 0 || (psm >> 4) == 3) {
         return;
     }

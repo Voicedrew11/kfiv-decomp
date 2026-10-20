@@ -269,8 +269,8 @@ void Splash_BuildSprite(void) {
     int width;
     u64 tex0;
 
-    width = 1 << ((file_load_buffer.tex0 >> 26) & 0xF);
-    height = 1 << ((file_load_buffer.tex0 >> 30) & 0xF);
+    width = 1 << ((SplashImageBits *)&file_load_buffer)->tex0.tw;
+    height = 1 << ((SplashImageBits *)&file_load_buffer)->tex0.th;
 
     memset(&splash_sprite, 0, sizeof(splash_sprite));
     tex0 = file_load_buffer.tex0;

@@ -53,28 +53,28 @@ static void Texture_LoadTm2(TextureHeader *header) {
     s16 width;
     s16 height;
 
-    if ((int)(header->tex0 & 0x3FFF) == 0) {
+    if (TEX0_BITS(header)->base_pointer == 0) {
         puts(tm2_tbp_zero_message);
         return;
     }
-    image_format = (header->tex0 >> 20) & 0x3F;
-    buffer_width = (header->tex0 >> 14) & 0x3F;
-    width = 1 << (int)((header->tex0 >> 26) & 0xF);
-    height = 1 << (int)((header->tex0 >> 30) & 0xF);
-    sceGsSetDefLoadImage(&load_image, (u16)(header->tex0 & 0x3FFF), buffer_width, image_format, 0, 0, width, height);
+    image_format = TEX0_BITS(header)->pixel_format;
+    buffer_width = TEX0_BITS(header)->buffer_width;
+    width = 1 << TEX0_BITS(header)->width_log2;
+    height = 1 << TEX0_BITS(header)->height_log2;
+    sceGsSetDefLoadImage(&load_image, (u16)TEX0_BITS(header)->base_pointer, buffer_width, image_format, 0, 0, width, height);
     FlushCache(0);
     sceGsExecLoadImage(&load_image, (char *)header + sizeof(TextureHeader));
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
-    pixel_format = (header->tex0 >> 20) & 0x3F;
+    pixel_format = TEX0_BITS(header)->pixel_format;
     if (pixel_format == 0x13 || pixel_format == 0x1B) {
-        sceGsSetDefLoadImage(&load_image, (u16)((header->tex0 >> 37) & 0x3FFF), 1, (u16)((header->tex0 >> 51) & 0xF), 0, 0, 16, 16);
+        sceGsSetDefLoadImage(&load_image, (u16)TEX0_BITS(header)->clut_pointer, 1, (u16)TEX0_BITS(header)->clut_format, 0, 0, 16, 16);
         FlushCache(0);
         sceGsExecLoadImage(&load_image, (char *)header + (header->image_size + sizeof(TextureHeader)));
         while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
         }
     } else if (pixel_format == 0x14 || pixel_format == 0x24 || pixel_format == 0x2C) {
-        sceGsSetDefLoadImage(&load_image, (u16)((header->tex0 >> 37) & 0x3FFF), 1, (u16)((header->tex0 >> 51) & 0xF), 0, 0, 8, 2);
+        sceGsSetDefLoadImage(&load_image, (u16)TEX0_BITS(header)->clut_pointer, 1, (u16)TEX0_BITS(header)->clut_format, 0, 0, 8, 2);
         FlushCache(0);
         sceGsExecLoadImage(&load_image, (char *)header + (header->image_size + sizeof(TextureHeader)));
         while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
@@ -265,18 +265,18 @@ static void Texture_BuildPacket(char **texture, char **packet) {
     tex0_high = tex0_words[1];
     tex0_low = tex0_words[0];
     printf(tm2_header_label);
-    printf(tex0_tbp_format, tex0_low & 0x3FFF);
-    printf(tex0_tbw_format, (tex0_low >> 14) & 0x3F);
-    printf(tex0_psm_format, (tex0_low >> 20) & 0x3F);
-    printf(tex0_tw_format, (tex0_low >> 26) & 0xF);
-    printf(tex0_th_format, (tex0_low >> 30) | ((tex0_high & 3) << 2));
-    printf(tex0_tcc_format, (tex0_high >> 2) & 1);
-    printf(tex0_tfx_format, (tex0_high >> 3) & 3);
-    printf(tex0_cbp_format, (tex0_high >> 5) & 0x3FFF);
-    printf(tex0_cpsm_format, (tex0_high >> 19) & 0xF);
-    printf(tex0_csm_format, (tex0_high >> 23) & 1);
-    printf(tex0_csa_format, (tex0_high >> 24) & 0x1F);
-    printf(tex0_cld_format, tex0_high >> 29);
+    printf(tex0_tbp_format, GS_TEX0_TBP0(tex0_low));
+    printf(tex0_tbw_format, GS_TEX0_TBW(tex0_low));
+    printf(tex0_psm_format, GS_TEX0_PSM(tex0_low));
+    printf(tex0_tw_format, GS_TEX0_TW(tex0_low));
+    printf(tex0_th_format, GS_TEX0_TH_WORDS(tex0_low, tex0_high));
+    printf(tex0_tcc_format, GS_TEX0_HI_TCC(tex0_high));
+    printf(tex0_tfx_format, GS_TEX0_HI_TFX(tex0_high));
+    printf(tex0_cbp_format, GS_TEX0_HI_CBP(tex0_high));
+    printf(tex0_cpsm_format, GS_TEX0_HI_CPSM(tex0_high));
+    printf(tex0_csm_format, GS_TEX0_HI_CSM(tex0_high));
+    printf(tex0_csa_format, GS_TEX0_HI_CSA(tex0_high));
+    printf(tex0_cld_format, GS_TEX0_HI_CLD(tex0_high));
     *packet = bytes;
 }
 
@@ -296,7 +296,7 @@ void Texture_SendTexFlush(void) {
     *cursor++ = 0;
     *cursor++ = 0xFFFFFFFFU;
     *cursor++ = 0;
-    *cursor++ = 0x3F;
+    *cursor++ = GS_REG_TEXFLUSH;
     *cursor = 0;
     FlushCache(0);
     while (*D2_CHCR & D_CHCR_STR) {
@@ -337,12 +337,12 @@ static void *Texture_MoveBasePointers(TextureHeader *header, int tbp_delta, int 
     int tbp;
     int cbp;
 
-    tbp = ((int) (bits & 0x3FFF) + tbp_delta) & 0x3FFF;
-    bits &= ~0x3FFFUL;
+    tbp = ((int)GS_TEX0_TBP0(bits) + tbp_delta) & GS_TEX0_BASE_MASK;
+    bits &= ~(u64)GS_TEX0_BASE_MASK;
     bits |= tbp;
-    cbp = (int) ((bits >> 37) & 0x3FFF);
+    cbp = (int)GS_TEX0_CBP(bits);
     bits &= 0xFFF8001FFFFFFFFFUL;
-    bits |= (u64) ((cbp + cbp_delta) & 0x3FFF) << 37;
+    bits |= (u64) ((cbp + cbp_delta) & GS_TEX0_BASE_MASK) << 37;
     header->tex0 = bits;
     return (char *) header + header->data_offset;
 }

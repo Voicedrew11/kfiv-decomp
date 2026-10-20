@@ -36,6 +36,12 @@
 #define IPU_CTRL ((volatile int *)0x10002010)
 #define IPU_BP ((volatile int *)0x10002020)
 #define IPU_TOP ((volatile int *)0x10002030)
+#define IPU_CTRL_OFC_MASK 0xF0 /* IPU_CTRL bits 4-7, OFC: the output FIFO's qword count */
+#define IPU_BP_BIT_POSITION_MASK 0x7F /* IPU_BP bits 0-6, BP: the bit position in the current qword */
+#define IPU_BP_IFC_SHIFT 8 /* IPU_BP bits 8-11, IFC: the input FIFO's qword count */
+#define IPU_BP_IFC_MASK 0xF
+#define IPU_BP_FP_SHIFT 16 /* IPU_BP bits 16-17, FP: the FIFO's pending count */
+#define IPU_BP_FP_MASK 0x3
 #define IPU_in_FIFO ((volatile void *)0x10007010)
 
 /* GIF. */
@@ -104,6 +110,7 @@
 #define D_CHCR_TTE 0x40            /* bit6: TTE, transfer the DMAtag too */
 #define D_CHCR_STR 0x100           /* bit8: STR, start; set while the transfer runs */
 #define D_MADR_SPR 0x80000000      /* MADR bit 31: the address is in the scratchpad */
+#define D_CHCR_TAG_ID_BITS 0xF0000000 /* CHCR bits 28-31: the DMAtag id and IRQ bits a channel takes from its tag */
 
 /* DMAtag words: the id in bits 28-30, the address below it. */
 #define DMA_TAG_ID_MASK 0x70000000 /* the id field */
@@ -114,9 +121,12 @@
 /* the top bits of an address pick its alias: uncached, and uncached accelerated */
 #define EE_UNCACHED_ALIAS 0x20000000
 #define EE_UNCACHED_ACCELERATED_ALIAS 0x30000000
+#define EE_PHYSICAL_ADDRESS_MASK 0x0FFFFFFF /* strips the segment bits: an address's physical part */
 
 /* DMA controller. */
 #define D_CTRL ((volatile int *)0x1000E000)
+#define D_CTRL_DMAE 0x1 /* D_CTRL bit 0, DMAE: the DMA controller is enabled */
+#define D_CTRL_RELE 0x2 /* D_CTRL bit 1, RELE: releases the bus cycle */
 #define D_STAT ((volatile int *)0x1000E010)    /* derived name */
 #define D_PCR ((volatile int *)0x1000E020)     /* derived name */
 #define D_SQWC ((volatile int *)0x1000E030)    /* derived name */
