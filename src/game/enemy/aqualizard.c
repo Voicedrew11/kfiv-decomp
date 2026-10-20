@@ -18,8 +18,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
-static void Aqualizard_Think(Entity *entity, s32 unknown);
-static void Aqualizard_ThinkCombat(Entity *entity, s32 unknown);
+static void Aqualizard_Think(Entity *entity, s32 run_now);
+static void Aqualizard_ThinkCombat(Entity *entity, s32 run_now);
 static void Aqualizard_MeleeAttack2(Entity *entity);
 
 /* Set-up of a type 57 entity: clears its work area and installs the type's handlers. */
@@ -67,7 +67,7 @@ void Aqualizard_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with Aqualizard_ThinkCombat for state 2. */
-static void Aqualizard_Think(Entity *entity, s32 unknown) {
+static void Aqualizard_Think(Entity *entity, s32 run_now) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -77,27 +77,27 @@ static void Aqualizard_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
     case 0:
-        EntityAi_ThinkIdle(entity, unknown);
+        EntityAi_ThinkIdle(entity, run_now);
         return;
     case 1:
-        EntityAi_ThinkPursue(entity, unknown);
+        EntityAi_ThinkPursue(entity, run_now);
         return;
     case 2:
-        Aqualizard_ThinkCombat(entity, unknown);
+        Aqualizard_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but melee attack 2 is
    Aqualizard_MeleeAttack2 and closing in adds command bits 0x440 when EntityParams.action_frames is set.
    */
-static void Aqualizard_ThinkCombat(Entity *entity, s32 unknown) {
+static void Aqualizard_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -129,11 +129,11 @@ static void Aqualizard_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else if (ENTITY_FLAG_BITS(entity)->attack_index == 2) {
-                EntityAi_StartAction(entity, Aqualizard_MeleeAttack2, unknown);
+                EntityAi_StartAction(entity, Aqualizard_MeleeAttack2, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -177,7 +177,7 @@ static void Aqualizard_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The melee attack with record 2 (EntityParams.melee_attack_third; busy bit 1): animation 22, one part checked.

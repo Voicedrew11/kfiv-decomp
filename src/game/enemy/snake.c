@@ -22,7 +22,7 @@
 static void Snake_DormantHoldAnim2(Entity *entity);
 static void Snake_DormantHoldAnim8ThenMove(Entity *entity);
 static void Snake_Dormant(Entity *entity);
-static void Snake_Think(Entity *entity, s32 unknown);
+static void Snake_Think(Entity *entity, s32 run_now);
 static void Snake_Death(Entity *entity);
 
 /* Set-up of a type 21 entity: clears its work area and installs the type's handlers. */
@@ -268,7 +268,7 @@ static void Snake_Dormant(Entity *entity) {
 /* The think handler: as EntityAi_Think, but first, for a spawn in mode 1 whose
    EntitySpawnInfo.variant is 1, it starts Snake_Death once map_script_flags[unk43 + unk42 * 64] is
    not 0. */
-static void Snake_Think(Entity *entity, s32 unknown) {
+static void Snake_Think(Entity *entity, s32 run_now) {
     s32 index;
 
     if (entity->spawn_info->spawn_mode == 1 && entity->spawn_info->variant == 1) {
@@ -288,20 +288,20 @@ static void Snake_Think(Entity *entity, s32 unknown) {
         }
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                EntityAi_ThinkCombat(entity, unknown);
+                EntityAi_ThinkCombat(entity, run_now);
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }

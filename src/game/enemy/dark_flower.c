@@ -16,9 +16,9 @@
 #include "model/motion.h"
 #include "player/player.h"
 
-static void DarkFlower_Think(Entity *entity, s32 unknown);
-static void DarkFlower_ThinkWander(Entity *entity, s32 unknown);
-static void DarkFlower_ThinkCombat(Entity *entity, s32 unknown);
+static void DarkFlower_Think(Entity *entity, s32 run_now);
+static void DarkFlower_ThinkWander(Entity *entity, s32 run_now);
+static void DarkFlower_ThinkCombat(Entity *entity, s32 run_now);
 static void DarkFlower_Move(Entity *entity);
 static void DarkFlower_RangedAttack0(Entity *entity);
 
@@ -68,7 +68,7 @@ void DarkFlower_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with DarkFlower_ThinkWander for every state but 2 and
    DarkFlower_ThinkCombat for state 2. */
-static void DarkFlower_Think(Entity *entity, s32 unknown) {
+static void DarkFlower_Think(Entity *entity, s32 run_now) {
     u32 phase;
 
     phase = frame_counter % 10U;
@@ -81,7 +81,7 @@ static void DarkFlower_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
@@ -89,17 +89,17 @@ static void DarkFlower_Think(Entity *entity, s32 unknown) {
     case 1:
         break;
     case 2:
-        DarkFlower_ThinkCombat(entity, unknown);
+        DarkFlower_ThinkCombat(entity, run_now);
         return;
     }
-    DarkFlower_ThinkWander(entity, unknown);
+    DarkFlower_ThinkWander(entity, run_now);
 }
 
 /* The think function of every state but 2 (DarkFlower_Think calls it): wanders. Each time the
    timer runs out it picks a point near the spawn point (EntityPoint_PickNear; 79 times in 100, for 240 to
    329 frames) or no target (90 to 149 frames), takes the command of EntityAi_MoveCommand towards it and
    starts the move action. It does not go for the player. */
-static void DarkFlower_ThinkWander(Entity *entity, s32 unknown) {
+static void DarkFlower_ThinkWander(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
@@ -116,13 +116,13 @@ static void DarkFlower_ThinkWander(Entity *entity, s32 unknown) {
         }
     }
     entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat without the dodge; ranged record 0 is
    DarkFlower_RangedAttack0, and instead of closing in on the player it goes to a point
    EntityPoint_PickNear picks round the spawn point. */
-static void DarkFlower_ThinkCombat(Entity *entity, s32 unknown) {
+static void DarkFlower_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 side;
 
@@ -143,12 +143,12 @@ static void DarkFlower_ThinkCombat(Entity *entity, s32 unknown) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
-                    EntityAi_StartAction(entity, DarkFlower_RangedAttack0, unknown);
+                    EntityAi_StartAction(entity, DarkFlower_RangedAttack0, run_now);
                 } else {
-                    EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                    EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
                 }
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -169,7 +169,7 @@ static void DarkFlower_ThinkCombat(Entity *entity, s32 unknown) {
     if (ai_state->move_choice == 0) {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: as EntityAi_Move, but the entity moves along the bearing to its target instead

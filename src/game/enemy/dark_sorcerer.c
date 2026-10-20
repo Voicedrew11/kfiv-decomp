@@ -24,8 +24,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 static void DarkSorcerer_OnHit(Entity *entity);
-static void DarkSorcerer_Think(Entity *entity, s32 unknown);
-static void DarkSorcerer_ThinkDecide(Entity *entity, s32 unknown);
+static void DarkSorcerer_Think(Entity *entity, s32 run_now);
+static void DarkSorcerer_ThinkDecide(Entity *entity, s32 run_now);
 static void DarkSorcerer_Move(Entity *entity);
 static void DarkSorcerer_ApplyMoveCommand(Entity *entity);
 static void DarkSorcerer_Dormant(Entity *entity);
@@ -103,7 +103,7 @@ static void DarkSorcerer_OnHit(Entity *entity) {
    EntityCollision_DistanceToPropFloor reads (work byte unk7A: set above EntityParams.type_param_1 or when there is no reading,
    cleared below type_param_2); and it calls DarkSorcerer_ApplyMoveCommand while the entity is not busy or is in a hit
    reaction. Counts down work word unk6A. */
-static void DarkSorcerer_Think(Entity *entity, s32 unknown) {
+static void DarkSorcerer_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 height;
 
@@ -114,9 +114,9 @@ static void DarkSorcerer_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
-            DarkSorcerer_ThinkDecide(entity, unknown);
+            DarkSorcerer_ThinkDecide(entity, run_now);
         }
     }
     if (entity->busy_flags & ENTITY_BUSY_DEATH) {
@@ -157,7 +157,7 @@ static void DarkSorcerer_Think(Entity *entity, s32 unknown) {
    DarkSorcerer_PickAction starts one of its three actions, it gives the command for the way
    of closing in kept in work byte unk78 (0 forward, 1 backwards, 2 and 3 sideways with command bits
    4 and 8, 4 turning only) and starts the move action. */
-static void DarkSorcerer_ThinkDecide(Entity *entity, s32 unknown) {
+static void DarkSorcerer_ThinkDecide(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 side;
@@ -184,9 +184,9 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, DarkSorcerer_RangedAttack, unknown);
+                EntityAi_StartAction(entity, DarkSorcerer_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, DarkSorcerer_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, DarkSorcerer_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -257,7 +257,7 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 unknown) {
         entity->move_command |= EntityAi_TurnCommand(entity);
         break;
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: only picks the animation, 6 or 7 for command bits 4 and 8, 3 forward, 5

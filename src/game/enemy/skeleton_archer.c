@@ -19,8 +19,8 @@
 
 static void SkeletonArcher_Animate(Entity *entity);
 static void SkeletonArcher_PitchPartToPlayer(Entity *entity);
-static void SkeletonArcher_Think(Entity *entity, s32 unknown);
-static void SkeletonArcher_ThinkCombat(Entity *entity, s32 unknown);
+static void SkeletonArcher_Think(Entity *entity, s32 run_now);
+static void SkeletonArcher_ThinkCombat(Entity *entity, s32 run_now);
 static void SkeletonArcher_RangedAttack0(Entity *entity);
 
 /* Set-up of a type 9 entity: clears its work area and installs the type's handlers. */
@@ -123,7 +123,7 @@ static void SkeletonArcher_PitchPartToPlayer(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with SkeletonArcher_ThinkCombat for state 2. */
-static void SkeletonArcher_Think(Entity *entity, s32 unknown) {
+static void SkeletonArcher_Think(Entity *entity, s32 run_now) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -133,28 +133,28 @@ static void SkeletonArcher_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
     case 0:
-        EntityAi_ThinkIdle(entity, unknown);
+        EntityAi_ThinkIdle(entity, run_now);
         return;
     case 1:
-        EntityAi_ThinkPursue(entity, unknown);
+        EntityAi_ThinkPursue(entity, run_now);
         return;
     case 2:
-        SkeletonArcher_ThinkCombat(entity, unknown);
+        SkeletonArcher_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but ranged record 0 is
    SkeletonArcher_RangedAttack0 (flag bit 10 is set for a ranged attack), and closing in does not use
    EntityAi_ClearTurnInPlace, takes its command from EntityAi_TurnCommand where the shared one calls EntityAi_MoveCommand, and
    never runs. */
-static void SkeletonArcher_ThinkCombat(Entity *entity, s32 unknown) {
+static void SkeletonArcher_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 side;
@@ -184,12 +184,12 @@ static void SkeletonArcher_ThinkCombat(Entity *entity, s32 unknown) {
             if (EntityAi_PickAttack(entity)) {
                 ENTITY_FLAG_BITS(entity)->attacking = TRUE;
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
-                    EntityAi_StartAction(entity, SkeletonArcher_RangedAttack0, unknown);
+                    EntityAi_StartAction(entity, SkeletonArcher_RangedAttack0, run_now);
                 } else {
-                    EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                    EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
                 }
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -216,7 +216,7 @@ static void SkeletonArcher_ThinkCombat(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_TurnCommand(entity);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The ranged attack with record 0 (busy bit 1): animation 23, as EntityAi_RangedAttack; from frame

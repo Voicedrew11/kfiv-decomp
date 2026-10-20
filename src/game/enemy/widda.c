@@ -19,8 +19,8 @@
 
 static void Widda_Animate(Entity *entity);
 static void Widda_AimPartsAtTarget(Entity *entity);
-static void Widda_Think(Entity *entity, s32 unknown);
-static void Widda_ThinkCombat(Entity *entity, s32 unknown);
+static void Widda_Think(Entity *entity, s32 run_now);
+static void Widda_ThinkCombat(Entity *entity, s32 run_now);
 static void Widda_Move(Entity *entity);
 
 /* Set-up of a type 19 entity: clears its work area and installs the type's handlers. */
@@ -144,7 +144,7 @@ static void Widda_AimPartsAtTarget(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with Widda_ThinkCombat for state 2. Sets work byte
    unk7A when flag bit 45, 47 or 48 is set during a dodge (busy bit 8). */
-static void Widda_Think(Entity *entity, s32 unknown) {
+static void Widda_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if ((entity->busy_flags & ENTITY_BUSY_DODGE) && (entity->flags & (ENTITY_FLAG_WALL_PUSH | ENTITY_FLAG_OBJECT_PUSH | ENTITY_FLAG_ENTITY_PUSH))) {
@@ -159,21 +159,21 @@ static void Widda_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
     case 0:
-        EntityAi_ThinkIdle(entity, unknown);
+        EntityAi_ThinkIdle(entity, run_now);
         return;
     case 1:
-        EntityAi_ThinkPursue(entity, unknown);
+        EntityAi_ThinkPursue(entity, run_now);
         return;
     case 2:
-        Widda_ThinkCombat(entity, unknown);
+        Widda_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but closing in runs (work byte unk78 is
@@ -181,7 +181,7 @@ static void Widda_Think(Entity *entity, s32 unknown) {
    player near and the entity within 40 degrees of the player's facing, a chance of
    EntityParams.action_frames in 100 makes it start EntityAi_Dodge when the player is 40 to 90 degrees off
    its heading, or close in at the run when the player is farther off or work byte unk7A is set. */
-static void Widda_ThinkCombat(Entity *entity, s32 unknown) {
+static void Widda_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -209,9 +209,9 @@ static void Widda_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -301,7 +301,7 @@ static void Widda_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: as EntityAi_Move, but it only turns the entity (twice as fast for command bits

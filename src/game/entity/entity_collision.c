@@ -405,11 +405,11 @@ static void EntityCollision_SphereSphere(f32 *center_a, f32 *center_b, f32 radiu
    the unk20 timer (1800 frames) by a chance EntityParams.ailment_defence_1 lowers, 3 starts it outright, 4 takes up to 50
    less a resistance term (EntityParams.magic_defence + unkDA) of Entity.hit_points (its health), 5 takes 30; 4 and 5 also
    clear flag bits 38-39 and set unkA3 to 3. */
-void EntityCollision_ApplySurfaceEffect(Entity *entity, s32 unknown_a, s32 unknown_b, s32 unknown_c) {
+void EntityCollision_ApplySurfaceEffect(Entity *entity, s32 material_first, s32 material_second, s32 material_third) {
     s32 chance;
     s32 amount;
 
-    switch (Collision_GetSurfaceEffect(unknown_a, unknown_b, unknown_c)) {
+    switch (Collision_GetSurfaceEffect(material_first, material_second, material_third)) {
     case 1:
         chance = 20 - entity->params->ailment_defence_1;
         if (chance <= 0) {

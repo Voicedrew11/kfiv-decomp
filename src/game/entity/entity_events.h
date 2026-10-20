@@ -23,10 +23,10 @@ void EntityEvent_StartFrameEffects(Entity *entity, s32 animation, s32 frame_from
 void EntityEvent_StartFrameCues(Entity *entity, s32 animation, s32 frame_from, s32 frame_to);
 
 /* Passes a cue to Sound_PlayFalloff with where the entity is as seen from the player. */
-void EntityEvent_StartCue(Entity *entity, s32 unknown1, s32 unknown2, s32 skip_if_unk2A);
+void EntityEvent_StartCue(Entity *entity, s32 sound_index, s32 falloff_kind, s32 skip_while_ailing);
 
-/* EntityEvent_StartCue without the unk2A test. */
-void EntityEvent_StartCueAlways(Entity *entity, s32 unknown1, s32 unknown2);
+/* EntityEvent_StartCue without the ailment_4_frames test. */
+void EntityEvent_StartCueAlways(Entity *entity, s32 sound_index, s32 falloff_kind);
 
 /* Puts the entity back at its spawn point. */
 void EntityEvent_Respawn(Entity *entity);

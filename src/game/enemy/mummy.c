@@ -14,8 +14,8 @@
 #include "player/player.h"
 
 
-static void Mummy_Think(Entity *entity, s32 unknown);
-static void Mummy_ThinkCombat(Entity *entity, s32 unknown);
+static void Mummy_Think(Entity *entity, s32 run_now);
+static void Mummy_ThinkCombat(Entity *entity, s32 run_now);
 static void Mummy_OnHit(Entity *entity);
 static s32 Mummy_BackwardsCommand(Entity *entity, s32 unused, f32 reach);
 
@@ -60,7 +60,7 @@ void Mummy_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with Mummy_ThinkCombat for state 2. Sets work byte
    unk7A once Entity.hit_points is below half of EntityParams.hit_points. */
-static void Mummy_Think(Entity *entity, s32 unknown) {
+static void Mummy_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -73,20 +73,20 @@ static void Mummy_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                Mummy_ThinkCombat(entity, unknown);
+                Mummy_ThinkCombat(entity, run_now);
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -97,7 +97,7 @@ static void Mummy_Think(Entity *entity, s32 unknown) {
    is set. When the player is near, the entity is within 40 degrees of the player's facing and the
    player is 40 to 90 degrees off its heading, it goes backwards for 90 to 149 frames instead (work
    byte unk78 is 1), with the command Mummy_BackwardsCommand gives. */
-static void Mummy_ThinkCombat(Entity *entity, s32 unknown) {
+static void Mummy_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -130,9 +130,9 @@ static void Mummy_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -210,7 +210,7 @@ static void Mummy_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The on_hit handler: as EntityAi_OnHit, but only a heavy hit forgets the target and starts a

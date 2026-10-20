@@ -27,12 +27,12 @@
 static void DarkArcher_Animate(Entity *entity);
 static void DarkArcher_PitchPart2ToPlayer(Entity *entity, s32 mode);
 static void DarkArcher_OnHit(Entity *entity);
-static void DarkArcher_ThinkShootOrTurn(Entity *entity, s32 unknown);
+static void DarkArcher_ThinkShootOrTurn(Entity *entity, s32 run_now);
 static void DarkArcher_MoveTurnOnly(Entity *entity);
 static void DarkArcher_DormantFadeIn(Entity *entity);
 static void DarkArcher_DeathWithoutReward(Entity *entity);
-static void DarkArcher_Think(Entity *entity, s32 unknown);
-static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown);
+static void DarkArcher_Think(Entity *entity, s32 run_now);
+static void DarkArcher_ThinkCombat(Entity *entity, s32 run_now);
 static void DarkArcher_RangedAttack(Entity *entity);
 static void DarkArcher_MoveAlongArc(Entity *entity);
 
@@ -213,7 +213,7 @@ static void DarkArcher_OnHit(Entity *entity) {
    pause Entity.attack_delay_frames is over and EntityAi_CanUseRanged finds the player in reach of that record; else it
    starts the move action with the command of EntityAi_TurnCommand, the player as target. Keeps flag bit 10
    clear and bits 11 to 13 at 0. */
-static void DarkArcher_ThinkShootOrTurn(Entity *entity, s32 unknown) {
+static void DarkArcher_ThinkShootOrTurn(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -227,11 +227,11 @@ static void DarkArcher_ThinkShootOrTurn(Entity *entity, s32 unknown) {
         entity->flags = flags;
         busy = (u32)(flags >> 63);
         if (busy == 0 && entity->attack_delay_frames == 0 && EntityAi_CanUseRanged(entity, 2) != 0) {
-            EntityAi_StartAttack(entity, DarkArcher_RangedAttack, unknown, 1, 2);
+            EntityAi_StartAttack(entity, DarkArcher_RangedAttack, run_now, 1, 2);
         } else {
             entity->target = &player_state;
             entity->move_command = EntityAi_TurnCommand(entity);
-            EntityAi_StartAction(entity, ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, run_now);
         }
     }
     entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
@@ -354,7 +354,7 @@ static void DarkArcher_DeathWithoutReward(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with DarkArcher_ThinkCombat for state 2. Sets work byte
    unk7A to whether EntityParams.action_frames is not 0 and flag bit 44 or 50 is set. */
-static void DarkArcher_Think(Entity *entity, s32 unknown) {
+static void DarkArcher_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -364,20 +364,20 @@ static void DarkArcher_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                DarkArcher_ThinkCombat(entity, unknown);
+                DarkArcher_ThinkCombat(entity, run_now);
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -393,7 +393,7 @@ static void DarkArcher_Think(Entity *entity, s32 unknown) {
    DarkArcher_RangedAttack (with flag bit 10 set), and instead of closing in it starts
    DarkArcher_MoveAlongArc when work byte unk7A is set, the player is nearer than
    EntityParams.near_distance and player_state.unk14 is within 40 degrees of Entity.heading_to_player. */
-static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
+static void DarkArcher_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -427,16 +427,16 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
                 ENTITY_FLAG_BITS(entity)->attacking = 1;
-                EntityAi_StartAction(entity, DarkArcher_RangedAttack, unknown);
+                EntityAi_StartAction(entity, DarkArcher_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
             entity->target = &player_state;
             angle = EntityMath_AngleDifference(player_state.rotation.y, entity->heading_to_player);
             if (ai_state->step_index != 0 && entity->distance_to_player < (f32)entity->params->near_distance && ABS(angle) < DEG_TO_RAD(40)) {
-                EntityAi_StartAction(entity, DarkArcher_MoveAlongArc, unknown);
+                EntityAi_StartAction(entity, DarkArcher_MoveAlongArc, run_now);
                 return;
             }
             entity->action_timer = rand() % 60 + 0x78;
@@ -475,7 +475,7 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, but it keeps flag bit 10 set and starts

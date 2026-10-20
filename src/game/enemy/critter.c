@@ -17,9 +17,9 @@
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void Critter_Dormant(Entity *entity);
-static void Critter_Think(Entity *entity, s32 unknown);
-static void Critter_ThinkIdle(Entity *entity, s32 unknown);
-static void Critter_ThinkCombat(Entity *entity, s32 unknown);
+static void Critter_Think(Entity *entity, s32 run_now);
+static void Critter_ThinkIdle(Entity *entity, s32 run_now);
+static void Critter_ThinkCombat(Entity *entity, s32 run_now);
 
 /* Set-up of a type 25 entity: clears its work area and installs the type's handlers. */
 void Critter_Init(Entity *entity) {
@@ -113,7 +113,7 @@ static void Critter_Dormant(Entity *entity) {
 /* The think handler: as EntityAi_Think, with Critter_ThinkIdle for state 0 and
    Critter_ThinkCombat for states 1 and 2. Sets the flag field bits60 to 5 whenever
    EntityCollision_DistanceToGround gives a reading for the entity's position. */
-static void Critter_Think(Entity *entity, s32 unknown) {
+static void Critter_Think(Entity *entity, s32 run_now) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -126,7 +126,7 @@ static void Critter_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
@@ -134,10 +134,10 @@ static void Critter_Think(Entity *entity, s32 unknown) {
         break;
     case 1:
     case 2:
-        Critter_ThinkCombat(entity, unknown);
+        Critter_ThinkCombat(entity, run_now);
         return;
     }
-    Critter_ThinkIdle(entity, unknown);
+    Critter_ThinkIdle(entity, run_now);
 }
 
 /* The think function of state 0 (called after the switch, which `case 0:` leaves): gives command
@@ -146,7 +146,7 @@ static void Critter_Think(Entity *entity, s32 unknown) {
    heading 90 degrees to the side of the one EntityAi_TurnFromPush gives, give or take 70 degrees (work
    float unk48), turns to it with command bit 0x400 and no movement (work byte unk7A set), then sets
    the pause to EntityParams.action_frames. */
-static void Critter_ThinkIdle(Entity *entity, s32 unknown) {
+static void Critter_ThinkIdle(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -187,12 +187,12 @@ static void Critter_ThinkIdle(Entity *entity, s32 unknown) {
             ai_state->action_flags = entity->params->action_frames;
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of states 1 and 2: as EntityAi_ThinkCombat; it leaves flag bits 9 and 10 as
    they are and never adds command bit 0x40. */
-static void Critter_ThinkCombat(Entity *entity, s32 unknown) {
+static void Critter_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -219,9 +219,9 @@ static void Critter_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -262,5 +262,5 @@ static void Critter_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }

@@ -17,8 +17,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
-static void Sentinel_Think(Entity *entity, s32 unknown);
-static void Sentinel_ThinkCombat(Entity *entity, s32 unknown);
+static void Sentinel_Think(Entity *entity, s32 run_now);
+static void Sentinel_ThinkCombat(Entity *entity, s32 run_now);
 static void Sentinel_MeleeAttack1(Entity *entity);
 static void Sentinel_PlayAnim12(Entity *entity);
 static void Sentinel_Animate(Entity *entity);
@@ -68,7 +68,7 @@ void Sentinel_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with Sentinel_ThinkCombat for state 2. */
-static void Sentinel_Think(Entity *entity, s32 unknown) {
+static void Sentinel_Think(Entity *entity, s32 run_now) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -78,26 +78,26 @@ static void Sentinel_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
     case 0:
-        EntityAi_ThinkIdle(entity, unknown);
+        EntityAi_ThinkIdle(entity, run_now);
         return;
     case 1:
-        EntityAi_ThinkPursue(entity, unknown);
+        EntityAi_ThinkPursue(entity, run_now);
         return;
     case 2:
-        Sentinel_ThinkCombat(entity, unknown);
+        Sentinel_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but starts Sentinel_MeleeAttack1 when
    the player is within 500 and more than 140 degrees off its heading. */
-static void Sentinel_ThinkCombat(Entity *entity, s32 unknown) {
+static void Sentinel_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -122,7 +122,7 @@ static void Sentinel_ThinkCombat(Entity *entity, s32 unknown) {
     if (entity->distance_to_player < 500.0f) {
         if (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > DEG_TO_RAD(140) ||
             EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) < -DEG_TO_RAD(140)) {
-            EntityAi_StartAction(entity, Sentinel_MeleeAttack1, unknown);
+            EntityAi_StartAction(entity, Sentinel_MeleeAttack1, run_now);
             return;
         }
     }
@@ -136,9 +136,9 @@ static void Sentinel_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -182,7 +182,7 @@ static void Sentinel_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The melee attack with record 1 (busy bit 1): animation 21, its hits checked towards the back (the

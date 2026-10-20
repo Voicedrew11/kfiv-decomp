@@ -151,7 +151,7 @@ static int Script_StartAlways(int script_id, int argument) {
     *(void **)&thread->argument = (void *)argument; // match: stored as a pointer, so the word read below does not wait for it
     thread->script_id = script_id;
     thread->cursor = script_top;
-    while (TRUE) { // match: no end-label test here; an unknown id reads past the script
+    while (TRUE) { // match: no end-label test here; an run_now id reads past the script
         word = *thread->cursor;
         operand = word & 0xFFFF;
         word >>= 16;

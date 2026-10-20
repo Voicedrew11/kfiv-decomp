@@ -17,8 +17,8 @@
 
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
-static void AncientMummy_Think(Entity *entity, s32 unknown);
-static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown);
+static void AncientMummy_Think(Entity *entity, s32 run_now);
+static void AncientMummy_ThinkCombat(Entity *entity, s32 run_now);
 static s32 AncientMummy_BackwardsCommand(Entity *entity, s32 unused, f32 reach);
 static void AncientMummy_ShootAndRelocate(Entity *entity);
 static void AncientMummy_FadeBackIn(Entity *entity);
@@ -64,7 +64,7 @@ void AncientMummy_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with AncientMummy_ThinkCombat for state 2. Counts down work
    word unk68, the pause before the next AncientMummy_ShootAndRelocate. */
-static void AncientMummy_Think(Entity *entity, s32 unknown) {
+static void AncientMummy_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -77,20 +77,20 @@ static void AncientMummy_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                AncientMummy_ThinkCombat(entity, unknown);
+                AncientMummy_ThinkCombat(entity, run_now);
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -102,7 +102,7 @@ static void AncientMummy_Think(Entity *entity, s32 unknown) {
    and the pause is over, or, with the player nearer than 800 and less than 90 degrees off its
    heading, goes backwards for 90 to 149 frames (work byte unk78 is 1) with the command
    AncientMummy_BackwardsCommand gives. Closing in never runs. */
-static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
+static void AncientMummy_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -152,9 +152,9 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -210,7 +210,7 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The movement command for going backwards: a turn bit (0x100 / 0x200) while the target is off the heading by

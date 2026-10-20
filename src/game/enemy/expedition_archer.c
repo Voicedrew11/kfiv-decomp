@@ -21,8 +21,8 @@
 
 static void ExpeditionArcher_Animate(Entity *entity);
 static void ExpeditionArcher_PitchPartToPlayer(Entity *actor);
-static void ExpeditionArcher_Think(Entity *entity, s32 unknown);
-static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown);
+static void ExpeditionArcher_Think(Entity *entity, s32 run_now);
+static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 run_now);
 static void ExpeditionArcher_RangedAttack(Entity *entity);
 static void ExpeditionArcher_RangedAttack1(Entity *entity);
 static void ExpeditionArcher_Death(Entity *entity);
@@ -138,7 +138,7 @@ static void ExpeditionArcher_PitchPartToPlayer(Entity *actor) {
 /* The think handler: as EntityAi_Think, with ExpeditionArcher_ThinkCombat for state 2. Before that it
    clears bit 40 of model part 5's unk68 during frames 9 to 46 of animations 23 and 24 and sets it
    otherwise. */
-static void ExpeditionArcher_Think(Entity *entity, s32 unknown) {
+static void ExpeditionArcher_Think(Entity *entity, s32 run_now) {
     if (((u8)entity->animation_index == 0x17 || (u8)entity->animation_index == 0x18) && entity->model->level_tables->blend_left == 0 &&
         entity->model->level_tables->frame >= 9 && entity->model->level_tables->frame < 0x2F) {
         entity->model->parts[5].part_flags &= ~(0x8000L << 25);
@@ -154,27 +154,27 @@ static void ExpeditionArcher_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
     case 0:
-        EntityAi_ThinkIdle(entity, unknown);
+        EntityAi_ThinkIdle(entity, run_now);
         return;
     case 1:
-        EntityAi_ThinkPursue(entity, unknown);
+        EntityAi_ThinkPursue(entity, run_now);
         return;
     case 2:
-        ExpeditionArcher_ThinkCombat(entity, unknown);
+        ExpeditionArcher_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but ranged record 1 is
    ExpeditionArcher_RangedAttack1 and the other ranged records ExpeditionArcher_RangedAttack; closing in
    never runs. */
-static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown) {
+static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -204,12 +204,12 @@ static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 1) {
-                    EntityAi_StartAction(entity, ExpeditionArcher_RangedAttack1, unknown);
+                    EntityAi_StartAction(entity, ExpeditionArcher_RangedAttack1, run_now);
                 } else {
-                    EntityAi_StartAction(entity, ExpeditionArcher_RangedAttack, unknown);
+                    EntityAi_StartAction(entity, ExpeditionArcher_RangedAttack, run_now);
                 }
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -250,7 +250,7 @@ static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, but it sets flag bit 10 and aims its

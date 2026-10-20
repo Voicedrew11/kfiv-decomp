@@ -15,7 +15,7 @@
 #include "player/player.h"
 #include "save/save_state.h"
 
-static void Fadin_Think(Entity *entity, s32 unknown);
+static void Fadin_Think(Entity *entity, s32 run_now);
 
 /* Set-up of a type 80 entity: clears its work area and installs the type's handlers. */
 void Fadin_Init(Entity *entity) {
@@ -55,7 +55,7 @@ void Fadin_Init(Entity *entity) {
 /* The think handler: launches a shot at the player each time the timer Entity.action_timer runs out, as
    type 32's; one launch in three is shot EntityParams.pitch_limit_deg, the others shot 0xCD. Starts the
    death action once master_fadin_killed[0] is set. */
-static void Fadin_Think(Entity *entity, s32 unknown) {
+static void Fadin_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 angles[4];
     f32 target[4];
@@ -107,5 +107,5 @@ static void Fadin_Think(Entity *entity, s32 unknown) {
         entity->action_timer = entity->params->action_frames + rand() % 3;
     }
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }

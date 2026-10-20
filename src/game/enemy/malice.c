@@ -22,8 +22,8 @@
 
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
-static void Malice_Think(Entity *entity, s32 unknown);
-static void Malice_ThinkCombat(Entity *entity, s32 unknown);
+static void Malice_Think(Entity *entity, s32 run_now);
+static void Malice_ThinkCombat(Entity *entity, s32 run_now);
 static void Malice_Move(Entity *entity);
 static void Malice_ApplyMoveCommand(Entity *entity);
 static void Malice_ToggleFadeLevel(Entity *entity);
@@ -78,7 +78,7 @@ void Malice_Init(Entity *entity) {
    down work word unk6A, adds command bit 0x10 or 0x20 by what EntityCollision_DistanceToPropFloor reads at the entity's
    position against EntityParams.type_param_1 and type_param_2 (work byte unk7A), and calls
    Malice_ApplyMoveCommand while the entity is not busy or has one of the busy bits 0x3006. */
-static void Malice_Think(Entity *entity, s32 unknown) {
+static void Malice_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 height;
 
@@ -106,20 +106,20 @@ static void Malice_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                Malice_ThinkCombat(entity, unknown);
+                Malice_ThinkCombat(entity, run_now);
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -153,7 +153,7 @@ static void Malice_Think(Entity *entity, s32 unknown) {
    chance of unk438 in 100). It attacks only with unk7B at 0 and the player within 200 in y, and
    else goes to a point EntityPoint_PickNearFromDistance picks; ranged record 0 is Malice_RangedAttack0. Closing
    in never runs. */
-static void Malice_ThinkCombat(Entity *entity, s32 unknown) {
+static void Malice_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 retreat_point[4];
     f32 destination[4];
@@ -211,12 +211,12 @@ static void Malice_ThinkCombat(Entity *entity, s32 unknown) {
             } else if (ai_state->action_flags == 0) {
                 if (EntityAi_PickAttack(entity)) {
                     if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
-                        EntityAi_StartAction(entity, Malice_RangedAttack0, unknown);
+                        EntityAi_StartAction(entity, Malice_RangedAttack0, run_now);
                     } else {
-                        EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                        EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
                     }
                 } else {
-                    EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                    EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
                 }
                 return;
             } else {
@@ -265,7 +265,7 @@ static void Malice_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: only picks the animation, 3 going forward and 0 otherwise;

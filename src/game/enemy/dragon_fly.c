@@ -20,10 +20,10 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 static void DragonFly_Animate(Entity *entity);
-static void DragonFly_Think(Entity *entity, s32 unknown);
-static void DragonFly_ThinkReturn(Entity *entity, s32 unknown);
-static void DragonFly_ThinkWander(Entity *entity, s32 unknown);
-static void DragonFly_ThinkCombat(Entity *entity, s32 unknown);
+static void DragonFly_Think(Entity *entity, s32 run_now);
+static void DragonFly_ThinkReturn(Entity *entity, s32 run_now);
+static void DragonFly_ThinkWander(Entity *entity, s32 run_now);
+static void DragonFly_ThinkCombat(Entity *entity, s32 run_now);
 static void DragonFly_Move(Entity *entity);
 static void DragonFly_MeleeAttack(Entity *entity);
 static void DragonFly_RangedAttack(Entity *entity);
@@ -89,7 +89,7 @@ static void DragonFly_Animate(Entity *entity) {
    DragonFly_ThinkReturn while flag bit 53 is set, DragonFly_ThinkCombat for state 2 and
    DragonFly_ThinkWander for the other states. It also moves the entity in y so that the ground
    EntityCollision_DistanceToGround finds is no nearer than Entity.collision_radius. */
-static void DragonFly_Think(Entity *entity, s32 unknown) {
+static void DragonFly_Think(Entity *entity, s32 run_now) {
     f32 floor_distance;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -105,7 +105,7 @@ static void DragonFly_Think(Entity *entity, s32 unknown) {
         entity->model->position[1] -= entity->collision_radius - floor_distance;
     }
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        DragonFly_ThinkReturn(entity, unknown);
+        DragonFly_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
@@ -113,16 +113,16 @@ static void DragonFly_Think(Entity *entity, s32 unknown) {
     case 1:
         break;
     case 2:
-        DragonFly_ThinkCombat(entity, unknown);
+        DragonFly_ThinkCombat(entity, run_now);
         return;
     }
-    DragonFly_ThinkWander(entity, unknown);
+    DragonFly_ThinkWander(entity, run_now);
 }
 
 /* The think function while flag bit 53 is set: as EntityAi_ThinkReturn, with flag bits 11 to 13 at
    0, the command of EntityAi_MoveCommand3D (far marked), and, while it is pushed, command bit 0x40 and bit
    0x20 or 0x10 by the y of the push. */
-static void DragonFly_ThinkReturn(Entity *entity, s32 unknown) {
+static void DragonFly_ThinkReturn(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 to_spawn[4];
     f32 push[4];
@@ -177,14 +177,14 @@ static void DragonFly_ThinkReturn(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand3D(entity, 1, 50.0f);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of every state but 2 (DragonFly_Think calls it): wanders. Each time the
    timer runs out it picks a point near the spawn point (EntityPoint_PickNearWithHeight; 79 times in 100) or no
    target, takes the command of EntityAi_MoveCommand3D towards it (or of EntityAi_PushTurnCommand3D for the turn away from
    a push) and starts the move action. */
-static void DragonFly_ThinkWander(Entity *entity, s32 unknown) {
+static void DragonFly_ThinkWander(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 turn;
@@ -206,7 +206,7 @@ static void DragonFly_ThinkWander(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand3D(entity, 1, 50.0f);
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 2: it has none of EntityAi_ThinkCombat's guard, dodge and draw among
@@ -217,7 +217,7 @@ static void DragonFly_ThinkWander(Entity *entity, s32 unknown) {
    work float unk4C (the player's y less 220 to 919) until within 200 of that point; 3 (after an
    attack) forward for 90 frames; 4 forward with command bits 0x40 and 0x10 until the player's y is
    more than 700 above its own. */
-static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
+static void DragonFly_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 target[4];
     f32 direction[4];
@@ -228,9 +228,9 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     if (ai_state->move_choice != 4 && entity->attack_delay_frames == 0 && EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack(entity)) {
-            EntityAi_StartAction(entity, DragonFly_RangedAttack, unknown);
+            EntityAi_StartAction(entity, DragonFly_RangedAttack, run_now);
         } else {
-            EntityAi_StartAction(entity, DragonFly_MeleeAttack, unknown);
+            EntityAi_StartAction(entity, DragonFly_MeleeAttack, run_now);
         }
         ai_state->part_angle_x = 0.0f;
         ai_state->move_choice = 3;
@@ -342,7 +342,7 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     if (entity->handler != ai_state->move) {
-        EntityAi_StartAction(entity, ai_state->move, unknown);
+        EntityAi_StartAction(entity, ai_state->move, run_now);
     }
 }
 

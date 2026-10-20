@@ -22,8 +22,8 @@
 #define GIANT_LEADER_BREAK_SECOND 2
 #define GIANT_LEADER_BREAK_THIRD  4
 
-static void GiantLeader_Think(Entity *entity, s32 unknown);
-static void GiantLeader_ThinkCombat(Entity *entity, s32 unknown);
+static void GiantLeader_Think(Entity *entity, s32 run_now);
+static void GiantLeader_ThinkCombat(Entity *entity, s32 run_now);
 static void GiantLeader_MeleeAttack0(Entity *entity);
 static void GiantLeader_BreakMapObject(Entity *entity);
 static void GiantLeader_OnHit(Entity *entity);
@@ -74,7 +74,7 @@ void GiantLeader_Init(Entity *entity) {
    between the entity and the player (EntityCollision_LineHits), with the entity and the player on two given
    map records and one of them near the object; if so it puts the number of the object in unk7A,
    marks it in work byte unk7B (each object is used once) and starts GiantLeader_BreakMapObject. */
-static void GiantLeader_Think(Entity *entity, s32 unknown) {
+static void GiantLeader_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 position[4];
     f32 target[4];
@@ -105,7 +105,7 @@ static void GiantLeader_Think(Entity *entity, s32 unknown) {
                     && player_state.map_index == 0x14) {
                     ai_state->step_index = 2;
                     ai_state->action_flags |= GIANT_LEADER_BREAK_FIRST;
-                    EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
+                    EntityAi_StartAction(entity, GiantLeader_BreakMapObject, run_now);
                     return;
                 }
                 if (EntityCollision_LineHits(second, entity->model->position, &player_state.position.x) == 1 && !(ai_state->action_flags & GIANT_LEADER_BREAK_SECOND)
@@ -114,7 +114,7 @@ static void GiantLeader_Think(Entity *entity, s32 unknown) {
                     && player_state.map_index == 0x16) {
                     ai_state->step_index = 3;
                     ai_state->action_flags |= GIANT_LEADER_BREAK_SECOND;
-                    EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
+                    EntityAi_StartAction(entity, GiantLeader_BreakMapObject, run_now);
                     return;
                 }
             } else if (entity->map_record == &records[0x14]) {
@@ -124,7 +124,7 @@ static void GiantLeader_Think(Entity *entity, s32 unknown) {
                     && player_state.map_index == 0x11) {
                     ai_state->step_index = 2;
                     ai_state->action_flags |= GIANT_LEADER_BREAK_FIRST;
-                    EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
+                    EntityAi_StartAction(entity, GiantLeader_BreakMapObject, run_now);
                     return;
                 }
                 if (EntityCollision_LineHits(third, entity->model->position, &player_state.position.x) == 1 && !(ai_state->action_flags & GIANT_LEADER_BREAK_THIRD)
@@ -133,7 +133,7 @@ static void GiantLeader_Think(Entity *entity, s32 unknown) {
                     && player_state.map_index == 0x16) {
                     ai_state->step_index = 1;
                     ai_state->action_flags |= GIANT_LEADER_BREAK_THIRD;
-                    EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
+                    EntityAi_StartAction(entity, GiantLeader_BreakMapObject, run_now);
                     return;
                 }
             } else if (entity->map_record == &records[0x16]) {
@@ -143,7 +143,7 @@ static void GiantLeader_Think(Entity *entity, s32 unknown) {
                     && player_state.map_index == 0x11) {
                     ai_state->step_index = 3;
                     ai_state->action_flags |= GIANT_LEADER_BREAK_SECOND;
-                    EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
+                    EntityAi_StartAction(entity, GiantLeader_BreakMapObject, run_now);
                     return;
                 }
                 if (EntityCollision_LineHits(third, entity->model->position, &player_state.position.x) == 1 && !(ai_state->action_flags & GIANT_LEADER_BREAK_THIRD)
@@ -152,7 +152,7 @@ static void GiantLeader_Think(Entity *entity, s32 unknown) {
                     && player_state.map_index == 0x14) {
                     ai_state->step_index = 1;
                     ai_state->action_flags |= GIANT_LEADER_BREAK_THIRD;
-                    EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
+                    EntityAi_StartAction(entity, GiantLeader_BreakMapObject, run_now);
                     return;
                 }
             }
@@ -162,20 +162,20 @@ static void GiantLeader_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                GiantLeader_ThinkCombat(entity, unknown);
+                GiantLeader_ThinkCombat(entity, run_now);
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -184,7 +184,7 @@ static void GiantLeader_Think(Entity *entity, s32 unknown) {
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but melee record 0 is
    GiantLeader_MeleeAttack0 and melee record 1 GiantLeader_MeleeAttack1; closing in never runs. */
-static void GiantLeader_ThinkCombat(Entity *entity, s32 unknown) {
+static void GiantLeader_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -216,13 +216,13 @@ static void GiantLeader_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
-                EntityAi_StartAction(entity, GiantLeader_MeleeAttack0, unknown);
+                EntityAi_StartAction(entity, GiantLeader_MeleeAttack0, run_now);
             } else if (ENTITY_FLAG_BITS(entity)->attack_index == 1) {
-                EntityAi_StartAction(entity, GiantLeader_MeleeAttack1, unknown);
+                EntityAi_StartAction(entity, GiantLeader_MeleeAttack1, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -263,7 +263,7 @@ static void GiantLeader_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The melee attack with record 0 (busy bit 1): animation 20, no turning.

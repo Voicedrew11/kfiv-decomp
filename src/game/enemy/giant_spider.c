@@ -17,9 +17,9 @@
 
 static void GiantSpider_Animate(Entity *entity);
 static void GiantSpider_OnHit(Entity *entity);
-static void GiantSpider_Think(Entity *entity, s32 unknown);
-static void GiantSpider_ThinkTurnToPlayer(Entity *entity, s32 unknown);
-static void GiantSpider_ThinkCombat(Entity *entity, s32 unknown);
+static void GiantSpider_Think(Entity *entity, s32 run_now);
+static void GiantSpider_ThinkTurnToPlayer(Entity *entity, s32 run_now);
+static void GiantSpider_ThinkCombat(Entity *entity, s32 run_now);
 static void GiantSpider_Move(Entity *entity);
 static void GiantSpider_PlayTurnAnim6Or11(Entity *entity);
 static void GiantSpider_PlayTurnAnim7Or12(Entity *entity);
@@ -120,7 +120,7 @@ static void GiantSpider_OnHit(Entity *entity) {
 /* The think handler: as EntityAi_Think without EntityAi_CheckFarFromSpawn and the return to the spawn point,
    flag bit 9 kept set, with GiantSpider_ThinkCombat for state 2 and GiantSpider_ThinkTurnToPlayer for the other
    states. */
-static void GiantSpider_Think(Entity *entity, s32 unknown) {
+static void GiantSpider_Think(Entity *entity, s32 run_now) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 0);
     }
@@ -134,17 +134,17 @@ static void GiantSpider_Think(Entity *entity, s32 unknown) {
     case 1:
         break;
     case 2:
-        GiantSpider_ThinkCombat(entity, unknown);
+        GiantSpider_ThinkCombat(entity, run_now);
         return;
     }
-    GiantSpider_ThinkTurnToPlayer(entity, unknown);
+    GiantSpider_ThinkTurnToPlayer(entity, run_now);
 }
 
 /* The think function of every state but 2 (GiantSpider_Think calls it): turns the entity to
    Entity.heading_to_player, the bearing the shared code turns to when it turns to the player. When unk68 is
    more than 25 degrees off the heading it starts GiantSpider_PlayTurnAnim7Or12 (positive side) or
    GiantSpider_PlayTurnAnim6Or11; else it starts the move action with no command. */
-static void GiantSpider_ThinkTurnToPlayer(Entity *entity, s32 unknown) {
+static void GiantSpider_ThinkTurnToPlayer(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 angle;
 
@@ -152,12 +152,12 @@ static void GiantSpider_ThinkTurnToPlayer(Entity *entity, s32 unknown) {
     angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
     if (ABS(angle) > DEG_TO_RAD(25)) {
         if (angle >= 0.0f) {
-            EntityAi_StartAction(entity, GiantSpider_PlayTurnAnim7Or12, unknown);
+            EntityAi_StartAction(entity, GiantSpider_PlayTurnAnim7Or12, run_now);
         } else {
-            EntityAi_StartAction(entity, GiantSpider_PlayTurnAnim6Or11, unknown);
+            EntityAi_StartAction(entity, GiantSpider_PlayTurnAnim6Or11, run_now);
         }
     } else {
-        EntityAi_StartAction(entity, ai_state->move, unknown);
+        EntityAi_StartAction(entity, ai_state->move, run_now);
     }
 }
 
@@ -166,7 +166,7 @@ static void GiantSpider_ThinkTurnToPlayer(Entity *entity, s32 unknown) {
    GiantSpider_RangedAttack. It gives no command: where that one closes in, this one starts
    GiantSpider_PlayTurnAnim7Or12 or GiantSpider_PlayTurnAnim6Or11 (by the side) when Entity.heading_to_player is more than
    25 degrees off the heading. An attack clears work byte unk7A. */
-static void GiantSpider_ThinkCombat(Entity *entity, s32 unknown) {
+static void GiantSpider_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 side;
     f32 angle;
@@ -187,9 +187,9 @@ static void GiantSpider_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, GiantSpider_RangedAttack, unknown);
+                EntityAi_StartAction(entity, GiantSpider_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             ai_state->step_index = 0;
             return;
@@ -197,10 +197,10 @@ static void GiantSpider_ThinkCombat(Entity *entity, s32 unknown) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(angle) > DEG_TO_RAD(25)) {
                 if (angle >= 0.0f) {
-                    EntityAi_StartAction(entity, GiantSpider_PlayTurnAnim7Or12, unknown);
+                    EntityAi_StartAction(entity, GiantSpider_PlayTurnAnim7Or12, run_now);
                     return;
                 }
-                EntityAi_StartAction(entity, GiantSpider_PlayTurnAnim6Or11, unknown);
+                EntityAi_StartAction(entity, GiantSpider_PlayTurnAnim6Or11, run_now);
                 return;
             }
             ai_state->step_index = 0;
@@ -215,7 +215,7 @@ static void GiantSpider_ThinkCombat(Entity *entity, s32 unknown) {
             break;
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: only picks the animation: 12 or 11 for command bit 0x100 or 0x200, 7 or 6 when

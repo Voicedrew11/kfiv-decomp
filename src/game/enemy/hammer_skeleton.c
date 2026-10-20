@@ -17,7 +17,7 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
-static void HammerSkeleton_Think(Entity *entity, s32 unknown);
+static void HammerSkeleton_Think(Entity *entity, s32 run_now);
 static void HammerSkeleton_Death(Entity *entity);
 
 /* Set-up of a type 37 entity: clears its work area and installs the type's handlers. */
@@ -62,7 +62,7 @@ void HammerSkeleton_Init(Entity *entity) {
 
 /* The think handler: no states. While the entity is not busy it starts HammerSkeleton_Death when the
    player is inside either of two fixed boxes, else the move action. */
-static void HammerSkeleton_Think(Entity *entity, s32 unknown) {
+static void HammerSkeleton_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (entity->busy_flags == 0) {
@@ -72,9 +72,9 @@ static void HammerSkeleton_Think(Entity *entity, s32 unknown) {
             (-6200.0f <= player_state.position.x && player_state.position.x <= -2600.0f &&
              -50.0f <= player_state.position.y && player_state.position.y <= 450.0f &&
              -600.0f <= player_state.position.z && player_state.position.z <= 1000.0f)) {
-            EntityAi_StartAction(entity, HammerSkeleton_Death, unknown);
+            EntityAi_StartAction(entity, HammerSkeleton_Death, run_now);
         } else {
-            EntityAi_StartAction(entity, ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, run_now);
         }
     }
 }

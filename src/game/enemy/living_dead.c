@@ -19,8 +19,8 @@
 static void LivingDead_OnHit(Entity *entity);
 static void LivingDead_ReactionLight(Entity *entity);
 static void LivingDead_ReactionHeavy(Entity *entity);
-static void LivingDead_Think(Entity *entity, s32 unknown);
-static void LivingDead_ThinkCombat(Entity *entity, s32 unknown);
+static void LivingDead_Think(Entity *entity, s32 run_now);
+static void LivingDead_ThinkCombat(Entity *entity, s32 run_now);
 
 /* Set-up of a type 11 entity: clears its work area and installs the type's handlers. */
 void LivingDead_Init(Entity *entity) {
@@ -181,7 +181,7 @@ static void LivingDead_ReactionHeavy(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with EntityAi_ThinkIdle for state 1 too and
    LivingDead_ThinkCombat for state 2. */
-static void LivingDead_Think(Entity *entity, s32 unknown) {
+static void LivingDead_Think(Entity *entity, s32 run_now) {
     u32 phase;
 
     phase = frame_counter % 10U;
@@ -194,7 +194,7 @@ static void LivingDead_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
@@ -202,17 +202,17 @@ static void LivingDead_Think(Entity *entity, s32 unknown) {
     case 1:
         break;
     case 2:
-        LivingDead_ThinkCombat(entity, unknown);
+        LivingDead_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but with EntitySpawnInfo.spawn_mode at 0, on
    each frame whose count divides by 120 plus work byte unk7A, it draws unk7A anew (0 to 59) and
    starts EntityAi_RangedAttack with record 0 with a chance of EntityParams.action_frames in 100. Closing
    in never runs; waiting lasts 60 to 89 frames. */
-static void LivingDead_ThinkCombat(Entity *entity, s32 unknown) {
+static void LivingDead_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -233,7 +233,7 @@ static void LivingDead_ThinkCombat(Entity *entity, s32 unknown) {
         if (rand() % 100 < (s16)entity->params->action_frames) {
             ENTITY_FLAG_BITS(entity)->ranged_attack = 1;
             ENTITY_FLAG_BITS(entity)->attack_index = 0;
-            EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+            EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             return;
         }
     }
@@ -248,9 +248,9 @@ static void LivingDead_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -291,5 +291,5 @@ static void LivingDead_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }

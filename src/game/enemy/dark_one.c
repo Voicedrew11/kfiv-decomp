@@ -18,7 +18,7 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
-static void DarkOne_Think(Entity *entity, s32 unknown);
+static void DarkOne_Think(Entity *entity, s32 run_now);
 static void DarkOne_Death(Entity *entity);
 static void DarkOne_DeathByOtherWeapon(Entity *entity);
 static void DarkOne_DeathByMoonlightSword(Entity *entity);
@@ -77,7 +77,7 @@ void DarkOne_Init(Entity *entity) {
    set it calls EntityEvent_StartEffectAtPoint with 0x13D and clears the bit; then, with dark_one_hits_left at 0 or less, it
    sets Entity.hit_flash_frames to 6 and starts DarkOne_Death, and else, when dark_one_hits_left has changed (work
    byte unk7A keeps it), calls EntityEvent_StartCue and Sound_PlayMapAtRange. */
-static void DarkOne_Think(Entity *entity, s32 unknown) {
+static void DarkOne_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 3U == 0) {
@@ -98,7 +98,7 @@ static void DarkOne_Think(Entity *entity, s32 unknown) {
         ENTITY_FLAG_BITS(entity)->hit_by_player = FALSE;
         if (dark_one_hits_left <= 0) {
             entity->hit_flash_frames = 6;
-            EntityAi_StartAction(entity, DarkOne_Death, unknown);
+            EntityAi_StartAction(entity, DarkOne_Death, run_now);
             return;
         }
         if (ai_state->step_index != dark_one_hits_left) {
@@ -116,11 +116,11 @@ static void DarkOne_Think(Entity *entity, s32 unknown) {
         switch (entity->state) {
         case 1:
         case 2:
-            EntityAi_ThinkCombat(entity, unknown);
+            EntityAi_ThinkCombat(entity, run_now);
             break;
         case 0:
         default:
-            EntityAi_ThinkIdle(entity, unknown);
+            EntityAi_ThinkIdle(entity, run_now);
             break;
         }
     }

@@ -281,9 +281,9 @@ void EntityEvent_StartFrameCues(Entity *entity, s32 animation, s32 frame_from, s
     }
 }
 
-/* Passes a cue to Sound_PlayFalloff with where the entity is as seen from the player; not while the unk2A timer
-   runs if `skip_if_unk2A` is set. */
-void EntityEvent_StartCue(Entity *entity, s32 unknown1, s32 unknown2, s32 skip_if_unk2A) {
+/* Passes a cue to Sound_PlayFalloff with where the entity is as seen from the player; not while the ailment_4_frames
+   timer runs if `skip_while_ailing` is set. */
+void EntityEvent_StartCue(Entity *entity, s32 sound_index, s32 falloff_kind, s32 skip_while_ailing) {
     f32 angle;
 
     angle = atan2f(entity->model->position[0] - player_state.position.x, entity->model->position[2] - player_state.position.z) - player_state.rotation.y;
@@ -293,14 +293,14 @@ void EntityEvent_StartCue(Entity *entity, s32 unknown1, s32 unknown2, s32 skip_i
     } else if (angle < -PI) {
         angle += TWO_PI;
     }
-    if (entity->ailment_4_frames != 0 && skip_if_unk2A != 0) {
+    if (entity->ailment_4_frames != 0 && skip_while_ailing != 0) {
         return;
     }
-    Sound_PlayFalloff((u8)unknown1, (u8)unknown2, entity->sound_bank, entity->params->sound_id, entity->distance_to_player_3d, angle);
+    Sound_PlayFalloff((u8)sound_index, (u8)falloff_kind, entity->sound_bank, entity->params->sound_id, entity->distance_to_player_3d, angle);
 }
 
-/* As EntityEvent_StartCue, without the unk2A test. */
-void EntityEvent_StartCueAlways(Entity *entity, s32 unknown1, s32 unknown2) {
+/* As EntityEvent_StartCue, without the ailment_4_frames test. */
+void EntityEvent_StartCueAlways(Entity *entity, s32 sound_index, s32 falloff_kind) {
     f32 angle;
     f32 wrapped;
 
@@ -312,7 +312,7 @@ void EntityEvent_StartCueAlways(Entity *entity, s32 unknown1, s32 unknown2) {
     } else if (wrapped < -PI) {
         wrapped += TWO_PI;
     }
-    Sound_PlayFalloff((u8)unknown1, (u8)unknown2, entity->sound_bank, entity->params->sound_id, entity->distance_to_player_3d, wrapped);
+    Sound_PlayFalloff((u8)sound_index, (u8)falloff_kind, entity->sound_bank, entity->params->sound_id, entity->distance_to_player_3d, wrapped);
 }
 
 /* Puts the entity back at its spawn point (Entity_ResetToSpawn), sets flag bits 1 and 8 and clears bits 2-3,

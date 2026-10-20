@@ -17,12 +17,12 @@
 #include "model/motion.h"
 
 
-static void Seafang_Think(Entity *entity, s32 unknown);
-static void Seafang_ThinkIdle(Entity *entity, s32 unknown);
-static void Seafang_ThinkCombat(Entity *entity, s32 unknown);
-static void Seafang_ThinkLowerGradually(Entity *entity, s32 unknown);
-static void Seafang_ThinkWander(Entity *entity, s32 unknown);
-static void Seafang_ThinkCombatRunAtPlayer(Entity *entity, s32 unknown);
+static void Seafang_Think(Entity *entity, s32 run_now);
+static void Seafang_ThinkIdle(Entity *entity, s32 run_now);
+static void Seafang_ThinkCombat(Entity *entity, s32 run_now);
+static void Seafang_ThinkLowerGradually(Entity *entity, s32 run_now);
+static void Seafang_ThinkWander(Entity *entity, s32 run_now);
+static void Seafang_ThinkCombatRunAtPlayer(Entity *entity, s32 run_now);
 static void Seafang_Move(Entity *entity);
 static void Seafang_Death(Entity *entity);
 static void Seafang_DeathWithoutDrop(Entity *entity);
@@ -69,7 +69,7 @@ void Seafang_Init(Entity *entity) {
 /* The think handler: as EntityAi_Think with the type's own functions for the states. Before that it
    reads EntityCollision_DistanceToGround at the entity's position into work float unk48, moves the entity in y by it,
    and starts Seafang_DeathWithoutDrop when it is above 0. */
-static void Seafang_Think(Entity *entity, s32 unknown) {
+static void Seafang_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -87,16 +87,16 @@ static void Seafang_Think(Entity *entity, s32 unknown) {
             }
         }
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 1:
             case 2:
-                Seafang_ThinkCombat(entity, unknown);
+                Seafang_ThinkCombat(entity, run_now);
                 break;
             case 0:
             default:
-                Seafang_ThinkIdle(entity, unknown);
+                Seafang_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -105,7 +105,7 @@ static void Seafang_Think(Entity *entity, s32 unknown) {
 
 /* The think function of state 0: as EntityAi_ThinkIdle, with EntityPoint_PickNearWithHeight picking the point to go
    to and EntityAi_MoveCommand3D the command. */
-static void Seafang_ThinkIdle(Entity *entity, s32 unknown) {
+static void Seafang_ThinkIdle(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 turn;
@@ -129,12 +129,12 @@ static void Seafang_ThinkIdle(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand3D(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of states 1 and 2: as EntityAi_ThinkCombat, but it closes in, at the run, on a
    point off the player in y (by work float unk4C), and its melee attack is always record 0. */
-static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
+static void Seafang_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 side;
@@ -161,11 +161,11 @@ static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
                 ENTITY_FLAG_BITS(entity)->ranged_attack = 0;
                 ENTITY_FLAG_BITS(entity)->attack_index = 0;
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -196,7 +196,7 @@ static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand3D(entity, 1, entity->radius + 100.0f + 30.0f);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think handler of a spawn whose EntitySpawnInfo.spawn_mode is set: as Seafang_Think, but where
@@ -205,7 +205,7 @@ static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
    and it has its own functions for the states (Seafang_ThinkWander,
    Seafang_ThinkCombatRunAtPlayer). Starts Seafang_DeathWithoutDrop when EntityCollision_DistanceToGround
    reads above 0, as Seafang_Think does. */
-static void Seafang_ThinkLowerGradually(Entity *entity, s32 unknown) {
+static void Seafang_ThinkLowerGradually(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -223,16 +223,16 @@ static void Seafang_ThinkLowerGradually(Entity *entity, s32 unknown) {
             }
         }
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 1:
             case 2:
-                Seafang_ThinkCombatRunAtPlayer(entity, unknown);
+                Seafang_ThinkCombatRunAtPlayer(entity, run_now);
                 break;
             case 0:
             default:
-                Seafang_ThinkWander(entity, unknown);
+                Seafang_ThinkWander(entity, run_now);
                 break;
             }
         }
@@ -244,7 +244,7 @@ static void Seafang_ThinkLowerGradually(Entity *entity, s32 unknown) {
    (EntityPoint_PickNear; 79 times in 100, for 120 to 179 frames) or no target (60 to 89 frames), takes the
    command of EntityAi_MoveCommand towards it (or the turn away from a push, EntityAi_TurnFromPush) and starts the
    move action. */
-static void Seafang_ThinkWander(Entity *entity, s32 unknown) {
+static void Seafang_ThinkWander(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 turn;
@@ -268,14 +268,14 @@ static void Seafang_ThinkWander(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of states 1 and 2 for Seafang_ThinkLowerGradually: as
    EntityAi_ThinkCombat, closing in at the run (command bit 0x40) on the player's own position,
    where Seafang_ThinkCombat goes for a point off the player in y; the melee attack is record 0
    while work float unk48 is below -80. */
-static void Seafang_ThinkCombatRunAtPlayer(Entity *entity, s32 unknown) {
+static void Seafang_ThinkCombatRunAtPlayer(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 side;
@@ -302,13 +302,13 @@ static void Seafang_ThinkCombatRunAtPlayer(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
                 if (ai_state->part_angle_x < -80.0f) {
                     ENTITY_FLAG_BITS(entity)->ranged_attack = 0;
                     ENTITY_FLAG_BITS(entity)->attack_index = 0;
                 }
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -335,7 +335,7 @@ static void Seafang_ThinkCombatRunAtPlayer(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: turns the entity and pitches it down or up as the command says,

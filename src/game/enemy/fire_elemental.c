@@ -15,8 +15,8 @@
 #include "entity/entity_math.h"
 #include "player/player.h"
 
-static void FireElemental_Think(Entity *entity, s32 unknown);
-static void FireElemental_ThinkCombat(Entity *entity, s32 unknown);
+static void FireElemental_Think(Entity *entity, s32 run_now);
+static void FireElemental_ThinkCombat(Entity *entity, s32 run_now);
 static void FireElemental_StandAndAttack(Entity *entity);
 static void FireElemental_PlayTurnAnim(Entity *entity);
 static void FireElemental_Dodge(Entity *entity);
@@ -28,7 +28,7 @@ static void FireElemental_OnHit(Entity *entity);
 static void FireElemental_BackAwayFromPlayer(Entity *entity);
 static void FireElemental_Move(Entity *entity);
 static s32 FireElemental_BackwardsCommand(Entity *entity, s32 unused, f32 reach);
-static void FireElemental_ThinkReturn(Entity *entity, s32 unknown);
+static void FireElemental_ThinkReturn(Entity *entity, s32 run_now);
 static void FireElemental_RangedAttack0(Entity *entity);
 
 /* Set-up of a type 48 entity: clears its work area and installs the type's handlers. */
@@ -76,7 +76,7 @@ void FireElemental_Init(Entity *entity) {
    then FireElemental_ThinkCombat. Work byte unk7C is put to 30 while player_state.unk259 is set and
    counts down. While work word unk68 is 1 (FireElemental_AlertSameKind of another entity sets it) it
    starts FireElemental_BackAwayFromPlayer instead of all that. */
-static void FireElemental_Think(Entity *entity, s32 unknown) {
+static void FireElemental_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -97,26 +97,26 @@ static void FireElemental_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            FireElemental_ThinkReturn(entity, unknown);
+            FireElemental_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
                 ai_state->step_index = 0;
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
                 if (ai_state->step_index == 0) {
-                    EntityAi_StartAction(entity, FireElemental_StandAndAttack, unknown);
+                    EntityAi_StartAction(entity, FireElemental_StandAndAttack, run_now);
                 } else {
-                    FireElemental_ThinkCombat(entity, unknown);
+                    FireElemental_ThinkCombat(entity, run_now);
                 }
                 break;
             default:
                 ai_state->step_index = 0;
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -126,7 +126,7 @@ static void FireElemental_Think(Entity *entity, s32 unknown) {
 /* The think function of state 2: as EntityAi_ThinkCombat, but it first starts EntityAi_Dodge when
    FireElemental_ShouldDodgeMagic says so, ranged record 1 is FireElemental_RangedAttack1, and closing in gives the
    backwards command (bit 2, from FireElemental_BackwardsCommand) where the shared one gives the forwards one. */
-static void FireElemental_ThinkCombat(Entity *entity, s32 unknown) {
+static void FireElemental_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -163,12 +163,12 @@ static void FireElemental_ThinkCombat(Entity *entity, s32 unknown) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 1) {
-                    EntityAi_StartAction(entity, FireElemental_RangedAttack1, unknown);
+                    EntityAi_StartAction(entity, FireElemental_RangedAttack1, run_now);
                 } else {
-                    EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                    EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
                 }
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -209,7 +209,7 @@ static void FireElemental_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* An action (busy bit 0x1000) that FireElemental_Think starts in state 2 while work byte unk7A is 0:
@@ -719,7 +719,7 @@ static s32 FireElemental_BackwardsCommand(Entity *entity, s32 unused, f32 reach)
 /* The think function while flag bit 53 is set: as EntityAi_ThinkReturn (walk back to the spawn
    point, turning away from whatever is pushing the entity), but with the backwards command of
    FireElemental_BackwardsCommand where the shared one gives the forwards one. */
-static void FireElemental_ThinkReturn(Entity *entity, s32 unknown) {
+static void FireElemental_ThinkReturn(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 to_spawn[4];
     f32 push[4];
@@ -764,7 +764,7 @@ static void FireElemental_ThinkReturn(Entity *entity, s32 unknown) {
             entity->move_command = FireElemental_BackwardsCommand(entity, 1, entity->radius + 100.0f + 30.0f);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The ranged attack with record 0 (busy bit 1): animation 23, as EntityAi_RangedAttack, but the

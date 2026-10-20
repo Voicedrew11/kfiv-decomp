@@ -15,8 +15,8 @@
 
 static void Crow_Animate(Entity *entity);
 static void Crow_Think(Entity *entity, int frame);
-static void Crow_PickAction(Entity *entity, s32 unknown);
-static void Crow_MoveOffAndRemove(Entity *entity, s32 unknown);
+static void Crow_PickAction(Entity *entity, s32 run_now);
+static void Crow_MoveOffAndRemove(Entity *entity, s32 run_now);
 static void Crow_Death(Entity *entity);
 static void Crow_PlayAnim20(Entity *entity);
 static void Crow_PlayAnim21(Entity *entity);
@@ -100,7 +100,7 @@ static void Crow_Think(Entity *entity, int frame) {
 /* Helper of Crow_Think, called until the state is 3: each time the timer runs out it draws
    among Crow_PlayAnim20, Crow_PlayAnim21 and a wait of 120 to 179 frames,
    weighted by EntityParams.yaw_limit_deg, unk434 and unk436; else it starts the move action. */
-static void Crow_PickAction(Entity *entity, s32 unknown) {
+static void Crow_PickAction(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 roll;
 
@@ -115,18 +115,18 @@ static void Crow_PickAction(Entity *entity, s32 unknown) {
             roll = rand() % roll;
         }
         if (roll < entity->params->yaw_limit_deg) {
-            EntityAi_StartAction(entity, Crow_PlayAnim20, unknown);
+            EntityAi_StartAction(entity, Crow_PlayAnim20, run_now);
             return;
         }
         if (roll < entity->params->yaw_limit_deg + (s16)entity->params->action_frames) {
-            EntityAi_StartAction(entity, Crow_PlayAnim21, unknown);
+            EntityAi_StartAction(entity, Crow_PlayAnim21, run_now);
             return;
         }
         if (roll < entity->params->yaw_limit_deg + (s16)entity->params->action_frames + entity->params->near_distance) {
             entity->action_timer = rand() % 60 + 0x78;
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
     return;
 }
 
@@ -134,7 +134,7 @@ static void Crow_PickAction(Entity *entity, s32 unknown) {
    action; the motion never moves the entity. It calls EntityEvent_StartEffectAtPoint with EntityParams.far_distance on the
    first type_param_0 frames, pitches the entity to -40 degrees while its y is above -2000 and back to 0
    after, and clears flag bit 1 once it is more than 10000 from its spawn point. */
-static void Crow_MoveOffAndRemove(Entity *entity, s32 unknown) {
+static void Crow_MoveOffAndRemove(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 turn;
 
@@ -157,7 +157,7 @@ static void Crow_MoveOffAndRemove(Entity *entity, s32 unknown) {
     if (EntityMath_DistanceXZ(entity->model->position, &entity->spawn_info->spawn_x) > 10000.0f) {
         ENTITY_FLAG_BITS(entity)->live = FALSE;
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The death action (busy bit 0x40): as EntityAi_Death; all the while it pitches the entity towards

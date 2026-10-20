@@ -23,15 +23,15 @@
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void AncientKing_Animate(Entity *entity);
-static void AncientKing_Think(Entity *entity, s32 unknown);
-static void AncientKing_ThinkCombat(Entity *entity, s32 unknown);
+static void AncientKing_Think(Entity *entity, s32 run_now);
+static void AncientKing_ThinkCombat(Entity *entity, s32 run_now);
 static void AncientKing_Move(Entity *entity);
 static void AncientKing_Death(Entity *entity);
 static void AncientKing_RangedAttack0(Entity *entity);
 static void AncientKing_RespawnOthers(Entity *entity);
 static void AncientKing_SwitchHandlers(Entity *entity);
-static void AncientKing_ThinkAfterSwitch(Entity *entity, s32 unknown);
-static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown);
+static void AncientKing_ThinkAfterSwitch(Entity *entity, s32 run_now);
+static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 run_now);
 static void AncientKing_DeathLaunchShot(Entity *entity);
 static void AncientKing_LaunchShotsNearPlayer(Entity *entity);
 static void AncientKing_RangedAttack1(Entity *entity);
@@ -141,7 +141,7 @@ static void AncientKing_Animate(Entity *entity) {
    is not busy: once Entity.hit_points is below three quarters of EntityParams.hit_points it starts
    AncientKing_SwitchHandlers; else in state 2 it calls AncientKing_ThinkCombat, and in the other
    states starts the move action. Counts down work word unk68. */
-static void AncientKing_Think(Entity *entity, s32 unknown) {
+static void AncientKing_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -150,17 +150,17 @@ static void AncientKing_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags == 0) {
         EntityAi_StepState(entity);
         if (entity->hit_points < (s32)(entity->params->hit_points * 0.75f)) {
-            EntityAi_StartAction(entity, AncientKing_SwitchHandlers, unknown);
+            EntityAi_StartAction(entity, AncientKing_SwitchHandlers, run_now);
             return;
         }
         switch (entity->state) {
         case 2:
-            AncientKing_ThinkCombat(entity, unknown);
+            AncientKing_ThinkCombat(entity, run_now);
             break;
         case 0:
         case 1:
         default:
-            EntityAi_StartAction(entity, ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, run_now);
             break;
         }
     }
@@ -172,17 +172,17 @@ static void AncientKing_Think(Entity *entity, s32 unknown) {
 /* The think function of state 2: starts AncientKing_RespawnOthers when AncientKing_ShouldRespawnOthers says so; else
    AncientKing_RangedAttack0 when the pause Entity.attack_delay_frames is over and EntityAi_CanUseRanged finds the player
    in reach of ranged record 0; else the move action. */
-static void AncientKing_ThinkCombat(Entity *entity, s32 unknown) {
+static void AncientKing_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     if (AncientKing_ShouldRespawnOthers(entity)) {
-        EntityAi_StartAction(entity, AncientKing_RespawnOthers, unknown);
+        EntityAi_StartAction(entity, AncientKing_RespawnOthers, run_now);
     } else if (entity->attack_delay_frames == 0 && EntityAi_CanUseRanged(entity, 0)) {
-        EntityAi_StartAttack(entity, AncientKing_RangedAttack0, unknown, 1, 0);
+        EntityAi_StartAttack(entity, AncientKing_RangedAttack0, run_now, 1, 0);
     } else {
-        EntityAi_StartAction(entity, ai_state->move, unknown);
+        EntityAi_StartAction(entity, ai_state->move, run_now);
     }
 }
 
@@ -401,7 +401,7 @@ static void AncientKing_SwitchHandlers(Entity *entity) {
    AncientKing_ThinkCombatAfterSwitch for state 2 and EntityAi_ThinkIdle for states 0 and 1. Clears flag
    bit 25 once the entity is more than 160 from its spawn point (EntityMath_DistanceXZ). Counts down work
    word unk68. */
-static void AncientKing_ThinkAfterSwitch(Entity *entity, s32 unknown) {
+static void AncientKing_ThinkAfterSwitch(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -414,16 +414,16 @@ static void AncientKing_ThinkAfterSwitch(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 2:
-                AncientKing_ThinkCombatAfterSwitch(entity, unknown);
+                AncientKing_ThinkCombatAfterSwitch(entity, run_now);
                 break;
             case 0:
             case 1:
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -436,7 +436,7 @@ static void AncientKing_ThinkAfterSwitch(Entity *entity, s32 unknown) {
 /* The think function of state 2 for AncientKing_ThinkAfterSwitch: as EntityAi_ThinkCombat, but it starts
    AncientKing_RespawnOthersAfterSwitch when AncientKing_ShouldRespawnOthers says so, and ranged records 0 and 1 have the
    type's own actions (AncientKing_LaunchShotsNearPlayer, AncientKing_RangedAttack1). */
-static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
+static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -453,7 +453,7 @@ static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
         return;
     }
     if (AncientKing_ShouldRespawnOthers(entity)) {
-        EntityAi_StartAction(entity, AncientKing_RespawnOthersAfterSwitch, unknown);
+        EntityAi_StartAction(entity, AncientKing_RespawnOthersAfterSwitch, run_now);
         return;
     }
     side = EntityAi_PickCombatChoice(entity, 0);
@@ -469,14 +469,14 @@ static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
-                    EntityAi_StartAction(entity, AncientKing_LaunchShotsNearPlayer, unknown);
+                    EntityAi_StartAction(entity, AncientKing_LaunchShotsNearPlayer, run_now);
                 } else if (ENTITY_FLAG_BITS(entity)->attack_index == 1) {
-                    EntityAi_StartAction(entity, AncientKing_RangedAttack1, unknown);
+                    EntityAi_StartAction(entity, AncientKing_RangedAttack1, run_now);
                 } else {
-                    EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                    EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
                 }
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -517,7 +517,7 @@ static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The death action (busy bit 0x40) that AncientKing_SwitchHandlers installs: as EntityAi_Death; as

@@ -706,7 +706,7 @@ void EntityAi_OnHit(Entity *entity) {
 /* The default think handler: every tenth frame updates what the entity knows of the player
    (EntityAi_SensePlayer); while the entity is not busy it steps Entity.state and calls the think function
    of that state. */
-void EntityAi_Think(Entity *entity, s32 unknown) {
+void EntityAi_Think(Entity *entity, s32 run_now) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -718,26 +718,26 @@ void EntityAi_Think(Entity *entity, s32 unknown) {
     }
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
     case 0:
-        EntityAi_ThinkIdle(entity, unknown);
+        EntityAi_ThinkIdle(entity, run_now);
         return;
     case 1:
-        EntityAi_ThinkPursue(entity, unknown);
+        EntityAi_ThinkPursue(entity, run_now);
         return;
     case 2:
-        EntityAi_ThinkCombat(entity, unknown);
+        EntityAi_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* The think function while flag bit 53 is set (too far from the spawn point): walks back to the spawn point,
    turning aside while something pushes the entity from the front. */
-int EntityAi_ThinkReturn(void *entity_ptr, int unknown) {
+int EntityAi_ThinkReturn(void *entity_ptr, int run_now) {
     Entity *entity = entity_ptr;
     EntityAiState *ai_state = &entity->ai_state;
     f32 to_spawn[4];
@@ -787,12 +787,12 @@ int EntityAi_ThinkReturn(void *entity_ptr, int unknown) {
             entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 0: every 120-180 frames picks a point near the spawn point to walk to
    (EntityPoint_PickNear), or stands for 60-90 frames (one time in five). */
-int EntityAi_ThinkIdle(void *entity_ptr, int unknown) {
+int EntityAi_ThinkIdle(void *entity_ptr, int run_now) {
     Entity *entity = entity_ptr;
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
@@ -823,7 +823,7 @@ int EntityAi_ThinkIdle(void *entity_ptr, int unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 1 (the player was noticed and is no longer): keeps walking to the
@@ -857,7 +857,7 @@ void EntityAi_ThinkPursue(Entity *entity, int extra) {
 /* The think function of state 2 (the player is noticed): guards or dodges the player's swing, else
    picks among attacking (when an attack reaches), closing in and waiting, and gives the movement
    command for it. */
-void EntityAi_ThinkCombat(Entity *entity, s32 unknown) {
+void EntityAi_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -890,9 +890,9 @@ void EntityAi_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -936,7 +936,7 @@ void EntityAi_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The default move action: turns and moves as the command bits in Entity.move_command say, at the entity's speed

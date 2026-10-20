@@ -20,14 +20,14 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity, s32 run_now);
-static void ExpeditionSoldier_Think(Entity *entity, s32 unknown);
-static void ExpeditionSoldier_ThinkCombat(Entity *entity, s32 unknown);
+static void ExpeditionSoldier_Think(Entity *entity, s32 run_now);
+static void ExpeditionSoldier_ThinkCombat(Entity *entity, s32 run_now);
 static void ExpeditionSoldier_Death(Entity *entity);
 static void ExpeditionSoldier_SignalMapObject(Entity *entity);
-static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown);
-static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 unknown);
-static void ExpeditionSoldier_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown);
-static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 unknown);
+static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 run_now);
+static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 run_now);
+static void ExpeditionSoldier_ThinkUseMapObjectsNegX(Entity *entity, s32 run_now);
+static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 run_now);
 
 /* Set-up of a type 7 entity: clears its work area and installs the type's handlers. */
 void ExpeditionSoldier_Init(Entity *entity) {
@@ -122,7 +122,7 @@ static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity, s32 run_now) {
 
 /* The think handler (the set-up function's default, for any EntitySpawnInfo.variant but 1 to 4): as
    EntityAi_Think, with ExpeditionSoldier_ThinkCombat for state 2. */
-static void ExpeditionSoldier_Think(Entity *entity, s32 unknown) {
+static void ExpeditionSoldier_Think(Entity *entity, s32 run_now) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -132,27 +132,27 @@ static void ExpeditionSoldier_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
     case 0:
-        EntityAi_ThinkIdle(entity, unknown);
+        EntityAi_ThinkIdle(entity, run_now);
         return;
     case 1:
-        EntityAi_ThinkPursue(entity, unknown);
+        EntityAi_ThinkPursue(entity, run_now);
         return;
     case 2:
-        ExpeditionSoldier_ThinkCombat(entity, unknown);
+        ExpeditionSoldier_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but closing in from farther than EntityParams.action_frames
    only turns to the player (60 to 89 frames, when he is more than 45 degrees off the heading), and from nearer
    walks at him for 120 to 179 frames. */
-static void ExpeditionSoldier_ThinkCombat(Entity *entity, s32 unknown) {
+static void ExpeditionSoldier_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -180,9 +180,9 @@ static void ExpeditionSoldier_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -248,7 +248,7 @@ static void ExpeditionSoldier_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The death action (busy bit 0x40): as EntityAi_Death; when the fade starts and
@@ -357,7 +357,7 @@ static void ExpeditionSoldier_SignalMapObject(Entity *entity) {
    objects EntitySpawnInfo.map_object_id and unk43 name into work bytes unk7A and unk7B, and while either is
    clear it calls ExpeditionSoldier_WalkToMapObjectPosX instead of stepping the states. PosX: its points
    are at x 950 and 900; ExpeditionSoldier_ThinkUseMapObjectsNegX has them at -950 and -900. */
-static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown) {
+static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     MapObject *map_object;
 
@@ -376,13 +376,13 @@ static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown
         ai_state->action_flags = (map_object->state_flags >> 17) & 1;
     }
     if (!ai_state->step_index || !ai_state->action_flags) {
-        ExpeditionSoldier_WalkToMapObjectPosX(entity, unknown);
+        ExpeditionSoldier_WalkToMapObjectPosX(entity, run_now);
         return;
     }
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
@@ -390,17 +390,17 @@ static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown
         break;
     case 1:
     case 2:
-        ExpeditionSoldier_ThinkCombat(entity, unknown);
+        ExpeditionSoldier_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* Helper of ExpeditionSoldier_ThinkUseMapObjectsPosX, which calls it in place of the state functions: attacks when
    EntityAi_CanAttack says so; else walks to a fixed point (x 950) and from there to a point next to the
    map object whose bit is clear, turns to face it and starts ExpeditionSoldier_SignalMapObject for it; until
    then it starts the move action. */
-static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
+static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 run_now) {
     EntityAiStateKind178358 *ai_state = (EntityAiStateKind178358 *)&entity->ai_state;
     f32 stand_point[4];
     f32 face_point[4];
@@ -451,7 +451,7 @@ static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
             entity->target = ai_state->target_point;
             entity->move_command = EntityAi_TurnCommand(entity);
             if (entity->move_command == 0) {
-                EntityAi_StartAction(entity, ExpeditionSoldier_SignalMapObject, unknown);
+                EntityAi_StartAction(entity, ExpeditionSoldier_SignalMapObject, run_now);
                 return;
             }
         } else {
@@ -460,13 +460,13 @@ static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand(entity, 0, reach * 0.5f);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think handler the set-up function installs for EntitySpawnInfo.variant 4: as
    ExpeditionSoldier_ThinkUseMapObjectsPosX, with ExpeditionSoldier_WalkToMapObjectNegX (the points at x -950
    and -900). */
-static void ExpeditionSoldier_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown) {
+static void ExpeditionSoldier_ThinkUseMapObjectsNegX(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     MapObject *map_object;
 
@@ -485,13 +485,13 @@ static void ExpeditionSoldier_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown
         ai_state->action_flags = (map_object->state_flags >> 17) & 1;
     }
     if (!ai_state->step_index || !ai_state->action_flags) {
-        ExpeditionSoldier_WalkToMapObjectNegX(entity, unknown);
+        ExpeditionSoldier_WalkToMapObjectNegX(entity, run_now);
         return;
     }
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
@@ -499,14 +499,14 @@ static void ExpeditionSoldier_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown
         break;
     case 1:
     case 2:
-        ExpeditionSoldier_ThinkCombat(entity, unknown);
+        ExpeditionSoldier_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* Helper of ExpeditionSoldier_ThinkUseMapObjectsNegX: as ExpeditionSoldier_WalkToMapObjectPosX with its own points (x -950). */
-static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
+static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 run_now) {
     EntityAiStateKind178358 *ai_state = (EntityAiStateKind178358 *)&entity->ai_state;
     f32 stand_point[4];
     f32 face_point[4];
@@ -557,7 +557,7 @@ static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
             entity->target = ai_state->target_point;
             entity->move_command = EntityAi_TurnCommand(entity);
             if (entity->move_command == 0) {
-                EntityAi_StartAction(entity, ExpeditionSoldier_SignalMapObject, unknown);
+                EntityAi_StartAction(entity, ExpeditionSoldier_SignalMapObject, run_now);
                 return;
             }
         } else {
@@ -566,5 +566,5 @@ static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand(entity, 0, reach * 0.5f);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }

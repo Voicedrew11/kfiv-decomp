@@ -18,11 +18,11 @@
 
 static void Npc_Animate(Entity *entity);
 static void Npc_OnHit(Entity *entity);
-static void Npc_ThinkStand(Entity *entity, int unknown);
+static void Npc_ThinkStand(Entity *entity, int run_now);
 static void Npc_ThinkReactToPlayer(Entity *entity, s32 run_now);
 static void Npc_ThinkTurnToPlayer(Entity *entity, s32 run_now);
-static void Npc_ThinkWatchPlayer(Entity *entity, int unknown);
-static void Npc_ThinkStopWatching(Entity *entity, int unknown);
+static void Npc_ThinkWatchPlayer(Entity *entity, int run_now);
+static void Npc_ThinkStopWatching(Entity *entity, int run_now);
 static void Npc_ThinkTurnBack(Entity *entity, s32 run_now);
 static void Npc_TurnToPlayer(Entity *entity);
 static void Npc_TurnToSpawnHeading(Entity *entity);
@@ -31,7 +31,7 @@ static void Npc_Death(Entity *entity);
 static void Npc_Move(Entity *entity);
 static void Npc_OnHitType81(Entity *entity);
 static void Npc_ThinkType81(Entity *entity, s32 run_now);
-static int Npc_ThinkType81Stand(void *entity_ptr, int unknown);
+static int Npc_ThinkType81Stand(void *entity_ptr, int run_now);
 
 /* The set-up function of entity type 15, the talking characters (chr.prm): as EntityAi_InitDefaults, with the
    Npc_ handlers, its look part from EntityParams.type_param_1, and flag bit 16 set. */
@@ -127,27 +127,27 @@ static void Npc_OnHit(Entity *entity) {
 
 /* The think handler of type 15, while not busy: state 4 turns to the player, state 5 watches the player until
    it is farther than EntityParams.attack_range (then state 6), state 6 turns back; any other state stands. */
-void Npc_Think(Entity *entity, s32 unknown) {
+void Npc_Think(Entity *entity, s32 run_now) {
     if (entity->busy_flags == 0) {
         switch (entity->state) {
         case 4:
             if (entity->params->flags & ENTITY_PARAMS_FLAG_TURNS_IN_PLACE) {
-                Npc_ThinkTurnToPlayer(entity, unknown);
+                Npc_ThinkTurnToPlayer(entity, run_now);
             } else {
-                Npc_ThinkReactToPlayer(entity, unknown);
+                Npc_ThinkReactToPlayer(entity, run_now);
             }
             break;
         case 5:
-            Npc_ThinkWatchPlayer(entity, unknown);
+            Npc_ThinkWatchPlayer(entity, run_now);
             if (entity->params->attack_range < entity->distance_to_player) {
                 EntityAi_SetState(entity, 6);
             }
             break;
         case 6:
             if (entity->params->flags & ENTITY_PARAMS_FLAG_TURNS_IN_PLACE) {
-                Npc_ThinkTurnBack(entity, unknown);
+                Npc_ThinkTurnBack(entity, run_now);
             } else {
-                Npc_ThinkStopWatching(entity, unknown);
+                Npc_ThinkStopWatching(entity, run_now);
             }
             break;
         case 0:
@@ -155,7 +155,7 @@ void Npc_Think(Entity *entity, s32 unknown) {
         case 2:
         case 3:
         default:
-            Npc_ThinkStand(entity, unknown);
+            Npc_ThinkStand(entity, run_now);
             break;
         }
     }
@@ -163,9 +163,9 @@ void Npc_Think(Entity *entity, s32 unknown) {
 
 /* The think function of states 0-3: the head stops following the target and the move action runs with no
    command (standing). */
-static void Npc_ThinkStand(Entity *entity, int unknown) {
+static void Npc_ThinkStand(Entity *entity, int run_now) {
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
-    EntityAi_StartAction(entity, entity->ai_state.move, unknown);
+    EntityAi_StartAction(entity, entity->ai_state.move, run_now);
 }
 
 /* The think function of state 4 when EntityParams.flags has no 0x80: picks the animation by where the player
@@ -216,24 +216,24 @@ static void Npc_ThinkTurnToPlayer(Entity *entity, s32 run_now) {
 
 /* The think function of state 5: the head follows the target (flag bit 9) and the animation picked in state 4
    goes on. */
-static void Npc_ThinkWatchPlayer(Entity *entity, int unknown) {
+static void Npc_ThinkWatchPlayer(Entity *entity, int run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     u16 timer = ai_state->pause_timer;
 
     ENTITY_FLAGS(entity) |= ENTITY_FLAG_LOOK_AT_TARGET;
     entity->move_command = timer;
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 6 when EntityParams.flags has no 0x80: the head stops following the target,
    state 0. */
-static void Npc_ThinkStopWatching(Entity *entity, int unknown) {
+static void Npc_ThinkStopWatching(Entity *entity, int run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     ai_state->pause_timer = 0;
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     EntityAi_SetState(entity, 0);
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 6 when EntityParams.flags has 0x80: turns back to the spawn heading
@@ -649,9 +649,9 @@ static void Npc_ThinkType81(Entity *entity, s32 run_now) {
 }
 
 /* The think function of type 81 that stands: as Npc_ThinkStand. */
-static int Npc_ThinkType81Stand(void *entity_ptr, int unknown) {
+static int Npc_ThinkType81Stand(void *entity_ptr, int run_now) {
     Entity *entity = entity_ptr;
 
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
-    EntityAi_StartAction(entity, entity->ai_state.move, unknown);
+    EntityAi_StartAction(entity, entity->ai_state.move, run_now);
 }

@@ -15,8 +15,8 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
-static void MutantCeiling_Think(Entity *entity, s32 unknown);
-static void MutantCeiling_ThinkCombat(Entity *entity, s32 unknown);
+static void MutantCeiling_Think(Entity *entity, s32 run_now);
+static void MutantCeiling_ThinkCombat(Entity *entity, s32 run_now);
 static void MutantCeiling_MeleeAttack(Entity *entity);
 static void MutantCeiling_RangedAttack(Entity *entity);
 static void MutantCeiling_Animate(Entity *entity);
@@ -66,7 +66,7 @@ void MutantCeiling_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with MutantCeiling_ThinkCombat for state 2. */
-static void MutantCeiling_Think(Entity *entity, s32 unknown) {
+static void MutantCeiling_Think(Entity *entity, s32 run_now) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -76,27 +76,27 @@ static void MutantCeiling_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
     case 0:
-        EntityAi_ThinkIdle(entity, unknown);
+        EntityAi_ThinkIdle(entity, run_now);
         return;
     case 1:
-        EntityAi_ThinkPursue(entity, unknown);
+        EntityAi_ThinkPursue(entity, run_now);
         return;
     case 2:
-        MutantCeiling_ThinkCombat(entity, unknown);
+        MutantCeiling_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat with the type's own two attacks; it calls
    EntityAi_PickCombatChoice with 1, sets work byte unk79 to 1, and closing in does not use EntityAi_ClearTurnInPlace. The
    same as MutantWall_ThinkCombat. */
-static void MutantCeiling_ThinkCombat(Entity *entity, s32 unknown) {
+static void MutantCeiling_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 range;
@@ -132,9 +132,9 @@ static void MutantCeiling_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, MutantCeiling_RangedAttack, unknown);
+                EntityAi_StartAction(entity, MutantCeiling_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, MutantCeiling_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, MutantCeiling_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -173,7 +173,7 @@ static void MutantCeiling_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The melee attack (busy bit 1): as EntityAi_MeleeAttack, but flag bit 9 stays set, and work byte

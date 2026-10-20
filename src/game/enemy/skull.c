@@ -19,8 +19,8 @@
 #include "player/player.h"
 
 
-static void Skull_Think(Entity *entity, s32 unknown);
-static void Skull_ThinkCombat(Entity *entity, s32 unknown);
+static void Skull_Think(Entity *entity, s32 run_now);
+static void Skull_ThinkCombat(Entity *entity, s32 run_now);
 static void Skull_Move(Entity *entity);
 static void Skull_Death(Entity *entity);
 static void Skull_ApplyMoveCommand(Entity *entity);
@@ -78,7 +78,7 @@ void Skull_Init(Entity *entity) {
    so as to keep its y between 300 and 100 below the player's; then Skull_ApplyMoveCommand moves
    the entity. When work word unk68 has run below 0 it draws new values for
    Skull_SwingPart3 (work bytes unk7B and unk7C). */
-static void Skull_Think(Entity *entity, s32 unknown) {
+static void Skull_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -95,20 +95,20 @@ static void Skull_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                Skull_ThinkCombat(entity, unknown);
+                Skull_ThinkCombat(entity, run_now);
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -149,7 +149,7 @@ static void Skull_Think(Entity *entity, s32 unknown) {
    ranged attack. It attacks only while its y is between 300 and 50 below the player's; otherwise it
    sets the choice of command bit 0x20 or 0x10 (work byte unk7A) for 15 to 29 frames. One time in
    three it closes in with command bit 0x40. */
-static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
+static void Skull_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -182,9 +182,9 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
         case 0:
             if (entity->model->position[1] < player_state.position.y - 50.0f && player_state.position.y - 300.0f < entity->model->position[1]) {
                 if (EntityAi_PickAttack(entity)) {
-                    EntityAi_StartAction(entity, Skull_RangedAttack0, unknown);
+                    EntityAi_StartAction(entity, Skull_RangedAttack0, run_now);
                 } else {
-                    EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                    EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
                 }
                 return;
             }
@@ -250,7 +250,7 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: only picks the animation, 3 with command bit 1, else 0.

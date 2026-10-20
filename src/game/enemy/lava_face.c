@@ -17,7 +17,7 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
-static void LavaFace_Think(Entity *entity, s32 unknown);
+static void LavaFace_Think(Entity *entity, s32 run_now);
 
 /* Set-up of a type 32 entity: clears its work area and installs the type's handlers. */
 void LavaFace_Init(Entity *entity) {
@@ -62,7 +62,7 @@ void LavaFace_Init(Entity *entity) {
 /* The think handler: each time the timer Entity.action_timer runs out (and EntityParams.action_frames is not 0)
    launches shot EntityParams.pitch_limit_deg from model point unk432, aimed at the player, and sets the
    timer to unk434 plus 0 to 2 frames; keeps animation 0. */
-static void LavaFace_Think(Entity *entity, s32 unknown) {
+static void LavaFace_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 angles[4];
     f32 target[4];
@@ -102,5 +102,5 @@ static void LavaFace_Think(Entity *entity, s32 unknown) {
         entity->action_timer = entity->params->action_frames + rand() % 3;
     }
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
