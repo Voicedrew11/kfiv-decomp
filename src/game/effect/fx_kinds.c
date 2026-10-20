@@ -19,8 +19,6 @@
 #include <stdlib.h>
 
 /* the hit-check state byte of the motions (hit_end_state) */
-#define HIT_END_STATE_IDLE          0       /* no hit yet */
-#define HIT_END_STATE_SPAWNED       1       /* the end effect spawned; the next check ends the effect */
 /* GravityMotion.landing_mode (EffectDrop_Update) */
 #define DROP_LANDING_MODE_RADIUS_HALF 5     /* spawns the effect id in radius_half, else in interval */
 

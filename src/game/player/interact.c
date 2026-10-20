@@ -15,7 +15,6 @@
 #include "script/script.h"
 
 #define INTERACT_CONE_COS 0.866025f /* cos 30 degrees: objects further off the view direction are skipped */
-#define CAMERA_MODE_FOLLOW_PLAYER 0 /* game_status.camera_mode: the camera follows the player, not a script */
 
 
 /* Keep last frame's view ray, then rebuild it: from the player's eyes (or the camera, in a cutscene) along the
@@ -127,8 +126,8 @@ void Interact_FindTarget(void) {
                 continue;
             }
             reach = object->interact_radius + 200.0f < 2000.0f ? 2000.0f : object->interact_radius + 200.0f;
-            is_plain = object->source->collision_mesh_index == 0xFFFF && !(object->definition->kind == 1 || object->definition->kind == 2 ||
-                       object->definition->kind == 6 || object->definition->kind == 0x11);
+            is_plain = object->source->collision_mesh_index == 0xFFFF && !(object->definition->kind == MAP_OBJECT_KIND_DOOR || object->definition->kind == MAP_OBJECT_KIND_DOUBLE_DOOR ||
+                       object->definition->kind == MAP_OBJECT_KIND_MOVING_DOOR || object->definition->kind == MAP_OBJECT_KIND_SIGNAL_DOOR);
             if (is_plain) {
                 sceVu0SubVector(delta, &object->model->position, &camera_state);
                 sceVu0Normalize(delta, delta);

@@ -28,7 +28,6 @@
 #define ITEM_DEF_STATE_NEW     0
 #define ITEM_DEF_STATE_LISTED  1
 /* a map object kind: bones and gravestones that hold an item (map_object/door.c) */
-#define MAP_OBJECT_KIND_BONES  3
 #define PICKUP_HOLD_SPIN_PER_FRAME 0.08377580f
 
 /* 0x4147E0 the steps of the item pickup in progress, MapItem_UpdatePickup runs the current one */
@@ -779,7 +778,7 @@ void MapItem_PickupPutBack(void) {
     Vector_Copy(&pickup_item->model->position, pickup_start_position);
     Vector_Copy(&pickup_item->model->rotation, pickup_start_rotation);
     object = (MapObject *)pickup_item->map_object;
-    if (object != NULL && (object->state_flags & MAP_OBJECT_IN_USE) && object->definition->kind == MAP_OBJECT_KIND_BONES) {
+    if (object != NULL && (object->state_flags & MAP_OBJECT_IN_USE) && object->definition->kind == MAP_OBJECT_KIND_ITEM_HOLDER) {
         MapItem_Unlink(pickup_item);
     }
     suspended_updates[0] = 0;

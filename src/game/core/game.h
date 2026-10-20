@@ -42,6 +42,10 @@ typedef struct {
     int item_use_cooldown;          /* 0x44 counts down to 0; 1 when an item was just used (Player_UseItem) */
 } GameStatus;
 
+/* GameStatus.camera_mode */
+#define CAMERA_MODE_FOLLOW_PLAYER   0       /* the camera follows the player */
+#define CAMERA_MODE_SCRIPTED        1       /* the script places the camera */
+
 /* GameStatus with bits 10 and 11 of the flag word (GameStatus.bits10) apart, as ScriptCmd_ExitMainLoop
    sets them */
 typedef struct {

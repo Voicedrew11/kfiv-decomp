@@ -11,8 +11,6 @@
 #include <stdlib.h>
 
 /* the hit-check state byte of the motions (hit_end_state) */
-#define HIT_END_STATE_IDLE          0       /* no hit yet */
-#define HIT_END_STATE_SPAWNED       1       /* the end effect spawned; the next check ends the effect */
 /* LandingMotion.state of the ground chase (kind 8) */
 #define GROUND_CHASE_STATE_CHASING  0       /* runs along the floor toward its entity */
 #define GROUND_CHASE_STATE_ENDING   1       /* the end effect spawned; the next frame frees it */

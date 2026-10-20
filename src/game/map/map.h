@@ -343,6 +343,14 @@ typedef struct {
     char pad2C[0x04];
 } MapLoadState;
 
+/* MapLoadState.step: an index into the step handlers */
+#define MAP_LOAD_STEP_IDLE                  0   /* waits for a request */
+#define MAP_LOAD_STEP_OPEN_FILE             2   /* opens the requested map file */
+#define MAP_LOAD_STEP_READ_CHUNK            3   /* reads the next piece of the file */
+#define MAP_LOAD_STEP_WAIT_FOR_CHUNK        4   /* waits for the read in flight */
+#define MAP_LOAD_STEP_WAIT_FOR_SET_UP       5   /* the file is loaded, waiting to be set up */
+#define MAP_LOAD_STEP_SET_UP_MAP            6   /* sets the map up in the other slot */
+
 /* MapLoadState.flags.raw bits: the background load is held off at a safe step; a hold has been asked for */
 #define MAP_LOAD_HELD           0x2
 #define MAP_LOAD_HOLD_REQUESTED 0x4

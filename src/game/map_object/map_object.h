@@ -7,8 +7,10 @@
 #include "core/game.h"
 #include "map/map.h"
 
-/* the kinds of map object (MapObjectUnk04.kind) the code names; param/obj.prm gives the others' names:
-   doors are kinds 1, 2, 6 and 0x11, bones and gravestones 3, the things only examined 0xB, pedestals 0xD */
+/* the kinds of map object (MapObjectUnk04.kind) the code names; param/obj.prm gives the others' names */
+#define MAP_OBJECT_KIND_DOOR                1
+#define MAP_OBJECT_KIND_DOUBLE_DOOR         2       /* its collision clears once both leaves stand 225 apart */
+#define MAP_OBJECT_KIND_ITEM_HOLDER         3       /* bones and gravestones that hold an item */
 #define MAP_OBJECT_KIND_CHEST               4
 #define MAP_OBJECT_KIND_SYMBOL_OF_PASSAGE   12      /* where the wands take the player (Player_UseItem) */
 #define MAP_OBJECT_KIND_CONTAINER           21      /* barrels, pots and wooden boxes */
@@ -16,6 +18,7 @@
 #define MAP_OBJECT_KIND_DISTANCE_FADE       5       /* fades with the distance to the player */
 #define MAP_OBJECT_KIND_MOVING_DOOR         6       /* a door that moves with its second part */
 #define MAP_OBJECT_KIND_LIGHT               9       /* a light at a point of the model */
+#define MAP_OBJECT_KIND_SIGNAL_DOOR         0x11    /* a door between the shooter and pitfall kinds, handled as kind 1 */
 
 /* MapObjectBytes.step and anim values every kind shares; each kind's own steps are named in its file */
 #define MAP_OBJECT_STEP_NOT_STARTED         0       /* the kind's state machine is not started */

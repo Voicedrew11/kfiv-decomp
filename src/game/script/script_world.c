@@ -23,10 +23,6 @@
 #include "save/save_state.h"
 #include "sound/sound_game.h"
 
-/* GameStatus.camera_mode (core/game.h) */
-#define CAMERA_MODE_FOLLOW_PLAYER           0   /* the camera follows the player; 1 the script places it */
-/* MapLoadState.step (map/map_load.c) */
-#define MAP_LOAD_STEP_IDLE                  0   /* no load running */
 
 
 

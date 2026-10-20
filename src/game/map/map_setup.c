@@ -10,9 +10,6 @@
 #include "item/item.h"
 #include "save/save_state.h"
 
-/* EntityGroupState.death_kind: no member of the group has died */
-#define ENTITY_GROUP_DEATH_NONE             0
-
 /* Runs the set-up function of the map in the slot, picked by the map's number (its tag): it puts the map's
    records, objects, fog and lights in the state the story flags call for. */
 void MapSetup_RunForMap(int slot) {

@@ -15,10 +15,6 @@
 #include "player/player.h"
 #include "save/save_state.h"
 
-/* Entity.state of type 15 (its own state machine; states 0 to 3 stand) */
-#define NPC_STATE_REACT     4   /* turns to the player, or reacts to it (Npc_ThinkReactToPlayer) */
-#define NPC_STATE_WATCH     5   /* watches the player until it is farther than EntityParams.attack_range */
-#define NPC_STATE_TURN_BACK 6   /* turns back to the spawn heading, or stops watching */
 
 
 /* EntitySpawnInfo.spawn_mode: the spawn whose map script flag plays its turn animations 0x1E and 0x1F */
@@ -137,14 +133,14 @@ static void Npc_OnHit(Entity *entity) {
 void Npc_Think(Entity *entity, s32 run_now) {
     if (entity->busy_flags == 0) {
         switch (entity->state) {
-        case NPC_STATE_REACT:
+        case NPC_STATE_TURN_TO_PLAYER:
             if (entity->params->flags & ENTITY_PARAMS_FLAG_TURNS_IN_PLACE) {
                 Npc_ThinkTurnToPlayer(entity, run_now);
             } else {
                 Npc_ThinkReactToPlayer(entity, run_now);
             }
             break;
-        case NPC_STATE_WATCH:
+        case NPC_STATE_WATCH_PLAYER:
             Npc_ThinkWatchPlayer(entity, run_now);
             if (entity->params->attack_range < entity->distance_to_player) {
                 EntityAi_SetState(entity, NPC_STATE_TURN_BACK);
@@ -469,7 +465,7 @@ static void Npc_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->dying = 2;
             ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             EntityEvent_OnDeath(entity);
-            entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].death_kind = ENTITY_FLAG_HIT_BITS(entity)->hit_source ? 1 : 2;
+            entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].death_kind = ENTITY_FLAG_HIT_BITS(entity)->hit_source ? ENTITY_GROUP_DEATH_HIT : ENTITY_GROUP_DEATH_OTHER;
             if (ENTITY_FLAG_HIT_BITS(entity)->hit_source) {
                 story_flags[0xD] = 1;
             }

@@ -33,9 +33,6 @@
 /* screen_fade.step: an index into screen_fade_steps */
 #define SCREEN_FADE_STEP_IDLE               0   /* no change running */
 #define SCREEN_FADE_STEP_WAIT_FOR_IDLE      1   /* waits for the background load and the rest to settle */
-/* MapLoadState.step (map_load.c) */
-#define MAP_LOAD_STEP_IDLE                  0   /* no load running */
-#define MAP_LOAD_STEP_WAIT_FOR_SET_UP       5   /* the file is loaded, waiting to be set up */
 /* screen_fade.draw_step: an index into screen_fade_draw_steps */
 #define SCREEN_FADE_DRAW_FADE_OUT_CAPTURE   0   /* draws the captured picture fading to black */
 

@@ -22,7 +22,6 @@
 #define SNAKE_SPAWN_MODE_HOLD_ANIM2       0
 #define SNAKE_SPAWN_MODE_HOLD_ANIM8_THEN_MOVE 1
 /* MapObject step of a broken map object (MapObject_Break sets it) */
-#define SNAKE_MAP_OBJECT_STEP_BROKEN      0xF
 
 
 static void Snake_DormantHoldAnim2(Entity *entity);
@@ -110,7 +109,7 @@ static void Snake_DormantHoldAnim2(Entity *entity) {
         if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_strength != 0) {
             map_object = MapObject_GetById(entity->group_id, entity->spawn_info->variant);
             if (map_object != NULL) {
-                if (!(map_object->state_flags & MAP_OBJECT_IN_USE) || MAP_OBJECT_BITS(map_object)->step == SNAKE_MAP_OBJECT_STEP_BROKEN) {
+                if (!(map_object->state_flags & MAP_OBJECT_IN_USE) || MAP_OBJECT_BITS(map_object)->step == MAP_OBJECT_STEP_BROKEN) {
                     Motion_Start(entity, 0x11, 0, 0, 1);
                 }
             }

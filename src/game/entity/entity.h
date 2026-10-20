@@ -1194,9 +1194,14 @@ typedef union {
 } EntityCommand;
 #define ENTITY_COMMAND(entity) (((EntityCommand *)&(entity)->move_command)->all)
 
+/* EntityGroupState.death_kind */
+#define ENTITY_GROUP_DEATH_NONE     0       /* no member has died */
+#define ENTITY_GROUP_DEATH_HIT      1       /* a member died of the player's weapon or magic */
+#define ENTITY_GROUP_DEATH_OTHER    2       /* a member died some other way */
+
 /* entity_group_state[EntityController.entity_group_index]: state shared by a group of entities */
 typedef struct {
-    u8 death_kind;                  /* 0x00 1 or 2: how the group member died */
+    u8 death_kind;                  /* 0x00 how the group member died, ENTITY_GROUP_DEATH_ */
     char unk01;                     /* 0x01 */
     char member_died;               /* 0x02 set when a member dies */
     char pad03[0x02];

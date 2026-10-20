@@ -5,6 +5,7 @@
 #include "script/script.h"
 #include "entity/entity.h"
 #include "entity/entity_world.h"
+#include "entity/npc.h"
 #include "core/game.h"
 #include "ui/message.h"
 #include "player/player.h"
@@ -19,9 +20,6 @@
 #include "model/motion.h"
 
 /* Entity.state of an NPC (the states npc.c runs), set by the commands below */
-#define NPC_STATE_TURN_TO_PLAYER            4   /* turns to the player */
-#define NPC_STATE_WATCH_PLAYER              5   /* turned to the player, watching it */
-#define NPC_STATE_TURN_BACK                 6   /* turns back to its own heading */
 
 
 

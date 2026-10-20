@@ -121,6 +121,10 @@ typedef struct {
     char pad24[0x0C];
 } ScalerMotion;
 
+/* hit_end_state of the effect motions */
+#define HIT_END_STATE_IDLE          0       /* no hit yet */
+#define HIT_END_STATE_SPAWNED       1       /* the end effect spawned; the next check ends the effect */
+
 /* EffectMotion as EffectFall_Start, EffectFloorSkim_Start and others use it: turn toward a point */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
