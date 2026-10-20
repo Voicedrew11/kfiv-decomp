@@ -278,11 +278,21 @@ typedef struct {
 
 /* GameDefinitionFlags bits 18 and 19: the item's state (below 2, it is saved as one bit) */
 #define GAME_DEFINITION_STATE_MASK 0xC0000
+#define GAME_DEFINITION_STATE_SHIFT 18
+#define GAME_DEFINITION_STATE_VALUE_MASK 3  /* the state once shifted down to bit 0 */
+
+/* map_entry_counters: each byte holds two 4-bit death counters, the even spawn record in the low nibble */
+#define SPAWN_COUNTER_LOW_MASK  0xF
+#define SPAWN_COUNTER_HIGH_MASK 0xF0
+#define SPAWN_COUNTER_HIGH_SHIFT 4
 
 /* item_counts and the five tables after it: one byte per GameDefinition */
 typedef struct {
     u8 bytes[380];
 } DefinitionByteSet;
+
+/* RecollectionFlags.bits[0]: the number of the description shown (bits 0-2) */
+#define RECOLLECTION_DESCRIPTION_MASK 0x7
 
 /* recollection_flags[50]: one page of the menu's Recollection screen (messages MSG_RECOLLECTION_FIRST + 50 * page
    on): bits 0-2 the description shown, then a bit per message heard */
@@ -409,6 +419,8 @@ typedef struct {
     f32 color[4];                   /* 0x10 */
 } PoolPartPoint;
 
+/* the 11 GS PRIM bits of PoolPartMaterial.prim */
+#define POOL_PART_PRIM_MASK 0x7FF
 /* what a PoolPart draws with: the first of its strips; each strip's points follow it, then the next strip */
 typedef struct {
     u16 point_count;                /* 0x00 */
