@@ -18,6 +18,9 @@
 #include "entity/entity_ai_choice.h"
 #include "model/motion.h"
 
+/* Entity.ai_state.move_choice 1: walks to the point near the spawn, stopping 50 short of it */
+#define SPIDER_MOVE_CHOICE_TO_POINT 1
+
 static void Spider_Animate(Entity *entity);
 static void Spider_Think(Entity *entity, s32 run_now);
 static void Spider_ThinkWander(Entity *entity, s32 run_now);
@@ -121,7 +124,7 @@ static void Spider_Think(Entity *entity, s32 run_now) {
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, run_now);
-    } else if (entity->state == 2) {
+    } else if (entity->state == ENTITY_STATE_NOTICED) {
         Spider_ThinkCombat(entity, run_now);
     } else {
         Spider_ThinkWander(entity, run_now);
@@ -138,9 +141,9 @@ static void Spider_ThinkWander(Entity *entity, s32 run_now) {
     s32 turn;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     } else {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     }
     if (entity->action_timer == 0) {
         if (rand() % 100 > 40) {
@@ -163,7 +166,7 @@ static void Spider_ThinkWander(Entity *entity, s32 run_now) {
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
-/* The think function of state 2 (called under `entity->state == 2`, not from a switch): as
+/* The think function of state 2 (called under `entity->state == ENTITY_STATE_NOTICED`, not from a switch): as
    EntityAi_ThinkCombat with Spider_RangedAttack as the ranged attack; the head does not
    follow. It closes in on the player only while the player is within EntitySpawnInfo.wander_radius of the
    spawn point; otherwise it goes for a point near the spawn point. */
@@ -175,9 +178,9 @@ static void Spider_ThinkCombat(Entity *entity, s32 run_now) {
     s32 turn;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     } else {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     }
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
@@ -196,35 +199,35 @@ static void Spider_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, Spider_RangedAttack, run_now);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             if (EntityMath_DistanceXZ(&player_state.position.x, &entity->spawn_info->spawn_x) < (f32)entity->spawn_info->wander_radius) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 120;
-                ai_state->move_choice = 0;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             } else {
                 EntityPoint_PickNear(entity->spawn_info->wander_radius, ai_state->target_point, entity->spawn_info, entity->model->position);
                 entity->target = ai_state->target_point;
                 entity->action_timer = rand() % 60 + 120;
-                ai_state->move_choice = 1;
+                ai_state->move_choice = SPIDER_MOVE_CHOICE_TO_POINT;
             }
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (entity->combat_choice == 1) {
+    if (entity->combat_choice == COMBAT_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -240,7 +243,7 @@ static void Spider_ThinkCombat(Entity *entity, s32 run_now) {
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             switch (ai_state->move_choice) {
-            case 0:
+            case MOVE_CHOICE_CLOSE_IN:
                 if (turn > 0) {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                 } else if (turn < 0) {
@@ -248,7 +251,7 @@ static void Spider_ThinkCombat(Entity *entity, s32 run_now) {
                 } else {
                     entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
-            case 1:
+            case SPIDER_MOVE_CHOICE_TO_POINT:
                 if (turn > 0) {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                 } else if (turn < 0) {
@@ -275,11 +278,11 @@ static void Spider_RangedAttack(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
+        Motion_Start(entity, kind + ENTITY_MOTION_RANGED_ATTACK, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_BITS(entity)->bit25 && !ENTITY_PARAMS_BITS(entity)->bit26) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_BITS(entity)->bit25 && !ENTITY_PARAMS_BITS(entity)->bit26) ? MOTION_STEP_MOVE_FLAT : MOTION_STEP_MOVE;
         }
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
@@ -331,7 +334,7 @@ static void Spider_Dormant(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 3, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
         ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->no_second_wall_collision = TRUE;
@@ -382,9 +385,9 @@ static void Spider_Death(Entity *entity) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_BITS(entity)->bit25 && !ENTITY_PARAMS_BITS(entity)->bit26) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_BITS(entity)->bit25 && !ENTITY_PARAMS_BITS(entity)->bit26) ? MOTION_STEP_MOVE_FLAT : MOTION_STEP_MOVE;
         }
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;

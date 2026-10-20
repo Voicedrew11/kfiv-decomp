@@ -20,6 +20,9 @@
 #include "player/player.h"
 #include "save/save_state.h"
 
+/* EntitySpawnInfo.spawn_mode: 0 is the normal think, else WiddaArcher_ThinkUseMapObject */
+#define WIDDA_ARCHER_SPAWN_MODE_NORMAL 0
+
 
 static void WiddaArcher_Animate(Entity *entity);
 static void WiddaArcher_PitchPartToPlayer(Entity *entity);
@@ -41,7 +44,7 @@ void WiddaArcher_Init(Entity *entity) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
     EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
-    if (entity->spawn_info->spawn_mode != 0) {
+    if (entity->spawn_info->spawn_mode != WIDDA_ARCHER_SPAWN_MODE_NORMAL) {
         ai_state->think = WiddaArcher_ThinkUseMapObject;
     } else {
         ai_state->think = WiddaArcher_Think;
@@ -185,8 +188,8 @@ static void WiddaArcher_AimPartsAtTarget(Entity *entity) {
    24, and clears it otherwise. */
 static void WiddaArcher_Think(Entity *entity, s32 run_now) {
     if (entity->model->level_tables->blend_left == 0 &&
-        ((entity->animation_index == 0x17 && entity->model->level_tables->frame >= 7 && entity->model->level_tables->frame < 0x24) ||
-         (entity->animation_index == 0x18 && entity->model->level_tables->frame >= 0x19 && entity->model->level_tables->frame < 0x32))) {
+        ((entity->animation_index == ENTITY_MOTION_RANGED_ATTACK && entity->model->level_tables->frame >= 7 && entity->model->level_tables->frame < 0x24) ||
+         (entity->animation_index == ENTITY_MOTION_RANGED_ATTACK + 1 && entity->model->level_tables->frame >= 0x19 && entity->model->level_tables->frame < 0x32))) {
         ((EntityModelPart80 *)entity->model->parts)[29].part_flags |= 0x8000L << 25;
     } else {
         ((EntityModelPart80 *)entity->model->parts)[29].part_flags &= ~(0x8000L << 25);
@@ -204,13 +207,13 @@ static void WiddaArcher_Think(Entity *entity, s32 run_now) {
         return;
     }
     switch (entity->state) {
-    case 0:
+    case ENTITY_STATE_UNAWARE:
         EntityAi_ThinkIdle(entity, run_now);
         return;
-    case 1:
+    case ENTITY_STATE_SEARCHING:
         EntityAi_ThinkPursue(entity, run_now);
         return;
-    case 2:
+    case ENTITY_STATE_NOTICED:
         WiddaArcher_ThinkCombat(entity, run_now);
         return;
     }
@@ -229,7 +232,7 @@ static void WiddaArcher_ThinkCombat(Entity *entity, s32 run_now) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -249,24 +252,24 @@ static void WiddaArcher_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, WiddaArcher_RangedAttack, run_now);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
@@ -281,7 +284,7 @@ static void WiddaArcher_ThinkCombat(Entity *entity, s32 run_now) {
             }
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         turn = EntityAi_TurnFromPush(entity, direction);
         if (turn > 0) {
             entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
@@ -306,11 +309,11 @@ static void WiddaArcher_RangedAttack(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
+        Motion_Start(entity, attack_index + ENTITY_MOTION_RANGED_ATTACK, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? MOTION_STEP_MOVE_FLAT : MOTION_STEP_MOVE;
         }
         ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
@@ -357,8 +360,8 @@ static void WiddaArcher_RangedAttack(Entity *entity) {
    WiddaArcher_WalkToMapObject instead of stepping the states. */
 static void WiddaArcher_ThinkUseMapObject(Entity *entity, s32 run_now) {
     if (entity->model->level_tables->blend_left == 0 &&
-        ((entity->animation_index == 0x17 && entity->model->level_tables->frame >= 7 && entity->model->level_tables->frame < 0x24) ||
-         (entity->animation_index == 0x18 && entity->model->level_tables->frame >= 0x19 && entity->model->level_tables->frame < 0x32))) {
+        ((entity->animation_index == ENTITY_MOTION_RANGED_ATTACK && entity->model->level_tables->frame >= 7 && entity->model->level_tables->frame < 0x24) ||
+         (entity->animation_index == ENTITY_MOTION_RANGED_ATTACK + 1 && entity->model->level_tables->frame >= 0x19 && entity->model->level_tables->frame < 0x32))) {
         ((EntityModelPart80 *)entity->model->parts)[29].part_flags |= 0x8000L << 25;
     } else {
         ((EntityModelPart80 *)entity->model->parts)[29].part_flags &= ~(0x8000L << 25);
@@ -380,13 +383,13 @@ static void WiddaArcher_ThinkUseMapObject(Entity *entity, s32 run_now) {
         return;
     }
     switch (entity->state) {
-    case 0:
+    case ENTITY_STATE_UNAWARE:
         EntityAi_ThinkIdle(entity, run_now);
         return;
-    case 1:
+    case ENTITY_STATE_SEARCHING:
         EntityAi_ThinkPursue(entity, run_now);
         return;
-    case 2:
+    case ENTITY_STATE_NOTICED:
         WiddaArcher_ThinkCombat(entity, run_now);
         return;
     }
@@ -404,7 +407,7 @@ static void WiddaArcher_WalkToMapObject(Entity *entity, s32 run_now) {
     MapObject *map_object;
 
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     map_object = MapObject_GetById(entity->group_id, entity->spawn_info->second_map_object_id);
     if (map_object != NULL) {
         stand_point[0] = map_object->model->position.x;
@@ -418,7 +421,7 @@ static void WiddaArcher_WalkToMapObject(Entity *entity, s32 run_now) {
     }
     reach = 100.0f;
     if (EntityMath_DistanceXZ(entity->model->position, stand_point) < reach) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         Vector_Copy(ai_state->target_point, face_point);
         entity->target = ai_state->target_point;
         entity->move_command = EntityAi_TurnCommand(entity);
@@ -445,7 +448,7 @@ static void WiddaArcher_StartMapObjectScript(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 0);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0.0f;
         entity->action_step++;
         break;

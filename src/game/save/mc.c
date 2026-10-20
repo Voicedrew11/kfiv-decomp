@@ -6,6 +6,102 @@
 #include <sifdev.h>
 #include <string.h>
 
+/* mc_request.step: the first step of every request, and the steps a failed request runs through */
+#define MC_STEP_START                       0
+#define MC_STEP_FAILED                      100
+#define MC_STEP_FAILED_CLOSE                101
+#define MC_STEP_FAILED_WAIT                 102
+
+/* mc_request.info_step: the first step of the card-info steps, and the errors a request can end with */
+#define MC_INFO_STEP_START                  0
+#define MC_INFO_ERROR                       -1
+#define MC_INFO_BAD_CHECK_BYTE              -399
+
+/* mc_request.step of the requests that make one library call and wait for its answer */
+#define MC_CALL_STEP_CALL                   1
+#define MC_CALL_STEP_WAIT                   2
+
+/* mc_request.step in Mc_StepWriteChecked */
+#define MC_WRITE_CHECKED_STEP_GET_INFO              1
+#define MC_WRITE_CHECKED_STEP_CHECK_CARD            2
+#define MC_WRITE_CHECKED_STEP_GET_DIR               3
+#define MC_WRITE_CHECKED_STEP_GET_DIR_WAIT          4
+#define MC_WRITE_CHECKED_STEP_CHECK_ROOM            5
+#define MC_WRITE_CHECKED_STEP_BEFORE_OPEN           9
+#define MC_WRITE_CHECKED_STEP_OPEN                  10
+#define MC_WRITE_CHECKED_STEP_OPEN_WAIT             11
+#define MC_WRITE_CHECKED_STEP_SEEK_END              12
+#define MC_WRITE_CHECKED_STEP_SEEK_END_WAIT         13
+#define MC_WRITE_CHECKED_STEP_CLEAR_TRAILER         14
+#define MC_WRITE_CHECKED_STEP_WRITE_TRAILER         15
+#define MC_WRITE_CHECKED_STEP_WRITE_TRAILER_WAIT    16
+#define MC_WRITE_CHECKED_STEP_SEEK_START            17
+#define MC_WRITE_CHECKED_STEP_SEEK_START_WAIT       18
+#define MC_WRITE_CHECKED_STEP_BUILD_BLOCK           19
+#define MC_WRITE_CHECKED_STEP_WRITE_BLOCK           20
+#define MC_WRITE_CHECKED_STEP_WRITE_BLOCK_WAIT      21
+#define MC_WRITE_CHECKED_STEP_CLOSE                 22
+#define MC_WRITE_CHECKED_STEP_CLOSE_WAIT            23
+
+/* mc_request.step in Mc_StepReadChecked */
+#define MC_READ_CHECKED_STEP_GET_INFO               1
+#define MC_READ_CHECKED_STEP_OPEN                   2
+#define MC_READ_CHECKED_STEP_OPEN_WAIT              3
+#define MC_READ_CHECKED_STEP_READ_DATA_SIZE         4
+#define MC_READ_CHECKED_STEP_READ_DATA_SIZE_WAIT    5
+#define MC_READ_CHECKED_STEP_LAYOUT                 6
+#define MC_READ_CHECKED_STEP_SEEK_END               7
+#define MC_READ_CHECKED_STEP_SEEK_END_WAIT          8
+#define MC_READ_CHECKED_STEP_READ_END_MARK          9
+#define MC_READ_CHECKED_STEP_CHECK_END_MARK         10
+#define MC_READ_CHECKED_STEP_SEEK_DATA              11
+#define MC_READ_CHECKED_STEP_SEEK_DATA_WAIT         12
+#define MC_READ_CHECKED_STEP_READ_BLOCK             13
+#define MC_READ_CHECKED_STEP_READ_BLOCK_WAIT        14
+#define MC_READ_CHECKED_STEP_DATA_DONE              15
+#define MC_READ_CHECKED_STEP_CLOSE                  16
+#define MC_READ_CHECKED_STEP_CLOSE_WAIT             17
+
+/* mc_request.step in Mc_StepWrite */
+#define MC_WRITE_STEP_GET_INFO              1
+#define MC_WRITE_STEP_CHECK_CARD            2
+#define MC_WRITE_STEP_GET_DIR               3
+#define MC_WRITE_STEP_GET_DIR_WAIT          4
+#define MC_WRITE_STEP_CHECK_ROOM            5
+#define MC_WRITE_STEP_OPEN                  8
+#define MC_WRITE_STEP_OPEN_WAIT             9
+#define MC_WRITE_STEP_SET_CHUNK             10
+#define MC_WRITE_STEP_WRITE_BLOCK           11
+#define MC_WRITE_STEP_WRITE_BLOCK_WAIT      12
+#define MC_WRITE_STEP_CLOSE                 13
+#define MC_WRITE_STEP_CLOSE_WAIT            14
+
+/* mc_request.step in Mc_StepCopyFile */
+#define MC_COPY_FILE_STEP_GET_INFO              1
+#define MC_COPY_FILE_STEP_CHECK_CARD            2
+#define MC_COPY_FILE_STEP_GET_DIR               3
+#define MC_COPY_FILE_STEP_GET_DIR_WAIT          4
+#define MC_COPY_FILE_STEP_CHECK_ROOM            5
+#define MC_COPY_FILE_STEP_OPEN                  8
+#define MC_COPY_FILE_STEP_OPEN_WAIT             9
+#define MC_COPY_FILE_STEP_READ_SOURCE           10
+#define MC_COPY_FILE_STEP_WRITE_BLOCK           11
+#define MC_COPY_FILE_STEP_WRITE_BLOCK_WAIT      12
+#define MC_COPY_FILE_STEP_CLOSE_SOURCE          13
+#define MC_COPY_FILE_STEP_CLOSE                 14
+#define MC_COPY_FILE_STEP_CLOSE_WAIT            15
+
+/* mc_request.step in Mc_StepRead */
+#define MC_READ_STEP_GET_INFO               1
+#define MC_READ_STEP_OPEN                   2
+#define MC_READ_STEP_OPEN_WAIT              3
+#define MC_READ_STEP_CLEAR_BLOCK            4
+#define MC_READ_STEP_READ                   5
+#define MC_READ_STEP_READ_WAIT              6
+#define MC_READ_STEP_DATA_DONE              7
+#define MC_READ_STEP_CLOSE                  8
+#define MC_READ_STEP_CLOSE_WAIT             9
+
 /* The module's .bss: a work area and the file state, packed at four bytes. */
 #define MC_4BYTE __attribute__((section(".bss"), aligned(4)))
 
@@ -160,11 +256,11 @@ static int Mc_StepCheck(void) {
     int message;
 
     switch (step) {
-    case 0:
-        mc_state->step = 1;
+    case MC_STEP_START:
+        mc_state->step = MC_CALL_STEP_CALL;
         mc_state->retries = 0;
         break;
-    case 1:
+    case MC_CALL_STEP_CALL:
         if (sceMcGetInfo(port, slot, &MC_CARD_INFO->type[port][slot], &MC_CARD_INFO->free_clusters[port][slot],
                          &MC_CARD_INFO->format[port][slot]) != 0) {
             if (mc_state->retries == 2) {
@@ -176,7 +272,7 @@ static int Mc_StepCheck(void) {
             mc_state->step++;
         }
         break;
-    case 2:
+    case MC_CALL_STEP_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             MC_CARD_INFO->result[port][slot] = result;
             if (result < 0) {
@@ -218,11 +314,11 @@ static int Mc_StepGetDir(void) {
     int slot = mc_state->slot;
 
     switch (step) {
-    case 0:
-        mc_state->step = 1;
+    case MC_STEP_START:
+        mc_state->step = MC_CALL_STEP_CALL;
         mc_state->retries = 0;
         break;
-    case 1:
+    case MC_CALL_STEP_CALL:
         if (sceMcGetDir(port, slot, mc_state->path, mc_state->size, mc_state->count, mc_state->dir_entries) != 0) {
             if (mc_state->retries == 2) {
                 mc_state->status = MC_STATUS_ERROR;
@@ -234,7 +330,7 @@ static int Mc_StepGetDir(void) {
             mc_state->step++;
         }
         break;
-    case 2:
+    case MC_CALL_STEP_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result >= 0) {
                 mc_state->dir_count = result;
@@ -287,14 +383,14 @@ static int Mc_StepWriteChecked(void) {
     u8 checksum;
 
     switch (step) {
-    case 0:
+    case MC_STEP_START:
         mc_file_fd = 0;
         mc_file_offset = 0;
         mc_request.step++;
         mc_request.retries = 0;
         mc_file_chunk_size = 0;
         break;
-    case 1:
+    case MC_WRITE_CHECKED_STEP_GET_INFO:
         if ((mc_request.info_step = Mc_StepGetInfo(port, slot, &MC_CARD_INFO->type[port][slot],
                                                    &MC_CARD_INFO->free_clusters[port][slot],
                                                    &MC_CARD_INFO->format[port][slot], mc_request.info_step)) > 0) {
@@ -306,7 +402,7 @@ static int Mc_StepWriteChecked(void) {
         }
         mc_request.step++;
         break;
-    case 2:
+    case MC_WRITE_CHECKED_STEP_CHECK_CARD:
         if (MC_CARD_INFO->type[port][slot] != 2) {
             if (MC_CARD_INFO->type[port][slot] == 3) {
                 mc_request.status = MC_STATUS_NO_CARD;
@@ -319,7 +415,7 @@ static int Mc_StepWriteChecked(void) {
         mc_request.step++;
         mc_request.retries = 0;
         break;
-    case 3:
+    case MC_WRITE_CHECKED_STEP_GET_DIR:
         if (sceMcGetDir(port, slot, mc_request.path, 0, 1, &mc_dir_entry) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.status = MC_STATUS_ERROR;
@@ -331,7 +427,7 @@ static int Mc_StepWriteChecked(void) {
             mc_request.step++;
         }
         break;
-    case 4:
+    case MC_WRITE_CHECKED_STEP_GET_DIR_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2) {
@@ -356,7 +452,7 @@ static int Mc_StepWriteChecked(void) {
             }
         }
         break;
-    case 5:
+    case MC_WRITE_CHECKED_STEP_CHECK_ROOM:
         available = ((mc_dir_entry.FileSizeByte + 0x3FF) >> 10) + MC_CARD_INFO->free_clusters[port][slot];
         quantity = mc_request.size;
         if (mc_dir_entry.FileSizeByte == 0 && available < 3) {
@@ -380,12 +476,12 @@ static int Mc_StepWriteChecked(void) {
             mc_request.request = MC_REQUEST_NONE;
             return -6;
         }
-        mc_request.step = 9;
+        mc_request.step = MC_WRITE_CHECKED_STEP_BEFORE_OPEN;
         break;
-    case 9:
+    case MC_WRITE_CHECKED_STEP_BEFORE_OPEN:
         mc_request.step++;
         mc_request.retries = 0;
-    case 10:
+    case MC_WRITE_CHECKED_STEP_OPEN:
         open_mode = 3;
         if (mc_dir_entry.FileSizeByte == 0) {
             open_mode = 0x203;
@@ -401,7 +497,7 @@ static int Mc_StepWriteChecked(void) {
             mc_request.step++;
         }
         break;
-    case 11:
+    case MC_WRITE_CHECKED_STEP_OPEN_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2) {
@@ -421,11 +517,11 @@ static int Mc_StepWriteChecked(void) {
             }
         }
         break;
-    case 12:
+    case MC_WRITE_CHECKED_STEP_SEEK_END:
         if (sceMcSeek(mc_file_fd, mc_file_size - 0x20, 0) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.status = MC_STATUS_WRITE_FAILED;
-                mc_request.step = 0x64;
+                mc_request.step = MC_STEP_FAILED;
             } else {
                 mc_request.retries++;
             }
@@ -433,13 +529,13 @@ static int Mc_StepWriteChecked(void) {
             mc_request.step++;
         }
         break;
-    case 13:
-    case 18:
+    case MC_WRITE_CHECKED_STEP_SEEK_END_WAIT:
+    case MC_WRITE_CHECKED_STEP_SEEK_START_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2) {
                     mc_request.status = MC_STATUS_WRITE_FAILED;
-                    mc_request.step = 0x64;
+                    mc_request.step = MC_STEP_FAILED;
                 } else {
                     mc_request.retries++;
                     mc_request.step--;
@@ -449,15 +545,15 @@ static int Mc_StepWriteChecked(void) {
             }
         }
         break;
-    case 14:
+    case MC_WRITE_CHECKED_STEP_CLEAR_TRAILER:
         mc_request.retries = 0;
         memset(mc_file_block, 0, 0x20);
         mc_request.step++;
-    case 15:
+    case MC_WRITE_CHECKED_STEP_WRITE_TRAILER:
         if (sceMcWrite(mc_file_fd, mc_file_block, 0x20) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.status = MC_STATUS_WRITE_FAILED;
-                mc_request.step = 0x64;
+                mc_request.step = MC_STEP_FAILED;
             } else {
                 mc_request.retries++;
             }
@@ -465,12 +561,12 @@ static int Mc_StepWriteChecked(void) {
             mc_request.step++;
         }
         break;
-    case 16:
+    case MC_WRITE_CHECKED_STEP_WRITE_TRAILER_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2 || result == -8) {
                     mc_request.status = MC_STATUS_WRITE_FAILED;
-                    mc_request.step = 0x64;
+                    mc_request.step = MC_STEP_FAILED;
                 } else {
                     mc_request.retries++;
                     mc_request.step--;
@@ -481,11 +577,11 @@ static int Mc_StepWriteChecked(void) {
             }
         }
         break;
-    case 17:
+    case MC_WRITE_CHECKED_STEP_SEEK_START:
         if (sceMcSeek(mc_file_fd, 0, 0) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.status = MC_STATUS_WRITE_FAILED;
-                mc_request.step = 0x64;
+                mc_request.step = MC_STEP_FAILED;
             } else {
                 mc_request.retries++;
             }
@@ -493,7 +589,7 @@ static int Mc_StepWriteChecked(void) {
             mc_request.step++;
         }
         break;
-    case 19:
+    case MC_WRITE_CHECKED_STEP_BUILD_BLOCK:
         if ((u32)mc_request.size >= mc_file_offset) {
             memset(mc_file_block, 0, 0x420);
             chunk = mc_request.size - mc_file_offset;
@@ -538,14 +634,14 @@ static int Mc_StepWriteChecked(void) {
             mc_file_chunk_size = position;
             mc_request.retries = 0;
         } else {
-            mc_request.step = 0x16;
+            mc_request.step = MC_WRITE_CHECKED_STEP_CLOSE;
         }
         break;
-    case 20:
+    case MC_WRITE_CHECKED_STEP_WRITE_BLOCK:
         if (sceMcWrite(mc_file_fd, mc_file_block, mc_file_chunk_size) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.status = MC_STATUS_WRITE_FAILED;
-                mc_request.step = 0x64;
+                mc_request.step = MC_STEP_FAILED;
             } else {
                 mc_request.retries++;
             }
@@ -553,27 +649,27 @@ static int Mc_StepWriteChecked(void) {
             mc_request.step++;
         }
         break;
-    case 21:
+    case MC_WRITE_CHECKED_STEP_WRITE_BLOCK_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2 || result == -8) {
                     mc_request.status = MC_STATUS_WRITE_FAILED;
-                    mc_request.step = 0x64;
+                    mc_request.step = MC_STEP_FAILED;
                 } else {
                     mc_request.retries++;
                     mc_request.step--;
                 }
             } else {
-                mc_request.step = 0x13;
+                mc_request.step = MC_WRITE_CHECKED_STEP_BUILD_BLOCK;
                 mc_request.retries = 0;
             }
         }
         break;
-    case 22:
+    case MC_WRITE_CHECKED_STEP_CLOSE:
         if (sceMcClose(mc_file_fd) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.status = MC_STATUS_WRITE_FAILED;
-                mc_request.step = 0x64;
+                mc_request.step = MC_STEP_FAILED;
             } else {
                 mc_request.retries++;
             }
@@ -581,7 +677,7 @@ static int Mc_StepWriteChecked(void) {
             mc_request.step++;
         }
         break;
-    case 23:
+    case MC_WRITE_CHECKED_STEP_CLOSE_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             mc_request.request = MC_REQUEST_NONE; // match: cleared before the result is tested, so the retry below is asked of an idle request
             if (result < 0) {
@@ -597,7 +693,7 @@ static int Mc_StepWriteChecked(void) {
             }
         }
         break;
-    case 100:
+    case MC_STEP_FAILED:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (mc_file_fd < 0) { // match: never true, the descriptor is 0 or a sceMcSync result that was not negative
                 mc_request.status = MC_STATUS_WRITE_FAILED;
@@ -608,7 +704,7 @@ static int Mc_StepWriteChecked(void) {
             mc_request.retries = 0;
         }
         break;
-    case 101:
+    case MC_STEP_FAILED_CLOSE:
         if (sceMcClose(mc_file_fd) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.status = MC_STATUS_WRITE_FAILED;
@@ -620,7 +716,7 @@ static int Mc_StepWriteChecked(void) {
             mc_request.step++;
         }
         break;
-    case 102:
+    case MC_STEP_FAILED_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             mc_request.status = MC_STATUS_WRITE_FAILED;
             mc_request.request = MC_REQUEST_NONE;
@@ -649,12 +745,12 @@ static int Mc_StepReadChecked(void) {
     int total_size;
 
     switch (mc_request.step) {
-    case 0:
+    case MC_STEP_START:
         mc_file_fd = -1;
         mc_request.step++;
         mc_request.retries = 0;
         mc_read_bytes = 0;
-    case 1:
+    case MC_READ_CHECKED_STEP_GET_INFO:
         if ((mc_request.info_step = Mc_StepGetInfo(port, slot, &MC_CARD_INFO->type[port][slot],
                                                    &MC_CARD_INFO->free_clusters[port][slot],
                                                    &MC_CARD_INFO->format[port][slot], mc_request.info_step)) > 0) {
@@ -678,7 +774,7 @@ static int Mc_StepReadChecked(void) {
         mc_request.retries = 0;
         mc_request.step++;
         break;
-    case 2:
+    case MC_READ_CHECKED_STEP_OPEN:
         if (sceMcOpen(port, slot, mc_request.path, 1) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.request = MC_REQUEST_NONE;
@@ -690,7 +786,7 @@ static int Mc_StepReadChecked(void) {
             mc_request.step++;
         }
         break;
-    case 3:
+    case MC_READ_CHECKED_STEP_OPEN_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2) {
@@ -710,11 +806,11 @@ static int Mc_StepReadChecked(void) {
             }
         }
         break;
-    case 4:
+    case MC_READ_CHECKED_STEP_READ_DATA_SIZE:
         if (sceMcRead(mc_file_fd, &mc_file_data_size, 4) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.status = MC_STATUS_READ_FAILED;
-                mc_request.step = 100;
+                mc_request.step = MC_STEP_FAILED;
             } else {
                 mc_request.retries++;
             }
@@ -722,12 +818,12 @@ static int Mc_StepReadChecked(void) {
             mc_request.step++;
         }
         break;
-    case 5:
+    case MC_READ_CHECKED_STEP_READ_DATA_SIZE_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2) {
                     mc_request.status = MC_STATUS_READ_FAILED;
-                    mc_request.step = 100;
+                    mc_request.step = MC_STEP_FAILED;
                 } else {
                     mc_request.retries++;
                     mc_request.step--;
@@ -737,7 +833,7 @@ static int Mc_StepReadChecked(void) {
             }
         }
         break;
-    case 6:
+    case MC_READ_CHECKED_STEP_LAYOUT:
         remaining = mc_file_data_size;
         mc_file_size_padded = remaining + 6;
         remaining -= 0x3FB;
@@ -751,11 +847,11 @@ static int Mc_StepReadChecked(void) {
         mc_request.step++;
         mc_file_size_padded = total_size;
         break;
-    case 7:
+    case MC_READ_CHECKED_STEP_SEEK_END:
         if (sceMcSeek(mc_file_fd, mc_file_size_padded - 0x20, 0) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.status = MC_STATUS_READ_FAILED;
-                mc_request.step = 100;
+                mc_request.step = MC_STEP_FAILED;
             } else {
                 mc_request.retries++;
             }
@@ -763,12 +859,12 @@ static int Mc_StepReadChecked(void) {
             mc_request.step++;
         }
         break;
-    case 8:
+    case MC_READ_CHECKED_STEP_SEEK_END_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2) {
                     mc_request.status = MC_STATUS_READ_FAILED;
-                    mc_request.step = 100;
+                    mc_request.step = MC_STEP_FAILED;
                 } else {
                     mc_request.retries++;
                     mc_request.step--;
@@ -779,11 +875,11 @@ static int Mc_StepReadChecked(void) {
             }
         }
         break;
-    case 9:
+    case MC_READ_CHECKED_STEP_READ_END_MARK:
         if (sceMcRead(mc_file_fd, mc_file_block, 0x20) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.status = MC_STATUS_READ_FAILED;
-                mc_request.step = 100;
+                mc_request.step = MC_STEP_FAILED;
             } else {
                 mc_request.retries++;
             }
@@ -791,30 +887,30 @@ static int Mc_StepReadChecked(void) {
             mc_request.step++;
         }
         break;
-    case 10:
+    case MC_READ_CHECKED_STEP_CHECK_END_MARK:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2) {
                     mc_request.status = MC_STATUS_READ_FAILED;
-                    mc_request.step = 100;
+                    mc_request.step = MC_STEP_FAILED;
                 } else {
                     mc_request.retries++;
                     mc_request.step--;
                 }
             } else if (mc_file_block[mc_end_mark_offset] != 1) {
                 mc_request.status = MC_STATUS_READ_FAILED;
-                mc_request.step = 100;
+                mc_request.step = MC_STEP_FAILED;
             } else {
                 mc_request.retries = 0;
                 mc_request.step++;
             }
         }
         break;
-    case 11:
+    case MC_READ_CHECKED_STEP_SEEK_DATA:
         if (sceMcSeek(mc_file_fd, 4, 0) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.status = MC_STATUS_READ_FAILED;
-                mc_request.step = 100;
+                mc_request.step = MC_STEP_FAILED;
             } else {
                 mc_request.retries++;
             }
@@ -822,12 +918,12 @@ static int Mc_StepReadChecked(void) {
             mc_request.step++;
         }
         break;
-    case 12:
+    case MC_READ_CHECKED_STEP_SEEK_DATA_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2) {
                     mc_request.status = MC_STATUS_READ_FAILED;
-                    mc_request.step = 100;
+                    mc_request.step = MC_STEP_FAILED;
                 } else {
                     mc_request.retries++;
                     mc_request.step--;
@@ -839,7 +935,7 @@ static int Mc_StepReadChecked(void) {
             }
         }
         break;
-    case 13:
+    case MC_READ_CHECKED_STEP_READ_BLOCK:
         read_size = 0x400;
         if (mc_read_bytes == 0) {
             read_size = 0x3FC;
@@ -847,7 +943,7 @@ static int Mc_StepReadChecked(void) {
         if (sceMcRead(mc_file_fd, mc_file_block, read_size) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.status = MC_STATUS_READ_FAILED;
-                mc_request.step = 100;
+                mc_request.step = MC_STEP_FAILED;
             } else {
                 mc_request.retries++;
             }
@@ -855,7 +951,7 @@ static int Mc_StepReadChecked(void) {
             mc_request.step++;
         }
         break;
-    case 14:
+    case MC_READ_CHECKED_STEP_READ_BLOCK_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2) {
@@ -867,7 +963,7 @@ static int Mc_StepReadChecked(void) {
                         mc_request.status = MC_STATUS_READ_FAILED;
                     }
                     mc_request.info_step = result;
-                    mc_request.step = 100;
+                    mc_request.step = MC_STEP_FAILED;
                     break;
                 }
                 mc_request.retries++;
@@ -901,9 +997,9 @@ static int Mc_StepReadChecked(void) {
                             break;
                         }
                     } else {
-                        mc_request.info_step = -399;
+                        mc_request.info_step = MC_INFO_BAD_CHECK_BYTE;
                         mc_request.status = MC_STATUS_READ_FAILED;
-                        mc_request.step = 100;
+                        mc_request.step = MC_STEP_FAILED;
                         break;
                     }
                 }
@@ -913,11 +1009,11 @@ static int Mc_StepReadChecked(void) {
             }
         }
         break;
-    case 15:
+    case MC_READ_CHECKED_STEP_DATA_DONE:
         mc_request.retries = 0;
         mc_request.step++;
         break;
-    case 16:
+    case MC_READ_CHECKED_STEP_CLOSE:
         if (sceMcClose(mc_file_fd) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.request = MC_REQUEST_NONE;
@@ -929,7 +1025,7 @@ static int Mc_StepReadChecked(void) {
             mc_request.step++;
         }
         break;
-    case 17:
+    case MC_READ_CHECKED_STEP_CLOSE_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2) {
@@ -946,7 +1042,7 @@ static int Mc_StepReadChecked(void) {
             }
         }
         break;
-    case 100:
+    case MC_STEP_FAILED:
         if (mc_file_fd < 0) {
             mc_request.request = MC_REQUEST_NONE;
             return -100;
@@ -954,7 +1050,7 @@ static int Mc_StepReadChecked(void) {
         mc_request.retries = 0;
         mc_request.step++;
         break;
-    case 101:
+    case MC_STEP_FAILED_CLOSE:
         if (sceMcClose(mc_file_fd) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.status = MC_STATUS_READ_FAILED;
@@ -965,7 +1061,7 @@ static int Mc_StepReadChecked(void) {
             mc_request.step++;
         }
         break;
-    case 102:
+    case MC_STEP_FAILED_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             mc_request.request = MC_REQUEST_NONE;
             return -200;
@@ -987,12 +1083,12 @@ static int Mc_StepWrite(void) {
     int flags;
 
     switch (mc_request.step) {
-    case 0:
+    case MC_STEP_START:
         mc_file_fd = 0;
         mc_write_bytes = 0;
         mc_request.step++;
         break;
-    case 1:
+    case MC_WRITE_STEP_GET_INFO:
         if ((mc_request.info_step = Mc_StepGetInfo(port, slot, &MC_CARD_INFO->type[port][slot],
                                                    &MC_CARD_INFO->free_clusters[port][slot],
                                                    &MC_CARD_INFO->format[port][slot], mc_request.info_step)) > 0) {
@@ -1009,7 +1105,7 @@ static int Mc_StepWrite(void) {
         }
         mc_request.step++;
         break;
-    case 2:
+    case MC_WRITE_STEP_CHECK_CARD:
         if (MC_CARD_INFO->type[port][slot] != 2) {
             mc_request.request = MC_REQUEST_NONE;
             mc_request.status = MC_STATUS_WRITE_FAILED;
@@ -1018,7 +1114,7 @@ static int Mc_StepWrite(void) {
         mc_request.retries = 0;
         mc_request.step++;
         break;
-    case 3:
+    case MC_WRITE_STEP_GET_DIR:
         if (sceMcGetDir(port, slot, mc_request.path, 0, 1, &mc_dir_entry) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.request = MC_REQUEST_NONE;
@@ -1030,7 +1126,7 @@ static int Mc_StepWrite(void) {
             mc_request.step++;
         }
         break;
-    case 4:
+    case MC_WRITE_STEP_GET_DIR_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2) {
@@ -1055,7 +1151,7 @@ static int Mc_StepWrite(void) {
             }
         }
         break;
-    case 5:
+    case MC_WRITE_STEP_CHECK_ROOM:
         available = ((mc_dir_entry.FileSizeByte + 0x3FF) >> 10) + MC_CARD_INFO->free_clusters[port][slot];
         if (mc_dir_entry.FileSizeByte == 0 && available < 3) {
             mc_request.request = MC_REQUEST_NONE;
@@ -1072,9 +1168,9 @@ static int Mc_StepWrite(void) {
             return -101;
         }
         mc_request.retries = 0;
-        mc_request.step = 8;
+        mc_request.step = MC_WRITE_STEP_OPEN;
         break;
-    case 8:
+    case MC_WRITE_STEP_OPEN:
         flags = 3;
         if (mc_dir_entry.FileSizeByte == 0) {
             flags = 0x203;
@@ -1090,7 +1186,7 @@ static int Mc_StepWrite(void) {
             mc_request.step++;
         }
         break;
-    case 9:
+    case MC_WRITE_STEP_OPEN_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2) {
@@ -1098,8 +1194,8 @@ static int Mc_StepWrite(void) {
                     if (mc_request.status == MC_STATUS_ERROR) {
                         mc_request.status = MC_STATUS_WRITE_FAILED;
                     }
-                    mc_request.step = 100;
-                    mc_request.info_step = -1;
+                    mc_request.step = MC_STEP_FAILED;
+                    mc_request.info_step = MC_INFO_ERROR;
                     break;
                 }
                 mc_request.retries++;
@@ -1110,7 +1206,7 @@ static int Mc_StepWrite(void) {
             }
         }
         break;
-    case 10:
+    case MC_WRITE_STEP_SET_CHUNK:
         mc_write_chunk = mc_request.size - mc_write_bytes;
         if (mc_write_chunk > 0x400) {
             mc_write_chunk = 0x400;
@@ -1118,11 +1214,11 @@ static int Mc_StepWrite(void) {
         mc_request.retries = 0;
         mc_request.step++;
         break;
-    case 11:
+    case MC_WRITE_STEP_WRITE_BLOCK:
         if (sceMcWrite(mc_file_fd, mc_request.write_data + mc_write_bytes, mc_write_chunk) != 0) {
             if (mc_request.retries == 2) {
-                mc_request.info_step = -1;
-                mc_request.step = 100;
+                mc_request.info_step = MC_INFO_ERROR;
+                mc_request.step = MC_STEP_FAILED;
             } else {
                 mc_request.retries++;
             }
@@ -1130,12 +1226,12 @@ static int Mc_StepWrite(void) {
             mc_request.step++;
         }
         break;
-    case 12:
+    case MC_WRITE_STEP_WRITE_BLOCK_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2 || result == -8) {
-                    mc_request.info_step = -1;
-                    mc_request.step = 100;
+                    mc_request.info_step = MC_INFO_ERROR;
+                    mc_request.step = MC_STEP_FAILED;
                 } else {
                     mc_request.retries++;
                     mc_request.step--;
@@ -1146,16 +1242,16 @@ static int Mc_StepWrite(void) {
                 if (mc_write_bytes >= (u32)mc_request.size) {
                     mc_request.step++;
                 } else {
-                    mc_request.step = 10;
+                    mc_request.step = MC_WRITE_STEP_SET_CHUNK;
                 }
             }
         }
         break;
-    case 13:
+    case MC_WRITE_STEP_CLOSE:
         if (sceMcClose(mc_file_fd) != 0) {
             if (mc_request.retries == 2) {
-                mc_request.info_step = -1;
-                mc_request.step = 100;
+                mc_request.info_step = MC_INFO_ERROR;
+                mc_request.step = MC_STEP_FAILED;
             } else {
                 mc_request.retries++;
             }
@@ -1163,7 +1259,7 @@ static int Mc_StepWrite(void) {
             mc_request.step++;
         }
         break;
-    case 14:
+    case MC_WRITE_STEP_CLOSE_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             mc_request.request = MC_REQUEST_NONE;
             if (result < 0) {
@@ -1179,7 +1275,7 @@ static int Mc_StepWrite(void) {
             }
         }
         break;
-    case 100:
+    case MC_STEP_FAILED:
         if (mc_file_fd < 0) {
             mc_request.status = MC_STATUS_WRITE_FAILED;
             mc_request.request = MC_REQUEST_NONE;
@@ -1188,7 +1284,7 @@ static int Mc_StepWrite(void) {
         mc_request.retries = 0;
         mc_request.step++;
         break;
-    case 101:
+    case MC_STEP_FAILED_CLOSE:
         if (sceMcClose(mc_file_fd) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.request = MC_REQUEST_NONE;
@@ -1200,7 +1296,7 @@ static int Mc_StepWrite(void) {
             mc_request.step++;
         }
         break;
-    case 102:
+    case MC_STEP_FAILED_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             mc_request.status = MC_STATUS_WRITE_FAILED;
             mc_request.request = MC_REQUEST_NONE;
@@ -1225,14 +1321,14 @@ static int Mc_StepCopyFile(void) {
     int source;
 
     switch (mc_request.step) {
-    case 0:
+    case MC_STEP_START:
         mc_file_fd = 0;
         mc_copy_size = 0;
         mc_copy_done = 0;
         mc_request.step++;
         mc_request.retries = 0;
         break;
-    case 1:
+    case MC_COPY_FILE_STEP_GET_INFO:
         if ((mc_request.info_step = Mc_StepGetInfo(port, slot, &MC_CARD_INFO->type[port][slot],
                                                    &MC_CARD_INFO->free_clusters[port][slot],
                                                    &MC_CARD_INFO->format[port][slot], mc_request.info_step)) > 0) {
@@ -1246,7 +1342,7 @@ static int Mc_StepCopyFile(void) {
         }
         mc_request.step++;
         break;
-    case 2:
+    case MC_COPY_FILE_STEP_CHECK_CARD:
         if (MC_CARD_INFO->type[port][slot] != 2) {
             mc_request.request = MC_REQUEST_NONE;
             mc_request.status = MC_STATUS_WRITE_FAILED;
@@ -1254,7 +1350,7 @@ static int Mc_StepCopyFile(void) {
         }
         mc_request.step++;
         break;
-    case 3:
+    case MC_COPY_FILE_STEP_GET_DIR:
         if (sceMcGetDir(port, slot, mc_request.path, 0, 1, &mc_dir_entry) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.request = MC_REQUEST_NONE;
@@ -1266,7 +1362,7 @@ static int Mc_StepCopyFile(void) {
             mc_request.step++;
         }
         break;
-    case 4:
+    case MC_COPY_FILE_STEP_GET_DIR_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2) {
@@ -1291,7 +1387,7 @@ static int Mc_StepCopyFile(void) {
             }
         }
         break;
-    case 5:
+    case MC_COPY_FILE_STEP_CHECK_ROOM:
         available = ((mc_dir_entry.FileSizeByte + 0x3FF) >> 10) + MC_CARD_INFO->free_clusters[port][slot];
         if (mc_dir_entry.FileSizeByte == 0 && available < 3) {
             mc_request.request = MC_REQUEST_NONE;
@@ -1321,10 +1417,10 @@ static int Mc_StepCopyFile(void) {
             mc_request.request = MC_REQUEST_NONE;
             return -101;
         }
-        mc_request.step = 8;
+        mc_request.step = MC_COPY_FILE_STEP_OPEN;
         mc_request.retries = 0;
         break;
-    case 8:
+    case MC_COPY_FILE_STEP_OPEN:
         flags = 3;
         if (mc_dir_entry.FileSizeByte == 0) {
             flags = 0x203;
@@ -1340,7 +1436,7 @@ static int Mc_StepCopyFile(void) {
             mc_request.step++;
         }
         break;
-    case 9:
+    case MC_COPY_FILE_STEP_OPEN_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2) {
@@ -1348,8 +1444,8 @@ static int Mc_StepCopyFile(void) {
                     if (mc_request.status == MC_STATUS_ERROR) {
                         mc_request.status = MC_STATUS_WRITE_FAILED;
                     }
-                    mc_request.step = 100;
-                    mc_request.info_step = -1;
+                    mc_request.step = MC_STEP_FAILED;
+                    mc_request.info_step = MC_INFO_ERROR;
                     break;
                 }
                 mc_request.retries++;
@@ -1360,19 +1456,19 @@ static int Mc_StepCopyFile(void) {
             }
         }
         break;
-    case 10:
+    case MC_COPY_FILE_STEP_READ_SOURCE:
         if ((mc_copy_read_bytes = sceRead(mc_copy_source, mc_file_block, 0x400)) <= 0) {
-            mc_request.step = 13;
+            mc_request.step = MC_COPY_FILE_STEP_CLOSE_SOURCE;
         } else {
             mc_request.retries = 0;
             mc_request.step++;
         }
         break;
-    case 11:
+    case MC_COPY_FILE_STEP_WRITE_BLOCK:
         if (sceMcWrite(mc_file_fd, mc_file_block, mc_copy_read_bytes) != 0) {
             if (mc_request.retries == 2) {
-                mc_request.info_step = -1;
-                mc_request.step = 100;
+                mc_request.info_step = MC_INFO_ERROR;
+                mc_request.step = MC_STEP_FAILED;
             } else {
                 mc_request.retries++;
             }
@@ -1380,12 +1476,12 @@ static int Mc_StepCopyFile(void) {
             mc_request.step++;
         }
         break;
-    case 12:
+    case MC_COPY_FILE_STEP_WRITE_BLOCK_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2 || result == -8) {
-                    mc_request.info_step = -1;
-                    mc_request.step = 100;
+                    mc_request.info_step = MC_INFO_ERROR;
+                    mc_request.step = MC_STEP_FAILED;
                 } else {
                     mc_request.retries++;
                     mc_request.step--;
@@ -1401,15 +1497,15 @@ static int Mc_StepCopyFile(void) {
             }
         }
         break;
-    case 13:
+    case MC_COPY_FILE_STEP_CLOSE_SOURCE:
         sceClose(mc_copy_source);
         mc_request.step++;
         break;
-    case 14:
+    case MC_COPY_FILE_STEP_CLOSE:
         if (sceMcClose(mc_file_fd) != 0) {
             if (mc_request.retries == 2) {
-                mc_request.info_step = -1;
-                mc_request.step = 100;
+                mc_request.info_step = MC_INFO_ERROR;
+                mc_request.step = MC_STEP_FAILED;
             } else {
                 mc_request.retries++;
             }
@@ -1417,7 +1513,7 @@ static int Mc_StepCopyFile(void) {
             mc_request.step++;
         }
         break;
-    case 15:
+    case MC_COPY_FILE_STEP_CLOSE_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2) {
@@ -1434,7 +1530,7 @@ static int Mc_StepCopyFile(void) {
             }
         }
         break;
-    case 100:
+    case MC_STEP_FAILED:
         if (mc_copy_source != 0) {
             sceClose(mc_copy_source);
         }
@@ -1445,7 +1541,7 @@ static int Mc_StepCopyFile(void) {
         }
         mc_request.retries = 0; // match: the step is not advanced here, so the request stays in step 100
         break;
-    case 101:
+    case MC_STEP_FAILED_CLOSE:
         if (sceMcClose(mc_file_fd) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.request = MC_REQUEST_NONE;
@@ -1457,7 +1553,7 @@ static int Mc_StepCopyFile(void) {
             mc_request.step++;
         }
         break;
-    case 102:
+    case MC_STEP_FAILED_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             mc_request.status = MC_STATUS_WRITE_FAILED;
             mc_request.request = MC_REQUEST_NONE;
@@ -1476,12 +1572,12 @@ static int Mc_StepRead(void) {
     int message;
 
     switch (mc_request.step) {
-    case 0:
+    case MC_STEP_START:
         mc_file_fd = 0;
         mc_read_done = 0;
         mc_request.step++;
         mc_request.retries = 0;
-    case 1:
+    case MC_READ_STEP_GET_INFO:
         if ((mc_request.info_step = Mc_StepGetInfo(port, slot, &MC_CARD_INFO->type[port][slot],
                                                    &MC_CARD_INFO->free_clusters[port][slot],
                                                    &MC_CARD_INFO->format[port][slot], mc_request.info_step)) > 0) {
@@ -1494,15 +1590,15 @@ static int Mc_StepRead(void) {
             return -10;
         }
         if (MC_CARD_INFO->type[port][slot] != 2) {
-            mc_request.step = 100;
+            mc_request.step = MC_STEP_FAILED;
             break;
         }
         mc_request.step++;
         break;
-    case 2:
+    case MC_READ_STEP_OPEN:
         if (sceMcOpen(port, slot, mc_request.path, 1) != 0) {
             if (mc_request.retries == 2) {
-                mc_request.step = 100;
+                mc_request.step = MC_STEP_FAILED;
                 break;
             }
             mc_request.retries++;
@@ -1510,7 +1606,7 @@ static int Mc_StepRead(void) {
             mc_request.step++;
         }
         break;
-    case 3:
+    case MC_READ_STEP_OPEN_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2) {
@@ -1518,9 +1614,9 @@ static int Mc_StepRead(void) {
                     if (mc_request.status == MC_STATUS_ERROR) {
                         mc_request.status = MC_STATUS_READ_FAILED;
                     }
-                    mc_request.step = 100;
+                    mc_request.step = MC_STEP_FAILED;
                     mc_request.request = MC_REQUEST_NONE;
-                    mc_request.info_step = -1;
+                    mc_request.info_step = MC_INFO_ERROR;
                     return result;
                 }
                 mc_request.retries++;
@@ -1531,15 +1627,15 @@ static int Mc_StepRead(void) {
             }
         }
         break;
-    case 4:
+    case MC_READ_STEP_CLEAR_BLOCK:
         memset(mc_file_block, 0, 0x400);
         mc_request.retries = 0;
         mc_request.step++;
         break;
-    case 5:
+    case MC_READ_STEP_READ:
         if (sceMcRead(mc_file_fd, mc_file_block, 0x400) != 0) {
             if (mc_request.retries == 2) {
-                mc_request.step = 100;
+                mc_request.step = MC_STEP_FAILED;
                 break;
             }
             mc_request.retries++;
@@ -1547,12 +1643,12 @@ static int Mc_StepRead(void) {
             mc_request.step++;
         }
         break;
-    case 6:
+    case MC_READ_STEP_READ_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_request.retries == 2) {
                     mc_request.info_step = result;
-                    mc_request.step = 100;
+                    mc_request.step = MC_STEP_FAILED;
                     break;
                 }
                 mc_request.retries++;
@@ -1571,11 +1667,11 @@ static int Mc_StepRead(void) {
             }
         }
         break;
-    case 7:
+    case MC_READ_STEP_DATA_DONE:
         mc_request.retries = 0;
         mc_request.step++;
         break;
-    case 8:
+    case MC_READ_STEP_CLOSE:
         if (sceMcClose(mc_file_fd) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.request = MC_REQUEST_NONE;
@@ -1587,7 +1683,7 @@ static int Mc_StepRead(void) {
             mc_request.step++;
         }
         break;
-    case 9:
+    case MC_READ_STEP_CLOSE_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             mc_request.request = MC_REQUEST_NONE; // match: cleared before the result is tested, as in Mc_StepWriteChecked step 23
             if (result < 0) {
@@ -1603,7 +1699,7 @@ static int Mc_StepRead(void) {
             }
         }
         break;
-    case 100:
+    case MC_STEP_FAILED:
         if (mc_file_fd < 0) {
             mc_request.status = MC_STATUS_READ_FAILED;
             mc_request.request = MC_REQUEST_NONE;
@@ -1612,7 +1708,7 @@ static int Mc_StepRead(void) {
         mc_request.retries = 0;
         mc_request.step++;
         break;
-    case 101:
+    case MC_STEP_FAILED_CLOSE:
         if (sceMcClose(mc_file_fd) != 0) {
             if (mc_request.retries == 2) {
                 mc_request.request = MC_REQUEST_NONE;
@@ -1623,7 +1719,7 @@ static int Mc_StepRead(void) {
             mc_request.step++;
         }
         break;
-    case 102:
+    case MC_STEP_FAILED_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             mc_request.status = MC_STATUS_READ_FAILED;
             mc_request.request = MC_REQUEST_NONE;
@@ -1643,11 +1739,11 @@ static int Mc_StepFormat(void) {
     int slot = mc_state->slot;
 
     switch (step) {
-    case 0:
-        mc_state->step = 1;
+    case MC_STEP_START:
+        mc_state->step = MC_CALL_STEP_CALL;
         mc_state->retries = 0;
         break;
-    case 1:
+    case MC_CALL_STEP_CALL:
         if (sceMcFormat(port, slot) != 0) {
             if (mc_state->retries == 2) {
                 mc_state->status = MC_STATUS_FORMAT_FAILED;
@@ -1658,7 +1754,7 @@ static int Mc_StepFormat(void) {
             mc_state->step++;
         }
         break;
-    case 2:
+    case MC_CALL_STEP_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result == 0) {
                 mc_state->request = MC_REQUEST_NONE;
@@ -1687,11 +1783,11 @@ static int Mc_StepChdir(void) {
     int slot = mc_state->slot;
 
     switch (step) {
-    case 0:
-        mc_state->step = 1;
+    case MC_STEP_START:
+        mc_state->step = MC_CALL_STEP_CALL;
         mc_state->retries = 0;
         break;
-    case 1:
+    case MC_CALL_STEP_CALL:
         if (sceMcChdir(port, slot, mc_state->path, mc_state->second_path) != 0) {
             if (mc_state->retries == 2) {
                 mc_state->status = MC_STATUS_ERROR;
@@ -1702,7 +1798,7 @@ static int Mc_StepChdir(void) {
             mc_state->step++;
         }
         break;
-    case 2:
+    case MC_CALL_STEP_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result == 0) {
                 mc_state->request = MC_REQUEST_NONE;
@@ -1735,11 +1831,11 @@ static int Mc_StepMkdir(void) {
     int slot = mc_state->slot;
 
     switch (step) {
-    case 0:
-        mc_state->step = 1;
+    case MC_STEP_START:
+        mc_state->step = MC_CALL_STEP_CALL;
         mc_state->retries = 0;
         break;
-    case 1:
+    case MC_CALL_STEP_CALL:
         if (sceMcMkdir(port, slot, mc_state->path) != 0) {
             if (mc_state->retries == 2) {
                 mc_state->status = MC_STATUS_ERROR;
@@ -1750,7 +1846,7 @@ static int Mc_StepMkdir(void) {
             mc_state->step++;
         }
         break;
-    case 2:
+    case MC_CALL_STEP_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result == 0) {
                 mc_state->status = MC_STATUS_OK;
@@ -1779,11 +1875,11 @@ static int Mc_StepFindFile(void) {
     int slot = mc_state->slot;
     int step = mc_state->step;
     switch (step) {
-    case 0:
-        mc_state->step = 1;
+    case MC_STEP_START:
+        mc_state->step = MC_CALL_STEP_CALL;
         mc_state->retries = 0;
         break;
-    case 1:
+    case MC_CALL_STEP_CALL:
         if (sceMcGetDir(port, slot, mc_state->path, 0, 1, &mc_dir_entry) != 0) {
             if (mc_state->retries == 2) {
                 mc_state->status = MC_STATUS_ERROR;
@@ -1795,7 +1891,7 @@ static int Mc_StepFindFile(void) {
             mc_state->step++;
         }
         break;
-    case 2:
+    case MC_CALL_STEP_WAIT:
         if (sceMcSync(1, NULL, &result) != 0) {
             if (result < 0) {
                 if (mc_state->retries == step) {
@@ -1839,7 +1935,7 @@ int Mc_StartCheck(u32 port, u32 slot) {
     mc_state->slot = slot;
     mc_state->request = MC_REQUEST_CHECK;
     mc_state->port = port;
-    mc_state->step = 0;
+    mc_state->step = MC_STEP_START;
     return 0;
 }
 
@@ -1860,7 +1956,7 @@ int Mc_StartGetDir(u32 port, u32 slot, char *path, int mode, int max_entries, sc
     mc_state->path = path;
     mc_state->size = mode;
     mc_state->count = max_entries;
-    mc_state->step = 0;
+    mc_state->step = MC_STEP_START;
     return 0;
 }
 
@@ -1881,8 +1977,8 @@ int Mc_StartWriteChecked(u32 port, u32 slot, char *path, void *data, int size) {
     mc_state->path = path;
     mc_state->write_data = data;
     mc_state->size = size;
-    mc_state->info_step = 0;
-    mc_state->step = 0;
+    mc_state->info_step = MC_INFO_STEP_START;
+    mc_state->step = MC_STEP_START;
     return 0;
 }
 
@@ -1903,7 +1999,7 @@ int Mc_StartReadChecked(u32 port, u32 slot, char *path, void *buffer, int size) 
     mc_state->path = path;
     mc_state->read_buffer = buffer;
     mc_state->size = size;
-    mc_state->info_step = mc_state->step = 0;
+    mc_state->info_step = mc_state->step = MC_STEP_START;
     return 0;
 }
 
@@ -1924,8 +2020,8 @@ int Mc_StartWrite(u32 port, u32 slot, char *path, void *data, int size) {
     mc_state->path = path;
     mc_state->write_data = data;
     mc_state->size = size;
-    mc_state->step = 0;
-    mc_state->info_step = 0;
+    mc_state->step = MC_STEP_START;
+    mc_state->info_step = MC_INFO_STEP_START;
     return 0;
 }
 
@@ -1944,7 +2040,7 @@ int Mc_StartCopyFile(u32 port, u32 slot, char *path, char *source_path, int size
     mc_request.path = path;
     mc_request.second_path = source_path;
     mc_request.count = size;
-    mc_request.info_step = mc_request.step = 0;
+    mc_request.info_step = mc_request.step = MC_STEP_START;
     return 0;
 }
 
@@ -1965,7 +2061,7 @@ int Mc_StartRead(u32 port, u32 slot, char *path, void *buffer, int size) {
     mc_state->path = path;
     mc_state->read_buffer = buffer;
     mc_state->size = size;
-    mc_state->info_step = mc_state->step = 0;
+    mc_state->info_step = mc_state->step = MC_STEP_START;
     return 0;
 }
 
@@ -1981,7 +2077,7 @@ int Mc_StartFormat(u32 port, u32 slot) {
     mc_request.request = MC_REQUEST_FORMAT;
     mc_request.port = port;
     mc_request.slot = slot;
-    mc_request.step = 0;
+    mc_request.step = MC_STEP_START;
     return 0;
 }
 
@@ -2000,7 +2096,7 @@ int Mc_StartChdir(u32 port, u32 slot, char *path, char *pwd) {
     mc_state->port = port;
     mc_state->slot = slot;
     mc_state->path = path;
-    mc_state->step = 0;
+    mc_state->step = MC_STEP_START;
     return 0;
 }
 
@@ -2018,7 +2114,7 @@ int Mc_StartMkdir(u32 port, u32 slot, char *path) {
     mc_state->request = MC_REQUEST_MKDIR;
     mc_state->slot = slot;
     mc_state->port = port;
-    mc_state->step = 0;
+    mc_state->step = MC_STEP_START;
     return 0;
 }
 
@@ -2036,7 +2132,7 @@ int Mc_StartFindFile(u32 port, u32 slot, char *path) {
     mc_state->request = MC_REQUEST_FIND_FILE;
     mc_state->slot = slot;
     mc_state->port = port;
-    mc_state->step = 0;
+    mc_state->step = MC_STEP_START;
     return 0;
 }
 
@@ -2088,7 +2184,7 @@ int Mc_Update(void) {
     if (result < 0) {
         result = -mc_request.request;
         mc_request.request = MC_REQUEST_NONE;
-        mc_request.step = 0;
+        mc_request.step = MC_STEP_START;
         if (result == 0) {
             return -100;
         }
@@ -2096,7 +2192,7 @@ int Mc_Update(void) {
     }
     if (result > 0) {
         mc_request.request = MC_REQUEST_NONE;
-        mc_request.step = 0;
+        mc_request.step = MC_STEP_START;
         return 0;
     }
     return mc_request.request;

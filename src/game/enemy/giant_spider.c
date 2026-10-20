@@ -130,10 +130,10 @@ static void GiantSpider_Think(Entity *entity, s32 run_now) {
     entity->flags |= ENTITY_FLAG_LOOK_AT_TARGET;
     EntityAi_StepState(entity);
     switch (entity->state) {
-    case 0:
-    case 1:
+    case ENTITY_STATE_UNAWARE:
+    case ENTITY_STATE_SEARCHING:
         break;
-    case 2:
+    case ENTITY_STATE_NOTICED:
         GiantSpider_ThinkCombat(entity, run_now);
         return;
     }
@@ -148,7 +148,7 @@ static void GiantSpider_ThinkTurnToPlayer(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 angle;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
     if (ABS(angle) > DEG_TO_RAD(25)) {
         if (angle >= 0.0f) {
@@ -171,7 +171,7 @@ static void GiantSpider_ThinkCombat(Entity *entity, s32 run_now) {
     s32 side;
     f32 angle;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -185,7 +185,7 @@ static void GiantSpider_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, GiantSpider_RangedAttack, run_now);
             } else {
@@ -193,7 +193,7 @@ static void GiantSpider_ThinkCombat(Entity *entity, s32 run_now) {
             }
             ai_state->step_index = 0;
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(angle) > DEG_TO_RAD(25)) {
                 if (angle >= 0.0f) {
@@ -204,14 +204,14 @@ static void GiantSpider_ThinkCombat(Entity *entity, s32 run_now) {
                 return;
             }
             ai_state->step_index = 0;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
@@ -258,7 +258,7 @@ static void GiantSpider_PlayTurnAnim6Or11(Entity *entity) {
         } else {
             Motion_Start(entity, 0xB, 0, entity->params->motion_blend_frames, 1);
         }
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 3;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_TURN;
         ENTITY_UNK5C(entity)->as_s32 = 0;
         entity->action_step++;
         break;
@@ -295,7 +295,7 @@ static void GiantSpider_PlayTurnAnim7Or12(Entity *entity) {
         } else {
             Motion_Start(entity, 0xC, 0, entity->params->motion_blend_frames, 1);
         }
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 3;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_TURN;
         ENTITY_UNK5C(entity)->as_s32 = 0;
         entity->action_step++;
         break;
@@ -331,7 +331,7 @@ static void GiantSpider_RangedAttack(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
+        Motion_Start(entity, kind + ENTITY_MOTION_RANGED_ATTACK, 0, entity->params->motion_blend_frames >> 1, 1);
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->action_step++;
     case 1:

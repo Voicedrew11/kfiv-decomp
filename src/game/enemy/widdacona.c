@@ -82,7 +82,7 @@ static void Widdacona_Animate(Entity *entity) {
 
     ai_state = &entity->ai_state;
     if (ENTITY_FLAG_BITS(entity)->animates) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
@@ -117,7 +117,7 @@ static void Widdacona_Death(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FLY) {
             entity->collision_radius = 20.0f;
         }
@@ -186,9 +186,9 @@ static void Widdacona_Dormant(Entity *entity) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? MOTION_STEP_MOVE_FLAT : MOTION_STEP_MOVE;
         }
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
@@ -205,9 +205,9 @@ static void Widdacona_Dormant(Entity *entity) {
             if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
                 Motion_Start(entity, 2, 0, entity->params->motion_blend_frames, 0);
                 if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-                    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+                    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
                 } else {
-                    ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
+                    ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? MOTION_STEP_MOVE_FLAT : MOTION_STEP_MOVE;
                 }
                 ENTITY_FLAG_BITS(entity)->hit_strength = 0;
                 entity->action_step++;
@@ -251,7 +251,7 @@ static void Widdacona_ReturnToDormant(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 2, EntityAi_AnimationFrameCount(entity, 2) - 1, entity->params->motion_blend_frames, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ENTITY_FLAG_BITS(entity)->bit15 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
@@ -293,7 +293,7 @@ static void Widdacona_Think(Entity *entity, s32 run_now) {
         EntityAi_StartAction(entity, Widdacona_ReturnToDormant, run_now);
         return;
     }
-    if (entity->state == 2) {
+    if (entity->state == ENTITY_STATE_NOTICED) {
         Widdacona_ThinkCombat(entity, run_now);
         return;
     }
@@ -308,7 +308,7 @@ static void Widdacona_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 side;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -327,28 +327,28 @@ static void Widdacona_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, Widdacona_RangedAttack0, run_now);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         entity->move_command = EntityAi_TurnCommand(entity);
     }
     EntityAi_StartAction(entity, ai_state->move, run_now);

@@ -18,13 +18,14 @@
 #include "sound/sound_game.h"
 #include <stdio.h>
 
+
 extern void (*map_load_steps[])(void);
 
 /* Resets the background map load and the pending request. */
 void MapLoad_Reset(void) {
     memset(&map_load_state, 0, sizeof(MapLoadState));
     map_load_state.file_handle = -1;
-    map_load_state.step = 0;
+    map_load_state.step = MAP_LOAD_STEP_IDLE;
     map_load_state.request = NULL;
     map_load_committed = 0;
     map_load_request.x = 0.0f;
@@ -54,7 +55,7 @@ void MapLoad_Update(void) {
         if (current->tag != request->map) {
             if (other->loaded == 0 || other->tag != request->map) {
                 if (map_load_state.request == NULL || map_load_state.request->map != request->map) {
-                    if (map_load_state.step == 0) {
+                    if (map_load_state.step == MAP_LOAD_STEP_IDLE) {
                         map_load_state.request = request;
                     } else {
                         map_load_state.next_request = request;
@@ -63,8 +64,8 @@ void MapLoad_Update(void) {
             }
         }
     }
-    if (map_load_state.next_request != NULL && map_load_state.step != 4) {
-        map_load_state.step = 2;
+    if (map_load_state.next_request != NULL && map_load_state.step != MAP_LOAD_STEP_WAIT_FOR_CHUNK) {
+        map_load_state.step = MAP_LOAD_STEP_OPEN_FILE;
         map_load_state.request = map_load_state.next_request;
         map_load_state.next_request = NULL;
         if (map_load_state.file_handle != -1) {
@@ -76,7 +77,7 @@ void MapLoad_Update(void) {
         }
     }
     if ((map_load_state.flags.raw & MAP_LOAD_HOLD_MASK) == MAP_LOAD_HOLD_REQUESTED) {
-        if (map_load_state.step == 0 || map_load_state.step == 3 || map_load_state.step == 5) {
+        if (map_load_state.step == MAP_LOAD_STEP_IDLE || map_load_state.step == MAP_LOAD_STEP_READ_CHUNK || map_load_state.step == MAP_LOAD_STEP_WAIT_FOR_SET_UP) {
             map_load_state.flags.f.bit1 = TRUE;
             map_load_state.flags.f.bit2 = FALSE;
         }
@@ -85,7 +86,7 @@ void MapLoad_Update(void) {
         if (record != NULL && record->needs_neighbour_map != 0) {
             if ((u32)(map_load_state.step - 1) < 5) {
                 Input_StopRumble();
-                while (map_load_state.step != 5) {
+                while (map_load_state.step != MAP_LOAD_STEP_WAIT_FOR_SET_UP) {
                     GameLoop_DrawFrame(0);
                     Packet_WaitForSend();
                     Display_SwapBuffers(0);
@@ -97,7 +98,7 @@ void MapLoad_Update(void) {
                     GameLoop_RunSoundLoads();
                     Sound_Update();
                 }
-                map_load_state.step = 6;
+                map_load_state.step = MAP_LOAD_STEP_SET_UP_MAP;
             }
         }
         map_load_steps[map_load_state.step]();
@@ -107,7 +108,7 @@ void MapLoad_Update(void) {
 /* Finishes the running map load at once, makes the loaded map current, puts the player at its start
    and frees the old map. */
 void MapLoad_FinishAndEnter(void) {
-    while (map_load_state.step != 5) {
+    while (map_load_state.step != MAP_LOAD_STEP_WAIT_FOR_SET_UP) {
         GameLoop_DrawFrame(0);
         Packet_WaitForSend();
         Display_SwapBuffers(0);
@@ -116,10 +117,10 @@ void MapLoad_FinishAndEnter(void) {
         DrawList_Clear();
         map_load_steps[map_load_state.step]();
     }
-    map_load_state.step = 6;
+    map_load_state.step = MAP_LOAD_STEP_SET_UP_MAP;
     do {
         map_load_steps[map_load_state.step]();
-    } while (map_load_state.step != 0);
+    } while (map_load_state.step != MAP_LOAD_STEP_IDLE);
     Map_MakeCurrent(current_map_slot == 0);
     player_state.position.x = ((MapSlotUnk08 *)map_slots[current_map_slot].header)->player_start_x;
     player_state.position.y = ((MapSlotUnk08 *)map_slots[current_map_slot].header)->player_start_y;
@@ -304,7 +305,7 @@ void MapLoad_ActivateMap(void) {
     map_load_state.position.y = map_load_state.request->y;
     map_load_state.position.z = map_load_state.request->z;
     map_load_state.position.w = 0.0f;
-    map_load_state.step = 0;
+    map_load_state.step = MAP_LOAD_STEP_IDLE;
     map_load_state.request = NULL;
     MapLoad_Release();
 }

@@ -888,7 +888,7 @@ int MenuDraw_Number(KindObject *object) { // match: returns int, though no path 
     if (sprite == NULL) {
         return;
     }
-    if (sprite->kind == 2) {
+    if (sprite->kind == KIND_OBJECT_NUMBER) {
         value = MenuDraw_GetNumber(sprite->number_id);
     } else {
         value = sprite->number_id;
@@ -3188,13 +3188,13 @@ void MenuSprite_DrawPlain(int owner, int index, int param) {
     }
     if (object != NULL) {
         switch (object->kind) {
-        case 0:
+        case KIND_OBJECT_SPRITE:
             MenuDraw_Sprite(object);
             break;
-        case 1:
+        case KIND_OBJECT_WORD:
             MenuDraw_Word(object);
             break;
-        case 2:
+        case KIND_OBJECT_NUMBER:
             MenuDraw_Number(object);
             break;
         }
@@ -4531,13 +4531,13 @@ void MenuSprite_Draw(int owner, int entry_id, int param, int variant) {
             object = (KindObject *)MenuSprite_SetAlpha((SpritePacket *)object, variant);
         }
         switch (object->kind) {
-        case 0:
+        case KIND_OBJECT_SPRITE:
             MenuDraw_Sprite(object);
             break;
-        case 1:
+        case KIND_OBJECT_WORD:
             MenuDraw_Word(object);
             break;
-        case 2:
+        case KIND_OBJECT_NUMBER:
             MenuDraw_Number(object);
             break;
         }

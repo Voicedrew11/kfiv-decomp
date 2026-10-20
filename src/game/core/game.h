@@ -12,8 +12,8 @@ typedef struct {
     char player_control;            /* 0x00 nonzero: script blends are skipped */
     char set_on_map_reset;          /* 0x01 Flag set to 1 after the map state reset */
     char paused;                    /* 0x02 1 while GameLoop_UpdatePause holds the game */
-    s8 camera_mode;                 /* 0x03 0 the camera follows the player, 1 the script places it */
-    u8 camera_look_mode;            /* 0x04 0 or 1 */
+    s8 camera_mode;                 /* 0x03 CAMERA_MODE_ */
+    u8 camera_look_mode;            /* 0x04 CAMERA_LOOK_ */
     s8 camera_move_enabled;         /* 0x05 nonzero: the camera moves to CameraState.move_to_point */
     char player_run_disabled;       /* 0x06 nonzero: the player cannot run (Player_Update) */
     char movement_input_enabled;    /* 0x07 0: the player's move buttons are ignored */
@@ -41,6 +41,15 @@ typedef struct {
     void *effect_owner;             /* 0x40 the model of the item effect that asked for unk30 = 0xC5F (ItemEffect_StepRequestGameStatus) */
     int item_use_cooldown;          /* 0x44 counts down to 0; 1 when an item was just used (Player_UseItem) */
 } GameStatus;
+
+/* GameStatus.camera_mode */
+#define CAMERA_MODE_FOLLOW_PLAYER   0       /* the camera follows the player */
+#define CAMERA_MODE_SCRIPTED        1       /* the script places the camera */
+
+/* GameStatus.camera_look_mode: no look at a point, turn at once to it, or ease toward it */
+#define CAMERA_LOOK_NONE            0
+#define CAMERA_LOOK_SNAP            1
+#define CAMERA_LOOK_EASE            2
 
 /* GameStatus with bits 10 and 11 of the flag word (GameStatus.bits10) apart, as ScriptCmd_ExitMainLoop
    sets them */

@@ -67,7 +67,7 @@ void MapObject_InitMap(int map) {
     int j;
 
     for (; i < count; i++, object++) {
-        MAP_OBJECT_BYTES(object)->step = 0;
+        MAP_OBJECT_BYTES(object)->step = MAP_OBJECT_STEP_NOT_STARTED;
         if (object->definition->model_index == 0xFFFF) {
             object->model->get_point = MapObject_GetPositionAsPoint;
             object->model->update_bone_points = MapObject_UpdateNoBonePoints;
@@ -98,9 +98,9 @@ void MapObject_InitMap(int map) {
         object->interact_radius = object->definition->interact_radius * scale + 100.0f;
         object->model->radius = object->reach_radius;
         if (object->model->model_flags & 1) {
-            MAP_OBJECT_BYTES(object)->anim = 0;
+            MAP_OBJECT_BYTES(object)->anim = MAP_OBJECT_ANIM_FIRST;
         } else {
-            MAP_OBJECT_BYTES(object)->anim = -1;
+            MAP_OBJECT_BYTES(object)->anim = MAP_OBJECT_ANIM_NONE;
             ModelMatrix_Build(object->model, &object->model->position, &object->model->rotation, &object->model->scale_x);
             for (j = 0; j < object->model->part_count; j++) {
                 ModelMatrix_BuildPartLocal(object->model, &object->model->parts[j], &object->model->parts[j]);
@@ -119,7 +119,7 @@ void MapObject_InitMap(int map) {
                 object->model->draw = NULL;
                 break;
         }
-        if (object->definition->kind == 5) {
+        if (object->definition->kind == MAP_OBJECT_KIND_DISTANCE_FADE) {
             object->model->draw = MapObject_DrawModelNoDepthWrite;
         }
         if (object->source->def_index == 0x91) {
@@ -521,7 +521,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             } else {
                 object->model->fog_block = &map_draw_state.fog_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->fog_block_index];
             }
-            if (object->definition->kind == 9) {
+            if (object->definition->kind == MAP_OBJECT_KIND_LIGHT) {
                 LinkedPoint_FindHitsExclude(object->model, *(s16 *)object->work);
             } else if (object->source->linked_point_owner != 0 && object->source->linked_point_owner != 0xFF) {
                 LinkedPoint_FindHitsForOwner(object->model, object->source->linked_point_owner);
@@ -582,7 +582,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             } else {
                 object->model->fog_block = &map_draw_state.fog_blocks[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[4]];
             }
-            if (object->definition->kind == 9) {
+            if (object->definition->kind == MAP_OBJECT_KIND_LIGHT) {
                 LinkedPoint_FindHitsExclude(object->model, *(s16 *)object->work);
             } else if (object->source->linked_point_owner != 0 && object->source->linked_point_owner != 0xFF) {
                 LinkedPoint_FindHitsForOwner(object->model, object->source->linked_point_owner);
@@ -606,10 +606,10 @@ void MapObject_Activate(MapObject *object) {
 
     if (object != NULL && !(object->state_flags & MAP_OBJECT_IN_USE)) {
         object->state_flags |= MAP_OBJECT_IN_USE;
-        MAP_OBJECT_BITS(object)->step = 0;
+        MAP_OBJECT_BITS(object)->step = MAP_OBJECT_STEP_NOT_STARTED;
         MAP_OBJECT_BITS(object)->bit1 = FALSE;
         MAP_OBJECT_BITS(object)->bit2 = FALSE;
-        MAP_OBJECT_BITS(object)->anim = 4;
+        MAP_OBJECT_BITS(object)->anim = MAP_OBJECT_ANIM_OFF;
         model = object->model;
         model->fade_enabled = 0;
         model->colour_red = model->colour_green = model->colour_blue = model->alpha = 128.0f;
@@ -620,13 +620,13 @@ void MapObject_Activate(MapObject *object) {
 /* Takes a map object out of use: ends its kind's state machine and clears its state. */
 void MapObject_Deactivate(MapObject *object) {
     if (object != NULL) {
-        if (MAP_OBJECT_BITS(object)->step != 0) {
+        if (MAP_OBJECT_BITS(object)->step != MAP_OBJECT_STEP_NOT_STARTED) {
             map_object_end_hooks[object->definition->kind]((MapTrigger *)object);
         }
         MapObject_StopSound(object);
         Effect_FreeForOwner((Entity *)object); // match: shared prototype takes an Entity
         object->state_flags &= ~MAP_OBJECT_IN_USE;
-        MAP_OBJECT_BITS(object)->step = 0;
+        MAP_OBJECT_BITS(object)->step = MAP_OBJECT_STEP_NOT_STARTED;
         MAP_OBJECT_BITS(object)->bit1 = FALSE;
         MAP_OBJECT_BITS(object)->bit2 = FALSE;
         memset(object->work, 0, sizeof(object->work));
@@ -649,16 +649,16 @@ void MapObject_Break(MapObject *object) {
     if (!(MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_BREAKABLE)) {
         return;
     }
-    if (MAP_OBJECT_BYTES(object)->step == 0) {
+    if (MAP_OBJECT_BYTES(object)->step == MAP_OBJECT_STEP_NOT_STARTED) {
         return;
     }
-    if (MAP_OBJECT_BYTES(object)->step == 0xF) {
+    if (MAP_OBJECT_BYTES(object)->step == MAP_OBJECT_STEP_BROKEN) {
         return;
     }
     object->state_flags &= ~MAP_OBJECT_SCRIPTED;
-    MAP_OBJECT_BYTES(object)->step = 0xF;
+    MAP_OBJECT_BYTES(object)->step = MAP_OBJECT_STEP_BROKEN;
     if (MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_BREAK_ANIM) {
-        MapObject_StartAnim(object, 1);
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_BREAK);
     }
     Effect_StartSpawner(object->definition->break_effect, &object->model->position, &object->model->rotation, &map_slots[MAP_OBJECT_BYTES(object)->map_slot & 1]);
     if (object->source->break_script != 0 && (MAP_OBJECT_BYTES(object)->map_slot & 1) == current_map_slot) {
@@ -715,7 +715,7 @@ int MapObject_StepAnim(MapObject *object) {
             }
         }
     }
-    if (MAP_OBJECT_BITS(object)->anim == 4 || MAP_OBJECT_BITS(object)->anim == 5) {
+    if (MAP_OBJECT_BITS(object)->anim == MAP_OBJECT_ANIM_OFF || MAP_OBJECT_BITS(object)->anim == MAP_OBJECT_ANIM_ON) {
         anim = &object->definition->anims[MAP_OBJECT_BYTES(object)->anim + 2];
         if (anim->sound != 0xFFFF && anim->sound_frame == MODEL_CHANNEL(object->model)->frame) {
             range = 800.0f;
@@ -784,8 +784,8 @@ void MapObject_SetScripted(MapObject *object, int scripted) {
         MAP_OBJECT_BITS(object)->bit20 = scripted;
         MAP_OBJECT_BITS(object)->bit21 = FALSE;
         MAP_OBJECT_BITS(object)->bit22 = FALSE;
-        MAP_OBJECT_BYTES(object)->anim = 0;
-        MAP_OBJECT_BYTES(object)->step = 0;
+        MAP_OBJECT_BYTES(object)->anim = MAP_OBJECT_ANIM_FIRST;
+        MAP_OBJECT_BYTES(object)->step = MAP_OBJECT_STEP_NOT_STARTED;
     }
 }
 
@@ -795,7 +795,7 @@ void MapObject_PlayScriptedAnim(MapObject *object, int anim, int bit22) {
         MAP_OBJECT_BITS(object)->bit21 = FALSE;
         MAP_OBJECT_BITS(object)->bit22 = bit22;
         MAP_OBJECT_BITS(object)->anim = anim;
-        MAP_OBJECT_BITS(object)->step = 0;
+        MAP_OBJECT_BITS(object)->step = MAP_OBJECT_STEP_NOT_STARTED;
     }
 }
 

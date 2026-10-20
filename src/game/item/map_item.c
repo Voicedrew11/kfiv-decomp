@@ -24,6 +24,10 @@
 #include "player/player_update.h"
 
 /* Radians the held item turns each frame while the pickup is held. */
+/* LevelDef.state: 0 before the table is reset, then 1 (bit 0 lets the menus list the item) */
+#define ITEM_DEF_STATE_NEW     0
+#define ITEM_DEF_STATE_LISTED  1
+/* a map object kind: bones and gravestones that hold an item (map_object/door.c) */
 #define PICKUP_HOLD_SPIN_PER_FRAME 0.08377580f
 
 /* 0x4147E0 the steps of the item pickup in progress, MapItem_UpdatePickup runs the current one */
@@ -62,8 +66,8 @@ void MapItem_Init(void) {
     MapItem_ClearMap(1);
     def = (LevelDef *)item_name_defs;
     for (i = 0; i < 0x17C; i++, def++) {
-        if (def->state == 0) {
-            def->state = 1;
+        if (def->state == ITEM_DEF_STATE_NEW) {
+            def->state = ITEM_DEF_STATE_LISTED;
         }
     }
 }
@@ -774,7 +778,7 @@ void MapItem_PickupPutBack(void) {
     Vector_Copy(&pickup_item->model->position, pickup_start_position);
     Vector_Copy(&pickup_item->model->rotation, pickup_start_rotation);
     object = (MapObject *)pickup_item->map_object;
-    if (object != NULL && (object->state_flags & MAP_OBJECT_IN_USE) && object->definition->kind == 3) {
+    if (object != NULL && (object->state_flags & MAP_OBJECT_IN_USE) && object->definition->kind == MAP_OBJECT_KIND_ITEM_HOLDER) {
         MapItem_Unlink(pickup_item);
     }
     suspended_updates[0] = 0;

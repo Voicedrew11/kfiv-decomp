@@ -85,10 +85,10 @@ static void DarkFlower_Think(Entity *entity, s32 run_now) {
         return;
     }
     switch (entity->state) {
-    case 0:
-    case 1:
+    case ENTITY_STATE_UNAWARE:
+    case ENTITY_STATE_SEARCHING:
         break;
-    case 2:
+    case ENTITY_STATE_NOTICED:
         DarkFlower_ThinkCombat(entity, run_now);
         return;
     }
@@ -102,7 +102,7 @@ static void DarkFlower_Think(Entity *entity, s32 run_now) {
 static void DarkFlower_ThinkWander(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     if (entity->action_timer == 0) {
         if (rand() % 100 >= 21) {
             f32 *point = ai_state->target_point;
@@ -126,7 +126,7 @@ static void DarkFlower_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 side;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -140,7 +140,7 @@ static void DarkFlower_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
                     EntityAi_StartAction(entity, DarkFlower_RangedAttack0, run_now);
@@ -151,22 +151,22 @@ static void DarkFlower_ThinkCombat(Entity *entity, s32 run_now) {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             EntityPoint_PickNear(entity->spawn_info->wander_radius, ai_state->target_point, entity->spawn_info, entity->model->position);
             entity->target = ai_state->target_point;
             entity->action_timer = rand() % 60 + 210;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 60 + 90;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
     EntityAi_StartAction(entity, ai_state->move, run_now);

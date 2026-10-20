@@ -84,7 +84,7 @@ static void WiddaQueen_Animate(Entity *entity) {
 
     ai_state = &entity->ai_state;
     if (ENTITY_FLAG_BITS(entity)->animates) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
@@ -158,7 +158,7 @@ static void WiddaQueen_Think(Entity *entity, s32 run_now) {
 static void WiddaQueen_ThinkDecide(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     if (EntityAi_ShouldGuard(entity, 300.0f, PI)) {
         // match: called as returning int; only then is the 2 below loaded into $3
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
@@ -197,7 +197,7 @@ static void WiddaQueen_MeleeAttack0(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
@@ -258,7 +258,7 @@ static void WiddaQueen_MeleeAttack1(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x15, 10, (s16)entity->params->action_frames, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ai_state->step_index = 0;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
@@ -511,7 +511,7 @@ static void WiddaQueen_Death(Entity *entity) {
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
-            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;
             ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             ENTITY_FLAG_BITS(entity)->no_player_collision = 1;

@@ -31,6 +31,16 @@
 #include "save/save_state.h"
 #include "ui/menu_draw.h"
 
+/* list_step of save_screen_state, the save screen: -1 waits for input */
+#define SAVE_SCREEN_STEP_WAIT_INPUT        -1
+#define SAVE_SCREEN_STEP_SAVING             0  /* a save runs, the card is busy */
+#define SAVE_SCREEN_STEP_DONE               2  /* a save ended, a press returns to the list */
+#define SAVE_SCREEN_STEP_CONFIRM_EMPTY      6  /* asks yes or no before saving to an empty line */
+#define SAVE_SCREEN_STEP_CONFIRM_OVERWRITE  7  /* asks yes or no before overwriting a save */
+#define SAVE_SCREEN_STEP_CARD_ERROR        10  /* the card reports an error */
+#define SAVE_SCREEN_STEP_SAVE_FAILED       11  /* the card failed during a save */
+#define SAVE_SCREEN_STEP_NO_ROOM           20  /* the card has no room, a press returns to the list */
+
 /* Appends node to the ring being built; the seventh one becomes the page mark. */
 #define LINK_ITEM(node, page_mark)          \
     count++;                                \
@@ -5252,7 +5262,7 @@ static int SaveScreen_Start(HandlerContext *context) {
     screen->card_op_running = 0;
     screen->selected_card = 0;
     screen->selected_save = 1;
-    screen->confirm_choice = 1;
+    screen->confirm_choice = CONFIRM_CHOICE_NO;
     screen->check_finished = 0;
     screen->save_state_0 = 0;
     screen->save_state_1 = 0;
@@ -5478,10 +5488,10 @@ static void SaveScreen_UpdateCardSelect(void) {
             if (save_screen_state.dialog_id == 13) {
                 save_screen_state.dialog_id = 14;
                 save_screen_state.selected_save = 1;
-                save_screen_state.list_step = -1;
+                save_screen_state.list_step = SAVE_SCREEN_STEP_WAIT_INPUT;
             } else if (SaveCard_HasAnySave() != 0 || SaveCard_HasRoomForFolder(save_screen_state.selected_card) > 0) {
                 save_screen_state.input_locked = 1;
-                save_screen_state.list_step = -1;
+                save_screen_state.list_step = SAVE_SCREEN_STEP_WAIT_INPUT;
                 system_screen_state = 2;
                 save_screen_state.selected_save = 0;
             } else {
@@ -5501,7 +5511,7 @@ static void SaveScreen_UpdateCardSelect(void) {
                     if (SaveCard_HasAnySave() != 0 || SaveCard_HasRoomForFolder(save_screen_state.selected_card) > 0) {
                         save_screen_state.input_locked = 1;
                         system_screen_state = 2;
-                        save_screen_state.list_step = -1;
+                        save_screen_state.list_step = SAVE_SCREEN_STEP_WAIT_INPUT;
                         save_screen_state.selected_save = 0;
                         SaveCard_Cancel(save_screen_state.selected_card);
                     } else {
@@ -5624,7 +5634,7 @@ static void SaveScreen_UpdateCardSelect(void) {
             if (screen_part_alphas[i] < 0.0f) {
                 memset(screen_part_alphas, 0, 0x400);
                 if (system_screen_state == 2) {
-                    save_screen_state.confirm_press_state = 0;
+                    save_screen_state.confirm_press_state = CONFIRM_PRESS_IDLE;
                     save_screen_handler = SaveScreen_UpdateSaveList;
                     save_screen_state.free_clusters = 0;
                     save_screen_state.selected_save = 0;
@@ -5722,8 +5732,8 @@ static void SaveScreen_UpdateSaveList(void) {
     menu_number_93 = info[2]->play_minutes;
     menu_number_94 = info[2]->play_seconds;
 
-    if ((save_screen_state.list_step == -1 && (save_screen_state.free_clusters == 0 || save_screen_state.free_clusters != SaveCard_GetFreeClusters(save_screen_state.selected_card))) ||
-        (save_screen_state.list_step == 2 && save_screen_state.free_clusters != SaveCard_GetFreeClusters(save_screen_state.selected_card))) {
+    if ((save_screen_state.list_step == SAVE_SCREEN_STEP_WAIT_INPUT && (save_screen_state.free_clusters == 0 || save_screen_state.free_clusters != SaveCard_GetFreeClusters(save_screen_state.selected_card))) ||
+        (save_screen_state.list_step == SAVE_SCREEN_STEP_DONE && save_screen_state.free_clusters != SaveCard_GetFreeClusters(save_screen_state.selected_card))) {
         save_screen_state.free_clusters = 0;
         for (i = 0; i < 3; i++) {
             MENU_SCREEN_SAVES(&save_screen_state)->save_state[i] = SaveCard_GetSaveState(i);
@@ -5828,37 +5838,37 @@ static void SaveScreen_UpdateSaveList(void) {
         SET_PART_MODE_OF(&mc_parts[i]);
         if (kind == 3) {
             switch (save_screen_state.list_step) {
-            case 6:
+            case SAVE_SCREEN_STEP_CONFIRM_EMPTY:
                 MenuSprite_DrawPlain((int)&mc_parts[i], kind, 6);
                 break;
-            case 7:
+            case SAVE_SCREEN_STEP_CONFIRM_OVERWRITE:
                 MenuSprite_DrawPlain((int)&mc_parts[i], kind, 7);
                 break;
-            case 0:
+            case SAVE_SCREEN_STEP_SAVING:
                 MenuSprite_DrawPlain((int)&mc_parts[i], kind, 0);
                 break;
-            case 2:
+            case SAVE_SCREEN_STEP_DONE:
                 MenuSprite_DrawPlain((int)&mc_parts[i], kind, 2);
                 break;
-            case 20:
+            case SAVE_SCREEN_STEP_NO_ROOM:
                 MenuSprite_DrawPlain((int)&mc_parts[i], kind, 20);
                 break;
-            case 10:
+            case SAVE_SCREEN_STEP_CARD_ERROR:
                 MenuSprite_DrawPlain((int)&mc_parts[i], kind, 10);
                 break;
-            case 11:
+            case SAVE_SCREEN_STEP_SAVE_FAILED:
                 MenuSprite_DrawPlain((int)&mc_parts[i], kind, 11);
                 break;
             }
         } else {
             switch (save_screen_state.list_step) {
-            case 0:
-            case 2:
-            case 6:
-            case 7:
-            case 10:
-            case 11:
-            case 20:
+            case SAVE_SCREEN_STEP_SAVING:
+            case SAVE_SCREEN_STEP_DONE:
+            case SAVE_SCREEN_STEP_CONFIRM_EMPTY:
+            case SAVE_SCREEN_STEP_CONFIRM_OVERWRITE:
+            case SAVE_SCREEN_STEP_CARD_ERROR:
+            case SAVE_SCREEN_STEP_SAVE_FAILED:
+            case SAVE_SCREEN_STEP_NO_ROOM:
                 MenuSprite_Draw((int)&mc_parts[i], kind + 1000, 0, screen_part_alphas[i]);
                 break;
             }
@@ -5866,7 +5876,7 @@ static void SaveScreen_UpdateSaveList(void) {
         SET_PART_MODE(0);
     }
 
-    if (save_screen_state.list_step == 6 || save_screen_state.list_step == 7) {
+    if (save_screen_state.list_step == SAVE_SCREEN_STEP_CONFIRM_EMPTY || save_screen_state.list_step == SAVE_SCREEN_STEP_CONFIRM_OVERWRITE) {
         bar.first.f.lo16 = 0x7490;
         bar.first.f.mid16 = save_screen_state.confirm_choice * 0xC0 + 0x80A0;
         bar.first.f.mid24 = 0x5F370;
@@ -5886,14 +5896,14 @@ static void SaveScreen_UpdateSaveList(void) {
         save_screen_state.card_update_result = -1;
     }
     if (save_screen_state.card_update_result < 0) {
-        if (save_screen_state.list_step == 0 || save_screen_state.list_step == 11) {
-            save_screen_state.list_step = 11;
+        if (save_screen_state.list_step == SAVE_SCREEN_STEP_SAVING || save_screen_state.list_step == SAVE_SCREEN_STEP_SAVE_FAILED) {
+            save_screen_state.list_step = SAVE_SCREEN_STEP_SAVE_FAILED;
         } else {
-            save_screen_state.list_step = 10;
+            save_screen_state.list_step = SAVE_SCREEN_STEP_CARD_ERROR;
         }
     }
-    if (save_screen_state.list_step == 0 && SaveCard_CheckBusy() == 0) {
-        save_screen_state.list_step = 2;
+    if (save_screen_state.list_step == SAVE_SCREEN_STEP_SAVING && SaveCard_CheckBusy() == 0) {
+        save_screen_state.list_step = SAVE_SCREEN_STEP_DONE;
         if (save_lines_reorder_pending != 0) {
             save_lines_reorder_pending = 0;
             same_count = 0;
@@ -5940,71 +5950,71 @@ static void SaveScreen_UpdateSaveList(void) {
 
     report = Pad_GetReport(0, 0);
     if ((report->pressed & PAD_CROSS) && modal_pad_mode != 0xFF) {
-        if (save_screen_state.list_step != 0) {
+        if (save_screen_state.list_step != SAVE_SCREEN_STEP_SAVING) {
             report = Pad_GetReport(0, 0);
             if (report->held & (PAD_UP | PAD_DOWN)) {
-                save_screen_state.confirm_press_state = 1;
+                save_screen_state.confirm_press_state = CONFIRM_PRESS_WAIT_DIRECTION;
             } else {
-                save_screen_state.confirm_press_state = 3;
+                save_screen_state.confirm_press_state = CONFIRM_PRESS_FIRE;
             }
         }
     }
-    if (save_screen_state.confirm_press_state == 2) {
-        save_screen_state.confirm_press_state = 3;
+    if (save_screen_state.confirm_press_state == CONFIRM_PRESS_WAIT_FRAME) {
+        save_screen_state.confirm_press_state = CONFIRM_PRESS_FIRE;
     }
-    if (save_screen_state.confirm_press_state == 1) {
+    if (save_screen_state.confirm_press_state == CONFIRM_PRESS_WAIT_DIRECTION) {
         report = Pad_GetReport(0, 0);
         if (report->held & (PAD_UP | PAD_DOWN)) {
             if (menu_buttons & (PAD_UP | PAD_DOWN)) {
-                save_screen_state.confirm_press_state = 2;
+                save_screen_state.confirm_press_state = CONFIRM_PRESS_WAIT_FRAME;
             }
         } else {
-            save_screen_state.confirm_press_state = 3;
+            save_screen_state.confirm_press_state = CONFIRM_PRESS_FIRE;
         }
     }
 
-    if (save_screen_state.list_step != 0 && save_screen_state.input_locked == 0) {
-        if (save_screen_state.confirm_press_state == 3) {
-            save_screen_state.confirm_press_state = 0;
+    if (save_screen_state.list_step != SAVE_SCREEN_STEP_SAVING && save_screen_state.input_locked == 0) {
+        if (save_screen_state.confirm_press_state == CONFIRM_PRESS_FIRE) {
+            save_screen_state.confirm_press_state = CONFIRM_PRESS_IDLE;
             switch (save_screen_state.list_step) {
-            case -1:
+            case SAVE_SCREEN_STEP_WAIT_INPUT:
                 Sound_PlayMenu(0);
                 save_state = SaveCard_GetSaveState(save_line_write_slots[save_screen_state.selected_save]);
                 if (save_state == 0) {
                     if (SaveCard_HasRoomFor(save_screen_state.selected_card, 1, 0) > 0 &&
                         MENU_SCREEN_SAVES(&save_screen_state)->save_state[save_screen_state.selected_save] != -1) {
                         save_lines_reorder_pending = 1;
-                        save_screen_state.list_step = 6;
+                        save_screen_state.list_step = SAVE_SCREEN_STEP_CONFIRM_EMPTY;
                         save_screen_state.free_clusters = SaveCard_GetFreeClusters(save_screen_state.selected_card);
                     } else {
-                        save_screen_state.list_step = 20;
+                        save_screen_state.list_step = SAVE_SCREEN_STEP_NO_ROOM;
                         save_lines_reorder_pending = 0;
                     }
                 } else if (save_state == 1) {
-                    save_screen_state.list_step = 7;
+                    save_screen_state.list_step = SAVE_SCREEN_STEP_CONFIRM_OVERWRITE;
                 }
                 break;
-            case 6:
-            case 7:
-                if (save_screen_state.confirm_choice == 0) {
+            case SAVE_SCREEN_STEP_CONFIRM_EMPTY:
+            case SAVE_SCREEN_STEP_CONFIRM_OVERWRITE:
+                if (save_screen_state.confirm_choice == CONFIRM_CHOICE_YES) {
                     Sound_PlayMenu(0);
-                    save_screen_state.list_step = 0;
+                    save_screen_state.list_step = SAVE_SCREEN_STEP_SAVING;
                     PlayTime_Update();
                     Game_WriteSaveImage();
                     SaveCard_StartSave(save_screen_state.selected_card, save_line_write_slots[save_screen_state.selected_save], (s32 *)save_image);
                 } else {
                     Sound_PlayMenu(2);
-                    save_screen_state.list_step = -1;
+                    save_screen_state.list_step = SAVE_SCREEN_STEP_WAIT_INPUT;
                 }
-                save_screen_state.confirm_choice = 1;
+                save_screen_state.confirm_choice = CONFIRM_CHOICE_NO;
                 break;
-            case 2:
-            case 20:
+            case SAVE_SCREEN_STEP_DONE:
+            case SAVE_SCREEN_STEP_NO_ROOM:
                 Sound_PlayMenu(0);
-                save_screen_state.list_step = -1;
+                save_screen_state.list_step = SAVE_SCREEN_STEP_WAIT_INPUT;
                 break;
-            case 10:
-            case 11:
+            case SAVE_SCREEN_STEP_CARD_ERROR:
+            case SAVE_SCREEN_STEP_SAVE_FAILED:
                 Sound_PlayMenu(0);
                 system_screen_state = 3;
                 save_screen_state.input_locked = 1;
@@ -6012,29 +6022,29 @@ static void SaveScreen_UpdateSaveList(void) {
             }
         } else {
             report = Pad_GetReport(0, 0);
-            if ((report->pressed & PAD_CIRCLE) && modal_pad_mode != 0xFF && save_screen_state.confirm_press_state == 0) {
+            if ((report->pressed & PAD_CIRCLE) && modal_pad_mode != 0xFF && save_screen_state.confirm_press_state == CONFIRM_PRESS_IDLE) {
                 Sound_PlayMenu(2);
                 switch (save_screen_state.list_step) {
-                case -1:
+                case SAVE_SCREEN_STEP_WAIT_INPUT:
                     system_screen_state = 2;
                     save_screen_state.input_locked = 1;
                     break;
-                case 10:
-                case 11:
+                case SAVE_SCREEN_STEP_CARD_ERROR:
+                case SAVE_SCREEN_STEP_SAVE_FAILED:
                     system_screen_state = 3;
                     save_screen_state.input_locked = 1;
                     break;
-                case 6:
-                case 7:
-                    save_screen_state.confirm_choice = 1;
-                case 2:
-                case 20:
-                    save_screen_state.list_step = -1;
+                case SAVE_SCREEN_STEP_CONFIRM_EMPTY:
+                case SAVE_SCREEN_STEP_CONFIRM_OVERWRITE:
+                    save_screen_state.confirm_choice = CONFIRM_CHOICE_NO;
+                case SAVE_SCREEN_STEP_DONE:
+                case SAVE_SCREEN_STEP_NO_ROOM:
+                    save_screen_state.list_step = SAVE_SCREEN_STEP_WAIT_INPUT;
                     break;
                 }
             } else if (menu_buttons & PAD_DOWN) {
                 switch (save_screen_state.list_step) {
-                case -1:
+                case SAVE_SCREEN_STEP_WAIT_INPUT:
                     for (i = 0; i < 3; i++) {
                         save_screen_state.selected_save = ((s8)(save_screen_state.selected_save + 1) + 3) % 3;
                         if (MENU_SCREEN_SAVES(&save_screen_state)->save_state[save_screen_state.selected_save] >= 0) {
@@ -6045,15 +6055,15 @@ static void SaveScreen_UpdateSaveList(void) {
                         }
                     }
                     break;
-                case 6:
-                case 7:
+                case SAVE_SCREEN_STEP_CONFIRM_EMPTY:
+                case SAVE_SCREEN_STEP_CONFIRM_OVERWRITE:
                     Sound_PlayMenu(1);
                     save_screen_state.confirm_choice = (save_screen_state.confirm_choice + 1) & 1;
                     break;
                 }
             } else if (menu_buttons & PAD_UP) {
                 switch (save_screen_state.list_step) {
-                case -1:
+                case SAVE_SCREEN_STEP_WAIT_INPUT:
                     for (i = 0; i < 3; i++) {
                         save_screen_state.selected_save = ((s8)(save_screen_state.selected_save - 1) + 3) % 3;
                         if (MENU_SCREEN_SAVES(&save_screen_state)->save_state[save_screen_state.selected_save] >= 0) {
@@ -6064,8 +6074,8 @@ static void SaveScreen_UpdateSaveList(void) {
                         }
                     }
                     break;
-                case 6:
-                case 7:
+                case SAVE_SCREEN_STEP_CONFIRM_EMPTY:
+                case SAVE_SCREEN_STEP_CONFIRM_OVERWRITE:
                     Sound_PlayMenu(1);
                     save_screen_state.confirm_choice = (save_screen_state.confirm_choice + 1) & 1;
                     break;
@@ -6108,7 +6118,7 @@ static void SaveScreen_UpdateSaveList(void) {
                 save_screen_handler = SaveScreen_UpdateCardSelect;
                 pulse_sprite_falling = 0;
                 save_screen_state.selected_save = 1;
-                save_screen_state.confirm_choice = 1;
+                save_screen_state.confirm_choice = CONFIRM_CHOICE_NO;
                 if (system_screen_state == 2) {
                     SaveCard_StartCheck(0);
                 } else {

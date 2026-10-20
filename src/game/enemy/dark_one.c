@@ -149,7 +149,7 @@ static void DarkOne_DeathByOtherWeapon(Entity *entity) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
             s32 kind = 2;
 
@@ -194,7 +194,7 @@ static void DarkOne_DeathByMoonlightSword(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0, 0, 5, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
         ENTITY_FLAG_BITS(entity)->dying = 1;

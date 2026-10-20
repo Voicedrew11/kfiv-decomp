@@ -102,16 +102,16 @@ static void Beetle_Think(Entity *entity, s32 run_now) {
         return;
     }
     switch (entity->state) {
-    case 0:
-        if (entity->prev_state != 0) {
+    case ENTITY_STATE_UNAWARE:
+        if (entity->prev_state != ENTITY_STATE_UNAWARE) {
             EntityAi_StartAction(entity, EntityAi_StandOnce, run_now);
         } else {
             Beetle_ThinkWander(entity, run_now);
         }
         return;
-    case 1:
+    case ENTITY_STATE_SEARCHING:
         break;
-    case 2:
+    case ENTITY_STATE_NOTICED:
         Beetle_ThinkCombat(entity, run_now);
         return;
     }
@@ -127,7 +127,7 @@ static void Beetle_ThinkWander(Entity *entity, s32 run_now) {
     f32 direction[4];
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     if (entity->action_timer == 0) {
         if (rand() % 100 > 20) {
             EntityPoint_PickNear(entity->spawn_info->wander_radius, ai_state->target_point, entity->spawn_info, entity->model->position);
@@ -159,7 +159,7 @@ static void Beetle_ThinkCombat(Entity *entity, s32 run_now) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -177,28 +177,28 @@ static void Beetle_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, Beetle_RangedAttack0, run_now);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);

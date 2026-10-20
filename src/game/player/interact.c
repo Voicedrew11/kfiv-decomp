@@ -27,7 +27,7 @@ void Interact_UpdateViewRay(void) {
     Vector_Copy(view_ray_status.prev_view_origin, view_ray_status.view_origin);
     Vector_Copy(view_ray_status.prev_view_direction, view_ray_status.view_direction);
     view_ray_status.prev_view_distance = view_ray_status.view_distance;
-    if (game_status.camera_mode == 0) {
+    if (game_status.camera_mode == CAMERA_MODE_FOLLOW_PLAYER) {
         Vector_Copy(view_ray_status.view_origin, &player_state);
         view_ray_status.view_origin[1] = view_ray_status.view_origin[1] - 220.0f + player_state.landing_dip_offset + camera_state.height_offset;
         pitch = player_state.rotation.x - player_state.view_tilt_pitch;
@@ -126,8 +126,8 @@ void Interact_FindTarget(void) {
                 continue;
             }
             reach = object->interact_radius + 200.0f < 2000.0f ? 2000.0f : object->interact_radius + 200.0f;
-            is_plain = object->source->collision_mesh_index == 0xFFFF && !(object->definition->kind == 1 || object->definition->kind == 2 ||
-                       object->definition->kind == 6 || object->definition->kind == 0x11);
+            is_plain = object->source->collision_mesh_index == 0xFFFF && !(object->definition->kind == MAP_OBJECT_KIND_DOOR || object->definition->kind == MAP_OBJECT_KIND_DOUBLE_DOOR ||
+                       object->definition->kind == MAP_OBJECT_KIND_MOVING_DOOR || object->definition->kind == MAP_OBJECT_KIND_SIGNAL_DOOR);
             if (is_plain) {
                 sceVu0SubVector(delta, &object->model->position, &camera_state);
                 sceVu0Normalize(delta, delta);

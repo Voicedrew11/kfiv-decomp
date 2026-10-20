@@ -8,6 +8,9 @@
 #include "model/model_matrix.h"
 #include "player/player.h"
 
+/* MapObject.step of a distance fade (kind 5) */
+#define DISTANCE_FADE_STEP_ACTIVE   1       /* the alpha follows the distance to the player */
+
 /* Start handler of the kind that fades with the distance to the player: takes
    the two distances and the two alphas from its source and starts invisible. */
 void MapObject_StartDistanceFade(MapObject *object) {
@@ -15,7 +18,7 @@ void MapObject_StartDistanceFade(MapObject *object) {
     MapObjectUnk08Words *source;
 
     if (object->model->model_flags & 1) {
-        MapObject_StartAnim(object, 4);
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_OFF);
     }
     source = MAP_OBJECT_WORDS(object);
     ((MapObjectWorkFade *)object->work)->near_distance = source->kind_param_0;
@@ -23,7 +26,7 @@ void MapObject_StartDistanceFade(MapObject *object) {
     work->near_alpha = source->kind_param_2;
     work->far_alpha = source->kind_param_3;
     object->model->alpha = 0.0f;
-    MAP_OBJECT_BYTES(object)->step = 1;
+    MAP_OBJECT_BYTES(object)->step = DISTANCE_FADE_STEP_ACTIVE;
 }
 
 /* Update handler of the fading kind: the alpha goes from near_alpha to far_alpha
@@ -34,7 +37,7 @@ void MapObject_UpdateDistanceFade(MapObject *object) {
     f32 distance;
 
     if (object->model->model_flags & 1) {
-        MapObject_StartAnim(object, 4);
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_OFF);
         MapObject_StepAnim(object);
     }
     if (work->near_alpha == 0.0f && work->far_alpha == 0.0f) {

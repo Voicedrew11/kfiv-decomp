@@ -15,6 +15,10 @@
 #include "entity/entity_ai_choice.h"
 #include "model/motion.h"
 
+/* EntityAiState action_step of Phagos_RunAwayAndRemove */
+#define PHAGOS_ACTION_STEP_RUN_AWAY     1
+#define PHAGOS_ACTION_STEP_RUN_TO_POINT 2
+#define PHAGOS_ACTION_STEP_FADE_OUT     3
 
 static void Phagos_Animate(Entity *entity);
 static void Phagos_OnHit(Entity *entity);
@@ -88,7 +92,7 @@ static void Phagos_Think(Entity *entity, s32 run_now) {
         EntityAi_SensePlayer(entity, 2);
     }
     if (entity->busy_flags == 0) {
-        if (entity->state == 3) {
+        if (entity->state == ENTITY_STATE_HELD) {
             EntityAi_StartAction(entity, Phagos_RunAwayAndRemove, run_now);
         } else {
             EntityAi_StartAction(entity, Phagos_RunAwayAndRemove, run_now);
@@ -110,12 +114,12 @@ static void Phagos_RunAwayAndRemove(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 4, 0, entity->params->motion_blend_frames, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         }
         ai_state->part_angle_x = entity->heading_to_player + HALF_PI + DEG_TO_RAD((f32)(rand() % 180));
         ai_state->part_angle_x = EntityMath_WrapAngle(ai_state->part_angle_x);
@@ -123,7 +127,7 @@ static void Phagos_RunAwayAndRemove(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
         entity->action_step++;
         break;
-    case 1:
+    case PHAGOS_ACTION_STEP_RUN_AWAY:
         heading = entity->model->rotation[1];
         EntityMath_EaseAngleToward(&heading, ai_state->part_angle_x, 10.0f);
         entity->turn_delta_yaw += heading - entity->model->rotation[1];
@@ -137,7 +141,7 @@ static void Phagos_RunAwayAndRemove(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
             entity->action_timer = 20;
             EntityEvent_StartEffectAtPoint((char **)entity, entity->params->pitch_limit_deg, 0xFF, (int)entity->model->rotation);
-            entity->action_step = 3;
+            entity->action_step = PHAGOS_ACTION_STEP_FADE_OUT;
         } else if (EntityCollision_RayHitsPropWall(entity->model->position, direction, entity->radius, bounds)) {
             Vector_Copy(ai_state->target_point, entity->model->position);
             ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
@@ -145,12 +149,12 @@ static void Phagos_RunAwayAndRemove(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case PHAGOS_ACTION_STEP_RUN_TO_POINT:
         if (EntityMath_DistanceXZ(entity->model->position, ai_state->target_point) > entity->radius * 4.0f) {
             ENTITY_FLAG_BITS(entity)->live = FALSE;
         }
         break;
-    case 3:
+    case PHAGOS_ACTION_STEP_FADE_OUT:
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {

@@ -23,6 +23,12 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
+/* EntityAiState.move_choice 1 to 4 (0 is MOVE_CHOICE_CLOSE_IN) */
+#define DARK_SORCERER_MOVE_CHOICE_BACK        1
+#define DARK_SORCERER_MOVE_CHOICE_STEP_LEFT   2
+#define DARK_SORCERER_MOVE_CHOICE_STEP_RIGHT  3
+#define DARK_SORCERER_MOVE_CHOICE_TURN        4
+
 static void DarkSorcerer_OnHit(Entity *entity);
 static void DarkSorcerer_Think(Entity *entity, s32 run_now);
 static void DarkSorcerer_ThinkDecide(Entity *entity, s32 run_now);
@@ -163,7 +169,7 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 run_now) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -182,34 +188,34 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, DarkSorcerer_RangedAttack, run_now);
             } else {
                 EntityAi_StartAction(entity, DarkSorcerer_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             if ((f32)entity->params->far_distance < entity->distance_to_player) {
-                ai_state->move_choice = 0;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             } else if (entity->distance_to_player < (f32)entity->params->near_distance) {
-                ai_state->move_choice = 1;
+                ai_state->move_choice = DARK_SORCERER_MOVE_CHOICE_BACK;
             } else if (EntityMath_AngleDifference(player_state.rotation.y,
                                      EntityMath_AngleXZ(&player_state.position.x, entity->model->position)) > 0.0f) {
-                ai_state->move_choice = 2;
+                ai_state->move_choice = DARK_SORCERER_MOVE_CHOICE_STEP_LEFT;
             } else {
-                ai_state->move_choice = 3;
+                ai_state->move_choice = DARK_SORCERER_MOVE_CHOICE_STEP_RIGHT;
             }
             entity->action_timer = entity->params->type_param_0;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->target = &player_state;
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = 4;
+            ai_state->move_choice = DARK_SORCERER_MOVE_CHOICE_TURN;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
@@ -217,7 +223,7 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 run_now) {
         return;
     }
     switch (ai_state->move_choice) {
-    case 0:
+    case MOVE_CHOICE_CLOSE_IN:
         turn = EntityAi_TurnFromPush(entity, direction);
         if (turn > 0) {
             entity->move_command |= (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
@@ -227,7 +233,7 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 run_now) {
             entity->move_command |= EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
         }
         break;
-    case 1:
+    case DARK_SORCERER_MOVE_CHOICE_BACK:
         if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + PI))) {
             ai_state->move_choice = rand() % 3 + 2;
         } else {
@@ -235,7 +241,7 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 run_now) {
             entity->move_command |= MOVE_COMMAND_BACK;
         }
         break;
-    case 2:
+    case DARK_SORCERER_MOVE_CHOICE_STEP_LEFT:
         entity->move_command |= EntityAi_TurnCommand(entity);
         entity->move_command |= MOVE_COMMAND_STEP_LEFT;
         if ((f32)entity->params->far_distance < entity->distance_to_player) {
@@ -244,7 +250,7 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 run_now) {
             entity->move_command |= MOVE_COMMAND_BACK;
         }
         break;
-    case 3:
+    case DARK_SORCERER_MOVE_CHOICE_STEP_RIGHT:
         entity->move_command |= EntityAi_TurnCommand(entity);
         entity->move_command |= MOVE_COMMAND_STEP_RIGHT;
         if ((f32)entity->params->far_distance < entity->distance_to_player) {
@@ -253,7 +259,7 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 run_now) {
             entity->move_command |= MOVE_COMMAND_BACK;
         }
         break;
-    case 4:
+    case DARK_SORCERER_MOVE_CHOICE_TURN:
         entity->move_command |= EntityAi_TurnCommand(entity);
         break;
     }
@@ -443,9 +449,9 @@ static void DarkSorcerer_MeleeAttack(Entity *entity) {
     case 0:
         Motion_Start(entity, kind | ENTITY_MOTION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? MOTION_STEP_MOVE_FLAT : MOTION_STEP_MOVE;
         }
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
@@ -509,11 +515,11 @@ static void DarkSorcerer_RangedAttack(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
+        Motion_Start(entity, kind + ENTITY_MOTION_RANGED_ATTACK, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? MOTION_STEP_MOVE_FLAT : MOTION_STEP_MOVE;
         }
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
@@ -591,7 +597,7 @@ static void DarkSorcerer_Death(Entity *entity) {
     case 3:
         entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / (f32)ai_state->pause_timer;
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
-            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 3;
             ENTITY_FLAG_BITS(entity)->live = 0;
         }

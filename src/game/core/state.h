@@ -11,6 +11,16 @@ typedef struct {
     int arg;                        /* 0x08 */
 } HandlerContext;
 
+/* confirm_choice of the save screens and the card screen: the yes/no cursor of a question */
+#define CONFIRM_CHOICE_YES 0
+#define CONFIRM_CHOICE_NO  1
+
+/* confirm_press_state: how a confirm press is stepped before it fires */
+#define CONFIRM_PRESS_IDLE           0
+#define CONFIRM_PRESS_WAIT_DIRECTION 1
+#define CONFIRM_PRESS_WAIT_FRAME     2
+#define CONFIRM_PRESS_FIRE           3
+
 /* save_screen_state: the save screen SaveScreen_UpdateCardSelect runs each frame */
 typedef struct {
     s32 card_update_result;         /* 0x00 SaveCard_Update's result: negative marks a card failure */
@@ -38,6 +48,11 @@ typedef struct {
 } SaveScreen;
 
 extern SaveScreen save_screen_state;
+
+/* KindObject.kind: which function draws the object */
+#define KIND_OBJECT_SPRITE 0
+#define KIND_OBJECT_WORD   1
+#define KIND_OBJECT_NUMBER 2
 
 /* what the sprite_handlers build; MenuSprite_Draw dispatches it by kind */
 typedef struct {

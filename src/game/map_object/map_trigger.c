@@ -10,12 +10,22 @@
 #include "model/model_matrix.h"
 #include <stdlib.h>
 
+/* MapObject.step of a save point (kind 20) */
+#define SAVE_POINT_STEP_IDLE        1       /* waiting for the player to use it */
+/* MapObject.step of a container (kind 21) */
+#define CONTAINER_STEP_IDLE         1       /* waiting for the player to use it */
+/* MapObject.step of a pivot switch (kind 0x1E) */
+#define PIVOT_SWITCH_STEP_OFF       1       /* off, waiting for the player */
+#define PIVOT_SWITCH_STEP_TURNING_ON 2      /* the turning-on animation runs */
+#define PIVOT_SWITCH_STEP_ON        3       /* on, waiting for the player */
+#define PIVOT_SWITCH_STEP_TURNING_OFF 4     /* the turning-off animation runs */
+
 /* Fade progress added each frame by the map object fade (MapObject_FadeInObject). */
 #define MAP_TRIGGER_FADE_STEP 6.6666f
 
 /* Start handler of the save point: step 1. */
 void MapObject_StartSavePoint(MapObject *object) {
-    MAP_OBJECT_BYTES(object)->step = 1;
+    MAP_OBJECT_BYTES(object)->step = SAVE_POINT_STEP_IDLE;
 }
 
 /* Update handler of the save point (kind 20): used by the player, it asks for the save screen (GameStatus.bit5)
@@ -32,7 +42,7 @@ void MapObject_UpdateSavePoint(MapObject *object) {
 /* Start handler of a container (kind 21, barrels, pots and boxes): no wait, step 1. */
 void MapObject_StartContainer(MapObject *object) {
     object->work[0] = 0;
-    MAP_OBJECT_BYTES(object)->step = 1;
+    MAP_OBJECT_BYTES(object)->step = CONTAINER_STEP_IDLE;
 }
 
 /* Update handler of a container: used by the player, it shows the message of its definition (what it
@@ -71,11 +81,11 @@ void MapObject_SetUpContainer(MapObject *object) {
    step 3). */
 void MapObject_StartPivotSwitch(MapObject *object) {
     if (!(object->state_flags & MAP_OBJECT_ON)) {
-        MapObject_StartAnim(object, 4);
-        MAP_OBJECT_BYTES(object)->step = 1;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_OFF);
+        MAP_OBJECT_BYTES(object)->step = PIVOT_SWITCH_STEP_OFF;
     } else {
-        MapObject_StartAnim(object, 5);
-        MAP_OBJECT_BYTES(object)->step = 3;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_ON);
+        MAP_OBJECT_BYTES(object)->step = PIVOT_SWITCH_STEP_ON;
     }
 }
 
@@ -85,7 +95,7 @@ void MapObject_UpdatePivotSwitchOff(MapObject *object) {
 
     if (used == object && GAME_STATUS_FLAG_BITS(game_status_flags)->using_faced_object) {
         used->state_flags |= MAP_OBJECT_ON;
-        MAP_OBJECT_BYTES(used)->step = 2;
+        MAP_OBJECT_BYTES(used)->step = PIVOT_SWITCH_STEP_TURNING_ON;
     }
 }
 
@@ -94,8 +104,8 @@ void MapObject_TurnPivotSwitchOn(MapObject *object) {
     if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
     } else {
-        MapObject_StartAnim(object, 5);
-        MAP_OBJECT_BYTES(object)->step = 3;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_ON);
+        MAP_OBJECT_BYTES(object)->step = PIVOT_SWITCH_STEP_ON;
     }
 }
 
@@ -105,7 +115,7 @@ void MapObject_UpdatePivotSwitchOn(MapObject *object) {
 
     if (used == object && GAME_STATUS_FLAG_BITS(game_status_flags)->using_faced_object) {
         used->state_flags &= ~MAP_OBJECT_ON;
-        MAP_OBJECT_BYTES(used)->step = 4;
+        MAP_OBJECT_BYTES(used)->step = PIVOT_SWITCH_STEP_TURNING_OFF;
     }
 }
 
@@ -114,8 +124,8 @@ void MapObject_TurnPivotSwitchOff(MapObject *object) {
     if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
     } else {
-        MapObject_StartAnim(object, 4);
-        MAP_OBJECT_BYTES(object)->step = 1;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_OFF);
+        MAP_OBJECT_BYTES(object)->step = PIVOT_SWITCH_STEP_OFF;
     }
 }
 

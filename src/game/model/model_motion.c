@@ -5,6 +5,9 @@
 #include "math/vu0.h"
 #include "model/motion.h"
 
+/* ModelChannel.frame_step: the frame_fixed units a frame advances by */
+#define MOTION_FRAME_STEP_ONE_FRAME         0x100
+
 /* Adds a motion to the model's channel and poses the parts on its first key; returns the end of the motion. */
 MotionData *ModelMotion_Load(MotionData *data, ModelInstance *model, int unused) {
     MotionData *motion = data;
@@ -21,7 +24,7 @@ MotionData *ModelMotion_Load(MotionData *data, ModelInstance *model, int unused)
         channel = MODEL_CHANNEL(model);
         i = 0;
         limit = channel->limit;
-        channel->frame_step = 0x100;
+        channel->frame_step = MOTION_FRAME_STEP_ONE_FRAME;
         channel->motion_index = limit;
         channel->limit = limit + 1;
         channel->frame = 0;

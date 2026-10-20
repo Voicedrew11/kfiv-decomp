@@ -19,6 +19,9 @@
 #include "model/motion.h"
 #include "player/player.h"
 
+/* Entity.animation_index 0x11: the pose where part 3 turns to aim at the player */
+#define LIVING_ARMOR_MOTION_AIM 0x11
+
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 static void LivingArmor_Think(Entity *entity, s32 run_now);
@@ -92,13 +95,13 @@ static void LivingArmor_Think(Entity *entity, s32 run_now) {
         return;
     }
     switch (entity->state) {
-    case 0:
+    case ENTITY_STATE_UNAWARE:
         EntityAi_ThinkIdle(entity, run_now);
         return;
-    case 1:
+    case ENTITY_STATE_SEARCHING:
         EntityAi_ThinkPursue(entity, run_now);
         return;
-    case 2:
+    case ENTITY_STATE_NOTICED:
         LivingArmor_ThinkCombat(entity, run_now);
         return;
     }
@@ -114,7 +117,7 @@ static void LivingArmor_ThinkCombat(Entity *entity, s32 run_now) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -133,7 +136,7 @@ static void LivingArmor_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
@@ -142,21 +145,21 @@ static void LivingArmor_ThinkCombat(Entity *entity, s32 run_now) {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -199,7 +202,7 @@ static void LivingArmor_AimPart3AtPlayer(Entity *actor) {
     pair_copy = living_armor_look_limits;
     model = ENTITY_MODEL(actor);
     joint = &model->parts[3];
-    if (joint != NULL && actor->animation_index == 0x11) {
+    if (joint != NULL && actor->animation_index == LIVING_ARMOR_MOTION_AIM) {
         Bone_TurnPartToLook(model, (int)joint, (int)actor->ai_state.target_point, 1, &player_state.position, 0, 10.0f);
         angle = joint->rotation_x - DEG_TO_RAD(120);
         joint->rotation_x = angle;
@@ -228,7 +231,7 @@ static void LivingArmor_Animate(Entity *entity) {
         } else {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
-        if ((entity->busy_flags & ENTITY_BUSY_ATTACK) && entity->animation_index == 0x11) {
+        if ((entity->busy_flags & ENTITY_BUSY_ATTACK) && entity->animation_index == LIVING_ARMOR_MOTION_AIM) {
             LivingArmor_AimPart3AtPlayer(entity);
             return;
         }
@@ -262,7 +265,7 @@ static void LivingArmor_ReactionHeavy(Entity *entity) {
     switch (entity->reaction_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->attack_window = FALSE;
@@ -304,8 +307,8 @@ static void LivingArmor_WaitToStrike(Entity *entity) {
             EntityAi_StartAction(entity, LivingArmor_MeleeAttack1, 1);
         }
     }
-    if (ai_state->pause_timer-- <= 0 && entity->action_step == 0) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    if (ai_state->pause_timer-- <= 0 && entity->action_step == ACTION_STEP_START) {
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->attack_window = FALSE;
         ENTITY_FLAG_BITS(entity)->guarding = FALSE;
@@ -336,7 +339,7 @@ static void LivingArmor_MeleeAttack1(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
@@ -432,7 +435,7 @@ static void LivingArmor_Dormant(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 2, 0, entity->params->motion_blend_frames, 0);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->hit_strength = 0;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
@@ -497,7 +500,7 @@ static void LivingArmor_MeleeAttack0(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;

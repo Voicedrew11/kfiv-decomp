@@ -17,6 +17,9 @@
 // Local: entity_math.h says float * for DistanceXZ and AngleXZ, and callers pass the player block.
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
+
+/* EntityAiState.move_choice 1 (0 is MOVE_CHOICE_CLOSE_IN): walks straight at the player, without running or turning first */
+#define WIND_ELEMENTAL_MOVE_CHOICE_WALK_STRAIGHT 1
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void WindElemental_Think(Entity *entity, s32 run_now);
@@ -105,13 +108,13 @@ static void WindElemental_Think(Entity *entity, s32 run_now) {
             entity->move_command |= (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 EntityAi_ThinkIdle(entity, run_now);
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 WindElemental_ThinkCombat(entity, run_now);
                 break;
             default:
@@ -161,32 +164,32 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, mode);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
             if (rand() % 5 == 0) {
-                ai_state->move_choice = 1;
+                ai_state->move_choice = WIND_ELEMENTAL_MOVE_CHOICE_WALK_STRAIGHT;
             } else {
-                ai_state->move_choice = 0;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             }
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (entity->combat_choice == 1) {
+    if (entity->combat_choice == COMBAT_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -202,7 +205,7 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 run_now) {
         } else {
             side = EntityAi_TurnFromPush(entity, direction);
             switch (ai_state->move_choice) {
-            case 0:
+            case MOVE_CHOICE_CLOSE_IN:
                 if (side > 0) {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
                 } else if (side < 0) {
@@ -217,7 +220,7 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 run_now) {
                     entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f) | MOVE_COMMAND_TURN_FAST;
                 }
                 break;
-            case 1:
+            case WIND_ELEMENTAL_MOVE_CHOICE_WALK_STRAIGHT:
                 entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 break;
             }
@@ -475,12 +478,12 @@ static void WindElemental_RunAtPlayer(Entity *entity) {
         ENTITY_FLAGS(entity) |= ENTITY_FLAG_LOOK_AT_TARGET;
         if (side == 0) {
             entity->prev_combat_choice = entity->combat_choice;
-            entity->combat_choice = 0;
-            if (entity->prev_combat_choice != 0) {
+            entity->combat_choice = COMBAT_CHOICE_ATTACK;
+            if (entity->prev_combat_choice != COMBAT_CHOICE_ATTACK) {
                 entity->choice_change_frame = frame_counter;
             }
             EntityAi_LowerChoiceWeight(entity, 0);
-            if (entity->combat_choice == 0) {
+            if (entity->combat_choice == COMBAT_CHOICE_ATTACK) {
                 ai_state->pause_timer = 2;
                 if (EntityAi_PickAttack(entity)) {
                     EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);

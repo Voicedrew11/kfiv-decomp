@@ -14,6 +14,9 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
+/* EntitySpawnInfo.spawn_mode: 0 looks at the target, else it does not */
+#define EYE_PEDESTAL_SPAWN_MODE_NORMAL 0
+
 static void EyePedestal_Animate(Entity *entity);
 static void EyePedestal_Think(Entity *entity, s32 run_now);
 
@@ -69,7 +72,7 @@ static void EyePedestal_Animate(Entity *entity) {
 
     ai_state = &entity->ai_state;
     if (ENTITY_FLAG_BITS(entity)->animates) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
@@ -111,7 +114,7 @@ static void EyePedestal_Think(Entity *entity, s32 run_now) {
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
     ENTITY_FLAG_BITS(entity)->not_targetable = TRUE;
-    if (entity->spawn_info->spawn_mode != 0) {
+    if (entity->spawn_info->spawn_mode != EYE_PEDESTAL_SPAWN_MODE_NORMAL) {
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     } else {
         ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;

@@ -62,6 +62,7 @@
 #define GS_TEX0_HI_CSM(high)  (((high) >> 23) & 1)     /* TEX0 CSM: CLUT storage mode, bit 55 */
 #define GS_TEX0_HI_CSA(high)  (((high) >> 24) & 0x1F)  /* TEX0 CSA: CLUT entry offset, bits 56-60 */
 #define GS_TEX0_HI_CLD(high)  ((high) >> 29)           /* TEX0 CLD: CLUT load control, bits 61-63 */
+#define GS_TEX0_CLD_LOAD_TO_CBP0 2   /* TEX0 CLD: load the CLUT and copy CBP to CBP0 */
 #define GS_BITBLTBUF_DBP_MASK 0x3FFF /* BITBLTBUF DBP: the destination base pointer (bits 32-45), in 64-word blocks */
 #define SCREEN_XY_OUTSIDE_MASK 0xFFFF0000 /* x or y bits above the GS's 16-bit window: the point is outside it */
 #define GIF_TAG_FLG_IMAGE   0x800000000000000 /* GIF tag FLG (bits 58-59) at 2, image mode: the qwords after the tag are image data */

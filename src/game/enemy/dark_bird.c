@@ -23,6 +23,11 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
+/* EntitySpawnInfo.spawn_mode: how the spawn is placed and held */
+#define DARK_BIRD_SPAWN_MODE_FLOOR    0
+#define DARK_BIRD_SPAWN_MODE_CIRCLE   1
+#define DARK_BIRD_SPAWN_MODE_HOVER    2
+
 static void DarkBird_Think(Entity *entity, s32 run_now);
 static void DarkBird_ThinkCombat(Entity *entity, s32 run_now);
 static void DarkBird_ThinkIdle(Entity *entity, s32 run_now);
@@ -63,7 +68,7 @@ void DarkBird_Init(Entity *entity) {
     ai_state->on_hit = DarkBird_OnHit;
     ai_state->move = DarkBird_Move;
     ai_state->death = DarkBird_Death;
-    if (entity->spawn_info->spawn_mode == 1) {
+    if (entity->spawn_info->spawn_mode == DARK_BIRD_SPAWN_MODE_CIRCLE) {
         ai_state->dormant = DarkBird_DormantMoveToCircle;
     } else {
         ai_state->dormant = EntityAi_Dormant;
@@ -121,14 +126,14 @@ static void DarkBird_Think(Entity *entity, s32 run_now) {
             EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 ai_state->think_flag = 0;
                 DarkBird_ThinkIdle(entity, run_now);
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 if (ai_state->think_flag == 0) {
                     EntityAi_StartAction(entity, DarkBird_ApproachForMelee, run_now);
                     ai_state->think_flag = 1;
@@ -162,9 +167,9 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 run_now) {
     s32 turn;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     } else {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     }
     if (entity->action_timer == 0) {
         if (rand() % 100 < entity->params->far_distance) {
@@ -172,13 +177,13 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 run_now) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 30 + 0x1E;
                 ai_state->steer_to_target = 0;
-                entity->combat_choice = 1;
+                entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
                 ai_state->climb_command = 1;
             } else {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 30 + 0x1E;
                 ai_state->steer_to_target = 0;
-                entity->combat_choice = 1;
+                entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
                 ai_state->climb_command = -1;
             }
         } else if (entity->action_timer == 0) {
@@ -186,14 +191,14 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 run_now) {
         }
     }
     side = EntityAi_PickCombatChoice(entity, 0);
-    if (entity->spawn_info->spawn_mode == 0) {
+    if (entity->spawn_info->spawn_mode == DARK_BIRD_SPAWN_MODE_FLOOR) {
         if (EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position) < (f32)entity->params->near_distance ||
             ENTITY_FLAG_BITS(entity)->on_floor == 1) {
             side = 1;
             entity->target = &player_state;
             entity->action_timer = rand() % 30 + 0x1E;
             ai_state->steer_to_target = 0;
-            entity->combat_choice = 1;
+            entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
             ai_state->climb_command = 2;
         } else if (EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position) > (f32)(s16)entity->params->action_frames ||
                    ENTITY_FLAG_BITS(entity)->bit46 == 1) {
@@ -201,10 +206,10 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 run_now) {
             entity->target = &player_state;
             entity->action_timer = rand() % 30 + 0x1E;
             ai_state->steer_to_target = 0;
-            entity->combat_choice = 1;
+            entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
             ai_state->climb_command = -2;
         }
-    } else if (entity->spawn_info->spawn_mode == 1 || entity->spawn_info->spawn_mode == 2) {
+    } else if (entity->spawn_info->spawn_mode == DARK_BIRD_SPAWN_MODE_CIRCLE || entity->spawn_info->spawn_mode == DARK_BIRD_SPAWN_MODE_HOVER) {
         if (entity->spawn_info->spawn_y - entity->model->position[1] <
                 (f32)entity->spawn_info->map_object_id * (entity->spawn_info->second_map_object_id != 0 ? 100.0f : -100.0f) ||
             ENTITY_FLAG_BITS(entity)->on_floor == 1) {
@@ -212,7 +217,7 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 run_now) {
             entity->target = &player_state;
             entity->action_timer = rand() % 30 + 0x1E;
             ai_state->steer_to_target = 0;
-            entity->combat_choice = 1;
+            entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
             ai_state->climb_command = 2;
         } else if (entity->spawn_info->spawn_y - entity->model->position[1] > (f32)entity->spawn_info->variant * 100.0f ||
                    ENTITY_FLAG_BITS(entity)->bit46 == 1) {
@@ -220,7 +225,7 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 run_now) {
             entity->target = &player_state;
             entity->action_timer = rand() % 30 + 0x1E;
             ai_state->steer_to_target = 0;
-            entity->combat_choice = 1;
+            entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
             ai_state->climb_command = -2;
         }
     }
@@ -233,13 +238,13 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 if (player_state.position.y - entity->model->position[1] < 200.0f) {
                     entity->target = &player_state;
                     entity->action_timer = rand() % 30 + 0x1E;
                     ai_state->steer_to_target = 0;
-                    entity->combat_choice = 1;
+                    entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
                     ai_state->climb_command = 2;
                 } else {
                     EntityAi_StartAction(entity, DarkBird_RangedAttack, run_now);
@@ -255,7 +260,7 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 run_now) {
                 return;
             }
             break;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 30 + 0x3C;
             ai_state->steer_to_target = 0;
@@ -290,44 +295,44 @@ static void DarkBird_ThinkIdle(Entity *entity, s32 run_now) {
     s32 turn;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     } else {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     }
     ENTITY_FLAG_BITS(entity)->look_at_target = 1;
     if (entity->action_timer == 0) {
         EntityPoint_PickNear((f32)entity->spawn_info->wander_radius, ai_state->target_point, entity->spawn_info, entity->model->position);
         entity->target = ai_state->target_point;
         entity->action_timer = rand() % 60 + 0x3C;
-        if (entity->spawn_info->spawn_mode == 0) {
+        if (entity->spawn_info->spawn_mode == DARK_BIRD_SPAWN_MODE_FLOOR) {
             if (EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position) < (f32)entity->params->near_distance) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 30 + 0x1E;
                 ai_state->steer_to_target = 0;
-                entity->combat_choice = 1;
+                entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
                 ai_state->climb_command = 2;
             } else if (EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position) > (f32)(s16)entity->params->action_frames) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 30 + 0x1E;
                 ai_state->steer_to_target = 0;
-                entity->combat_choice = 1;
+                entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
                 ai_state->climb_command = -2;
             }
-        } else if (entity->spawn_info->spawn_mode == 1 || entity->spawn_info->spawn_mode == 2) {
+        } else if (entity->spawn_info->spawn_mode == DARK_BIRD_SPAWN_MODE_CIRCLE || entity->spawn_info->spawn_mode == DARK_BIRD_SPAWN_MODE_HOVER) {
             if (entity->spawn_info->spawn_y - entity->model->position[1] <
                     (f32)entity->spawn_info->map_object_id * (entity->spawn_info->second_map_object_id != 0 ? 100.0f : -100.0f) ||
                 ENTITY_FLAG_BITS(entity)->on_floor == 1) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 30 + 0x1E;
                 ai_state->steer_to_target = 0;
-                entity->combat_choice = 1;
+                entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
                 ai_state->climb_command = 2;
             } else if (entity->spawn_info->spawn_y - entity->model->position[1] > (f32)entity->spawn_info->variant * 100.0f ||
                        ENTITY_FLAG_BITS(entity)->bit46 == 1) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 30 + 0x1E;
                 ai_state->steer_to_target = 0;
-                entity->combat_choice = 1;
+                entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
                 ai_state->climb_command = -2;
             }
         }
@@ -336,13 +341,13 @@ static void DarkBird_ThinkIdle(Entity *entity, s32 run_now) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 30 + 0x1E;
                 ai_state->steer_to_target = 0;
-                entity->combat_choice = 1;
+                entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
                 ai_state->climb_command = 1;
             } else {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 30 + 0x1E;
                 ai_state->steer_to_target = 0;
-                entity->combat_choice = 1;
+                entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
                 ai_state->climb_command = -1;
             }
         } else {
@@ -507,7 +512,7 @@ static void DarkBird_DormantMoveToCircle(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ai_state->turn_rate = 0;
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
         ENTITY_FLAG_BITS(entity)->bit22 = 1;
@@ -562,7 +567,7 @@ static void DarkBird_ApproachForMelee(Entity *entity) {
     case 0:
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_0, 0, 3, 0, entity->params->motion_blend_frames, 0);
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_1, 1, 3, 0, entity->params->motion_blend_frames, 0);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ENTITY_FLAG_BITS(entity)->attacking = 1;
         ENTITY_FLAG_BITS(entity)->look_at_target = 1;
         entity->target = &player_state;
@@ -626,9 +631,9 @@ static void DarkBird_MeleeAttack(Entity *entity) {
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_0, 0, kind | ENTITY_MOTION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->attack_index | ENTITY_MOTION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? MOTION_STEP_MOVE_FLAT : MOTION_STEP_MOVE;
         }
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
@@ -700,12 +705,12 @@ static void DarkBird_RangedAttack(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_0, 0, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
+        EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_0, 0, kind + ENTITY_MOTION_RANGED_ATTACK, 0, entity->params->motion_blend_frames >> 1, 1);
+        EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->attack_index + ENTITY_MOTION_RANGED_ATTACK, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? MOTION_STEP_MOVE_FLAT : MOTION_STEP_MOVE;
         }
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
@@ -877,12 +882,12 @@ static void DarkBird_ReactionLight(Entity *entity) {
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_0, 0, 0xE, 0, 5, 1);
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_1, 1, 3, 0, 5, 0);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? MOTION_STEP_MOVE_FLAT : MOTION_STEP_MOVE;
         }
         ai_state->turn_rate = 0;
-        ENTITY_FLAG_BITS(entity)->animates = 1;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->attack_window = 0;
         ENTITY_FLAG_BITS(entity)->guarding = 0;
         ENTITY_FLAG_BITS(entity)->attacking = 0;
@@ -919,7 +924,7 @@ static void DarkBird_ReactionHeavy(Entity *entity) {
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_0, 0, 0xF, 0, 5, 1);
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_1, 1, 0xF, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
             s32 kind = 2;
 
@@ -971,7 +976,7 @@ static void DarkBird_Death(Entity *entity) {
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_0, 0, 0x10, 0, 5, 1);
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_1, 1, 0x10, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
             s32 kind = 2;
 

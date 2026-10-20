@@ -9,6 +9,9 @@
 #include "sound/sound_game.h"
 #include "sound/sound.h"
 
+/* MapObject.step of the scenery kinds (0 and 0x16 to 0x1C) */
+#define SCENERY_STEP_ACTIVE         1       /* the animation runs and kind 0 plays its ambient sound */
+
 /* Offset hook of every kind: moves the model and the object's source position by offset. */
 void MapObject_MoveByOffset(MapObject *object, void *offset) {
     Vector_Add(&object->model->position, &object->model->position, offset);
@@ -18,14 +21,14 @@ void MapObject_MoveByOffset(MapObject *object, void *offset) {
 /* Step 0 of the scenery kinds (0 and 0x16 to 0x1C): restarts the animation the object is on (kind 0 also
    forgets its ambient sound) and goes to step 1. */
 void MapObject_StartScenery(MapObject *object) {
-    if (object->definition->kind == 0) {
+    if (object->definition->kind == MAP_OBJECT_KIND_AMBIENT) {
         object->work[0] = 0;
     }
     if (object->model->model_flags & 1) {
         MapObject_StartAnim(object, MAP_OBJECT_BYTES(object)->anim);
         MapObject_StepAnim(object);
     }
-    MAP_OBJECT_BYTES(object)->step = 1;
+    MAP_OBJECT_BYTES(object)->step = SCENERY_STEP_ACTIVE;
 }
 
 /* Step 1 of the scenery kinds: a kind 0 object whose source names an ambient sound channel (0x40 to 0x7F)
@@ -34,7 +37,7 @@ void MapObject_StartScenery(MapObject *object) {
 void MapObject_UpdateScenery(MapObject *object) {
     MapObjectUnk08 *source;
 
-    if (object->definition->kind == 0) {
+    if (object->definition->kind == MAP_OBJECT_KIND_AMBIENT) {
         source = object->source;
         if ((u32)((u16)source->kind_param_0 - 0x40) < 0x40) {
             if (object->work[0] != 0) {

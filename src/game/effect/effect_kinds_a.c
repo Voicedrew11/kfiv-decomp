@@ -10,6 +10,11 @@
 #include "sound/sound_game.h"
 #include <stdlib.h>
 
+/* the hit-check state byte of the motions (hit_end_state) */
+/* LandingMotion.state of the ground chase (kind 8) */
+#define GROUND_CHASE_STATE_CHASING  0       /* runs along the floor toward its entity */
+#define GROUND_CHASE_STATE_ENDING   1       /* the end effect spawned; the next frame frees it */
+
 
 /* Start handler of the kinds that do nothing of their own (kind 6 and most unused kinds): does
    nothing. */
@@ -32,7 +37,7 @@ void EffectFly_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
     motion->fall_speed = 0;
     motion->scale = 1.0f;
-    motion->hit_end_state = 0;
+    motion->hit_end_state = HIT_END_STATE_IDLE;
 }
 
 /* EffectFly_Start, then raises the model 220 units (kind 1). */
@@ -522,7 +527,7 @@ void EffectGroundChase_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     } else {
         actor->model->position.y = COLLISION_RESULT->point[1];
     }
-    motion->state = 0;
+    motion->state = GROUND_CHASE_STATE_CHASING;
     motion->chase_radius = actor->def->radius_half;
 }
 
@@ -554,7 +559,7 @@ void EffectGroundChase_Update(EffectActor *actor) {
             actor->model->position.y = COLLISION_RESULT->point[1];
         }
     }
-    if (motion->state == 1) {
+    if (motion->state == GROUND_CHASE_STATE_ENDING) {
         Effect_Free(actor);
     } else if (actor->frame == 0) {
         Vector_Copy(&offset, &actor->model->position);
@@ -562,7 +567,7 @@ void EffectGroundChase_Update(EffectActor *actor) {
             target = (Entity *)actor->target_entity;
             if (Effect_Distance(&offset, &target->model->position) < 100.0f) {
                 Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
-                motion->state = 1;
+                motion->state = GROUND_CHASE_STATE_ENDING;
             }
         }
     }
@@ -839,7 +844,7 @@ void EffectFloorSkim_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     motion->end_effect_id = Effect_FramesToImpact(30.0f, actor, motion, motion->impact_point);
     motion->ends_next_frame = 0;
     motion->frames_to_impact = 0;
-    motion->hit_end_state = 0;
+    motion->hit_end_state = HIT_END_STATE_IDLE;
 }
 
 /* Flies on; where it touches the floor (hit bit 8) it leaves a mark there at most every radius_half
@@ -891,9 +896,9 @@ void EffectFloorSkim_Update(EffectActor *effect) {
                     if (3.0f < effect->model->scale_z) {
                         floor_skim_spawn_count = 0;
                     }
-                    if ((s8)motion->hit_end_state == 0 || (floor_skim_spawn_count & 1) == 0) {
+                    if ((s8)motion->hit_end_state == HIT_END_STATE_IDLE || (floor_skim_spawn_count & 1) == 0) {
                         Effect_Spawn(0x33, &point, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
-                        motion->hit_end_state = 1;
+                        motion->hit_end_state = HIT_END_STATE_SPAWNED;
                     }
                 }
                 motion->frames_to_impact = effect->def->radius_half;
@@ -1224,7 +1229,7 @@ void EffectFollow_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectStart_TurnModel(effect, spawn_slot);
     EffectStart_PlaceModel(effect, spawn_slot);
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
-    motion->hit_end_state = 0;
+    motion->hit_end_state = HIT_END_STATE_IDLE;
     motion->cleared_on_start = 0;
     motion->ends_next_frame = 0;
 }
@@ -1410,7 +1415,7 @@ void EffectBeam_Update(EffectActor *effect) {
     EffectDef *def;
 
     motion = (ScalerMotion *)&effect->motion;
-    if ((s8)((TurningMotion *)motion)->hit_end_state != 0) {
+    if ((s8)((TurningMotion *)motion)->hit_end_state != HIT_END_STATE_IDLE) {
         Effect_Free(effect);
         return;
     }
@@ -1835,7 +1840,7 @@ void EffectAimAtPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     motion = (TurningMotion *)&effect->motion;
     EffectStart_TurnModel(effect, spawn_slot);
     EffectStart_PlaceModel(effect, spawn_slot);
-    motion->hit_end_state = 0;
+    motion->hit_end_state = HIT_END_STATE_IDLE;
     effect->flags |= EFFECT_FLAG_HAS_TARGETERS;
 }
 
@@ -1937,7 +1942,7 @@ void EffectSplitShot_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
     motion->angle = Effect_FramesToImpact(30.0f, effect, motion, motion->impact_point);
     motion->timer = 0;
-    motion->hit_end_state = 0;
+    motion->hit_end_state = HIT_END_STATE_IDLE;
     motion->cooldown = 0;
 }
 

@@ -109,13 +109,13 @@ static void Malice_Think(Entity *entity, s32 run_now) {
             EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 EntityAi_ThinkIdle(entity, run_now);
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 Malice_ThinkCombat(entity, run_now);
                 break;
             default:
@@ -165,9 +165,9 @@ static void Malice_ThinkCombat(Entity *entity, s32 run_now) {
     s32 turn;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     } else {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     }
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
@@ -199,15 +199,15 @@ static void Malice_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             model = entity->model;
             height_difference = player_state.position.y - model->position[1];
             if (ABS(height_difference) > 200.0f) {
                 EntityPoint_PickNearFromDistance(retreat_point, model->position, EntityMath_DistanceXZ(model->position, &entity->spawn_info->spawn_x), entity->radius * 4.0f);
                 entity->target = retreat_point;
                 entity->action_timer = rand() % 30 + 30;
-                ai_state->move_choice = 0;
-                entity->combat_choice = 1;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
+                entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
             } else if (ai_state->action_flags == 0) {
                 if (EntityAi_PickAttack(entity)) {
                     if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
@@ -223,25 +223,25 @@ static void Malice_ThinkCombat(Entity *entity, s32 run_now) {
                 EntityPoint_PickNearFromDistance(destination, model->position, EntityMath_DistanceXZ(model->position, &entity->spawn_info->spawn_x), entity->radius * 4.0f);
                 entity->target = destination;
                 entity->action_timer = rand() % 30 + 60;
-                ai_state->move_choice = 0;
-                entity->combat_choice = 1;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
+                entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
             }
             break;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 30 + 60;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -395,7 +395,7 @@ static void Malice_ToggleFadeLevel(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, entity->params->motion_blend_frames, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
     case 1:
@@ -441,7 +441,7 @@ static void Malice_FadeOutAndRelocate(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, entity->params->motion_blend_frames, 0);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ENTITY_FLAG_BITS(entity)->hit_strength = 0;
         ai_state->pause_timer = 1;
         ai_state->turn_rate = 0.0f;
@@ -502,7 +502,7 @@ static void Malice_FadeBackIn(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->hit_strength = 0;
         ai_state->mode_timer = 0;
         entity->model_alpha = 0;
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         entity->action_step++;
         break;
     case 1:
@@ -559,9 +559,9 @@ static void Malice_Dormant(Entity *entity) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? MOTION_STEP_MOVE_FLAT : MOTION_STEP_MOVE;
         }
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
@@ -576,7 +576,7 @@ static void Malice_Dormant(Entity *entity) {
         break;
     case 1:
         if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
             ENTITY_FLAG_BITS(entity)->hit_strength = 0;
             entity->action_step++;
         }
@@ -676,14 +676,14 @@ static void Malice_Death(Entity *entity) {
         Motion_Start(entity, 0x10, 0, 5, 1);
         params = entity->params;
         if (params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(params) == ENTITY_PARAMS_MOVEMENT_1 ? MOTION_STEP_MOVE_FLAT : MOTION_STEP_MOVE;
         }
         if (ENTITY_PARAMS_MOVEMENT_KIND(params) == ENTITY_PARAMS_MOVEMENT_FLY) {
             entity->collision_radius = 20.0f;
         }
-        ENTITY_FLAG_BITS(entity)->animates = 1;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
         ENTITY_FLAG_BITS(entity)->dying = 1;
         ENTITY_FLAG_BITS(entity)->no_player_collision = 1;
@@ -701,7 +701,7 @@ static void Malice_Death(Entity *entity) {
     case 2:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->action_timer = 20;
-            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;
             ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             EntityEvent_OnDeath(entity);

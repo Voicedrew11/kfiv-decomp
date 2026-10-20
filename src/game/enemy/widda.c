@@ -15,6 +15,9 @@
 #include "entity/entity_math.h"
 #include "player/player.h"
 
+/* ai_state->move_choice: runs at the player when it is far and ahead */
+#define WIDDA_MOVE_CHOICE_RUN_IN 1
+
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 static void Widda_Animate(Entity *entity);
@@ -163,13 +166,13 @@ static void Widda_Think(Entity *entity, s32 run_now) {
         return;
     }
     switch (entity->state) {
-    case 0:
+    case ENTITY_STATE_UNAWARE:
         EntityAi_ThinkIdle(entity, run_now);
         return;
-    case 1:
+    case ENTITY_STATE_SEARCHING:
         EntityAi_ThinkPursue(entity, run_now);
         return;
-    case 2:
+    case ENTITY_STATE_NOTICED:
         Widda_ThinkCombat(entity, run_now);
         return;
     }
@@ -188,7 +191,7 @@ static void Widda_ThinkCombat(Entity *entity, s32 run_now) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -207,30 +210,30 @@ static void Widda_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (entity->distance_to_player > 900.0f && ABS(angle) < DEG_TO_RAD(40)) {
                 entity->action_timer = 300;
-                ai_state->move_choice = 1;
+                ai_state->move_choice = WIDDA_MOVE_CHOICE_RUN_IN;
             } else {
                 entity->action_timer = rand() % 60 + 120;
-                ai_state->move_choice = 0;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             }
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
@@ -248,18 +251,18 @@ static void Widda_ThinkCombat(Entity *entity, s32 run_now) {
                 entity->prev_combat_choice = entity->combat_choice;
                 entity->target = &player_state;
                 entity->action_timer = 300;
-                ai_state->move_choice = entity->combat_choice = 1;
+                ai_state->move_choice = entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
                 ai_state->step_index = 0;
             }
         } else {
             entity->prev_combat_choice = entity->combat_choice;
             entity->target = &player_state;
             entity->action_timer = 300;
-            ai_state->move_choice = entity->combat_choice = 1;
+            ai_state->move_choice = entity->combat_choice = COMBAT_CHOICE_CLOSE_IN;
             ai_state->step_index = 0;
         }
     }
-    if (entity->combat_choice == 1) {
+    if (entity->combat_choice == COMBAT_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -275,7 +278,7 @@ static void Widda_ThinkCombat(Entity *entity, s32 run_now) {
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             switch (ai_state->move_choice) {
-            case 0:
+            case MOVE_CHOICE_CLOSE_IN:
                 if (turn > 0) {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                 } else if (turn < 0) {
@@ -286,10 +289,10 @@ static void Widda_ThinkCombat(Entity *entity, s32 run_now) {
                 angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
                 if (entity->distance_to_player > 900.0f && ABS(angle) < DEG_TO_RAD(40)) {
                     entity->action_timer = 300;
-                    ai_state->move_choice = 1;
+                    ai_state->move_choice = WIDDA_MOVE_CHOICE_RUN_IN;
                 }
                 break;
-            case 1:
+            case WIDDA_MOVE_CHOICE_RUN_IN:
                 if (turn > 0) {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
                 } else if (turn < 0) {

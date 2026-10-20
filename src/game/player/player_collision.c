@@ -226,7 +226,7 @@ int Player_CollideWithMap(void) {
         player_state.fall_speed = 0.0f;
         player_state.status_bits &= ~(0x8000L << 19);
     }
-    if (player_previous.ground_effect_kind != 4 && player_state.ground_effect_kind == 4) {
+    if (player_previous.ground_effect_kind != GROUND_EFFECT_DAMAGE && player_state.ground_effect_kind == GROUND_EFFECT_DAMAGE) {
         player_state.fall_speed = 0.0f;
         player_state.status_bits &= ~(0x8000L << 19);
     }

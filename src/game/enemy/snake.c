@@ -18,6 +18,11 @@
 #include "model/motion.h"
 #include "entity/entity_math.h"
 
+/* EntitySpawnInfo.spawn_mode: which dormant hold it starts in */
+#define SNAKE_SPAWN_MODE_HOLD_ANIM2       0
+#define SNAKE_SPAWN_MODE_HOLD_ANIM8_THEN_MOVE 1
+/* MapObject step of a broken map object (MapObject_Break sets it) */
+
 
 static void Snake_DormantHoldAnim2(Entity *entity);
 static void Snake_DormantHoldAnim8ThenMove(Entity *entity);
@@ -54,9 +59,9 @@ void Snake_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        if (entity->spawn_info->spawn_mode == 0) {
+        if (entity->spawn_info->spawn_mode == SNAKE_SPAWN_MODE_HOLD_ANIM2) {
             ai_state->dormant = Snake_DormantHoldAnim2;
-        } else if (entity->spawn_info->spawn_mode == 1) {
+        } else if (entity->spawn_info->spawn_mode == SNAKE_SPAWN_MODE_HOLD_ANIM8_THEN_MOVE) {
             ai_state->dormant = Snake_DormantHoldAnim8ThenMove;
         } else {
             ai_state->dormant = Snake_Dormant;
@@ -87,7 +92,7 @@ static void Snake_DormantHoldAnim2(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 2, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
@@ -104,7 +109,7 @@ static void Snake_DormantHoldAnim2(Entity *entity) {
         if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_strength != 0) {
             map_object = MapObject_GetById(entity->group_id, entity->spawn_info->variant);
             if (map_object != NULL) {
-                if (!(map_object->state_flags & MAP_OBJECT_IN_USE) || MAP_OBJECT_BITS(map_object)->step == 0xF) {
+                if (!(map_object->state_flags & MAP_OBJECT_IN_USE) || MAP_OBJECT_BITS(map_object)->step == MAP_OBJECT_STEP_BROKEN) {
                     Motion_Start(entity, 0x11, 0, 0, 1);
                 }
             }
@@ -149,7 +154,7 @@ static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 8, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
@@ -225,7 +230,7 @@ static void Snake_Dormant(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 3, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
@@ -271,7 +276,7 @@ static void Snake_Dormant(Entity *entity) {
 static void Snake_Think(Entity *entity, s32 run_now) {
     s32 index;
 
-    if (entity->spawn_info->spawn_mode == 1 && entity->spawn_info->variant == 1) {
+    if (entity->spawn_info->spawn_mode == SNAKE_SPAWN_MODE_HOLD_ANIM8_THEN_MOVE && entity->spawn_info->variant == 1) {
         index = entity->spawn_info->second_map_object_id;
         index += entity->spawn_info->map_object_id * 64;
         if (map_script_flags[index] != 0) {
@@ -317,7 +322,7 @@ static void Snake_Death(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
         ENTITY_FLAG_BITS(entity)->dying = 1;

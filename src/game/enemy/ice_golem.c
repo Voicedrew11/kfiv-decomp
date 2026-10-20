@@ -16,6 +16,9 @@
 #include "entity/entity_ai_choice.h"
 #include "model/motion.h"
 
+/* ai_state->move_choice: runs at the player when it is far or behind */
+#define ICE_GOLEM_MOVE_CHOICE_RUN_IN 1
+
 #define ENTITY_WORK_AREA_SIZE 0xA0
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
@@ -82,13 +85,13 @@ static void IceGolem_Think(Entity *entity, s32 run_now) {
             EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 EntityAi_ThinkIdle(entity, run_now);
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 IceGolem_ThinkCombat(entity, run_now);
                 break;
             default:
@@ -113,7 +116,7 @@ static void IceGolem_ThinkCombat(Entity *entity, s32 run_now) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -132,33 +135,33 @@ static void IceGolem_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, IceGolem_RangedAttack0, run_now);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 0x78;
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (500.0f < entity->distance_to_player || ABS(angle) > HALF_PI) {
-                ai_state->move_choice = 1;
+                ai_state->move_choice = ICE_GOLEM_MOVE_CHOICE_RUN_IN;
             } else {
-                ai_state->move_choice = 0;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             }
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 0x1E;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (entity->combat_choice == 1) {
+    if (entity->combat_choice == COMBAT_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -174,7 +177,7 @@ static void IceGolem_ThinkCombat(Entity *entity, s32 run_now) {
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             switch (ai_state->move_choice) {
-            case 0:
+            case MOVE_CHOICE_CLOSE_IN:
                 if (turn > 0) {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                 } else if (turn < 0) {
@@ -183,7 +186,7 @@ static void IceGolem_ThinkCombat(Entity *entity, s32 run_now) {
                     entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
                 break;
-            case 1:
+            case ICE_GOLEM_MOVE_CHOICE_RUN_IN:
                 if (turn > 0) {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
                 } else if (turn < 0) {
@@ -209,9 +212,9 @@ static void IceGolem_Dormant(Entity *entity) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? MOTION_STEP_MOVE_FLAT : MOTION_STEP_MOVE;
         }
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->draw_afterimage = 0;
@@ -229,9 +232,9 @@ static void IceGolem_Dormant(Entity *entity) {
         if (entity->distance_to_player < (f32)entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
             Motion_Start(entity, 2, 0, entity->params->motion_blend_frames, 0);
             if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-                ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+                ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
             } else {
-                ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+                ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? MOTION_STEP_MOVE_FLAT : MOTION_STEP_MOVE;
             }
             ENTITY_FLAG_BITS(entity)->hit_strength = 0;
             entity->action_step++;
@@ -289,7 +292,7 @@ static void IceGolem_RangedAttack0(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->look_at_target = 1;
         entity->action_step++;
     case 1:

@@ -71,7 +71,7 @@ static void Critter_Dormant(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 2, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
         ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
@@ -130,10 +130,10 @@ static void Critter_Think(Entity *entity, s32 run_now) {
         return;
     }
     switch (entity->state) {
-    case 0:
+    case ENTITY_STATE_UNAWARE:
         break;
-    case 1:
-    case 2:
+    case ENTITY_STATE_SEARCHING:
+    case ENTITY_STATE_NOTICED:
         Critter_ThinkCombat(entity, run_now);
         return;
     }
@@ -153,7 +153,7 @@ static void Critter_ThinkIdle(Entity *entity, s32 run_now) {
     s32 turn;
 
     if (ai_state->step_index == 0) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN);
         turn = EntityAi_TurnFromPush(entity, direction);
         if (turn != 0 && ai_state->action_flags <= 0) {
@@ -173,7 +173,7 @@ static void Critter_ThinkIdle(Entity *entity, s32 run_now) {
             ai_state->action_counter = EntityAi_CheckMeleeHit(entity, &entity->params->melee_attacks[1], 0, 1, 1);
         }
     } else {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         angle = EntityMath_AngleDifference(entity->model->rotation[1], ai_state->part_angle_x);
         if (ABS(angle) > entity->params->turn_limit) {
             if (angle >= 0.0f) {
@@ -199,7 +199,7 @@ static void Critter_ThinkCombat(Entity *entity, s32 run_now) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -217,28 +217,28 @@ static void Critter_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);

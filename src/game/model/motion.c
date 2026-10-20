@@ -7,6 +7,9 @@
 #include <math.h>
 #include "math/vu0.h"
 
+/* ModelPart.motion_slot: the slot every part starts in */
+#define MOTION_SLOT_DEFAULT                 0
+
 /* dst = a * (1 - t) + b * t across the xyz lanes, on the VU0 (EntityMath_LerpVector inlined) */
 static inline void blend_vectors(Vector4 *dst, Vector4 *src_a, Vector4 *src_b, f32 ratio) {
     __asm__ volatile(
@@ -37,7 +40,7 @@ void Motion_ClearPartSlots(EntityModel *model) {
         do {
             part = (EntityModelPart80Byte *)((i << 7) + (s32)model->parts);
             i += 1;
-            part->motion_slot = 0;
+            part->motion_slot = MOTION_SLOT_DEFAULT;
         } while (i < instance->part_count);
     }
 }
@@ -146,7 +149,7 @@ s32 Motion_StepSlot(Entity *entity, EntityAiMotionSlotBits *slot_bits, s32 type,
     if (ENTITY_MODEL(entity)->scale_x < 0.0f) {
         turned[1] = -turned[1];
     }
-    if (mode == 1) {
+    if (mode == MOTION_STEP_MOVE) {
         sceVu0RotMatrixY(MODEL_MATRIX_SCRATCH, identity_matrix, -root->rotation_y);
         sceVu0RotMatrixX(MODEL_MATRIX_SCRATCH, MODEL_MATRIX_SCRATCH, -root->rotation_x);
         sceVu0RotMatrixZ(MODEL_MATRIX_SCRATCH, MODEL_MATRIX_SCRATCH, -root->rotation_z);
@@ -160,12 +163,12 @@ s32 Motion_StepSlot(Entity *entity, EntityAiMotionSlotBits *slot_bits, s32 type,
         entity->turn_delta_pitch += turned[0];
         entity->turn_delta_yaw += turned[1];
         entity->turn_delta_roll += turned[2];
-    } else if (mode == 2) {
+    } else if (mode == MOTION_STEP_MOVE_FLAT) {
         sine = sinf(-ENTITY_MODEL(entity)->rotation.y);
         cosine = cosf(-ENTITY_MODEL(entity)->rotation.y);
         entity->move_delta_x += moved[0] * cosine - moved[2] * sine;
         entity->move_delta_z += moved[0] * sine + moved[2] * cosine;
-    } else if (mode == 3) {
+    } else if (mode == MOTION_STEP_TURN) {
         entity->turn_delta_yaw += turned[1];
     }
     return slot->backwards ? slot->frame == motion->frame_count : slot->frame == 0;

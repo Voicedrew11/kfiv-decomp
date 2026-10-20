@@ -186,7 +186,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
             length = data->length;
             if (first && data->texture_word.clut_base != 0) {
                 first = FALSE;
-                data->texture_word.clut_load_mode = 2;
+                data->texture_word.clut_load_mode = GS_TEX0_CLD_LOAD_TO_CBP0;
             }
             data = (ModelPartData *)((char *)data + length * 16);
         }
@@ -773,7 +773,7 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
                 for (j = 0; j < count; j++) {
                     length = data->length;
                     if (((ModelPartDataBits30 *)&data->tex0)->clut_base != 0) {
-                        ((ModelPartDataBits30 *)&data->tex0)->clut_load_mode = 2;
+                        ((ModelPartDataBits30 *)&data->tex0)->clut_load_mode = GS_TEX0_CLD_LOAD_TO_CBP0;
                         first = FALSE;
                         break;
                     }
@@ -1344,7 +1344,7 @@ void Model_SetTexture(ModelInstance *model, u64 unk40, s64 unk30) {
             *(s64 *)&block->texture_word = unk30;
             block->tex0 = unk40;
             if (first) {
-                ((ModelPartDataBits30 *)&block->tex0)->clut_load_mode = 2;
+                ((ModelPartDataBits30 *)&block->tex0)->clut_load_mode = GS_TEX0_CLD_LOAD_TO_CBP0;
                 first = FALSE;
             }
             data = (ModelPartData *)((char *)block + (length + 1) * 16);
@@ -1546,7 +1546,7 @@ void Model_SetTextureBase(ModelInstance *model, int texture_base, int clut_base)
             }
             if (first) {
                 first = 0;
-                ((ModelPartDataBits30 *)cursor)->clut_load_mode = 2;
+                ((ModelPartDataBits30 *)cursor)->clut_load_mode = GS_TEX0_CLD_LOAD_TO_CBP0;
             }
             cursor = block + (length + 1) * 16;
         }

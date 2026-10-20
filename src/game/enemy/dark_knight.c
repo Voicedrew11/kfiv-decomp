@@ -190,13 +190,13 @@ static void DarkKnight_Think(Entity *entity, s32 run_now) {
             EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 EntityAi_ThinkIdle(entity, run_now);
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 DarkKnight_ThinkCombat(entity, run_now);
                 break;
             default:
@@ -244,7 +244,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, mode);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 1) {
                     EntityAi_StartAction(entity, DarkKnight_RangedAttack1, run_now);
@@ -259,9 +259,9 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 run_now) {
                 }
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             if (entity->distance_to_player > 500.0f) {
                 entity->action_timer = rand() % 30 + 60;
                 work->should_run = 1;
@@ -270,13 +270,13 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 run_now) {
                 work->should_run = 0;
             }
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         side = EntityAi_TurnFromPush(entity, direction);
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
@@ -422,7 +422,7 @@ static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
             Motion_Start(entity, 0x13, 0, 5, 1);
             ai_state->step_index = 2;
         }
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
@@ -505,7 +505,7 @@ static void DarkKnight_MeleeAttack2(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x16, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
@@ -621,7 +621,7 @@ static void DarkKnight_RangedAttack1(Entity *entity) {
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         } else {
-            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? MOTION_STEP_MOVE_FLAT : MOTION_STEP_MOVE;
         }
         ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;

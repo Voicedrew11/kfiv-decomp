@@ -16,6 +16,10 @@
 #include "model/motion.h"
 #include "player/player.h"
 
+/* Entity.ai_state.move_choice 1 and 2 */
+#define SCORPION_MOVE_CHOICE_APPROACH 1   /* turns and walks at the player */
+#define SCORPION_MOVE_CHOICE_SIDESTEP 2   /* steps left or right round the player (step_index) */
+
 
 static void Scorpion_Animate(Entity *entity);
 static void Scorpion_Think(Entity *entity, s32 run_now);
@@ -99,10 +103,10 @@ static void Scorpion_Think(Entity *entity, s32 run_now) {
         return;
     }
     switch (entity->state) {
-    case 0:
-    case 1:
+    case ENTITY_STATE_UNAWARE:
+    case ENTITY_STATE_SEARCHING:
         break;
-    case 2:
+    case ENTITY_STATE_NOTICED:
         Scorpion_ThinkCombat(entity, run_now);
         return;
     }
@@ -119,9 +123,9 @@ static int Scorpion_ThinkWander(Entity *entity, s32 run_now) {
     s32 turn;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     } else {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     }
     if (entity->action_timer == 0) {
         if (rand() % 100 <= 20) {
@@ -159,9 +163,9 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 run_now) {
     s32 mode;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     } else {
-        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
     }
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
@@ -180,26 +184,26 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(angle) > DEG_TO_RAD(10)) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 60;
-                ai_state->move_choice = 0;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             } else {
                 heading = EntityMath_AngleXZ(&player_state.position.x, entity->model->position) - player_state.rotation.y;
                 heading = EntityMath_WrapAngle(heading);
                 if (ABS(heading) > DEG_TO_RAD(45) || rand() % 100 < entity->params->pitch_limit_deg) {
                     entity->target = &player_state;
                     entity->action_timer = rand() % 60 + 120;
-                    ai_state->move_choice = 1;
+                    ai_state->move_choice = SCORPION_MOVE_CHOICE_APPROACH;
                 } else {
                     if (heading >= 0.0f) {
                         ai_state->step_index = 0;
@@ -207,16 +211,16 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 run_now) {
                         ai_state->step_index = 1;
                     }
                     entity->action_timer = rand() % 30 + 60;
-                    ai_state->move_choice = 2;
+                    ai_state->move_choice = SCORPION_MOVE_CHOICE_SIDESTEP;
                 }
             }
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
@@ -237,7 +241,7 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 run_now) {
         } else {
             turn = EntityAi_TurnFromPush(entity, &heading);
             switch (ai_state->move_choice) {
-            case 0:
+            case MOVE_CHOICE_CLOSE_IN:
                 angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
                 if (ABS(angle) > entity->params->turn_limit) {
                     if (angle >= 0.0f) {
@@ -249,9 +253,9 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 run_now) {
                 if (ABS(angle) <= DEG_TO_RAD(10)) {
                     entity->action_timer = 0;
                 }
-                ENTITY_FLAG_BITS(entity)->motion_step_mode = 3;
+                ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_TURN;
                 break;
-            case 1:
+            case SCORPION_MOVE_CHOICE_APPROACH:
                 if (turn > 0) {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                 } else if (turn < 0) {
@@ -260,7 +264,7 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 run_now) {
                     entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
                 break;
-            case 2:
+            case SCORPION_MOVE_CHOICE_SIDESTEP:
                 angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
                 if (ABS(angle) > entity->params->turn_limit) {
                     if (angle >= 0.0f) {
@@ -270,7 +274,7 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 run_now) {
                     }
                 }
                 if (entity->flags & (ENTITY_FLAG_WALL_PUSH | ENTITY_FLAG_OBJECT_PUSH | ENTITY_FLAG_ENTITY_PUSH)) {
-                    ai_state->move_choice = 1;
+                    ai_state->move_choice = SCORPION_MOVE_CHOICE_APPROACH;
                 } else if (ai_state->step_index != 0) {
                     entity->move_command |= MOVE_COMMAND_STEP_RIGHT;
                 } else {
@@ -321,7 +325,7 @@ static void Scorpion_Move(Entity *entity) {
     } else {
         command = first_command;
     }
-    if (ENTITY_FLAG_BITS(entity)->motion_step_mode == 0) {
+    if (ENTITY_FLAG_BITS(entity)->motion_step_mode == MOTION_STEP_IN_PLACE) {
         vector = ENTITY_SCRATCH_VECTOR;
         vector[0] = vector[1] = vector[2] = vector[3] = 0.0f;
         if (command & MOVE_COMMAND_FORWARD_BACK) {

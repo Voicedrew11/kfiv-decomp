@@ -18,6 +18,9 @@ typedef char *va_list;
 #define va_arg(ap, type) ((ap) += 8, *(type *)((ap) - 8))
 
 #define NOTICE_COUNT 6
+/* the kind of a notice (Message_ShowNotice): SHOWN takes the shown slot, QUEUED the next free one */
+#define MESSAGE_NOTICE_SHOWN   1
+#define MESSAGE_NOTICE_QUEUED  0
 #define DEBUG_LOG_LINES 0x80
 #define DEBUG_LOG_LINE_SIZE 0x108
 
@@ -300,7 +303,7 @@ void Message_ShowNotice(int x, int y, int font, int kind, int frames, int messag
     int width;
 
     format = Message_GetText(message_id);
-    if (kind == 1) {
+    if (kind == MESSAGE_NOTICE_SHOWN) {
         int left; // match: the two branches have their own left and top
         int top;
 
@@ -332,7 +335,7 @@ void Message_ShowNotice(int x, int y, int font, int kind, int frames, int messag
         notice_free->font = font;
         notice_free->left = left - width / 2;
         notice_free->top = top;
-        notice_free->kind = 0;
+        notice_free->kind = MESSAGE_NOTICE_QUEUED;
         notice_free = notice_free->next;
     }
     notices_active = 1;

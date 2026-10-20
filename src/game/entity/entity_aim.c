@@ -412,7 +412,7 @@ s32 EntitySight_ObjectInWay(Entity *entity) {
         object = map_objects(map);
         count = map_object_count(map);
         for (i = 0; i < count; i++, object++) {
-            if (object->definition->kind == 1 || object->definition->kind == 2 || object->definition->kind == 0x11 || object->definition->kind == 6) {
+            if (object->definition->kind == MAP_OBJECT_KIND_DOOR || object->definition->kind == MAP_OBJECT_KIND_DOUBLE_DOOR || object->definition->kind == MAP_OBJECT_KIND_SIGNAL_DOOR || object->definition->kind == MAP_OBJECT_KIND_MOVING_DOOR) {
                 reach = object->reach_radius;
                 if (reach <= 0.0f) {
                     continue;

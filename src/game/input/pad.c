@@ -1,6 +1,15 @@
 #include "input/pad.h"
 #include <libpad.h>
 
+/* scePadGetState: the controller's state (PadSlot.state) */
+#define PAD_STATE_DISCONNECTED      0
+#define PAD_STATE_FINDCTP1          2
+#define PAD_STATE_STABLE            6
+
+/* scePadGetReqState: how the last request ended (PadSlot.request_state) */
+#define PAD_REQSTATE_COMPLETE       0
+#define PAD_REQSTATE_FAILED         1
+
 static PadSystem pad_system; /* 0x1E0DB00 */
 
 /* Reads the controller into pad->report and turns its button bits round (a set bit is then a pressed button).
@@ -106,14 +115,14 @@ void Pad_Update(void) {
             }
             pad = &pad_system.slots[port * 4 + slot];
             pad->state = scePadGetState(port, slot);
-            if (pad->state == 0) {
+            if (pad->state == PAD_STATE_DISCONNECTED) {
                 pad->phase = 0;
             }
             pad->request_state = scePadGetReqState(port, slot);
             switch (pad->phase) {
                 case 0:
                     pad->mode = PAD_MODE_NONE;
-                    if (pad->state == 0) {
+                    if (pad->state == PAD_STATE_DISCONNECTED) {
                         continue;
                     }
                     type = scePadInfoMode(port, slot, 1, 0);
@@ -171,11 +180,11 @@ void Pad_Update(void) {
                     }
                     continue;
                 case 0x65:
-                    if (pad->request_state == 1) {
+                    if (pad->request_state == PAD_REQSTATE_FAILED) {
                         pad->phase = 0x64;
                     }
-                    if (pad->request_state == 0) {
-                        if (pad->state == 6 || pad->state == 2) {
+                    if (pad->request_state == PAD_REQSTATE_COMPLETE) {
+                        if (pad->state == PAD_STATE_STABLE || pad->state == PAD_STATE_FINDCTP1) {
                             pad->actuators_aligned = 0;
                             pad->phase = 0xFD;
                         }
@@ -187,11 +196,11 @@ void Pad_Update(void) {
                     }
                     continue;
                 case 0x6F:
-                    if (pad->request_state == 1) {
+                    if (pad->request_state == PAD_REQSTATE_FAILED) {
                         pad->phase = 0x6E;
                     }
-                    if (pad->request_state == 0) {
-                        if (pad->state == 6 || pad->state == 2) {
+                    if (pad->request_state == PAD_REQSTATE_COMPLETE) {
+                        if (pad->state == PAD_STATE_STABLE || pad->state == PAD_STATE_FINDCTP1) {
                             pad->actuators_aligned = 0;
                             if (scePadInfoPressMode(port, slot) == 1) {
                                 pad->features |= PAD_FEATURE_PRESSURE;
@@ -206,11 +215,11 @@ void Pad_Update(void) {
                     }
                     continue;
                 case 0x79:
-                    if (pad->request_state == 1) {
+                    if (pad->request_state == PAD_REQSTATE_FAILED) {
                         pad->phase = 0x78;
                     }
-                    if (pad->request_state == 0) {
-                        if (pad->state == 6 || pad->state == 2) {
+                    if (pad->request_state == PAD_REQSTATE_COMPLETE) {
+                        if (pad->state == PAD_STATE_STABLE || pad->state == PAD_STATE_FINDCTP1) {
                             pad->phase = 0xFF;
                         }
                     }
@@ -221,11 +230,11 @@ void Pad_Update(void) {
                     }
                     continue;
                 case 0x83:
-                    if (pad->request_state == 1) {
+                    if (pad->request_state == PAD_REQSTATE_FAILED) {
                         pad->phase = 0x82;
                     }
-                    if (pad->request_state == 0) {
-                        if (pad->state == 6 || pad->state == 2) {
+                    if (pad->request_state == PAD_REQSTATE_COMPLETE) {
+                        if (pad->state == PAD_STATE_STABLE || pad->state == PAD_STATE_FINDCTP1) {
                             pad->phase = 0xFE;
                         }
                     }
@@ -243,10 +252,10 @@ void Pad_Update(void) {
                     }
                     continue;
                 case 0xC9:
-                    if (pad->request_state == 1) {
+                    if (pad->request_state == PAD_REQSTATE_FAILED) {
                         pad->phase = 0xC8;
                     }
-                    if (pad->request_state == 0) {
+                    if (pad->request_state == PAD_REQSTATE_COMPLETE) {
                         pad->actuators_aligned = 1;
                         pad->phase = pad->next_phase;
                     }
@@ -317,7 +326,7 @@ void Pad_Update(void) {
             }
             pad->report.pressed = pad->report.held & ~old_buttons;
             Pad_StepRepeat(pad);
-            if ((pad->features & PAD_FEATURE_ACTUATORS) && pad->state == 6) {
+            if ((pad->features & PAD_FEATURE_ACTUATORS) && pad->state == PAD_STATE_STABLE) {
                 scePadSetActDirect(port, slot, pad->actuators);
             }
         }
