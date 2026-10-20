@@ -239,11 +239,11 @@ static void GiantLeader_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -287,7 +287,7 @@ static void GiantLeader_ThinkCombat(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
-                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                ai_state->turn_in_place = ABS(angle) > DEG_TO_RAD(30);
             }
             if (ai_state->turn_in_place != 0) {
                 entity->move_command = EntityAi_TurnCommand(entity);
@@ -336,19 +336,19 @@ static void GiantLeader_MeleeAttack0(Entity *entity) {
         ai_state->turn_rate = 0.0f;
         frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
-            ENTITY_FLAG_BITS(entity)->melee_0_hit = GiantLeader_CheckPartHit(entity, unk240, 0, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
+            ENTITY_FLAG_BITS(entity)->melee_0_hit = GiantLeader_CheckPartHit(entity, unk240, 0, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + PI));
             if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
                 ENTITY_FLAG_BITS(entity)->melee_0_hit = GiantLeader_CheckPartHit(entity, unk240, 1, frame, entity->model->level_tables->frame, entity->model->rotation[1]);
             }
         }
         if (!ENTITY_FLAG_BITS(entity)->melee_1_hit) {
-            ENTITY_FLAG_BITS(entity)->melee_1_hit = GiantLeader_CheckPartHit(entity, unk240, 2, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
+            ENTITY_FLAG_BITS(entity)->melee_1_hit = GiantLeader_CheckPartHit(entity, unk240, 2, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + PI));
             if (!ENTITY_FLAG_BITS(entity)->melee_1_hit) {
                 ENTITY_FLAG_BITS(entity)->melee_1_hit = GiantLeader_CheckPartHit(entity, unk240, 3, frame, entity->model->level_tables->frame, entity->model->rotation[1]);
             }
         }
         if (!ENTITY_FLAG_BITS(entity)->melee_2_hit) {
-            ENTITY_FLAG_BITS(entity)->melee_2_hit = GiantLeader_CheckPartHit(entity, unk240, 4, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
+            ENTITY_FLAG_BITS(entity)->melee_2_hit = GiantLeader_CheckPartHit(entity, unk240, 4, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + PI));
             if (!ENTITY_FLAG_BITS(entity)->melee_2_hit) {
                 ENTITY_FLAG_BITS(entity)->melee_2_hit = GiantLeader_CheckPartHit(entity, unk240, 5, frame, entity->model->level_tables->frame, entity->model->rotation[1]);
             }
@@ -399,9 +399,9 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
             entity->model->position[2] = -2400.0f;
             entity->model->position[3] = 0.0f;
             centre = 4200.0f;
-            angle = -1.5707964f;
+            angle = -HALF_PI;
             if (entity->model->position[0] > centre) {
-                angle = 1.5707964f;
+                angle = HALF_PI;
             }
             entity->model->rotation[1] = angle;
             coord = (entity->model->position[0] > centre ? -(entity->radius + 100.0f) : entity->radius + 100.0f) + centre;
@@ -418,7 +418,7 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
             entity->model->position[1] = 640.0f;
             entity->model->position[2] = coord;
             entity->model->position[3] = 0.0f;
-            entity->model->rotation[1] = EntityMath_WrapAngle(entity->model->position[2] > limit ? 0.0f : 3.1415927f);
+            entity->model->rotation[1] = EntityMath_WrapAngle(entity->model->position[2] > limit ? 0.0f : PI);
             coord = (entity->model->position[2] > limit ? -(entity->radius + 100.0f) : entity->radius + 100.0f) + limit;
             ai_state->target_point[0] = 5200.0f;
             ai_state->target_point[1] = 640.0f;
@@ -433,7 +433,7 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
             entity->model->position[1] = 640.0f;
             entity->model->position[2] = coord;
             entity->model->position[3] = 0.0f;
-            entity->model->rotation[1] = EntityMath_WrapAngle(entity->model->position[2] > limit ? 0.0f : 3.1415927f);
+            entity->model->rotation[1] = EntityMath_WrapAngle(entity->model->position[2] > limit ? 0.0f : PI);
             coord = (entity->model->position[2] > limit ? -(entity->radius + 100.0f) : entity->radius + 100.0f) + limit;
             ai_state->target_point[0] = 3400.0f;
             ai_state->target_point[1] = 640.0f;

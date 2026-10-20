@@ -131,10 +131,10 @@ static void WiddaArcher_Animate(Entity *entity) {
             ai_state->heading_speed = 0.0f;
         }
         WiddaArcher_AimPartsAtTarget(entity);
-        limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
-        limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
-        limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
-        limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
+        limits[1] = DEG_TO_RAD(entity->params->pitch_limit_deg);
+        limits[0] = DEG_TO_RAD(-entity->params->pitch_limit_deg);
+        limits[3] = DEG_TO_RAD(entity->params->yaw_limit_deg);
+        limits[2] = DEG_TO_RAD(-entity->params->yaw_limit_deg);
         if (ENTITY_FLAG_BITS(entity)->look_at_target) {
             EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, ENTITY_FLAG_BITS(entity)->look_at_target, limits, 12.0f);
         } else {
@@ -156,10 +156,10 @@ static void WiddaArcher_PitchPartToPlayer(Entity *entity) {
     ai_state = &entity->ai_state;
     if (part != NULL) {
         pitch = EntityMath_WrapAngle(atan2(player_state.position[1] - entity->model->position[1], entity->distance_to_player));
-        if (0.87266463f < pitch) {
-            pitch = 0.87266463f;
-        } else if (pitch < -0.87266463f) {
-            pitch = -0.87266463f;
+        if (DEG_TO_RAD(50) < pitch) {
+            pitch = DEG_TO_RAD(50);
+        } else if (pitch < -DEG_TO_RAD(50)) {
+            pitch = -DEG_TO_RAD(50);
         }
         EntityMath_EaseAngleToward(&ai_state->heading_speed, pitch, 5.0f);
         part->part_angles[0] = ai_state->heading_speed;
@@ -188,7 +188,7 @@ static void WiddaArcher_AimPartsAtTarget(Entity *entity) {
         ai_state->pitch_speed = parts[31].part_angles[1];
     } else {
         pitch = atan2f(player_state.position[1] - entity->model->position[1], entity->distance_to_player);
-        pitch_limit = 0.5235988f;
+        pitch_limit = DEG_TO_RAD(30);
         if (pitch_limit < pitch) {
             pitch = pitch_limit;
         } else if (pitch < -pitch_limit) {
@@ -201,7 +201,7 @@ static void WiddaArcher_AimPartsAtTarget(Entity *entity) {
         parts[21].part_angles[0] = ai_state->part_angle_z;
         yaw_to_target = EntityMath_HeadingTo(entity->model->position, entity->target);
         yaw = EntityMath_AngleDifference(entity->model->rotation[1], yaw_to_target);
-        yaw_limit = 0.6981317f;
+        yaw_limit = DEG_TO_RAD(40);
         if (yaw_limit < yaw) {
             yaw = yaw_limit;
         } else if (yaw < -yaw_limit) {
@@ -265,11 +265,11 @@ static void WiddaArcher_ThinkCombat(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.6981317f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(40))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -306,11 +306,11 @@ static void WiddaArcher_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     angle = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
-    if (entity->distance_to_player_3d - entity->radius - 100.0f < 200.0f && ABS(angle) < 0.6981317f) {
+    if (entity->distance_to_player_3d - entity->radius - 100.0f < 200.0f && ABS(angle) < DEG_TO_RAD(40)) {
         if (frame_counter % 10U == entity->spawn_index % 10U &&
             rand() % 100 < (entity->params->hit_points - entity->hit_points) * 100 / entity->params->hit_points) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-            if (ABS(angle) > 0.6981317f && ABS(angle) < 1.5707964f) {
+            if (ABS(angle) > DEG_TO_RAD(40) && ABS(angle) < HALF_PI) {
                 EntityAi_StartAction(entity, EntityAi_Dodge, 1);
                 return;
             }
@@ -366,7 +366,7 @@ static void WiddaArcher_RangedAttack(Entity *entity) {
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(target, player_state.position);
         target[1] -= 190.0f;
-        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, 0.17453294f, 0.17453294f);
+        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, AIMED_SHOT_TURN_RATE, AIMED_SHOT_TURN_RATE);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {

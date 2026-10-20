@@ -173,15 +173,15 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
     }
-    if (WindElemental_ShouldDodgeMagic(entity, 200.0f, 1.0471976f)) {
+    if (WindElemental_ShouldDodgeMagic(entity, 200.0f, DEG_TO_RAD(60))) {
         EntityAi_StartAction(entity, WindElemental_Dodge, 1);
         return;
     }
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, WindElemental_DodgeNoAttack, 1);
         return;
     }
@@ -225,7 +225,7 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
-                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                ai_state->turn_in_place = ABS(angle) > DEG_TO_RAD(30);
             }
             if (ai_state->turn_in_place != 0) {
                 entity->move_command = EntityAi_TurnCommand(entity);
@@ -242,7 +242,7 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
                 } else if (side < 0) {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
                 } else {
-                    if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 1.5707964f
+                    if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > HALF_PI
                         && frame_counter % 15U == 0 && !(rand() & 1)) {
                         ai_state->step_index = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
                         EntityAi_StartAction(entity, WindElemental_PlayTurnAnim, unknown);
@@ -332,7 +332,7 @@ static void WindElemental_Dodge(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (!(rand() & 1) && ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < 0.5235988f) {
+            if (!(rand() & 1) && ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < DEG_TO_RAD(30)) {
                 ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~(3L << 58)) | (1L << 58);
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
             } else if (ENTITY_FLAG_BITS(entity)->own_think) {
@@ -411,7 +411,7 @@ static s32 WindElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 
     if (ABS(angle) > max_angle) {
         return FALSE;
     }
-    if (ABS(player_angle) > 0.5235988f) {
+    if (ABS(player_angle) > DEG_TO_RAD(30)) {
         return FALSE;
     }
     return rand() % 100 < entity->params->dodge_chance / 10;
@@ -482,15 +482,15 @@ static void WindElemental_RunAtPlayer(Entity *entity) {
         }
         break;
     case 2:
-        if (WindElemental_ShouldDodgeMagic(entity, 200.0f, 1.0471976f)) {
+        if (WindElemental_ShouldDodgeMagic(entity, 200.0f, DEG_TO_RAD(60))) {
             EntityAi_StartAction(entity, WindElemental_Dodge, 1);
             break;
         }
-        if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+        if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
             EntityAi_StartAction(entity, EntityAi_Guard, 1);
             break;
         }
-        if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+        if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
             EntityAi_StartAction(entity, EntityAi_Dodge, 1);
             break;
         }

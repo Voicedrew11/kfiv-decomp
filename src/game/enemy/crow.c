@@ -156,7 +156,7 @@ static void Crow_MoveOffAndRemove(Entity *entity, s32 unknown) {
     // match: the whole step is written out in both arms (only the call is shared in retail)
     if (-2000.0f < entity->model->position[1]) {
         turn = entity->model->rotation[0];
-        EntityMath_EaseAngleToward(&turn, -0.6981317f, 20.0f);
+        EntityMath_EaseAngleToward(&turn, -DEG_TO_RAD(40), 20.0f);
         entity->turn_delta_pitch += turn - entity->model->rotation[0];
     } else {
         turn = entity->model->rotation[0];
@@ -178,7 +178,7 @@ static void Crow_Death(Entity *entity) {
     // match: the whole step is written out in both arms (only the call is shared in retail)
     if (!ENTITY_FLAG_BITS(entity)->on_floor) {
         turn = entity->model->rotation[0];
-        EntityMath_EaseAngleToward(&turn, 1.5707964f, 3.0f);
+        EntityMath_EaseAngleToward(&turn, HALF_PI, 3.0f);
         entity->turn_delta_pitch += turn - entity->model->rotation[0];
     } else {
         turn = entity->model->rotation[0];

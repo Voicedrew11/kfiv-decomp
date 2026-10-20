@@ -145,7 +145,7 @@ static void ParaStool_ThinkCombat(Entity *entity, s32 unknown) {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
     range = 300.0f;
-    angle = 0.5235988f;
+    angle = DEG_TO_RAD(30);
     if (EntityAi_ShouldGuard(entity, range, angle)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -281,8 +281,8 @@ static s32 ParaStool_CheckPartHitInPlayerView(Entity *entity, EntityParamsUnk240
         !(record->hit_parts[index].last_frame < frame && record->hit_parts[index].last_frame < current_frame)) {
         yaw = EntityMath_AngleDifference(player_state[5], EntityMath_AngleXZ(player_state, (char *)entity->model->position));
         pitch = (f32)atan((entity->model->position[1] - player_state[1] + 220.0f) / entity->distance_to_player) + player_state[4];
-        if (ABS(yaw) < entity->params->yaw_limit_deg * 0.017453292f && ABS(pitch) < (s16)entity->params->action_frames * 0.017453292f) {
-            spread = EntityMath_WrapAngle(record->hit_parts[0].half_angle_deg * 0.017453292f);
+        if (ABS(yaw) < DEG_TO_RAD(entity->params->yaw_limit_deg) && ABS(pitch) < (s16)entity->params->action_frames * DEG_TO_RAD(1)) {
+            spread = EntityMath_WrapAngle(DEG_TO_RAD(record->hit_parts[0].half_angle_deg));
             if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < spread) {
                 Attack_RollPlayerAilments(&entity->params->melee_attacks[0].hit_parts[0].ailment_chances);
                 memset(&request, 0, sizeof(request));
@@ -290,8 +290,8 @@ static s32 ParaStool_CheckPartHitInPlayerView(Entity *entity, EntityParamsUnk240
                 Vector_Copy(request.position, entity->model->position);
                 request.height = entity->height + 10.0f;
                 request.radius = entity->radius + record->hit_parts[index].radius_bonus;
-                request.facing = EntityMath_WrapAngle(angle + 3.1415927f);
-                request.half_angle = EntityMath_WrapAngle(record->hit_parts[index].half_angle_deg * 0.017453292f);
+                request.facing = EntityMath_WrapAngle(angle + PI);
+                request.half_angle = EntityMath_WrapAngle(DEG_TO_RAD(record->hit_parts[index].half_angle_deg));
                 request.owner = entity;
                 request.shape = 3;
                 request.target_mask = 1;

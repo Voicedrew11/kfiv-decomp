@@ -247,7 +247,7 @@ void Collision_CapsuleTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 
         return;
     }
     ratio = -normal[1];
-    if (-0.0001f < ratio && ratio < 0.0001f) {
+    if (-COLLISION_HORIZONTAL_EPSILON < ratio && ratio < COLLISION_HORIZONTAL_EPSILON) {
         if (radius < distance) {
             return;
         }
@@ -322,7 +322,7 @@ void Collision_CapsuleTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 
         flat[2] = edge[2];
         sceVu0Normalize(flat, flat);
         along = flat[0] * edge[0] + flat[1] * edge[1] + flat[2] * edge[2];
-        if (-0.000001f < along && along < 0.000001f) {
+        if (-COLLISION_END_ON_EPSILON < along && along < COLLISION_END_ON_EPSILON) {
             point[0] = end[0];
             point[1] = centre[1];
             point[2] = end[2];
@@ -352,7 +352,7 @@ void Collision_CapsuleTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 
             if (distance <= nearest_squared) {
                 KEEP_NEAREST(distance, point);
             }
-        } else if (1.00001f < ratio) {
+        } else if (COLLISION_RATIO_PAST_END < ratio) {
             point[0] = start[0];
             point[1] = centre[1];
             point[2] = start[2];
@@ -414,7 +414,7 @@ void Collision_RayTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *ori
         :
         : "r"(corner_a), "r"(corner_b), "r"(corner_c), "r"(edge_a), "r"(edge_c), "r"(normal));
     denominator = normal[0] * direction[0] + normal[1] * direction[1] + normal[2] * direction[2];
-    if (-0.00001f < denominator && denominator < 0.00001f) {
+    if (-COLLISION_PARALLEL_EPSILON < denominator && denominator < COLLISION_PARALLEL_EPSILON) {
         return;
     }
     distance = normal[0] * corner_a[0] + normal[1] * corner_a[1] + normal[2] * corner_a[2];
@@ -523,7 +523,7 @@ static void Collision_MoveTrianglePlane(f32 *corner_a, f32 *corner_b, f32 *corne
     // match: the parallel test adds the plane normal and the direction and sums the components; a dot product was meant
     Vector_Add(edge_a, plane, direction);
     facing = edge_a[0] + edge_a[1] + edge_a[2];
-    if (-0.00001f < facing && facing < 0.00001f) {
+    if (-COLLISION_PARALLEL_EPSILON < facing && facing < COLLISION_PARALLEL_EPSILON) {
         return;
     }
     distance = -(plane[0] * origin[0] + plane[1] * origin[1] + plane[2] * origin[2] + distance) /
@@ -575,7 +575,7 @@ static void Collision_DropOntoTriangle(f32 *corner_a, f32 *corner_b, f32 *corner
         :
         : "r"(corner_a), "r"(corner_b), "r"(corner_c), "r"(edge_a), "r"(edge_c), "r"(normal));
     denominator = normal[1];
-    if (-0.00001f < denominator && denominator < 0.00001f) {
+    if (-COLLISION_PARALLEL_EPSILON < denominator && denominator < COLLISION_PARALLEL_EPSILON) {
         return;
     }
     __asm__ volatile(
@@ -741,7 +741,7 @@ void Collision_RayCylinder(f32 radius, f32 height, f32 length, f32 *base, f32 *o
     }
     sceVu0Normalize(heading, heading);
     facing = heading[0] * along[0] + heading[1] * along[1] + heading[2] * along[2];
-    if (-0.000001f < facing && facing < 0.000001f) {
+    if (-COLLISION_END_ON_EPSILON < facing && facing < COLLISION_END_ON_EPSILON) {
         nearest[0] = start[0];
         nearest[1] = base[1];
         nearest[2] = start[2];
@@ -932,7 +932,7 @@ void Collision_CylinderArc(f32 *base, f32 *other, f32 radius, f32 height, f32 ot
         return;
     }
     half_angle += atan2f(radius + radius, sqrtf(distance));
-    angle = -(atan2f(delta[2], delta[0]) - 1.5707964f);
+    angle = -(atan2f(delta[2], delta[0]) - HALF_PI);
     angle = Angle_Wrap(angle - facing);
     if (angle < -half_angle) {
         return;
@@ -1000,7 +1000,7 @@ void Collision_CylinderArcPitch(f32 *base, f32 *other, f32 radius, f32 height, f
     }
     flat = sqrtf(distance);
     half_angle += atan2f(radius + radius, flat);
-    angle = -(atan2f(delta[2], delta[0]) - 1.5707964f);
+    angle = -(atan2f(delta[2], delta[0]) - HALF_PI);
     angle = Angle_Wrap(angle - facing);
     if (angle < -half_angle) {
         return;
@@ -1234,7 +1234,7 @@ void Collision_BallSwing(void *ball_centre, void *swing_origin, f32 radius, f32 
         return;
     }
     half_angle += atan2f(radius + radius, sqrtf(bottom));
-    top = Angle_Wrap(-(atan2f(delta[2], delta[0]) - 1.5707964f) - facing);
+    top = Angle_Wrap(-(atan2f(delta[2], delta[0]) - HALF_PI) - facing);
     if (top < -half_angle) {
         return;
     }
@@ -1292,7 +1292,7 @@ void Collision_BallSwingPitch(void *ball_centre, void *swing_origin, f32 radius,
     flat_distance = sqrtf(bottom);
     twice_radius = radius + radius;
     half_angle += atan2f(twice_radius, flat_distance);
-    top = Angle_Wrap(-(atan2f(delta[2], delta[0]) - 1.5707964f) - facing);
+    top = Angle_Wrap(-(atan2f(delta[2], delta[0]) - HALF_PI) - facing);
     if (top < -half_angle) {
         return;
     }

@@ -382,13 +382,13 @@ static void LavaBird_ApplyMoveCommand(Entity *entity) {
         if (ai_state->turn_rate < -entity->params->turn_limit) {
             ai_state->turn_rate = -entity->params->turn_limit;
         }
-        roll = (ai_state->pitch_speed + 50.0f) * 0.017453292f;
+        roll = DEG_TO_RAD(ai_state->pitch_speed + 50.0f);
     } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         ai_state->turn_rate += entity->params->turn_step_per_frame;
         if (entity->params->turn_limit < ai_state->turn_rate) {
             ai_state->turn_rate = entity->params->turn_limit;
         }
-        roll = (-50.0f - ai_state->pitch_speed) * 0.017453292f;
+        roll = DEG_TO_RAD(-50.0f - ai_state->pitch_speed);
     } else {
         if (entity->params->turn_step_per_frame < ai_state->turn_rate) {
             ai_state->turn_rate -= entity->params->turn_step_per_frame;
@@ -402,28 +402,28 @@ static void LavaBird_ApplyMoveCommand(Entity *entity) {
     entity->turn_delta_yaw += ai_state->turn_rate;
     EntityMath_EaseAngleToward(&entity->model->rotation[2], roll, 60.0f);
     if (ai_state->turn_in_place > 0) {
-        if (ABS((f32)ai_state->turn_in_place) * -0.17453292f < entity->model->rotation[0]) {
-            ai_state->part_angle_y -= 0.006981317f;
-            if (ai_state->part_angle_y < -0.017453292f) {
-                ai_state->part_angle_y = -0.017453292f;
+        if (ABS((f32)ai_state->turn_in_place) * -DEG_TO_RAD(10) < entity->model->rotation[0]) {
+            ai_state->part_angle_y -= DEG_TO_RAD(0.4f);
+            if (ai_state->part_angle_y < -DEG_TO_RAD(1)) {
+                ai_state->part_angle_y = -DEG_TO_RAD(1);
             }
         } else {
             ai_state->part_angle_y = 0.0f;
         }
     } else if (ai_state->turn_in_place < 0) {
-        if (entity->model->rotation[0] < ABS((f32)ai_state->turn_in_place) * 0.17453292f) {
-            ai_state->part_angle_y += 0.006981317f;
-            if (0.017453292f < ai_state->part_angle_y) {
-                ai_state->part_angle_y = 0.017453292f;
+        if (entity->model->rotation[0] < ABS((f32)ai_state->turn_in_place) * DEG_TO_RAD(10)) {
+            ai_state->part_angle_y += DEG_TO_RAD(0.4f);
+            if (DEG_TO_RAD(1) < ai_state->part_angle_y) {
+                ai_state->part_angle_y = DEG_TO_RAD(1);
             }
         } else {
             ai_state->part_angle_y = 0.0f;
         }
     } else if (ai_state->turn_in_place == 0) {
-        if (0.017453292f < entity->model->rotation[0]) {
-            ai_state->part_angle_y = -0.017453292f;
-        } else if (entity->model->rotation[0] < -0.017453292f) {
-            ai_state->part_angle_y = 0.017453292f;
+        if (DEG_TO_RAD(1) < entity->model->rotation[0]) {
+            ai_state->part_angle_y = -DEG_TO_RAD(1);
+        } else if (entity->model->rotation[0] < -DEG_TO_RAD(1)) {
+            ai_state->part_angle_y = DEG_TO_RAD(1);
         } else {
             ai_state->part_angle_y = -entity->model->rotation[0];
         }
@@ -619,7 +619,7 @@ static void LavaBird_RangedAttack(Entity *entity) {
         current_frame = slots->motion_slot_0.frame;
         launch_frame = ((EntityParamsUnk3D8Full *)unk3D8)->launches[0].frame;
         if (launch_frame != 0 && frame < launch_frame && launch_frame <= current_frame) {
-            LavaBird_LaunchBothShots(entity, unk3D8, frame, current_frame, player_state.position, 0.7853982f, 0.7853982f);
+            LavaBird_LaunchBothShots(entity, unk3D8, frame, current_frame, player_state.position, DEG_TO_RAD(45), DEG_TO_RAD(45));
         }
         if (slots->motion_slot_0.frame > 0 && unk3D8->attack_end_frame >= slots->motion_slot_0.frame) {
             ENTITY_FLAG_BITS(entity)->attack_window = 1;
@@ -672,11 +672,11 @@ static s32 LavaBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
                 delta_y = tip[1] - from[1];
                 delta_z = tip[2] - from[2];
                 angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
+                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + HALF_PI);
                 angles[2] = angles[3] = 0.0f;
             } else {
                 Vector_Copy(angles, entity->model->rotation);
-                angles[1] = EntityMath_WrapAngle(angles[1] + 3.1415927f);
+                angles[1] = EntityMath_WrapAngle(angles[1] + PI);
             }
             if (target != NULL) {
                 pitch = EntityMath_WrapAngle(-atan2(target[1] - from[1], EntityMath_DistanceXZ(from, target)));
@@ -883,10 +883,10 @@ static void LavaBird_Animate(Entity *entity) {
             EntityEvent_StartFrameCues(entity, slots->motion_slot_1.index, previous, slots->motion_slot_1.frame_fixed);
         }
     }
-    limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
-    limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
-    limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
-    limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
+    limits[1] = DEG_TO_RAD(entity->params->pitch_limit_deg);
+    limits[0] = DEG_TO_RAD(-entity->params->pitch_limit_deg);
+    limits[3] = DEG_TO_RAD(entity->params->yaw_limit_deg);
+    limits[2] = DEG_TO_RAD(-entity->params->yaw_limit_deg);
     if (ENTITY_FLAG_BITS(entity)->look_at_target && entity->target != NULL) {
         EntityAi_LookAtPoint(entity, (int)ai_state->look_part_angles, ENTITY_FLAG_BITS(entity)->look_at_target, (int)entity->target, (int)limits, 12.0f);
     } else {

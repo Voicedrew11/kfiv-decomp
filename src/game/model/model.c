@@ -84,7 +84,7 @@ typedef u32 u_long128 __attribute__((mode(TI)));
         : : "r"(from), "r"(to))
 /* the largest float: a vertex's distance before it has been measured.
    match: written as a literal, the compiler keeps it in .sdata (largest_float_not_measured) */
-#define NOT_MEASURED 3.4028235e38f
+#define NOT_MEASURED FLT_MAX
 void Model_DrawSkinned(ModelInstance *);
 // match: the asm label is part of the register order, see Model_GetSkinnedBonePoint above
 void Model_UpdateSkinnedBonePoints(ModelInstance *) __asm__("Model_UpdateSkinnedBonePoints");
@@ -214,8 +214,8 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
 
 /* an angle brought back into -pi..pi (for angles above -pi) */
 static inline f32 wrap_angle(f32 angle) {
-    angle += 3.1415927f;
-    return angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
+    angle += PI;
+    return angle - (f32)(s32)(angle / TWO_PI) * TWO_PI - PI;
 }
 
 /* Draws a model (the draw function Model_SetUpSkinned installs): works out a turn from the block at
@@ -243,7 +243,7 @@ void Model_DrawSkinned(ModelInstance *model) {
 
     i = 0;
     pitch = -asinf(((f32 *)model->light_block)[4]);
-    yaw = Angle_Wrap(atan2f(((f32 *)model->light_block)[8], ((f32 *)model->light_block)[0]) + 1.5707964f);
+    yaw = Angle_Wrap(atan2f(((f32 *)model->light_block)[8], ((f32 *)model->light_block)[0]) + HALF_PI);
     sceVu0RotMatrixY(MODEL_TURN_SCRATCH, identity_matrix, yaw);
     sceVu0RotMatrixX(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, pitch);
     sceVu0RotMatrixX(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.x));
@@ -380,7 +380,7 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
 
     i = 0;
     pitch = -asinf(((f32 *)model->light_block)[4]);
-    yaw = Angle_Wrap(atan2f(((f32 *)model->light_block)[8], ((f32 *)model->light_block)[0]) + 1.5707964f);
+    yaw = Angle_Wrap(atan2f(((f32 *)model->light_block)[8], ((f32 *)model->light_block)[0]) + HALF_PI);
     sceVu0RotMatrixY(MODEL_TURN_SCRATCH, identity_matrix, yaw);
     sceVu0RotMatrixX(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, pitch);
     sceVu0RotMatrixX(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.x));

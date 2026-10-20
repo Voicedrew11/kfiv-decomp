@@ -6,6 +6,8 @@
 #include "collision/collision.h"
 #include "math/vu0.h"
 
+#define INTERACT_CONE_COS 0.866025f /* cos 30 degrees: objects further off the view direction are skipped */
+
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 int Timer_GetTicks(void);
@@ -51,10 +53,10 @@ void Interact_UpdateViewRay(void) {
         Vector_Copy(view_ray_status.view_origin, &player_state);
         view_ray_status.view_origin[1] = view_ray_status.view_origin[1] - 220.0f + player_state.landing_dip_offset + camera_state.height_offset;
         pitch = player_state.rotation.x - player_state.view_tilt_pitch;
-        if (pitch > 1.012291f) {
-            pitch = 1.012291f;
-        } else if (pitch < -1.012291f) {
-            pitch = -1.012291f;
+        if (pitch > DEG_TO_RAD(58)) {
+            pitch = DEG_TO_RAD(58);
+        } else if (pitch < -DEG_TO_RAD(58)) {
+            pitch = -DEG_TO_RAD(58);
         }
         heading = player_state.rotation.y;
     } else {
@@ -151,7 +153,7 @@ void Interact_FindTarget(void) {
             if (is_plain) {
                 sceVu0SubVector(delta, &object->model->position, &camera_state);
                 sceVu0Normalize(delta, delta);
-                if (sceVu0InnerProduct(delta, view_ray_status.view_direction) < 0.866025f) {
+                if (sceVu0InnerProduct(delta, view_ray_status.view_direction) < INTERACT_CONE_COS) {
                     continue;
                 }
                 sceVu0SubVector(delta, &object->model->position, &camera_state);
@@ -198,7 +200,7 @@ void Interact_FindTarget(void) {
             continue;
         }
         sceVu0Normalize(unit, delta);
-        if (sceVu0InnerProduct(unit, view_ray_status.view_direction) < 0.866025f) {
+        if (sceVu0InnerProduct(unit, view_ray_status.view_direction) < INTERACT_CONE_COS) {
             continue;
         }
         distance = sqrtf(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);

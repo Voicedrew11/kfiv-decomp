@@ -8,9 +8,10 @@
 #include "effect/effect.h"
 
 #define IS_PLAYER(owner) ((owner) == (Entity *)&player_state)
+#define HIT_STRENGTH_LIGHT_MAX_PERCENT 33.3334f
 #define LARGER(first, second) ((first) < (second) ? (second) : (first))
 /* rand() scaled to 0-99 (the factor is 2 to the power -31) */
-#define ROLL_PERCENT() ((s32)(rand() * 100.0f * 0.0000000004656613f))
+#define ROLL_PERCENT() ((s32)(rand() * 100.0f * RAND_SCALE))
 /* a chance is never under 5 percent */
 #define AT_LEAST_5(chance) ((chance) < 5 ? 5 : (chance))
 #define ENTITY_TYPE_LAST_BOSS 99
@@ -1037,7 +1038,7 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
     entity->hit_cooldown_frames = 15;
 
     percent = damage * 100.0f / entity->params->hit_points;
-    ENTITY_FLAG_HIT_BITS(entity)->hit_strength = percent < 33.3334f ? 1 : 2;
+    ENTITY_FLAG_HIT_BITS(entity)->hit_strength = percent < HIT_STRENGTH_LIGHT_MAX_PERCENT ? 1 : 2;
     ENTITY_FLAG_HIT_BITS(entity)->hit_source = by_weapon ? 1 : by_magic ? 2 : 0; // match: a shift of by_magic in retail too
 
     // match: three stores to unk6C, one per arm, give retail's single shared call and store
@@ -1366,7 +1367,7 @@ void Attack_WearArmorFromHit(int damage, Unk1B1470Request *request) {
     if (request->hit_armor_part != 0) {
         part = request->hit_armor_part;
     } else {
-        part = (int)(rand() * 4.0f * 4.656613e-10f) + 1;
+        part = (int)(rand() * 4.0f * RAND_SCALE) + 1;
     }
     if (!((s32)(player_state.status_bits >> 35) & 1) && player_state.equipment[EQUIP_SHIELD] != ITEM_WORN_INDEX(ITEM_SHIELD_NONE)) {
         shield_exp = 1;

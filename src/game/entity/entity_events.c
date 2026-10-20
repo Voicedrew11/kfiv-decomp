@@ -29,11 +29,11 @@ int Script_Start(int, int);
 
 /* EntityMath_WrapAngle, which the game inlines here: wraps an angle to +-pi */
 static inline f32 wrap_angle(f32 angle) {
-    angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-    if (angle > 3.1415927f) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI;
+    if (angle > PI) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     return angle;
 }
@@ -69,11 +69,11 @@ static inline f32 approach_angle(f32 current, f32 goal, f32 rate) {
         return current;
     }
     difference = goal - current;
-    wrapped = difference - (f32)(s32)(difference / 6.2831855f) * 6.2831855f;
-    if (wrapped > 3.1415927f) {
-        wrapped -= 6.2831855f;
-    } else if (wrapped < -3.1415927f) {
-        wrapped += 6.2831855f;
+    wrapped = difference - (f32)(s32)(difference / TWO_PI) * TWO_PI;
+    if (wrapped > PI) {
+        wrapped -= TWO_PI;
+    } else if (wrapped < -PI) {
+        wrapped += TWO_PI;
     }
     steps = (s32)(wrapped / rate);
     if (steps > 0) {
@@ -92,22 +92,22 @@ static inline f32 turn_towards(f32 *angle, f32 goal, f32 rate) {
     f32 difference = goal - *angle;
     f32 turned;
 
-    difference = difference - (f32)(s32)(difference / 6.2831855f) * 6.2831855f;
-    if (difference > 3.1415927f) {
-        difference -= 6.2831855f;
-    } else if (difference < -3.1415927f) {
-        difference += 6.2831855f;
+    difference = difference - (f32)(s32)(difference / TWO_PI) * TWO_PI;
+    if (difference > PI) {
+        difference -= TWO_PI;
+    } else if (difference < -PI) {
+        difference += TWO_PI;
     }
     if (rate <= 1.0f) {
         *angle = goal;
         return difference;
     }
     turned = *angle + difference / rate;
-    turned = turned - (f32)(s32)(turned / 6.2831855f) * 6.2831855f;
-    if (turned > 3.1415927f) {
-        turned -= 6.2831855f;
-    } else if (turned < -3.1415927f) {
-        turned += 6.2831855f;
+    turned = turned - (f32)(s32)(turned / TWO_PI) * TWO_PI;
+    if (turned > PI) {
+        turned -= TWO_PI;
+    } else if (turned < -PI) {
+        turned += TWO_PI;
     }
     *angle = turned;
     return difference;
@@ -145,11 +145,11 @@ int EntityShot_LaunchAimed(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame
                     delta_y = tip[1] - from[1];
                     delta_z = tip[2] - from[2];
                     angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-                    angles[1] = wrap_angle(-atan2f(delta_z, delta_x) + 1.5707964f);
+                    angles[1] = wrap_angle(-atan2f(delta_z, delta_x) + HALF_PI);
                     angles[2] = angles[3] = 0.0f;
                 } else {
                     Vector_Copy(angles, entity->model->rotation);
-                    angles[1] = wrap_angle(angles[1] + 3.1415927f);
+                    angles[1] = wrap_angle(angles[1] + PI);
                 }
                 if (target != NULL) {
                     pitch = wrap_angle(-atan2(target[1] - from[1], flat_distance(from, target)));
@@ -238,7 +238,7 @@ void EntityEvent_StartFrameEffects(Entity *entity, s32 animation, s32 frame_from
             delta_y = tip[1] - from[1];
             delta_z = tip[2] - from[2];
             angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-            angles[1] = wrap_angle(-atan2f(delta_z, delta_x) + 1.5707964f);
+            angles[1] = wrap_angle(-atan2f(delta_z, delta_x) + HALF_PI);
             angles[2] = angles[3] = 0.0f;
             frame = record->frame << 8;
             if (frame < frame_from) {
@@ -269,11 +269,11 @@ void EntityEvent_StartFrameCues(Entity *entity, s32 animation, s32 frame_from, s
     count = entity->params->anim_sound_counts[animation];
     if (count > 0 && record != NULL) {
         angle = atan2f(entity->model->position[0] - player_state.position.x, entity->model->position[2] - player_state.position.z) - player_state.rotation.y;
-        angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-        if (angle > 3.1415927f) {
-            angle -= 6.2831855f;
-        } else if (angle < -3.1415927f) {
-            angle += 6.2831855f;
+        angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI;
+        if (angle > PI) {
+            angle -= TWO_PI;
+        } else if (angle < -PI) {
+            angle += TWO_PI;
         }
         for (i = 0; i < count; i++, record++) {
             frame = record->frame << 8;
@@ -297,11 +297,11 @@ void EntityEvent_StartCue(Entity *entity, s32 unknown1, s32 unknown2, s32 skip_i
     f32 angle;
 
     angle = atan2f(entity->model->position[0] - player_state.position.x, entity->model->position[2] - player_state.position.z) - player_state.rotation.y;
-    angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-    if (angle > 3.1415927f) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI;
+    if (angle > PI) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     if (entity->ailment_4_frames != 0 && skip_if_unk2A != 0) {
         return;
@@ -316,11 +316,11 @@ void EntityEvent_StartCueAlways(Entity *entity, s32 unknown1, s32 unknown2) {
 
     angle = atan2f(entity->model->position[0] - player_state.position.x, entity->model->position[2] - player_state.position.z);
     angle -= player_state.rotation.y;
-    wrapped = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-    if (wrapped > 3.1415927f) {
-        wrapped -= 6.2831855f;
-    } else if (wrapped < -3.1415927f) {
-        wrapped += 6.2831855f;
+    wrapped = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI;
+    if (wrapped > PI) {
+        wrapped -= TWO_PI;
+    } else if (wrapped < -PI) {
+        wrapped += TWO_PI;
     }
     Sound_PlayFalloff(entity->params->sound_id, (u8)unknown1, (u8)unknown2, entity->sound_bank, entity->distance_to_player_3d, wrapped);
 }

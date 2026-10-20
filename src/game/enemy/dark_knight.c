@@ -262,11 +262,11 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
 
     entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
-    if (DarkKnight_ShouldHoldAnim13(entity, 200.0f, 2.443461f)) {
+    if (DarkKnight_ShouldHoldAnim13(entity, 200.0f, DEG_TO_RAD(140))) {
         EntityAi_StartAction(entity, DarkKnight_HoldGuardPose, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -322,7 +322,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
-                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                ai_state->turn_in_place = ABS(angle) > DEG_TO_RAD(30);
             }
             if (ai_state->turn_in_place != 0) {
                 entity->move_command = EntityAi_TurnCommand(entity);
@@ -336,7 +336,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
             } else if (side < 0) {
                 entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
             } else {
-                if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 1.5707964f
+                if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > HALF_PI
                     && frame_counter % 15U == 0 && !(rand() & 1)) {
                     ai_state->action_flags = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
                     EntityAi_StartAction(entity, DarkKnight_PlayTurnAnim, unknown);
@@ -351,7 +351,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
             } else if (side < 0) {
                 entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
             } else {
-                if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 1.5707964f
+                if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > HALF_PI
                     && frame_counter % 15U == 0 && !(rand() & 1)) {
                     ai_state->action_flags = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
                     EntityAi_StartAction(entity, DarkKnight_PlayTurnAnim, unknown);
@@ -452,13 +452,13 @@ static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        if (ABS(entity->heading_to_player - entity->model->rotation[1]) < 0.5235988f) {
+        if (ABS(entity->heading_to_player - entity->model->rotation[1]) < DEG_TO_RAD(30)) {
             Motion_Start(entity, 0x11, 0, 5, 1);
             ai_state->step_index = 0;
-        } else if (entity->heading_to_player - entity->model->rotation[1] > 0.5235988f && entity->heading_to_player - entity->model->rotation[1] < 1.5707964f) {
+        } else if (entity->heading_to_player - entity->model->rotation[1] > DEG_TO_RAD(30) && entity->heading_to_player - entity->model->rotation[1] < HALF_PI) {
             Motion_Start(entity, 0x12, 0, 5, 1);
             ai_state->step_index = 2;
-        } else if (entity->heading_to_player - entity->model->rotation[1] < -0.5235988f && entity->heading_to_player - entity->model->rotation[1] > -1.5707964f) {
+        } else if (entity->heading_to_player - entity->model->rotation[1] < -DEG_TO_RAD(30) && entity->heading_to_player - entity->model->rotation[1] > -HALF_PI) {
             Motion_Start(entity, 0x13, 0, 5, 1);
             ai_state->step_index = 2;
         }
@@ -507,7 +507,7 @@ static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
         if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
             ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->frame, entity->model->rotation[1]);
             if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
-                ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
+                ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + PI));
             }
         }
         if (!ENTITY_FLAG_BITS(entity)->melee_1_hit) {
@@ -569,7 +569,7 @@ static void DarkKnight_MeleeAttack2(Entity *entity) {
         if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
             ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->frame, entity->model->rotation[1]);
             if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
-                ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
+                ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + PI));
             }
         }
         if (!ENTITY_FLAG_BITS(entity)->melee_1_hit) {
@@ -681,7 +681,7 @@ static void DarkKnight_RangedAttack1(Entity *entity) {
         }
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(direction, entity->model->rotation);
-        direction[1] -= 3.1415927f;
+        direction[1] -= PI;
         EntityShot_Launch(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;

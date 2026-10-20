@@ -114,11 +114,11 @@ static void GiantSpider_Animate(Entity *entity) {
                 ai_state->look_part_angles[1] = -part->part_angles[1];
             } else {
                 angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-                if (angle < -0.5235988f) {
-                    angle = -0.5235988f;
+                if (angle < -DEG_TO_RAD(30)) {
+                    angle = -DEG_TO_RAD(30);
                 }
-                if (0.5235988f < angle) {
-                    angle = 0.5235988f;
+                if (DEG_TO_RAD(30) < angle) {
+                    angle = DEG_TO_RAD(30);
                 }
                 EntityMath_EaseAngleToward(&ai_state->look_part_angles[1], angle, 10.0f);
                 part->part_angles[1] = -ai_state->look_part_angles[1];
@@ -172,7 +172,7 @@ static void GiantSpider_ThinkTurnToPlayer(Entity *entity, s32 unknown) {
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-    if (ABS(angle) > 0.43633232f) {
+    if (ABS(angle) > DEG_TO_RAD(25)) {
         if (angle >= 0.0f) {
             EntityAi_StartAction(entity, GiantSpider_PlayTurnAnim7Or12, unknown);
         } else {
@@ -194,7 +194,7 @@ static void GiantSpider_ThinkCombat(Entity *entity, s32 unknown) {
     f32 angle;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
@@ -217,7 +217,7 @@ static void GiantSpider_ThinkCombat(Entity *entity, s32 unknown) {
             return;
         case 1:
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-            if (ABS(angle) > 0.43633232f) {
+            if (ABS(angle) > DEG_TO_RAD(25)) {
                 if (angle >= 0.0f) {
                     EntityAi_StartAction(entity, GiantSpider_PlayTurnAnim7Or12, unknown);
                     return;
@@ -373,7 +373,7 @@ static void GiantSpider_RangedAttack(Entity *entity) {
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(direction, &player_state);
         direction[1] -= 160.0f;
-        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction, 0.2617994f, 0.2617994f);
+        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction, DEG_TO_RAD(15), DEG_TO_RAD(15));
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {

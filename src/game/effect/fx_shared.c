@@ -10,11 +10,11 @@ void sceVu0ScaleVectorXYZ(void *, void *, float);
 void sceVu0AddVector(void *, void *, void *);
 /* Wraps an angle into -pi..pi. */
 static inline f32 wrap_angle(f32 angle) {
-    angle = angle - (float)(int)(angle / 6.2831855f) * 6.2831855f;
-    if (angle > 3.1415927f) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle = angle - (float)(int)(angle / TWO_PI) * TWO_PI;
+    if (angle > PI) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     return angle;
 }
@@ -28,8 +28,6 @@ float atan2f(float, float);
 int rand(void);
 double sin(double);
 double cos(double);
-#define TWO_PI 6.2831855f
-#define PI 3.1415927f
 void Vector_Normalize(void *dst, void *src);
 void Vector_Scale(void *, void *, float);
 void Vector_Add(void *, void *, void *);

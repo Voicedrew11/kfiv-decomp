@@ -436,28 +436,28 @@ static void DarkBird_ApplyMoveCommand(Entity *entity) {
     }
     entity->turn_delta_yaw += ai_state->turn_rate;
     if (ai_state->climb_command > 0) {
-        if (ABS((f32)ai_state->climb_command) * -0.17453292f < entity->model->rotation[0]) {
-            ai_state->pitch_speed -= 0.006981317f;
-            if (ai_state->pitch_speed < -0.017453292f) {
-                ai_state->pitch_speed = -0.017453292f;
+        if (ABS((f32)ai_state->climb_command) * -DEG_TO_RAD(10) < entity->model->rotation[0]) {
+            ai_state->pitch_speed -= DEG_TO_RAD(0.4f);
+            if (ai_state->pitch_speed < -DEG_TO_RAD(1)) {
+                ai_state->pitch_speed = -DEG_TO_RAD(1);
             }
         } else {
             ai_state->pitch_speed = 0.0f;
         }
     } else if (ai_state->climb_command < 0) {
-        if (entity->model->rotation[0] < ABS((f32)ai_state->climb_command) * 0.17453292f) {
-            ai_state->pitch_speed += 0.006981317f;
-            if (0.017453292f < ai_state->pitch_speed) {
-                ai_state->pitch_speed = 0.017453292f;
+        if (entity->model->rotation[0] < ABS((f32)ai_state->climb_command) * DEG_TO_RAD(10)) {
+            ai_state->pitch_speed += DEG_TO_RAD(0.4f);
+            if (DEG_TO_RAD(1) < ai_state->pitch_speed) {
+                ai_state->pitch_speed = DEG_TO_RAD(1);
             }
         } else {
             ai_state->pitch_speed = 0.0f;
         }
     } else if (ai_state->climb_command == 0) {
-        if (0.017453292f < entity->model->rotation[0]) {
-            ai_state->pitch_speed = -0.017453292f;
-        } else if (entity->model->rotation[0] < -0.017453292f) {
-            ai_state->pitch_speed = 0.017453292f;
+        if (DEG_TO_RAD(1) < entity->model->rotation[0]) {
+            ai_state->pitch_speed = -DEG_TO_RAD(1);
+        } else if (entity->model->rotation[0] < -DEG_TO_RAD(1)) {
+            ai_state->pitch_speed = DEG_TO_RAD(1);
         } else {
             ai_state->pitch_speed = -entity->model->rotation[0];
         }
@@ -575,7 +575,7 @@ static void DarkBird_DormantMoveToCircle(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            angle = EntityMath_WrapAngle((f32)(rand() % 361) * 0.017453292f);
+            angle = EntityMath_WrapAngle(DEG_TO_RAD((f32)(rand() % 361)));
             entity->model->position[0] = sinf(angle) * 2000.0f;
             entity->model->position[2] = cosf(angle) * 2000.0f;
             if (ENTITY_FLAG_BITS(entity)->own_think) {
@@ -783,9 +783,9 @@ static void DarkBird_RangedAttack(Entity *entity) {
                     point = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0);
                     angles[0] = EntityMath_WrapAngle(-atan2(player_state.position[1] - point[1], EntityMath_DistanceXZ(point, &player_state)));
                     if (!(rand() & 1)) {
-                        angles[1] = EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f + (f32)(rand() % 15) * 0.017453292f);
+                        angles[1] = EntityMath_WrapAngle(entity->model->rotation[1] + PI + DEG_TO_RAD((f32)(rand() % 15)));
                     } else {
-                        angles[1] = EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f - (f32)(rand() % 15) * 0.017453292f);
+                        angles[1] = EntityMath_WrapAngle(entity->model->rotation[1] + PI - DEG_TO_RAD((f32)(rand() % 15)));
                     }
                     angles[2] = 0.0f;
                     DarkBird_LaunchThreeShots(entity, record, elapsed, ai_state->motion_slot_0.frame, angles);
@@ -795,7 +795,7 @@ static void DarkBird_RangedAttack(Entity *entity) {
             Vector_Copy(target, &player_state);
             target[1] -= 200.0f;
             if (record->launches[0].frame != 0 && elapsed < record->launches[0].frame && frame >= record->launches[0].frame) {
-                DarkBird_LaunchBothShots(entity, (EntityParamsUnk3D8 *)record, elapsed, ai_state->motion_slot_0.frame, target, 0.7853982f, 0.0f);
+                DarkBird_LaunchBothShots(entity, (EntityParamsUnk3D8 *)record, elapsed, ai_state->motion_slot_0.frame, target, DEG_TO_RAD(45), 0.0f);
             }
         }
         if (ai_state->motion_slot_0.frame > 0 && record->attack_end_frame >= ai_state->motion_slot_0.frame) {
@@ -849,11 +849,11 @@ static s32 DarkBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
                 delta_y = tip[1] - from[1];
                 delta_z = tip[2] - from[2];
                 angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
+                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + HALF_PI);
                 angles[2] = angles[3] = 0.0f;
             } else {
                 Vector_Copy(angles, entity->model->rotation);
-                angles[1] = EntityMath_WrapAngle(angles[1] + 3.1415927f);
+                angles[1] = EntityMath_WrapAngle(angles[1] + PI);
             }
             if (target != NULL) {
                 pitch = EntityMath_WrapAngle(-atan2(target[1] - from[1], EntityMath_DistanceXZ(from, target)));
@@ -1104,10 +1104,10 @@ static void DarkBird_Animate(Entity *entity) {
             EntityEvent_StartFrameCues(entity, slots->motion_slot_1.index, previous, slots->motion_slot_1.frame_fixed);
         }
     }
-    limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
-    limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
-    limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
-    limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
+    limits[1] = DEG_TO_RAD(entity->params->pitch_limit_deg);
+    limits[0] = DEG_TO_RAD(-entity->params->pitch_limit_deg);
+    limits[3] = DEG_TO_RAD(entity->params->yaw_limit_deg);
+    limits[2] = DEG_TO_RAD(-entity->params->yaw_limit_deg);
     if (ENTITY_FLAG_BITS(entity)->look_at_target && entity->target != NULL) {
         EntityAi_LookAtPoint(entity, (int)ai_state->look_part_angles, ENTITY_FLAG_BITS(entity)->look_at_target, (int)entity->target, (int)limits, 12.0f);
     } else {

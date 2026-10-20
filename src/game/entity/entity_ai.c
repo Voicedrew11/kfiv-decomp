@@ -21,11 +21,11 @@ void Vector_Copy(void *, void *);
 s32 Attack_Run(Unk1B1470Request *, Unk1B1470Extra *);
 /* EntityMath_WrapAngle, which the game inlines here: wraps an angle to +-pi */
 static inline f32 wrap_angle(f32 angle) {
-    angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-    if (angle > 3.1415927f) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI;
+    if (angle > PI) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     return angle;
 }
@@ -102,9 +102,9 @@ static float EntityAi_Decelerate(Entity *entity, float speed);
 float EntityAi_RandomAngle(void) {
     float angle;
 
-    angle = (float) (rand() % 360) * 0.017453292f;
-    if (3.1415927f <= angle) {
-        angle -= 6.2831855f;
+    angle = DEG_TO_RAD((float) (rand() % 360));
+    if (PI <= angle) {
+        angle -= TWO_PI;
     }
     return angle;
 }
@@ -164,39 +164,39 @@ static s32 EntityAi_CheckMeleeAilment(Entity *entity, EntityParamsUnk240 *record
     f32 wrapped;
 
     model = entity->model;
-    turn = record->heading_offset_deg * 0.017453292f;
+    turn = DEG_TO_RAD(record->heading_offset_deg);
     if (!(0.0f <= model->scale[0])) {
         turn = -turn;
     }
-    wrapped = model->rotation[1] + turn + 3.1415927f;
-    wrapped = wrapped - (f32)(s32)(wrapped / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < wrapped) {
-        wrapped -= 6.2831855f;
-    } else if (wrapped < -3.1415927f) {
-        wrapped += 6.2831855f;
+    wrapped = model->rotation[1] + turn + PI;
+    wrapped = wrapped - (f32)(s32)(wrapped / TWO_PI) * TWO_PI;
+    if (PI < wrapped) {
+        wrapped -= TWO_PI;
+    } else if (wrapped < -PI) {
+        wrapped += TWO_PI;
     }
     if ((frame_min < record->hit_parts[index].first_frame && frame_max < record->hit_parts[index].first_frame) || (record->hit_parts[index].last_frame < frame_min && record->hit_parts[index].last_frame < frame_max)) {
         return 0;
     }
-    return EntityAim_AilPlayerInArc(&record->hit_parts[index].ailment_chances, model->position, record->hit_parts[index].half_angle_deg * 0.017453292f, entity->collision_height, record->hit_parts[index].radius_bonus, wrapped);
+    return EntityAim_AilPlayerInArc(&record->hit_parts[index].ailment_chances, model->position, DEG_TO_RAD(record->hit_parts[index].half_angle_deg), entity->collision_height, record->hit_parts[index].radius_bonus, wrapped);
 }
 
 /* Hit check of one part of a melee record: turns the model's heading by the record's angle (mirrored when
    the model is) and hands it to EntityAi_CheckMeleeHitAt. */
 int EntityAi_CheckMeleeHit(Entity *entity, EntityParamsUnk240 *record, int part, int frame_from, int frame_to) {
     ModelInstance *model = ENTITY_MODEL(entity);
-    float delta = (float)record->heading_offset_deg * 0.017453292f;
+    float delta = DEG_TO_RAD((float)record->heading_offset_deg);
     float angle;
 
     if (!(model->scale_x >= 0.0f)) {
         delta = -delta;
     }
     angle = model->rotation.y + delta;
-    angle = angle - (float)(int)(angle / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < angle) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle = angle - (float)(int)(angle / TWO_PI) * TWO_PI;
+    if (PI < angle) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     return EntityAi_CheckMeleeHitAt(entity, record, part, frame_from, frame_to, angle);
 }
@@ -222,11 +222,11 @@ s32 EntityAi_SendMeleeHit(Entity *entity, EntityParamsUnk240 *record, s32 index,
     memset(&request, 0, sizeof(request));
     memset(&extra, 0, sizeof(extra));
     Vector_Copy(request.position, entity->model->position);
-    yaw = angle + 3.1415927f;
+    yaw = angle + PI;
     request.radius = entity->radius + record->hit_parts[index].radius_bonus;
     request.height = entity->height + 10.0f;
     request.facing = wrap_angle(yaw);
-    request.half_angle = wrap_angle(record->hit_parts[index].half_angle_deg * 0.017453292f);
+    request.half_angle = wrap_angle(DEG_TO_RAD(record->hit_parts[index].half_angle_deg));
     request.owner = entity;
     request.shape = 3;
     request.target_mask = 1;
@@ -280,13 +280,13 @@ void EntityAi_SpawnBoneEffect(char **model, int effect_id, int point) {
         delta_y = tip[1] - from[1];
         delta_z = tip[2] - from[2];
         angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-        yaw = -atan2f(delta_z, delta_x) + 1.5707964f;
-        turns = (int)(yaw / 6.2831855f);
-        yaw -= turns * 6.2831855f;
-        if (3.1415927f < yaw) {
-            yaw -= 6.2831855f;
-        } else if (yaw < -3.1415927f) {
-            yaw += 6.2831855f;
+        yaw = -atan2f(delta_z, delta_x) + HALF_PI;
+        turns = (int)(yaw / TWO_PI);
+        yaw -= turns * TWO_PI;
+        if (PI < yaw) {
+            yaw -= TWO_PI;
+        } else if (yaw < -PI) {
+            yaw += TWO_PI;
         }
         angles[1] = yaw;
         angles[2] = angles[3] = 0.0f;
@@ -477,11 +477,11 @@ static void EntityAi_SensePlayerInArc(Entity *actor) {
         reach *= 0.5f;
     }
     turn = actor->heading_to_player - actor->model->rotation[1];
-    turn -= (s32)(turn / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < turn) {
-        turn -= 6.2831855f;
-    } else if (turn < -3.1415927f) {
-        turn += 6.2831855f;
+    turn -= (s32)(turn / TWO_PI) * TWO_PI;
+    if (PI < turn) {
+        turn -= TWO_PI;
+    } else if (turn < -PI) {
+        turn += TWO_PI;
     }
     turn_abs = 0.0f <= turn ? turn : -turn;
     upper = actor->model->position[1] - (actor->height + half_height) * 0.5f;
@@ -544,11 +544,11 @@ void EntityAi_SensePlayer(Entity *actor, s32 mode) {
         reach *= 0.5f;
     }
     turn = actor->heading_to_player - actor->model->rotation[1];
-    turn -= (s32)(turn / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < turn) {
-        turn -= 6.2831855f;
-    } else if (turn < -3.1415927f) {
-        turn += 6.2831855f;
+    turn -= (s32)(turn / TWO_PI) * TWO_PI;
+    if (PI < turn) {
+        turn -= TWO_PI;
+    } else if (turn < -PI) {
+        turn += TWO_PI;
     }
     turn_abs = 0.0f <= turn ? turn : -turn;
     upper = actor->model->position[1] - (actor->height + half_height) * 0.5f;
@@ -665,19 +665,19 @@ s32 EntityAi_IsPointInView(Entity *entity, f32 *target, f32 yaw_range, f32 pitch
     }
     if (yaw_range != 0.0f) {
         angle = atan2f(target[0] - entity->model->position[0], target[2] - entity->model->position[2]);
-        angle += 3.1415927f;
-        angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < angle) {
-            angle -= 6.2831855f;
-        } else if (angle < -3.1415927f) {
-            angle += 6.2831855f;
+        angle += PI;
+        angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI;
+        if (PI < angle) {
+            angle -= TWO_PI;
+        } else if (angle < -PI) {
+            angle += TWO_PI;
         }
         angle -= entity->model->rotation[1];
-        angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < angle) {
-            angle -= 6.2831855f;
-        } else if (angle < -3.1415927f) {
-            angle += 6.2831855f;
+        angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI;
+        if (PI < angle) {
+            angle -= TWO_PI;
+        } else if (angle < -PI) {
+            angle += TWO_PI;
         }
         diff = angle;
         magnitude = 0.0f <= diff ? diff : -diff;
@@ -699,11 +699,11 @@ s32 EntityAi_IsPointInView(Entity *entity, f32 *target, f32 yaw_range, f32 pitch
             : "=m"(distance) : "r"(entity->model->position), "r"(target), "r"(distance));
         diff = atan2f(target[1] - entity->model->position[1], distance[0]);
         diff -= entity->model->rotation[0];
-        diff = diff - (f32)(s32)(diff / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < diff) {
-            diff -= 6.2831855f;
-        } else if (diff < -3.1415927f) {
-            diff += 6.2831855f;
+        diff = diff - (f32)(s32)(diff / TWO_PI) * TWO_PI;
+        if (PI < diff) {
+            diff -= TWO_PI;
+        } else if (diff < -PI) {
+            diff += TWO_PI;
         }
         magnitude = 0.0f <= diff ? diff : -diff;
         if (pitch_range * 0.5f < magnitude) {
@@ -746,23 +746,23 @@ s32 EntityAi_CanAttack(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = ENTITY_PARAMS_UNK240_RECORD(entity->params, 0).heading_offset_deg * 0.017453292f;
+        turn = DEG_TO_RAD(ENTITY_PARAMS_UNK240_RECORD(entity->params, 0).heading_offset_deg);
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
         heading = entity->model->rotation[1] + turn;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         heading = entity->heading_to_player - heading;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         {
             f32 magnitude;
@@ -779,23 +779,23 @@ s32 EntityAi_CanAttack(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = ENTITY_PARAMS_UNK240_RECORD(entity->params, 1).heading_offset_deg * 0.017453292f;
+        turn = DEG_TO_RAD(ENTITY_PARAMS_UNK240_RECORD(entity->params, 1).heading_offset_deg);
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
         heading = entity->model->rotation[1] + turn;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         heading = entity->heading_to_player - heading;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         {
             f32 magnitude;
@@ -812,23 +812,23 @@ s32 EntityAi_CanAttack(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = ENTITY_PARAMS_UNK240_RECORD(entity->params, 2).heading_offset_deg * 0.017453292f;
+        turn = DEG_TO_RAD(ENTITY_PARAMS_UNK240_RECORD(entity->params, 2).heading_offset_deg);
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
         heading = entity->model->rotation[1] + turn;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         heading = entity->heading_to_player - heading;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         {
             f32 magnitude;
@@ -845,23 +845,23 @@ s32 EntityAi_CanAttack(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = entity->params->ranged_attacks[0].heading_offset_deg * 0.017453292f;
+        turn = DEG_TO_RAD(entity->params->ranged_attacks[0].heading_offset_deg);
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
         heading = entity->model->rotation[1] + turn;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         heading = entity->heading_to_player - heading;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         {
             f32 magnitude;
@@ -878,23 +878,23 @@ s32 EntityAi_CanAttack(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = entity->params->ranged_attacks[1].heading_offset_deg * 0.017453292f;
+        turn = DEG_TO_RAD(entity->params->ranged_attacks[1].heading_offset_deg);
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
         heading = entity->model->rotation[1] + turn;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         heading = entity->heading_to_player - heading;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         {
             f32 magnitude;
@@ -911,23 +911,23 @@ s32 EntityAi_CanAttack(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = entity->params->ranged_attacks[2].heading_offset_deg * 0.017453292f;
+        turn = DEG_TO_RAD(entity->params->ranged_attacks[2].heading_offset_deg);
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
         heading = entity->model->rotation[1] + turn;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         heading = entity->heading_to_player - heading;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         {
             f32 magnitude;
@@ -1037,23 +1037,23 @@ s32 EntityAi_CanMelee(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = ENTITY_PARAMS_UNK240_RECORD(entity->params, 0).heading_offset_deg * 0.017453292f;
+        turn = DEG_TO_RAD(ENTITY_PARAMS_UNK240_RECORD(entity->params, 0).heading_offset_deg);
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
         heading = entity->model->rotation[1] + turn;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         heading = entity->heading_to_player - heading;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         {
             f32 magnitude;
@@ -1070,23 +1070,23 @@ s32 EntityAi_CanMelee(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = ENTITY_PARAMS_UNK240_RECORD(entity->params, 1).heading_offset_deg * 0.017453292f;
+        turn = DEG_TO_RAD(ENTITY_PARAMS_UNK240_RECORD(entity->params, 1).heading_offset_deg);
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
         heading = entity->model->rotation[1] + turn;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         heading = entity->heading_to_player - heading;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         {
             f32 magnitude;
@@ -1103,23 +1103,23 @@ s32 EntityAi_CanMelee(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = ENTITY_PARAMS_UNK240_RECORD(entity->params, 2).heading_offset_deg * 0.017453292f;
+        turn = DEG_TO_RAD(ENTITY_PARAMS_UNK240_RECORD(entity->params, 2).heading_offset_deg);
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
         heading = entity->model->rotation[1] + turn;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         heading = entity->heading_to_player - heading;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         {
             f32 magnitude;
@@ -1178,23 +1178,23 @@ int EntityAi_CanUseMelee(Entity *entity, int index) {
     params = entity->params;
     model = entity->model;
     record = &ENTITY_PARAMS_UNK240_RECORD(params, index);
-    angle = record->heading_offset_deg * 0.017453292f;
+    angle = DEG_TO_RAD(record->heading_offset_deg);
     if (!(model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
     yaw = model->rotation[1] + angle;
-    yaw -= (float)(int)(yaw / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < yaw) {
-        yaw -= 6.2831855f;
-    } else if (yaw < -3.1415927f) {
-        yaw += 6.2831855f;
+    yaw -= (float)(int)(yaw / TWO_PI) * TWO_PI;
+    if (PI < yaw) {
+        yaw -= TWO_PI;
+    } else if (yaw < -PI) {
+        yaw += TWO_PI;
     }
     diff = entity->heading_to_player - yaw;
-    diff -= (float)(int)(diff / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < diff) {
-        diff -= 6.2831855f;
-    } else if (diff < -3.1415927f) {
-        diff += 6.2831855f;
+    diff -= (float)(int)(diff / TWO_PI) * TWO_PI;
+    if (PI < diff) {
+        diff -= TWO_PI;
+    } else if (diff < -PI) {
+        diff += TWO_PI;
     }
     abs_diff = diff;
     if (!(abs_diff >= 0.0f)) {
@@ -1234,20 +1234,20 @@ int EntityAi_CanUseMeleeFacing(Entity *entity, int index, float yaw) {
 
     params = entity->params;
     record = &ENTITY_PARAMS_UNK240_RECORD(params, index);
-    angle = record->heading_offset_deg * 0.017453292f;
+    angle = DEG_TO_RAD(record->heading_offset_deg);
     yaw += angle;
-    yaw -= (float)(int)(yaw / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < yaw) {
-        yaw -= 6.2831855f;
-    } else if (yaw < -3.1415927f) {
-        yaw += 6.2831855f;
+    yaw -= (float)(int)(yaw / TWO_PI) * TWO_PI;
+    if (PI < yaw) {
+        yaw -= TWO_PI;
+    } else if (yaw < -PI) {
+        yaw += TWO_PI;
     }
     diff = entity->heading_to_player - yaw;
-    diff -= (float)(int)(diff / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < diff) {
-        diff -= 6.2831855f;
-    } else if (diff < -3.1415927f) {
-        diff += 6.2831855f;
+    diff -= (float)(int)(diff / TWO_PI) * TWO_PI;
+    if (PI < diff) {
+        diff -= TWO_PI;
+    } else if (diff < -PI) {
+        diff += TWO_PI;
     }
     abs_diff = diff;
     if (!(abs_diff >= 0.0f)) {
@@ -1341,23 +1341,23 @@ s32 EntityAi_CanShoot(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = entity->params->ranged_attacks[0].heading_offset_deg * 0.017453292f;
+        turn = DEG_TO_RAD(entity->params->ranged_attacks[0].heading_offset_deg);
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
         heading = entity->model->rotation[1] + turn;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         heading = entity->heading_to_player - heading;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         {
             f32 magnitude;
@@ -1374,23 +1374,23 @@ s32 EntityAi_CanShoot(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = entity->params->ranged_attacks[1].heading_offset_deg * 0.017453292f;
+        turn = DEG_TO_RAD(entity->params->ranged_attacks[1].heading_offset_deg);
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
         heading = entity->model->rotation[1] + turn;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         heading = entity->heading_to_player - heading;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         {
             f32 magnitude;
@@ -1407,23 +1407,23 @@ s32 EntityAi_CanShoot(Entity *entity) {
         f32 heading;
         f32 turn;
 
-        turn = entity->params->ranged_attacks[2].heading_offset_deg * 0.017453292f;
+        turn = DEG_TO_RAD(entity->params->ranged_attacks[2].heading_offset_deg);
         if (!(entity->model->scale[0] >= 0.0f)) {
             turn = -turn;
         }
         heading = entity->model->rotation[1] + turn;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         heading = entity->heading_to_player - heading;
-        heading = heading - (f32)(s32)(heading / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < heading) {
-            heading -= 6.2831855f;
-        } else if (heading < -3.1415927f) {
-            heading += 6.2831855f;
+        heading = heading - (f32)(s32)(heading / TWO_PI) * TWO_PI;
+        if (PI < heading) {
+            heading -= TWO_PI;
+        } else if (heading < -PI) {
+            heading += TWO_PI;
         }
         {
             f32 magnitude;
@@ -1479,7 +1479,7 @@ s32 EntityAi_CanUseRanged(Entity *entity, s32 index) {
     f32 farthest;
     f32 reach[2];
 
-    angle = ENTITY_PARAMS_RANGED(params)[index].heading_offset_deg * 0.017453292f;
+    angle = DEG_TO_RAD(ENTITY_PARAMS_RANGED(params)[index].heading_offset_deg);
     if (!(model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
@@ -1522,20 +1522,20 @@ int EntityAi_CanUseRangedFacing(Entity *entity, int index, float yaw) {
     float window[2];
 
     params = entity->params;
-    angle = params->ranged_attacks[index].heading_offset_deg * 0.017453292f;
+    angle = DEG_TO_RAD(params->ranged_attacks[index].heading_offset_deg);
     yaw += angle;
-    yaw -= (float)(int)(yaw / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < yaw) {
-        yaw -= 6.2831855f;
-    } else if (yaw < -3.1415927f) {
-        yaw += 6.2831855f;
+    yaw -= (float)(int)(yaw / TWO_PI) * TWO_PI;
+    if (PI < yaw) {
+        yaw -= TWO_PI;
+    } else if (yaw < -PI) {
+        yaw += TWO_PI;
     }
     diff = entity->heading_to_player - yaw;
-    diff -= (float)(int)(diff / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < diff) {
-        diff -= 6.2831855f;
-    } else if (diff < -3.1415927f) {
-        diff += 6.2831855f;
+    diff -= (float)(int)(diff / TWO_PI) * TWO_PI;
+    if (PI < diff) {
+        diff -= TWO_PI;
+    } else if (diff < -PI) {
+        diff += TWO_PI;
     }
     abs_diff = diff;
     if (!(abs_diff >= 0.0f)) {
@@ -1709,22 +1709,22 @@ static float EntityAi_Decelerate(Entity *entity, float speed) {
 s32 EntityAi_TurnToHeading(Entity *entity, f32 *speed, f32 target) {
     f32 diff;
 
-    target -= (int)(target / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < target) {
-        target -= 6.2831855f;
-    } else if (target < -3.1415927f) {
-        target += 6.2831855f;
+    target -= (int)(target / TWO_PI) * TWO_PI;
+    if (PI < target) {
+        target -= TWO_PI;
+    } else if (target < -PI) {
+        target += TWO_PI;
     }
     if (entity->model->rotation[1] == target) {
         *speed = 0.0f;
         return 1;
     }
     diff = target - entity->model->rotation[1];
-    diff -= (int)(diff / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < diff) {
-        diff -= 6.2831855f;
-    } else if (diff < -3.1415927f) {
-        diff += 6.2831855f;
+    diff -= (int)(diff / TWO_PI) * TWO_PI;
+    if (PI < diff) {
+        diff -= TWO_PI;
+    } else if (diff < -PI) {
+        diff += TWO_PI;
     }
     if (diff > 0.0f) {
         *speed += entity->params->turn_step_per_frame;
@@ -1761,29 +1761,29 @@ int EntityAi_TurnToPoint(Entity *entity, f32 *turn_rate, f32 *target) {
     f32 diff;
 
     angle = atan2f(target[0] - entity->model->position[0], target[2] - entity->model->position[2]);
-    angle += 3.1415927f;
-    angle -= (f32)(int)(angle / 6.2831855f) * 6.2831855f;
-    if (angle > 3.1415927f) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle += PI;
+    angle -= (f32)(int)(angle / TWO_PI) * TWO_PI;
+    if (angle > PI) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
-    angle -= (f32)(int)(angle / 6.2831855f) * 6.2831855f;
-    if (angle > 3.1415927f) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle -= (f32)(int)(angle / TWO_PI) * TWO_PI;
+    if (angle > PI) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     if (entity->model->rotation[1] == angle) {
         *turn_rate = 0.0f;
         return 1;
     }
     diff = angle - entity->model->rotation[1];
-    diff -= (f32)(int)(diff / 6.2831855f) * 6.2831855f;
-    if (diff > 3.1415927f) {
-        diff -= 6.2831855f;
-    } else if (diff < -3.1415927f) {
-        diff += 6.2831855f;
+    diff -= (f32)(int)(diff / TWO_PI) * TWO_PI;
+    if (diff > PI) {
+        diff -= TWO_PI;
+    } else if (diff < -PI) {
+        diff += TWO_PI;
     }
     if (diff > 0.0f) {
         *turn_rate += entity->params->turn_step_per_frame;
@@ -1993,7 +1993,7 @@ void Entity_DrawPoolModels(void) {
         model->light_block = ENTITY_MODEL(entity)->light_block;
         model->fog_block = ENTITY_MODEL(entity)->fog_block;
         Packet_BeginGsRegisters();
-        Packet_AddGsRegister(GS_REG_ALPHA_2, ((s64)(s32)(ENTITY_MODEL(entity)->alpha * 32.0f * 0.0078125f) << 32) | 0x64);
+        Packet_AddGsRegister(GS_REG_ALPHA_2, ((s64)(s32)(ENTITY_MODEL(entity)->alpha * 32.0f * (1.0f / 128.0f)) << 32) | 0x64);
         Packet_EndGsRegisters();
         model->draw_parts(model);
         GsDraw_QueueFlush();

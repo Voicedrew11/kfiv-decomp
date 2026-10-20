@@ -188,23 +188,23 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, DarkSoldier_Dodge, 1);
         return;
     }
     if (entity->action_timer == 0) {
         angle = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
-        if (rand() % 100 < entity->params->near_distance && ABS(angle) < 1.0471976f
-            && ABS(entity->heading_to_player - entity->model->rotation[1]) < 1.0471976f) {
+        if (rand() % 100 < entity->params->near_distance && ABS(angle) < DEG_TO_RAD(60)
+            && ABS(entity->heading_to_player - entity->model->rotation[1]) < DEG_TO_RAD(60)) {
             ai_state->action_flags = 0;
             EntityAi_StartAction(entity, DarkSoldier_PlayAnim6Or7BySide, unknown);
             return;
         }
-        if (rand() % 100 < entity->params->far_distance && ABS(angle) < 1.5707964f && entity->spawn_info->spawn_mode == 0
+        if (rand() % 100 < entity->params->far_distance && ABS(angle) < HALF_PI && entity->spawn_info->spawn_mode == 0
             && DarkSoldier_CanMoveAlongArc(entity)) {
             ai_state->action_flags = 0;
             EntityAi_StartAction(entity, DarkSoldier_MoveAlongArc, unknown);
@@ -227,12 +227,12 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
                 return;
             }
             angle = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
-            if (rand() % 100 < entity->params->near_distance && ABS(angle) < 0.6981317f) {
+            if (rand() % 100 < entity->params->near_distance && ABS(angle) < DEG_TO_RAD(40)) {
                 ai_state->action_flags = 1;
                 EntityAi_StartAction(entity, DarkSoldier_PlayAnim6Or7BySide, unknown);
                 return;
             }
-            if (rand() % 100 < entity->params->far_distance && ABS(angle) < 1.5707964f && entity->spawn_info->spawn_mode == 0
+            if (rand() % 100 < entity->params->far_distance && ABS(angle) < HALF_PI && entity->spawn_info->spawn_mode == 0
                 && DarkSoldier_CanMoveAlongArc(entity)) {
                 ai_state->action_flags = 1;
                 EntityAi_StartAction(entity, DarkSoldier_MoveAlongArc, unknown);
@@ -262,7 +262,7 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
-                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                ai_state->turn_in_place = ABS(angle) > DEG_TO_RAD(30);
             }
             if (ai_state->turn_in_place != 0) {
                 entity->move_command = EntityAi_TurnCommand(entity);
@@ -419,13 +419,13 @@ static void DarkSoldier_PlayAnim6Or7BySide(Entity *entity) {
                 Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 1);
             }
         } else if (side < 0.0f) {
-            if ((f32)(rand() % 120) > side * 57.29578f + 60.0f) {
+            if ((f32)(rand() % 120) > side * RAD_TO_DEG + 60.0f) {
                 Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 1);
             } else {
                 Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 1);
             }
         } else {
-            if ((f32)(rand() % 120) > side * 57.29578f + 60.0f) {
+            if ((f32)(rand() % 120) > side * RAD_TO_DEG + 60.0f) {
                 Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 1);
             } else {
                 Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -501,7 +501,7 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
     case 4:
         move_along_arc(entity, ai_state);
         if (ai_state->part_angle_x < 10.0f) {
-            if (ABS(entity->heading_to_player - entity->model->rotation[1]) > 1.5707964f) {
+            if (ABS(entity->heading_to_player - entity->model->rotation[1]) > HALF_PI) {
                 ENTITY_FLAG_BITS(entity)->animates = TRUE;
                 entity->action_step++;
             } else {

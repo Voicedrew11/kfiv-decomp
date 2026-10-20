@@ -208,11 +208,11 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -272,7 +272,7 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 unknown) {
         }
         break;
     case 1:
-        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f))) {
+        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + PI))) {
             ai_state->move_choice = rand() % 3 + 2;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
@@ -576,7 +576,7 @@ static void DarkSorcerer_RangedAttack(Entity *entity) {
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(target, &player_state);
         target[1] -= 190.0f;
-        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, 0.7853982f, 0.0f);
+        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, DEG_TO_RAD(45), 0.0f);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
@@ -749,7 +749,7 @@ static void DarkSorcerer_LaunchShotsAtFixedPoints(Entity *entity) {
     position[2] = 4200.0f;
     position[3] = 0.0f;
     direction[0] = 0.0f;
-    direction[1] = 3.1415927f;
+    direction[1] = PI;
     direction[2] = 0.0f;
     direction[3] = 0.0f;
     for (i = -17300; i <= -16100; i += 400) {
@@ -761,7 +761,7 @@ static void DarkSorcerer_LaunchShotsAtFixedPoints(Entity *entity) {
     position[2] = 2000.0f;
     position[3] = 0.0f;
     direction[0] = 0.0f;
-    direction[1] = 1.5707964f;
+    direction[1] = HALF_PI;
     direction[2] = 0.0f;
     direction[3] = 0.0f;
     for (i = 2000; i <= 4000; i += 400) {
@@ -773,7 +773,7 @@ static void DarkSorcerer_LaunchShotsAtFixedPoints(Entity *entity) {
     position[2] = 3200.0f;
     position[3] = 0.0f;
     direction[0] = 0.0f;
-    direction[1] = -1.5707964f;
+    direction[1] = -HALF_PI;
     direction[2] = 0.0f;
     direction[3] = 0.0f;
     for (i = 3200; i <= 4000; i += 400) {

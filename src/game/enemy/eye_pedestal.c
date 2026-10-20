@@ -84,10 +84,10 @@ static void EyePedestal_Animate(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
         params = entity->params;
-        limits[0] = -params->pitch_limit_deg * 0.017453292f;
-        limits[1] = params->pitch_limit_deg * 0.017453292f;
-        limits[3] = params->yaw_limit_deg * 0.017453292f;
-        limits[2] = -params->yaw_limit_deg * 0.017453292f;
+        limits[0] = DEG_TO_RAD(-params->pitch_limit_deg);
+        limits[1] = DEG_TO_RAD(params->pitch_limit_deg);
+        limits[3] = DEG_TO_RAD(params->yaw_limit_deg);
+        limits[2] = DEG_TO_RAD(-params->yaw_limit_deg);
         point[0] = ai_state->part_angle_x;
         point[1] = ai_state->part_angle_y;
         point[2] = ai_state->part_angle_z;

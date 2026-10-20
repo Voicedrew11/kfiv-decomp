@@ -41,11 +41,11 @@ void Attack_RollPlayerAilments(void *);
 
 /* EntityMath_WrapAngle, which the game inlines here: wraps an angle to +-pi */
 static inline f32 wrap_angle(f32 angle) {
-    angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-    if (angle > 3.1415927f) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI;
+    if (angle > PI) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     return angle;
 }
@@ -122,9 +122,9 @@ void EntityPoint_PickNear(float range, void *point_arg, void *centre, void *posi
         }
     }
     range *= (10.0f - i) / 10.0f - (rand() % 10) / 10.0f;
-    angle = (rand() % 360) * 0.017453292f;
-    if (angle >= 3.1415927f) {
-        angle -= 6.2831855f;
+    angle = DEG_TO_RAD(rand() % 360);
+    if (angle >= PI) {
+        angle -= TWO_PI;
     }
     point[0] = -sinf(angle) * range;
     point[1] = 0.0f;
@@ -160,9 +160,9 @@ void EntityPoint_PickNearFromDistance(f32 *point, f32 *centre, f32 distance, f32
         }
     }
     range *= (10.0f - i) / 10.0f - (rand() % 10) / 10.0f;
-    angle = (rand() % 360) * 0.017453292f;
-    if (angle >= 3.1415927f) {
-        angle -= 6.2831855f;
+    angle = DEG_TO_RAD(rand() % 360);
+    if (angle >= PI) {
+        angle -= TWO_PI;
     }
     point[0] = -sinf(angle) * range;
     point[1] = 0.0f;
@@ -372,7 +372,7 @@ void Bone_MatrixToAngles(void *angles_arg, void *matrix) {
     Vector_ApplyMatrix(turned, local, axis);
     angles[0] = atan2f(-turned[1], turned[2]);
     if (local[5] < 0.0f) {
-        angles[0] = 3.1415927f - angles[0];
+        angles[0] = PI - angles[0];
     }
     angles[0] = wrap_angle(angles[0]);
     angles[1] = wrap_angle(angles[1]);
@@ -585,11 +585,11 @@ s32 EntityAim_AilPlayerInArc(void *target, f32 *point, f32 max_angle, f32 max_he
         return FALSE;
     }
     angle = heading - atan2f(player_state.position.x - point[0], player_state.position.z - point[2]);
-    angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-    if (angle > 3.1415927f) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI;
+    if (angle > PI) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     if (ABS(angle) > max_angle) {
         return FALSE;

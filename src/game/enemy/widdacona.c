@@ -333,11 +333,11 @@ static void Widdacona_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -409,7 +409,7 @@ static void Widdacona_RangedAttack0(Entity *entity) {
         if (entity->model->level_tables->frame >= 12 && entity->model->level_tables->frame <= 76 && frame_counter % 3 != 0) {
             Vector_Copy(direction, &player_state);
             direction[1] -= 100.0f;
-            EntityShot_LaunchAimed(entity, unk3D8, 12, 76, direction, 0.3926991f, 0.17453294f);
+            EntityShot_LaunchAimed(entity, unk3D8, 12, 76, direction, DEG_TO_RAD(22.5f), AIMED_SHOT_TURN_RATE);
         }
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;

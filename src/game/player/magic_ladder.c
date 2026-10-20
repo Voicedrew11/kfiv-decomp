@@ -4,6 +4,8 @@
 #include "effect/shot.h"
 #include "entity/entity.h"
 
+#define LADDER_TURN_SPEED_RAD 0.029088821f /* 5/3 degrees per frame, in radians */
+
 void *memset(void *, s32, u32);
 float sqrtf(float);
 float sinf(float);
@@ -110,10 +112,10 @@ int Player_CastMagic(int magic_id) {
         shot->worn_item_stats = player_state.worn_item_stats;
         Vector_Copy(&angles, &player_state.rotation);
         angles.x += player_state.view_tilt_pitch;
-        if (angles.x > 1.012291f) {
-            angles.x = 1.012291f;
-        } else if (angles.x < -1.012291f) {
-            angles.x = -1.012291f;
+        if (angles.x > DEG_TO_RAD(58)) {
+            angles.x = DEG_TO_RAD(58);
+        } else if (angles.x < -DEG_TO_RAD(58)) {
+            angles.x = -DEG_TO_RAD(58);
         }
         Attack_LaunchMagicEffect(magic_id, shot, &player_state, &player_state.rotation, &player_state); // match: the player's rotation is passed; the clamped angles above are never used
         player_state.cast_launched_shot = 1;
@@ -404,10 +406,10 @@ void Player_HoldMagic(int magic_id) {
             channeled_shot->worn_item_stats = player_state.worn_item_stats;
             Vector_Copy(&angles, &player_state.rotation);
             angles.x += player_state.view_tilt_pitch;
-            if (angles.x > 1.012291f) {
-                angles.x = 1.012291f;
-            } else if (angles.x < -1.012291f) {
-                angles.x = -1.012291f;
+            if (angles.x > DEG_TO_RAD(58)) {
+                angles.x = DEG_TO_RAD(58);
+            } else if (angles.x < -DEG_TO_RAD(58)) {
+                angles.x = -DEG_TO_RAD(58);
             }
             // match: the clamped angles are not what is passed
             Attack_LaunchMagicEffect(magic_id, channeled_shot, &player_state, &player_state.rotation, &player_state);
@@ -496,7 +498,7 @@ void Ladder_WalkToFoot(void) {
             Vector_Copy(&player_state.position, &ladder_foot_position);
         }
     }
-    if (Angle_Approach(&player_state.rotation.y, ladder_facing_y, 0.029088821f) && ladder_walk_frames_remaining <= 0) {
+    if (Angle_Approach(&player_state.rotation.y, ladder_facing_y, LADDER_TURN_SPEED_RAD) && ladder_walk_frames_remaining <= 0) {
         ladder_state_index++;
     }
 }
@@ -549,7 +551,7 @@ void Ladder_ClimbRungUp(u16 buttons) {
         player_state.status_bits &= ~(1L << 36);
     }
     ladder_rung_anim_frame++;
-    angle = 1.9198622f;
+    angle = DEG_TO_RAD(110);
     fraction = 1.0f;
     fraction /= (f32)ladder_rung_count;
     fraction = fraction * sinf((f32)ladder_rung_anim_frame * angle / (f32)ladder_frames_per_rung) / sinf(angle);
@@ -579,7 +581,7 @@ void Ladder_ClimbRungDown(u16 buttons) {
         player_state.status_bits &= ~(1L << 36);
     }
     ladder_rung_anim_frame--;
-    angle = 1.6580628f;
+    angle = DEG_TO_RAD(95);
     fraction = 1.0f;
     fraction /= (f32)ladder_rung_count;
     fraction = fraction * sinf((f32)ladder_rung_anim_frame * angle / (f32)ladder_frames_per_rung) / sinf(angle);

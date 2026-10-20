@@ -24,7 +24,8 @@ Source text (comments and strings stripped):
                   (enum candidates), casts to a plain pointer type (`(u8 *)`,
                   `(char *)`, ...), parameters named `unknown`/`argN`, and float
                   literals with four or more decimals (`0.5235988f`: derived
-                  constants such as angles in radians). Local declarations:
+                  constants such as angles in radians) outside brace
+                  initializers (data tables) and #define lines. Local declarations:
                   top-level `extern`s and non-static prototypes in a .c file,
                   which belong in the module headers; those for a symbol some
                   header already declares are counted apart too.
@@ -268,6 +269,23 @@ def local_declarations(code: str) -> list:
 RAW_FLOAT = re.compile(r"(?<![\w.])\d+\.\d{4,}(?:[eE][-+]?\d+)?[fF]?\b")
 
 
+def without_initializers(code: str) -> str:
+    """Code with brace initializers (`= { ... }`, data tables) and #define lines (a name's value) blanked."""
+    out, pos = [], 0
+    for m in re.finditer(r"=\s*\{", code):
+        if m.start() < pos:
+            continue
+        depth, i = 0, m.end() - 1
+        while i < len(code):
+            depth += {"{": 1, "}": -1}.get(code[i], 0)
+            if depth == 0:
+                break
+            i += 1
+        out.append(code[pos:m.start()]); pos = i + 1
+    out.append(code[pos:])
+    return re.sub(r"^[ \t]*#[ \t]*define\b.*", " ", " ".join(out), flags=re.M)
+
+
 def source_measures(sources) -> dict:
     m = dict.fromkeys(("field_uses", "named_field_uses", "bit_ops", "named_bit_ops",
                        "fn_ptr_casts", "match_comments", "gotos", "long_comments",
@@ -300,7 +318,7 @@ def source_measures(sources) -> dict:
         m["plain_pointer_casts"] += len(PTR_CAST.findall(code))
         m["placeholder_params"] += sum(len(PLACEHOLDER_PARAM.findall(p.replace("\n", " ").strip()))
                                        for d in FUNC_DEF.findall(code) for p in d.split(","))
-        m["raw_float_constants"] += len(RAW_FLOAT.findall(code))
+        m["raw_float_constants"] += len(RAW_FLOAT.findall(without_initializers(code)))
         local = local_declarations(code)
         m["local_declarations"] += len(local)
         m["local_declarations_in_headers"] += sum(1 for n in local if n in header_names)

@@ -5,6 +5,9 @@
 #include "map/map.h"
 #include "item/item.h"
 
+/* Fade progress added each frame by the map object fade (MapObject_FadeInObject). */
+#define MAP_TRIGGER_FADE_STEP 6.6666f
+
 void MapObject_UpdateBreakingItemHolder(MapObject *);
 void MapObject_SetupItemHolder(MapObject *);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
@@ -149,7 +152,7 @@ void MapObject_SignalPivotSwitch(MapTrigger *trigger, int turn_on) {
 /* An angle brought back into -half_turn..half_turn. */
 static inline f32 wrap_half_turn(f32 angle, f32 half_turn) {
     angle += half_turn;
-    angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
+    angle -= (f32)(s32)(angle / TWO_PI) * TWO_PI;
     return angle - half_turn;
 }
 
@@ -181,7 +184,7 @@ void MapObject_PosePivotSwitch(MapTrigger *trigger) {
         part = trigger->model->parts;
     }
     joint = part;
-    half_turn = 3.1415927f;
+    half_turn = PI;
     sceVu0CopyMatrix(matrix, identity_matrix);
     // match: an empty loop here (a debug macro compiled out?) keeps the scheduler from moving anything across
     // this point, which is what leaves the half_turn load in front of the call above
@@ -237,7 +240,7 @@ void MapObject_FadeInObject(MapTrigger *trigger) {
     memset(steps, 0, 0x10);
     steps[3] = 8;
     if (shot->fade_progress < 100000.0f) {
-        shot->fade_progress += 6.6666f;
+        shot->fade_progress += MAP_TRIGGER_FADE_STEP;
     }
     if (Model_FadeVertexColoursNear((int)trigger->model, shot, steps, targets, shot->fade_progress) == 0) {
         trigger->type = 3;
@@ -292,8 +295,8 @@ void MapObject_StartPulse(MapTrigger *trigger) {
     model->fade_enabled = 1;
     trigger->model->fade_alpha = 0;
     /* 4.656613e-10f is 1 / 2^31: rand() scaled to 0..1 */
-    shot->period = (int)((float)rand() * 61.0f * 4.656613e-10f) + 0x78;
-    shot->phase = (int)((float)(shot->period + 1) * (float)rand() * 4.656613e-10f);
+    shot->period = (int)((float)rand() * 61.0f * RAND_SCALE) + 0x78;
+    shot->phase = (int)((float)(shot->period + 1) * (float)rand() * RAND_SCALE);
     trigger->type = 1;
 }
 

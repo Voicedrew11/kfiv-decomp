@@ -180,15 +180,15 @@ static void FireElemental_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
-    if (FireElemental_ShouldDodgeMagic(entity, 200.0f, 1.0471976f)) {
+    if (FireElemental_ShouldDodgeMagic(entity, 200.0f, DEG_TO_RAD(60))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -232,7 +232,7 @@ static void FireElemental_ThinkCombat(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
-                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                ai_state->turn_in_place = ABS(angle) > DEG_TO_RAD(30);
             }
             if (ai_state->turn_in_place != 0) {
                 entity->move_command = EntityAi_TurnCommand(entity);
@@ -288,7 +288,7 @@ static void FireElemental_StandAndAttack(Entity *entity) {
             ai_state->sub_timer--;
         }
         ENTITY_FLAG_BITS(entity)->look_at_target = 1;
-        if (FireElemental_ShouldDodgeMagic(entity, 200.0f, 1.0471976f) || FireElemental_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+        if (FireElemental_ShouldDodgeMagic(entity, 200.0f, DEG_TO_RAD(60)) || FireElemental_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
             ai_state->step_index = 1;
             entity->busy_flags = 0;
             entity->move_command = 0;
@@ -297,7 +297,7 @@ static void FireElemental_StandAndAttack(Entity *entity) {
             break;
         }
         if (entity->distance_to_player < (f32)entity->params->near_distance + 100.0f + entity->radius &&
-            ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < 0.34906584f) {
+            ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < DEG_TO_RAD(20)) {
             ai_state->step_index = 1;
             entity->busy_flags = 0;
             entity->move_command = 0;
@@ -307,7 +307,7 @@ static void FireElemental_StandAndAttack(Entity *entity) {
             break;
         }
         if (entity->action_timer == 0) {
-            if (ai_state->sub_timer == 0 && ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < 0.34906584f) {
+            if (ai_state->sub_timer == 0 && ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < DEG_TO_RAD(20)) {
                 ai_state->step_index = 1;
                 ai_state->sub_timer = entity->params->far_distance / 2 + rand() % (entity->params->far_distance / 2);
                 entity->busy_flags = 0;
@@ -316,7 +316,7 @@ static void FireElemental_StandAndAttack(Entity *entity) {
                 EntityAi_StartAction(entity, FireElemental_RangedAttack0, 1);
                 break;
             }
-            if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 1.5707964f) {
+            if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > HALF_PI) {
                 entity->busy_flags = 0;
                 entity->move_command = 0;
                 entity->action_timer = 0;
@@ -324,7 +324,7 @@ static void FireElemental_StandAndAttack(Entity *entity) {
                 EntityAi_StartAction(entity, FireElemental_PlayTurnAnim, 1);
                 break;
             }
-            if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 0.34906584f) {
+            if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > DEG_TO_RAD(20)) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 30 + 30;
                 ai_state->move_choice = 0;
@@ -436,7 +436,7 @@ static void FireElemental_Dodge(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (!(rand() & 1) && ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < 0.5235988f) {
+            if (!(rand() & 1) && ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < DEG_TO_RAD(30)) {
                 ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~(3L << 58)) | (1L << 58);
                 EntityAi_StartAction(entity, FireElemental_RangedAttack1, 1);
             } else if (ENTITY_FLAG_BITS(entity)->own_think) {
@@ -470,7 +470,7 @@ static s32 FireElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 
     if (ABS(angle) > max_angle) {
         return FALSE;
     }
-    if (ABS(player_angle) > 0.5235988f) {
+    if (ABS(player_angle) > DEG_TO_RAD(30)) {
         return FALSE;
     }
     return rand() % 100 < entity->params->dodge_chance / 10;
@@ -533,7 +533,7 @@ static void FireElemental_RangedAttack1(Entity *entity) {
         }
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(direction, entity->model->rotation);
-        direction[1] = EntityMath_WrapAngle(entity->model->rotation[1] - 3.1415927f + 0.08726646f);
+        direction[1] = EntityMath_WrapAngle(entity->model->rotation[1] - PI + DEG_TO_RAD(5));
         EntityShot_Launch(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;
@@ -619,15 +619,15 @@ static void FireElemental_BackAwayFromPlayer(Entity *entity) {
         }
         break;
     case 2:
-        if (FireElemental_ShouldDodgeMagic(entity, 200.0f, 1.0471976f)) {
+        if (FireElemental_ShouldDodgeMagic(entity, 200.0f, DEG_TO_RAD(60))) {
             EntityAi_StartAction(entity, EntityAi_Dodge, 1);
             break;
         }
-        if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+        if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
             EntityAi_StartAction(entity, EntityAi_Guard, 1);
             break;
         }
-        if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+        if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
             EntityAi_StartAction(entity, EntityAi_Dodge, 1);
             break;
         }
@@ -841,7 +841,7 @@ static void FireElemental_RangedAttack0(Entity *entity) {
         }
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(direction, entity->model->rotation);
-        direction[1] = EntityMath_WrapAngle(direction[1] - 3.1415927f);
+        direction[1] = EntityMath_WrapAngle(direction[1] - PI);
         EntityShot_Launch(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;

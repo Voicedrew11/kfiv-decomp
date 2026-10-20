@@ -11,6 +11,16 @@
 #include "effect/effect.h"
 #include "sound/sound_game.h"
 
+/* the sound is silent at this distance: the falloff is 1 - (distance / 2500)^2 */
+#define SOUND_INVERSE_RANGE (1.0f / 2500.0f)
+/* volumes run from 0 to 64 */
+#define SOUND_VOLUME_LEVELS 64.0f
+
+/* the sound is silent at this distance: the falloff is 1 - (distance / 2500)^2 */
+#define SOUND_INVERSE_RANGE (1.0f / 2500.0f)
+/* volumes run from 0 to 64 */
+#define SOUND_VOLUME_LEVELS 64.0f
+
 int File_IsLocked(void);
 int File_Sync(int, int);
 
@@ -442,12 +452,12 @@ int Sound_PlayTrackedAt(int sound, int unused, float *position) {
     direction[0] = origin[0];
     direction[1] = 0.0f;
     direction[2] = -offset[0];
-    falloff = 1.0f - distance * distance * 0.0004f * 0.0004f;
+    falloff = 1.0f - distance * distance * SOUND_INVERSE_RANGE * SOUND_INVERSE_RANGE;
     volume = sqrt(falloff) * 64.0;
     if (volume < 0) {
         volume = 0;
     }
-    volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
+    volume = (float) volume * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS);
     if (volume >= 0x80) {
         volume = 0x7F;
     }
@@ -538,12 +548,12 @@ int Sound_PlayMapAt(u8 sound, void *position) {
     direction[0] = origin[0];
     direction[1] = 0.0f;
     direction[2] = -offset[0];
-    falloff = 1.0f - distance * distance * 0.0004f * 0.0004f;
+    falloff = 1.0f - distance * distance * SOUND_INVERSE_RANGE * SOUND_INVERSE_RANGE;
     level = (int)(sqrt(falloff) * 64.0);
     if (level < 0.0f) {
         level = 0.0f;
     }
-    volume = level * (float) sfx_volume[0] * 0.015625f;
+    volume = level * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS);
     if (volume >= 0x80) {
         volume = 0x7F;
     }
@@ -606,17 +616,17 @@ int Sound_PlayCommonAt(float range, int sound, float *position) {
     distance = Sound_Delta(diff, position, &player_state.position.x);
     if (!(range < distance)) {
         angle = atan2f(position[0] - player_state.position.x, position[2] - player_state.position.z) - player_state.rotation.y;
-        angle -= (int)(angle / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < angle) {
-            angle -= 6.2831855f;
-        } else if (angle < -3.1415927f) {
-            angle += 6.2831855f;
+        angle -= (int)(angle / TWO_PI) * TWO_PI;
+        if (PI < angle) {
+            angle -= TWO_PI;
+        } else if (angle < -PI) {
+            angle += TWO_PI;
         }
         Sound_CosSin(angle, origin, offset);
         volume = (range - distance) * 64.0f * (1.0f / range);
         if (!((float) volume < 0.0f)) {
             pan_pos = (offset[0] + 1.0f) * 63.0f;
-            volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
+            volume = (float) volume * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS);
             if (volume >= 128) {
                 volume = 127;
             }
@@ -639,7 +649,7 @@ int Sound_PlayMapVolume(u8 sound, int volume) {
     if (volume < 0) {
         volume = 0;
     }
-    volume = (int) ((float) volume * (float) sfx_volume[0] * 0.015625f);
+    volume = (int) ((float) volume * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS));
     if (volume >= 128) {
         volume = 127;
     }
@@ -691,16 +701,16 @@ int Sound_PlayMapAtRange(u8 sound, u8 mode, float *position, float range) {
     if (level < 0.0f) {
         level = 0.0f;
     }
-    volume = level * (float) sfx_volume[0] * 0.015625f;
+    volume = level * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS);
     if (volume >= 0x80) {
         volume = 0x7F;
     }
     angle = atan2f(position[0] - player_state.position.x, position[2] - player_state.position.z) - player_state.rotation.y;
-    angle -= (int)(angle / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < angle) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle -= (int)(angle / TWO_PI) * TWO_PI;
+    if (PI < angle) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     Sound_CosSin(angle, origin, offset);
     pan = (offset[0] + 1.0f) * 63.0f;
@@ -724,7 +734,7 @@ int Sound_StartTagged(s8 sound, u8 voice, int volume) {
     int i;
     s8 voice_id;
 
-    volume = (int) ((float) volume * (float) sfx_volume[0] * 0.015625f);
+    volume = (int) ((float) volume * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS));
     if (volume >= 0x80) {
         volume = 0x7F;
     }
@@ -892,7 +902,7 @@ void Sound_UpdateTagged(void) {
                         }
                         continue;
                     } else {
-                        volume = (float) volume * (float) game_options[2] * 0.015625f;
+                        volume = (float) volume * (float) game_options[2] * (1.0f / SOUND_VOLUME_LEVELS);
                         if (volume >= 0x80) {
                             volume = 0x7F;
                         }
@@ -902,11 +912,11 @@ void Sound_UpdateTagged(void) {
                 }
                 angle = atan2f(nearest.x - player_state.position.x, nearest.z - player_state.position.z) -
                         player_state.rotation.y;
-                angle -= (int)(angle / 6.2831855f) * 6.2831855f;
-                if (3.1415927f < angle) {
-                    angle -= 6.2831855f;
-                } else if (angle < -3.1415927f) {
-                    angle += 6.2831855f;
+                angle -= (int)(angle / TWO_PI) * TWO_PI;
+                if (PI < angle) {
+                    angle -= TWO_PI;
+                } else if (angle < -PI) {
+                    angle += TWO_PI;
                 }
                 Sound_CosSin(angle, origin, offset);
                 pan = (offset[0] * 0.6f + 1.0f) * 63.0f;
@@ -1091,7 +1101,7 @@ void Sound_UnmuteTagged(void) {
     do {
         n--;
         if (channel->sound_id >= 0 && channel->kind == 0x63) {
-            volume = (int)((float)channel->volume_level * (float)game_options[2] * 0.015625f);
+            volume = (int)((float)channel->volume_level * (float)game_options[2] * (1.0f / SOUND_VOLUME_LEVELS));
             SoundDriver_SetNoteControl(0, channel->note_slot, (volume >= 0x80) ? 0x7F : volume);
         }
         channel++;
@@ -1633,7 +1643,7 @@ void Sound_PlayLinear(u8 sound, int bank, float range, float distance, float ang
         Sound_CosSin(angle, origin, offset);
         volume = (range - distance) * 64.0f * (1.0f / range);
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS);
         if (volume >= 128) {
             volume = 127;
         }
@@ -1656,7 +1666,7 @@ void Sound_PlaySteep(u8 sound, int bank, float range, float distance, float angl
         volume = (1.0 - sqrt(range * range - (range - distance) * (range - distance)) / range) * 64.0;
         volume *= 1.5f;
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS);
         if (volume >= 128) {
             volume = 127;
         }
@@ -1679,7 +1689,7 @@ void Sound_PlayRound(u8 sound, int bank, float range, float distance, float angl
         Sound_CosSin(angle, origin, offset);
         volume = sqrt(range * range - distance * distance) / range * 64.0;
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS);
         if (volume >= 128) {
             volume = 127;
         }
@@ -1701,7 +1711,7 @@ void Sound_PlayLinearSteady(u8 sound, int bank, float range, float distance, flo
         Sound_CosSin(angle, origin, offset);
         volume = (range - distance) * 64.0f * (1.0f / range);
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS);
         if (volume >= 128) {
             volume = 127;
         }
@@ -1722,7 +1732,7 @@ void Sound_PlaySteepSteady(u8 sound, int bank, float range, float distance, floa
         Sound_CosSin(angle, origin, offset);
         volume = (1.0 - sqrt(range * range - (range - distance) * (range - distance)) / range) * 64.0;
         volume = (float) volume * 1.5f;
-        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS);
         pan_pos = (offset[0] + 1.0f) * 63.0f;
         if (volume >= 128) {
             volume = 127;
@@ -1743,7 +1753,7 @@ void Sound_PlayRoundSteady(u8 sound, int bank, float range, float distance, floa
     if (!(range < distance) && sound != 0xFF) {
         Sound_CosSin(angle, origin, offset);
         volume = sqrt(range * range - distance * distance) / range * 64.0;
-        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS);
         pan_pos = (offset[0] + 1.0f) * 63.0f;
         if (volume >= 128) {
             volume = 127;
@@ -1765,7 +1775,7 @@ void Sound_PlaySfxLinear(u8 sound, float range, float distance, float angle) {
         Sound_CosSin(angle, origin, offset);
         volume = (range - distance) * 64.0f * (1.0f / range);
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS);
         if (volume >= 128) {
             volume = 127;
         }
@@ -1789,7 +1799,7 @@ void Sound_PlaySfxSteep(u8 sound, float range, float distance, float angle) {
         volume = (1.0 - sqrt(reach) / range) * 64.0;
         volume *= 1.5f;
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS);
         if (volume >= 128) {
             volume = 127;
         }
@@ -1811,7 +1821,7 @@ void Sound_PlaySfxRound(u8 sound, float range, float distance, float angle) {
         Sound_CosSin(angle, origin, offset);
         volume = sqrt(range * range - distance * distance) / range * 64.0;
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS);
         if (volume >= 128) {
             volume = 127;
         }
@@ -1834,7 +1844,7 @@ void Sound_PlayMapLinear(u8 sound, float range, float distance, float angle) {
         Sound_CosSin(angle, origin, offset);
         volume = (range - distance) * 64.0f * (1.0f / range);
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS);
         if (volume >= 128) {
             volume = 127;
         }
@@ -1860,7 +1870,7 @@ void Sound_PlayMapSteep(u8 sound, float range, float distance, float angle) {
         volume = (1.0 - sqrt(falloff) / range) * 64.0;
         volume = (float) volume * 1.5f;
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS);
         if (volume >= 128) {
             volume = 127;
         }
@@ -1883,7 +1893,7 @@ void Sound_PlayMapRound(u8 sound, float range, float distance, float angle) {
         Sound_CosSin(angle, origin, offset);
         volume = sqrt(range * range - distance * distance) / range * 64.0;
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * (1.0f / SOUND_VOLUME_LEVELS);
         if (volume >= 128) {
             volume = 127;
         }

@@ -1181,9 +1181,9 @@ static void Trade_UpdateStockList(HandlerContext *context) {
         view_matrix[2][2] = view_matrix[1][1] = view_matrix[0][0] = 0.8f;
         view_matrix[3][3] = 1.0f;
         sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-        trade_stock_list_model_angle += 3.1415927f;
-        trade_stock_list_model_angle -= (s32)(trade_stock_list_model_angle / 6.2831855f) * 6.2831855f;
-        trade_stock_list_model_angle -= 3.1415927f;
+        trade_stock_list_model_angle += PI;
+        trade_stock_list_model_angle -= (s32)(trade_stock_list_model_angle / TWO_PI) * TWO_PI;
+        trade_stock_list_model_angle -= PI;
         sceVu0RotMatrixY((f32 *)local_matrix, (f32 *)view_matrix, trade_stock_list_model_angle);
         sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, trade_stock_list_model_position);
         Menu_DrawItemModel((f32 *)local_matrix);
@@ -1276,7 +1276,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
             menu_number_50 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
             menu_number_51 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
             menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
-            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[record].level;
             menu_number_54 = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[trade_stock_list_cursor[0]->group];
@@ -1536,8 +1536,8 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
     view_matrix[2][2] = view_matrix[1][1] = view_matrix[0][0] = 0.8f;
     view_matrix[3][3] = 1.0f;
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-    angle = trade_take_amount_model_angle + 3.1415927f;
-    trade_take_amount_model_angle = angle - (s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
+    angle = trade_take_amount_model_angle + PI;
+    trade_take_amount_model_angle = angle - (s32)(angle / TWO_PI) * TWO_PI - PI;
     sceVu0RotMatrixY((f32 *)local_matrix, (f32 *)view_matrix, trade_take_amount_model_angle);
     sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, trade_take_amount_model_position);
     Menu_DrawItemModel((f32 *)local_matrix);
@@ -1626,7 +1626,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             menu_number_50 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
             menu_number_51 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
             menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
-            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[record].level;
             menu_number_54 = item_name_defs[trade_stock_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[trade_stock_list_cursor[0]->group];
@@ -1977,9 +1977,9 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
     view_matrix.rows[3][3] = 1.0f;
     node = item_list_top[0];
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-    trade_owned_list_model_angle += 3.1415927f;
-    trade_owned_list_model_angle -= (s32)(trade_owned_list_model_angle / 6.2831855f) * 6.2831855f;
-    trade_owned_list_model_angle -= 3.1415927f;
+    trade_owned_list_model_angle += PI;
+    trade_owned_list_model_angle -= (s32)(trade_owned_list_model_angle / TWO_PI) * TWO_PI;
+    trade_owned_list_model_angle -= PI;
     sceVu0RotMatrixY((f32 *)local_matrix, (f32 *)&view_matrix, trade_owned_list_model_angle);
     sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, trade_owned_list_model_position);
     Menu_DrawItemModel((f32 *)local_matrix);
@@ -2100,7 +2100,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             menu_number_50 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
             menu_number_51 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
             menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
-            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[record].level;
             menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
@@ -2319,8 +2319,8 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
     view_matrix[2][2] = view_matrix[1][1] = view_matrix[0][0] = 0.8f;
     view_matrix[3][3] = 1.0f;
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-    angle = trade_give_amount_model_angle + 3.1415927f;
-    trade_give_amount_model_angle = angle - (s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
+    angle = trade_give_amount_model_angle + PI;
+    trade_give_amount_model_angle = angle - (s32)(angle / TWO_PI) * TWO_PI - PI;
     sceVu0RotMatrixY((f32 *)local_matrix, (f32 *)view_matrix, trade_give_amount_model_angle);
     sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, trade_give_amount_model_position);
     Menu_DrawItemModel((f32 *)local_matrix);
@@ -2412,7 +2412,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             menu_number_50 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
             menu_number_51 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
             menu_number_52 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
-            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[record].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[record].level;
             menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
@@ -3440,8 +3440,8 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
     scale[10] = scale[5] = scale[0] = 0.8f;
     scale[15] = 1.0f;
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-    angle = smith_upgrade_list_model_angle + 3.1415927f;
-    smith_upgrade_list_model_angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
+    angle = smith_upgrade_list_model_angle + PI;
+    smith_upgrade_list_model_angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI - PI;
     sceVu0RotMatrixY(rotation, scale, smith_upgrade_list_model_angle);
     sceVu0TransMatrix(rotation, rotation, smith_upgrade_list_model_position);
     Menu_DrawItemModel(rotation);
@@ -3542,7 +3542,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             menu_number_50 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
             menu_number_51 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
             menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
-            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[index].level;
             menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
@@ -3755,8 +3755,8 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
     scale[10] = scale[5] = scale[0] = 0.8f;
     scale[15] = 1.0f;
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-    angle = smith_upgrade_confirm_model_angle + 3.1415927f;
-    smith_upgrade_confirm_model_angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
+    angle = smith_upgrade_confirm_model_angle + PI;
+    smith_upgrade_confirm_model_angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI - PI;
     sceVu0RotMatrixY(rotation, scale, smith_upgrade_confirm_model_angle);
     sceVu0TransMatrix(rotation, rotation, smith_upgrade_confirm_model_position);
     Menu_DrawItemModel(rotation);
@@ -3858,7 +3858,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             menu_number_50 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
             menu_number_51 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
             menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
-            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[index].level;
             menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
@@ -4188,8 +4188,8 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
     scale[10] = scale[5] = scale[0] = 0.8f;
     scale[15] = 1.0f;
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-    angle = smith_confirm_list_model_angle + 3.1415927f;
-    smith_confirm_list_model_angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
+    angle = smith_confirm_list_model_angle + PI;
+    smith_confirm_list_model_angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI - PI;
     sceVu0RotMatrixY(rotation, scale, smith_confirm_list_model_angle);
     sceVu0TransMatrix(rotation, rotation, smith_confirm_list_model_position);
     Menu_DrawItemModel(rotation);
@@ -4293,7 +4293,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             menu_number_50 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
             menu_number_51 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
             menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
-            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[index].level;
             menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
@@ -4629,8 +4629,8 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
     scale[10] = scale[5] = scale[0] = 0.8f;
     scale[15] = 1.0f;
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-    angle = smith_item_screen_model_angle + 3.1415927f;
-    smith_item_screen_model_angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
+    angle = smith_item_screen_model_angle + PI;
+    smith_item_screen_model_angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI - PI;
     sceVu0RotMatrixY(rotation, scale, smith_item_screen_model_angle);
     sceVu0TransMatrix(rotation, rotation, smith_item_screen_model_position);
     Menu_DrawItemModel(rotation);
@@ -4719,7 +4719,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             menu_number_50 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
             menu_number_51 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
             menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
-            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[index].level;
             menu_number_54 = item_name_defs[item_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[item_list_cursor[0]->group];
@@ -4957,8 +4957,8 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
     scale[10] = scale[5] = scale[0] = 0.8f;
     scale[15] = 1.0f;
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-    angle = smith_collect_list_model_angle + 3.1415927f;
-    smith_collect_list_model_angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
+    angle = smith_collect_list_model_angle + PI;
+    smith_collect_list_model_angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI - PI;
     sceVu0RotMatrixY(rotation, scale, smith_collect_list_model_angle);
     sceVu0TransMatrix(rotation, rotation, smith_collect_list_model_position);
     Menu_DrawItemModel(rotation);
@@ -5059,7 +5059,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             menu_number_50 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
             menu_number_51 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
             menu_number_52 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
-            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
+            menu_number_70 = (s32)(weapon_defs[index].weapon_length_cm * CM_TO_FEET * 10.0f);
             menu_number_71 = weapon_level_records[index].level;
             menu_number_54 = item_name_defs[smith_collect_list_cursor[0]->item_number].weight_tenths_of_pound;
             menu_number_72 = player_weapon[smith_collect_list_cursor[0]->group];

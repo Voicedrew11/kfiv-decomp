@@ -371,10 +371,14 @@ f32 menu_view_screen_matrix[16] = { 0 };
 #define PACKET_BUFFER_1 ((void *)((char *)POOL_DRAW_SCRATCH + 0x2400))
 #define POOL(slot) ((PoolSlot *)(slot))
 #define HEADER_TEX0(header) ((BootTex0 *)&(header)->tex0)
-#define ANGLE_PI 3.1415927f
-#define ANGLE_TURN 6.283184f
+#define ANGLE_TURN (2.0f * 3.141592f) /* a hair under TWO_PI: twice PI to six decimals */
+/* One glyph cell of a font page in texture units, 25 cells across; the half-width glyphs use half of one. */
+#define FONT_GLYPH_CELL_UV (5.0f / 128.0f)
+#define FONT_GLYPH_HALF_CELL_UV (FONT_GLYPH_CELL_UV / 2.0f)
+/* A quarter cell, pulled in from each glyph edge in the texture. */
+#define FONT_GLYPH_EDGE_INSET_UV (FONT_GLYPH_CELL_UV / 4.0f)
 /* an angle brought into -PI..PI */
-#define WRAP_ANGLE(angle) ((angle) + ANGLE_PI - (f32)(s32)(((angle) + ANGLE_PI) / ANGLE_TURN) * ANGLE_TURN - ANGLE_PI)
+#define WRAP_ANGLE(angle) ((angle) + PI - (f32)(s32)(((angle) + PI) / ANGLE_TURN) * ANGLE_TURN - PI)
 
 /* The colour number of a colour change code in a text. */
 static inline s32 text_color(u16 code) {
@@ -635,7 +639,7 @@ s8 MenuDraw_GetWordStart(s32 index) {
 void MenuDraw_Word(KindObject *object) {
     SpritePacket *sprite = (SpritePacket *)object;
     f32 unused[8]; // match: 0x20 bytes of frame that nothing uses
-    f32 cell[2] = { 0.0390625f, 0.0390625f }; /* how much of a font page one glyph cell covers, across and down */
+    f32 cell[2] = { FONT_GLYPH_CELL_UV, FONT_GLYPH_CELL_UV }; /* how much of a font page one glyph cell covers, across and down */
     GsPackedWord first;
     GsPackedWord second;
     GsPackedWord step;
@@ -676,19 +680,19 @@ void MenuDraw_Word(KindObject *object) {
         *cursor++ = 0;
         *cursor++ = sprite->red | (sprite->green << 8) | (sprite->blue << 16) | (sprite->alpha << 24);
         *((f32 *)cursor)++ = 1.0f;
-        *((f32 *)cursor)++ = (f32)column * cell[0] + 0.009765625f;
+        *((f32 *)cursor)++ = (f32)column * cell[0] + FONT_GLYPH_EDGE_INSET_UV;
         *((f32 *)cursor)++ = (f32)(row + 1) * cell[1];
         *cursor++ = ((s32)first.f.lo16 + index * (s32)step.f.lo16) | ((s32)second.f.mid16 << 16);
         *cursor++ = ((GsPackedWord *)&sprite->xyz0)->f.mid24;
-        *((f32 *)cursor)++ = (f32)column * cell[0] + 0.009765625f;
+        *((f32 *)cursor)++ = (f32)column * cell[0] + FONT_GLYPH_EDGE_INSET_UV;
         *((f32 *)cursor)++ = (f32)row * cell[1];
         *cursor++ = ((s32)first.f.lo16 + index * (s32)step.f.lo16) | ((s32)first.f.mid16 << 16);
         *cursor++ = ((GsPackedWord *)&sprite->xyz0)->f.mid24;
-        *((f32 *)cursor)++ = (f32)(column + 1) * cell[0] - 0.009765625f;
+        *((f32 *)cursor)++ = (f32)(column + 1) * cell[0] - FONT_GLYPH_EDGE_INSET_UV;
         *((f32 *)cursor)++ = (f32)(row + 1) * cell[1];
         *cursor++ = ((index + 1) * (s32)step.f.lo16 + (s32)first.f.lo16) | ((s32)second.f.mid16 << 16);
         *cursor++ = ((GsPackedWord *)&sprite->xyz0)->f.mid24;
-        *((f32 *)cursor)++ = (f32)(column + 1) * cell[0] - 0.009765625f;
+        *((f32 *)cursor)++ = (f32)(column + 1) * cell[0] - FONT_GLYPH_EDGE_INSET_UV;
         *((f32 *)cursor)++ = (f32)row * cell[1];
         *cursor++ = ((index + 1) * (s32)step.f.lo16 + (s32)first.f.lo16) | ((s32)first.f.mid16 << 16);
         *cursor++ = ((GsPackedWord *)&sprite->xyz0)->f.mid24;
@@ -935,7 +939,7 @@ int MenuDraw_GetNumber(int number) {
 int MenuDraw_Number(KindObject *object) { // match: returns int, though no path sets a value
     SpritePacket *sprite = (SpritePacket *)object;
     f32 unused[8]; // match: 0x20 bytes of frame that nothing uses
-    f32 cell[2] = { 0.0390625f, 0.0390625f }; /* how much of a font page one glyph cell covers, across and down */
+    f32 cell[2] = { FONT_GLYPH_CELL_UV, FONT_GLYPH_CELL_UV }; /* how much of a font page one glyph cell covers, across and down */
     u16 glyphs[16];
     GsPackedWord first;
     GsPackedWord second;
@@ -1099,8 +1103,8 @@ static void MenuDraw_TextAt(u16 *text, GsPackedWord origin) {
             *((u64 *)cursor)++ = *menu_font_page_tex0[0];
             top.f.lo16 = bottom.f.lo16;
             bottom.f.lo16 += 0xA0;
-            scale[0] = 0.01953125f;
-            scale[1] = 0.0390625f;
+            scale[0] = FONT_GLYPH_HALF_CELL_UV;
+            scale[1] = FONT_GLYPH_CELL_UV;
         } else {
             code = text[index];
             *((u64 *)cursor)++ = *menu_font_page_tex0[code / 625];
@@ -1109,7 +1113,7 @@ static void MenuDraw_TextAt(u16 *text, GsPackedWord origin) {
             bottom.f.lo16 += 0x140;
             column = code % 25;
             row = code / 25;
-            scale[1] = scale[0] = 0.0390625f;
+            scale[1] = scale[0] = FONT_GLYPH_CELL_UV;
         }
         *cursor++ = 0x54;
         *cursor++ = 0;
@@ -1189,8 +1193,8 @@ static void MenuDraw_TextRightAligned(u16 *text, GsPackedWord origin) {
             *((u64 *)cursor)++ = *menu_font_page_tex0[0];
             top.f.lo16 = bottom.f.lo16;
             bottom.f.lo16 += 0xA0;
-            scale[0] = 0.01953125f;
-            scale[1] = 0.0390625f;
+            scale[0] = FONT_GLYPH_HALF_CELL_UV;
+            scale[1] = FONT_GLYPH_CELL_UV;
         } else {
             code = text[index];
             *((u64 *)cursor)++ = *menu_font_page_tex0[code / 625];
@@ -1199,7 +1203,7 @@ static void MenuDraw_TextRightAligned(u16 *text, GsPackedWord origin) {
             bottom.f.lo16 += 0x140;
             column = code % 25;
             row = code / 25;
-            scale[1] = scale[0] = 0.0390625f;
+            scale[1] = scale[0] = FONT_GLYPH_CELL_UV;
         }
         *cursor++ = 0x54;
         *cursor++ = 0;
@@ -1373,8 +1377,8 @@ s32 MenuText_DrawWrapped(u16 *text, s32 limit) {
             glyph_row = glyph / 50;
             top_left.pos_x = bottom_right.pos_x;
             *((u64 *)cursor)++ = *menu_font_page_tex0[1];
-            scale[0] = 0.01953125f;
-            scale[1] = 0.0390625f;
+            scale[0] = FONT_GLYPH_HALF_CELL_UV;
+            scale[1] = FONT_GLYPH_CELL_UV;
             bottom_right.pos_x += (s32)text_glyph_size.pos_x >> 1;
         } else {
             glyph = text[i];
@@ -1384,8 +1388,8 @@ s32 MenuText_DrawWrapped(u16 *text, s32 limit) {
             glyph_row = glyph / 25;
             top_left.pos_x = bottom_right.pos_x;
             bottom_right.pos_x += text_glyph_size.pos_x;
-            scale[0] = 0.0390625f;
-            scale[1] = 0.0390625f;
+            scale[0] = FONT_GLYPH_CELL_UV;
+            scale[1] = FONT_GLYPH_CELL_UV;
         }
         *cursor++ = 0x56;
         *cursor++ = 0;
@@ -1500,8 +1504,8 @@ s32 MenuText_DrawWrappedLong(u16 *text, s32 limit) {
             top_left.pos_x = bottom_right.pos_x;
             bottom_right.pos_x += (s32)text_glyph_size.pos_x >> 1;
             *((u64 *)cursor)++ = *menu_font_page_tex0[1];
-            scale[0] = 0.01953125f;
-            scale[1] = 0.0390625f;
+            scale[0] = FONT_GLYPH_HALF_CELL_UV;
+            scale[1] = FONT_GLYPH_CELL_UV;
         } else {
             glyph = text[i];
             *((u64 *)cursor)++ = *menu_font_page_tex0[(glyph / 625) % 2]; // match: % 2, not & 1
@@ -1510,8 +1514,8 @@ s32 MenuText_DrawWrappedLong(u16 *text, s32 limit) {
             glyph_row = glyph / 25;
             top_left.pos_x = bottom_right.pos_x;
             bottom_right.pos_x += text_glyph_size.pos_x;
-            scale[0] = 0.0390625f;
-            scale[1] = 0.0390625f;
+            scale[0] = FONT_GLYPH_CELL_UV;
+            scale[1] = FONT_GLYPH_CELL_UV;
         }
         *cursor++ = 0x56;
         *cursor++ = 0;
@@ -1601,8 +1605,8 @@ s32 MenuText_DrawLine(u16 *text, s32 limit) {
             glyph_row = glyph / 50;
             top_left.pos_x = bottom_right.pos_x;
             *((u64 *)cursor)++ = *menu_font_page_tex0[1];
-            scale[0] = 0.01953125f;
-            scale[1] = 0.0390625f;
+            scale[0] = FONT_GLYPH_HALF_CELL_UV;
+            scale[1] = FONT_GLYPH_CELL_UV;
             bottom_right.pos_x += (s32)text_glyph_size.pos_x >> 1;
         } else {
             glyph = text[i];
@@ -1612,7 +1616,7 @@ s32 MenuText_DrawLine(u16 *text, s32 limit) {
             glyph_column = glyph % 25;
             glyph_row = glyph / 25;
             bottom_right.pos_x += text_glyph_size.pos_x;
-            scale[1] = scale[0] = 0.0390625f;
+            scale[1] = scale[0] = FONT_GLYPH_CELL_UV;
         }
         *cursor++ = 0x56;
         *cursor++ = 0;
@@ -1719,8 +1723,8 @@ s32 MenuText_DrawLineShortened(u16 *text, s32 limit) {
             glyph_row = glyph / 50;
             top_left.pos_x = bottom_right.pos_x;
             *((u64 *)cursor)++ = *menu_font_page_tex0[1];
-            scale[0] = 0.01953125f;
-            scale[1] = 0.0390625f;
+            scale[0] = FONT_GLYPH_HALF_CELL_UV;
+            scale[1] = FONT_GLYPH_CELL_UV;
             bottom_right.pos_x += (s32)text_glyph_size.pos_x >> 1;
         } else {
             glyph = text[i];
@@ -1730,7 +1734,7 @@ s32 MenuText_DrawLineShortened(u16 *text, s32 limit) {
             glyph_column = glyph % 25;
             glyph_row = glyph / 25;
             bottom_right.pos_x += text_glyph_size.pos_x;
-            scale[1] = scale[0] = 0.0390625f;
+            scale[1] = scale[0] = FONT_GLYPH_CELL_UV;
         }
         *cursor++ = 0x56;
         *cursor++ = 0;
@@ -1828,8 +1832,8 @@ s32 MenuText_DrawLineCentered(u16 *text, s32 limit) {
             glyph_row = glyph / 50;
             top_left.pos_x = bottom_right.pos_x;
             *((u64 *)cursor)++ = *menu_font_page_tex0[1];
-            scale[0] = 0.01953125f;
-            scale[1] = 0.0390625f;
+            scale[0] = FONT_GLYPH_HALF_CELL_UV;
+            scale[1] = FONT_GLYPH_CELL_UV;
             bottom_right.pos_x += (s32)text_glyph_size.pos_x >> 1;
         } else {
             glyph = text[i];
@@ -1839,7 +1843,7 @@ s32 MenuText_DrawLineCentered(u16 *text, s32 limit) {
             glyph_column = glyph % 25;
             glyph_row = glyph / 25;
             bottom_right.pos_x += text_glyph_size.pos_x;
-            scale[1] = scale[0] = 0.0390625f;
+            scale[1] = scale[0] = FONT_GLYPH_CELL_UV;
         }
         *cursor++ = 0x56;
         *cursor++ = 0;
@@ -1949,8 +1953,8 @@ static s32 MenuText_DrawWordWrapped(u16 *text, s32 limit) {
             glyph_row = glyph / 50;
             top_left.pos_x = bottom_right.pos_x;
             *((u64 *)cursor)++ = *menu_font_page_tex0[1];
-            scale[0] = 0.01953125f;
-            scale[1] = 0.0390625f;
+            scale[0] = FONT_GLYPH_HALF_CELL_UV;
+            scale[1] = FONT_GLYPH_CELL_UV;
             bottom_right.pos_x += (s32)text_glyph_size.pos_x >> 1;
         } else {
             glyph = text[i];
@@ -1960,7 +1964,7 @@ static s32 MenuText_DrawWordWrapped(u16 *text, s32 limit) {
             glyph_column = glyph % 25;
             glyph_row = glyph / 25;
             bottom_right.pos_x += text_glyph_size.pos_x;
-            scale[1] = scale[0] = 0.0390625f;
+            scale[1] = scale[0] = FONT_GLYPH_CELL_UV;
         }
         *cursor++ = 0x56;
         *cursor++ = 0;
@@ -2078,8 +2082,8 @@ s32 MenuText_DrawWordWrappedLong(u16 *text, s32 limit) {
             top_left.pos_x = bottom_right.pos_x;
             bottom_right.pos_x += (s32)text_glyph_size.pos_x >> 1;
             *((u64 *)cursor)++ = *menu_font_page_tex0[1];
-            scale[0] = 0.01953125f;
-            scale[1] = 0.0390625f;
+            scale[0] = FONT_GLYPH_HALF_CELL_UV;
+            scale[1] = FONT_GLYPH_CELL_UV;
         } else if (text[i] == 0x8000) {
             /* a space: half-width glyph 0 */
             glyph = 0; // match: the zero keeps glyph % 50 from being folded
@@ -2089,8 +2093,8 @@ s32 MenuText_DrawWordWrappedLong(u16 *text, s32 limit) {
             top_left.pos_x = bottom_right.pos_x;
             bottom_right.pos_x += (s32)text_glyph_size.pos_x >> 1;
             *((u64 *)cursor)++ = *menu_font_page_tex0[1];
-            scale[0] = 0.01953125f;
-            scale[1] = 0.0390625f;
+            scale[0] = FONT_GLYPH_HALF_CELL_UV;
+            scale[1] = FONT_GLYPH_CELL_UV;
         } else {
             glyph = text[i];
             *((u64 *)cursor)++ = *menu_font_page_tex0[glyph / 625];
@@ -2099,8 +2103,8 @@ s32 MenuText_DrawWordWrappedLong(u16 *text, s32 limit) {
             glyph_row = glyph / 25;
             top_left.pos_x = bottom_right.pos_x;
             bottom_right.pos_x += text_glyph_size.pos_x;
-            scale[0] = 0.0390625f;
-            scale[1] = 0.0390625f;
+            scale[0] = FONT_GLYPH_CELL_UV;
+            scale[1] = FONT_GLYPH_CELL_UV;
         }
         *cursor++ = 0x56;
         *cursor++ = 0;
@@ -3404,7 +3408,7 @@ static void MenuTexture_UploadInStrips(TextureHeader *header) {
     }
     image = (char *)header + sizeof(TextureHeader);
     strip_rows = 131068.0f / (((f32)(u32)header->data_offset - 16.0f) / width);
-    strip_rows = (int)(strip_rows * 0.015625f) << 6;
+    strip_rows = (int)(strip_rows * (1.0f / 64.0f)) << 6;
     rows = (height < strip_rows) ? height : strip_rows;
     strip_rows = rows;
     while (height != 0) {
@@ -3486,7 +3490,7 @@ void MenuTexture_UploadTwoCluts(TextureHeader *header, u64 *tex0_out, u64 *trail
     }
     pixel_bytes *= width * height;
     strip_rows = 131068.0f / ((pixel_bytes - 16.0f) / width);
-    strip_rows = (int)(strip_rows * 0.015625f) << 6;
+    strip_rows = (int)(strip_rows * (1.0f / 64.0f)) << 6;
     rows = (height < strip_rows) ? height : strip_rows;
     strip_rows = rows;
     while (height != 0) {

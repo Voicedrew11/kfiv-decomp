@@ -4,6 +4,9 @@
 #include "player/player.h"
 #include "model/model.h"
 
+/* cos 20 degrees: a quad whose normal is within 20 degrees of vertical is a floor or a ceiling */
+#define QUAD_FLOOR_NORMAL_Y 0.93969f
+
 typedef void (*MapObjectSweepTest)(MapObject *, f32 *, f32, f32);
 typedef void (*MapObjectFanTest)(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
 typedef void (*MapObjectCircleTest)(MapObject *, f32 *, f32, f32);
@@ -161,7 +164,7 @@ void Collision_DropOnTriangle(void *corner_a, void *corner_b, void *corner_c, vo
         : : "r"(corner_a), "r"(corner_b), "r"(corner_c), "r"(edge_a), "r"(edge_c), "r"(normal));
 
     scalar = normal[1];
-    if (-0.00001f < scalar && scalar < 0.00001f) {
+    if (-COLLISION_PARALLEL_EPSILON < scalar && scalar < COLLISION_PARALLEL_EPSILON) {
         return;
     }
     scalar = (normal[0] * ((f32 *)corner_a)[0] + scalar * ((f32 *)corner_a)[1] + normal[2] * ((f32 *)corner_a)[2] +
@@ -222,7 +225,7 @@ void Collision_DropOnTriangleWithin(void *corner_a, void *corner_b, void *corner
         : : "r"(corner_a), "r"(corner_b), "r"(corner_c), "r"(edge_a), "r"(edge_c), "r"(normal));
 
     scalar = normal[1];
-    if (-0.00001f < scalar && scalar < 0.00001f) {
+    if (-COLLISION_PARALLEL_EPSILON < scalar && scalar < COLLISION_PARALLEL_EPSILON) {
         return;
     }
     scalar = (normal[0] * ((f32 *)corner_a)[0] + scalar * ((f32 *)corner_a)[1] + normal[2] * ((f32 *)corner_a)[2] +
@@ -2663,10 +2666,10 @@ void Collision_PushOutOfQuadObj(CollisionOwner *owner, f32 *position, f32 radius
         point3 = (f32 *)owner->model->get_point(owner->model, 3);
         Vector_TriangleNormal(normal, point0, point1, point3);
         Vector_Normalize(normal, normal);
-        if (normal[1] < -0.93969f) {
+        if (normal[1] < -QUAD_FLOOR_NORMAL_Y) {
             return;
         }
-        if (normal[1] > 0.93969f) {
+        if (normal[1] > QUAD_FLOOR_NORMAL_Y) {
             return;
         }
         height = point0[1] - point1[1];
@@ -2750,7 +2753,7 @@ s32 Collision_StandOnQuadObj(CollisionOwner *owner, f32 *position, f32 radius) {
         point3 = (f32 *)owner->model->get_point(owner->model, 3);
         Vector_TriangleNormal(normal, point0, point1, point3);
         Vector_Normalize(normal, normal);
-        if (normal[1] >= -0.93969f && normal[1] <= 0.93969f) {
+        if (normal[1] >= -QUAD_FLOOR_NORMAL_Y && normal[1] <= QUAD_FLOOR_NORMAL_Y) {
             return FALSE;
         }
         Vector_Copy(centre, position);

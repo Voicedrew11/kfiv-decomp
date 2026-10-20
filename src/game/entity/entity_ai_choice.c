@@ -19,18 +19,18 @@ float atan2f(float, float);
 
 /* EntityMath_WrapAngle, which the game inlines here: wraps an angle to +-pi */
 static inline f32 wrap_angle(f32 angle) {
-    angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-    if (angle > 3.1415927f) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI;
+    if (angle > PI) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     return angle;
 }
 
 /* the angle between the direction to the player and an attack's direction, `degrees` off the heading */
 static inline f32 attack_angle(EntityModel *body, EntityModel *model, f32 heading_to_player, s16 degrees) {
-    f32 angle = degrees * 0.017453292f;
+    f32 angle = DEG_TO_RAD(degrees);
 
     if (!(model->scale[0] >= 0.0f)) {
         angle = -angle;
@@ -53,37 +53,37 @@ static inline s32 player_in_reach(Entity *entity, EntityParams *params) {
     f32 top;
     f32 bottom;
 
-    angle = params->melee_attacks[0].heading_offset_deg * 0.017453292f;
+    angle = DEG_TO_RAD(params->melee_attacks[0].heading_offset_deg);
     if (!(entity->model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
     angles[0] = wrap_angle(entity->heading_to_player - wrap_angle(entity->model->rotation[1] + angle));
     angles[0] = ABS(angles[0]);
-    angle = params->melee_attacks[1].heading_offset_deg * 0.017453292f;
+    angle = DEG_TO_RAD(params->melee_attacks[1].heading_offset_deg);
     if (!(entity->model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
     angles[1] = wrap_angle(entity->heading_to_player - wrap_angle(entity->model->rotation[1] + angle));
     angles[1] = ABS(angles[1]);
-    angle = params->melee_attacks[2].heading_offset_deg * 0.017453292f;
+    angle = DEG_TO_RAD(params->melee_attacks[2].heading_offset_deg);
     if (!(entity->model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
     angles[2] = wrap_angle(entity->heading_to_player - wrap_angle(entity->model->rotation[1] + angle));
     angles[2] = ABS(angles[2]);
-    angle = ENTITY_PARAMS_RANGED(params)[0].heading_offset_deg * 0.017453292f;
+    angle = DEG_TO_RAD(ENTITY_PARAMS_RANGED(params)[0].heading_offset_deg);
     if (!(entity->model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
     angles[3] = wrap_angle(entity->heading_to_player - wrap_angle(entity->model->rotation[1] + angle));
     angles[3] = ABS(angles[3]);
-    angle = ENTITY_PARAMS_RANGED(params)[1].heading_offset_deg * 0.017453292f;
+    angle = DEG_TO_RAD(ENTITY_PARAMS_RANGED(params)[1].heading_offset_deg);
     if (!(entity->model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
     angles[4] = wrap_angle(entity->heading_to_player - wrap_angle(entity->model->rotation[1] + angle));
     angles[4] = ABS(angles[4]);
-    angle = ENTITY_PARAMS_RANGED(params)[2].heading_offset_deg * 0.017453292f;
+    angle = DEG_TO_RAD(ENTITY_PARAMS_RANGED(params)[2].heading_offset_deg);
     if (!(entity->model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
@@ -233,14 +233,14 @@ int EntityAi_TurnFromPush(void *entity_arg, void *heading_out) {
     if (angle >= 0.0f) {
         return 0;
     }
-    angle = (f32)acos(angle) - 1.5707964f;
+    angle = (f32)acos(angle) - HALF_PI;
     Vector_Cross(facing, push, facing);
     if (facing[1] <= 0.0f) {
-        angle = entity->model->rotation[1] + angle + 0.017453292f;
+        angle = entity->model->rotation[1] + angle + DEG_TO_RAD(1);
         *(f32 *)heading_out = angle;
         return 1;
     }
-    angle = entity->model->rotation[1] - angle - 0.017453292f;
+    angle = entity->model->rotation[1] - angle - DEG_TO_RAD(1);
     *(f32 *)heading_out = angle;
     return -1;
 }
@@ -281,11 +281,11 @@ s32 EntityAi_ShouldGuard(Entity *entity, f32 max_distance, f32 max_angle) {
     f32 angle = entity->heading_to_player - entity->model->rotation[1];
     f32 distance = entity->distance_to_player - (entity->radius + 100.0f);
 
-    angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-    if (angle > 3.1415927f) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI;
+    if (angle > PI) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     if (entity->busy_flags != 0) {
         return FALSE;
@@ -312,11 +312,11 @@ s32 EntityAi_ShouldDodge(Entity *entity, f32 max_distance, f32 max_angle) {
     }
     angle = entity->heading_to_player - entity->model->rotation[1];
     distance = entity->distance_to_player - (entity->radius + 100.0f);
-    angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-    if (angle > 3.1415927f) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI;
+    if (angle > PI) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     if (entity->busy_flags != 0) {
         return FALSE;
@@ -356,7 +356,7 @@ s32 EntityAi_PickAttack(Entity *entity) {
             f32 bottom;
             s32 in_reach;
 
-            angle = entity->params->melee_attacks[i].heading_offset_deg * 0.017453292f;
+            angle = DEG_TO_RAD(entity->params->melee_attacks[i].heading_offset_deg);
             if (!(entity->model->scale[0] >= 0.0f)) {
                 angle = -angle;
             }
@@ -401,7 +401,7 @@ s32 EntityAi_PickAttack(Entity *entity) {
             s32 j;
 
             j = i - 3;
-            angle = ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].heading_offset_deg * 0.017453292f;
+            angle = DEG_TO_RAD(ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].heading_offset_deg);
             if (!(entity->model->scale[0] >= 0.0f)) {
                 angle = -angle;
             }
@@ -769,19 +769,19 @@ int EntityAi_TurnCommand(Entity *entity) {
         return 0;
     }
     angle = atan2f(target[0] - entity->model->position[0], target[2] - entity->model->position[2]);
-    angle += 3.1415927f;
-    angle -= (f32)(int)(angle / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < angle) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle += PI;
+    angle -= (f32)(int)(angle / TWO_PI) * TWO_PI;
+    if (PI < angle) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     diff = angle - entity->model->rotation[1];
-    diff -= (f32)(int)(diff / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < diff) {
-        diff -= 6.2831855f;
-    } else if (diff < -3.1415927f) {
-        diff += 6.2831855f;
+    diff -= (f32)(int)(diff / TWO_PI) * TWO_PI;
+    if (PI < diff) {
+        diff -= TWO_PI;
+    } else if (diff < -PI) {
+        diff += TWO_PI;
     }
     if (entity->params->turn_limit < ABS(diff)) {
         result = 0x100;
@@ -807,19 +807,19 @@ s32 EntityAi_MoveCommand3D(Entity *entity, s32 mark_far, f32 range) {
         return 0;
     }
     angle = atan2f(target[0] - entity->model->position[0], target[2] - entity->model->position[2]);
-    angle += 3.1415927f;
-    angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < angle) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle += PI;
+    angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI;
+    if (PI < angle) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     angle -= entity->model->rotation[1];
-    angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < angle) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI;
+    if (PI < angle) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     diff = angle;
     if (entity->params->turn_limit < (0.0f <= diff ? diff : -diff)) {
@@ -865,19 +865,19 @@ s32 EntityAi_MoveCommand(Entity *entity, s32 mark_far, f32 range) {
         return 0;
     }
     angle = atan2f(target[0] - entity->model->position[0], target[2] - entity->model->position[2]);
-    angle += 3.1415927f;
-    angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < angle) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle += PI;
+    angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI;
+    if (PI < angle) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     diff = angle - entity->model->rotation[1];
-    diff = diff - (f32)(s32)(diff / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < diff) {
-        diff -= 6.2831855f;
-    } else if (diff < -3.1415927f) {
-        diff += 6.2831855f;
+    diff = diff - (f32)(s32)(diff / TWO_PI) * TWO_PI;
+    if (PI < diff) {
+        diff -= TWO_PI;
+    } else if (diff < -PI) {
+        diff += TWO_PI;
     }
     if (entity->params->turn_limit < (0.0f <= diff ? diff : -diff)) {
         result = 0.0f <= diff ? 0x200 : 0x100;
@@ -916,19 +916,19 @@ s32 EntityAi_TurnOrMoveCommand(Entity *entity, s32 far_flag, f32 reach) {
     }
     target_pos = entity->target;
     angle = atan2f(target_pos[0] - entity->model->position[0], target_pos[2] - entity->model->position[2]);
-    angle += 3.1415927f;
-    angle -= (int)(angle / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < angle) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle += PI;
+    angle -= (int)(angle / TWO_PI) * TWO_PI;
+    if (PI < angle) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     angle -= entity->model->rotation[1];
-    angle -= (int)(angle / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < angle) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle -= (int)(angle / TWO_PI) * TWO_PI;
+    if (PI < angle) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     turn_limit = ENTITY_CONTROLLER(entity)->turn_limit;
     if (0.0f <= angle ? turn_limit < angle : turn_limit < -angle) {

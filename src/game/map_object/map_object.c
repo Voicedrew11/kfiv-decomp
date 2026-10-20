@@ -343,7 +343,7 @@ void MapObject_UpdateAll(void) {
     }
     period = 60; // match: the divisor is a variable
     sway_frame = (sway_frame + 1) % period;
-    sinf(sway_frame * 6.2831855f / 60.0f); // match: the result is not used
+    sinf(sway_frame * TWO_PI / 60.0f); // match: the result is not used
     for (map = 0; map < 2; map++) {
         object = map_objects(map);
         count = map_object_count(map);
@@ -404,7 +404,7 @@ void MapObject_UpdateAll(void) {
                     delta_y = next[1] - from[1];
                     delta_z = next[2] - from[2];
                     angles.x = atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-                    angles.y = Angle_Wrap(-atan2f(delta_z, delta_x) + 1.5707964f);
+                    angles.y = Angle_Wrap(-atan2f(delta_z, delta_x) + HALF_PI);
                     angles.z = angles.w = 0.0f;
                     Effect_StartSpawner(object->source->appear_effect, from, &angles, object);
                 } else {

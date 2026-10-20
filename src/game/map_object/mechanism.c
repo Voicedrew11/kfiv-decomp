@@ -108,7 +108,7 @@ void MapObject_UpdateLadder(MapObject *object) {
         }
         turn = Angle_Wrap(atan2f(delta.x, delta.z) - object->model->rotation.y);
         half_angle = MAP_OBJECT_WORD_ARRAY(object)[i * 3 + 1];
-        half_angle = half_angle * 0.017453292f * 0.5f;
+        half_angle = half_angle * DEG_TO_RAD(1) * 0.5f;
         if (turn < -half_angle) {
             continue;
         }
@@ -148,8 +148,8 @@ void MapObject_UpdateShooter(MapObject *object) {
         return;
     }
     point = (void *)object->model->get_point(object->model, MAP_OBJECT_WORDS(object)->kind_param_2);
-    aim.x = Angle_Wrap(object->model->rotation.x + MAP_OBJECT_WORDS(object)->kind_param_3 * 0.017453292f);
-    aim.y = Angle_Wrap(object->model->rotation.y + MAP_OBJECT_WORDS(object)->kind_param_4 * 0.017453292f + 3.1415927f);
+    aim.x = Angle_Wrap(object->model->rotation.x + DEG_TO_RAD(MAP_OBJECT_WORDS(object)->kind_param_3));
+    aim.y = Angle_Wrap(object->model->rotation.y + DEG_TO_RAD(MAP_OBJECT_WORDS(object)->kind_param_4) + PI);
     aim.z = object->model->rotation.z;
     aim.w = 0.0f;
     shot = Shot_Alloc();

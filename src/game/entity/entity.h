@@ -7,6 +7,7 @@
 
 #define ENTITY_DESPAWN_MARGIN           300.0f
 #define ENTITY_VERTICAL_DESPAWN_MARGIN  150.0f
+#define AIMED_SHOT_TURN_RATE            (10.0f * PI / 180.0f) /* pitch and yaw rate of an aimed shot; one bit above DEG_TO_RAD(10) */
 
 /* what Entity.spawn_info points at */
 typedef struct {

@@ -177,11 +177,11 @@ static void Minion_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, Minion_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, Minion_Dodge, 1);
         return;
     }
@@ -286,10 +286,10 @@ static void Minion_Animate(Entity *entity) {
             }
         }
     }
-    limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
-    limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
-    limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
-    limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
+    limits[1] = DEG_TO_RAD(entity->params->pitch_limit_deg);
+    limits[0] = DEG_TO_RAD(-entity->params->pitch_limit_deg);
+    limits[3] = DEG_TO_RAD(entity->params->yaw_limit_deg);
+    limits[2] = DEG_TO_RAD(-entity->params->yaw_limit_deg);
     if (ENTITY_FLAG_BITS(entity)->look_at_target && entity->target != NULL) {
         EntityAi_LookAtPoint(entity, (int)ai_state->look_part_angles, ENTITY_FLAG_BITS(entity)->look_at_target, (int)entity->target, (int)limits, 12.0f);
     } else {
@@ -687,7 +687,7 @@ static void Minion_Dodge(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_DODGE;
     switch (entity->action_step) {
     case 0:
-        if (EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) * 57.29578f > 0.0f) {
+        if (EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) * RAD_TO_DEG > 0.0f) {
             EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, 6, 0, entity->params->motion_blend_frames >> 1, 1);
             if (ai_state->turn_in_place == 0) {
                 EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_1, 1, 6, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -764,11 +764,11 @@ static s32 Minion_LaunchShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 fr
                     delta_y = tip[1] - from[1];
                     delta_z = tip[2] - from[2];
                     angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-                    angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
+                    angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + HALF_PI);
                     angles[2] = angles[3] = 0.0f;
                 } else {
                     Vector_Copy(angles, entity->model->rotation);
-                    angles[1] = EntityMath_WrapAngle(angles[1] + 3.1415927f);
+                    angles[1] = EntityMath_WrapAngle(angles[1] + PI);
                 }
                 if (target != NULL) {
                     pitch = EntityMath_WrapAngle(-atan2(target[1] - from[1], EntityMath_DistanceXZ(from, target)));

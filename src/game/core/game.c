@@ -11,6 +11,9 @@
 #include "ui/menu_screens.h"
 #include "ui/message.h"
 
+/* cos 30 degrees: focus candidates must lie within this cone around the view ray */
+#define FOCUS_CONE_MIN_COS 0.86602497f
+
 extern u8 game_options[0x10];             /* the options (Game_SetDefaultOptions sets their defaults) */
 extern u8 map_script_flags[0x2000];
 extern u8 story_flags[0x40];
@@ -1553,7 +1556,7 @@ void Game_ShiftScreenByFocusTurn(void) {
         distance_squared = scratch_vector[0] + scratch_vector[1] + scratch_vector[2];
         if (nearest_distance_squared < distance_squared) continue;
         sceVu0Normalize(scratch_vector, offset_to_entity);
-        if (sceVu0InnerProduct(scratch_vector, view_ray_status + 4) < 0.86602497f) continue; /* about cos 30 degrees */
+        if (sceVu0InnerProduct(scratch_vector, view_ray_status + 4) < FOCUS_CONE_MIN_COS) continue; /* about cos 30 degrees */
         nearest_distance_squared = distance_squared;
         focus_distance = sqrtf(distance_squared);
     }

@@ -330,7 +330,7 @@ static void ForestGolem_ThinkCombat(Entity *entity, s32 unknown) {
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     range = 300.0f;
-    angle = 0.5235988f;
+    angle = DEG_TO_RAD(30);
     if (EntityAi_ShouldGuard(entity, range, angle)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -360,7 +360,7 @@ static void ForestGolem_ThinkCombat(Entity *entity, s32 unknown) {
             if ((s16)entity->params->action_frames < entity->distance_to_player) { // match: read signed here
                 turn = EntityMath_AngleDifference(entity->heading_to_player, entity->model->rotation[1]);
                 turn = ABS(turn);
-                if (turn > 0.7853982f) {
+                if (turn > DEG_TO_RAD(45)) {
                     entity->target = player_state;
                     entity->action_timer = rand() % 30 + 60;
                     ai_state->move_choice = 0;

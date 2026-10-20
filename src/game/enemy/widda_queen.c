@@ -115,10 +115,10 @@ static void WiddaQueen_Animate(Entity *entity) {
         }
         WiddaQueen_TurnPart9ToPlayer(entity, ai_state->step_index);
         look_at_target = ENTITY_FLAG_BITS(entity)->look_at_target;
-        limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
-        limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
-        limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
-        limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
+        limits[1] = DEG_TO_RAD(entity->params->pitch_limit_deg);
+        limits[0] = DEG_TO_RAD(-entity->params->pitch_limit_deg);
+        limits[3] = DEG_TO_RAD(entity->params->yaw_limit_deg);
+        limits[2] = DEG_TO_RAD(-entity->params->yaw_limit_deg);
         if (look_at_target) {
             EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, look_at_target, limits, 12.0f);
         } else {
@@ -143,11 +143,11 @@ static void WiddaQueen_TurnPart9ToPlayer(Entity *entity, s32 mode) {
         rate += rate;
     }
     angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-    if (1.5707964f < angle) {
-        angle = 1.5707964f;
+    if (HALF_PI < angle) {
+        angle = HALF_PI;
     }
-    if (angle < -1.5707964f) {
-        angle = -1.5707964f;
+    if (angle < -HALF_PI) {
+        angle = -HALF_PI;
     }
     if (mode == 1) {
         EntityMath_EaseAngleToward(&ai_state->part_angle_x, angle, rate);
@@ -181,7 +181,7 @@ static void WiddaQueen_ThinkDecide(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
-    if (EntityAi_ShouldGuard(entity, 300.0f, 3.1415927f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, PI)) {
         // match: called as returning int; only then is the 2 below loaded into $3
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         ai_state->step_index = 2;
@@ -295,9 +295,9 @@ static void WiddaQueen_MeleeAttack1(Entity *entity) {
     case 2:
         frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
-            ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->frame, entity->model->rotation[1] - 0.7853982f);
+            ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->frame, entity->model->rotation[1] - DEG_TO_RAD(45));
             if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
-                ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, entity->model->rotation[1] + 0.7853982f);
+                ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, entity->model->rotation[1] + DEG_TO_RAD(45));
             }
         }
         if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
@@ -356,7 +356,7 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(target, player_state.position);
         target[1] -= 190.0f;
-        EntityShot_LaunchAimed(entity, (EntityParamsUnk3D8 *)unk3D8, elapsed, entity->model->level_tables->frame, target, 1.5707964f, 1.5707964f);
+        EntityShot_LaunchAimed(entity, (EntityParamsUnk3D8 *)unk3D8, elapsed, entity->model->level_tables->frame, target, HALF_PI, HALF_PI);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {

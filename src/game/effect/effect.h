@@ -1098,4 +1098,8 @@ void EffectStart_PlaceModel(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectStart_TurnModel(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectSteer_Toward(Vector4 *velocity, Vector4 *direction, float speed, float turn);
 
+/* (rand() & 0xFFFF) times this is 0..2 */
+#define RAND_16BIT_SCALE (1.0f / 32768.0f)
+#define PI_APPROX 3.1415f /* pi to four decimals, as some effects write it; not PI's bits */
+
 #endif

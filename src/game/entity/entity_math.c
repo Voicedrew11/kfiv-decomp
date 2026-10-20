@@ -86,12 +86,12 @@ float EntityMath_WrapAngle(float radians) {
     s32 turns;
     float wrapped;
 
-    turns = radians / 6.2831855f;
-    wrapped = radians - (float)turns * 6.2831855f;
-    if (3.1415927f < wrapped) {
-        wrapped -= 6.2831855f;
-    } else if (wrapped < -3.1415927f) {
-        wrapped += 6.2831855f;
+    turns = radians / TWO_PI;
+    wrapped = radians - (float)turns * TWO_PI;
+    if (PI < wrapped) {
+        wrapped -= TWO_PI;
+    } else if (wrapped < -PI) {
+        wrapped += TWO_PI;
     }
     return wrapped;
 }
@@ -171,11 +171,11 @@ float EntityMath_ApproachAngle(float angle, float target, float step) {
         return angle;
     }
     delta = target - angle;
-    difference = delta - (float)(s32)(delta / 6.2831855f) * 6.2831855f;
-    if (difference > 3.1415927f) {
-        difference -= 6.2831855f;
-    } else if (difference < -3.1415927f) {
-        difference += 6.2831855f;
+    difference = delta - (float)(s32)(delta / TWO_PI) * TWO_PI;
+    if (difference > PI) {
+        difference -= TWO_PI;
+    } else if (difference < -PI) {
+        difference += TWO_PI;
     }
     steps = (s32)(difference / step);
     if (steps > 0) {
@@ -185,11 +185,11 @@ float EntityMath_ApproachAngle(float angle, float target, float step) {
     } else {
         angle = target;
     }
-    angle -= (float)(s32)(angle / 6.2831855f) * 6.2831855f;
-    if (angle > 3.1415927f) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle -= (float)(s32)(angle / TWO_PI) * TWO_PI;
+    if (angle > PI) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     return angle;
 }
@@ -211,11 +211,11 @@ float EntityMath_StepAngleToward(float *angle, float target, float step) {
         return difference;
     }
     wrapped = difference;
-    wrapped -= (float)(s32)(wrapped / 6.2831855f) * 6.2831855f;
-    if (wrapped > 3.1415927f) {
-        wrapped -= 6.2831855f;
-    } else if (wrapped < -3.1415927f) {
-        wrapped += 6.2831855f;
+    wrapped -= (float)(s32)(wrapped / TWO_PI) * TWO_PI;
+    if (wrapped > PI) {
+        wrapped -= TWO_PI;
+    } else if (wrapped < -PI) {
+        wrapped += TWO_PI;
     }
     steps = (s32)(wrapped / step);
     if (steps > 0) {
@@ -226,11 +226,11 @@ float EntityMath_StepAngleToward(float *angle, float target, float step) {
         *angle = target;
     }
     next = *angle;
-    next -= (float)(s32)(next / 6.2831855f) * 6.2831855f;
-    if (next > 3.1415927f) {
-        next -= 6.2831855f;
-    } else if (next < -3.1415927f) {
-        next += 6.2831855f;
+    next -= (float)(s32)(next / TWO_PI) * TWO_PI;
+    if (next > PI) {
+        next -= TWO_PI;
+    } else if (next < -PI) {
+        next += TWO_PI;
     }
     *angle = next;
     return wrapped;
@@ -243,22 +243,22 @@ float EntityMath_EaseAngleToward(float *angle, float goal, float rate) {
     float old = *angle;
     float difference = goal - old;
 
-    difference -= (float)(s32)(difference / 6.2831855f) * 6.2831855f;
-    if (difference > 3.1415927f) {
-        difference -= 6.2831855f;
-    } else if (difference < -3.1415927f) {
-        difference += 6.2831855f;
+    difference -= (float)(s32)(difference / TWO_PI) * TWO_PI;
+    if (difference > PI) {
+        difference -= TWO_PI;
+    } else if (difference < -PI) {
+        difference += TWO_PI;
     }
     if (rate <= 1.0f) {
         *angle = goal;
         return difference;
     }
     rate = old + difference / rate; // match: the new angle reuses the register of `rate`
-    rate -= (float)(s32)(rate / 6.2831855f) * 6.2831855f;
-    if (rate > 3.1415927f) {
-        rate -= 6.2831855f;
-    } else if (rate < -3.1415927f) {
-        rate += 6.2831855f;
+    rate -= (float)(s32)(rate / TWO_PI) * TWO_PI;
+    if (rate > PI) {
+        rate -= TWO_PI;
+    } else if (rate < -PI) {
+        rate += TWO_PI;
     }
     *angle = rate;
     return difference;
@@ -275,12 +275,12 @@ float EntityMath_HeadingTo(float *origin, float *target) {
     float wrapped;
 
     angle = atan2f(target[0] - origin[0], target[2] - origin[2]);
-    wrapped = angle + 3.1415927f;
-    wrapped -= (float)(s32)(wrapped / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < wrapped) {
-        wrapped -= 6.2831855f;
-    } else if (wrapped < -3.1415927f) {
-        wrapped += 6.2831855f;
+    wrapped = angle + PI;
+    wrapped -= (float)(s32)(wrapped / TWO_PI) * TWO_PI;
+    if (PI < wrapped) {
+        wrapped -= TWO_PI;
+    } else if (wrapped < -PI) {
+        wrapped += TWO_PI;
     }
     return wrapped;
 }
@@ -310,12 +310,12 @@ void EntityMath_VectorToRotation(float *angles, float *direction) {
     float heading;
 
     angles[0] = -atan2f(direction[1], sqrtf(direction[0] * direction[0] + direction[2] * direction[2]));
-    heading = -atan2f(direction[2], direction[0]) + 1.5707964f;
-    heading -= (float)(s32)(heading / 6.2831855f) * 6.2831855f;
-    if (heading > 3.1415927f) {
-        heading -= 6.2831855f;
-    } else if (heading < -3.1415927f) {
-        heading += 6.2831855f;
+    heading = -atan2f(direction[2], direction[0]) + HALF_PI;
+    heading -= (float)(s32)(heading / TWO_PI) * TWO_PI;
+    if (heading > PI) {
+        heading -= TWO_PI;
+    } else if (heading < -PI) {
+        heading += TWO_PI;
     }
     angles[1] = heading;
     angles[2] = angles[3] = 0.0f;
@@ -327,11 +327,11 @@ void EntityMath_VectorToAngles(float *angles, float *direction) {
 
     angles[0] = -atan2f(direction[1], sqrtf(direction[0] * direction[0] + direction[2] * direction[2]));
     yaw = -atan2f(direction[2], direction[0]);
-    yaw -= (float)(s32)(yaw / 6.2831855f) * 6.2831855f;
-    if (yaw > 3.1415927f) {
-        yaw -= 6.2831855f;
-    } else if (yaw < -3.1415927f) {
-        yaw += 6.2831855f;
+    yaw -= (float)(s32)(yaw / TWO_PI) * TWO_PI;
+    if (yaw > PI) {
+        yaw -= TWO_PI;
+    } else if (yaw < -PI) {
+        yaw += TWO_PI;
     }
     angles[1] = yaw;
     angles[2] = angles[3] = 0.0f;
@@ -341,11 +341,11 @@ void EntityMath_VectorToAngles(float *angles, float *direction) {
 float EntityMath_AngleDifference(float angle_from, float angle_to) {
     float difference = angle_to - angle_from;
 
-    difference -= (s32)(difference / 6.2831855f) * 6.2831855f;
-    if (difference > 3.1415927f) {
-        difference -= 6.2831855f;
-    } else if (difference < -3.1415927f) {
-        difference += 6.2831855f;
+    difference -= (s32)(difference / TWO_PI) * TWO_PI;
+    if (difference > PI) {
+        difference -= TWO_PI;
+    } else if (difference < -PI) {
+        difference += TWO_PI;
     }
     return difference;
 }

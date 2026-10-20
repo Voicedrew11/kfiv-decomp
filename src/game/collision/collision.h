@@ -5,6 +5,13 @@
 #include "common.h"
 #include "model/model.h"
 
+/* tolerances of the collision tests */
+#define COLLISION_PARALLEL_EPSILON 0.00001f
+#define COLLISION_END_ON_EPSILON 0.000001f
+#define COLLISION_HORIZONTAL_EPSILON 0.0001f
+/* a ratio above this is past the far end of a segment */
+#define COLLISION_RATIO_PAST_END 1.00001f
+
 /* what every collision test leaves at the start of the scratchpad */
 typedef struct {
     f32 point[4];                   /* 0x00 where it hit */

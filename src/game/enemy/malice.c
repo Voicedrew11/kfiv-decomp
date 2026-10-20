@@ -212,11 +212,11 @@ static void Malice_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -289,7 +289,7 @@ static void Malice_ThinkCombat(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
-                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                ai_state->turn_in_place = ABS(angle) > DEG_TO_RAD(30);
             }
             if (ai_state->turn_in_place != 0) {
                 entity->move_command = EntityAi_TurnCommand(entity);
@@ -511,7 +511,7 @@ static void Malice_FadeOutAndRelocate(Entity *entity) {
             height = EntityCollision_DistanceToPropFloor(entity->map_record, destination);
             if (height != malice_no_floor_height_relocate[0]) {
                 yaw = EntityMath_AngleXZ(player_state.position, (char *)destination);
-                if (ABS(EntityMath_WrapAngle(yaw - player_state.heading)) > 0.7853982f) {
+                if (ABS(EntityMath_WrapAngle(yaw - player_state.heading)) > DEG_TO_RAD(45)) {
                     ai_state->target_point[1] += height - (f32)(rand() % 200);
                     ai_state->action_counter = 1;
                 }
@@ -682,7 +682,7 @@ static void Malice_RangedAttack0(Entity *entity) {
         if (entity->model->level_tables->frame >= 0x1C && entity->model->level_tables->frame <= 0x3C) {
             Vector_Copy(direction, entity->model->rotation);
             direction[0] = atanf((entity->model->position[1] - player_state.position[1]) / entity->distance_to_player);
-            direction[1] = EntityMath_WrapAngle(direction[1] - 3.1415927f);
+            direction[1] = EntityMath_WrapAngle(direction[1] - PI);
             if (frame_counter & 1) {
                 EntityShot_Launch(entity, unk3D8, 0x1C, 0x3C, direction);
             }

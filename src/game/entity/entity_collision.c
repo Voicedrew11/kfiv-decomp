@@ -6,6 +6,9 @@
 #include "map/map.h"
 #include "collision/collision.h"
 
+#define VERTICAL_FACE_NORMAL_Y_EPSILON 0.00001f
+#define EDGE_PERPENDICULAR_TO_FLAT_EPSILON 0.000001f
+
 extern PlayerData player_state;
 void Vector_Normalize(void *, void *);
 double sqrt(double);
@@ -608,7 +611,7 @@ void EntityCollision_WalkAgainstMap(Entity *entity) {
     s32 i;
 
     hit_floor = FALSE;
-    floor_y = 3.4028235e38f;
+    floor_y = FLT_MAX;
     height = entity->model->position[1];
     Vector_Copy(position, entity->model->position);
     normal_sum[0] = normal_sum[1] = normal_sum[2] = normal_sum[3] = 0.0f;
@@ -788,7 +791,7 @@ void EntityCollision_CapsuleTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c
     distance = normal[0] * corner_b[0] + normal[1] * corner_b[1] + normal[2] * corner_b[2];
     distance += -normal[0] * centre[0] - normal[1] * centre[1] - normal[2] * centre[2];
     bottom = centre[1] - height;
-    if (-0.00001f < ratio && ratio < 0.00001f) {
+    if (-VERTICAL_FACE_NORMAL_Y_EPSILON < ratio && ratio < VERTICAL_FACE_NORMAL_Y_EPSILON) {
         if (radius < distance) {
             return;
         }
@@ -877,7 +880,7 @@ void EntityCollision_CapsuleTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c
         origin[3] = 1.0f;
         sceVu0Normalize(origin, origin);
         along = origin[0] * edge[0] + origin[2] * edge[2];
-        if (-0.000001f < along && along < 0.000001f) {
+        if (-EDGE_PERPENDICULAR_TO_FLAT_EPSILON < along && along < EDGE_PERPENDICULAR_TO_FLAT_EPSILON) {
             point[0] = end[0];
             point[1] = centre[1];
             point[2] = end[2];
@@ -1964,7 +1967,7 @@ static void EntityCollision_MoveOnMesh(CollisionOwner *owner, f32 *centre, f32 s
     COLLISION_RESULT->hit = 0;
     Collision_TransformMeshPoints(owner->model);
     mesh = (CollisionMesh *)owner->model->strips;
-    floor_y = 3.4028235e38f; // match: FLT_MAX as a literal (the compiler keeps it in .sdata, at 0x446840)
+    floor_y = FLT_MAX; // match: FLT_MAX as a literal (the compiler keeps it in .sdata, at 0x446840)
     normal_sum[0] = normal_sum[1] = normal_sum[2] = normal_sum[3] = 0.0f;
     Vector_Copy(position, centre);
     strip = mesh->floor_strips;
@@ -2358,7 +2361,7 @@ f32 EntityCollision_DistanceToPropFloor(void *prop_arg, void *position_arg) {
     s32 i;
     s32 j;
 
-    result = lowest = 3.4028235e38f;
+    result = lowest = FLT_MAX;
     if (prop == NULL || prop->collision_strip_index == 0xFFFF || prop->model == NULL || prop->model->strips == NULL) {
         return lowest;
     }
@@ -2411,7 +2414,7 @@ s32 EntityCollision_RayProp(void *prop_arg, f32 *origin, f32 *direction, f32 len
     // match: called as if it returned nothing (other files declare it int)
     ((void (*)(void *))Collision_TransformMeshPoints)(prop->model);
     mesh = (CollisionMesh *)prop->model->strips;
-    nearest = 3.4028235e38f;
+    nearest = FLT_MAX;
     strip = mesh->floor_strips;
     i = mesh->floor_strip_count;
     while (--i != -1) {
@@ -2527,7 +2530,7 @@ s32 EntityCollision_RayProps(f32 *origin, f32 *direction, void *out_point, f32 l
         lowest[2] = end[2];
         highest[2] = origin[2];
     }
-    nearest = 3.4028235e38f; // match: FLT_MAX as a literal (the compiler keeps it in .sdata, at 0x44684C)
+    nearest = FLT_MAX; // match: FLT_MAX as a literal (the compiler keeps it in .sdata, at 0x44684C)
     result = 0;
     slots[0] = &map_slots[current_map_slot];
     slots[1] = &map_slots[current_map_slot ^ 1];
@@ -2716,5 +2719,5 @@ f32 EntityCollision_DistanceToGround(f32 *point) {
             }
         }
     }
-    return 3.4028235e38f;
+    return FLT_MAX;
 }

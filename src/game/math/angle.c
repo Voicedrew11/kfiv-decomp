@@ -59,7 +59,7 @@ static int Step_Toward(f32 target, f32 step, f32 *value) {
     if (!(0.0f <= step)) {
         step = -step;
     }
-    if (target - 1.1920929e-7f < *value && *value < target + 1.1920929e-7f) {
+    if (target - FLT_EPSILON < *value && *value < target + FLT_EPSILON) {
         *value = target;
         return 1;
     }
@@ -84,12 +84,12 @@ float Angle_Wrap(float angle) {
     float wrapped;
     int turns;
 
-    turns = angle / 6.2831855f;
-    wrapped = angle - (float)turns * 6.2831855f;
-    if (3.1415927f < wrapped) {
-        wrapped -= 6.2831855f;
-    } else if (wrapped < -3.1415927f) {
-        wrapped += 6.2831855f;
+    turns = angle / TWO_PI;
+    wrapped = angle - (float)turns * TWO_PI;
+    if (PI < wrapped) {
+        wrapped -= TWO_PI;
+    } else if (wrapped < -PI) {
+        wrapped += TWO_PI;
     }
     return wrapped;
 }
@@ -99,14 +99,14 @@ static float Angle_WrapPositive(float radians) {
     float angle;
 
     angle = radians;
-    if (6.2831855f <= angle) {
+    if (TWO_PI <= angle) {
         do {
-            angle -= 6.2831855f;
-        } while (6.2831855f <= angle);
+            angle -= TWO_PI;
+        } while (TWO_PI <= angle);
     }
     if (angle < 0.0f) {
         do {
-            angle += 6.2831855f;
+            angle += TWO_PI;
         } while (angle < 0.0f);
     }
     return angle;
@@ -157,10 +157,10 @@ int Angle_EaseToward(float target, float *angle, int frames) {
         return 1;
     }
     diff = target - *angle;
-    if (3.1415927f < diff) {
-        diff -= 6.2831855f;
-    } else if (diff < -3.1415927f) {
-        diff += 6.2831855f;
+    if (PI < diff) {
+        diff -= TWO_PI;
+    } else if (diff < -PI) {
+        diff += TWO_PI;
     }
     *angle = *angle + diff / frames;
     *angle = Angle_Wrap(*angle);
