@@ -137,12 +137,12 @@ static page) and the table below; commit those with each batch of work.
 
 | game readability | | |
 | --- | ---: | ---: |
-| structs recovered | 587 | total_structs |
-| struct fields named | 3112 | total_fields |
+| structs recovered | 97.02% | 587 of 605 |
+| struct fields named | 99.27% | 3112 of 3135 |
 | padding fields | 624 | unused by game code |
-| field uses named | 58513 | field_uses |
-| globals named | 1385 | total_globals |
-| bit operations named | 3081 | bit_ops |
+| field uses named | 99.96% | 58513 of 58539 |
+| globals named | 94.35% | 1385 of 1468 |
+| bit operations named | 92.16% | 3081 of 3343 |
 | function-pointer casts | 164 | left |
 | `// match:` comments | 941 | left |
 | gotos | 14 | left |
