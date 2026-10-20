@@ -974,9 +974,14 @@ void Model_SetTexture(ModelInstance *model, u64 unk40, s64 unk30);
 void Model_SetAlphaBlend(ModelInstance *model, s64 value);
 void Model_SetVu1Program(ModelInstance *model, s32 value);
 int Model_FadeVertexColoursNear(int model_arg, void *centre_arg, int *steps, int *targets, float radius);
+void Model_UpdateBonePoints(ModelInstance *model);
+Vector4 *Model_GetBonePoint(ModelInstance *model, s32 index);
 
 /* model/model_screen.c */
 void ModelScreen_CutClippedTriangles(ModelInstance *model);
+void ModelScreen_QueueCutTriangle(u32 *data, ModelPartVertexWords *vertex, int first, int setup, void *matrix);
+void ModelScreen_StepVertices(ModelPartVertexWords *out, ModelPartVertexWords *from, ModelPartVertexWords *last, int steps);
+void ModelScreen_StepFloatVertices(BlendVertex *out, BlendVertex *from, BlendVertex *last, int steps);
 
 /* model/model_textures.c */
 void ModelTexture_ResetSlots(void);
@@ -987,5 +992,11 @@ extern int screen_uv_frame;  /* 0..59, stepped by ModelScreen_SetUvsFromScreen *
 extern int cut_triangle_count;  /* triangles cut up this way */
 extern int shared_texture_packet_sent[2];
 extern int screen_uv_frame_copy;  /* the same value; nothing reads it */
+
+/* model/model.c */
+void Model_SetBlockGsWords(ModelInstance *model, s64 unk30, s64 unk40, s64 unk50, s64 unk60);
+void Model_RestoreGsWordsAndUvs(ModelInstance *model);
+void Model_SetVertexColour(void *model_arg, int red, int green, int blue, int alpha);
+void Model_SetTextureBase(ModelInstance *model, int texture_base, int clut_base);
 
 #endif

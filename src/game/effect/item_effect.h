@@ -25,4 +25,10 @@ extern char item_effect_large_model_path[];
 extern char item_effect_large_motion_path[];
 extern char item_effect_texture_path_format[];
 
+/* effect/item_effect.c */
+void ItemEffect_StepRequestGameStatus(void);
+void ItemEffect_StepWaitOverlay(void);
+void ItemEffect_StepPlayMotion(void);
+void ItemEffect_StepFadeOut(void);
+
 #endif

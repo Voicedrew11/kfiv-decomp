@@ -12,14 +12,6 @@ static PadReport *debug_pad; /* 0x447108 the controller report the editors read;
 
 static char debug_cursor_marks[0x68]; /* 0x5742E0 the strings the debug menus draw, four bytes apart */
 
-void Debug_StartMenuLoopInit(void);
-void Debug_StartMenuLoopTop(void);
-void Debug_StartMenuBeforeRun(void);
-void Debug_StartMenuBetweenRuns(void);
-int Debug_RunStartMenu(void);
-void Packet_WaitForSend(void);
-extern u16 pad_state[];
-
 /* Wraps the cursor into 0..count-1 and writes ">>" for its line and "  " for the others into debug_cursor_marks.
    Nothing calls it. */
 void Debug_MarkCursorLine(int *cursor, int count) {
@@ -233,7 +225,7 @@ int Debug_RunStartMenu(void) {
     do {
         while (running) {
             Input_Update();
-            if (pad_state[1] & PAD_START) {
+            if (pad_state.pressed & PAD_START) {
                 break;
             }
             Packet_SwapBuffers();
@@ -251,13 +243,13 @@ int Debug_RunStartMenu(void) {
         selected = 0;
         while (running) {
             Input_Update();
-            if (pad_state[1] & PAD_UP) {
+            if (pad_state.pressed & PAD_UP) {
                 selected = (selected + 3) % 4;
-            } else if (pad_state[1] & PAD_DOWN) {
+            } else if (pad_state.pressed & PAD_DOWN) {
                 selected = (selected + 1) % 4;
-            } else if (pad_state[1] & PAD_CIRCLE) {
+            } else if (pad_state.pressed & PAD_CIRCLE) {
                 break;
-            } else if (pad_state[1] & PAD_CROSS) {
+            } else if (pad_state.pressed & PAD_CROSS) {
                 chosen = selected;
                 running = FALSE;
             }

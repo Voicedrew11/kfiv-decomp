@@ -1,4 +1,5 @@
 #include "player/held_weapon.h"
+#include "math/camera.h"
 #include "core/game.h"
 #include "gfx/gs.h"
 #include "map/map.h"
@@ -17,11 +18,8 @@
 #include "sound/sound_game.h"
 #include <stdio.h>
 #include <string.h>
+#include "item/item.h"
 
-extern GameDefinition weapon_name_defs[70];
-extern char file_load_buffer[0x80000];
-extern CameraState camera_state;
-extern f32 world_screen_matrix[16];
 
 /* What lights the held item's models, its trail, its position offsets and the points of its arm. */
 MapLightBlockHalf held_item_light_blocks[2] = { /* 0x4145E0 the second hand's block ends with 1.0 four times */
@@ -63,14 +61,6 @@ static s32 trail_count;                 /* 0x44717C */
 static s32 trail_write_index;           /* 0x447180 */
 static s32 trail_read_index;            /* 0x447184 */
 static s32 trail_kind;                  /* 0x447188 index into weapon_trail_kinds */
-
-void WeaponTrail_Reset(void);
-void WeaponTrail_SetMinLife(s32);
-void WeaponTrail_Age(void);
-void WeaponTrail_Push(void *);
-void WeaponTrail_GetPoint(void *, s32);
-s32 WeaponTrail_GetLife(s32);
-int WeaponTrail_GetCount(void);
 
 void HeldWeapon_Init(void) {
     int file_handle;

@@ -9,35 +9,13 @@
 #include <math.h>
 #include "math/vu0.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "model/motion.h"
+#include "entity/entity_math.h"
+#include "player/player.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
-extern s32 entity_type_handlers[][2];
-int Motion_Step(void *, int);
-int Motion_BlendToPose(EntityModel *, f32);
-int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-extern PlayerData player_state;
-float EntityMath_EaseAngleToward(float *, float, float);
-float EntityMath_HeadingTo(float *, float *);
-float EntityMath_AngleDifference(float, float);
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
-void EntityAi_StepState(void *);
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-void EntityAi_ClearTurnInPlace(Entity *);
-float EntityMath_AngleXZ(float *, char *);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-extern int entity_under_player[];
-int Motion_Start(void *, int, int, u32, int);
 
 static void Widda_Animate(Entity *entity);
 static void Widda_AimPartsAtTarget(Entity *entity);
@@ -59,7 +37,7 @@ void Widda_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Widda_Think;
     ai_state->animate = Widda_Animate;
     ai_state->on_hit = EntityAi_OnHit;
@@ -86,7 +64,7 @@ void Widda_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate, and Widda_AimPartsAtTarget turns two model parts.
@@ -101,7 +79,7 @@ static void Widda_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
@@ -138,7 +116,7 @@ static void Widda_AimPartsAtTarget(Entity *entity) {
         ai_state->part_angle_z = parts[second].part_angles[0];
         ai_state->pitch_speed = parts[second].part_angles[1];
     } else {
-        angle = atan2f(player_state.position[1] - entity->model->position[1], entity->distance_to_player);
+        angle = atan2f(player_state.position.y - entity->model->position[1], entity->distance_to_player);
         limit = DEG_TO_RAD(30);
         if (angle > limit) {
             angle = limit;
@@ -178,7 +156,7 @@ static void Widda_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags != 0) {
         return;
     }
-    EntityAi_CheckFarFromSpawn((char *)entity);
+    EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -230,7 +208,7 @@ static void Widda_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
@@ -256,7 +234,7 @@ static void Widda_ThinkCombat(Entity *entity, s32 unknown) {
             break;
         }
     }
-    angle = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
+    angle = EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ((float *)&player_state.position, entity->model->position));
     if (entity->distance_to_player_3d - entity->radius - 100.0f < 200.0f && ABS(angle) < DEG_TO_RAD(40)
         && frame_counter % 10U == entity->spawn_index % 10U && rand() % 100 < ENTITY_CONTROLLER(entity)->action_frames) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);

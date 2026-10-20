@@ -15,35 +15,12 @@
 #include "math/vu0.h"
 #include "model/motion.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_math.h"
+#include "player/player.h"
 
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
-void EntityAi_StepState(void *);
-extern PlayerData player_state;
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-float EntityMath_DistanceXZ(void *, void *);
-void EntityAi_ClearTurnInPlace(Entity *);
-float EntityMath_AngleDifference(float, float);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-float EntityMath_AngleXZ(float *, char *);
-float EntityMath_WrapAngle(float);
-float EntityMath_HeadingTo(float *, float *);
-void EntityAi_LowerWeightsAfterHit(char *);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-void EntityAi_SetState(char *, u8);
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-void EntityAi_SetAttackDelay(Entity *, s32);
 
 static void Malice_Think(Entity *entity, s32 unknown);
 static void Malice_ThinkCombat(Entity *entity, s32 unknown);
@@ -66,7 +43,7 @@ void Malice_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Malice_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = Malice_OnHit;
@@ -126,7 +103,7 @@ static void Malice_Think(Entity *entity, s32 unknown) {
     }
     ENTITY_FLAG_BITS(entity)->no_floor_lift = 1;
     if (entity->busy_flags == 0) {
-        EntityAi_CheckFarFromSpawn((char *)entity);
+        EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -224,15 +201,15 @@ static void Malice_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             model = entity->model;
-            height_difference = player_state.position[1] - model->position[1];
+            height_difference = player_state.position.y - model->position[1];
             if (ABS(height_difference) > 200.0f) {
-                EntityPoint_PickNearFromDistance(retreat_point, model->position, EntityMath_DistanceXZ(model->position, entity->spawn_info), entity->radius * 4.0f);
+                EntityPoint_PickNearFromDistance(retreat_point, model->position, EntityMath_DistanceXZ(model->position, &entity->spawn_info->spawn_x), entity->radius * 4.0f);
                 entity->target = retreat_point;
                 entity->action_timer = rand() % 30 + 30;
                 ai_state->move_choice = 0;
                 entity->combat_choice = 1;
             } else if (ai_state->action_flags == 0) {
-                if (EntityAi_PickAttack((char *)entity)) {
+                if (EntityAi_PickAttack(entity)) {
                     if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
                         EntityAi_StartAction(entity, Malice_RangedAttack0, unknown);
                     } else {
@@ -243,7 +220,7 @@ static void Malice_ThinkCombat(Entity *entity, s32 unknown) {
                 }
                 return;
             } else {
-                EntityPoint_PickNearFromDistance(destination, model->position, EntityMath_DistanceXZ(model->position, entity->spawn_info), entity->radius * 4.0f);
+                EntityPoint_PickNearFromDistance(destination, model->position, EntityMath_DistanceXZ(model->position, &entity->spawn_info->spawn_x), entity->radius * 4.0f);
                 entity->target = destination;
                 entity->action_timer = rand() % 30 + 60;
                 ai_state->move_choice = 0;
@@ -294,7 +271,7 @@ static void Malice_ThinkCombat(Entity *entity, s32 unknown) {
 /* The move handler: only picks the animation, 3 going forward and 0 otherwise;
    Malice_ApplyMoveCommand moves the entity. */
 static void Malice_Move(Entity *entity) {
-    if (entity == player_state.stood_on_entity) {
+    if (entity == player_state.stepped_on_entity) {
         if (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON) {
             entity->move_command = 0;
         }
@@ -487,11 +464,11 @@ static void Malice_FadeOutAndRelocate(Entity *entity) {
     case 2:
         if (ai_state->action_counter == 0) {
             destination = ai_state->target_point;
-            EntityPoint_PickNearFromDistance(destination, (f32 *)entity->spawn_info, EntityMath_DistanceXZ(entity->model->position, entity->spawn_info), entity->spawn_info->wander_radius);
+            EntityPoint_PickNearFromDistance(destination, &entity->spawn_info->spawn_x, EntityMath_DistanceXZ(entity->model->position, &entity->spawn_info->spawn_x), entity->spawn_info->wander_radius);
             height = EntityCollision_DistanceToPropFloor(entity->map_record, destination);
             if (height != malice_no_floor_height_relocate[0]) {
-                yaw = EntityMath_AngleXZ(player_state.position, (char *)destination);
-                if (ABS(EntityMath_WrapAngle(yaw - player_state.heading)) > DEG_TO_RAD(45)) {
+                yaw = EntityMath_AngleXZ(&player_state.position.x, destination);
+                if (ABS(EntityMath_WrapAngle(yaw - player_state.rotation.y)) > DEG_TO_RAD(45)) {
                     ai_state->target_point[1] += height - (f32)(rand() % 200);
                     ai_state->action_counter = 1;
                 }
@@ -531,7 +508,7 @@ static void Malice_FadeBackIn(Entity *entity) {
     case 1:
         if ((s16)entity->params->action_frames < ai_state->mode_timer++) {
             Motion_Start(entity, 1, 0, 0, 0);
-            entity->model->rotation[1] = EntityMath_HeadingTo(entity->model->position, (f32 *)&player_state);
+            entity->model->rotation[1] = EntityMath_HeadingTo(entity->model->position, &player_state.position.x);
             EntityEvent_StartEffectAtPoint((char **)entity, 0x235, 0, (int)entity->model->rotation);
             entity->action_step++;
         }
@@ -556,7 +533,7 @@ static void Malice_FadeBackIn(Entity *entity) {
 
 /* The on_hit handler: the same as EntityAi_OnHit. */
 static void Malice_OnHit(Entity *entity) {
-    EntityAi_LowerWeightsAfterHit((char *)entity);
+    EntityAi_LowerWeightsAfterHit(entity);
     entity->target = NULL;
     ENTITY_FLAG_BITS(entity)->attacking = 0;
     ENTITY_FLAG_BITS(entity)->look_at_target = 0;
@@ -569,7 +546,7 @@ static void Malice_OnHit(Entity *entity) {
     } else if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
 }
 
 /* The dormant action (busy bit 0x20): as EntityAi_Dormant, but in place of animation 2 it takes
@@ -608,7 +585,7 @@ static void Malice_Dormant(Entity *entity) {
         entity->model_alpha++;
         if (entity->model_alpha >= 0x30) {
             entity->model_alpha = 0x30;
-            EntityAi_SetState((char *)entity, 2);
+            EntityAi_SetState(entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
             ENTITY_FLAG_BITS(entity)->bit22 = 0;
             ENTITY_FLAG_BITS(entity)->no_wall_collision = 0;
@@ -661,7 +638,7 @@ static void Malice_RangedAttack0(Entity *entity) {
         }
         if (entity->model->level_tables->frame >= 0x1C && entity->model->level_tables->frame <= 0x3C) {
             Vector_Copy(direction, entity->model->rotation);
-            direction[0] = atanf((entity->model->position[1] - player_state.position[1]) / entity->distance_to_player);
+            direction[0] = atanf((entity->model->position[1] - player_state.position.y) / entity->distance_to_player);
             direction[1] = EntityMath_WrapAngle(direction[1] - PI);
             if (frame_counter & 1) {
                 EntityShot_Launch(entity, unk3D8, 0x1C, 0x3C, direction);

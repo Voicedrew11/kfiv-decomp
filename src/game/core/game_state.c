@@ -23,4 +23,4 @@ MapSlot map_slots[2] = { 0 }; /* 0x38CD20 the two loaded maps */
 asm(".globl map_slot0_header\nmap_slot0_header = map_slots + 0x8");  /* 0x38CD28 slot 0's header (sound/sound_game.c) */
 
 /* 0x38CDE0 the prop of each prop id, per map slot */
-MapProp *map_slot_props[2][0x100] = { 0 };
+MapProp *map_slot_props[2][0xFF] = { 0 };

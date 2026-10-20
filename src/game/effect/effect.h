@@ -1315,4 +1315,9 @@ extern int ground_fan_index;
 extern int bolt_start_count;
 extern int turn_fan_index;
 
+/* effect/fx_shared.c */
+void EffectHit_CheckAndEnd(EffectActor *effect, void *state_arg);
+void EffectAngle_FromVector(void *angles_arg, void *direction_arg);
+int EffectHit_FindAimedEntity(EffectActor *effect, Vector4 *position, Vector4 *reference);
+
 #endif

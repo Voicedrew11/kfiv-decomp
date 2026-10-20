@@ -13,12 +13,12 @@
 #include <libvu0.h>
 #include "math/vu0.h"
 #include "model/model.h"
+#include "input/pad.h"
 #include "save/save_state.h"
 #include "sound/sound_game.h"
 #include <stdlib.h>
 
 
-void EffectAngle_FromVector(void *angles, void *direction);
 /* Wraps an angle into -pi..pi. */
 static inline f32 wrap_angle(f32 angle) {
     angle = angle - (float)(int)(angle / TWO_PI) * TWO_PI;
@@ -29,12 +29,8 @@ static inline f32 wrap_angle(f32 angle) {
     }
     return angle;
 }
-void EffectHit_CheckAndEnd(EffectActor *effect, void *state);
 typedef float Mat[4][4] __attribute__((aligned(16)));
 extern void (*effect_kind_handlers[][2])();
-extern GameStatus game_status;
-extern u16 pad_state[];
-int EffectHit_FindAimedEntity(void *, void *, void *);
 /* LinkedPoint_StartDefault called as returning s16 (the caller keeps the handle in a halfword) */
 // match: only this type matches; model/linked_point.c defines it as returning int
 #define LINKED_POINT_START_S16 ((s16(*)(f32, void *, void *))LinkedPoint_StartDefault)
@@ -1619,7 +1615,7 @@ void EffectBowDraw_Update(EffectActor *actor) {
     Vector_Copy(&actor->model->rotation, actor->start_rotation);
     if (game_status.player_control != 0) {
         if (!(game_status.update_hold_flags & 1)) {
-            if ((pad_state[0] & attack_button) && player_state.swing_ended == 0) {
+            if ((pad_state.held & attack_button) && player_state.swing_ended == 0) {
                 return;
             }
             if (player_state.draw_motion_complete != 0 && player_state.swing_ended == 0) {

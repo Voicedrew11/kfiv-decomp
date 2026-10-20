@@ -8,18 +8,11 @@
 #include "entity/entity.h"
 #include "common.h"
 #include "math/vu0.h"
+#include "entity/entity_ai.h"
+#include "model/motion.h"
+#include "player/player.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-void Motion_ClearPartSlots(EntityModel *);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
-extern s32 entity_type_handlers[][2];
-int Motion_Step(void *, int);
-int Motion_BlendToPose(EntityModel *, f32);
-int EntityAi_LookAtPoint(void *, int, int, int, int, float);
-int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-int Motion_Start(void *, int, int, u32, int);
-extern PlayerData player_state;
 
 static void EyePedestal_Animate(Entity *entity);
 static void EyePedestal_Think(Entity *entity, s32 run_now);
@@ -38,7 +31,7 @@ void EyePedestal_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = EyePedestal_Think;
     ai_state->animate = EyePedestal_Animate;
     ai_state->on_hit = NULL;
@@ -79,7 +72,7 @@ static void EyePedestal_Animate(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
@@ -110,9 +103,9 @@ static void EyePedestal_Think(Entity *entity, s32 run_now) {
     if (ai_state->think_flag != 0) {
         ai_state->think_flag--;
     } else {
-        ai_state->point_x = player_state.position[0];
-        ai_state->point_y = player_state.position[1] - 220.0f;
-        ai_state->point_z = player_state.position[2];
+        ai_state->point_x = player_state.position.x;
+        ai_state->point_y = player_state.position.y - 220.0f;
+        ai_state->point_z = player_state.position.z;
         ai_state->think_flag = (u8)entity->params->near_distance;
     }
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;

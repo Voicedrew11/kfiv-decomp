@@ -17,6 +17,13 @@ typedef struct {
     int file_handle;                /* 0x24 -1 when closed */
 } LoadJob;
 
+/* a load job's slot: the job plus two words, 8-byte aligned */
+typedef struct {
+    LoadJob job;                    /* 0x00 */
+    int unk28;                      /* 0x28 -1 */
+    int unk2C;                      /* 0x2C */
+} __attribute__((aligned(8))) LoadJobSlot;
+
 /* the job Sound_BgmFadeOut and Sound_BgmLoadVoice step: control words, the IOP handle it got and its arguments */
 typedef struct {
     int *ctl;                       /* 0x00 */

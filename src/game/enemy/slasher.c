@@ -11,19 +11,10 @@
 #include "math/vu0.h"
 #include "model/model.h"
 #include "model/motion.h"
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityAi_LowerWeightsAfterHit(char *);
-void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
-void EntityAi_StepState(void *);
 
 static void Slasher_OnHit(Entity *entity);
 static void Slasher_Think(Entity *entity, s32 unknown);
@@ -45,7 +36,7 @@ void Slasher_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Slasher_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = Slasher_OnHit;
@@ -83,7 +74,7 @@ static void Slasher_OnHit(Entity *entity) {
     u64 flags;
     u64 hit_strength;
 
-    EntityAi_LowerWeightsAfterHit((char *)entity);
+    EntityAi_LowerWeightsAfterHit(entity);
     ENTITY_UNK5C(entity)->as_s32 = 0;
     flags = entity->flags & ~ENTITY_FLAG_LOOK_AT_TARGET;
     entity->flags = flags;
@@ -97,7 +88,7 @@ static void Slasher_OnHit(Entity *entity) {
     } else if (hit_strength == 2) {
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
     ai_state->step_index = 1;
     ENTITY_FLAG_BITS(entity)->player_in_reach = 1;
     ENTITY_FLAG_BITS(entity)->player_noticed = 1;
@@ -115,7 +106,7 @@ static void Slasher_Think(Entity *entity, s32 unknown) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {
-        EntityAi_CheckFarFromSpawn((char *)entity);
+        EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);

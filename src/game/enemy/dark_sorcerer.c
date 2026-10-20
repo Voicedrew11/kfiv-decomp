@@ -15,41 +15,13 @@
 #include "script/script.h"
 #include "sound/sound_game.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_math.h"
+#include "player/player.h"
+#include "save/save_state.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityAi_LowerWeightsAfterHit(char *);
-void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-// match: the size is unknown; a complete small type would be read through $gp
-extern f32 dark_sorcerer_no_floor_height[];
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(void *);
-void EntityAi_StepState(void *);
-extern PlayerData player_state;
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-float EntityMath_WrapAngle(float);
-float EntityMath_AngleXZ(float *, char *);
-float EntityMath_AngleDifference(float, float);
-s32 EntityAi_IsPushedFromFront(Entity *, f32);
-int EntityAi_TurnCommand(Entity *entity);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-// match: the size is unknown; a complete small type would be read through $gp
-extern u8 dark_sorcerer_fight_started[];
-int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
-void EntityAi_SetAttackDelay(Entity *, s32);
-int EntityAi_AnimationFrameCount(void *, int);
-int EntityAi_LaunchShot(void *, int, void *, void *);
-void *Map_GetRecordById(int, int);
 
 static void DarkSorcerer_OnHit(Entity *entity);
 static void DarkSorcerer_Think(Entity *entity, s32 unknown);
@@ -82,7 +54,7 @@ void DarkSorcerer_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = DarkSorcerer_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = DarkSorcerer_OnHit;
@@ -110,7 +82,7 @@ void DarkSorcerer_Init(Entity *entity) {
 static void DarkSorcerer_OnHit(Entity *entity) {
     u64 hit_strength;
 
-    EntityAi_LowerWeightsAfterHit((char *)entity);
+    EntityAi_LowerWeightsAfterHit(entity);
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     hit_strength = ENTITY_FLAG_BITS(entity)->hit_strength;
     if (hit_strength == 1) {
@@ -122,7 +94,7 @@ static void DarkSorcerer_OnHit(Entity *entity) {
     } else if (hit_strength == 2) {
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
 }
 
 /* The think handler: no states. While the entity is not busy it calls EntityAi_ThinkReturn when
@@ -211,7 +183,7 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, DarkSorcerer_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, DarkSorcerer_MeleeAttack, unknown);
@@ -223,8 +195,8 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 unknown) {
                 ai_state->move_choice = 0;
             } else if (entity->distance_to_player < (f32)entity->params->near_distance) {
                 ai_state->move_choice = 1;
-            } else if (EntityMath_AngleDifference(player_state.heading,
-                                     EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) > 0.0f) {
+            } else if (EntityMath_AngleDifference(player_state.rotation.y,
+                                     EntityMath_AngleXZ(&player_state.position.x, entity->model->position)) > 0.0f) {
                 ai_state->move_choice = 2;
             } else {
                 ai_state->move_choice = 3;
@@ -642,8 +614,8 @@ static s32 DarkSorcerer_PickAction(Entity *entity) {
     if (entity->ai_state.sub_timer > 0) {
         return FALSE;
     }
-    if (player_state.position[0] < -16900.0f || player_state.position[0] > -16500.0f || player_state.position[2] < 2500.0f
-        || player_state.position[2] > 3600.0f) {
+    if (player_state.position.x < -16900.0f || player_state.position.x > -16500.0f || player_state.position.z < 2500.0f
+        || player_state.position.z > 3600.0f) {
         chances.weights[2] = 90;
     }
     total = chances.weights[0] + chances.weights[1] + chances.weights[2];
@@ -885,7 +857,7 @@ static void DarkSorcerer_PlayAnim19StartScripts(Entity *entity) {
    Map_GetRecordById gives for 0x6B to 0x88, drawn at random. */
 static void DarkSorcerer_StartMapScripts(Entity *entity) {
     MapSlot *slot = &map_slots[current_map_slot];
-    MapRecord *record = &((MapRecord *)slot->records)[player_state.map_record_index];
+    MapRecord *record = &((MapRecord *)slot->records)[player_state.map_index];
     s32 remaining;
     s32 chance;
     s32 i;

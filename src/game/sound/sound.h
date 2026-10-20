@@ -130,8 +130,7 @@ typedef struct {
     char pad4D8[0x08];              /* the block in .bss is 0x4E0 bytes */
 } SoundState;
 
-/* sound_load_queue: the sound loads waiting to run, one at a time (GameLoop_RunSoundLoads). Other files
-   still declare it as int[]/char[], so the extern stays in each file. */
+/* sound_load_queue: the sound loads waiting to run, one at a time (GameLoop_RunSoundLoads) */
 typedef struct {
     int bgm_id;                     /* 0x00 first argument of Sound_LoadBgm */
     int bgm_load_pending;           /* 0x04 nonzero: a step 3 load is wanted; Sound_LoadBgm clears it */
@@ -255,6 +254,21 @@ typedef struct {
     int used;                       /* 0x08 */
 } SoundFileBuffer;
 
+/* a bank's slot: its buffer and the two file sizes (SoundFileBuffer alone is the 0xC bytes the loaders use) */
+typedef struct {
+    SoundFileBuffer buffer;         /* 0x00 */
+    int size_a;                     /* 0x0C */
+    int size_b;                     /* 0x10 */
+    int extra_size;                 /* 0x14 extra size of the BGM buffers */
+    char pad18[0x08];               /* 0x18 */
+} SoundBankSlot;
+
+/* a job's slot: the job and the bank it loads */
+typedef struct {
+    SoundJob job;                   /* 0x00 */
+    SoundBank bank;                 /* 0x20 */
+} SoundJobSlot;
+
 /* map_reverb_cue_indices: 0x78 cue indices (0 to 3) into map_bank_cues; Sound_MapBankAddReverb copies
    the whole table and takes entry 1 (cue_index) */
 typedef struct {
@@ -375,5 +389,8 @@ extern int voice_load_failures;
 extern int voice_load_step;
 extern char sample_buffer_freed_message[];
 extern int sequence_load_step;
+
+/* sound/sound_load_queue.c */
+extern SoundLoadQueue sound_load_queue;
 
 #endif

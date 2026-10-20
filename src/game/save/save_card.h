@@ -73,7 +73,7 @@ typedef struct {
     char pad02[0x02];
     int numbers[10];                /* 0x04 GameStatus.save_area and nine words of the player state (SaveCard_FillSaveInfo) */
     char pad2C[0x14C];
-    PlayTime play_time;             /* 0x178 */
+    ClockTime play_time;             /* 0x178 */
 } SaveInfo;
 
 /* Starts the memory card library and clears both task records. Returns -1 when the library does not start. */

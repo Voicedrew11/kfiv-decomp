@@ -9,34 +9,12 @@
 #include "entity/entity_math.h"
 #include "math/vu0.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "model/motion.h"
+#include "player/player.h"
 
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
-void EntityAi_StepState(void *);
-extern float player_state[];
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-void EntityAi_ClearTurnInPlace(Entity *);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-s32 EntityAi_CanUseMelee(Entity *, s32);
-int EntityAi_StartAttack(Entity *, void (*)(Entity *entity), int, int, int);
-int Motion_Start(void *, int, int, u32, int);
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
-void EntityAi_SetAttackDelay(Entity *, s32);
-s32 EntityAi_CanUseRanged(Entity *, s32);
 
 static void LavaLizard_Think(Entity *entity, s32 unknown);
 static void LavaLizard_ThinkCombat(Entity *entity, s32 unknown);
@@ -54,7 +32,7 @@ void LavaLizard_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     if (entity->spawn_info->spawn_mode != 0) {
         ai_state->think = LavaLizard_ThinkNoStates;
     } else {
@@ -85,7 +63,7 @@ void LavaLizard_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with LavaLizard_ThinkCombat for state 2. Counts down work
@@ -101,7 +79,7 @@ static void LavaLizard_Think(Entity *entity, s32 unknown) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {
-        EntityAi_CheckFarFromSpawn((char *)entity);
+        EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -157,7 +135,7 @@ static void LavaLizard_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, LavaLizard_RangedAttack0, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
@@ -170,7 +148,7 @@ static void LavaLizard_ThinkCombat(Entity *entity, s32 unknown) {
                 EntityAi_StartAction(entity, LavaLizard_RunAtPlayer, unknown);
                 return;
             }
-            entity->target = player_state;
+            entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
             ai_state->move_choice = 0;
             break;
@@ -333,7 +311,7 @@ static void LavaLizard_ThinkDecideShootOrTurn(Entity *entity, s32 unknown) {
     if (entity->action_timer == 0) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
         if (ABS(angle) > DEG_TO_RAD(30)) {
-            entity->target = player_state;
+            entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
             ai_state->move_choice = 0;
         } else {

@@ -5,9 +5,6 @@
 #include "math/vu0.h"
 #include "model/motion.h"
 
-void ModelMotion_Hermite(void *, void *, void *, void *, void *, f32);
-void ModelMotion_StepBlend(ModelInstance *);
-
 /* Adds a motion to the model's channel and poses the parts on its first key; returns the end of the motion. */
 MotionData *ModelMotion_Load(MotionData *data, ModelInstance *model, int unused) {
     MotionData *motion = data;

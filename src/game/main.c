@@ -1,3 +1,4 @@
+#include <libgraph.h>
 #include "core/game.h"
 #include "ui/hud.h"
 #include "effect/item_effect.h"
@@ -20,10 +21,6 @@
 #include "sound/sound.h"
 #include "sound/sound_game.h"
 #include <stdlib.h>
-
-extern GameStatus game_status;
-
-int sceGsSyncV(int);
 
 /* Sets everything up, then loops for ever: the intro, the title screen, one game. */
 int main(void) {

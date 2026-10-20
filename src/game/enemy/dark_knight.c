@@ -14,37 +14,11 @@
 #include "model/model.h"
 #include "model/motion.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "player/player.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityAi_LowerWeightsAfterHit(char *);
-void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-extern PlayerData player_state;
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(void *);
-void EntityAi_StepState(void *);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-void EntityAi_ClearTurnInPlace(Entity *);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-s32 EntityAi_CheckMeleeHitAt(Entity *, void *, s32, s32, s32, f32);
-void EntityAi_SetAttackDelay(Entity *, s32);
-int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
-s32 EntityAi_CanMelee(Entity *);
-s32 EntityAi_CanShoot(Entity *);
-s32 EntityAi_CanUseMelee(Entity *, s32);
-s32 EntityAi_CanUseRanged(Entity *, s32);
-void EntityAi_LowerAttackWeight(Entity *);
 
 static void DarkKnight_OnHit(Entity *entity);
 static void DarkKnight_Think(Entity *entity, s32 unknown);
@@ -75,7 +49,7 @@ void DarkKnight_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = DarkKnight_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = DarkKnight_OnHit;
@@ -109,13 +83,13 @@ void DarkKnight_Init(Entity *entity) {
    (EntityAi_ReactionHeavy); a light hit only puts the entity in state 2. */
 static void DarkKnight_OnHit(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
-        EntityAi_LowerWeightsAfterHit((char *)entity);
+        EntityAi_LowerWeightsAfterHit(entity);
         entity->target = NULL;
         ENTITY_FLAG_BITS(entity)->attacking = FALSE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
 }
 
 /* The think handler: as EntityAi_Think, with DarkKnight_ThinkCombat for state 2. Before that,
@@ -197,7 +171,7 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
     if (ai_state->mode_timer > 0) {
         ai_state->mode_timer--;
     }
-    if (player_state.magic_shot_launched != 0) {
+    if (player_state.cast_launched_shot != 0) {
         ai_state->mode_timer = entity->params->type_param_0;
     }
     if (ai_state->sub_timer > 0) {
@@ -271,7 +245,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, mode);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 1) {
                     EntityAi_StartAction(entity, DarkKnight_RangedAttack1, unknown);
                 } else {

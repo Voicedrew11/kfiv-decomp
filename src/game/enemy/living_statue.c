@@ -6,12 +6,9 @@
 #include "entity/entity_ai_handlers.h"
 #include "math/vu0.h"
 #include "model/motion.h"
+#include "entity/entity_ai.h"
 
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
 
 static void LivingStatue_ThinkHoldAnim1(Entity *entity, s32 run_now);
 
@@ -29,7 +26,7 @@ void LivingStatue_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     if (entity->spawn_info->spawn_mode != 0) {
         ai_state->animate = EntityAi_Animate;
         ai_state->think = LivingStatue_ThinkHoldAnim1;

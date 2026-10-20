@@ -5,31 +5,17 @@
 #include "entity/entity.h"
 #include "core/file.h"
 #include "enemy/enemy.h"
+#include "player/player.h"
 #include "entity/entity_ai_choice.h"
 #include "entity/entity_ai_handlers.h"
 #include <math.h>
 #include "math/vu0.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_math.h"
+#include "model/motion.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
-extern float player_state[];
-int Motion_Start(void *, int, int, u32, int);
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-void EntityAi_SetAttackDelay(Entity *, s32);
-float EntityMath_AngleXZ(float *, char *);
-float EntityMath_AngleDifference(float, float);
-float EntityMath_WrapAngle(float);
-void Attack_RollPlayerAilments(void *);
-s32 Attack_Run(Unk1B1470Request *, Unk1B1470Extra *);
 
 static void ParaStool_Think(Entity *entity, s32 unknown);
 static void ParaStool_ThinkCombat(Entity *entity, s32 unknown);
@@ -50,7 +36,7 @@ void ParaStool_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = ParaStool_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = EntityAi_OnHit;
@@ -77,7 +63,7 @@ void ParaStool_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with ParaStool_ThinkCombat for state 2. Counts down work
@@ -94,7 +80,7 @@ static void ParaStool_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags != 0) {
         return;
     }
-    EntityAi_CheckFarFromSpawn((char *)entity);
+    EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -159,7 +145,7 @@ static void ParaStool_ThinkCombat(Entity *entity, s32 unknown) {
             ai_state->move_choice = -1;
             break;
         case 1:
-            entity->target = player_state;
+            entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
             ai_state->move_choice = 0;
             break;
@@ -265,8 +251,8 @@ static s32 ParaStool_CheckPartHitInPlayerView(Entity *entity, EntityParamsUnk240
 
     if (record->hit_parts[index].first_frame != 0 && !(frame < record->hit_parts[index].first_frame && current_frame < record->hit_parts[index].first_frame) &&
         !(record->hit_parts[index].last_frame < frame && record->hit_parts[index].last_frame < current_frame)) {
-        yaw = EntityMath_AngleDifference(player_state[5], EntityMath_AngleXZ(player_state, (char *)entity->model->position));
-        pitch = (f32)atan((entity->model->position[1] - player_state[1] + 220.0f) / entity->distance_to_player) + player_state[4];
+        yaw = EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position));
+        pitch = (f32)atan((entity->model->position[1] - player_state.position.y + 220.0f) / entity->distance_to_player) + player_state.rotation.x;
         if (ABS(yaw) < DEG_TO_RAD(entity->params->yaw_limit_deg) && ABS(pitch) < (s16)entity->params->action_frames * DEG_TO_RAD(1)) {
             spread = EntityMath_WrapAngle(DEG_TO_RAD(record->hit_parts[0].half_angle_deg));
             if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < spread) {

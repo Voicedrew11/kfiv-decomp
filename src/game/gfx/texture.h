@@ -131,4 +131,7 @@ extern char tex0_cld_format[];
 extern char tex0_tw_format[];
 extern char tex0_th_format[];
 
+/* gfx/texture_table.c */
+void TextureTable_SetBasePointers(TextureTableHeader *table, int texture_base, int clut_base);
+
 #endif

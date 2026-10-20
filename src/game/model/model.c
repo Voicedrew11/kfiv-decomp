@@ -1,4 +1,5 @@
 #include "model/model.h"
+#include "model/model_matrix.h"
 #include "map/map.h"
 #include "gfx/gs.h"
 #include <eeregs.h>
@@ -87,10 +88,9 @@ typedef u32 u_long128 __attribute__((mode(TI)));
 #define NOT_MEASURED FLT_MAX
 // match: the asm label (gcse hashes the name) gives retail's registers for Model_SetUpSkinned's three function addresses
 void Model_UpdateSkinnedBonePoints(ModelInstance *) __asm__("Model_UpdateSkinnedBonePoints");
-int ModelMatrix_BuildDrawMatrices(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
-void Model_UpdateBonePoints(ModelInstance *);
-Vector4 *Model_GetBonePoint(ModelInstance *, s32);
-int ModelMatrix_BuildDrawMatrices(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
+// match: called for an int result (the definition is void), which keeps $2 busy after the call
+#define MODEL_BUILD_DRAW_MATRICES(model, normal_src, light_src, normal_dest, light_dest) \
+    ((int (*)(ModelInstance *, s32, s32, void *, void *))ModelMatrix_BuildDrawMatrices)(model, normal_src, light_src, normal_dest, light_dest)
 
 /* Multiply the matrices of a part's children by the part's own matrix. */
 void Model_MultiplyChildMatrices(ModelPart *part) {
@@ -230,7 +230,7 @@ void Model_DrawSkinned(ModelInstance *model) {
     sceVu0RotMatrixX(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.x));
     sceVu0RotMatrixY(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.y));
     sceVu0RotMatrixZ(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.z));
-    ModelMatrix_BuildDrawMatrices(model, model->light_block, model->light_block + 0x40, MODEL_TURN_MATRIX_A, MODEL_TURN_MATRIX_B);
+    MODEL_BUILD_DRAW_MATRICES(model, model->light_block, model->light_block + 0x40, MODEL_TURN_MATRIX_A, MODEL_TURN_MATRIX_B);
     part_count = model->part_count;
     part = model->parts;
     for (; i < part_count; i++, part++) {
@@ -367,7 +367,7 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
     sceVu0RotMatrixX(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.x));
     sceVu0RotMatrixY(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.y));
     sceVu0RotMatrixZ(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.z));
-    ModelMatrix_BuildDrawMatrices(model, model->light_block, model->light_block + 0x40, MODEL_TURN_MATRIX_A, MODEL_TURN_MATRIX_B);
+    MODEL_BUILD_DRAW_MATRICES(model, model->light_block, model->light_block + 0x40, MODEL_TURN_MATRIX_A, MODEL_TURN_MATRIX_B);
     part_count = model->part_count;
     part = model->parts;
     for (; i < part_count; i++, part++) {
@@ -829,7 +829,7 @@ void Model_DrawPosed(ModelInstance *model) {
     f32 unused[4];
 
     if (model->parts != NULL && model->part_count != 0) {
-        ModelMatrix_BuildDrawMatrices(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b);
+        MODEL_BUILD_DRAW_MATRICES(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b);
         if (model->model_flags & 0x800) {
             packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
@@ -931,7 +931,7 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
 
     if (model->parts != NULL && model->part_count != 0) {
         matrix_b_ptr = matrix_b;
-        ModelMatrix_BuildDrawMatrices(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b_ptr);
+        MODEL_BUILD_DRAW_MATRICES(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b_ptr);
         if (model->model_flags & 0x800) {
             packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
@@ -1034,7 +1034,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
     u32 word;
 
     if (model->parts != NULL && model->part_count != 0) {
-        ModelMatrix_BuildDrawMatrices(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b);
+        MODEL_BUILD_DRAW_MATRICES(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b);
         if (model->model_flags & 0x800) {
             packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
@@ -1146,7 +1146,7 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
     u32 word;
 
     if (model->parts != NULL && model->part_count != 0) {
-        ModelMatrix_BuildDrawMatrices(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b);
+        MODEL_BUILD_DRAW_MATRICES(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b);
         /* the packet below is 0x1C quadwords either way: with the flag set the last 5 are never written */
         if (model->model_flags & 0x800) {
             packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them

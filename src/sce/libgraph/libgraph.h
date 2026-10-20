@@ -155,8 +155,8 @@ int sceGsSetDefDrawEnv(sceGsDrawEnv *env, short psm, short w, short h, short zts
 int sceGsSetDefLoadImage(sceGsLoadImage *di, short dbp, short dbw, short dpsm, short dsax,
                          short dsay, short rrw, short rrh); /* definition in sce/ */
 
-/* sceGsSetDefStoreImage is left out: Texture.c, the game's caller that
-   includes this header, declares it with int parameters, which its bytes pin. */
+int sceGsSetDefStoreImage(sceGsStoreImage *di, short sbp, short sbw, short spsm, short ssax,
+                          short ssay, short rrw, short rrh); /* definition in sce/ */
 
 int sceGsSetDefTexEnv(sceGsTexEnv *env, short flush, short tbp, short tbw, short psm, short tw,
                       short th, short tfx, short cbp, short cpsm, short cld,

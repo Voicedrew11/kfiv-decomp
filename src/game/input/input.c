@@ -2,11 +2,7 @@
 #include "core/game.h"
 #include "core/file.h"
 #include "input/input.h"
-
-void Input_ReadPort(int);
-
-extern PadState pad_state;
-extern s8 sfx_volume[];
+#include "save/save_state.h"
 
 /* Opens controller port 0 and clears both pad states. */
 void Input_Init(void) {
@@ -46,7 +42,7 @@ void Input_Update(void) {
     Pad_Update();
     Input_ReadPort(0);
     pad_state = pad_states[0];
-    if (sfx_volume[4] != 0) {
+    if (rumble_option[0] != 0) {
         if (rumble_active != 0 && rumble_paused == 0) {
             if (rumble_frames_left != 0) {
                 if (rumble_fades != 0) {
@@ -137,10 +133,10 @@ void Input_StopRumble(void) {
     Input_Update();
 }
 
-/* Requests a controller rumble of strength for duration frames (only when the option at sfx_volume[4] is on);
+/* Requests a controller rumble of strength for duration frames (only when the rumble option is on);
    a nonzero last argument makes it fade out over the frames. */
 void Input_StartRumble(u8 strength, u8 duration, u8 delay) {
-    if (sfx_volume[4] != 0) {
+    if (rumble_option[0] != 0) {
         rumble_strength = strength;
         rumble_active = 1;
         rumble_frames_left = rumble_frames = duration;

@@ -1,3 +1,4 @@
+#include "save/save_state.h"
 #include "item/gold.h"
 #include "item/item.h"
 #include "collision/collision.h"
@@ -19,18 +20,6 @@
 #include "model/model_matrix.h"
 #include <stdlib.h>
 
-void Gold_PrepareFadedDraw(OverlaySprite *);
-
-extern MapDrawState map_draw_state;
-extern ObjectMarkRow map_object_marks[];
-extern GameStatus game_status;
-
-MapActor *Gold_FindFree(int slot);
-MapActor *Gold_FindOldest(int slot);
-void Gold_LinkInUse(MapActor *actor);
-MapActor *Gold_UnlinkFromList(MapActor *actor);
-void Gold_SaveMark(MapActor *actor);
-void Gold_ClearMark(MapActor *actor);
 
 #define GOLD_MAX 999999
 

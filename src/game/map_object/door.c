@@ -7,9 +7,8 @@
 #include "math/vu0.h"
 #include "model/model_matrix.h"
 #include "sound/sound_game.h"
-
-extern u8 item_counts[];
-extern float player_state[];
+#include "player/player.h"
+#include "save/save_state.h"
 
 /* Start handler of the door-like kinds: closed (animation 4) or already open
    (animation 5). Kind 6 remembers where its second part sits and, when it starts
@@ -59,7 +58,7 @@ void MapObject_UpdateClosedDoor(MapObject *object) {
     if (faced_object[0] == object && GAME_STATUS_FLAG_BITS(game_status_flags)->using_faced_object) {
         item = object->source->kind_param_0;
         if (item != 0 && !(object->state_flags & MAP_OBJECT_EMPTIED)) {
-            if (item_counts[item] != 0) {
+            if (item_counts.bytes[item] != 0) {
                 MapObject_ShowKeyUsed(item);
                 range = 800.0f;
                 if (object->definition->sound_range > 0.0f) {
@@ -149,7 +148,6 @@ void MapObject_UpdateOpeningDoor(MapObject *object) {
 void MapObject_UpdateOpenDoor(MapObject *object) {
     ModelInstance *model;
     MapObjectWork *work;
-    float *player;
     float delta_x;
     float delta_z;
     float distance;
@@ -160,9 +158,8 @@ void MapObject_UpdateOpenDoor(MapObject *object) {
     }
     if (MAP_OBJECT_WORDS(object)->kind_param_1 == 0) {
         model = object->model;
-        player = player_state;
-        delta_x = model->position.x - player[0];
-        delta_z = model->position.z - player[2];
+        delta_x = model->position.x - player_state.position.x;
+        delta_z = model->position.z - player_state.position.z;
         distance = sqrtf(delta_x * delta_x + delta_z * delta_z);
         if (!(distance < object->reach_radius + 100.0f)) {
             object->state_flags &= ~MAP_OBJECT_ON;

@@ -3,15 +3,6 @@
 #include "sound/sound.h"
 #include "sound/sound_game.h"
 
-// match: sound/sound.h's SoundFileBuffer is 0xC bytes; retail's bank slot is 0x20
-typedef struct {
-    SoundFileBuffer buffer;         /* 0x00 */
-    int size_a;                     /* 0x0C */
-    int size_b;                     /* 0x10 */
-    int extra_size;                 /* 0x14 extra size of the BGM buffers */
-    char pad18[0x08];               /* 0x18 */
-} SoundBankSlot;
-
 SoundBankSlot se_com_bank = { /* 0x3EF500 the se_com bank */
     .size_a = 0x2D000, .size_b = 0x1400,
 };
@@ -38,13 +29,6 @@ SoundBankSpec map_bank_files = { /* 0x3EF5A0 the map bank's two files (Sound_Loa
     .size_a = 0x32000, .size_b = 0x1400,
 };
 
-// match: core/load.h's LoadJob is 0x28 bytes; retail's load job is 0x30 and 8-byte aligned
-typedef struct {
-    LoadJob job;                    /* 0x00 */
-    int unk28;                      /* 0x28 -1 */
-    int unk2C;                      /* 0x2C */
-} __attribute__((aligned(8))) LoadJobSlot;
-
 LoadJobSlot bgm_load_job = { /* 0x3EF5B8 the BGM load job */
     .job = {
         .buffers = (int *)&bgm_buffers, .name = bgm_bd_format, .header_format = bgm_hd_format,
@@ -54,12 +38,6 @@ LoadJobSlot bgm_load_job = { /* 0x3EF5B8 the BGM load job */
     },
     .unk28 = -1,
 };
-
-// match: sound/sound.h's SoundJob is 0x20 bytes; retail's sound job is 0x30, bank included
-typedef struct {
-    SoundJob job;                   /* 0x00 */
-    SoundBank bank;                 /* 0x20 */
-} SoundJobSlot;
 
 SoundJobSlot se_com_job = { /* 0x3EF5E8 the se_com bank's job */
     .job = { .spec = (SoundJobSpec *)&se_com_bank, .name_a = se_com_bd_path, .name_b = se_com_hd_path,

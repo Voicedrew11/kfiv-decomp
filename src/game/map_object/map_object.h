@@ -52,8 +52,9 @@ void MapObject_UpdateBreakingItemHolder(MapObject *object);
 void MapObject_SetupChest(MapObject *object);
 void MapObject_StartChest(MapObject *object);
 void MapObject_UpdateOpeningChest(MapObject *object);
-void MapObject_ChestStep4Empty(void);
+void MapObject_ChestStep4Empty(MapObject *object);
 void MapObject_OpenChestOnSignal(GameEvent *event, int mode);
+void MapObject_SpawnHeldItem(MapObject *object);
 
 /* map_object/door.c */
 void MapObject_UpdateOpeningDoor(MapObject *object);
@@ -75,10 +76,16 @@ void MapObject_StartLight(MapObject *object);
 void MapObject_UpdateLight(MapObject *object);
 void MapObject_ReleaseLight(MapObject *object);
 void MapObject_StartStatusOnTouch(MapObject *object);
-void MapObject_IdleStatusOnTouch(void);
+void MapObject_IdleStatusOnTouch(MapObject *object);
 
 /* map_object/map_object.c */
 void MapObject_ClearAllMaps(void);
+void MapObject_DrawModel(ModelInstance *model);
+void MapObject_DrawModelWithAlpha(ModelInstance *model);
+void MapObject_DrawModelNoDepthWrite(ModelInstance *model);
+void MapObject_UpdateNoBonePoints(ModelInstance *model);
+void *MapObject_GetPositionAsPoint(void *model, int index);
+void MapObject_StopSound(MapObject *object);
 
 /* map_object/map_object_common.c */
 void MapObject_MoveByOffset(MapObject *object, void *offset);
@@ -87,9 +94,9 @@ void MapObject_UpdateScenery(MapObject *object);
 void MapObject_UpdateBreaking(MapObject *object);
 void MapObject_StopAmbientSound(MapTrigger *trigger);
 void MapObject_RebuildMatrices(MapObject *object);
-int MapObject_RefuseItem(void);
-void MapObject_IgnoreSignal(void);
-void MapObject_SkipSetUp(void);
+int MapObject_RefuseItem(MapObject *object, int item);
+void MapObject_IgnoreSignal(MapObject *object, int turn_on);
+void MapObject_SkipSetUp(MapObject *object);
 
 /* map_object/map_object_tables.c */
 extern char map_object_defs[];
@@ -113,8 +120,8 @@ void MapObject_SignalPivotSwitch(MapTrigger *trigger, int turn_on);
 void MapObject_PosePivotSwitch(MapTrigger *trigger);
 void MapObject_StartFadeObject(MapTrigger *trigger);
 void MapObject_SignalFadeObject(MapTrigger *trigger, int turn_on);
-void MapObject_KeepFadeObjectHidden(void);
-void MapObject_KeepFadeObjectShown(void);
+void MapObject_KeepFadeObjectHidden(MapObject *object);
+void MapObject_KeepFadeObjectShown(MapObject *object);
 void MapObject_FadeOutObject(MapTrigger *trigger);
 void MapObject_StartPulse(MapTrigger *trigger);
 int MapObject_UpdatePulse(MapTrigger *trigger);
@@ -145,6 +152,7 @@ void MapObject_SettleMarkerStone(MapObject *object);
 void MapObject_UpdateFilledMarker(MapObject *object);
 void MapObject_LiftMarkerStone(MapObject *object);
 void MapObject_MoveMarkerStoneOut(MapObject *object);
+void MapObject_ShowMarkerStone(MapObject *object, int item);
 
 /* map_object/sign.c */
 void MapObject_StartExaminable(MapObject *object);
@@ -153,7 +161,7 @@ void MapObject_ShowExaminedSign(MapObject *object);
 void MapObject_ShowExaminedMessage(MapObject *object);
 void MapObject_WaitExaminedMessage(MapObject *object);
 void MapObject_StartSymbolOfPassage(MapObject *object);
-void MapObject_IdleSymbolOfPassage(void);
+void MapObject_IdleSymbolOfPassage(MapObject *object);
 
 /* map_object/socket.c */
 void MapObject_StartPedestal(MapObject *object);
@@ -180,5 +188,8 @@ void MapObject_SetSwitchOn(MapObject *object, int turn_on);
 /* data still in asm */
 extern void *faced_object[];
 extern Qword object_item_scale;
+
+/* data still in asm */
+extern EventRunner view_ray_status;
 
 #endif

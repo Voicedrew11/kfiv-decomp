@@ -1050,20 +1050,6 @@ typedef union {
 
 #define ENTITY_FLAG_WORD(flags) (((EntityFlagWord *)&(flags))->word)
 
-/* the block at player_state: the player (position first). Files declare
-   `extern PlayerData player_state;` themselves: older files still use an array. */
-typedef struct {
-    f32 position[4];                /* 0x00 */
-    char pad10[0x04];
-    f32 heading;                    /* 0x14 the player's heading angle, PlayerState.rotation.y */
-    char pad18[0x1EC];
-    Entity *stood_on_entity;        /* 0x204 the entity the player was put on top of when climbing */
-    char pad208[0x4A];
-    u16 map_record_index;           /* 0x252 picks the MapSlot record the player is in */
-    char pad254[0x05];
-    u8 magic_shot_launched;         /* 0x259 set when a cast magic launches a shot, cleared each frame */
-} PlayerData;
-
 /* four animation frame numbers: a local table that a function copies whole
    from read-only data (in the game: `s32 frames[4] = { ... };`) */
 typedef struct {
@@ -1174,10 +1160,13 @@ typedef union {
 
 /* entity_group_state[EntityController.entity_group_index]: state shared by a group of entities */
 typedef struct {
-    char death_kind;                /* 0x00 1 or 2: how the group member died */
+    u8 death_kind;                  /* 0x00 1 or 2: how the group member died */
     char unk01;                     /* 0x01 */
     char member_died;               /* 0x02 set when a member dies */
-    char pad03[0x3D];
+    char pad03[0x02];
+    u8 unk05;                       /* 0x05 */
+    u8 unk06;                       /* 0x06 */
+    char pad07[0x39];
 } EntityGroupRecord;
 
 #define ENTITY_POOL_SLOT_COUNT  5
@@ -1332,5 +1321,9 @@ extern char chr_directory[];  /* "chr/" */
 extern int map_spawn_counts[2];
 extern Entity *active_entities_tail;  /* list C tail */
 extern int screen_textured_entity_type;  /* type of the last entity given the screen-textured draw, -1: none */
+
+/* entity/entity_types.c */
+extern s32 entity_type_handlers[][2];
+extern ModelMatrix fire_lord_model_matrix;
 
 #endif

@@ -9,36 +9,13 @@
 #include "entity/entity_collision.h"
 #include "math/vu0.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_math.h"
+#include "model/motion.h"
+#include "player/player.h"
 
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
-void EntityAi_StepState(void *);
-extern PlayerData player_state;
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-void EntityAi_ClearTurnInPlace(Entity *);
-float EntityMath_AngleXZ(float *, char *);
-float EntityMath_AngleDifference(float, float);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-float EntityMath_HeadingTo(float *origin, float *target);
-float EntityMath_DistanceXZ(float *a, float *b);
-int Motion_Start(void *, int, int, u32, int);
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-float EntityMath_WrapAngle(float);
-int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
-void EntityAi_SetState(char *, u8);
 
 static void AncientMummy_Think(Entity *entity, s32 unknown);
 static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown);
@@ -55,7 +32,7 @@ void AncientMummy_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = AncientMummy_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = EntityAi_OnHit;
@@ -82,7 +59,7 @@ void AncientMummy_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with AncientMummy_ThinkCombat for state 2. Counts down work
@@ -97,7 +74,7 @@ static void AncientMummy_Think(Entity *entity, s32 unknown) {
         ai_state->pause_timer--;
     }
     if (entity->busy_flags == 0) {
-        EntityAi_CheckFarFromSpawn((char *)entity);
+        EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -148,7 +125,7 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
     }
     side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->look_at_target = 1;
-    angle = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
+    angle = EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position));
     if (entity->distance_to_player_3d - entity->radius - 100.0f < 300.0f && ABS(angle) < DEG_TO_RAD(40) && ai_state->pause_timer == 0) {
         entity->busy_flags = 0;
         entity->move_command = 0;
@@ -174,7 +151,7 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
@@ -311,8 +288,8 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
             EntityPoint_PickNearFromDistance(destination, position, EntityMath_DistanceXZ(position, (float *)entity->spawn_info), entity->spawn_info->wander_radius);
             height = EntityCollision_DistanceToPropFloor(entity->map_record, destination);
             if (height != ancient_mummy_no_floor_height[0]) {
-                yaw = EntityMath_AngleXZ(player_state.position, (char *)destination);
-                if (EntityMath_WrapAngle(yaw - player_state.heading) < -HALF_PI || EntityMath_WrapAngle(yaw - player_state.heading) > HALF_PI) {
+                yaw = EntityMath_AngleXZ(&player_state.position.x, destination);
+                if (EntityMath_WrapAngle(yaw - player_state.rotation.y) < -HALF_PI || EntityMath_WrapAngle(yaw - player_state.rotation.y) > HALF_PI) {
                     ai_state->step_index = 1;
                     ai_state->target_point[1] += height;
                 }
@@ -366,7 +343,7 @@ static void AncientMummy_FadeBackIn(Entity *entity) {
         break;
     case 1:
         if (entity->params->near_distance < ai_state->sub_timer++) {
-            entity->model->rotation[1] = EntityMath_HeadingTo(entity->model->position, player_state.position);
+            entity->model->rotation[1] = EntityMath_HeadingTo(entity->model->position, &player_state.position.x);
             entity->action_step++;
         }
         break;
@@ -394,7 +371,7 @@ static void AncientMummy_FadeBackIn(Entity *entity) {
         break;
     case 3:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
-            EntityAi_SetState((char *)entity, 2);
+            EntityAi_SetState(entity, 2);
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;

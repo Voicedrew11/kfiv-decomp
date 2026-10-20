@@ -1,8 +1,6 @@
 /* The KF4.DAT file layer: one packed archive read through two file slots, or loose files under \DATA\. */
 #include "core/file.h"
 
-int sceCdInit(int);
-int sceCdMmode(int);
 
 // match: core/file.h declares these, so a plain definition would go to COMMON
 static u8 file_slots_lead_pad[0x38] __attribute__((section(".bss"))) = { 0 }; /* 0x4475C8 */

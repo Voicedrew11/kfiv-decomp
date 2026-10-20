@@ -15,15 +15,10 @@
 #include "math/angle.h"
 #include "math/vu0.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "model/motion.h"
 
 
-int Script_StoreFloatResult(ScriptArg *target, double value); // match: the definition takes a float, but retail converts the argument to double here (fptodp): there was no prototype in scope
-int Motion_Start(void *, int, int, u32, int);
-int Motion_Step(void *, int);
-int Motion_BlendToPose(EntityModel *, f32);
-void EntityAi_SetState(char *, u8);
-
-extern GameStatus game_status;
 
 /* Command 200, and every unused number from 200 to 299: finishes at once. */
 void ScriptCmd_Nop200(ScriptThreadCommand *command) {
@@ -123,7 +118,7 @@ void ScriptCmd_Sin(ScriptFloatQueryCommand *command) {
     int wrapped = step + 0x1000;
     int index = wrapped % 4096;
 
-    Script_StoreFloatResult(result, sine_table[index]);
+    SCRIPT_STORE_FLOAT_RESULT(result, sine_table[index]);
     command->active = 0;
 }
 
@@ -135,7 +130,7 @@ void ScriptCmd_Cos(ScriptFloatQueryCommand *command) {
     int wrapped = step + 0x1000;
     int index = wrapped % 4096;
 
-    Script_StoreFloatResult(result, sine_table[index + 0x400]);
+    SCRIPT_STORE_FLOAT_RESULT(result, sine_table[index + 0x400]);
     command->active = 0;
 }
 
@@ -145,7 +140,7 @@ void ScriptCmd_RandomFloat(ScriptFloatQueryCommand *command) {
     int hundredths;
 
     hundredths = command->input.value * 100.0f;
-    Script_StoreFloatResult(&command->result, (f32)(rand() % hundredths) * 0.01f);
+    SCRIPT_STORE_FLOAT_RESULT(&command->result, (f32)(rand() % hundredths) * 0.01f);
     command->active = 0;
 }
 
@@ -164,15 +159,15 @@ void ScriptCmd_GetPointFromPlayer(ScriptPointAheadCommand *command) {
     sceVu0ApplyMatrix(vector, matrix, vector);
     Vector_Scale(vector, vector, (f32)command->distance.value);
     Vector_Add(point, &player_state.position, vector);
-    Script_StoreFloatResult((ScriptArg *)&command->x, point[0]);
-    Script_StoreFloatResult((ScriptArg *)&command->y, point[1]);
-    Script_StoreFloatResult((ScriptArg *)&command->z, point[2]);
+    SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->x, point[0]);
+    SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->y, point[1]);
+    SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->z, point[2]);
     command->active = 0;
 }
 
 /* Command 228: hands the script, through `angle`, atan2f(x, y), then finishes. */
 void ScriptCmd_Atan2(ScriptAngleCommand *command) {
-    Script_StoreFloatResult(&command->angle, atan2f(command->x.value, command->y.value));
+    SCRIPT_STORE_FLOAT_RESULT(&command->angle, atan2f(command->x.value, command->y.value));
     command->active = 0;
 }
 
@@ -258,12 +253,12 @@ void ScriptCmd_WaitEntityMotion(ScriptCallCommand *command) {
    (Motion_BlendToPose) while the motion has blend frames. */
 int ScriptCmd_BlendEntityMotion(ScriptMotionBlendCommand *command) {
     Entity *entity;
-    EntityModel *entity_model;
+    ModelInstance *entity_model;
 
     entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL && (entity->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE | ENTITY_FLAG_DYING_MASK)) == 3 && entity->hit_points != 0) {
-        entity_model = entity->model;
-        if (entity_model->level_tables->blend_left != 0) {
+        entity_model = ENTITY_MODEL(entity);
+        if (MODEL_CHANNEL(entity_model)->blend_left != 0) {
             return Motion_BlendToPose(entity_model, command->weight.value);
         }
     }
@@ -295,7 +290,7 @@ void ScriptCmd_TurnEntityToPlayer(ScriptStateWaitCommand *command) {
                         return;
                     }
                 }
-                EntityAi_SetState((char *)entity, 4);
+                EntityAi_SetState(entity, 4);
                 command->step++;
                 return;
             case 1:
@@ -317,7 +312,7 @@ void ScriptCmd_TurnEntityToPlayer(ScriptStateWaitCommand *command) {
                     command->active = 0;
                     return;
                 }
-                EntityAi_SetState((char *)entity, 4);
+                EntityAi_SetState(entity, 4);
                 command->step++;
                 return;
             case 1:
@@ -348,7 +343,7 @@ void ScriptCmd_TurnEntityBack(ScriptWaitCommand *command) {
             return;
         }
         if (command->started == 0) {
-            EntityAi_SetState((char *)entity, 6);
+            EntityAi_SetState(entity, 6);
             command->started = 1;
         }
         if (entity->state != 0) {
@@ -557,13 +552,13 @@ void ScriptCmd_GetEntityPosition(ScriptEntityVectorCommand *command) {
 
     entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL) {
-        Script_StoreFloatResult((ScriptArg *)&command->x, entity->model->position[0]);
-        Script_StoreFloatResult((ScriptArg *)&command->y, entity->model->position[1]);
-        Script_StoreFloatResult((ScriptArg *)&command->z, entity->model->position[2]);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->x, entity->model->position[0]);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->y, entity->model->position[1]);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->z, entity->model->position[2]);
     } else {
-        Script_StoreFloatResult((ScriptArg *)&command->x, 0);
-        Script_StoreFloatResult((ScriptArg *)&command->y, 0);
-        Script_StoreFloatResult((ScriptArg *)&command->z, 0);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->x, 0.0);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->y, 0.0);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->z, 0.0);
     }
     command->active = 0;
 }
@@ -575,13 +570,13 @@ void ScriptCmd_GetEntityRotation(ScriptEntityVectorCommand *command) {
 
     entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL) {
-        Script_StoreFloatResult((ScriptArg *)&command->x, entity->model->rotation[0]);
-        Script_StoreFloatResult((ScriptArg *)&command->y, entity->model->rotation[1]);
-        Script_StoreFloatResult((ScriptArg *)&command->z, entity->model->rotation[2]);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->x, entity->model->rotation[0]);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->y, entity->model->rotation[1]);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->z, entity->model->rotation[2]);
     } else {
-        Script_StoreFloatResult((ScriptArg *)&command->x, 0);
-        Script_StoreFloatResult((ScriptArg *)&command->y, 0);
-        Script_StoreFloatResult((ScriptArg *)&command->z, 0);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->x, 0.0);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->y, 0.0);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->z, 0.0);
     }
     command->active = 0;
 }
@@ -593,13 +588,13 @@ void ScriptCmd_GetEntitySpawnPosition(ScriptEntityVectorCommand *command) {
 
     entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL) {
-        Script_StoreFloatResult((ScriptArg *)&command->x, entity->spawn_info->spawn_x);
-        Script_StoreFloatResult((ScriptArg *)&command->y, entity->spawn_info->spawn_y);
-        Script_StoreFloatResult((ScriptArg *)&command->z, entity->spawn_info->spawn_z);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->x, entity->spawn_info->spawn_x);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->y, entity->spawn_info->spawn_y);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->z, entity->spawn_info->spawn_z);
     } else {
-        Script_StoreFloatResult((ScriptArg *)&command->x, 0);
-        Script_StoreFloatResult((ScriptArg *)&command->y, 0);
-        Script_StoreFloatResult((ScriptArg *)&command->z, 0);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->x, 0.0);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->y, 0.0);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->z, 0.0);
     }
     command->active = 0;
 }
@@ -611,13 +606,13 @@ void ScriptCmd_GetEntitySpawnRotation(ScriptEntityVectorCommand *command) {
 
     entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL) {
-        Script_StoreFloatResult((ScriptArg *)&command->x, entity->spawn_info->spawn_rotation_x);
-        Script_StoreFloatResult((ScriptArg *)&command->y, entity->spawn_info->spawn_rotation_y);
-        Script_StoreFloatResult((ScriptArg *)&command->z, entity->spawn_info->spawn_rotation_z);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->x, entity->spawn_info->spawn_rotation_x);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->y, entity->spawn_info->spawn_rotation_y);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->z, entity->spawn_info->spawn_rotation_z);
     } else {
-        Script_StoreFloatResult((ScriptArg *)&command->x, 0);
-        Script_StoreFloatResult((ScriptArg *)&command->y, 0);
-        Script_StoreFloatResult((ScriptArg *)&command->z, 0);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->x, 0.0);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->y, 0.0);
+        SCRIPT_STORE_FLOAT_RESULT((ScriptArg *)&command->z, 0.0);
     }
     command->active = 0;
 }
@@ -634,7 +629,7 @@ void ScriptCmd_Distance2D(ScriptDistance2DCommand *command) {
     delta_y = command->a_y.value - command->b_y.value;
     distance_sq = delta_x * delta_x + delta_y * delta_y;
     distance = sqrt(distance_sq);
-    Script_StoreFloatResult(&command->result, distance);
+    SCRIPT_STORE_FLOAT_RESULT(&command->result, distance);
     command->active = 0;
 }
 
@@ -652,7 +647,7 @@ void ScriptCmd_Distance(ScriptDistanceCommand *command) {
     delta_z = command->a_z.value - command->b_z.value;
     distance_sq = delta_x * delta_x + delta_y * delta_y + delta_z * delta_z;
     distance = sqrt(distance_sq);
-    Script_StoreFloatResult(&command->result, distance);
+    SCRIPT_STORE_FLOAT_RESULT(&command->result, distance);
     command->active = 0;
 }
 

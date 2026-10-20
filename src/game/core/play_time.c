@@ -1,19 +1,11 @@
 #include "core/game.h"
+#include <time.h>
+#include <libcdvd.h>
 #include "core/play_time.h"
 
 #define BCD2DEC(x) (((x) & 0xF) + ((x) >> 4) * 10)
 
-int PlayTime_ReadRealTimeClock(ClockTime *);
-int PlayTime_ReadClock(void);
-int PlayTime_ComputeCurrent(void);
-int PlayTime_ClockSecondsBetween(ClockTime, ClockTime);
-int PlayTime_ClockMinutesBetween(ClockTime, ClockTime);
-int PlayTime_ToSeconds(ClockTime);
-int PlayTime_ToMinutes(ClockTime);
-int mktime(void *);
-int sceCdReadClock(ClockTime *);
 
-extern ClockTime current_play_time;
 
 /* Restart the play clock from a saved play time: keep it as the base and read the wall clock. */
 void PlayTime_Resume(ClockTime play_time) {
@@ -66,7 +58,7 @@ int PlayTime_MinutesSince(ClockTime play_time) {
 
 /* The day of the week of the last clock read, 0: Sunday. */
 int PlayTime_GetWeekday(void) {
-    CalendarTime calendar;
+    struct tm calendar;
 
     calendar.tm_sec = wall_clock_time.sec;
     calendar.tm_min = wall_clock_time.min;
@@ -116,16 +108,16 @@ int PlayTime_AsSeconds(ClockTime play_time) {
 
 /* The day of the year of a clock time (mktime's tm_yday). */
 int PlayTime_DayOfYear(ClockTime time) {
-    int tm_fields[9];
+    struct tm calendar;
 
-    tm_fields[0] = time.sec;
-    tm_fields[1] = time.min;
-    tm_fields[2] = time.hour;
-    tm_fields[3] = time.mday;
-    tm_fields[4] = time.mon - 1;
-    tm_fields[5] = time.year + 0x64;
-    mktime(tm_fields);
-    return tm_fields[7];
+    calendar.tm_sec = time.sec;
+    calendar.tm_min = time.min;
+    calendar.tm_hour = time.hour;
+    calendar.tm_mday = time.mday;
+    calendar.tm_mon = time.mon - 1;
+    calendar.tm_year = time.year + 0x64;
+    mktime(&calendar);
+    return calendar.tm_yday;
 }
 
 /* Seconds from clock start to clock end (same century). */

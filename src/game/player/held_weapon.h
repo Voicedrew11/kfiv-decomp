@@ -14,6 +14,13 @@ void WeaponTrail_PickKind(void);
 /* player/held_weapon.c */
 extern PlayerArmPoints held_item_arm_points;
 extern PlayerArmPoints held_item_arm_points_prev;
+void WeaponTrail_Reset(void);
+void WeaponTrail_SetMinLife(s32 min_life);
+void WeaponTrail_Age(void);
+void WeaponTrail_Push(void *position);
+void WeaponTrail_GetPoint(void *dst, s32 index);
+s32 WeaponTrail_GetLife(s32 index);
+int WeaponTrail_GetCount(void);
 
 /* data still in asm */
 extern char arm_phong_texture_path[];

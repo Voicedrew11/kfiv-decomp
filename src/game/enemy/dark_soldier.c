@@ -10,33 +10,13 @@
 #include "math/vu0.h"
 #include "model/motion.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_math.h"
+#include "player/player.h"
+#include "entity/entity_collision.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(void *);
-void EntityAi_StepState(void *);
-extern PlayerData player_state;
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-void EntityAi_ClearTurnInPlace(Entity *);
-float EntityMath_AngleXZ(float *, char *);
-float EntityMath_AngleDifference(float, float);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-extern int entity_under_player[];
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
-void EntityAi_SetAttackDelay(Entity *, s32);
-void EntityMath_FacingVector(Vector4 *, float);
 /* one frame of the arc of DarkSoldier_MoveAlongArc: forwards at unk44 along unk30, in y at minus
    unk48 (up); both wear off */
 static inline void move_along_arc(Entity *entity, EntityAiState *ai_state) {
@@ -49,11 +29,6 @@ static inline void move_along_arc(Entity *entity, EntityAiState *ai_state) {
         ai_state->move_speed = 0.0f;
     }
 }
-void EntityAi_LowerWeightsAfterHit(char *);
-void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-f32 EntityMath_Distance(f32 *, f32 *);
-int EntityCollision_RayProps(void *, void *, void *, float); // match: the distance is the last argument (set up after the pointers)
 
 static void DarkSoldier_Think(Entity *entity, s32 unknown);
 static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown);
@@ -80,7 +55,7 @@ void DarkSoldier_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = DarkSoldier_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = DarkSoldier_OnHit;
@@ -183,7 +158,7 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     if (entity->action_timer == 0) {
-        angle = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
+        angle = EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position));
         if (rand() % 100 < entity->params->near_distance && ABS(angle) < DEG_TO_RAD(60)
             && ABS(entity->heading_to_player - entity->model->rotation[1]) < DEG_TO_RAD(60)) {
             ai_state->action_flags = 0;
@@ -208,11 +183,11 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
                 return;
             }
-            angle = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
+            angle = EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position));
             if (rand() % 100 < entity->params->near_distance && ABS(angle) < DEG_TO_RAD(40)) {
                 ai_state->action_flags = 1;
                 EntityAi_StartAction(entity, DarkSoldier_PlayAnim6Or7BySide, unknown);
@@ -397,7 +372,7 @@ static void DarkSoldier_PlayAnim6Or7BySide(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
-        side = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
+        side = EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position));
         if (ai_state->action_flags == 1) {
             if (side > 0.0f) {
                 Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -438,7 +413,7 @@ static void DarkSoldier_PlayAnim6Or7BySide(Entity *entity) {
                     EntityAi_StartAction(entity, ai_state->move, 1);
                 }
             } else {
-                EntityAi_PickAttack((char *)entity);
+                EntityAi_PickAttack(entity);
                 EntityAi_StartAction(entity, DarkSoldier_MeleeAttack, 1);
             }
         }
@@ -558,7 +533,7 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
                     EntityAi_StartAction(entity, ai_state->move, 1);
                 }
             } else {
-                EntityAi_PickAttack((char *)entity);
+                EntityAi_PickAttack(entity);
                 EntityAi_StartAction(entity, DarkSoldier_MeleeAttack, 1);
             }
         }
@@ -577,7 +552,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_DODGE;
     switch (entity->action_step) {
     case 0:
-        if (EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) > 0.0f) {
+        if (EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position)) > 0.0f) {
             Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 1);
         } else {
             Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -641,7 +616,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
 /* The on_hit handler: as EntityAi_OnHit, but it keeps the target and clears Entity.unk5C and flag
    bit 28. */
 static void DarkSoldier_OnHit(Entity *entity) {
-    EntityAi_LowerWeightsAfterHit((char *)entity);
+    EntityAi_LowerWeightsAfterHit(entity);
     entity->flags &= ~ENTITY_FLAG_ATTACKING;
     ENTITY_UNK5C(entity)->as_s32 = 0;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
@@ -655,7 +630,7 @@ static void DarkSoldier_OnHit(Entity *entity) {
     } else if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
 }
 
 /* Helper of DarkSoldier_ThinkCombat: whether the way is free for DarkSoldier_MoveAlongArc. It

@@ -115,6 +115,22 @@ void MapItem_DrawAll(int with_picked);
 void MapItem_DrawPicked(int hidden);
 int MapItem_StartPickup(ItemNode *node);
 int MapItem_StartPickupById(int item_id, int may_put_back);
+void MapItem_ClearMap(int map);
+s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f32 *offset, f32 *rotation, f32 *scale, u32 order);
+ItemModelSource *MapItem_FindModelSource(int slot, int key);
+void MapItem_PrepareDraw(ModelInstance *model);
+void MapItem_PickupAim(void);
+void MapItem_PickupBringUp(void);
+void MapItem_PickupHold(void);
+void MapItem_PickupTake(void);
+void MapItem_PickupPutBack(void);
+int MapItem_PlaceFixed(int map, int index);
+ItemNode *MapItem_Unlink(ItemNode *node);
+int MapItem_GetFixedIndex(int slot, int object_id);
+void MapItem_Link(ListNode *node);
+int MapItem_UniqueNotCarried(int item);
+int MapItem_UniqueNotInTradeStock(int item);
+int MapItem_UniqueNotDropped(int item);
 
 /* data still in asm */
 extern const Vector4Arg enemy_drop_scale;
@@ -130,5 +146,13 @@ extern s32 pickup_step;
 extern f32 pickup_view_pitch;
 extern int pickup_move_frames;
 extern int pickup_frames_left;
+
+/* item/item_defs.c */
+extern GameDefinition item_name_defs[380];
+extern GameDefinition weapon_name_defs[70];
+
+/* item/map_item.c */
+void *MapItem_GetFixedById(int slot);
+int MapItem_IsPickable(ItemNode *node);
 
 #endif

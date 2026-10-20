@@ -1,6 +1,7 @@
 /* The second half of the start-up code after core/memory.c: the IOP reboot that System_Init runs, the projection
    matrix of Display_Init, the memory reset main runs, and the frame buffer swaps (Display_). */
 #include "core/display.h"
+#include <sifrpc.h>
 #include "core/game.h"
 #include "gfx/gs.h"
 #include "core/memory.h"
@@ -12,11 +13,6 @@
 
 static char menu_heap_area[0x200000];   /* 0x1BFAF80 the area the menus' heap (menu_heap) lies in */
 
-void sceSifInitRpc(int);
-int sceSifRebootIop(const char *);
-int sceSifSyncIop(void);
-void sceFsReset(void);
-int sceSifLoadModule(const char *, int, const char *);
 
 
 /* Reboots the IOP with IOPRP224.IMG and loads the nine IOP modules (pad, memory card, sound and file I/O). */

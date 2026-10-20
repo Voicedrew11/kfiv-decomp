@@ -21,8 +21,6 @@
 #include "save/save_state.h"
 #include "sound/sound_game.h"
 
-extern SoundLoadQueue sound_load_queue;
-
 static ScriptThread *current_thread = NULL; /* 0x446FD0 the thread being stepped */
 static int command_count;                   /* 0x4473E4 commands in use, as Script_StepHeldCommands counts them */
 static u32 *script_top;                     /* 0x4473E8 the current map's script */

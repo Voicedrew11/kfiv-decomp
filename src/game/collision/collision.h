@@ -191,6 +191,34 @@ void Collision_HitRayObj(MapObject *object, f32 *origin, f32 *direction, f32 rea
 void Collision_HitSphereObj(MapObject *object, f32 *point, f32 reach);
 void Collision_PushOutOfObjects(f32 *centre, s32 measure, f32 radius, f32 push);
 s32 Collision_StandOnObjects(f32 *centre, s32 measure, f32 radius, f32 push);
+void Collision_HitRayBoxObj(void *target, f32 *from, f32 *direction, float distance);
+void Collision_HitRayDoubleDoorObj(void *target, f32 *from, f32 *direction, float distance);
+s32 Collision_HitRayQuadObj(AnimObject *object, f32 *param1, f32 *param2, f32 param3);
+void Collision_HitRayPitfallObj(void *target, f32 *from, f32 *direction, float distance);
+void Collision_HitRayMeshObj(MapObject *object, f32 *origin, f32 *direction, f32 reach);
+int Collision_HitSphereBoxObj(MapObject *object, f32 *point, f32 reach);
+int Collision_HitSphereDoubleDoorObj(MapObject *object, f32 *point, f32 reach);
+void Collision_HitSphereQuadObj(MapObject *object, f32 *point, f32 reach);
+void Collision_HitSpherePitfallObj(MapObject *object, f32 *point, f32 reach);
+void Collision_HitSphereMeshObj(CollisionOwner *owner, f32 *point, float factor);
+int Collision_HitCapsuleBoxObj(MapObject *object, f32 *point, f32 radius, f32 push);
+void Collision_HitCapsuleDoubleDoorObj(MapObject *object, f32 *centre, f32 radius, f32 push);
+int Collision_HitCapsuleQuadObj(CollisionOwner *owner, f32 *point, float first_value, float second_value);
+void Collision_HitCapsulePitfallObj(void);
+void Collision_HitCapsuleMeshObj(MapObject *object, f32 *centre, f32 height, f32 radius);
+void Collision_HitFanBoxObj(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32 first_x, f32 first_z, f32 second_x, f32 second_z);
+void Collision_HitFanDoubleDoorObj(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32 first_x, f32 first_z, f32 second_x, f32 second_z);
+void Collision_HitFanQuadObj(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32 first_x, f32 first_z, f32 second_x, f32 second_z);
+void Collision_HitFanPitfallObj(void);
+void Collision_HitFanMeshObj(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32 first_x, f32 first_z, f32 second_x, f32 second_z);
+void Collision_PushOutOfBoxObj(MapObject *object, f32 *centre, f32 radius, f32 push);
+void Collision_PushOutOfDoubleDoorObj(MapObject *object, f32 *centre, f32 radius, f32 push);
+void Collision_PushOutOfQuadObj(CollisionOwner *owner, f32 *position, f32 radius, f32 push);
+void Collision_PushOutOfPitfallObj(void);
+void Collision_PushOutOfMeshObj(MapObject *object, f32 *position, f32 height, f32 radius);
+s32 Collision_StandOnQuadObj(CollisionOwner *owner, f32 *position, f32 radius);
+s32 Collision_StandOnPitfallObj(MapObject *object, f32 *position, f32 radius);
+s32 Collision_StandOnMeshObj(CollisionOwner *owner, f32 *position, f32 radius);
 
 /* collision/world_strip_lists.c */
 
@@ -216,5 +244,15 @@ extern const f32 negative_zero_ray_triangle_limit[];  /* -0.0f */
 extern const f32 negative_zero_drop_triangle_limit[];  /* -0.0f */
 extern const f32 negative_zero_ray_cylinder_limit[];  /* -0.0f */
 extern const f32 negative_zero_sphere_cylinder_limit[];  /* -0.0f */
+
+/* collision/collision.c */
+void Collision_CylinderCylinder(f32 *base, f32 radius, f32 height, f32 *other_base, f32 other_radius, f32 other_height);
+void Collision_RayCylinder(f32 radius, f32 height, f32 length, f32 *base, f32 *origin, f32 *direction);
+void Collision_SphereCylinder(f32 *base, f32 *centre, f32 radius, f32 height, f32 reach);
+void Collision_CylinderArc(f32 *base, f32 *other, f32 radius, f32 height, f32 other_radius, f32 other_height, f32 half_angle, f32 facing);
+void Collision_CylinderArcPitch(f32 *base, f32 *other, f32 radius, f32 height, f32 other_radius, f32 other_low, f32 other_high, f32 half_angle, f32 facing, f32 pitch_range, f32 pitch);
+
+/* collision/world_strip_lists.c */
+extern s32 strip_list_indices[8];
 
 #endif

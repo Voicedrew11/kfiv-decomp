@@ -1,5 +1,6 @@
 /* Debug dumps to host0 (VRAM, CLUT, screenshots, data) and the VRAM clear. */
 #include "common.h"
+#include <libgraph.h>
 #include "gfx/packet.h"
 #include "debug/screen_dump.h"
 #include "core/file.h"
@@ -9,10 +10,6 @@
 #include <sifdev.h>
 #include <stdio.h>
 
-void sceGsSetDefStoreImage(void *, s16, s16, s16, s16, s16, s16, s16);
-void sceGsExecStoreImage(void *, void *);
-extern int sceGsExecLoadImage(int *, int *);
-extern int sceGsSetDefLoadImage(int *, int, int, int, int, int, int, int);
 #define SCREEN_WIDTH 0x280
 #define SCREEN_HEIGHT 0x1C0
 #define SCREEN_BYTES (SCREEN_WIDTH * SCREEN_HEIGHT * 3)
@@ -24,7 +21,7 @@ static void ScreenDump_Data(void *data, int size);
 /* Writes VRAM to host0 clut.raw in 64x32 blocks, first_row through last_row (a debug dump; nothing calls
    it). */
 void ScreenDump_Clut(int first_row, int last_row) {
-    char store_image[0x70];
+    sceGsStoreImage store_image;
     char buf[0x10000];
     int file;
     int row;
@@ -33,9 +30,9 @@ void ScreenDump_Clut(int first_row, int last_row) {
     if (file >= 0) {
         for (row = first_row; row <= last_row; row += 0x20) {
             memset(buf, 0, 0x10000);
-            sceGsSetDefStoreImage(store_image, row, 1, 0, 0, 0, 0x40, 0x20);
+            sceGsSetDefStoreImage(&store_image, row, 1, 0, 0, 0, 0x40, 0x20);
             FlushCache(0);
-            sceGsExecStoreImage(store_image, buf);
+            sceGsExecStoreImage(&store_image, buf);
             sceGsSyncPath(0, 0);
             sceWrite(file, buf, 0x2000);
         }
@@ -46,7 +43,7 @@ void ScreenDump_Clut(int first_row, int last_row) {
 /* Writes VRAM to host0 vram.raw in 128x128 blocks, first_row through last_row (a debug dump; nothing calls
    it). */
 static void ScreenDump_Vram(int first_row, int last_row) {
-    char store_image[0x70];
+    sceGsStoreImage store_image;
     char buf[0x10000];
     int file;
     int row;
@@ -55,9 +52,9 @@ static void ScreenDump_Vram(int first_row, int last_row) {
     if (file >= 0) {
         for (row = first_row; row <= last_row; row += 0x100) {
             memset(buf, 0, 0x10000);
-            sceGsSetDefStoreImage(store_image, row, 2, 0, 0, 0, 0x80, 0x80);
+            sceGsSetDefStoreImage(&store_image, row, 2, 0, 0, 0, 0x80, 0x80);
             FlushCache(0);
-            sceGsExecStoreImage(store_image, buf);
+            sceGsExecStoreImage(&store_image, buf);
             sceGsSyncPath(0, 0);
             sceWrite(file, buf, 0x10000);
         }
@@ -67,15 +64,15 @@ static void ScreenDump_Vram(int first_row, int last_row) {
 
 /* Fills VRAM from first_row up to end_row with zeros in 128x128 blocks, then flushes the texture cache. */
 void Vram_Clear(int first_row, int end_row) {
-    int img[24];
+    sceGsLoadImage load_image;
     int buf[0x4000];
     int i;
 
     memset(buf, 0, 0x10000);
     for (i = first_row; i < end_row; i += 0x100) {
-        sceGsSetDefLoadImage(img, (s16)i, 2, 0, 0, 0, 0x80, 0x80);
+        sceGsSetDefLoadImage(&load_image, (s16)i, 2, 0, 0, 0, 0x80, 0x80);
         FlushCache(0);
-        sceGsExecLoadImage(img, buf);
+        sceGsExecLoadImage(&load_image, buf);
         sceGsSyncPath(0, 0);
     }
     Texture_SendTexFlush();
@@ -86,7 +83,7 @@ void Vram_Clear(int first_row, int end_row) {
 void ScreenDump_Bmp(u8 *buffer) {
     BmpFileHeader file_header;
     BmpInfoHeader info_header;
-    char store_image[0x70];
+    sceGsStoreImage store_image;
     char name[0x100];
     int file;
     int i;
@@ -148,9 +145,9 @@ void ScreenDump_Bmp(u8 *buffer) {
         if (misalign != 0) {
             aligned -= misalign - 0x10;
         }
-        sceGsSetDefStoreImage(store_image, base, 0xA, 1, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+        sceGsSetDefStoreImage(&store_image, base, 0xA, 1, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         FlushCache(0);
-        sceGsExecStoreImage(store_image, aligned);
+        sceGsExecStoreImage(&store_image, aligned);
         sceGsSyncPath(0, 0);
         FlushCache(0);
         source = aligned;
@@ -180,7 +177,7 @@ void ScreenDump_Bmp(u8 *buffer) {
 /* Stores the screen into a 16-byte aligned buffer and writes it to the first unused numbered .raw screenshot
    file on host0. */
 static void ScreenDump_Raw(u8 *buffer) {
-    char store_image[0x70];
+    sceGsStoreImage store_image;
     char name[0x100];
     int file;
     int i;
@@ -211,9 +208,9 @@ static void ScreenDump_Raw(u8 *buffer) {
         if (misalign != 0) {
             aligned -= misalign - 0x10;
         }
-        sceGsSetDefStoreImage(store_image, base, 0xA, 1, 0, 0, 0x280, 0x1C0);
+        sceGsSetDefStoreImage(&store_image, base, 0xA, 1, 0, 0, 0x280, 0x1C0);
         FlushCache(0);
-        sceGsExecStoreImage(store_image, aligned);
+        sceGsExecStoreImage(&store_image, aligned);
         sceGsSyncPath(0, 0);
         file = sceOpen(name, 0x202);
         if (file >= 0) {

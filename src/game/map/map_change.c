@@ -26,15 +26,6 @@
 #include "sound/sound_game.h"
 #include <stdio.h>
 
-extern void (*screen_fade_steps[])(void);
-extern void (*screen_fade_draw_steps[])(void);
-void Packet_WaitForSend(void);
-void MapChange_CaptureFrame(void);
-extern ScreenFade screen_fade;
-extern GameStatus game_status;
-extern MapProp *map_slot_props[2][0xFF];
-extern SoundLoadQueue sound_load_queue;
-
 /* Starts the change to map new_value, the player to stand at the map's start, unless a change is running
    or it is the current map. */
 void MapChange_StartToMap(int new_value) {

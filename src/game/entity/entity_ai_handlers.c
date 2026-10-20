@@ -11,25 +11,10 @@
 #include <libvu0.h>
 #include "math/vu0.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity.h"
+#include "player/player.h"
 
-int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
-void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(Entity *entity, void (*reaction)(Entity *entity), int run_now);
-void EntityAi_SetAttackDelay(Entity *, s32);
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
-int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
-void EntityAi_RaiseAttackWeight(Entity *);
-void EntityAi_RaiseRangedWeights(Entity *);
-void EntityAi_UpdateCollision(Entity *);
-void EntityAi_SetUpdate(char *, s32);
-extern s32 entity_type_handlers[][2];
-int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
-extern PlayerData player_state;
-void EntityAi_ClearTurnInPlace(Entity *);
-float EntityAi_Accelerate(Entity *, float);
 
 /* An action that starts no motion of its own: it waits until the current motion has blended in and played to
    its end, then ends as the other actions do (think, or the move action). Nothing refers to it. */
@@ -140,7 +125,7 @@ void EntityAi_Dormant(Entity *entity) {
         break;
     case 3:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
-            EntityAi_SetState((char *)entity, 2);
+            EntityAi_SetState(entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
             ENTITY_FLAG_BITS(entity)->bit22 = 0;
             ENTITY_FLAG_BITS(entity)->no_wall_collision = 0;
@@ -632,7 +617,7 @@ void EntityAi_InitDefaults(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = EntityAi_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = EntityAi_OnHit;
@@ -715,7 +700,7 @@ void EntityAi_OnHit(Entity *entity) {
     } else if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
 }
 
 /* The default think handler: every tenth frame updates what the entity knows of the player
@@ -729,7 +714,7 @@ void EntityAi_Think(Entity *entity, s32 unknown) {
         return;
     }
     if (!(ENTITY_PARAMS_BITS(entity)->bit25 && ENTITY_PARAMS_BITS(entity)->bit26)) {
-        EntityAi_CheckFarFromSpawn((char *)entity);
+        EntityAi_CheckFarFromSpawn(entity);
     }
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
@@ -963,7 +948,7 @@ void EntityAi_Move(Entity *entity) {
     f32 turn;
     f32 amount;
 
-    if (entity == player_state.stood_on_entity && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
+    if (entity == player_state.stepped_on_entity && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
         entity->move_command = 0;
     }
     if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {

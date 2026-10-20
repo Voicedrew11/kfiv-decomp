@@ -4,6 +4,7 @@
    hit points and experience, with resistances and drops where two monsters share those. */
 #include "entity/entity.h"
 #include "enemy/enemy.h"
+#include "player/player.h"
 #include "entity/entity_ai_handlers.h"
 #include "entity/entity_aim.h"
 #include "entity/entity_collision.h"
@@ -11,33 +12,10 @@
 #include "entity/entity_math.h"
 #include "math/vu0.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "model/motion.h"
 
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-// match: const, so that the store to unk48 can follow the load of it
-extern const f32 seafang_no_floor_height_think[];
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn3D(char *);
-void EntityAi_StepState(void *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand3D(Entity *, s32, f32);
-extern float player_state[];
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-// match: const, so that the store to unk48 can follow the load of it
-extern const f32 seafang_no_floor_height_lower[];
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-int Motion_Start(void *, int, int, u32, int);
-// match: const, so that the store to unk48 can follow the load of it
-extern const f32 seafang_no_floor_height_death[];
 
 static void Seafang_Think(Entity *entity, s32 unknown);
 static void Seafang_ThinkIdle(Entity *entity, s32 unknown);
@@ -57,7 +35,7 @@ void Seafang_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     if (entity->spawn_info->spawn_mode != 0) {
         ai_state->think = Seafang_ThinkLowerGradually;
     } else {
@@ -85,7 +63,7 @@ void Seafang_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The think handler: as EntityAi_Think with the type's own functions for the states. Before that it
@@ -98,7 +76,7 @@ static void Seafang_Think(Entity *entity, s32 unknown) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {
-        EntityAi_CheckFarFromSpawn3D((char *)entity);
+        EntityAi_CheckFarFromSpawn3D(entity);
         EntityAi_StepState(entity);
         ai_state->part_angle_x = EntityCollision_DistanceToGround(entity->model->position);
         if (ai_state->part_angle_x != seafang_no_floor_height_think[0] && -entity->collision_height < ai_state->part_angle_x) {
@@ -182,7 +160,7 @@ static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 ENTITY_FLAG_BITS(entity)->ranged_attack = 0;
@@ -191,7 +169,7 @@ static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = player_state;
+            entity->target = &player_state;
             ai_state->part_angle_y = entity->collision_radius + rand() % 150;
             entity->action_timer = rand() % 60 + 120;
             ai_state->move_choice = 0;
@@ -212,7 +190,7 @@ static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
         } else if (turn < 0) {
             entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
         } else {
-            Vector_Copy(ai_state->target_point, player_state);
+            Vector_Copy(ai_state->target_point, &player_state);
             ai_state->target_point[1] -= ai_state->part_angle_y;
             entity->target = ai_state->target_point;
             entity->move_command = EntityAi_MoveCommand3D(entity, 1, entity->radius + 100.0f + 30.0f);
@@ -234,7 +212,7 @@ static void Seafang_ThinkLowerGradually(Entity *entity, s32 unknown) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {
-        EntityAi_CheckFarFromSpawn3D((char *)entity);
+        EntityAi_CheckFarFromSpawn3D(entity);
         EntityAi_StepState(entity);
         ai_state->part_angle_x = EntityCollision_DistanceToGround(entity->model->position);
         if (ai_state->part_angle_x != seafang_no_floor_height_lower[0] && -entity->collision_height < ai_state->part_angle_x) {
@@ -323,7 +301,7 @@ static void Seafang_ThinkCombatRunAtPlayer(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 if (ai_state->part_angle_x < -80.0f) {
@@ -334,7 +312,7 @@ static void Seafang_ThinkCombatRunAtPlayer(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = player_state;
+            entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
             ai_state->move_choice = 0;
             break;

@@ -35,7 +35,7 @@ typedef struct {
     int vertex1_t;                  /* 0x3C texture height << 4 */
 } SplashSprite;
 
-extern SplashImage file_load_buffer;
+#define SPLASH_IMAGE ((SplashImage *)file_load_buffer)  /* the image, read into file_load_buffer */
 
 /* the GS TEX0 register as bit-fields */
 typedef struct {
@@ -87,5 +87,14 @@ void Splash_Abort(void);
 void Splash_Update(void);
 void Splash_Draw(void);
 void Splash_BuildSprite(void);
+
+/* ui/splash.c */
+void Splash_StateIdle(void);
+void Splash_StateStartDelay(void);
+void Splash_StateLoadImage(void);
+void Splash_StateFadeIn(void);
+void Splash_StateHold(void);
+void Splash_StateFadeOut(void);
+void Splash_StateClose(void);
 
 #endif

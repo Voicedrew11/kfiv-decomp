@@ -68,6 +68,8 @@ s32 Menu_CardsHaveSaves(void);
 int Menu_SetBlendMode(u8 mode);
 int Menu_IsEquipSlotFilled(s32 value, u32 step);
 void Menu_ClearEquipSlot(s8 slot);
+void Menu_DrawBrightness(s32 level);
+int Menu_IsEquipped(u32 slot, s32 kind, s32 value);
 
 /* data still in asm */
 extern MenuItem **equipped_item_refs[11];
@@ -342,5 +344,9 @@ extern LinkNode key_item_model_loads[12];
 extern MenuScreenState card_screen_state;
 extern u16 button_settings_copy[13];
 extern s8 equip_panel_state;
+
+/* data still in asm */
+extern u8 detail_panel_open;
+extern s32 detail_panel_open_word;  /* detail_panel_open as ui/trade.c reads and writes it, a word (an alias there) */
 
 #endif

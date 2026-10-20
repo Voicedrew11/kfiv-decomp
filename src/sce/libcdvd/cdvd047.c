@@ -13,7 +13,7 @@
 static int stStarted = 0; /* derived name */
 
 /* The member's own .bss: the mode record every call but sceCdStStart passes. */
-static CdRMode stMode; /* derived name */
+static sceCdRMode stMode; /* derived name */
 
 int sceCdStInit(int bufmax, int bankmax, void *buf)
 {
@@ -21,7 +21,7 @@ int sceCdStInit(int bufmax, int bankmax, void *buf)
     return sceCdStream(bufmax, bankmax, buf, 5, &stMode);
 }
 
-int sceCdStStart(int lsn, CdRMode *mode)
+int sceCdStStart(int lsn, sceCdRMode *mode)
 {
     stStarted = 1;
     return sceCdStream(lsn, 0, 0, 1, mode);
@@ -127,7 +127,7 @@ typedef struct { /* field names derived */
     unsigned char pad;
 } CdStreamCmd; /* derived name */
 
-int sceCdStream(int lsn, int sectors, void *buf, int cmd, CdRMode *mode)
+int sceCdStream(int lsn, int sectors, void *buf, int cmd, sceCdRMode *mode)
 {
     CdStreamCmd *sd = (CdStreamCmd *)_sceCd_ncmdsdata;
     int *p;

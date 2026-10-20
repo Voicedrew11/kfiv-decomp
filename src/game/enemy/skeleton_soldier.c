@@ -9,25 +9,11 @@
 #include "entity/entity_ai_handlers.h"
 #include "math/vu0.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "model/motion.h"
+#include "entity/entity_math.h"
 
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
-void EntityAi_StepState(void *);
-int Motion_Start(void *, int, int, u32, int);
-void EntityAi_SetState(char *, u8);
-float EntityMath_DistanceXZ(void *, void *);
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
 
 static void SkeletonSoldier_Think(Entity *entity, s32 unknown);
 static void SkeletonSoldier_Dormant(Entity *entity);
@@ -46,7 +32,7 @@ void SkeletonSoldier_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = EntityAi_OnHit;
     ai_state->move = EntityAi_Move;
@@ -80,7 +66,7 @@ void SkeletonSoldier_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The think handler: as EntityAi_Think; in state 2 with flag bit 32 set it first plays
@@ -92,7 +78,7 @@ static void SkeletonSoldier_Think(Entity *entity, s32 unknown) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {
-        EntityAi_CheckFarFromSpawn((char *)entity);
+        EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -175,7 +161,7 @@ static void SkeletonSoldier_Dormant(Entity *entity) {
         break;
     case 3:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
-            EntityAi_SetState((char *)entity, 2);
+            EntityAi_SetState(entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
             ENTITY_FLAG_BITS(entity)->bit20 = 0;
             ENTITY_FLAG_BITS(entity)->bit22 = 0;
@@ -247,11 +233,11 @@ static void SkeletonSoldier_ThinkClearFlag25Away(Entity *entity, s32 unknown) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (entity->spawn_info->spawn_mode == 3 && EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) > 180.0f) {
+    if (entity->spawn_info->spawn_mode == 3 && EntityMath_DistanceXZ(entity->model->position, &entity->spawn_info->spawn_x) > 180.0f) {
         ENTITY_FLAG_BITS(entity)->no_map_object_collision = 0;
     }
     if (entity->busy_flags == 0) {
-        EntityAi_CheckFarFromSpawn((char *)entity);
+        EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -327,7 +313,7 @@ static void SkeletonSoldier_DormantAnim18Then19(Entity *entity) {
         break;
     case 3:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
-            EntityAi_SetState((char *)entity, 2);
+            EntityAi_SetState(entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
             ENTITY_FLAG_BITS(entity)->bit20 = 0;
             ENTITY_FLAG_BITS(entity)->bit22 = 0;
@@ -367,7 +353,7 @@ static void SkeletonSoldier_ThinkNoStates(Entity *entity, s32 unknown) {
         return;
     }
     if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) != ENTITY_PARAMS_MOVEMENT_FIXED) {
-        EntityAi_CheckFarFromSpawn((char *)entity);
+        EntityAi_CheckFarFromSpawn(entity);
     }
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
@@ -404,7 +390,7 @@ static void SkeletonSoldier_ThinkDecideAttackOrWait(Entity *entity, s32 unknown)
         }
         EntityAi_LowerChoiceWeight(entity, side);
         if (entity->combat_choice == 0) {
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);

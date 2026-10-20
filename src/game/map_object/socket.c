@@ -7,10 +7,7 @@
 #include <libvu0.h>
 #include <math.h>
 #include "math/vu0.h"
-
-void Player_AddItem(int);
-extern GameStatus game_status;
-extern float player_state[];
+#include "player/player.h"
 
 /* Step 0 of the pedestals (kind 0xD: the Bridge, Binding and Release Pedestals); the item sits on part 2.
    Empty: animation 4, step 1; with bit 17 set it holds its item: animation 5, step 4. */
@@ -58,7 +55,7 @@ void MapObject_UpdateEmptyPedestal(MapObject *object) {
         origin.x = origin.y = origin.z = 0.0f;
         Vector_ApplyMatrix(&origin, part, &origin);
         Vector_ApplyMatrix(&origin, object->model->model_matrix, &origin);
-        Vector_Copy(&target, player_state);
+        Vector_Copy(&target, &player_state.position);
         target.y -= 115.0f;
         Vector_Subtract(work, &origin, &target);
         sceVu0RotMatrixX(matrix, identity_matrix, object->model->rotation.x);
@@ -154,7 +151,7 @@ void MapObject_LiftPedestalItem(MapObject *object) {
     origin.x = origin.y = origin.z = 0.0f;
     Vector_ApplyMatrix(&origin, part, &origin);
     Vector_ApplyMatrix(&origin, object->model->model_matrix, &origin);
-    Vector_Copy(&target, player_state);
+    Vector_Copy(&target, &player_state.position);
     target.y -= 115.0f;
     Vector_Subtract(work, &target, &origin);
     distance = sqrtf(((MapObjectWorkSlide *)object->work)->step.x * ((MapObjectWorkSlide *)object->work)->step.x + work->step.y * work->step.y + work->step.z * work->step.z);

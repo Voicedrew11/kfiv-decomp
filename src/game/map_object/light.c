@@ -97,5 +97,5 @@ void MapObject_StartStatusOnTouch(MapObject *object) {
 }
 
 /* Does nothing: the step a kind 10 object stays in once started (its effect comes from touching it). */
-void MapObject_IdleStatusOnTouch(void) {
+void MapObject_IdleStatusOnTouch(MapObject *object) {
 }

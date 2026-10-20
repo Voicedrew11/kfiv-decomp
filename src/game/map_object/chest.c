@@ -2,18 +2,13 @@
 #include "ui/message.h"
 #include "map_object/map_object.h"
 #include "item/gold.h"
+#include "item/item.h"
+#include "save/save_state.h"
 #include "core/game.h"
 #include "core/file.h"
 #include "sound/sound_game.h"
 
-ItemNode *MapItem_PutOutForObject(int, int, void *, void *, void *, void *);
-int MapItem_StartPickup(ModelNode *);
-void MapObject_SpawnHeldItem(MapObject *);
-ModelNode *MapItem_FindForObject(int);
 extern void (*map_object_update_hooks[])(MapObject *);
-extern u8 item_counts[];
-extern GameStatus game_status;
-extern EventRunner view_ray_status;
 
 /* Step 1 of the bones and gravestones (kind 3): used by the player, one that still holds its item spawns it
    at its point 0 (MapItem_PutOutForObject) and the player picks it up at once (MapItem_StartPickup); otherwise its name is
@@ -28,7 +23,7 @@ void MapObject_UpdateItemHolder(MapObject *object) {
     if (GAME_STATUS_FLAG_BITS(game_status_flags)->using_faced_object && faced_object[0] == object) {
         if (object->source->kind_param_0 != 0 && !(object->state_flags & MAP_OBJECT_EMPTIED)) {
             object->model->update_bone_points(object->model);
-            MapItem_StartPickup((ModelNode *)MapItem_PutOutForObject(
+            MapItem_StartPickup(MapItem_PutOutForObject(
                 MAP_OBJECT_BYTES(object)->map_slot & 1, object->source->kind_param_0, (void *)object->model->get_point(object->model, 0),
                 &object->model->rotation, &unk_value, object));
         } else if (work[0] <= 0) {
@@ -119,7 +114,7 @@ void MapObject_UpdateClosedChest(void *arg, int unused) {
         source = object->source;
         key = ((MapObjectUnk08Words *)source)->kind_param_1;
         if (key != 0) {
-            if (item_counts[key] == 0) {
+            if (item_counts.bytes[key] == 0) {
                 if (work[1] > 0) {
                     return;
                 }
@@ -178,7 +173,7 @@ void MapObject_UpdateOpeningChest(MapObject *object) {
 void MapObject_UpdateOpenChest(MapObject *object) {
     s32 *work = object->work;
     MapObjectUnk08Words *source;
-    ModelNode *pickup;
+    ItemNode *pickup;
 
     if (work[1] > 0) {
         work[1]--;
@@ -201,7 +196,7 @@ void MapObject_UpdateOpenChest(MapObject *object) {
 }
 
 /* Does nothing: step 4 of a chest, which the chest code never sets. */
-void MapObject_ChestStep4Empty(void) {
+void MapObject_ChestStep4Empty(MapObject *object) {
 }
 
 /* Signal hook of the chests: opens a closed chest (step 1) as if the player had used it, by running

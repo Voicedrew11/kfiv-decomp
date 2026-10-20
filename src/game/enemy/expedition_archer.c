@@ -11,35 +11,13 @@
 #include <math.h>
 #include "math/vu0.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_events.h"
+#include "model/motion.h"
+#include "player/player.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
-extern s32 entity_type_handlers[][2];
-int Motion_Step(void *, int);
-int Motion_BlendToPose(EntityModel *, f32);
-int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
-void EntityAi_StepState(void *);
-extern PlayerData player_state;
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-void EntityAi_ClearTurnInPlace(Entity *);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-int Motion_Start(void *, int, int, u32, int);
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
-void EntityAi_SetAttackDelay(Entity *, s32);
-void EntityEvent_OnDeath(Entity *);
-void EntityEvent_Respawn(char *);
 
 static void ExpeditionArcher_Animate(Entity *entity);
 static void ExpeditionArcher_PitchPartToPlayer(Entity *actor);
@@ -63,7 +41,7 @@ void ExpeditionArcher_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = ExpeditionArcher_Think;
     ai_state->animate = ExpeditionArcher_Animate;
     ai_state->on_hit = EntityAi_OnHit;
@@ -90,7 +68,7 @@ void ExpeditionArcher_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate; while flag bit 10 is set ExpeditionArcher_PitchPartToPlayer
@@ -109,7 +87,7 @@ static void ExpeditionArcher_Animate(Entity *entity) {
     if ((s32)((s64)(flags << 18) >> 32) & 1) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
             flags = entity->flags;
         } else {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
@@ -146,7 +124,7 @@ static void ExpeditionArcher_PitchPartToPlayer(Entity *actor) {
     float angle;
 
     if (part != NULL) {
-        angle = EntityMath_WrapAngle(atan2(player_state.position[1] - model->position.y, actor->distance_to_player));
+        angle = EntityMath_WrapAngle(atan2(player_state.position.y - model->position.y, actor->distance_to_player));
         if (DEG_TO_RAD(50) < angle) {
             angle = DEG_TO_RAD(50);
         } else if (angle < -DEG_TO_RAD(50)) {
@@ -173,7 +151,7 @@ static void ExpeditionArcher_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags != 0) {
         return;
     }
-    EntityAi_CheckFarFromSpawn((char *)entity);
+    EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -224,7 +202,7 @@ static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 1) {
                     EntityAi_StartAction(entity, ExpeditionArcher_RangedAttack1, unknown);
                 } else {
@@ -317,7 +295,7 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
             ai_state->turn_rate = 0.0f;
         }
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
-        Vector_Copy(target, player_state.position);
+        Vector_Copy(target, &player_state.position);
         target[1] -= 170.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, AIMED_SHOT_TURN_RATE, AIMED_SHOT_TURN_RATE);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
@@ -395,7 +373,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
     case 4:
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
-        Vector_Copy(target, player_state.position);
+        Vector_Copy(target, &player_state.position);
         target[1] -= 170.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, AIMED_SHOT_TURN_RATE, AIMED_SHOT_TURN_RATE);
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
@@ -456,7 +434,7 @@ static void ExpeditionArcher_Death(Entity *entity) {
                 Entity *partner = Entity_GetBySpawnId(entity->spawn_info->spawn_mode);
 
                 if (partner != NULL && ((s32)partner->flags & ENTITY_FLAG_ACTIVE_LIST)) {
-                    EntityEvent_Respawn((char *)partner);
+                    EntityEvent_Respawn(partner);
                     Vector_Copy(partner->model->position, entity->model->position);
                 }
             }

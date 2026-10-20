@@ -237,7 +237,7 @@ EXTERN = re.compile(r"^extern\b[^(\[]*?\b(\w+)\s*(?:\[[^\]]*\]\s*)*$|^extern\b.*
 
 def top_level_statements(code: str):
     """Statements at file scope that end in `;`, preprocessor lines left out."""
-    code = re.sub(r"^\s*#.*$", "", code, flags=re.M)
+    code = re.sub(r"^\s*#(?:.*\\\n)*.*$", "", code, flags=re.M)  # with continuation lines
     depth, start = 0, 0
     for i, ch in enumerate(code):
         if ch in "{(":
@@ -261,7 +261,8 @@ def local_declarations(code: str) -> list:
             m = EXTERN.match(st)
             if m:
                 names.append(m.group(1) or m.group(2))
-        elif (m := PROTOTYPE.match(st)) and not re.match(r"^(?:struct|union|enum)\s+\w+\s*$", st):
+        elif ((m := PROTOTYPE.match(st)) and not m.group(1).startswith("__")
+              and not re.match(r"^(?:struct|union|enum)\s+\w+\s*$", st)):
             names.append(m.group(1))
     return names
 

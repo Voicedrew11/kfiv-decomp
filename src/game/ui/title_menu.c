@@ -1,10 +1,8 @@
 #include "ui/title.h"
 #include "ui/menu_screens.h"
 #include "item/item.h"
-
-extern u8 item_counts[];
-extern u8 spell_levels[6][5];
-extern char fx_table[];
+#include "save/save_state.h"
+#include "player/player.h"
 
 /* The title screen's loop: runs Title_Run and the menus it leads to; 0 for a new game, 1 once a game was loaded. */
 int TitleMenu_Run(void) {
@@ -37,7 +35,7 @@ int Menu_OwnsAnyItem(void) {
     int i;
 
     for (i = 0; i < ITEM_COUNT; i++) {
-        if (item_counts[i] != 0 && (i < ITEM_KEY_FIRST || i == ITEM_KEY_UNUSED || i > ITEM_KEY_LAST) && i != 0
+        if (item_counts.bytes[i] != 0 && (i < ITEM_KEY_FIRST || i == ITEM_KEY_UNUSED || i > ITEM_KEY_LAST) && i != 0
             && i != ITEM_WEAPON_FIRST && i != ITEM_SHIELD_NONE && i != ITEM_HELM_NONE && i != ITEM_ARMOR_NONE
             && i != ITEM_GAUNTLET_NONE && i != ITEM_BOOT_NONE && i != ITEM_RING_NONE && i != ITEM_BRACELET_NONE
             && i != ITEM_AMULET_NONE && i != 0) {
@@ -47,7 +45,7 @@ int Menu_OwnsAnyItem(void) {
     return FALSE;
 }
 
-/* Whether the player knows a magic cast from the menu (fx_table unk102 == 1; the main menu's spell screen). */
+/* Whether the player knows a magic cast from the menu (fx_table item_menu_magic == 1; the main menu's spell screen). */
 int Menu_KnowsCastableSpell(void) {
     int i;
     int j;
@@ -55,7 +53,7 @@ int Menu_KnowsCastableSpell(void) {
     for (i = 0; i < 6; i++) {
         for (j = 0; j < 5; j++) {
             if (spell_levels[i][j] != 0) {
-                if (fx_table[(15 * i + 3 * j + spell_levels[i][j]) * 0x110 + 0x102] == 1) {
+                if (fx_table[15 * i + 3 * j + spell_levels[i][j]].item_menu_magic == 1) {
                     return 1;
                 }
             }

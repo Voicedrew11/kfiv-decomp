@@ -11,11 +11,6 @@
 #include <stdlib.h>
 
 
-void EffectHit_CheckAndEnd(EffectActor *effect, s8 *state);
-void EffectAngle_FromVector(float *angles, float *direction);
-int EffectHit_FindAimedEntity(EffectActor *effect, Vector4 *position, Vector4 *reference);
-
-
 /* Start handler of the kinds that do nothing of their own (kind 6 and most unused kinds): does
    nothing. */
 void EffectIdle_Start(EffectActor *effect, EffectSlot *spawn_slot) {

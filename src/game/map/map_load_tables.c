@@ -27,10 +27,4 @@ void (*screen_fade_draw_steps[4])(void) = { /* 0x38D670 what ScreenFade.draw_ste
     MapChange_FadeMapToBlack, NULL,
 };
 
-// match: gfx/screen.h's ScreenFade is 0x2C bytes, retail's screen fade 0x30
-typedef struct {
-    ScreenFade fade;                /* 0x00 */
-    int unk2C;                      /* 0x2C the four bytes retail keeps after the fade */
-} ScreenFadeSlot;                   /* 0x30 */
-
-ScreenFadeSlot screen_fade = { 0 }; /* 0x38D680 the screen fade of a map change */
+ScreenFade screen_fade = { 0 }; /* 0x38D680 the screen fade of a map change */

@@ -4,18 +4,14 @@
    (Sound_PlayFalloff), then waits EntityParams.action_frames frames before it answers another hit. Prima's
    official guide (2004): shoot the bell with a bow to ring it and destroy the skeletons. */
 #include "entity/entity.h"
+#include "sound/sound_game.h"
 #include "common.h"
 #include "math/vu0.h"
 #include "model/motion.h"
+#include "entity/entity_ai.h"
+#include "entity/entity_math.h"
+#include "player/player.h"
 
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-extern s32 entity_type_handlers[][2];
-extern PlayerData player_state;
-float EntityMath_AngleXZ(float *, char *);
-float EntityMath_WrapAngle(float);
-// match: the definition names only the three integer arguments; the floats go on to the handler it calls in their registers
-void Sound_PlayFalloff(s32, s32, s32, f32, f32, f32);
 
 static void Bell_Animate(Entity *entity);
 static void Bell_Think(Entity *entity, s32 run_now);
@@ -29,7 +25,7 @@ void Bell_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Bell_Think;
     ai_state->animate = Bell_Animate;
     ai_state->on_hit = NULL;
@@ -82,8 +78,8 @@ static void Bell_Think(Entity *entity, s32 run_now) {
     if (ENTITY_FLAG_BITS(entity)->hit_by_player) {
         if (entity->action_timer == 0) {
             entity->flags = flags | ENTITY_FLAG_20000000;
-            angle = EntityMath_AngleXZ(player_state.position, (char *)entity->model->position);
-            angle = EntityMath_WrapAngle(angle - player_state.heading);
+            angle = EntityMath_AngleXZ(&player_state.position.x, entity->model->position);
+            angle = EntityMath_WrapAngle(angle - player_state.rotation.y);
             Sound_PlayFalloff((u8)entity->params->yaw_limit_deg, (u8)entity->params->pitch_limit_deg, entity->sound_bank,
                           (f32)entity->params->sound_id, entity->distance_to_player_3d, angle);
             entity->action_timer = entity->params->action_frames;

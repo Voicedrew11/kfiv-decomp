@@ -7,24 +7,14 @@
 #include <math.h>
 #include "math/vu0.h"
 #include "model/model.h"
+#include "entity/entity_ai.h"
+#include "entity/entity_events.h"
+#include "entity/entity_math.h"
+#include "entity/entity_ai_handlers.h"
+#include "model/motion.h"
+#include "player/player.h"
 
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityEvent_Respawn(char *);
-int Motion_Start(void *, int, int, u32, int);
-extern float player_state[];
-float EntityMath_WrapAngle(float);
-float EntityMath_DistanceXZ(void *, void *);
-float EntityMath_AngleXZ(float *, char *);
-f32 EntityMath_Approach(f32, f32, f32);
-int EntityAi_LaunchShot(void *, int, void *, void *);
-void EntityEvent_StartCue(Entity *, s32, s32, s32);
-void EntityEvent_OnDeath(Entity *);
 
 static void MasterFadin_Think(Entity *entity, s32 unknown);
 static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 unknown);
@@ -40,7 +30,7 @@ void MasterFadin_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = MasterFadin_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->dormant = MasterFadin_Dormant;
@@ -64,7 +54,7 @@ void MasterFadin_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The think handler: it sets Entity.state itself and does not call EntityAi_StepState. In mode 2
@@ -94,7 +84,7 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
         for (other = active_entities_head; other != NULL; other = other->next) {
             if (other->params == entity->params && other != entity && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST)) {
                 if (!ENTITY_FLAG_BITS(other)->live || ENTITY_FLAG_BITS(other)->dying >= 3) {
-                    EntityEvent_Respawn((char *)other);
+                    EntityEvent_Respawn(other);
                 }
             }
         }
@@ -150,10 +140,10 @@ static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 unknown) {
                 Vector_Copy(angles, entity->model->rotation);
                 angles[1] = EntityMath_WrapAngle(angles[1] + PI);
             }
-            Vector_Copy(target, player_state);
+            Vector_Copy(target, &player_state.position);
             target[1] -= 190.0f;
             pitch = EntityMath_WrapAngle(-atan2(target[1] - from[1], EntityMath_DistanceXZ(from, target)));
-            yaw = EntityMath_AngleXZ(from, (char *)target);
+            yaw = EntityMath_AngleXZ(from, target);
             angles[0] = EntityMath_Approach(angles[0], pitch, entity->params->near_distance);
             angles[1] = EntityMath_Approach(angles[1], yaw, entity->params->far_distance);
             EntityAi_LaunchShot(entity, entity->params->pitch_limit_deg, from, angles);

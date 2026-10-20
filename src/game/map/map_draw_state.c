@@ -1,4 +1,5 @@
 /* The haze layers the maps are drawn with, and the map draw state. */
+#define MAP_DRAW_STATE_DEFINITION
 #include "map/map.h"
 
 /* 0x38A158 the distances of the haze layers, nearest last */

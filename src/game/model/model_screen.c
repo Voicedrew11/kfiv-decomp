@@ -55,9 +55,6 @@ typedef u32 u_long128 __attribute__((mode(TI)));
     (to).colour[1] = (from)->colour[1];                                                             \
     (to).colour[2] = (from)->colour[2];                                                             \
     (to).colour[3] = (from)->colour[3]
-void ModelScreen_QueueCutTriangle(u32 *, ModelPartVertexWords *, int, int, void *);
-void ModelScreen_StepVertices(ModelPartVertexWords *, ModelPartVertexWords *, ModelPartVertexWords *, int);
-void ModelScreen_StepFloatVertices(BlendVertex *, BlendVertex *, BlendVertex *, int);
 
 /* Looks for the triangles of a model that the GS could not draw as they are (a corner out of its
    range) but that are partly on the screen, and queues each cut up into smaller ones. */

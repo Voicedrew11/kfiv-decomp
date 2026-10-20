@@ -124,7 +124,7 @@ sceSifGetReg(unsigned int reg); /* the register number is unsigned, see sceSifRe
 int sceSifInitIopHeap(void);                            /* definition in sce/ */
 void sceSifInitRpc(int mode);                           /* definition in sce/ */
 int sceSifLoadFileReset(void);                          /* definition in sce/ */
-int sceSifLoadModule(void *name, int arglen, int args); /* definition in sce/ */
+int sceSifLoadModule(const char *name, int arglen, const char *args); /* definition in sce/ */
 int sceSifRebootIop(const char *img);
 int sceSifSetDma(struct sceSifDmaData *sdd, int len);
 unsigned int sceSifSetReg(int reg, int val); /* returns a value */

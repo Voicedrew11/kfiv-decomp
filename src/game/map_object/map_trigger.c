@@ -13,9 +13,6 @@
 /* Fade progress added each frame by the map object fade (MapObject_FadeInObject). */
 #define MAP_TRIGGER_FADE_STEP 6.6666f
 
-void Model_SetVertexColour(void *, int, int, int, int);
-extern GameStatus game_status;
-
 /* Start handler of the save point: step 1. */
 void MapObject_StartSavePoint(MapObject *object) {
     MAP_OBJECT_BYTES(object)->step = 1;
@@ -208,7 +205,7 @@ void MapObject_StartFadeObject(MapTrigger *trigger) {
 }
 
 /* Step 1 of the fading kind, at rest hidden until MapObject_SignalFadeObject starts the fade-in: empty. */
-void MapObject_KeepFadeObjectHidden(void) {
+void MapObject_KeepFadeObjectHidden(MapObject *object) {
 }
 
 /* Update handler, type 2: grows the radius (up to 100000) and steps the model's
@@ -234,7 +231,7 @@ void MapObject_FadeInObject(MapTrigger *trigger) {
 }
 
 /* Step 3 of the fading kind, at rest shown until MapObject_SignalFadeObject starts the fade-out: empty. */
-void MapObject_KeepFadeObjectShown(void) {
+void MapObject_KeepFadeObjectShown(MapObject *object) {
 }
 
 /* Update handler, type 4: grows the radius (up to 2000) and steps the model's

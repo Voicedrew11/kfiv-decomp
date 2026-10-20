@@ -16,42 +16,13 @@
 #include <math.h>
 #include "math/vu0.h"
 #include <stdlib.h>
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_ai.h"
+#include "model/motion.h"
+#include "player/player.h"
+#include "save/save_state.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
-// match: read as pointers, so that the int store to target is not taken to alias the table
-extern void *entity_type_handlers[][2];
-int Motion_Step(void *, int);
-int Motion_BlendToPose(EntityModel *, f32);
-int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-extern PlayerData player_state;
-void EntityAi_LowerWeightsAfterHit(char *);
-void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_StartAttack(Entity *, void (*)(Entity *entity), int, int, int);
-int EntityAi_CanUseRanged(Entity *, int);
-void EntityAi_SensePlayer(void *, int);
-int Motion_Start(void *, int, int, u32, int);
-// match: the size is unknown; a complete small type would be read through $gp
-extern u8 dark_succubus_fight_started[];
-void EntityAi_CheckFarFromSpawn(void *);
-void EntityAi_StepState(void *);
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-void EntityAi_ClearTurnInPlace(Entity *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-void EntityAi_SpawnBoneEffect(Entity *, s32, s32);
-int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
-void EntityAi_SetAttackDelay(Entity *, s32);
 
 static void DarkArcher_Animate(Entity *entity);
 static void DarkArcher_PitchPart2ToPlayer(Entity *entity, s32 mode);
@@ -87,8 +58,8 @@ void DarkArcher_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
-    *(s32 *)&entity->target = 0; // match: stored as an int, so it can move ahead of the params load
-    EntityAi_SetUpdate((char *)entity, (s32)entity_type_handlers[entity->params->entity_type][1]);
+    entity->target = NULL;
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     if (entity->spawn_info->spawn_mode != 0) {
         ai_state->think = DarkArcher_ThinkShootOrTurn;
         ai_state->animate = DarkArcher_Animate;
@@ -135,7 +106,7 @@ static void DarkArcher_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
@@ -168,7 +139,7 @@ static void DarkArcher_PitchPart2ToPlayer(Entity *entity, s32 mode) {
     f32 rate;
 
     if (bone != NULL) {
-        pitch = EntityMath_WrapAngle(atan2(player_state.position[1] - entity->model->position[1], entity->distance_to_player));
+        pitch = EntityMath_WrapAngle(atan2(player_state.position.y - entity->model->position[1], entity->distance_to_player));
         if (pitch > DEG_TO_RAD(60)) {
             pitch = DEG_TO_RAD(60);
         } else if (pitch < -DEG_TO_RAD(60)) {
@@ -218,7 +189,7 @@ static void DarkArcher_OnHit(Entity *entity) {
     u64 flags;
     u64 hit_strength;
 
-    EntityAi_LowerWeightsAfterHit((char *)entity);
+    EntityAi_LowerWeightsAfterHit(entity);
     ENTITY_UNK5C(entity)->as_s32 = 0;
     entity->flags &= ~ENTITY_FLAG_ATTACKING;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
@@ -234,7 +205,7 @@ static void DarkArcher_OnHit(Entity *entity) {
     } else if (hit_strength == 2) {
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
 }
 
 /* The think handler of a spawn whose EntitySpawnInfo.spawn_mode is set: no states. While the entity is
@@ -454,7 +425,7 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 ENTITY_FLAG_BITS(entity)->attacking = 1;
                 EntityAi_StartAction(entity, DarkArcher_RangedAttack, unknown);
             } else {
@@ -463,7 +434,7 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
             return;
         case 1:
             entity->target = &player_state;
-            angle = EntityMath_AngleDifference(player_state.heading, entity->heading_to_player);
+            angle = EntityMath_AngleDifference(player_state.rotation.y, entity->heading_to_player);
             if (ai_state->step_index != 0 && entity->distance_to_player < (f32)entity->params->near_distance && ABS(angle) < DEG_TO_RAD(40)) {
                 EntityAi_StartAction(entity, DarkArcher_MoveAlongArc, unknown);
                 return;

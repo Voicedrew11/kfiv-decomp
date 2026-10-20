@@ -20,4 +20,13 @@ extern f32 gold_drop_unmeasured_distance[];
 extern MapActor *map_actors_in_use;
 extern s32 map_actor_drop_counts[2];
 
+/* item/gold.c */
+void Gold_PrepareFadedDraw(OverlaySprite *sprite);
+MapActor *Gold_FindFree(int slot);
+MapActor *Gold_FindOldest(int slot);
+void Gold_LinkInUse(MapActor *actor);
+MapActor *Gold_UnlinkFromList(MapActor *actor);
+void Gold_SaveMark(MapActor *actor);
+void Gold_ClearMark(MapActor *actor);
+
 #endif

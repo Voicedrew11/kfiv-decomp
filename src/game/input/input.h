@@ -13,6 +13,7 @@ void Input_StopRumble(void);
 void Input_PauseRumble(void);
 void Input_ResumeRumble(void);
 void Input_StartupHook(void);
+void Input_ReadPort(int port);
 
 /* data still in asm */
 extern u8 rumble_active;

@@ -19,6 +19,9 @@
 #include "model/motion.h"
 #include "sound/sound_game.h"
 #include <stdlib.h>
+#include "save/save_state.h"
+#include "enemy/enemy.h"
+#include "input/pad.h"
 
 static s32 swing_magic_frames;                    /* 0x447114 frames the swing-cast magic still runs */
 static s32 swing_magic_id;                        /* 0x447118 magic id cast from the swing */
@@ -28,20 +31,10 @@ static f32 movement_top_speed;                    /* 0x447124 top walk speed thi
 
 #define SHOT_REQUEST ((Unk1B1470Request *)item_shot->attack_request)
 
-extern struct PlayerWeaponModel *held_item_model_ptr;
-
 #define WEAPON_MODEL ((ModelInstance *)held_item_model_ptr)
+#define WEAPON_AIM_MODEL ((struct PlayerWeaponModel *)held_item_model_ptr)
 #define FALL_DAMAGE_MIN_SPEED 66.666664f
 #define SCREEN_TINT_STEP_PER_FRAME (1.0f / 128.0f)
-
-extern GameStatus game_status;
-extern SoundLoadQueue sound_load_queue;
-extern u16 pad_state[];
-extern u8 item_counts[];
-extern s8 game_options[];
-extern u8 guardians_room_water_purified[];
-extern int current_map_slot;
-extern u32 frame_counter;
 
 /* The player's movement tables, tint colours, weapon tip and held item handlers (this file's scratch). */
 /* 0x413DE0 the top speed of each row of the movement tables (see movement_row) */
@@ -70,18 +63,6 @@ void (*item_step_handlers[8])(u16, u16) = {
     Player_PlayEquipSound, Player_FinishWeaponMotion,
     Player_HolsterWeapon, 0, 0, 0,
 };
-
-void Player_Move(u16 held, u16 pressed); // match: retail passes both pad words
-void Player_ApplyGroundEffects(void);
-void Player_TakeFallDamage(float);
-void Player_UpdateBreath(void);
-void Player_UpdateAilmentImmunity(void);
-void Player_UpdateStatus(void);
-
-extern u8 spell_levels[6][5];
-extern GameDefinition weapon_name_defs[70];
-extern LevelRecord weapon_level_records[70];
-extern LevelDef item_name_defs[0x17C];
 
 #define STRIDE_LENGTH 0x1400
 
@@ -215,8 +196,8 @@ void Player_Update(void) {
     if (game_status.player_control == 0 || (game_status.update_hold_flags & 1)) {
         Player_StopWalking();
     }
-    held = pad_state[0];
-    pressed = pad_state[1];
+    held = pad_state.held;
+    pressed = pad_state.pressed;
     player_previous = player_state;
 
     PLAYER_STATUS(&player_state)->running = FALSE;
@@ -271,7 +252,7 @@ void Player_Update(void) {
             case 0:
                 break;
             case 1:
-                if (item_counts[player_state.shortcut] != 0) {
+                if (item_counts.bytes[player_state.shortcut] != 0) {
                     game_status.item_to_use = player_state.shortcut;
                     game_status.bit6 = TRUE;
                 }
@@ -380,7 +361,7 @@ void Player_Update(void) {
         }
     }
     /* head bob, when the option is on */
-    if (game_options[5] != 0) {
+    if ((s8)game_options[5] != 0) { // match: retail reads the head bob option through game_options, as a signed byte
         player_state.head_bob_offset = sinf((f32)player_state.stride_phase * TWO_PI / 5120.0f) * 2.75f;
     } else {
         player_state.head_bob_offset = 0.0f;
@@ -510,8 +491,6 @@ void Player_DrawScreenTints(void) {
         GsDraw_FillScreen(0, 0, 0, player_screen_tint.death_fade_tint_alpha, 0x44);
     }
 }
-
-extern MapDrawState map_draw_state;
 
 /* Works out the colours laid over the screen (PlayerScreenTint) for the frame: which timed
    flag shows, how strong each tint is, and the map's glow. */
@@ -703,8 +682,6 @@ void Player_UpdateActions(u16 held, u16 pressed) {
     }
 }
 
-extern LevelRecord weapon_level_records[];
-
 /* Handler of a weapon that is swung: the button starts the swing; while its motion runs the
    swing hits what it reaches, plays its sound and casts the weapon's two magics when they were
    asked for in time. */
@@ -855,7 +832,7 @@ void Player_InvokeTargetHandler(u16 target_id, u16 command) {
 void Player_FireProjectile(u16 held, u16 pressed) {
     PlayerItemDef *def = &weapon_defs[player_state.weapon];
 
-    if ((attack_button & pressed) && !((s32)(player_state.status_bits >> 39) & 1) && item_counts[def->ammo_item_index] != 0) {
+    if ((attack_button & pressed) && !((s32)(player_state.status_bits >> 39) & 1) && item_counts.bytes[def->ammo_item_index] != 0) {
         ModelMotion_Select(WEAPON_MODEL, 0);
         MODEL_CHANNEL(WEAPON_MODEL)->frame = 0;
         MODEL_CHANNEL(WEAPON_MODEL)->frame_fixed = 0;
@@ -875,7 +852,6 @@ void Player_FireProjectile(u16 held, u16 pressed) {
     }
 }
 
-extern GameDefinition weapon_name_defs[];
 static u8 bow_shot_requests_lead_pad[8] __attribute__((section(".bss")));  /* 0x57A348 the eight bytes before the requests */
 static Unk1B1470Request bow_shot_requests[32];                     /* 0x57A350 the bow's requests, one per shot */
 
@@ -935,7 +911,7 @@ void Player_DrawBow(u16 held, u16 pressed) {
             ModelMotion_BlendInto(WEAPON_MODEL, 1, speed);
             MODEL_CHANNEL(WEAPON_MODEL)->blend_speed = 0;
             player_state.item_action_step++;
-            item_counts[def->ammo_item_index]--;
+            item_counts.bytes[def->ammo_item_index]--;
             return;
         }
     }
@@ -993,9 +969,9 @@ void Player_UpdateWeaponAim(void) {
     void *weapon_base;
     void *weapon_tip;
 
-    held_item_model_ptr->update_aim(held_item_model_ptr);
-    weapon_base = held_item_model_ptr->get_point(held_item_model_ptr, 0);
-    weapon_tip = held_item_model_ptr->get_point(held_item_model_ptr, 1);
+    WEAPON_AIM_MODEL->update_aim(held_item_model_ptr);
+    weapon_base = WEAPON_AIM_MODEL->get_point(held_item_model_ptr, 0);
+    weapon_tip = WEAPON_AIM_MODEL->get_point(held_item_model_ptr, 1);
     Vector_Subtract(vec, weapon_tip, weapon_base);
     Vector_Copy(weapon_tip_position, weapon_tip);
     weapon_tip_angles[0] = atan2f(-vec[1], sqrtf(vec[0] * vec[0] + vec[2] * vec[2]));

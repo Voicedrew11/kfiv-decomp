@@ -10,10 +10,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "ui/menu_draw.h"
+#include "player/player.h"
 
-extern GameStatus game_status;
-extern s32 player_state[];
-extern PlayTime current_play_time;
 
 static sceMcTblGetDir *dir_entries;     /* 0x447334 the eleven directory entries a directory request fills */
 static McIconSys *icon_sys;             /* 0x447338 */
@@ -1353,15 +1351,15 @@ static void SaveCard_FillSaveInfo(void *unused_arg0, s32 index) {
     info->exists = 1;
     info->damaged = 0;
     info->numbers[0] = save_area_name_id[0];
-    info->numbers[1] = player_state[20];
-    info->numbers[2] = player_state[21];
-    info->numbers[3] = player_state[45];
-    info->numbers[4] = player_state[22];
-    info->numbers[5] = player_state[46];
-    info->numbers[6] = player_state[23];
-    info->numbers[7] = player_state[10];
-    info->numbers[8] = player_state[11];
-    info->numbers[9] = player_state[19];
+    info->numbers[1] = player_state.experience;
+    info->numbers[2] = player_state.level;
+    info->numbers[3] = player_state.hp_now;
+    info->numbers[4] = player_state.hp_max;
+    info->numbers[5] = player_state.mp_now;
+    info->numbers[6] = player_state.mp_max;
+    info->numbers[7] = player_state.power_base;
+    info->numbers[8] = player_state.magic_base;
+    info->numbers[9] = player_state.gold;
     info->play_time = current_play_time;
     SyncDCache(save_infos, save_infos + 3);
 }

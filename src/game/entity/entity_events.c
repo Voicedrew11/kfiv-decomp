@@ -1,6 +1,7 @@
 /* What an entity sets off: shots, effects and cues on the frames of its animations, its death and its return
    to its spawn point; and the turning of a model part (bone) towards a goal. */
 #include "entity/entity_events.h"
+#include "sound/sound_game.h"
 #include "entity/entity_aim.h"
 #include "effect/shot.h"
 #include "effect/effect.h"
@@ -15,9 +16,6 @@
 #include "math/vu0.h"
 #include "model/model.h"
 #include "script/script.h"
-
-// match: Sound_PlayFalloff.c has not been given its real arguments yet
-void Sound_PlayFalloff(float, int, int, char, float, float);
 
 /* EntityMath_WrapAngle, which the game inlines here: wraps an angle to +-pi */
 static inline f32 wrap_angle(f32 angle) {
@@ -278,7 +276,7 @@ void EntityEvent_StartFrameCues(Entity *entity, s32 animation, s32 frame_from, s
             if (entity->ailment_4_frames != 0 && record->skip_while_ailing != 0) {
                 continue;
             }
-            Sound_PlayFalloff(entity->params->sound_id, record->sound, record->kind, entity->sound_bank, entity->distance_to_player_3d, angle);
+            Sound_PlayFalloff(record->sound, record->kind, entity->sound_bank, entity->params->sound_id, entity->distance_to_player_3d, angle);
         }
     }
 }
@@ -298,7 +296,7 @@ void EntityEvent_StartCue(Entity *entity, s32 unknown1, s32 unknown2, s32 skip_i
     if (entity->ailment_4_frames != 0 && skip_if_unk2A != 0) {
         return;
     }
-    Sound_PlayFalloff(entity->params->sound_id, (u8)unknown1, (u8)unknown2, entity->sound_bank, entity->distance_to_player_3d, angle);
+    Sound_PlayFalloff((u8)unknown1, (u8)unknown2, entity->sound_bank, entity->params->sound_id, entity->distance_to_player_3d, angle);
 }
 
 /* As EntityEvent_StartCue, without the unk2A test. */
@@ -314,7 +312,7 @@ void EntityEvent_StartCueAlways(Entity *entity, s32 unknown1, s32 unknown2) {
     } else if (wrapped < -PI) {
         wrapped += TWO_PI;
     }
-    Sound_PlayFalloff(entity->params->sound_id, (u8)unknown1, (u8)unknown2, entity->sound_bank, entity->distance_to_player_3d, wrapped);
+    Sound_PlayFalloff((u8)unknown1, (u8)unknown2, entity->sound_bank, entity->params->sound_id, entity->distance_to_player_3d, wrapped);
 }
 
 /* Puts the entity back at its spawn point (Entity_ResetToSpawn), sets flag bits 1 and 8 and clears bits 2-3,

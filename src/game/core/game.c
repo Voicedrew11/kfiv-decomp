@@ -13,96 +13,25 @@
 #include "stdlib.h"
 #include "ui/menu_screens.h"
 #include "ui/message.h"
+#include "item/item.h"
+#include <string.h>
+#include "gfx/gs_draw.h"
+#include "math/vu0.h"
+#include "math/camera.h"
+#include "enemy/enemy.h"
+#include "gfx/packet.h"
+#include "save/save_state.h"
+#include "sound/sound.h"
 
 /* cos 30 degrees: focus candidates must lie within this cone around the view ray */
 #define FOCUS_CONE_MIN_COS 0.86602497f
 
-extern u8 game_options[0x10];             /* the options (Game_SetDefaultOptions sets their defaults) */
-extern u8 map_script_flags[0x2000];
-extern u8 story_flags[0x40];
-extern u8 entity_group_state[0xC80];
-extern RecollectionFlags recollection_flags[50];     /* per Recollection page: which messages were heard */
-extern u8 recollection_pages[50];               /* per Recollection page: 0 not met yet, else which description it shows */
-extern u8 story_values[0x400];
-extern u8 map_visited_flags[0x10];             /* 128 flags, one bit each */
-extern u8 map_entry_flags[0x8000];           /* four flag bits per nibble, 0x100 bytes per map */
-extern u8 map_entry_counters[0x80][0x40];       /* a 4-bit counter per nibble, 128 per map */
-extern u8 map_item_pickup_counts[0x2000];
-extern u8 dropped_item_records[0xA000];
-extern u8 map_object_marks[0x5000];
-extern TriggerItemRecord trigger_items[TRIGGER_ITEM_RECORD_COUNT];
-extern u16 spell_experience[6][5];
-extern u8 spell_levels[6][5];
-extern LevelRecord weapon_level_records[70];
-extern LevelRecord worn_item_level_records[160];
-extern DefinitionByteSet item_counts;
-extern DefinitionByteSet trade_stock_1;
-extern DefinitionByteSet trade_stock_2;
-extern DefinitionByteSet trade_stock_3;
-extern DefinitionByteSet trade_stock_4;
-extern DefinitionByteSet trade_stock_5;
-extern u8 save_image[0x20000];          /* the save image */
-extern char sound_load_queue[0x28];
-extern MapSlot map_slots[];
-extern const DefinitionByteSet initial_trade_stock_1;
-extern const DefinitionByteSet initial_trade_stock_2;
-extern const DefinitionByteSet initial_trade_stock_3;
-extern const DefinitionByteSet initial_trade_stock_4;
-extern const DefinitionByteSet initial_trade_stock_5;
-extern PlayerState player_state;
-extern GameDefinition item_name_defs[380];
-extern ItemCommonDef item_common_defs[150];
-extern u8 key_item_slots[0x30];
-extern u16 forward_button, back_button, turn_right_button, turn_left_button, step_right_button, step_left_button, look_down_button;
-extern u16 look_up_button, attack_button, magic_button, action_button, menu_button, shortcut_button, pause_button;
-extern s32 saved_map_tag;
-extern volatile int current_map_slot;         // match: volatile keeps the load where the save writer reads it
-extern s32 item_drop_counter;
-extern char current_play_time[8];
-extern int fade_frames_left;                  /* frames of the fade left */
-extern int fade_frames;                  /* frames the fade takes */
-
-void *memcpy(void *, const void *, u32);
-void GsDraw_FillScreen(int, int, int, int, s64);
-extern int haze_layer_depths[8];               /* the screen depth of each haze layer */
-extern u32 haze_layer_distances[8];               /* the distances of the haze layers, nearest last */
-extern float view_ray_status[];
-extern float view_ray_previous_direction[];
-extern float view_ray_length[];
-extern sceVu0FMATRIX identity_matrix;
-extern sceVu0FMATRIX world_view_matrix;
-extern sceVu0FMATRIX world_screen_matrix;
-extern GsColor haze_sprite_color;
-extern LayerOffsets haze_layer_x_offsets;
-extern char z_value_format[];
-extern ScreenRect full_screen_rect;
-extern ScreenRect inset_screen_rect;
-extern int depth_test_sprite_z;
-extern int wobble_grid_reset;                  /* nonzero: Game_DrawWobblingScreen lays its grid out afresh */
-extern u32 haze_layer_count;                  /* the number of haze layers */
-extern u32 frame_counter;
-extern int context1_buffer_half;
 static int wobble_grid_origin[8][11][2];     /* 0x467680 the grid as laid out */
 static int wobble_grid_points[8][11][2];     /* 0x467940 the wobbling points */
 static int wobble_grid_previous[8][11][2];     /* 0x467C00 the points of the frame before */
 static float wobble_grid_forces[8][11][2];   /* 0x467EC0 the force on each point */
 static int fade_color[3];            /* 0x468180 the fade colour */
 
-void Vu0_LoadMatrix(void *);
-void Vu0_ProjectToScreen(int *, void *);
-void Vector_MultiplyComponents(float *, float *, float *);
-void Vector_Scale(float *, float *, float);
-void Vector_Subtract(float *, float *, float *);
-void Vector_Copy(void *, void *);
-void Vector_Add(void *, void *, void *);
-void Packet_AppendToChain(u32 *, u32 *);
-u32 *Packet_Alloc(int);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-void GsDraw_QueueFlush(void);
-void GsDraw_QueueTexFlush(void);
-void GsDraw_QueueTexturedSprite(void *);
 static int Game_GetObjectBit(int map, int entry, int bit);
 static void Game_SetObjectBit(int map, int entry, int bit, int value);
 
@@ -163,7 +92,7 @@ void Game_ResetProgress(void) {
     memset(spell_experience, 0, sizeof(spell_experience));
     memset(spell_levels, 0, sizeof(spell_levels));
     Menu_ClearKeyItems();
-    memset(sound_load_queue, 0, sizeof(sound_load_queue));
+    memset(&sound_load_queue, 0, sizeof(sound_load_queue));
 }
 
 /* marks what the player has equipped as found and tidies the spell tables */
@@ -602,15 +531,15 @@ void Game_WriteSaveImage(void) {
     copy_size = 0xB40;
     memcpy(save_cursor, map_item_pickup_counts, copy_size); save_cursor += copy_size;
     copy_size = 0x6C0;
-    memcpy(save_cursor, map_item_pickup_counts + 0x1680, copy_size); save_cursor += copy_size;
+    memcpy(save_cursor, map_item_pickup_counts[0x5A], copy_size); save_cursor += copy_size;
     copy_size = 0x3840;
     memcpy(save_cursor, dropped_item_records, copy_size); save_cursor += copy_size;
     copy_size = 0x21C0;
-    memcpy(save_cursor, dropped_item_records + 0x7080, copy_size); save_cursor += copy_size;
+    memcpy(save_cursor, dropped_item_records[0x5A], copy_size); save_cursor += copy_size;
     copy_size = 0x1C20;
     memcpy(save_cursor, map_object_marks, copy_size); save_cursor += copy_size;
     copy_size = 0x10E0;
-    memcpy(save_cursor, map_object_marks + 0x3840, copy_size); save_cursor += copy_size;
+    memcpy(save_cursor, &map_object_marks[0x5A], copy_size); save_cursor += copy_size;
     memcpy(save_cursor, spell_experience, 0x3C); save_cursor += 0x3C;
     memcpy(save_cursor, spell_levels, 0x1E); save_cursor += 0x1E;
     memcpy(save_cursor, weapon_level_records, 0x94C); save_cursor += 0x94C;
@@ -636,7 +565,7 @@ void Game_WriteSaveImage(void) {
     memcpy(save_cursor, (u8 *)&player_state + 0xB8, 4); save_cursor += 4;
     memcpy(save_cursor, (u8 *)&player_state + 0xD4, 4); save_cursor += 4;
     memcpy(save_cursor, (u8 *)&player_state + 0xD8, 4); save_cursor += 4;
-    map_tag = map_slots[current_map_slot].tag;
+    map_tag = map_slots[*(volatile int *)&current_map_slot].tag; // match: a volatile load keeps it where the save writer reads it
     memcpy(save_cursor, &map_tag, 4); save_cursor += 4;
     memcpy(save_cursor, key_item_slots, 0x30); save_cursor += 0x30;
     memcpy(save_cursor, &item_drop_counter, 4); save_cursor += 4;
@@ -680,7 +609,7 @@ void Game_ReadSaveImage(void) {
     u8 *save_cursor;
     int magic;
     int stored_size;
-    PlayTime play_time;
+    ClockTime play_time;
     u8 flag_bits;
     int i;
     u32 flags;
@@ -727,15 +656,15 @@ void Game_ReadSaveImage(void) {
     copy_size = 0xB40;
     memcpy(map_item_pickup_counts, save_cursor, copy_size); save_cursor += copy_size;
     copy_size = 0x6C0;
-    memcpy(map_item_pickup_counts + 0x1680, save_cursor, copy_size); save_cursor += copy_size;
+    memcpy(map_item_pickup_counts[0x5A], save_cursor, copy_size); save_cursor += copy_size;
     copy_size = 0x3840;
     memcpy(dropped_item_records, save_cursor, copy_size); save_cursor += copy_size;
     copy_size = 0x21C0;
-    memcpy(dropped_item_records + 0x7080, save_cursor, copy_size); save_cursor += copy_size;
+    memcpy(dropped_item_records[0x5A], save_cursor, copy_size); save_cursor += copy_size;
     copy_size = 0x1C20;
     memcpy(map_object_marks, save_cursor, copy_size); save_cursor += copy_size;
     copy_size = 0x10E0;
-    memcpy(map_object_marks + 0x3840, save_cursor, copy_size); save_cursor += copy_size;
+    memcpy(&map_object_marks[0x5A], save_cursor, copy_size); save_cursor += copy_size;
     memcpy(spell_experience, save_cursor, 0x3C); save_cursor += 0x3C;
     memcpy(spell_levels, save_cursor, 0x1E); save_cursor += 0x1E;
     memcpy(weapon_level_records, save_cursor, 0x94C); save_cursor += 0x94C;
@@ -1542,27 +1471,27 @@ void Game_ShiftScreenByFocusTurn(void) {
 
     texture_base = 0x1180;
     if (context1_buffer_half != 0) texture_base = 0;
-    focus_distance = view_ray_status[18] > 1000.0f ? 1000.0f : view_ray_status[18];
+    focus_distance = view_ray_status.nearest_entity_distance > 1000.0f ? 1000.0f : view_ray_status.nearest_entity_distance;
     nearest_distance_squared = focus_distance * focus_distance;
     for (entity = active_entities_head; entity != NULL; entity = entity->next) {
         if ((ENTITY_FLAG_BITS(entity)->live) == 0) continue;
         if (focus_distance < entity->distance_to_player) continue;
         Vector_Copy(offset_to_entity, entity->model->position);
         offset_to_entity[1] -= entity->height * 0.5f;
-        Vector_Subtract(offset_to_entity, offset_to_entity, view_ray_status);
+        Vector_Subtract(offset_to_entity, offset_to_entity, view_ray_status.view_origin);
         Vector_MultiplyComponents(scratch_vector, offset_to_entity, offset_to_entity);
         distance_squared = scratch_vector[0] + scratch_vector[1] + scratch_vector[2];
         if (nearest_distance_squared < distance_squared) continue;
         sceVu0Normalize(scratch_vector, offset_to_entity);
-        if (sceVu0InnerProduct(scratch_vector, view_ray_status + 4) < FOCUS_CONE_MIN_COS) continue; /* about cos 30 degrees */
+        if (sceVu0InnerProduct(scratch_vector, view_ray_status.view_direction) < FOCUS_CONE_MIN_COS) continue; /* about cos 30 degrees */
         nearest_distance_squared = distance_squared;
         focus_distance = sqrtf(distance_squared);
     }
 
     sceVu0MulMatrix(view_matrix, world_screen_matrix, identity_matrix);
     Vu0_LoadMatrix(view_matrix);
-    Vector_Scale(scratch_vector, view_ray_status + 12, focus_distance);
-    Vector_Add(scratch_vector, scratch_vector, view_ray_status + 8);
+    Vector_Scale(scratch_vector, view_ray_status.prev_view_direction, focus_distance);
+    Vector_Add(scratch_vector, scratch_vector, view_ray_status.prev_view_origin);
     scratch_vector[3] = 1.0f;
     Vu0_ProjectToScreen(screen_position, scratch_vector);
 

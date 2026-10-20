@@ -3,51 +3,15 @@
 #include "core/ini.h"
 #include "player/player.h"
 #include "core/file.h"
+#include "save/save_state.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-extern char file_load_buffer[];           /* where the file is read to */
-extern u8 item_counts[380];
-extern LevelRecord weapon_level_records[70];
-extern LevelRecord worn_item_level_records[160];
-extern u8 spell_levels[6][5];
-extern u16 spell_experience[6][5];
 
 static char *ini_cursor;          /* 0x447350 start of the next line */
 static int ini_remaining;         /* 0x447354 bytes left after ini_cursor */
 static char ini_line[0x400];      /* 0x5F9700 the line Ini_ReadLine returns */
-
-/* what reads each key of ini/NNNN.ini */
-void Ini_SetHp(char *text);
-void Ini_SetMp(char *text);
-void Ini_SetPower(char *text);
-void Ini_SetMagic(char *text);
-void Ini_SetLevel(char *text);
-void Ini_SetExp(char *text);
-void Ini_SetGold(char *text);
-void Ini_SetEquipWeapon(char *text);
-void Ini_SetEquipMagic(char *text);
-void Ini_SetEquipShield(char *text);
-void Ini_SetEquipHelm(char *text);
-void Ini_SetEquipArmor(char *text);
-void Ini_SetEquipGauntlet(char *text);
-void Ini_SetEquipBoot(char *text);
-void Ini_SetEquipRing(char *text);
-void Ini_SetEquipBracelet(char *text);
-void Ini_SetEquipAmulet(char *text);
-void Ini_SetShortcutType(char *text);
-void Ini_SetShortcut(char *text);
-void Ini_SetItem(char *text);
-void Ini_SetMagicFire(char *text);
-void Ini_SetMagicEarth(char *text);
-void Ini_SetMagicWind(char *text);
-void Ini_SetMagicWater(char *text);
-void Ini_SetMagicHoly(char *text);
-void Ini_SetMagicDark(char *text);
-void Ini_SetDebugAutoRecv(char *text);
-void Ini_SetDebugDash(char *text);
-void Ini_SetDebugMagicRapidFire(char *text);
 
 /* 0x42B810 the keys of ini/NNNN.ini and what reads each, ended by a NULL handler */
 IniKeyHandler ini_keys[30] = {
@@ -314,7 +278,7 @@ void Ini_SetItem(char *text) {
 
     if ((u32)((u8)text[-4] - '0') < 10 && text[-3] >= '0' && text[-3] <= '9' && text[-2] >= '0' && text[-2] <= '9') {
         item = atoi(text - 4);
-        item_counts[item] = atoi(text); // match: item can be 0 to 999 here; the table has 380 entries
+        item_counts.bytes[item] = atoi(text); /* item runs 0 to 999 here; the table holds 380 */
         index = item - 150;
         if ((u32)index < 70) {
             comma = strchr(text, ',');

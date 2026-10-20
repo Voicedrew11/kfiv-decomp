@@ -12,29 +12,12 @@
 #include "math/vu0.h"
 #include "model/motion.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_events.h"
+#include "player/player.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
-void EntityAi_StepState(void *);
-extern float player_state[];
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-void EntityAi_ClearTurnInPlace(Entity *);
-int EntityAi_TurnCommand(Entity *);
-int EntityAi_TurnFromPush(void *, void *);
-s32 EntityAi_MoveCommand(Entity *, s32, f32);
-void EntityEvent_OnDeath(Entity *);
-void EntityEvent_Respawn(char *);
-s32 EntityAi_CanAttack(Entity *);
 
 static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity, s32 run_now);
 static void ExpeditionSoldier_Think(Entity *entity, s32 unknown);
@@ -60,7 +43,7 @@ void ExpeditionSoldier_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     switch (entity->spawn_info->variant) {
     case 1:
     case 2:
@@ -146,7 +129,7 @@ static void ExpeditionSoldier_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags != 0) {
         return;
     }
-    EntityAi_CheckFarFromSpawn((char *)entity);
+    EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -196,7 +179,7 @@ static void ExpeditionSoldier_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
+            if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
@@ -207,14 +190,14 @@ static void ExpeditionSoldier_ThinkCombat(Entity *entity, s32 unknown) {
                 angle = EntityMath_AngleDifference(entity->heading_to_player, entity->model->rotation[1]);
                 angle = ABS(angle);
                 if (angle > DEG_TO_RAD(45)) {
-                    entity->target = player_state;
+                    entity->target = &player_state;
                     entity->action_timer = rand() % 30 + 0x3C;
                     ai_state->move_choice = 0;
                 } else {
                     ai_state->move_choice = -1;
                 }
             } else {
-                entity->target = player_state;
+                entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 0x78;
                 ai_state->move_choice = 1;
             }
@@ -310,7 +293,7 @@ static void ExpeditionSoldier_Death(Entity *entity) {
                 Entity *partner = Entity_GetBySpawnId(entity->spawn_info->spawn_mode);
 
                 if (partner != NULL && ((s32)partner->flags & ENTITY_FLAG_ACTIVE_LIST)) {
-                    EntityEvent_Respawn((char *)partner);
+                    EntityEvent_Respawn(partner);
                     Vector_Copy(partner->model->position, entity->model->position);
                 }
             }
@@ -396,7 +379,7 @@ static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown
         ExpeditionSoldier_WalkToMapObjectPosX(entity, unknown);
         return;
     }
-    EntityAi_CheckFarFromSpawn((char *)entity);
+    EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -424,7 +407,7 @@ static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
     f32 reach;
 
     if (EntityAi_CanAttack(entity)) {
-        if (EntityAi_PickAttack((char *)entity)) {
+        if (EntityAi_PickAttack(entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, 1);
@@ -505,7 +488,7 @@ static void ExpeditionSoldier_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown
         ExpeditionSoldier_WalkToMapObjectNegX(entity, unknown);
         return;
     }
-    EntityAi_CheckFarFromSpawn((char *)entity);
+    EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -530,7 +513,7 @@ static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
     f32 reach;
 
     if (EntityAi_CanAttack(entity)) {
-        if (EntityAi_PickAttack((char *)entity)) {
+        if (EntityAi_PickAttack(entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, 1);

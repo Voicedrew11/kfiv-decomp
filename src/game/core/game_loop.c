@@ -1,6 +1,8 @@
 /* The game session: resetting the systems, the main loop, drawing a frame, the camera, the sound-load
    queue, opening menus between frames with their fades, and pause. */
+#include <libgraph.h>
 #include "item/gold.h"
+#include "math/camera.h"
 #include "player/held_weapon.h"
 #include "effect/item_effect.h"
 #include "model/linked_point.h"
@@ -42,39 +44,9 @@
 #include <stdlib.h>
 #include "ui/map_viewer.h"
 #include "ui/trade.h"
+#include "core/play_time.h"
+#include "math/vu0.h"
 
-int PlayTime_Start(void);
-void PlayTime_Resume(PlayTime);
-void GameLoop_UpdateCameraShake(void);
-void GameLoop_UpdateCamera(void);
-void GameLoop_SetCameraMatrices(int, int);
-void Packet_WaitForSend(void);
-void GameLoop_OpenRequestedMenu(void);
-void GameLoop_UpdatePause(void);
-int sceGsSyncV(int);
-void Vector_Copy(void *, void *);
-void Vector_Scale(float *, float *, float);
-void Vector_Subtract(void *, void *, void *);
-void Vector_Add(void *, void *, void *);
-void GameLoop_DrawFrameWithoutHud(void);
-void GameLoop_ShowGrabbedFrame(int);
-void GameLoop_RedrawFrame(void);
-void GameLoop_ClearBothBuffers(void);
-void PlayTime_Update(void);
-extern SoundLoadQueue sound_load_queue;
-extern GameStatus game_status;
-extern u16 pad_state[];
-extern f32 world_screen_matrix[16];
-extern MapDrawStateOverlays map_draw_state;
-extern f32 scale_matrices[4][4];
-extern f32 origin_point[4];
-extern CameraState camera_state;
-extern EventRunner view_ray_status;
-extern f32 identity_matrix[16];      /* the unit matrix */
-extern f32 view_screen_matrix[16];      /* view to screen */
-extern f32 world_view_matrix[16];      /* world to view */
-extern f32 inverse_camera_rotation[16];      /* the camera's rotation, inverted */
-extern PlayTime current_play_time;
 
 /* Resets every game system for a new session; a loaded save is then applied on top. */
 void GameLoop_ResetSystems(int arg) {
@@ -146,10 +118,10 @@ void GameLoop_Run(int arg) {
             Input_Update();
         }
         if (game_status.bit12 && !game_status.bit13) {
-            if (pad_state[1] & PAD_START) {
-                pad_state[1] = 0;
+            if (pad_state.pressed & PAD_START) {
+                pad_state.pressed = 0;
                 game_status.bit13 = TRUE;
-                pad_state[0] = 0;
+                pad_state.held = 0;
             }
         }
         if (!(game_status.update_hold_flags & UPDATE_HOLD_SCRIPTS) && player_state.death_timer == 0) {
@@ -231,7 +203,7 @@ void GameLoop_DrawFrame(int arg) {
     Wobble_AdvanceSines();
     Packet_OnFrameStart();
     GsDraw_ResetDrawTarget();
-    switch (map_draw_state.mode) {
+    switch (MAP_DRAW_OVERLAYS->mode) {
     case 0:
         GameLoop_SetCameraMatrices(0, 0);
         GsDraw_QueueVu1Matrix(world_screen_matrix);
@@ -361,25 +333,25 @@ void GameLoop_DrawFrame(int arg) {
         Game_DrawWobblingScreen(red, green, blue, 0x80, tint);
     }
     Player_DrawScreenFade();
-    if (map_draw_state.bit44) {
+    if (MAP_DRAW_OVERLAYS->bit44) {
         Game_DrawHazeLayers();
     }
-    if (map_draw_state.bit41) {
+    if (MAP_DRAW_OVERLAYS->bit41) {
         Game_DrawDepthTestSprite();
     }
-    if (map_draw_state.bit42) {
+    if (MAP_DRAW_OVERLAYS->bit42) {
         Game_BlendScreenOffsetDown();
     }
-    if (map_draw_state.bit43) {
+    if (MAP_DRAW_OVERLAYS->bit43) {
         Game_BlendScreenOffsetUpDown();
     }
-    if (map_draw_state.bit40) {
+    if (MAP_DRAW_OVERLAYS->bit40) {
         Game_BlendPreviousFrame(map_draw_state.previous_frame_alpha);
     }
     if (player_state.aim_speed > 0.0f) {
         Game_BlendPreviousFrame(0x40);
     }
-    if (arg != 0 && map_draw_state.bit45) {
+    if (arg != 0 && MAP_DRAW_OVERLAYS->bit45) {
         Game_ShiftScreenByViewTurn();
     }
     GsDraw_ClearDepth();
@@ -457,7 +429,7 @@ void GameLoop_UpdateCameraShake(void) {
             camera_state.script_shake_frames--;
         }
     } else {
-        Vector_Copy(camera_state.script_shake_offset, origin_point);
+        Vector_Copy(camera_state.script_shake_offset, &origin_point);
     }
     if (camera_state.entity_shake_frames != 0 && camera_state.entity_shake_reach > 0.0f) {
         angle = (f32)(int)((f32)rand() * 360.0f / 2147483648.0f) * DEG_TO_RAD(1);
@@ -475,7 +447,7 @@ void GameLoop_UpdateCameraShake(void) {
             camera_state.entity_shake_frames--;
         }
     } else {
-        Vector_Copy(camera_state.entity_shake_offset, origin_point);
+        Vector_Copy(camera_state.entity_shake_offset, &origin_point);
     }
 }
 
@@ -905,9 +877,9 @@ void GameLoop_ClearBothBuffers(void) {
 
 /* Pause: when the pause button is pressed, holds the game until it is pressed again. */
 void GameLoop_UpdatePause(void) {
-    PlayTime play_time;
+    ClockTime play_time;
 
-    if (pad_state[1] & pause_button) {
+    if (pad_state.pressed & pause_button) {
         PlayTime_Update();
         game_status.paused = TRUE;
         play_time = current_play_time;
@@ -931,7 +903,7 @@ void GameLoop_UpdatePause(void) {
             while (sceGsSyncV(0) != 1) {
             }
             Input_Update();
-        } while (!(pad_state[1] & pause_button));
+        } while (!(pad_state.pressed & pause_button));
         Input_ResumeRumble();
         game_status.paused = FALSE;
         Packet_SendChain();

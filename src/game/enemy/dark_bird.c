@@ -16,36 +16,12 @@
 #include "model/model.h"
 #include "model/motion.h"
 #include <stdlib.h>
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_ai.h"
+#include "entity/entity_math.h"
+#include "player/player.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-extern s32 entity_type_handlers[][2];
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void EntityAi_SensePlayer(void *, int);
-int EntityAi_StartSlotMotion(void *, void *, int, int, int, int, int);
-void EntityAi_CheckFarFromSpawn(void *);
-void EntityAi_StepState(void *);
-extern PlayerData player_state;
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
-int EntityAi_PickAttack(char *);
-int EntityAi_TurnFromPush(void *, void *);
-float EntityMath_HeadingTo(float *, float *);
-float EntityMath_AngleDifference(float, float);
-void EntityAi_SetState(char *, u8);
-float EntityMath_WrapAngle(float);
-s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
-void EntityAi_SetAttackDelay(Entity *entity, s32 base);
-float EntityMath_DistanceXZ(void *, void *);
-float EntityMath_AngleXZ(float *, char *);
-f32 EntityMath_Approach(f32, f32, f32);
-int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
-void EntityAi_LowerWeightsAfterHit(char *);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-int EntityAi_StepSlotMotion(Entity *, EntityMotionSlot *, int, f32);
-int EntityAi_LookAtPoint(void *, int, int, int, int, float);
-int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 
 static void DarkBird_Think(Entity *entity, s32 unknown);
 static void DarkBird_ThinkCombat(Entity *entity, s32 unknown);
@@ -81,7 +57,7 @@ void DarkBird_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = DarkBird_Think;
     ai_state->animate = DarkBird_Animate;
     ai_state->on_hit = DarkBird_OnHit;
@@ -136,7 +112,7 @@ static void DarkBird_Think(Entity *entity, s32 unknown) {
         entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
     }
     if (!(entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_HEAVY | ENTITY_BUSY_ATTACK))) {
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_1, 1, 3, 0, entity->params->motion_blend_frames, 0);
+        EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_1, 1, 3, 0, entity->params->motion_blend_frames, 0);
     }
     if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn(entity);
@@ -258,8 +234,8 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (EntityAi_PickAttack((char *)entity)) {
-                if (player_state.position[1] - entity->model->position[1] < 200.0f) {
+            if (EntityAi_PickAttack(entity)) {
+                if (player_state.position.y - entity->model->position[1] < 200.0f) {
                     entity->target = &player_state;
                     entity->action_timer = rand() % 30 + 0x1E;
                     ai_state->steer_to_target = 0;
@@ -270,7 +246,7 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 unknown) {
                     return;
                 }
             } else {
-                height = player_state.position[1] - entity->model->position[1];
+                height = player_state.position.y - entity->model->position[1];
                 if (100.0f < height && height < 400.0f) {
                     EntityAi_StartAction(entity, DarkBird_MeleeAttack, unknown);
                 } else {
@@ -389,8 +365,8 @@ static void DarkBird_ThinkIdle(Entity *entity, s32 unknown) {
    does the turning and the moving. */
 static void DarkBird_Move(Entity *entity) {
     entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
-    EntityAi_StartSlotMotion(entity, entity->ai_state.motion_slot_0, 0, 3, 0, entity->params->motion_blend_frames, 0);
-    EntityAi_StartSlotMotion(entity, entity->ai_state.motion_slot_1, 1, 3, 0, entity->params->motion_blend_frames, 0);
+    EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)entity->ai_state.motion_slot_0, 0, 3, 0, entity->params->motion_blend_frames, 0);
+    EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)entity->ai_state.motion_slot_1, 1, 3, 0, entity->params->motion_blend_frames, 0);
 }
 
 /* Carries out the movement command in Entity.move_command; DarkBird_Think and
@@ -546,7 +522,7 @@ static void DarkBird_DormantMoveToCircle(Entity *entity) {
     case 1:
         if (entity->distance_to_player < (f32)entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
             ENTITY_FLAG_BITS(entity)->hit_strength = 0;
-            EntityAi_SetState((char *)entity, 2);
+            EntityAi_SetState(entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
             ENTITY_FLAG_BITS(entity)->bit22 = 0;
             ENTITY_FLAG_BITS(entity)->no_wall_collision = 0;
@@ -584,8 +560,8 @@ static void DarkBird_ApproachForMelee(Entity *entity) {
     entity->busy_flags |= (ENTITY_BUSY_1000 | ENTITY_BUSY_2000);
     switch (entity->action_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_0, 0, 3, 0, entity->params->motion_blend_frames, 0);
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_1, 1, 3, 0, entity->params->motion_blend_frames, 0);
+        EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_0, 0, 3, 0, entity->params->motion_blend_frames, 0);
+        EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_1, 1, 3, 0, entity->params->motion_blend_frames, 0);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         ENTITY_FLAG_BITS(entity)->attacking = 1;
         ENTITY_FLAG_BITS(entity)->look_at_target = 1;
@@ -594,7 +570,7 @@ static void DarkBird_ApproachForMelee(Entity *entity) {
         entity->action_step++;
     case 1:
         if (entity->distance_to_player < entity->radius + 250.0f + 100.0f) {
-            f32 above = player_state.position[1] - entity->model->position[1];
+            f32 above = player_state.position.y - entity->model->position[1];
 
             if (100.0f < above && above < 400.0f) {
                 entity->busy_flags = 0;
@@ -624,7 +600,7 @@ static void DarkBird_ApproachForMelee(Entity *entity) {
             // match: retail passes two more arguments here and takes the result as 16 bits
             entity->move_command = DarkBird_SteerToTargetCommand(entity, 0, 0.0f);
         }
-        height = player_state.position[1] - entity->model->position[1];
+        height = player_state.position.y - entity->model->position[1];
         if (height < 200.0f || ENTITY_FLAG_BITS(entity)->on_floor == 1 || ENTITY_FLAG_BITS(entity)->wall_push == 1) {
             ai_state->climb_command = 2;
         } else if (400.0f < height || ENTITY_FLAG_BITS(entity)->bit46 == 1) {
@@ -647,8 +623,8 @@ static void DarkBird_MeleeAttack(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_0, 0, kind | ENTITY_MOTION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->attack_index | ENTITY_MOTION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
+        EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_0, 0, kind | ENTITY_MOTION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
+        EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->attack_index | ENTITY_MOTION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
@@ -724,8 +700,8 @@ static void DarkBird_RangedAttack(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_0, 0, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
+        EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_0, 0, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
+        EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
@@ -764,7 +740,7 @@ static void DarkBird_RangedAttack(Entity *entity) {
                 }
                 if (launch_frame != 0 && elapsed < launch_frame && frame >= launch_frame) {
                     point = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0);
-                    angles[0] = EntityMath_WrapAngle(-atan2(player_state.position[1] - point[1], EntityMath_DistanceXZ(point, &player_state)));
+                    angles[0] = EntityMath_WrapAngle(-atan2(player_state.position.y - point[1], EntityMath_DistanceXZ(point, &player_state.position.x)));
                     if (!(rand() & 1)) {
                         angles[1] = EntityMath_WrapAngle(entity->model->rotation[1] + PI + DEG_TO_RAD((f32)(rand() % 15)));
                     } else {
@@ -840,7 +816,7 @@ static s32 DarkBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
             }
             if (target != NULL) {
                 pitch = EntityMath_WrapAngle(-atan2(target[1] - from[1], EntityMath_DistanceXZ(from, target)));
-                yaw = EntityMath_AngleXZ(from, (char *)target);
+                yaw = EntityMath_AngleXZ(from, target);
                 angles[0] = EntityMath_Approach(angles[0], pitch, pitch_rate);
                 angles[1] = EntityMath_Approach(angles[1], yaw, yaw_rate);
             }
@@ -877,7 +853,7 @@ static s32 DarkBird_LaunchThreeShots(Entity *entity, EntityParamsUnk3D8Full *rec
 /* The on_hit handler: as EntityAi_OnHit with the type's own two reactions; a light hit starts
    DarkBird_ReactionLight whether flag bit 19 is set or not. */
 static void DarkBird_OnHit(Entity *entity) {
-    EntityAi_LowerWeightsAfterHit((char *)entity);
+    EntityAi_LowerWeightsAfterHit(entity);
     entity->target = NULL;
     entity->flags &= ~ENTITY_FLAG_ATTACKING;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
@@ -886,7 +862,7 @@ static void DarkBird_OnHit(Entity *entity) {
     } else if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_SetReaction(entity, DarkBird_ReactionHeavy, 0);
     }
-    EntityAi_SetState((char *)entity, 2);
+    EntityAi_SetState(entity, 2);
 }
 
 /* The reaction to a light hit (busy bit 2): as EntityAi_ReactionLight, on the motion slots
@@ -898,8 +874,8 @@ static void DarkBird_ReactionLight(Entity *entity) {
     switch (entity->reaction_step) {
     case 0:
         EntityEvent_StartFrameCues(entity, 0xE, 0, 0);
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_0, 0, 0xE, 0, 5, 1);
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_1, 1, 3, 0, 5, 0);
+        EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_0, 0, 0xE, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_1, 1, 3, 0, 5, 0);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
@@ -940,8 +916,8 @@ static void DarkBird_ReactionHeavy(Entity *entity) {
     entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_0, 0, 0xF, 0, 5, 1);
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_1, 1, 0xF, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_0, 0, 0xF, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_1, 1, 0xF, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
@@ -992,8 +968,8 @@ static void DarkBird_Death(Entity *entity) {
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_0, 0, 0x10, 0, 5, 1);
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_1, 1, 0x10, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_0, 0, 0x10, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_1, 1, 0x10, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {

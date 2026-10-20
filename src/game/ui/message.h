@@ -116,4 +116,7 @@ void Message_ClearNotices(void);
 void Message_CloseBox(void);
 int Message_GetText(int message_id);
 
+/* ui/message.c */
+int Message_SplitDigits(int value, u8 *digits);
+
 #endif

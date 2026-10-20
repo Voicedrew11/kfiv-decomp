@@ -7,12 +7,7 @@
 #include <libvu0.h>
 #include <math.h>
 #include "math/vu0.h"
-
-void MapObject_ShowMarkerStone(MapObject *, int);
-void Player_AddItem(int);
-extern GameStatus game_status;
-extern float player_state[];
-extern EventRunner view_ray_status;
+#include "player/player.h"
 
 /* Step 0 of the Guide Stone markers (kind 0x13); the stone sits on part 2. One that starts holding a stone
    keeps it only while the map's flag block still records a stone for it (Game_GetTriggerItem), and its model shows
@@ -69,7 +64,7 @@ void MapObject_UpdateEmptyMarker(MapObject *object) {
         MapObject_RebuildMatrices(object);
         Vector_Copy(&origin, part->position);
         origin.w = 1.0f;
-        Vector_Copy(&target, player_state);
+        Vector_Copy(&target, &player_state.position);
         target.w = 1.0f;
         target.y -= 220.0f;
         Matrix_Multiply(matrix, object->model->model_matrix, part);
@@ -164,7 +159,7 @@ void MapObject_LiftMarkerStone(MapObject *object) {
     object->model->update_bone_points(object->model);
     point = (void *)object->model->get_point(object->model, 0);
     Vector_Copy(&origin, point);
-    Vector_Copy(&target, player_state);
+    Vector_Copy(&target, &player_state.position);
     target.y -= 115.0f;
     Vector_Subtract(work, &target, &origin);
     distance = sqrtf(((MapObjectWorkKind121DA8 *)object->work)->step.x * ((MapObjectWorkKind121DA8 *)object->work)->step.x + work->step.y * work->step.y + work->step.z * work->step.z);

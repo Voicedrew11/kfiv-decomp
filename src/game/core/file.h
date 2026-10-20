@@ -5,15 +5,10 @@
 #define KF_FILE_H
 
 #include "common.h"
+#include <libcdvd.h>
 
-typedef struct {
-    u8 trycount;
-    u8 spindlctrl;
-    u8 datapattern;
-    u8 pad;
-} sceCdRMode;
-
-typedef struct {
+/* the file record sceCdSearchFile fills in (libcdvd.h leaves its body to the caller) */
+typedef struct sceCdlFILE {
     u32 lsn;
     u32 size;
     char name[16];
@@ -55,7 +50,8 @@ typedef struct {
 extern int file_layer_locked;   /* file layer locked */
 extern int kf4_directory_words[2];       /* [1] the KF4.DAT header, [2] its entries, [3] the fade direction (core/game.c); 8 bytes keeps it $gp-relative */
 extern KFFile file_slots[2];
-extern char archive_toc[];       /* the KF4.DAT table of contents */
+extern char archive_toc[];
+extern char file_load_buffer[0x100000];  /* where whole files are read to (core/load_buffer.c) */       /* the KF4.DAT table of contents */
 
 int KF_File_Open(char *name, int nowait, int pack, int unused);
 int File_Close(int fd);
@@ -69,11 +65,6 @@ char *strcpy(char *, const char *);
 char *strcat(char *, const char *);
 int strcasecmp(const char *, const char *);
 void *memset(void *, int, u32);
-int sceCdSearchFile(sceCdlFILE *, const char *);
-int sceCdRead(int lsn, int sectors, void *buf, sceCdRMode *mode);
-int sceCdSeek(int lsn);
-int sceCdSync(int mode);
-int sceCdGetError(void);
 
 /* core/file.c */
 void File_InitDrive(void);

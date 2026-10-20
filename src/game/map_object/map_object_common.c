@@ -7,8 +7,7 @@
 #include "model/model_matrix.h"
 #include "model/motion.h"
 #include "sound/sound_game.h"
-
-extern int sound_load_queue[0x28 / 4];
+#include "sound/sound.h"
 
 /* Offset hook of every kind: moves the model and the object's source position by offset. */
 void MapObject_MoveByOffset(MapObject *object, void *offset) {
@@ -42,7 +41,7 @@ void MapObject_UpdateScenery(MapObject *object) {
                 if ((MAP_OBJECT_BYTES(object)->map_slot & 1) != current_map_slot) {
                     object->work[0] = 0;
                 }
-            } else if ((MAP_OBJECT_BYTES(object)->map_slot & 1) == current_map_slot && sound_load_queue[4] == 0 && sound_load_queue[5] == 0) {
+            } else if ((MAP_OBJECT_BYTES(object)->map_slot & 1) == current_map_slot && sound_load_queue.pending_map_slot == NULL && sound_load_queue.next_map_slot == NULL) {
                 Sound_StartTaggedAt(source->kind_param_0, source->kind_param_2, source->kind_param_1, source->kind_param_3, (Vector4Arg *)&object->model->position);
                 object->work[0] = 1;
             }
@@ -140,14 +139,14 @@ void MapObject_RebuildMatrices(MapObject *object) {
 }
 
 /* Item hook of the kinds that take no item: returns FALSE (the item is not used). */
-int MapObject_RefuseItem(void) {
+int MapObject_RefuseItem(MapObject *object, int item) {
     return 0;
 }
 
 /* Does nothing: the signal hook of the kinds that take no signal. */
-void MapObject_IgnoreSignal(void) {
+void MapObject_IgnoreSignal(MapObject *object, int turn_on) {
 }
 
 /* Does nothing: the set-up hook of the kinds that need none. */
-void MapObject_SkipSetUp(void) {
+void MapObject_SkipSetUp(MapObject *object) {
 }

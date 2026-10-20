@@ -19,8 +19,6 @@
 #include <stdio.h>
 
 extern void (*map_load_steps[])(void);
-void Packet_WaitForSend(void);
-void MapLoad_FinishAndEnter(void);
 
 /* Resets the background map load and the pending request. */
 void MapLoad_Reset(void) {

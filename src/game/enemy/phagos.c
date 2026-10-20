@@ -11,19 +11,10 @@
 #include "entity/entity_math.h"
 #include "math/vu0.h"
 #include <stdlib.h>
+#include "entity/entity_ai.h"
+#include "entity/entity_ai_choice.h"
+#include "model/motion.h"
 
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
-extern s32 entity_type_handlers[][2];
-int Motion_Step(void *, int);
-int Motion_BlendToPose(EntityModel *, f32);
-void EntityAi_LowerWeightsAfterHit(char *);
-int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-void EntityAi_SetState(char *, u8);
-void EntityAi_SensePlayer(void *, int);
-int Motion_Start(void *, int, int, u32, int);
 
 static void Phagos_Animate(Entity *entity);
 static void Phagos_OnHit(Entity *entity);
@@ -38,7 +29,7 @@ void Phagos_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Phagos_Think;
     ai_state->animate = Phagos_Animate;
     ai_state->on_hit = Phagos_OnHit;
@@ -75,7 +66,7 @@ static void Phagos_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
@@ -85,9 +76,9 @@ static void Phagos_Animate(Entity *entity) {
 /* The on_hit handler: every hit starts EntityAi_ReactionLight, whatever its strength, and puts the
    entity in state 3; the target and flag bits 9 and 10 are left as they are. */
 static void Phagos_OnHit(Entity *entity) {
-    EntityAi_LowerWeightsAfterHit((char *)entity);
+    EntityAi_LowerWeightsAfterHit(entity);
     EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);
-    EntityAi_SetState((char *)entity, 3);
+    EntityAi_SetState(entity, 3);
 }
 
 /* The think handler: no states. While the entity is not busy it starts Phagos_RunAwayAndRemove; it

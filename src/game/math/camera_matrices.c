@@ -14,7 +14,7 @@ f32 world_view_spare_matrix[0x10] = { 0 }; /* 0x4323A0 set to identity by Displa
 
 f32 world_screen_matrix[0x60] = { 0 };     /* 0x4323E0 world to screen: view_screen_matrix times world_view_matrix */
 
-f32 projection_matrix[0x10] = { 0 };       /* 0x432560 a perspective projection (Display_BuildProjection) */
+f32 projection_matrix[4][4] = { 0 };       /* 0x432560 a perspective projection (Display_BuildProjection) */
 
 f32 camera_state[0x12] = { 0 };            /* 0x4325A0 the camera (CameraState) up to its word at 0x48 */
 

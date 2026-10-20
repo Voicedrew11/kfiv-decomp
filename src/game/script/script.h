@@ -647,6 +647,8 @@ extern ScriptCommandHandler script_general_command_handlers[];
 extern u8 *script_game_var_blocks[];
 extern ScriptCommandHandler script_world_command_handlers[];
 extern ScriptCommandHandler script_entity_command_handlers[];
+extern u32 script_spare_var_block_a[0x10];
+extern u32 script_spare_var_block_b[0x10];
 
 /* script/script_world.c */
 void ScriptCmd_OpenMenu(ScriptThreadCommand *command);
@@ -737,5 +739,13 @@ void ScriptCmd_IsScriptRunning(ScriptQueryCommand *command);
 
 /* data still in asm */
 extern char script_error_flags[];
+
+/* script/script.c */
+int Script_StoreFloatResult(ScriptArg *target, f32 value);
+// match: script_entity.c and script_world.c call it with no prototype in scope, so the value goes as a double
+#define SCRIPT_STORE_FLOAT_RESULT(target, value) ((int (*)())Script_StoreFloatResult)(target, value)
+
+/* script/script_entity.c */
+int ScriptCmd_BlendEntityMotion(ScriptMotionBlendCommand *command);
 
 #endif

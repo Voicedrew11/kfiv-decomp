@@ -1,7 +1,11 @@
 /* What main runs at start-up, and the movies: the system set-up (System_Init), the display set-up
    (Display_Init) and the opening and ending movies (Movie_). core/memory.c and core/display.c follow it; System_Init
    and Display_Init call into core/display.c, so the three were probably one source file. */
+#include <libgraph.h>
+#include <libsdr.h>
+#include <libdev.h>
 #include "core/system.h"
+#include "math/camera.h"
 #include "core/display.h"
 #include "core/game.h"
 #include "input/pad.h"
@@ -20,20 +24,7 @@
 #include "sound/sound.h"
 #include "sound/sound_game.h"
 
-extern f32 world_view_matrix[16];
-extern f32 world_view_spare_matrix[16];
-extern f32 projection_matrix[4][4];
 
-void Packet_WaitForSend(void);
-int sceGsSyncV(int);
-void sceDevVif0Reset(void);
-void sceDevVif1Reset(void);
-int sceDevVu0Pause();
-int sceDevVu0SetTBit();
-int sceGsResetGraph(int, int, int, int);
-int sceGsResetPath();
-int sceSdRemoteInit();
-void sceGsSetDefDBuff(void *, s16, s16, s16, s16, s16, s16);
 
 /* The opening movie's per-frame callback (given to Movie_Play by Movie_PlayOpening): polls the controller
    and returns TRUE, ending the movie, when START is pressed. */
@@ -126,7 +117,7 @@ void System_Init(void) {
 /* Sets up the game's two double buffers (the second one draws through GS context 2), the view
    matrices and the projection. */
 void Display_Init(void) {
-    sceGsSetDefDBuff(&game_dbuff, 0, 0x280, 0x1C0, 3, 0x3A, 1);
+    sceGsSetDefDBuff((sceGsDBuff *)&game_dbuff, 0, 0x280, 0x1C0, 3, 0x3A, 1);
     game_dbuff.disp[0].dispfb.fbp = 0;
     game_dbuff.disp[1].dispfb.fbp = 0x8C;
     game_dbuff.draw0.frame.fbp = 0x8C;
@@ -139,7 +130,7 @@ void Display_Init(void) {
     context1_buffer_half = 0;
     display_spare_buffer_half = 0;
     game_dbuff.clear1.rgbaq = game_dbuff.clear0.rgbaq = 0x100000000L;
-    sceGsSetDefDBuff(&game_dbuff_context2, 0, 0x280, 0x1C0, 3, 0x3A, 1);
+    sceGsSetDefDBuff((sceGsDBuff *)&game_dbuff_context2, 0, 0x280, 0x1C0, 3, 0x3A, 1);
     game_dbuff_context2.disp[0].dispfb.fbp = 0;
     game_dbuff_context2.disp[1].dispfb.fbp = 0x8C;
     game_dbuff_context2.draw0.frame.fbp = 0x8C;

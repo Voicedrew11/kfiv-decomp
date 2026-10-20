@@ -6,8 +6,7 @@
 #include "math/camera.h"
 #include "math/vu0.h"
 #include "model/model_matrix.h"
-
-extern float player_state[];
+#include "player/player.h"
 
 /* Start handler of the kind that fades with the distance to the player: takes
    the two distances and the two alphas from its source and starts invisible. */
@@ -42,7 +41,7 @@ void MapObject_UpdateDistanceFade(MapObject *object) {
         object->model->alpha = 127.0f;
         return;
     }
-    Vector_Subtract(&delta, &object->model->position, player_state);
+    Vector_Subtract(&delta, &object->model->position, &player_state.position);
     distance = sqrtf(delta.x * delta.x + delta.z * delta.z);
     if (distance < work->near_distance) {
         object->model->alpha = work->near_alpha;
@@ -93,7 +92,7 @@ void MapObject_RebuildBillboardMatrices(MapObject *object) {
     for (; i < part_count; i++) {
         Matrix_Multiply(matrix, object->model->model_matrix, part);
         Vector_ApplyMatrix(&world, matrix, &unit);
-        Vector_Subtract(&delta, camera_state, &world);
+        Vector_Subtract(&delta, &camera_state, &world);
         pitch = atan2f(delta.y, sqrtf(delta.x * delta.x + delta.z * delta.z));
         yaw = atan2f(-delta.x, -delta.z);
         part->position[0] = world.x;

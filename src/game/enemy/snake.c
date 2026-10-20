@@ -14,20 +14,10 @@
 #include "math/vu0.h"
 #include "save/save_state.h"
 #include "script/script.h"
+#include "entity/entity_ai.h"
+#include "model/motion.h"
+#include "entity/entity_math.h"
 
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(Entity *);
-extern s32 entity_type_handlers[][2];
-int Motion_Start(void *, int, int, u32, int);
-void EntityAi_SetState(char *, u8);
-void EntityMath_FacingVector(Vector4 *, float);
-float EntityMath_DistanceXZ(void *, void *);
-void EntityAi_SensePlayer(void *, int);
-void EntityAi_CheckFarFromSpawn(char *);
 
 static void Snake_DormantHoldAnim2(Entity *entity);
 static void Snake_DormantHoldAnim8ThenMove(Entity *entity);
@@ -49,7 +39,7 @@ void Snake_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Snake_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = EntityAi_OnHit;
@@ -82,7 +72,7 @@ void Snake_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The dormant action of a spawn in mode 0 (EntitySpawnInfo.spawn_mode is 0; busy bit 0x20): holds
@@ -124,7 +114,7 @@ static void Snake_DormantHoldAnim2(Entity *entity) {
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
-            EntityAi_SetState((char *)entity, 2);
+            EntityAi_SetState(entity, 2);
             ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
             ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
@@ -205,7 +195,7 @@ static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
         break;
     case 4:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
-            EntityAi_SetState((char *)entity, 2);
+            EntityAi_SetState(entity, 2);
             ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
             ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
             ENTITY_FLAG_BITS(entity)->no_second_wall_collision = FALSE;
@@ -254,8 +244,8 @@ static void Snake_Dormant(Entity *entity) {
         }
         break;
     case 2:
-        if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) >= (f32)entity->params->type_param_0) {
-            EntityAi_SetState((char *)entity, 2);
+        if (EntityMath_DistanceXZ(entity->model->position, &entity->spawn_info->spawn_x) >= (f32)entity->params->type_param_0) {
+            EntityAi_SetState(entity, 2);
             ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
             ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
@@ -294,7 +284,7 @@ static void Snake_Think(Entity *entity, s32 unknown) {
     }
     if (entity->busy_flags == 0) {
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) != ENTITY_PARAMS_MOVEMENT_FIXED) {
-            EntityAi_CheckFarFromSpawn((char *)entity);
+            EntityAi_CheckFarFromSpawn(entity);
         }
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {

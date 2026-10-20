@@ -36,33 +36,6 @@
     }
 #define SHOT_REQUEST ((Unk1B1470Request *)shot->attack_request)
 
-s32 Attack_RunSphere(Unk1B1470Request *, Unk1B1470Extra *);
-int Attack_RunShape1Stub(void);
-int Attack_RunShape2Stub(void);
-s32 Attack_RunSwept(Unk1B1470Request *, Unk1B1470Extra *);
-void Attack_HitPlayer(Unk1B1470Request *, Unk1B1470Extra *);
-void Attack_HitEntity(Unk1B1470Request *, Unk1B1470Extra *, Entity *, f32);
-void Attack_HitMapObject(Unk1B1470Request *, Unk1B1470Extra *, MapObject *);
-int Attack_HitMap(Unk1B1470Request *, Unk1B1470Extra *);
-void Collision_SphereCylinder(void *, void *, f32, f32, f32);
-void Collision_CylinderArc(void *, void *, f32, f32, f32, f32, f32, f32);
-void Collision_CylinderArcPitch(void *, void *, f32, f32, f32, f32, f32, f32, f32, f32, f32);
-void Attack_GetEffectiveStrengths(EntityParamsUnk240PartUnk00 *, Unk1B1470Request *, Unk1B1470Extra *);
-int Attack_StrengthDamageToPlayer(int, int, int);
-void Attack_WearArmorFromHit(int, Unk1B1470Request *);
-int Attack_StrengthDamage(int, int, int, int);
-void Attack_RollEntityAilments(Entity *, EntityParamsUnk240PartUnk12 *);
-
-// match: declared without a size, so it is not addressed through $gp
-extern CollisionListPick2 map_hit_floor_strip_lists[];
-// match: declared without a size, so it is not addressed through $gp
-extern CollisionListPick2 map_hit_wall_strip_lists[];
-extern GameStatus game_status;
-extern LevelDef weapon_name_defs[];
-
-int Attack_TestMapModel(ModelInstance *, void *, f32);
-int Attack_TestMapModelFloors(ModelInstance *, void *, f32);
-int Attack_TestMapModelWalls(ModelInstance *, void *, f32);
 
 /* 0x402D88 the three hit checks of a swing, one per kind of collision shape class */
 int (*swing_hit_checks[3])(ModelInstance *, void *, f32) = { Attack_TestMapModel, Attack_TestMapModelFloors, Attack_TestMapModelWalls };
@@ -141,7 +114,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     }
     if (request->target_mask & HIT_TARGET_PLAYER) {
         if (!((request->target_mask & HIT_TARGET_SKIP_OWNER) && IS_PLAYER(request->owner))) {
-            Collision_SphereCylinder(&player_state, request, 50.0f, 230.0f, request->radius);
+            Collision_SphereCylinder(&player_state.position.x, request->position, 50.0f, 230.0f, request->radius);
             if (COLLISION_RESULT->hit != 0) {
                 Attack_HitPlayer(request, extra);
                 return 1;
@@ -166,7 +139,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                 if (ENTITY_PARAMS_IS_SPHERE(entity->params)) {
                     Collision_SphereSphere(entity->model->position, request, entity->radius, request->radius);
                 } else {
-                    Collision_SphereCylinder(entity->model->position, request, entity->radius, entity->height, request->radius);
+                    Collision_SphereCylinder(entity->model->position, request->position, entity->radius, entity->height, request->radius);
                 }
                 if (COLLISION_RESULT->hit != 0) {
                     Attack_HitEntity(request, extra, entity, 1.0f);
@@ -182,7 +155,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                     }
                     point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->flags_or_model_point.point);
                     if (!(body->flags_or_model_point.flags & ENTITY_BODY_ROUND)) {
-                        Collision_SphereCylinder(point, request, body->radius * scale, body->height * ENTITY_MODEL(entity)->scale_y,
+                        Collision_SphereCylinder(point, request->position, body->radius * scale, body->height * ENTITY_MODEL(entity)->scale_y,
                                       request->radius);
                     } else {
                         Collision_SphereSphere(point, request, body->radius * scale, request->radius);
@@ -291,7 +264,7 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
 
     if (request->target_mask & HIT_TARGET_PLAYER) {
         if (!((request->target_mask & HIT_TARGET_SKIP_OWNER) && IS_PLAYER(request->owner))) {
-            Collision_CylinderArc(&player_state, request, 50.0f, 230.0f, request->radius, request->height, request->half_angle,
+            Collision_CylinderArc(&player_state.position.x, request->position, 50.0f, 230.0f, request->radius, request->height, request->half_angle,
                           request->facing);
             if (COLLISION_RESULT->hit != 0) {
                 Attack_HitPlayer(request, extra);
@@ -315,11 +288,11 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             }
             if (!(entity->params->flags & ENTITY_PARAMS_FLAG_HIT_BODY_POINTS)) {
                 if (IS_PLAYER(request->owner)) {
-                    Collision_CylinderArcPitch(entity->model->position, request, entity->radius, entity->height, request->radius,
+                    Collision_CylinderArcPitch(entity->model->position, request->position, entity->radius, entity->height, request->radius,
                                   request->lowest_y, request->highest_y, request->half_angle, request->facing, request->half_pitch,
                                   request->pitch);
                 } else {
-                    Collision_CylinderArc(entity->model->position, request, entity->radius, entity->height, request->radius,
+                    Collision_CylinderArc(entity->model->position, request->position, entity->radius, entity->height, request->radius,
                                   request->height, request->half_angle, request->facing);
                 }
                 if (COLLISION_RESULT->hit != 0) {
@@ -344,11 +317,11 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                     point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->flags_or_model_point.point);
                     if (!(body->flags_or_model_point.flags & ENTITY_BODY_ROUND)) {
                         if (IS_PLAYER(request->owner)) {
-                            Collision_CylinderArcPitch(point, request, body->radius * width_scale, body->height * ENTITY_MODEL(entity)->scale_y,
+                            Collision_CylinderArcPitch(point, request->position, body->radius * width_scale, body->height * ENTITY_MODEL(entity)->scale_y,
                                           request->radius, request->lowest_y, request->highest_y, request->half_angle, request->facing,
                                           request->half_pitch, request->pitch);
                         } else {
-                            Collision_CylinderArc(point, request, body->radius * width_scale, body->height * ENTITY_MODEL(entity)->scale_y,
+                            Collision_CylinderArc(point, request->position, body->radius * width_scale, body->height * ENTITY_MODEL(entity)->scale_y,
                                           request->radius, request->height, request->half_angle, request->facing);
                         }
                     } else {
@@ -1281,7 +1254,7 @@ int Attack_StrengthDamageToPlayer(int strength, int resistance, int stat) {
 void Attack_WearWeapon(int idx, int amount) {
     PlayerItemDef *item;
     LevelRecord *rec;
-    LevelDef *def;
+    GameDefinition *def;
 
     if (idx != 0) {
         item = &weapon_defs[idx];
@@ -1375,7 +1348,7 @@ void Attack_WearArmorFromHit(int damage, Unk1B1470Request *request) {
 /* Wears a worn item as Attack_WearWeapon wears a weapon; the "none" items do not wear. */
 void Attack_WearWornItem(int idx, int amount) {
     LevelRecord *rec = &worn_item_level_records[idx];
-    LevelDef *def = &worn_name_defs[idx];
+    GameDefinition *def = &worn_name_defs[idx];
 
     if (rec->level >= 0x33 && idx != ITEM_WORN_INDEX(ITEM_SHIELD_NONE) && idx != ITEM_WORN_INDEX(ITEM_HELM_NONE)
         && idx != ITEM_WORN_INDEX(ITEM_ARMOR_NONE) && idx != ITEM_WORN_INDEX(ITEM_GAUNTLET_NONE)

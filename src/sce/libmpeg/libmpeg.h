@@ -36,6 +36,7 @@ void sceMpegInit(void);
 int sceMpegIsEnd(sceMpeg *mp);          /* definition in sce/ */
 int sceMpegIsRefBuffEmpty(sceMpeg *mp); /* definition in sce/ */
 void sceMpegReset(sceMpeg *mp);         /* definition in sce/ */
+void sceMpegSetDecodeMode(sceMpeg *mp, int ni, int np, int nb); /* definition in sce/ */
 
 /* The library's internal symbols are in libmpeg_internal.h. */
 

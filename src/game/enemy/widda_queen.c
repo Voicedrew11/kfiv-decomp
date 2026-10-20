@@ -11,25 +11,11 @@
 #include "entity/entity_math.h"
 #include "math/vu0.h"
 #include <stdlib.h>
+#include "model/motion.h"
+#include "player/player.h"
+#include "entity/entity_ai.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
-extern s32 entity_type_handlers[][2];
-int Motion_Step(void *, int);
-int Motion_BlendToPose(EntityModel *, f32);
-int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-void EntityAi_SensePlayer(void *, int);
-int Motion_Start(void *, int, int, u32, int);
-s32 EntityAi_CheckMeleeHitAt(Entity *, void *, s32, s32, s32, f32);
-void EntityAi_SetAttackDelay(Entity *, s32);
-extern PlayerData player_state;
-int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
-// match: the definitions take the float last, but retail sets it up before the index
-int EntityAi_CanUseMeleeFacing(Entity *, f32, s32);
-int EntityAi_CanUseRangedFacing(Entity *, f32, s32); // match: as EntityAi_CanUseMeleeFacing
 
 static void WiddaQueen_Animate(Entity *entity);
 static void WiddaQueen_TurnPart9ToPlayer(Entity *entity, s32 mode);
@@ -58,7 +44,7 @@ void WiddaQueen_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = WiddaQueen_Think;
     ai_state->animate = WiddaQueen_Animate;
     ai_state->on_hit = EntityAi_OnHit;
@@ -101,7 +87,7 @@ static void WiddaQueen_Animate(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
@@ -346,7 +332,7 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
             EntityEvent_StartEffectAtPoint((char **)entity, 0x373, 8, (int)entity->model->rotation);
         }
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
-        Vector_Copy(target, player_state.position);
+        Vector_Copy(target, &player_state.position);
         target[1] -= 190.0f;
         EntityShot_LaunchAimed(entity, (EntityParamsUnk3D8 *)unk3D8, elapsed, entity->model->level_tables->frame, target, HALF_PI, HALF_PI);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {

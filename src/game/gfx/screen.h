@@ -31,7 +31,12 @@ typedef struct {
     s32 file_handle;                /* 0x20 */
     s32 draw_step;                  /* 0x24 index into screen_fade_draw_steps */
     int timer;                      /* 0x28 frames left */
+    int unk2C;                      /* 0x2C */
 } ScreenFade;
+
+extern ScreenFade screen_fade;
+extern void (*screen_fade_steps[8])(void);
+extern void (*screen_fade_draw_steps[4])(void);
 
 /* one screen wobble oscillator (gfx/wobble.c keeps 16); its sine wave moves the screen */
 typedef struct {

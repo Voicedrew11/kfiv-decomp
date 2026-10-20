@@ -54,17 +54,6 @@
         best = node;                                                                               \
     }
 #define USABLE_IN_MAP(node) (AREA_NODE_MAP(node) == map && USABLE(node))
-void Map_QueueSlotPacket(int, int);
-int Map_ClassifyRecordOnScreen(MapDrawRecord *, ModelInstance *);
-void Map_InsertRecordBySize(AreaNode *);
-void Packet_WaitForSend(void);
-void Map_DrawFreeCameraView(void);
-extern MapDrawState map_draw_state;
-extern MapProp *map_slot_props[2][0xFF];
-extern SoundLoadQueue sound_load_queue;
-extern GameStatus game_status;
-extern u16 pad_state[];
-extern MapLightBlock map_object_default_lights;
 
 /* Draws the map records of both map slots whose flag bit 0 is clear (the list Map_UpdateDrawState builds each
    frame), then each slot's map objects. mode 0 draws every record, the others only some; below 2 the
@@ -830,35 +819,35 @@ void Map_RunFreeCamera(void) {
             DrawList_Clear();
             Input_Update();
             move.x = move.y = move.z = move.w = 0.0f;
-            if (pad_state[0] & PAD_CIRCLE) {
-                if (pad_state[0] & PAD_DOWN) {
+            if (pad_state.held & PAD_CIRCLE) {
+                if (pad_state.held & PAD_DOWN) {
                     rotation.x = Angle_Wrap(rotation.x + DEG_TO_RAD(5));
                 }
-                if (pad_state[0] & PAD_UP) {
+                if (pad_state.held & PAD_UP) {
                     rotation.x = Angle_Wrap(rotation.x - DEG_TO_RAD(5));
                 }
-                if (pad_state[0] & PAD_LEFT) {
+                if (pad_state.held & PAD_LEFT) {
                     rotation.y = Angle_Wrap(rotation.y + DEG_TO_RAD(5));
                 }
-                if (pad_state[0] & PAD_RIGHT) {
+                if (pad_state.held & PAD_RIGHT) {
                     rotation.y = Angle_Wrap(rotation.y - DEG_TO_RAD(5));
                 }
             } else {
-                if (pad_state[0] & PAD_LEFT) {
+                if (pad_state.held & PAD_LEFT) {
                     move.x = -1.0f;
                 }
-                if (pad_state[0] & PAD_RIGHT) {
+                if (pad_state.held & PAD_RIGHT) {
                     move.x += 1.0f;
                 }
-                if (pad_state[0] & PAD_UP) {
+                if (pad_state.held & PAD_UP) {
                     move.y -= 1.0f;
                 }
-                if (pad_state[0] & PAD_DOWN) {
+                if (pad_state.held & PAD_DOWN) {
                     move.y += 1.0f;
                 }
             }
             if (!reset_held) {
-                if ((*(s32 *)pad_state & (PAD_L1 | PAD_R1)) == (PAD_L1 | PAD_R1)) {
+                if ((*(s32 *)&pad_state & (PAD_L1 | PAD_R1)) == (PAD_L1 | PAD_R1)) {
                     reset_held = TRUE;
                     position.z = 10000.0f;
                     rotation.x = -HALF_PI;
@@ -868,12 +857,12 @@ void Map_RunFreeCamera(void) {
                     position.w = 0.0f;
                     rotation.z = 0.0f;
                     rotation.w = 0.0f;
-                } else if (pad_state[0] & PAD_L1) {
+                } else if (pad_state.held & PAD_L1) {
                     move.z += 1.0f;
-                } else if (pad_state[0] & PAD_R1) {
+                } else if (pad_state.held & PAD_R1) {
                     move.z -= 1.0f;
                 }
-            } else if (!(*(s32 *)pad_state & (PAD_L1 | PAD_R1))) {
+            } else if (!(*(s32 *)&pad_state & (PAD_L1 | PAD_R1))) {
                 reset_held = FALSE;
             }
             if (move.x != 0.0f || move.y != 0.0f || move.z != 0.0f) {
@@ -903,7 +892,7 @@ void Map_RunFreeCamera(void) {
             Packet_OnFrameEnd();
             GameLoop_RunSoundLoads();
             Packet_WaitForSend();
-        } while (!(pad_state[1] & PAD_CIRCLE));
+        } while (!(pad_state.pressed & PAD_CIRCLE));
         game_status.bit7 = FALSE;
     }
 }

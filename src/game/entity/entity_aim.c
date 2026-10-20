@@ -10,11 +10,8 @@
 #include <math.h>
 #include "math/vu0.h"
 #include <stdlib.h>
+#include "map_object/map_object.h"
 
-extern s32 map_objects_started[2];
-extern s32 map_object_counts[2];
-extern MapObject map_slot_objects[];
-extern MapObject map_slot1_objects[];
 
 /* EntityMath_WrapAngle, which the game inlines here: wraps an angle to +-pi */
 static inline f32 wrap_angle(f32 angle) {
@@ -33,7 +30,7 @@ static inline MapObject *map_objects(s32 map) {
         if (current_map_slot != map) {
             return map_slot1_objects;
         }
-        return map_slot_objects;
+        return map_slot_objects[0];
     }
     return NULL;
 }
