@@ -2,6 +2,11 @@
 #include "model/linked_point.h"
 #include "math/angle.h"
 
+/* MapObject.step of a light (kind 9) */
+#define LIGHT_STEP_ACTIVE           1       /* the update flickers it (sorts 0 and 1) */
+/* MapObject.step of a status-on-touch object (kind 10) */
+#define STATUS_ON_TOUCH_STEP_IDLE   1       /* waiting to be touched */
+
 /* Start handler of the light kind: makes a light of the colour in its source at
    a point of the model, and for the flickering sorts (0, 1) rolls the two
    flicker periods and where in them it starts. */
@@ -29,7 +34,7 @@ void MapObject_StartLight(MapObject *object) {
             work[3] = work[4] * (f32)rand() * RAND_SCALE;
         }
     }
-    MAP_OBJECT_BYTES(object)->step = 1;
+    MAP_OBJECT_BYTES(object)->step = LIGHT_STEP_ACTIVE;
 }
 
 /* Update handler of the light kind: the flickering sorts (0 faintly, 1 strongly)
@@ -93,7 +98,7 @@ void MapObject_ReleaseLight(MapObject *object) {
    timed status its source names (unk52: PlayerState.timed_flags[unk52 - 1], [0] the poison) and the red
    damage flash. */
 void MapObject_StartStatusOnTouch(MapObject *object) {
-    MAP_OBJECT_BYTES(object)->step = 1;
+    MAP_OBJECT_BYTES(object)->step = STATUS_ON_TOUCH_STEP_IDLE;
 }
 
 /* Does nothing: the step a kind 10 object stays in once started (its effect comes from touching it). */

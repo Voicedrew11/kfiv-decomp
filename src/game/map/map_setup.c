@@ -10,6 +10,9 @@
 #include "item/item.h"
 #include "save/save_state.h"
 
+/* EntityGroupState.death_kind: no member of the group has died */
+#define ENTITY_GROUP_DEATH_NONE             0
+
 /* Runs the set-up function of the map in the slot, picked by the map's number (its tag): it puts the map's
    records, objects, fog and lights in the state the story flags call for. */
 void MapSetup_RunForMap(int slot) {
@@ -103,7 +106,7 @@ void MapSetup_Armory(int map) {
             MapObject_SetScripted(object, 1);
         }
         MapItem_PlaceFixedById(map, 0x46);
-        if (entity_group_state[23].death_kind == 0) {
+        if (entity_group_state[23].death_kind == ENTITY_GROUP_DEATH_NONE) {
             entity = Entity_GetBySpawnIdForMap(map, 0x17);
             if (entity != NULL) {
                 entity->flags |= ENTITY_FLAG_LIVE;
@@ -476,7 +479,7 @@ void MapSetup_CentralTowerLevel3(int map_slot) {
     Entity *entity;
 
     entity = Entity_GetBySpawnIdForMap(map_slot, 1);
-    if (entity_group_state[13].death_kind == 0) {
+    if (entity_group_state[13].death_kind == ENTITY_GROUP_DEATH_NONE) {
         if (entity_group_state[13].unk05 != 0 && entity_group_state[13].unk06 == 0) {
             entity_group_state[13].unk06 = 1;
         }
@@ -504,7 +507,7 @@ void MapSetup_CraftsmansRoom(int map) {
         object = MapObject_GetById(map, 0x77);
         if (object != NULL) {
             MapObject_Deactivate(object);
-            if (object->model != NULL && object->definition->kind == 9) {
+            if (object->model != NULL && object->definition->kind == MAP_OBJECT_KIND_LIGHT) {
                 MAP_OBJECT_WORDS(object)->kind_param_0 = 0xFF;
                 MAP_OBJECT_WORDS(object)->kind_param_1 = 0x80;
                 MAP_OBJECT_WORDS(object)->kind_param_2 = 0x18;

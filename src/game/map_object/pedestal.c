@@ -9,6 +9,14 @@
 #include "math/vu0.h"
 #include "player/player.h"
 
+/* MapObject.step of a Guide Stone marker (kind 0x13) */
+#define MARKER_STEP_EMPTY           1       /* empty, waiting for a stone */
+#define MARKER_STEP_MOVE_IN         2       /* the stone's part moves toward the marker */
+#define MARKER_STEP_SETTLE          3       /* the animation runs as the stone settles */
+#define MARKER_STEP_FILLED          4       /* holds its stone, waiting for the player */
+#define MARKER_STEP_LIFT            5       /* the stone's part rises above the player */
+#define MARKER_STEP_MOVE_OUT        6       /* the stone's part moves back to the player */
+
 /* Step 0 of the Guide Stone markers (kind 0x13); the stone sits on part 2. One that starts holding a stone
    keeps it only while the map's flag block still records a stone for it (Game_GetTriggerItem), and its model shows
    that stone (MapObject_ShowMarkerStone). Empty: animation 4, step 1; holding a stone: animation 5, step 4. */
@@ -27,11 +35,11 @@ void MapObject_StartMarker(MapObject *object) {
     }
     MapObject_ShowMarkerStone(object, item);
     if (!(object->state_flags & MAP_OBJECT_ON)) {
-        MapObject_StartAnim(object, 4);
-        MAP_OBJECT_BYTES(object)->step = 1;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_OFF);
+        MAP_OBJECT_BYTES(object)->step = MARKER_STEP_EMPTY;
     } else {
-        MapObject_StartAnim(object, 5);
-        MAP_OBJECT_BYTES(object)->step = 4;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_ON);
+        MAP_OBJECT_BYTES(object)->step = MARKER_STEP_FILLED;
     }
 }
 
@@ -59,7 +67,7 @@ void MapObject_UpdateEmptyMarker(MapObject *object) {
     } else if (work->fired != 0) {
         work->fired = 0;
         object->state_flags |= MAP_OBJECT_ON;
-        MAP_OBJECT_BYTES(object)->step = 3;
+        MAP_OBJECT_BYTES(object)->step = MARKER_STEP_SETTLE;
         MapObject_StepAnim(object);
         MapObject_RebuildMatrices(object);
         Vector_Copy(&origin, part->position);
@@ -90,7 +98,7 @@ void MapObject_MoveMarkerStoneIn(MapObject *object) {
     }
     Vector_Add(part->position, part->position, work);
     if (--work->frames <= 0) {
-        MAP_OBJECT_BYTES(object)->step = 3;
+        MAP_OBJECT_BYTES(object)->step = MARKER_STEP_SETTLE;
     }
 }
 
@@ -105,8 +113,8 @@ void MapObject_SettleMarkerStone(MapObject *object) {
     if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
     } else {
-        MapObject_StartAnim(object, 5);
-        MAP_OBJECT_BYTES(object)->step = 4;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_ON);
+        MAP_OBJECT_BYTES(object)->step = MARKER_STEP_FILLED;
         game_status.update_hold_flags &= ~1U;
     }
 }
@@ -124,7 +132,7 @@ void MapObject_UpdateFilledMarker(MapObject *object) {
         work->timer = timer - 1;
     }
     if (game_status.using_faced_object && view_ray_status.current == object) {
-        MAP_OBJECT_BYTES(object)->step = 5;
+        MAP_OBJECT_BYTES(object)->step = MARKER_STEP_LIFT;
         // match: two leftover arguments are passed
         item = ((int (*)(int, int, void *, int))Game_GetTriggerItem)(tag, object->source->spawn_flags.bytes[2], work, timer);
         Game_ClearTriggerItem(tag, object->source->spawn_flags.bytes[2]);
@@ -154,7 +162,7 @@ void MapObject_LiftMarkerStone(MapObject *object) {
         MapObject_StepAnim(object);
         return;
     }
-    MAP_OBJECT_BYTES(object)->step = 6;
+    MAP_OBJECT_BYTES(object)->step = MARKER_STEP_MOVE_OUT;
     MapObject_RebuildMarkerMatrices(object);
     object->model->update_bone_points(object->model);
     point = (void *)object->model->get_point(object->model, 0);
@@ -184,8 +192,8 @@ void MapObject_MoveMarkerStoneOut(MapObject *object) {
     Vector_Add(part->position, part->position, work);
     if (--work->frames <= 0) {
         MapObject_ShowMarkerStone(object, 0);
-        MapObject_StartAnim(object, 4);
-        MAP_OBJECT_BYTES(object)->step = 1;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_OFF);
+        MAP_OBJECT_BYTES(object)->step = MARKER_STEP_EMPTY;
         game_status.update_hold_flags &= ~1U;
     }
 }

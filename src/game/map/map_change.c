@@ -26,18 +26,31 @@
 #include "sound/sound_game.h"
 #include <stdio.h>
 
+/* screen_fade.kind: what started the change */
+#define SCREEN_FADE_KIND_TO_MAP             0   /* MapChange_StartToMap: the map's start */
+#define SCREEN_FADE_KIND_TO_POSITION        1   /* MapChange_StartToPosition: the position given */
+#define SCREEN_FADE_KIND_PASSAGE            2   /* MapChange_StartPassage: a Symbol of Passage */
+/* screen_fade.step: an index into screen_fade_steps */
+#define SCREEN_FADE_STEP_IDLE               0   /* no change running */
+#define SCREEN_FADE_STEP_WAIT_FOR_IDLE      1   /* waits for the background load and the rest to settle */
+/* MapLoadState.step (map_load.c) */
+#define MAP_LOAD_STEP_IDLE                  0   /* no load running */
+#define MAP_LOAD_STEP_WAIT_FOR_SET_UP       5   /* the file is loaded, waiting to be set up */
+/* screen_fade.draw_step: an index into screen_fade_draw_steps */
+#define SCREEN_FADE_DRAW_FADE_OUT_CAPTURE   0   /* draws the captured picture fading to black */
+
 /* Starts the change to map new_value, the player to stand at the map's start, unless a change is running
    or it is the current map. */
 void MapChange_StartToMap(int new_value) {
     MapSlot *slot;
 
     slot = &map_slots[current_map_slot];
-    if (screen_fade.step == FALSE && slot->tag != new_value) {
-        screen_fade.step = TRUE;
+    if (screen_fade.step == SCREEN_FADE_STEP_IDLE && slot->tag != new_value) {
+        screen_fade.step = SCREEN_FADE_STEP_WAIT_FOR_IDLE;
         screen_fade.timer = 0x1E;
         screen_fade.map = new_value;
-        screen_fade.draw_step = 0;
-        screen_fade.kind = 0;
+        screen_fade.draw_step = SCREEN_FADE_DRAW_FADE_OUT_CAPTURE;
+        screen_fade.kind = SCREEN_FADE_KIND_TO_MAP;
     }
 }
 
@@ -45,7 +58,7 @@ void MapChange_StartToMap(int new_value) {
 void MapChange_StartToPosition(int map, Vector4 *position) {
     MapSlot *slot = &map_slots[current_map_slot];
 
-    if (screen_fade.step == 0) {
+    if (screen_fade.step == SCREEN_FADE_STEP_IDLE) {
         if (slot->tag == map) {
             if (position != NULL) {
                 player_state.position.x = position->x;
@@ -58,9 +71,9 @@ void MapChange_StartToPosition(int map, Vector4 *position) {
             screen_fade.position.y = position->y;
             screen_fade.position.z = position->z;
             screen_fade.timer = 30;
-            screen_fade.step = 1;
-            screen_fade.kind = 1;
-            screen_fade.draw_step = 0;
+            screen_fade.step = SCREEN_FADE_STEP_WAIT_FOR_IDLE;
+            screen_fade.kind = SCREEN_FADE_KIND_TO_POSITION;
+            screen_fade.draw_step = SCREEN_FADE_DRAW_FADE_OUT_CAPTURE;
             screen_fade.position.w = 0.0f;
         }
     }
@@ -72,25 +85,25 @@ int MapChange_StartPassage(int entry) {
     int target[2];
     int map;
 
-    if (screen_fade.step != 0) {
+    if (screen_fade.step != SCREEN_FADE_STEP_IDLE) {
         return FALSE;
     }
     if (Game_FindTriggerOfItem(entry - 5, &target[0], &target[1]) == 0) {
         return FALSE;
     }
     map = target[0];
-    screen_fade.step = 1;
+    screen_fade.step = SCREEN_FADE_STEP_WAIT_FOR_IDLE;
     screen_fade.target_object_id = target[1];
     screen_fade.timer = 30;
     screen_fade.map = map;
-    screen_fade.kind = 2;
-    screen_fade.draw_step = 0;
+    screen_fade.kind = SCREEN_FADE_KIND_PASSAGE;
+    screen_fade.draw_step = SCREEN_FADE_DRAW_FADE_OUT_CAPTURE;
     return TRUE;
 }
 
 /* Runs a pending map change to the end, drawing its own frames meanwhile. */
 void MapChange_RunToEnd(void) {
-    if (screen_fade.step != 0) {
+    if (screen_fade.step != SCREEN_FADE_STEP_IDLE) {
         MapChange_CaptureFrame();
         GameLoop_CancelMenuRequests();
         Splash_Abort();
@@ -104,7 +117,7 @@ void MapChange_RunToEnd(void) {
             screen_fade_steps[screen_fade.step]();
             GameLoop_RunSoundLoads();
             ((u8 (*)(void))Packet_WaitForSend)(); // match: called as returning a value, so the loop test uses $3
-        } while (screen_fade.step != 0);
+        } while (screen_fade.step != SCREEN_FADE_STEP_IDLE);
         game_status.bit2 = FALSE;
         game_status.save_requested = FALSE;
     }
@@ -206,7 +219,7 @@ void MapChange_WaitForIdle(void) {
     MapLoad_Update();
     Entity_UpdatePool();
     Sound_Update();
-    if (map_load_state.step == 0 || map_load_state.step == 5) {
+    if (map_load_state.step == MAP_LOAD_STEP_IDLE || map_load_state.step == MAP_LOAD_STEP_WAIT_FOR_SET_UP) {
         if (EntityPool_IsLoading() == 0 && sound_load_queue.map_bank_load_pending == 0 && sound_load_queue.bgm_load_pending == 0 && sound_load_queue.entity_bank_load_pending == 0 &&
             File_IsLocked() == 0) {
             screen_fade.step++;
@@ -300,10 +313,10 @@ void MapChange_SetUpMap(void) {
     MapItem_InitMap(0);
     Gold_InitMap(0);
     switch (screen_fade.kind) {
-    case 1:
+    case SCREEN_FADE_KIND_TO_POSITION:
         Vector_Copy(&player_state, &screen_fade);
         break;
-    case 2:
+    case SCREEN_FADE_KIND_PASSAGE:
         object = MapObject_GetById(0, screen_fade.target_object_id);
         if (object != NULL) {
             sine = sinf(-object->model->rotation.y);
@@ -342,12 +355,12 @@ void MapChange_SetUpMap(void) {
     Sound_StopAll(1);
     sound_load_queue.next_map_slot = &map_slots[0];
     Game_StartFadeIn(0, 0, 0, 30);
-    screen_fade.step = 0;
+    screen_fade.step = SCREEN_FADE_STEP_IDLE;
 }
 
 /* Map change step 6: ends the change once the timer has run out (MapChange_SetUpMap ends it itself). */
 void MapChange_EndWhenTimerDone(void) {
     if (screen_fade.timer <= 0) {
-        screen_fade.step = 0;
+        screen_fade.step = SCREEN_FADE_STEP_IDLE;
     }
 }

@@ -10,6 +10,15 @@
 #include "player/player.h"
 #include "save/save_state.h"
 
+/* MapObject.step of the door-like kinds (1, 2, 6 and 0x11) */
+#define DOOR_STEP_CLOSED            1       /* shut, waiting for the player */
+#define DOOR_STEP_OPENING           2       /* the opening animation runs */
+#define DOOR_STEP_OPEN              3       /* open */
+#define DOOR_STEP_CLOSING           4       /* the closing animation runs */
+
+/* MapObject.step of the bones and gravestones (kind 3) */
+#define ITEM_HOLDER_STEP_READY      1       /* waiting for the player to use it */
+
 /* Start handler of the door-like kinds: closed (animation 4) or already open
    (animation 5). Kind 6 remembers where its second part sits and, when it starts
    open, is run until it gets there. */
@@ -17,9 +26,9 @@ void MapObject_StartDoor(MapObject *object) {
     MapObjectWork *work = MAP_OBJECT_WORK(object);
     ModelPart *part;
 
-    if (object->definition->kind == 6) {
-        MapObject_StartAnim(object, 4);
-        MAP_OBJECT_BYTES(object)->step = 1;
+    if (object->definition->kind == MAP_OBJECT_KIND_MOVING_DOOR) {
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_OFF);
+        MAP_OBJECT_BYTES(object)->step = DOOR_STEP_CLOSED;
         Vector_Copy(work, object->model->parts[1].position);
         work->timer = 0;
         part = object->model->parts;
@@ -27,18 +36,18 @@ void MapObject_StartDoor(MapObject *object) {
         work->base_y = part[1].position[1];
         work->base_z = part[1].position[2];
         if (MAP_OBJECT_FLAGS(object) & MAP_OBJECT_ON) {
-            MAP_OBJECT_BYTES(object)->step = 2;
+            MAP_OBJECT_BYTES(object)->step = DOOR_STEP_OPENING;
             do {
                 MapObject_UpdateOpeningDoor(object);
-            } while (MAP_OBJECT_BYTES(object)->step != 3);
+            } while (MAP_OBJECT_BYTES(object)->step != DOOR_STEP_OPEN);
         }
     } else {
         if (!(object->state_flags & MAP_OBJECT_ON)) {
-            MapObject_StartAnim(object, 4);
-            MAP_OBJECT_BYTES(object)->step = 1;
+            MapObject_StartAnim(object, MAP_OBJECT_ANIM_OFF);
+            MAP_OBJECT_BYTES(object)->step = DOOR_STEP_CLOSED;
         } else {
-            MapObject_StartAnim(object, 5);
-            MAP_OBJECT_BYTES(object)->step = 3;
+            MapObject_StartAnim(object, MAP_OBJECT_ANIM_ON);
+            MAP_OBJECT_BYTES(object)->step = DOOR_STEP_OPEN;
         }
         MAP_OBJECT_UNK60_BITS(object)->bit0 = FALSE;
     }
@@ -80,7 +89,7 @@ void MapObject_UpdateClosedDoor(MapObject *object) {
             }
         }
         object->state_flags |= MAP_OBJECT_ON;
-        MAP_OBJECT_BYTES(object)->step = 2;
+        MAP_OBJECT_BYTES(object)->step = DOOR_STEP_OPENING;
         MAP_OBJECT_UNK60_BITS(object)->bit0 = TRUE;
     }
 }
@@ -138,8 +147,8 @@ void MapObject_UpdateOpeningDoor(MapObject *object) {
             }
         }
     } else {
-        MapObject_StartAnim(object, 5);
-        MAP_OBJECT_BYTES(object)->step = 3;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_ON);
+        MAP_OBJECT_BYTES(object)->step = DOOR_STEP_OPEN;
     }
 }
 
@@ -163,7 +172,7 @@ void MapObject_UpdateOpenDoor(MapObject *object) {
         distance = sqrtf(delta_x * delta_x + delta_z * delta_z);
         if (!(distance < object->reach_radius + 100.0f)) {
             object->state_flags &= ~MAP_OBJECT_ON;
-            MAP_OBJECT_BYTES(object)->step = 4;
+            MAP_OBJECT_BYTES(object)->step = DOOR_STEP_CLOSING;
         }
     }
 }
@@ -182,7 +191,7 @@ void MapObject_UpdateClosingDoor(MapObject *object) {
     }
     if (MODEL_CHANNEL(object->model)->frame != 0) {
         ((int (*)(char *))MapObject_StepAnim)((char *)object); // match: it returns a value
-        if (object->definition->kind == 6) {
+        if (object->definition->kind == MAP_OBJECT_KIND_MOVING_DOOR) {
             Vector_Subtract(&delta, object->model->parts[1].position, work);
             sine = sinf(-object->model->rotation.y);
             cosine = cosf(-object->model->rotation.y);
@@ -193,8 +202,8 @@ void MapObject_UpdateClosingDoor(MapObject *object) {
             Vector_Copy(work, object->model->parts[1].position);
         }
     } else {
-        MapObject_StartAnim(object, 4);
-        MAP_OBJECT_BYTES(object)->step = 1;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_OFF);
+        MAP_OBJECT_BYTES(object)->step = DOOR_STEP_CLOSED;
         Vector_Copy(&object->model->position, object->source);
     }
 }
@@ -203,10 +212,10 @@ void MapObject_UpdateClosingDoor(MapObject *object) {
 void MapObject_SetDoorOpen(MapObject *object, int open) {
     if ((object->state_flags & MAP_OBJECT_STEP_AND_ON_MASK) == 0x100 && open) {
         object->state_flags |= MAP_OBJECT_ON;
-        MAP_OBJECT_BYTES(object)->step = 2;
+        MAP_OBJECT_BYTES(object)->step = DOOR_STEP_OPENING;
     } else if ((object->state_flags & MAP_OBJECT_STEP_AND_ON_MASK) == 0x20300 && !open) {
         object->state_flags &= ~MAP_OBJECT_ON;
-        MAP_OBJECT_BYTES(object)->step = 4;
+        MAP_OBJECT_BYTES(object)->step = DOOR_STEP_CLOSING;
     }
 }
 
@@ -243,5 +252,5 @@ void MapObject_RebuildMovingDoorMatrices(MapObject *object) {
 
 /* Step 0 of the bones and gravestones that hold an item (kind 3): step 1. */
 void MapObject_StartItemHolder(MapObject *object) {
-    MAP_OBJECT_BYTES(object)->step = 1;
+    MAP_OBJECT_BYTES(object)->step = ITEM_HOLDER_STEP_READY;
 }

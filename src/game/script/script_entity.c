@@ -18,6 +18,11 @@
 #include "entity/entity_ai.h"
 #include "model/motion.h"
 
+/* Entity.state of an NPC (the states npc.c runs), set by the commands below */
+#define NPC_STATE_TURN_TO_PLAYER            4   /* turns to the player */
+#define NPC_STATE_WATCH_PLAYER              5   /* turned to the player, watching it */
+#define NPC_STATE_TURN_BACK                 6   /* turns back to its own heading */
+
 
 
 /* Command 200, and every unused number from 200 to 299: finishes at once. */
@@ -284,20 +289,20 @@ void ScriptCmd_TurnEntityToPlayer(ScriptStateWaitCommand *command) {
             case 0:
                 heading = EntityMath_HeadingTo(entity->model->position, &player_state.position.x);
                 turn = EntityMath_AngleDifference(entity->model->rotation[1], heading);
-                if (entity->state == 5) {
+                if (entity->state == NPC_STATE_WATCH_PLAYER) {
                     if (ABS(turn) <= DEG_TO_RAD(entity->params->far_distance)) {
                         command->active = 0;
                         return;
                     }
                 }
-                EntityAi_SetState(entity, 4);
+                EntityAi_SetState(entity, NPC_STATE_TURN_TO_PLAYER);
                 command->step++;
                 return;
             case 1:
                 if (--command->frames.value > 0) {
                     return;
                 }
-                if (entity->state != 5) {
+                if (entity->state != NPC_STATE_WATCH_PLAYER) {
                     return;
                 }
                 command->active = 0;
@@ -308,18 +313,18 @@ void ScriptCmd_TurnEntityToPlayer(ScriptStateWaitCommand *command) {
         } else {
             switch (command->step) {
             case 0:
-                if (entity->state == 5) {
+                if (entity->state == NPC_STATE_WATCH_PLAYER) {
                     command->active = 0;
                     return;
                 }
-                EntityAi_SetState(entity, 4);
+                EntityAi_SetState(entity, NPC_STATE_TURN_TO_PLAYER);
                 command->step++;
                 return;
             case 1:
                 if (--command->frames.value > 0) {
                     return;
                 }
-                if (entity->state != 5) {
+                if (entity->state != NPC_STATE_WATCH_PLAYER) {
                     return;
                 }
                 command->active = 0;
@@ -343,10 +348,10 @@ void ScriptCmd_TurnEntityBack(ScriptWaitCommand *command) {
             return;
         }
         if (command->started == 0) {
-            EntityAi_SetState(entity, 6);
+            EntityAi_SetState(entity, NPC_STATE_TURN_BACK);
             command->started = 1;
         }
-        if (entity->state != 0) {
+        if (entity->state != ENTITY_STATE_UNAWARE) {
             return;
         }
     }

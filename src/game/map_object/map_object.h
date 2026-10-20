@@ -12,6 +12,19 @@
 #define MAP_OBJECT_KIND_CHEST               4
 #define MAP_OBJECT_KIND_SYMBOL_OF_PASSAGE   12      /* where the wands take the player (Player_UseItem) */
 #define MAP_OBJECT_KIND_CONTAINER           21      /* barrels, pots and wooden boxes */
+#define MAP_OBJECT_KIND_AMBIENT             0       /* scenery that can play an ambient sound */
+#define MAP_OBJECT_KIND_DISTANCE_FADE       5       /* fades with the distance to the player */
+#define MAP_OBJECT_KIND_MOVING_DOOR         6       /* a door that moves with its second part */
+#define MAP_OBJECT_KIND_LIGHT               9       /* a light at a point of the model */
+
+/* MapObjectBytes.step and anim values every kind shares; each kind's own steps are named in its file */
+#define MAP_OBJECT_STEP_NOT_STARTED         0       /* the kind's state machine is not started */
+#define MAP_OBJECT_STEP_BROKEN              0xF     /* MapObject_Break: breaking, its animation and effect */
+#define MAP_OBJECT_ANIM_NONE                -1      /* no animation started yet */
+#define MAP_OBJECT_ANIM_FIRST               0       /* the definition's first animation */
+#define MAP_OBJECT_ANIM_BREAK               1       /* the breaking animation */
+#define MAP_OBJECT_ANIM_OFF                 4       /* closed, off or unlit */
+#define MAP_OBJECT_ANIM_ON                  5       /* open, on or lit */
 
 extern s32 map_objects_started[2];
 extern int map_object_placements[2];
