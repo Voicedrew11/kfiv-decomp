@@ -122,8 +122,8 @@ static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg) {
     s32 part_index;
 
     part = (EntityModelPart80 *)entity->model->parts;
-    if (entity->animation_index != ENTITY_MOTION_STAND && entity->animation_index != ENTITY_MOTION_WALK && entity->animation_index != ENTITY_MOTION_RUN && entity->animation_index != 0xB &&
-        entity->animation_index != 0xC) {
+    if (entity->animation_index != ENTITY_MOTION_STAND && entity->animation_index != ENTITY_MOTION_WALK && entity->animation_index != ENTITY_MOTION_RUN && entity->animation_index != ENTITY_MOTION_TURN_LEFT &&
+        entity->animation_index != ENTITY_MOTION_TURN_RIGHT) {
         ai_state->neck_bend[2] = ai_state->neck_bend[3] = ai_state->neck_bend[4] = ai_state->neck_bend[5] = ai_state->neck_bend[6] = 0.0f;
         return;
     }

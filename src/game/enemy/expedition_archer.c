@@ -142,7 +142,7 @@ static void ExpeditionArcher_PitchPartToPlayer(Entity *actor) {
    clears bit 40 of model part 5's unk68 during frames 9 to 46 of animations 23 and 24 and sets it
    otherwise. */
 static void ExpeditionArcher_Think(Entity *entity, s32 run_now) {
-    if (((u8)entity->animation_index == ENTITY_MOTION_RANGED_ATTACK || (u8)entity->animation_index == ENTITY_MOTION_ATTACK_BASE + 4) && entity->model->level_tables->blend_left == 0 &&
+    if (((u8)entity->animation_index == ENTITY_MOTION_RANGED_ATTACK || (u8)entity->animation_index == ENTITY_MOTION_RANGED_ATTACK + 1) && entity->model->level_tables->blend_left == 0 &&
         entity->model->level_tables->frame >= 9 && entity->model->level_tables->frame < 0x2F) {
         entity->model->parts[5].part_flags &= ~(0x8000L << 25);
     } else {
@@ -269,7 +269,7 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
+        Motion_Start(entity, attack_index + ENTITY_MOTION_RANGED_ATTACK, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {
@@ -336,7 +336,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
+        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->attack_index + ENTITY_MOTION_RANGED_ATTACK, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         } else {

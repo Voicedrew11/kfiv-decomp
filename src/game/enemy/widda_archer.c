@@ -189,7 +189,7 @@ static void WiddaArcher_AimPartsAtTarget(Entity *entity) {
 static void WiddaArcher_Think(Entity *entity, s32 run_now) {
     if (entity->model->level_tables->blend_left == 0 &&
         ((entity->animation_index == ENTITY_MOTION_RANGED_ATTACK && entity->model->level_tables->frame >= 7 && entity->model->level_tables->frame < 0x24) ||
-         (entity->animation_index == ENTITY_MOTION_ATTACK_BASE + 4 && entity->model->level_tables->frame >= 0x19 && entity->model->level_tables->frame < 0x32))) {
+         (entity->animation_index == ENTITY_MOTION_RANGED_ATTACK + 1 && entity->model->level_tables->frame >= 0x19 && entity->model->level_tables->frame < 0x32))) {
         ((EntityModelPart80 *)entity->model->parts)[29].part_flags |= 0x8000L << 25;
     } else {
         ((EntityModelPart80 *)entity->model->parts)[29].part_flags &= ~(0x8000L << 25);
@@ -309,7 +309,7 @@ static void WiddaArcher_RangedAttack(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
+        Motion_Start(entity, attack_index + ENTITY_MOTION_RANGED_ATTACK, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         } else {
@@ -361,7 +361,7 @@ static void WiddaArcher_RangedAttack(Entity *entity) {
 static void WiddaArcher_ThinkUseMapObject(Entity *entity, s32 run_now) {
     if (entity->model->level_tables->blend_left == 0 &&
         ((entity->animation_index == ENTITY_MOTION_RANGED_ATTACK && entity->model->level_tables->frame >= 7 && entity->model->level_tables->frame < 0x24) ||
-         (entity->animation_index == ENTITY_MOTION_ATTACK_BASE + 4 && entity->model->level_tables->frame >= 0x19 && entity->model->level_tables->frame < 0x32))) {
+         (entity->animation_index == ENTITY_MOTION_RANGED_ATTACK + 1 && entity->model->level_tables->frame >= 0x19 && entity->model->level_tables->frame < 0x32))) {
         ((EntityModelPart80 *)entity->model->parts)[29].part_flags |= 0x8000L << 25;
     } else {
         ((EntityModelPart80 *)entity->model->parts)[29].part_flags &= ~(0x8000L << 25);

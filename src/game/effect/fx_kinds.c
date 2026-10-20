@@ -113,7 +113,7 @@ void EffectImpactLob_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     EffectAngle_ToVector(actor->def->speed, &motion->velocity, &actor->model->rotation);
     motion->end_frame = Effect_FramesToImpact((float)actor->def->radius_half, actor, motion, scratch);
     if (motion->end_frame != 0xFFFF) {
-        motion->mode = COLLISION_RESULT->floor_material;
+        motion->floor_material = COLLISION_RESULT->floor_material;
     }
     motion->hit_end_state[0] = 0;
     motion->spawned = 0;
@@ -142,7 +142,7 @@ void EffectImpactLob_Update(EffectActor *actor) {
     motion->velocity.y += actor->def->gravity;
     sceVu0AddVector(&actor->model->position, &actor->model->position, &motion->velocity);
     if (actor->frame > motion->end_frame) {
-        if (motion->mode == 5 || motion->mode == 3) {
+        if (motion->floor_material == 5 || motion->floor_material == 3) {
             Effect_Spawn(0x15, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
         }
         Effect_Free(actor);
@@ -1587,12 +1587,12 @@ void EffectLaunchFromOwner_Update(EffectActor *effect) {
 
 /* Kind 80 start: clears the end countdown. */
 void EffectBowDraw_Start(EffectActor *effect, EffectSlot *spawn_slot) {
-    StateFlagMotion *motion;
+    ShockMotion *motion;
 
     EffectStart_TurnModel(effect, spawn_slot);
-    motion = (StateFlagMotion *)&effect->motion;
+    motion = (ShockMotion *)&effect->motion;
     EffectStart_PlaceModel(effect, spawn_slot);
-    motion->state = 0;
+    motion->countdown = 0;
 }
 
 /* Kind 80 update: at its start pose while the attack button (attack_button) is held. Once it is let go (and

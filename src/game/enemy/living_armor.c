@@ -307,7 +307,7 @@ static void LivingArmor_WaitToStrike(Entity *entity) {
             EntityAi_StartAction(entity, LivingArmor_MeleeAttack1, 1);
         }
     }
-    if (ai_state->pause_timer-- <= 0 && entity->action_step == 0) {
+    if (ai_state->pause_timer-- <= 0 && entity->action_step == ACTION_STEP_START) {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->attack_window = FALSE;

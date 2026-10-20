@@ -16,11 +16,9 @@
 #include "model/motion.h"
 
 /* EntityAiState action_step of Phagos_RunAwayAndRemove */
-#define PHAGOS_ACTION_STEP_START        0
 #define PHAGOS_ACTION_STEP_RUN_AWAY     1
 #define PHAGOS_ACTION_STEP_RUN_TO_POINT 2
 #define PHAGOS_ACTION_STEP_FADE_OUT     3
-
 
 static void Phagos_Animate(Entity *entity);
 static void Phagos_OnHit(Entity *entity);
@@ -116,7 +114,7 @@ static void Phagos_RunAwayAndRemove(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
-    case PHAGOS_ACTION_STEP_START:
+    case ACTION_STEP_START:
         Motion_Start(entity, 4, 0, entity->params->motion_blend_frames, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;

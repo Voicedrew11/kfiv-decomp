@@ -177,8 +177,8 @@ void Entity_ResetToSpawn(Entity *entity) {
     entity->ailment_2_frames = 0;
     entity->ailment_3_frames = 0;
     entity->ailment_4_frames = 0;
-    entity->action_step = 0;
-    entity->reaction_step = 0;
+    entity->action_step = ACTION_STEP_START;
+    entity->reaction_step = ACTION_STEP_START;
     entity->state = ENTITY_STATE_UNAWARE;
     entity->combat_choice = COMBAT_CHOICE_ATTACK;
     entity->prev_state = ENTITY_STATE_UNAWARE;

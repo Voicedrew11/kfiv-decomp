@@ -32,23 +32,12 @@
 #include "enemy/enemy.h"
 #include "entity/entity.h"
 
-/* GameStatus.camera_mode: the camera follows the player, or the script places it */
-#define CAMERA_MODE_FOLLOW_PLAYER   0
-#define CAMERA_MODE_SCRIPT          1
-
-/* GameStatus.camera_look_mode: no look at a point, turn at once to it, or ease toward it */
-#define CAMERA_LOOK_NONE            0
-#define CAMERA_LOOK_SNAP            1
-#define CAMERA_LOOK_EASE            2
-
 /* sound_load_queue.step: which load runs (SoundLoadQueue.step) */
 #define SOUND_LOAD_STEP_IDLE        0
 #define SOUND_LOAD_STEP_MAP_BANK    1
 #define SOUND_LOAD_STEP_ENTITY_BANK 2
 #define SOUND_LOAD_STEP_BGM         3
 
-/* map_load_state.step: no map load is running (MapLoadState.step) */
-#define MAP_LOAD_STEP_IDLE          0
 #include "entity/entity_ai.h"
 #include "gfx/draw_list.h"
 #include "gfx/gs_draw.h"
@@ -496,7 +485,7 @@ void GameLoop_UpdateCamera(void) {
         camera_state.yaw = atan2f(direction[0], direction[2]);
         camera_state.roll = 0.0f;
         break;
-    case CAMERA_MODE_SCRIPT:
+    case CAMERA_MODE_SCRIPTED:
         if (game_status.camera_move_enabled != 0) {
             Vector_Subtract(direction, camera_state.move_to_point, camera_state.position);
             length = sqrtf(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);

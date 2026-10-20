@@ -789,6 +789,9 @@ typedef struct {
 #define MOVE_COMMAND_FORWARD_BACK   0x3     /* the forward/back axis */
 #define MOVE_COMMAND_SIDEWAYS       0xC     /* the step left/right axis */
 
+/* Entity.action_step and reaction_step: the first step, where an action or reaction sets itself up */
+#define ACTION_STEP_START           0
+
 /* Entity.state: what the entity knows of the player (EntityAi_StepState) */
 #define ENTITY_STATE_UNAWARE        0       /* the player is not noticed */
 #define ENTITY_STATE_SEARCHING      1       /* the player was noticed and Entity.timer still runs */
@@ -821,7 +824,9 @@ typedef struct {
 #define ENTITY_MOTION_STEP_RIGHT    7
 #define ENTITY_MOTION_DOWN          8
 #define ENTITY_MOTION_UP            9
-#define ENTITY_MOTION_RANGED_ATTACK 0x17    /* the ranged attack: ENTITY_MOTION_ATTACK_BASE + 3 */
+#define ENTITY_MOTION_TURN_LEFT     0xB
+#define ENTITY_MOTION_TURN_RIGHT    0xC
+#define ENTITY_MOTION_RANGED_ATTACK 0x17    /* the first ranged attack; ranged attack n plays this + n */
 #define MOVE_COMMAND_UP_DOWN        0x30    /* the up/down axis */
 #define MOVE_COMMAND_DIRECTIONS     0x3F    /* all six direction bits: the command moves the entity */
 #define MOVE_COMMAND_TURNS          0x300   /* either turn bit */

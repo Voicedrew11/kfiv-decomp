@@ -106,12 +106,12 @@ void EntityAi_SetState(Entity *entity, u8 state) {
    action_step back to 0. */
 void EntityAi_SetUpdate(Entity *entity, EntityHandler update) {
     entity->update_func = update;
-    entity->action_step = 0;
+    entity->action_step = ACTION_STEP_START;
 }
 
 /* Switches the entity's handler, keeping the old one as prev_handler; optionally runs the new one now. */
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now) {
-    entity->action_step = 0;
+    entity->action_step = ACTION_STEP_START;
     entity->prev_handler = entity->handler;
     entity->handler = handler;
     if (run_now != 0 && handler != NULL) {
@@ -124,7 +124,7 @@ int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now)
 int EntityAi_StartAttack(Entity *entity, void (*handler)(Entity *entity), int run, int bit57, int bits58) {
     ENTITY_FLAG_BITS(entity)->ranged_attack = bit57;
     ENTITY_FLAG_BITS(entity)->attack_index = bits58;
-    entity->action_step = 0;
+    entity->action_step = ACTION_STEP_START;
     entity->prev_handler = entity->handler;
     entity->handler = handler;
     if (run != 0 && handler != NULL) {
@@ -1808,7 +1808,7 @@ void EntityAi_SetAttackDelay(Entity *entity, s32 base) {
    clears it), and puts the reaction's step, Entity.reaction_step, back to 0; optionally runs it now. */
 int EntityAi_SetReaction(Entity *entity, void (*reaction)(Entity *entity), int run_now) {
     entity->ai_state.reaction = reaction;
-    entity->reaction_step = 0;
+    entity->reaction_step = ACTION_STEP_START;
     if (run_now != 0) {
         if (reaction != NULL) {
             // match: retail calls it without passing the entity

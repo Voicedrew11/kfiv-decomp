@@ -99,7 +99,7 @@ typedef struct {
 /* EffectMotion as EffectImpactLob_Update uses it: falls under gravity */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    int mode;                       /* 0x10 3 or 5: spawn effect 0x15 on landing */
+    int floor_material;             /* 0x10 under the launch point; 3 or 5: spawn effect 0x15 on landing */
     u16 end_frame;                  /* 0x14 */
     s8 spawned;                     /* 0x16 a follow-up effect has been spawned */
     char hit_end_state[0x19];       /* 0x17 Hit-check state byte, 1 once the end effect spawned */
@@ -575,12 +575,6 @@ typedef struct {
     Entity *owner_entity;           /* 0x10 a copy of EffectActor.owner_entity */
     u8 hit_end_state;               /* 0x14 Hit-check state byte, set once the end spawned */
 } SavedArgMotion;
-
-/* EffectMotion as EffectBowDraw_Start uses it */
-typedef struct {
-    char pad00[4];
-    u8 state;                       /* 0x04 */
-} StateFlagMotion;
 
 /* EffectMotion as EffectInheritSpeed_Start uses it */
 typedef struct {
