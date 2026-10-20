@@ -72,7 +72,7 @@
  },
  "readability": {
   "bit_ops": 3341,
-  "comment_unk_names": 792,
+  "comment_unk_names": 790,
   "field_uses": 59224,
   "fn_ptr_casts": 171,
   "gotos": 14,
@@ -85,7 +85,7 @@
   "named_fields": 3110,
   "named_globals": 1385,
   "padding_fields": 624,
-  "placeholder_params": 220,
+  "placeholder_params": 0,
   "plain_pointer_casts": 1527,
   "raw_case_labels": 2525,
   "raw_float_constants": 21,
