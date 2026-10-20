@@ -11,6 +11,16 @@
 #include "math/angle.h"
 #include "math/vu0.h"
 
+/* MapObject.step of a ladder (kind 0xF) */
+#define LADDER_STEP_ACTIVE          1       /* the update checks the player against its two points */
+/* MapObject.step of a shooter (kind 0x10) */
+#define SHOOTER_STEP_ACTIVE         1       /* the update shoots at the player while it is on */
+/* MapObject.step of a pitfall (kind 0x12) */
+#define PITFALL_STEP_CLOSED         1       /* closed, waiting for the player to step on it */
+#define PITFALL_STEP_OPENING        2       /* waits out its delay, then the opening animation runs */
+#define PITFALL_STEP_OPEN           3       /* open, waits before it closes */
+#define PITFALL_STEP_CLOSING        4       /* waits, then the closing animation runs */
+
 /* Step 0 of kind 0xE, a platform that sinks under the player: at rest, with its state cleared; step 1. */
 void MapObject_StartSinkingPlatform(MapTrigger *trigger) {
     MapTriggerShotKind121660 *shot = (MapTriggerShotKind121660 *)&trigger->shot;
@@ -72,7 +82,7 @@ void MapObject_UpdateSinkingPlatform(MapObject *object) {
 
 /* Start handler of the ladder kind: step 1. */
 void MapObject_StartLadder(MapObject *object) {
-    MAP_OBJECT_BYTES(object)->step = 1;
+    MAP_OBJECT_BYTES(object)->step = LADDER_STEP_ACTIVE;
 }
 
 /* Update handler: when the player (using it, status bit 36 clear) is within
@@ -117,7 +127,7 @@ void MapObject_UpdateLadder(MapObject *object) {
 
 /* Step 0 of kind 0x10, which shoots at the player: step 1. */
 void MapObject_StartShooter(MapObject *object) {
-    MAP_OBJECT_BYTES(object)->step = 1;
+    MAP_OBJECT_BYTES(object)->step = SHOOTER_STEP_ACTIVE;
 }
 
 /* Update handler of the shooting kind: every so many frames (or all the time
@@ -164,12 +174,12 @@ void MapObject_SetShooterOn(MapObject *object, int enabled) {
    that goes with it. */
 void MapObject_StartPitfall(MapObject *object) {
     if (!(object->state_flags & MAP_OBJECT_ON)) {
-        MapObject_StartAnim(object, 4);
-        MAP_OBJECT_BYTES(object)->step = 1;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_OFF);
+        MAP_OBJECT_BYTES(object)->step = PITFALL_STEP_CLOSED;
         object->work[0] = MAP_OBJECT_WORDS(object)->kind_param_0;
     } else {
-        MapObject_StartAnim(object, 5);
-        MAP_OBJECT_BYTES(object)->step = 3;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_ON);
+        MAP_OBJECT_BYTES(object)->step = PITFALL_STEP_OPEN;
         object->work[0] = MAP_OBJECT_WORDS(object)->kind_param_1;
     }
 }
@@ -180,7 +190,7 @@ void MapObject_UpdateClosedPitfall(MapObject *object) {
 
     if (stood_on == object && MAP_OBJECT_WORDS(stood_on)->kind_param_0 >= 0) {
         stood_on->state_flags |= MAP_OBJECT_ON;
-        MAP_OBJECT_BYTES(stood_on)->step = 2;
+        MAP_OBJECT_BYTES(stood_on)->step = PITFALL_STEP_OPENING;
     }
 }
 
@@ -198,8 +208,8 @@ void MapObject_UpdateOpeningPitfall(MapObject *object) {
         if (MODEL_CHANNEL(object->model)->frame != 0) {
             MapObject_StepAnim(object);
         } else {
-            MapObject_StartAnim(object, 5);
-            MAP_OBJECT_BYTES(object)->step = 3;
+            MapObject_StartAnim(object, MAP_OBJECT_ANIM_ON);
+            MAP_OBJECT_BYTES(object)->step = PITFALL_STEP_OPEN;
             object->work[0] = MAP_OBJECT_WORDS(object)->kind_param_1;
         }
     }
@@ -209,7 +219,7 @@ void MapObject_UpdateOpeningPitfall(MapObject *object) {
 void MapObject_UpdateOpenPitfall(MapObject *object) {
     if (MAP_OBJECT_WORDS(object)->kind_param_1 >= 0) {
         object->state_flags &= ~MAP_OBJECT_ON;
-        MAP_OBJECT_BYTES(object)->step = 4;
+        MAP_OBJECT_BYTES(object)->step = PITFALL_STEP_CLOSING;
     }
 }
 
@@ -223,8 +233,8 @@ void MapObject_UpdateClosingPitfall(MapObject *object) {
     } else if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
     } else {
-        MapObject_StartAnim(object, 4);
-        MAP_OBJECT_BYTES(object)->step = 1;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_OFF);
+        MAP_OBJECT_BYTES(object)->step = PITFALL_STEP_CLOSED;
         object->work[0] = MAP_OBJECT_WORDS(object)->kind_param_0;
     }
 }
@@ -239,13 +249,13 @@ void MapObject_SetPitfallOpen(MapObject *object, int turn_on) {
         if (turn_on != 0) {
             object->work[0] = 0;
             object->state_flags = flags | MAP_OBJECT_ON;
-            MAP_OBJECT_BYTES(object)->step = 2;
+            MAP_OBJECT_BYTES(object)->step = PITFALL_STEP_OPENING;
             return;
         }
     }
     if ((flags & MAP_OBJECT_STEP_AND_ON_MASK) == 0x20300 && turn_on == 0) {
         *wait = 0;
         object->state_flags &= ~MAP_OBJECT_ON;
-        MAP_OBJECT_BYTES(object)->step = 4;
+        MAP_OBJECT_BYTES(object)->step = PITFALL_STEP_CLOSING;
     }
 }

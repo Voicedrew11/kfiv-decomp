@@ -9,6 +9,14 @@
 #include "math/vu0.h"
 #include "player/player.h"
 
+/* MapObject.step of a pedestal (kind 0xD) */
+#define PEDESTAL_STEP_EMPTY         1       /* empty, waiting for its item */
+#define PEDESTAL_STEP_MOVE_IN       2       /* the item's part moves toward the pedestal */
+#define PEDESTAL_STEP_SETTLE        3       /* the animation runs as the item settles */
+#define PEDESTAL_STEP_FILLED        4       /* holds its item, waiting for the player */
+#define PEDESTAL_STEP_LIFT          5       /* the item's part rises above the player */
+#define PEDESTAL_STEP_MOVE_OUT      6       /* the item's part moves back to the player */
+
 /* Step 0 of the pedestals (kind 0xD: the Bridge, Binding and Release Pedestals); the item sits on part 2.
    Empty: animation 4, step 1; with bit 17 set it holds its item: animation 5, step 4. */
 void MapObject_StartPedestal(MapObject *object) {
@@ -17,11 +25,11 @@ void MapObject_StartPedestal(MapObject *object) {
     work->part = 2;
     work->fired = 0;
     if (!(object->state_flags & MAP_OBJECT_ON)) {
-        MapObject_StartAnim(object, 4);
-        MAP_OBJECT_BYTES(object)->step = 1;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_OFF);
+        MAP_OBJECT_BYTES(object)->step = PEDESTAL_STEP_EMPTY;
     } else {
-        MapObject_StartAnim(object, 5);
-        MAP_OBJECT_BYTES(object)->step = 4;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_ON);
+        MAP_OBJECT_BYTES(object)->step = PEDESTAL_STEP_FILLED;
     }
 }
 
@@ -48,7 +56,7 @@ void MapObject_UpdateEmptyPedestal(MapObject *object) {
     } else if (work->fired != 0) {
         work->fired = 0;
         object->state_flags |= MAP_OBJECT_ON;
-        MAP_OBJECT_BYTES(object)->step = 2;
+        MAP_OBJECT_BYTES(object)->step = PEDESTAL_STEP_MOVE_IN;
         MapObject_StepAnim(object);
         MapObject_RebuildMatrices(object);
         origin.w = 1.0f;
@@ -79,7 +87,7 @@ void MapObject_MovePedestalItemIn(MapObject *object) {
     }
     Vector_Add(part->position, part->position, work);
     if (--work->frames <= 0) {
-        MAP_OBJECT_BYTES(object)->step = 3;
+        MAP_OBJECT_BYTES(object)->step = PEDESTAL_STEP_SETTLE;
     }
 }
 
@@ -95,8 +103,8 @@ void MapObject_SettlePedestalItem(MapObject *object) {
         MapObject_StepAnim(object);
         return;
     }
-    MapObject_StartAnim(object, 5);
-    MAP_OBJECT_BYTES(object)->step = 4;
+    MapObject_StartAnim(object, MAP_OBJECT_ANIM_ON);
+    MAP_OBJECT_BYTES(object)->step = PEDESTAL_STEP_FILLED;
     game_status.update_hold_flags &= ~1U;
 }
 
@@ -119,7 +127,7 @@ void MapObject_UpdateFilledPedestal(MapObject *object) {
             Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->definition->definition_flags);
             work->timer = 0x2D;
         } else {
-            MAP_OBJECT_BYTES(object)->step = 5;
+            MAP_OBJECT_BYTES(object)->step = PEDESTAL_STEP_LIFT;
             object->state_flags &= ~MAP_OBJECT_ON;
             Player_AddItem(source->kind_param_0);
             game_status.update_hold_flags |= 1;
@@ -145,7 +153,7 @@ void MapObject_LiftPedestalItem(MapObject *object) {
         MapObject_StepAnim(object);
         return;
     }
-    MAP_OBJECT_BYTES(object)->step = 6;
+    MAP_OBJECT_BYTES(object)->step = PEDESTAL_STEP_MOVE_OUT;
     MapObject_RebuildMatrices(object);
     origin.w = 1.0f;
     origin.x = origin.y = origin.z = 0.0f;
@@ -174,8 +182,8 @@ void MapObject_MovePedestalItemOut(MapObject *object) {
     }
     Vector_Add(part->position, part->position, work);
     if (--work->frames <= 0) {
-        MapObject_StartAnim(object, 4);
-        MAP_OBJECT_BYTES(object)->step = 1;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_OFF);
+        MAP_OBJECT_BYTES(object)->step = PEDESTAL_STEP_EMPTY;
         game_status.update_hold_flags &= ~1U;
     }
 }
@@ -191,7 +199,7 @@ int MapObject_PlaceItemOnPedestal(MapObject *object, int item) {
     MapObjectWorkSlide *work = (MapObjectWorkSlide *)object->work;
     u8 step = MAP_OBJECT_BYTES(object)->step;
 
-    if (step == 1 && work->fired == 0 && item == MAP_OBJECT_WORDS(object)->kind_param_0) {
+    if (step == PEDESTAL_STEP_EMPTY && work->fired == 0 && item == MAP_OBJECT_WORDS(object)->kind_param_0) {
         work->fired = step;
         return TRUE;
     }

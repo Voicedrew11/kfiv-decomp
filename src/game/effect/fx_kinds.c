@@ -18,6 +18,12 @@
 #include "sound/sound_game.h"
 #include <stdlib.h>
 
+/* the hit-check state byte of the motions (hit_end_state) */
+#define HIT_END_STATE_IDLE          0       /* no hit yet */
+#define HIT_END_STATE_SPAWNED       1       /* the end effect spawned; the next check ends the effect */
+/* GravityMotion.landing_mode (EffectDrop_Update) */
+#define DROP_LANDING_MODE_RADIUS_HALF 5     /* spawns the effect id in radius_half, else in interval */
+
 
 /* Wraps an angle into -pi..pi. */
 static inline f32 wrap_angle(f32 angle) {
@@ -176,7 +182,7 @@ void EffectGroundFan_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectAngle_ToVector(def->speed, &motion->velocity, &heading);
     EffectAngle_FromVector(&effect->model->rotation, motion);
     new_y = motion->velocity.y - (float)effect->def->radius_half;
-    motion->hit_end_state = 0;
+    motion->hit_end_state = HIT_END_STATE_IDLE;
     motion->frame_stamp = ground_fan_index;
     motion->velocity.y = new_y;
     motion->phase = ground_fan_index % effect->def->interval;
@@ -476,7 +482,7 @@ void EffectBolt_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     EffectStart_PlaceModel(actor, spawn_slot);
     EffectAngle_ToVector(actor->def->speed, &motion->velocity, &actor->model->rotation);
     angle = Effect_FramesToImpact((float)actor->def->radius_half, actor, motion, motion->impact_point);
-    motion->hit_end_state = 0;
+    motion->hit_end_state = HIT_END_STATE_IDLE;
     motion->frames_to_impact = angle;
     def = actor->def;
     motion->end_effect_id = def->end_effect;
@@ -521,7 +527,7 @@ void EffectBolt_StartCounted(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
     effect->model->position.y -= 220.0f;
     angle = Effect_FramesToImpact((float)effect->def->radius_half, effect, motion, &motion->impact_point);
-    motion->hit_end_state = 0;
+    motion->hit_end_state = HIT_END_STATE_IDLE;
     motion->frames_to_impact = angle;
     motion->end_effect_id = effect->def->end_effect;
     bolt_start_count += 1;
@@ -757,7 +763,7 @@ void EffectLateFall_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     motion->scale = 1.0f;
     motion->radius_half = effect->def->radius_half;
     motion->cleared_on_start = 0;
-    motion->hit_end_state = 0;
+    motion->hit_end_state = HIT_END_STATE_IDLE;
 }
 
 /* Kind 54 start: EffectLateFall_Start; the effects aimed at it go with it. */
@@ -793,7 +799,7 @@ void EffectFallToFloor_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectStart_TurnModel(effect, spawn_slot);
     EffectStart_PlaceModel(effect, spawn_slot);
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
-    motion->hit_end_state = 0;
+    motion->hit_end_state = HIT_END_STATE_IDLE;
 }
 
 /* Kind 55 update: falls under def->gravity; where it meets a floor spawns def->end_effect on it and ends the
@@ -898,7 +904,7 @@ void EffectHomeOnPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectStart_TurnModel(effect, spawn_slot);
     EffectStart_PlaceModel(effect, spawn_slot);
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
-    motion->hit_end_state = 0;
+    motion->hit_end_state = HIT_END_STATE_IDLE;
 }
 
 /* Kind 56 update: for def->radius_half frames steers toward 220 above the player and faces its velocity;
@@ -1060,7 +1066,7 @@ void EffectTurnFan_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &angles);
     EffectAngle_FromVector(&effect->model->rotation, motion);
     motion->velocity.y -= effect->def->radius_half;
-    motion->hit_end_state = 0;
+    motion->hit_end_state = HIT_END_STATE_IDLE;
     motion->start_frame = turn_fan_index;
     motion->scale = 1.0f;
     turn_fan_index = motion->start_frame + 1;
@@ -1104,7 +1110,7 @@ void EffectDelayedShot_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     motion = (BurstMotion *)&actor->motion;
     EffectStart_TurnModel(actor, spawn_slot);
     EffectStart_PlaceModel(actor, spawn_slot);
-    motion->hit_end_state = 0;
+    motion->hit_end_state = HIT_END_STATE_IDLE;
     actor->flags |= EFFECT_FLAG_HAS_TARGETERS;
 }
 
@@ -1153,7 +1159,7 @@ void EffectLevelFan_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     Vector_Scale(&offset.x, &motion->velocity.x, (f32)(effect->def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level));
     Vector_Add(&effect->model->position, &effect->model->position, &offset);
     motion->scale = 1.0f;
-    motion->hit_end_state = 0;
+    motion->hit_end_state = HIT_END_STATE_IDLE;
 }
 
 /* Kind 63 update: moves, its x and z growing by def->scale_per_frame, until def->max_frames; checks for hits. */
@@ -1422,7 +1428,7 @@ void EffectSurroundPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectAngle_FromVector(&effect->model->rotation, &offset);
     motion->end_effect_id = (s16)((effect->def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level) * effect->def->sub_effect_id + 30);
     motion->frames_to_impact = (s16)(motion->end_effect_id - effect->def->child_effect_id);
-    motion->hit_end_state = 0;
+    motion->hit_end_state = HIT_END_STATE_IDLE;
 }
 
 /* Kind 68 update: keeps facing the player until its aim frame; at its launch frame launches along its
@@ -1555,7 +1561,7 @@ void EffectLaunchFromOwner_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     motion->owner_entity = effect->owner_entity;
     Vector_Copy(&effect->model->position, effect->start_position);
     Vector_Copy(&effect->model->rotation, effect->start_rotation);
-    motion->hit_end_state = 0;
+    motion->hit_end_state = HIT_END_STATE_IDLE;
 }
 
 /* Kind 78 update: holds its start pose until frame def->unkF2, then flies backward along the owner model's
@@ -1618,7 +1624,7 @@ void EffectBowDraw_Update(EffectActor *actor) {
             if ((pad_state.held & attack_button) && player_state.swing_ended == 0) {
                 return;
             }
-            if (player_state.draw_motion_complete != 0 && player_state.swing_ended == 0) {
+            if (player_state.draw_motion_complete != FALSE && player_state.swing_ended == 0) {
                 Effect_SpawnFromEffect(actor->def->radius_half, actor);
                 motion->scale = actor->def->speed * ((float)player_state.power_gauge / 5000.0f) + 1.0f;
             }
@@ -1640,7 +1646,7 @@ void EffectInheritSpeed_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectAngle_ToVector(motion->speed, &motion->velocity, &effect->model->rotation);
     motion->cleared_on_start = 0;
     motion->scale = 1.0f;
-    motion->hit_end_state = 0;
+    motion->hit_end_state = HIT_END_STATE_IDLE;
 }
 
 /* Kind 81 update: flies, falling under def->gravity after def->radius_half frames, faces its velocity;
@@ -1974,7 +1980,7 @@ void EffectDrop_Update(EffectActor *effect) {
         motion->vertical_speed += def->gravity;
         model->position.y += motion->vertical_speed;
         if (effect->frame >= motion->landing_frame) {
-            if (motion->landing_mode == 5) {
+            if (motion->landing_mode == DROP_LANDING_MODE_RADIUS_HALF) {
                 spawn_id = def->radius_half;
             } else {
                 spawn_id = def->interval;

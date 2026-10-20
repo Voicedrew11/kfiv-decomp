@@ -7,6 +7,9 @@
 #include <math.h>
 #include "math/vu0.h"
 
+/* ModelPart.motion_slot: the slot every part starts in */
+#define MOTION_SLOT_DEFAULT                 0
+
 /* dst = a * (1 - t) + b * t across the xyz lanes, on the VU0 (EntityMath_LerpVector inlined) */
 static inline void blend_vectors(Vector4 *dst, Vector4 *src_a, Vector4 *src_b, f32 ratio) {
     __asm__ volatile(
@@ -37,7 +40,7 @@ void Motion_ClearPartSlots(EntityModel *model) {
         do {
             part = (EntityModelPart80Byte *)((i << 7) + (s32)model->parts);
             i += 1;
-            part->motion_slot = 0;
+            part->motion_slot = MOTION_SLOT_DEFAULT;
         } while (i < instance->part_count);
     }
 }

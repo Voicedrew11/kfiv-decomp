@@ -23,6 +23,11 @@
 #include "save/save_state.h"
 #include "sound/sound_game.h"
 
+/* GameStatus.camera_mode (core/game.h) */
+#define CAMERA_MODE_FOLLOW_PLAYER           0   /* the camera follows the player; 1 the script places it */
+/* MapLoadState.step (map/map_load.c) */
+#define MAP_LOAD_STEP_IDLE                  0   /* no load running */
+
 
 
 static s32 waiting_for_menu = 0;            /* 0x446FD4 ScriptCmd_OpenMenu is waiting for the menu */
@@ -391,7 +396,7 @@ void ScriptCmd_GetMapObjectParams(ScriptObjectValuesCommand *command) {
     MapObject *object;
 
     object = MapObject_GetById(current_map_slot, command->target_id.value);
-    if (object != NULL && object->model != NULL && object->definition->kind == 9) {
+    if (object != NULL && object->model != NULL && object->definition->kind == MAP_OBJECT_KIND_LIGHT) {
         Script_StoreResult(&command->values[0], MAP_OBJECT_WORDS(object)->kind_param_0);
         Script_StoreResult(&command->values[1], MAP_OBJECT_WORDS(object)->kind_param_1);
         Script_StoreResult(&command->values[2], MAP_OBJECT_WORDS(object)->kind_param_2);
@@ -407,7 +412,7 @@ void ScriptCmd_SetMapObjectParams(ScriptObjectShortsCommand *command) {
     MapObjectUnk08Words *source;
 
     object = MapObject_GetById(current_map_slot, command->target_id.value);
-    if (object != NULL && object->model != NULL && object->definition->kind == 9) {
+    if (object != NULL && object->model != NULL && object->definition->kind == MAP_OBJECT_KIND_LIGHT) {
         source = MAP_OBJECT_WORDS(object);
         source->kind_param_0 = command->values[0].value;
         source->kind_param_1 = command->values[1].value;
@@ -757,7 +762,7 @@ void ScriptCmd_SetCameraLookAt(ScriptPointCommand *command) {
 /* Command 142: while the script places the camera, eases it toward the position x, y, z over `frames`
    frames. */
 void ScriptCmd_MoveCameraTo(ScriptTripleCommand *command) {
-    if (game_status.camera_mode != 0 &&
+    if (game_status.camera_mode != CAMERA_MODE_FOLLOW_PLAYER &&
         (command->x.value != camera_state.position[0] || command->y.value != camera_state.position[1] ||
          command->z.value != camera_state.position[2])) {
         int frames = command->frames.value;
@@ -783,7 +788,7 @@ void ScriptCmd_MoveCameraTo(ScriptTripleCommand *command) {
 /* Command 143: while the script places the camera, turns it toward the rotation x, y, z over `frames`
    frames. */
 void ScriptCmd_TurnCameraTo(ScriptTripleCommand *command) {
-    if (game_status.camera_mode == 0 ||
+    if (game_status.camera_mode == CAMERA_MODE_FOLLOW_PLAYER ||
         (command->x.value == camera_state.pitch && command->y.value == camera_state.yaw &&
          command->z.value == camera_state.roll)) {
         command->active = 0;
@@ -823,12 +828,12 @@ void ScriptCmd_SetPropColor(ScriptObjectValuesCommand *command) {
    frames. */
 void ScriptCmd_LoadMap(ScriptValueCommand *command) {
     if ((u32)command->value.value < 0x80) {
-        if (map_load_state.step == 0 && map_load_request.map == 0xFFFF) {
+        if (map_load_state.step == MAP_LOAD_STEP_IDLE && map_load_request.map == 0xFFFF) {
             map_load_request.map = command->value.value;
             map_load_request.x = 0.0f;
             map_load_request.y = 0.0f;
             map_load_request.z = 0.0f;
-            map_load_state.step = 0;
+            map_load_state.step = MAP_LOAD_STEP_IDLE;
             map_load_state.request = &map_load_request;
             map_load_state.next_request = NULL;
             map_load_state.timer = 2;
@@ -842,7 +847,7 @@ void ScriptCmd_LoadMap(ScriptValueCommand *command) {
 /* Command 149: commits the scripted map load ScriptCmd_LoadMap asked for: with a background load running
    and a request pending it sets map_load_committed, which makes the loader take map_load_request and finish at once. */
 void ScriptCmd_CommitMapLoad(ScriptThreadCommand *command) {
-    if (map_load_state.step != 0 && map_load_request.map != 0xFFFF) {
+    if (map_load_state.step != MAP_LOAD_STEP_IDLE && map_load_request.map != 0xFFFF) {
         map_load_committed = 1;
     }
     command->active = 0;

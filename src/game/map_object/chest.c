@@ -8,6 +8,11 @@
 #include "core/file.h"
 #include "sound/sound_game.h"
 
+/* MapObject.step of a chest (kind 4) */
+#define CHEST_STEP_CLOSED           1       /* shut, waiting for the player */
+#define CHEST_STEP_OPENING          2       /* the opening animation runs */
+#define CHEST_STEP_OPEN             3       /* open */
+
 extern void (*map_object_update_hooks[])(MapObject *);
 
 /* Step 1 of the bones and gravestones (kind 3): used by the player, one that still holds its item spawns it
@@ -74,12 +79,12 @@ void MapObject_StartChest(MapObject *object) {
     drop_params[0] = object_item_scale.low_doubleword;
     drop_params[1] = object_item_scale.high_doubleword;
     if (!(object->state_flags & MAP_OBJECT_ON)) {
-        MapObject_StartAnim(object, 4);
-        MAP_OBJECT_BYTES(object)->step = 1;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_OFF);
+        MAP_OBJECT_BYTES(object)->step = CHEST_STEP_CLOSED;
     } else {
-        MapObject_StartAnim(object, 5);
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_ON);
         source = object->source;
-        MAP_OBJECT_BYTES(object)->step = 3;
+        MAP_OBJECT_BYTES(object)->step = CHEST_STEP_OPEN;
         if (source->kind_param_0 != 0 && !(object->state_flags & MAP_OBJECT_EMPTIED)) {
             model = object->model;
             drop_position[0] = model->position.x;
@@ -133,7 +138,7 @@ void MapObject_UpdateClosedChest(MapObject *object) {
             Sound_PlayMapAtRange(0x2D, 0, &object->model->position.x, range);
             source = object->source;
         }
-        MAP_OBJECT_BYTES(object)->step = 2;
+        MAP_OBJECT_BYTES(object)->step = CHEST_STEP_OPENING;
         MAP_OBJECT_BITS(object)->bit17 = TRUE;
         work[1] = 0;
         MAP_OBJECT_BITS(object)->bit18 = TRUE;
@@ -160,8 +165,8 @@ void MapObject_UpdateOpeningChest(MapObject *object) {
     if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
     } else {
-        MapObject_StartAnim(object, 5);
-        MAP_OBJECT_BYTES(object)->step = 3;
+        MapObject_StartAnim(object, MAP_OBJECT_ANIM_ON);
+        MAP_OBJECT_BYTES(object)->step = CHEST_STEP_OPEN;
         object->work[0] = 0x5A;
     }
     MapObject_UpdateOpenChest(object);
