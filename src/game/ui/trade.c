@@ -48,8 +48,6 @@ extern MenuItem *owned_list_last_page;
 extern s32 handover_list_count;        /* how many nodes the ring has */
 extern s32 owned_list_count;
 /* Appends node to the ring being built; the seventh one becomes the page mark. */
-/* Feet per centimetre, rounded the way the retail code has it. */
-#define CM_TO_FEET 0.03281f
 #define LINK_ITEM(node, page_mark)          \
     count++;                                \
     if (count == 7) {                       \

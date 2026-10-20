@@ -88,8 +88,6 @@ extern MenuItem *castable_spell_cursor[];
 extern MenuItem *castable_spell_top[];
 extern MenuItem *castable_spell_page_mark[];
 /* Appends node to the ring being built. */
-/* Feet per centimetre, rounded the way the retail code has it. */
-#define CM_TO_FEET 0.03281f
 #define LINK_ITEM(node)                     \
     if (last != NULL) {                     \
         (node)->next = last;                \

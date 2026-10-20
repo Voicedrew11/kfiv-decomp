@@ -256,4 +256,6 @@ typedef struct {
     GsPackedWord word[6];           /* 0x00 */
 } KeyItemNameWords;
 
+#define CM_TO_FEET 0.03281f /* feet per centimetre, as retail rounds it */
+
 #endif

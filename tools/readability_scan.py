@@ -25,7 +25,7 @@ Source text (comments and strings stripped):
                   `(char *)`, ...), parameters named `unknown`/`argN`, and float
                   literals with four or more decimals (`0.5235988f`: derived
                   constants such as angles in radians) outside brace
-                  initializers, which are data tables. Local declarations:
+                  initializers (data tables) and #define lines. Local declarations:
                   top-level `extern`s and non-static prototypes in a .c file,
                   which belong in the module headers; those for a symbol some
                   header already declares are counted apart too.
@@ -270,7 +270,7 @@ RAW_FLOAT = re.compile(r"(?<![\w.])\d+\.\d{4,}(?:[eE][-+]?\d+)?[fF]?\b")
 
 
 def without_initializers(code: str) -> str:
-    """Code with brace initializers (`= { ... }`, data tables) blanked."""
+    """Code with brace initializers (`= { ... }`, data tables) and #define lines (a name's value) blanked."""
     out, pos = [], 0
     for m in re.finditer(r"=\s*\{", code):
         if m.start() < pos:
@@ -283,7 +283,7 @@ def without_initializers(code: str) -> str:
             i += 1
         out.append(code[pos:m.start()]); pos = i + 1
     out.append(code[pos:])
-    return " ".join(out)
+    return re.sub(r"^[ \t]*#[ \t]*define\b.*", " ", " ".join(out), flags=re.M)
 
 
 def source_measures(sources) -> dict:
