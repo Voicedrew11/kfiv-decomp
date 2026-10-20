@@ -245,7 +245,7 @@ static void IceGolem_Dormant(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DORMANT_STEP_WAKE:
         if (entity->model->level_tables->frame >= 0x29) {
             ENTITY_FLAG_BITS(entity)->bit20 = 0;
             ENTITY_FLAG_BITS(entity)->draw_afterimage = 1;

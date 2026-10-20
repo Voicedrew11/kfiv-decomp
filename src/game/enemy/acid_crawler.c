@@ -250,10 +250,10 @@ static void AcidCrawler_Think(Entity *entity, s32 run_now) {
         return;
     }
     switch (entity->state) {
-    case 0:
+    case ENTITY_STATE_UNAWARE:
         break;
-    case 1:
-    case 2:
+    case ENTITY_STATE_SEARCHING:
+    case ENTITY_STATE_NOTICED:
         AcidCrawler_ThinkCombat(entity, run_now);
         return;
     }

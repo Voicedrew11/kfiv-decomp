@@ -264,7 +264,7 @@ static void DarkFlower_RangedAttack0(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (entity->model->level_tables->frame >= entity->params->pitch_limit_deg && entity->model->level_tables->frame <= entity->params->yaw_limit_deg) {
             if ((s16)entity->params->action_frames == 0) {
                 EntityAi_LaunchShots(entity, unk3D8, 30, 50);

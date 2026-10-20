@@ -506,7 +506,7 @@ static void LivingArmor_MeleeAttack0(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (unk240->hit_start_frame != 0) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
@@ -514,7 +514,7 @@ static void LivingArmor_MeleeAttack0(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (unk240->hit_start_frame >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {

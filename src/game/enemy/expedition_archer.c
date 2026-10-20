@@ -17,6 +17,11 @@
 #include "model/motion.h"
 #include "player/player.h"
 
+/* Entity.action_step values of ExpeditionArcher_RangedAttack1 past the shared ones */
+#define EXPEDITION_ARCHER_RANGED_STEP_DRAW          2   /* turns and draws the bow until frame 42 */
+#define EXPEDITION_ARCHER_RANGED_STEP_TURN_TO_AIM   3   /* turns until aimed at the player, or the timer runs out */
+#define EXPEDITION_ARCHER_RANGED_STEP_SHOOT         4   /* launches the aimed shot, ends when the motion ends */
+
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 /* EntitySpawnInfo.spawn_mode: the spawn id of the partner archer, 0 for none */
@@ -290,7 +295,7 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         ENTITY_FLAG_BITS(entity)->attacking = TRUE;
         if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
@@ -350,7 +355,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case EXPEDITION_ARCHER_RANGED_STEP_DRAW:
         ENTITY_FLAG_BITS(entity)->attacking = TRUE;
         EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
@@ -363,7 +368,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case EXPEDITION_ARCHER_RANGED_STEP_TURN_TO_AIM:
         EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
         ENTITY_FLAG_BITS(entity)->attacking = TRUE;
         ENTITY_FLAG_BITS(entity)->animates = FALSE;
@@ -373,7 +378,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 4:
+    case EXPEDITION_ARCHER_RANGED_STEP_SHOOT:
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(target, &player_state.position);
