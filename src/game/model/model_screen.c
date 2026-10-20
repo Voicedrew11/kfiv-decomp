@@ -635,8 +635,8 @@ void ModelScreen_SetUvsFromScreen(ModelInstance *model) {
                 point[2] = vertex->z;
                 point[3] = 1.0f;
                 Vu0_ProjectToScreen(screen, point);
-                vertex->tex_u = (s16)(screen[0] - 0x6C00) * 6.1035156e-05f;
-                vertex->tex_v = (s16)(screen[1] - 0x7200) * 0.00012207031f;
+                vertex->tex_u = (s16)(screen[0] - 0x6C00) * (1.0f / 16384.0f);
+                vertex->tex_v = (s16)(screen[1] - 0x7200) * (1.0f / 8192.0f);
                 vertex->uvs_set_from_screen = 1;
                 vertex++;
             }

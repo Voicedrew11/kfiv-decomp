@@ -288,7 +288,7 @@ void Wobble_ResetOscillators(void) {
     for (i = 0; i < 16; i++) {
         oscillator->amp_x = 0.01f;
         oscillator->amp_y = 0.0f;
-        oscillator->phase = (float)i * TWO_PI * 0.0625f;
+        oscillator->phase = (float)i * TWO_PI * (1.0f / 16.0f);
         oscillator++;
     }
 }
@@ -453,9 +453,9 @@ void Wobble_SetUvsFromJitteredScreen(ModelInstance *model) {
             vertex_count = data->vertex_count & GIF_TAG_NLOOP_MASK;
             length = data->length;
             for (k = 0; k < vertex_count; k++) {
-                *&MODEL_PROJECT_SCRATCH->point[0] = vertex->x + (rand() - 1073741824.0f) * 2.0f * 9.313226e-10f;
-                *&MODEL_PROJECT_SCRATCH->point[1] = vertex->y + (rand() - 1073741824.0f) * 2.0f * 9.313226e-10f;
-                *&MODEL_PROJECT_SCRATCH->point[2] = vertex->z + (rand() - 1073741824.0f) * 2.0f * 9.313226e-10f;
+                *&MODEL_PROJECT_SCRATCH->point[0] = vertex->x + (rand() - 1073741824.0f) * 2.0f * (1.0f / 1073741824.0f);
+                *&MODEL_PROJECT_SCRATCH->point[1] = vertex->y + (rand() - 1073741824.0f) * 2.0f * (1.0f / 1073741824.0f);
+                *&MODEL_PROJECT_SCRATCH->point[2] = vertex->z + (rand() - 1073741824.0f) * 2.0f * (1.0f / 1073741824.0f);
                 *&MODEL_PROJECT_SCRATCH->point[3] = 1.0f;
                 Vu0_ProjectToScreen(MODEL_PROJECT_SCRATCH->screen, MODEL_PROJECT_SCRATCH->point);
                 vertex->tex_u = (*&MODEL_PROJECT_SCRATCH->screen[0] - 0x6C00) / 10240.0f * 4096.0f;

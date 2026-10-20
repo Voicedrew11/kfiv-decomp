@@ -9,6 +9,9 @@
 #include "ui/message.h"
 #include "player/player.h"
 
+/* 180 / PI as the game's float literal (180.0f / PI rounds to another float) */
+#define RADIANS_TO_DEGREES 57.29578f
+
 int Script_StoreFloatResult(ScriptArg *target, double value); // match: the definition takes a float, but retail converts the argument to double here (fptodp): there was no prototype in scope
 int rand(void);
 float atan2f(float, float);
@@ -538,7 +541,7 @@ void ScriptCmd_IsEntityFacing(ScriptFacingCommand *command) {
     if (entity != NULL) {
         angle = Angle_Wrap(entity->heading_to_player - entity->model->rotation[1]);
         angle = ABS(angle);
-        angle *= 57.29578f;
+        angle *= RADIANS_TO_DEGREES;
         if (angle <= command->range.value / 2) {
             Script_StoreResult(&command->result, TRUE);
             command->active = 0;
