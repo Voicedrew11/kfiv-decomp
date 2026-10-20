@@ -200,11 +200,11 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
-    if (GreaterDemon_ShouldGuard(entity, 200.0f, 1.0471976f)) {
+    if (GreaterDemon_ShouldGuard(entity, 200.0f, DEG_TO_RAD(60))) {
         EntityAi_StartAction(entity, GreaterDemon_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -215,9 +215,9 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
     }
     // match: angle is read here before anything has set it
     if (ai_state->sliding == 0 && entity->distance_to_player < entity->radius + 50.0f + 100.0f && entity->action_timer == 0 &&
-        rand() % 100 < (s16)entity->params->action_frames && ABS(angle) < 1.0471976f) {
+        rand() % 100 < (s16)entity->params->action_frames && ABS(angle) < DEG_TO_RAD(60)) {
         turn_left = entity->heading_to_player - entity->model->rotation[1];
-        if (ABS(turn_left) < 1.0471976f) {
+        if (ABS(turn_left) < DEG_TO_RAD(60)) {
             EntityAi_StartAction(entity, GreaterDemon_PlayAnim6Or7BySide, unknown);
             return;
         }
@@ -272,7 +272,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
-                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                ai_state->turn_in_place = ABS(angle) > DEG_TO_RAD(30);
             }
             if (ai_state->turn_in_place != 0) {
                 entity->move_command = EntityAi_TurnCommand(entity);
@@ -431,7 +431,7 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
-            if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < 0.34906584f) {
+            if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < DEG_TO_RAD(20)) {
                 Motion_Start(entity, 0x12, 0, 1, 1);
                 entity->action_step++;
                 ai_state->part_angle_x = 20.0f;
@@ -759,7 +759,7 @@ static s32 GreaterDemon_ShouldGuard(Entity *entity, f32 min_gap, f32 max_angle) 
     f32 angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
     f32 facing = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
 
-    if (entity->busy_flags != 0 || gap < min_gap || max_angle < ABS(angle) || 0.7853982f < ABS(facing) || ai_state->magic_alert_timer <= 0) {
+    if (entity->busy_flags != 0 || gap < min_gap || max_angle < ABS(angle) || DEG_TO_RAD(45) < ABS(facing) || ai_state->magic_alert_timer <= 0) {
         return FALSE;
     }
     return rand() % 100 < entity->params->guard_chance;
@@ -835,7 +835,7 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
                             minion->model->position[0] = point->x;
                             minion->model->position[1] = point->y;
                             minion->model->position[2] = point->z;
-                            minion->model->rotation[1] = EntityMath_WrapAngle((f32)(rand() % 360) * 0.017453292f);
+                            minion->model->rotation[1] = EntityMath_WrapAngle(DEG_TO_RAD((f32)(rand() % 360)));
                             minion_model = minion->model;
                             spin = minion_model->scale[0];
                             if (rand() % 3 != 0) {
@@ -927,7 +927,7 @@ static void GreaterDemon_RangedAttack(Entity *entity) {
         }
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         direction[0] = 0.0f;
-        direction[1] = EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f);
+        direction[1] = EntityMath_WrapAngle(entity->model->rotation[1] + PI);
         direction[2] = 0.0f;
         EntityShot_Launch(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {

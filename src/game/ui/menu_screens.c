@@ -361,8 +361,8 @@ s32 MenuText_DrawWrapped(u16 *, s32);
 s32 MenuText_DrawWordWrappedLong(u16 *, s32);
 /* an angle brought back into -pi..pi (for angles above -pi) */
 static inline f32 wrap_angle(f32 angle) {
-    angle += 3.1415927f;
-    return angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
+    angle += PI;
+    return angle - (f32)(s32)(angle / TWO_PI) * TWO_PI - PI;
 }
 extern f32 cast_spell_model_position[4];
 extern s32 menu_number_45;
@@ -3636,7 +3636,7 @@ static void Menu_UpdateEquip(void) {
     } else if (menu_buttons & PAD_L1) {
         equip_weapon_model_angle -= 0.03f;
     }
-    equip_weapon_model_angle -= (f32)(s32)(equip_weapon_model_angle / 3.1415927f) * 6.2831855f;
+    equip_weapon_model_angle -= (f32)(s32)(equip_weapon_model_angle / PI) * TWO_PI;
     sceVu0RotMatrixY(weapon_matrix, unit, equip_weapon_model_angle);
     sceVu0TransMatrix(weapon_matrix, weapon_matrix, equip_weapon_model_position);
     node.pool_node = &equip_weapon_pool_node;
@@ -3727,8 +3727,8 @@ static void Menu_UpdateEquip(void) {
             }
             model_draw_color.alpha = (s32)screen_part_alphas[254];
         }
-        angle = equip_item_model_angle + 3.1415927f;
-        equip_item_model_angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
+        angle = equip_item_model_angle + PI;
+        equip_item_model_angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI - PI;
         sceVu0RotMatrixY(item_matrix, scale, equip_item_model_angle);
         sceVu0TransMatrix(item_matrix, item_matrix, equip_item_model_position);
         DRAW_ITEM_MODEL(item_matrix);
@@ -4992,9 +4992,9 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     }
 
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-    visible_item_model_angle += 3.1415927f;
-    visible_item_model_angle -= (s32)(visible_item_model_angle / 6.2831855f) * 6.2831855f;
-    visible_item_model_angle -= 3.1415927f;
+    visible_item_model_angle += PI;
+    visible_item_model_angle -= (s32)(visible_item_model_angle / TWO_PI) * TWO_PI;
+    visible_item_model_angle -= PI;
     sceVu0RotMatrixY(local, view, visible_item_model_angle);
     sceVu0TransMatrix(local, local, visible_item_model_position);
     Menu_DrawItemModel(local);

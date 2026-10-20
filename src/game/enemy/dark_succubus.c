@@ -177,10 +177,10 @@ static void DarkSuccubus_Animate(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
         look_at_target = ENTITY_FLAG_BITS(entity)->look_at_target;
-        limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
-        limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
-        limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
-        limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
+        limits[1] = DEG_TO_RAD(entity->params->pitch_limit_deg);
+        limits[0] = DEG_TO_RAD(-entity->params->pitch_limit_deg);
+        limits[3] = DEG_TO_RAD(entity->params->yaw_limit_deg);
+        limits[2] = DEG_TO_RAD(-entity->params->yaw_limit_deg);
         if (look_at_target) {
             EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, look_at_target, limits, 12.0f);
         } else {
@@ -321,11 +321,11 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
 
     entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
-    if (DarkSuccubus_ShouldDodgeAnim29Or30(entity, 600.0f, 0.5235988f)) {
+    if (DarkSuccubus_ShouldDodgeAnim29Or30(entity, 600.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, DarkSuccubus_DodgeAnim29Or30, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 1.0471976f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(60))) {
         EntityAi_StartAction(entity, DarkSuccubus_Dodge, 1);
         return;
     }
@@ -349,7 +349,7 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
         if (entity->combat_choice == 1) {
             entity->target = &player_state;
             angle = EntityMath_AngleDifference(player_state.heading, entity->heading_to_player);
-            if (entity->distance_to_player < 350.0f && ABS(angle) < 0.6981317f) {
+            if (entity->distance_to_player < 350.0f && ABS(angle) < DEG_TO_RAD(40)) {
                 EntityAi_StartAction(entity, DarkSuccubus_MoveAlongArc, unknown);
                 return;
             }
@@ -375,7 +375,7 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
         }
         break;
     case 1:
-        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f))) {
+        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + PI))) {
             ai_state->move_choice = rand() % 3 + 2;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
@@ -383,7 +383,7 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
         }
         break;
     case 2:
-        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] - 1.5707964f))) {
+        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] - HALF_PI))) {
             ai_state->move_choice = 3;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
@@ -396,7 +396,7 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
         }
         break;
     case 3:
-        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + 1.5707964f))) {
+        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + HALF_PI))) {
             ai_state->move_choice = 2;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
@@ -431,11 +431,11 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown) {
     s32 may_strike;
 
     entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
-    if (DarkSuccubus_ShouldDodgeAnim29Or30(entity, 600.0f, 0.5235988f)) {
+    if (DarkSuccubus_ShouldDodgeAnim29Or30(entity, 600.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, DarkSuccubus_DodgeAnim29Or30, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 1.0471976f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(60))) {
         EntityAi_StartAction(entity, DarkSuccubus_Dodge, 1);
         return;
     }
@@ -463,7 +463,7 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown) {
         case 1:
             entity->target = &player_state;
             angle = EntityMath_AngleDifference(player_state.heading, entity->heading_to_player);
-            if (may_strike && entity->distance_to_player < 350.0f && ABS(angle) < 0.6981317f) {
+            if (may_strike && entity->distance_to_player < 350.0f && ABS(angle) < DEG_TO_RAD(40)) {
                 EntityAi_StartAction(entity, DarkSuccubus_MoveAlongArc, unknown);
                 return;
             }
@@ -500,7 +500,7 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown) {
         }
         break;
     case 1:
-        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f))) {
+        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + PI))) {
             ai_state->move_choice = rand() % 3 + 2;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
@@ -508,7 +508,7 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown) {
         }
         break;
     case 2:
-        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] - 1.5707964f))) {
+        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] - HALF_PI))) {
             ai_state->move_choice = 3;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
@@ -521,7 +521,7 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown) {
         }
         break;
     case 3:
-        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + 1.5707964f))) {
+        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + HALF_PI))) {
             ai_state->move_choice = 2;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
@@ -554,17 +554,17 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknow
     s32 may_strike;
 
     entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
-    if (DarkSuccubus_ShouldDodgeAnim29Or30(entity, 600.0f, 0.5235988f)) {
+    if (DarkSuccubus_ShouldDodgeAnim29Or30(entity, 600.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, DarkSuccubus_DodgeAnim29Or30, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 1.0471976f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(60))) {
         EntityAi_StartAction(entity, DarkSuccubus_Dodge, 1);
         return;
     }
     entity->flags |= ENTITY_FLAG_LOOK_AT_TARGET;
     angle = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
-    if (ABS(angle) > 0.87266463f || ai_state->pause_timer != 0) {
+    if (ABS(angle) > DEG_TO_RAD(50) || ai_state->pause_timer != 0) {
         ai_state->keep_min_distance = 100.0f;
         ai_state->keep_max_distance = 250.0f;
         may_strike = FALSE;
@@ -592,7 +592,7 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknow
         case 1:
             entity->target = &player_state;
             angle = EntityMath_AngleDifference(player_state.heading, entity->heading_to_player);
-            if (may_strike && entity->distance_to_player < 350.0f && ABS(angle) < 0.6981317f) {
+            if (may_strike && entity->distance_to_player < 350.0f && ABS(angle) < DEG_TO_RAD(40)) {
                 EntityAi_StartAction(entity, DarkSuccubus_MoveAlongArc, unknown);
                 return;
             }
@@ -635,7 +635,7 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknow
         }
         break;
     case 1:
-        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f))) {
+        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + PI))) {
             ai_state->move_choice = rand() % 3 + 2;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
@@ -643,7 +643,7 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknow
         }
         break;
     case 2:
-        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] - 1.5707964f))) {
+        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] - HALF_PI))) {
             ai_state->move_choice = 3;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
@@ -656,7 +656,7 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknow
         }
         break;
     case 3:
-        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + 1.5707964f))) {
+        if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + HALF_PI))) {
             ai_state->move_choice = 2;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
@@ -1029,7 +1029,7 @@ static void DarkSuccubus_RangedAttack(Entity *entity) {
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(target, player_state.position);
         target[1] -= 190.0f;
-        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, 0.7853982f, 0.17453292f);
+        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, DEG_TO_RAD(45), DEG_TO_RAD(10));
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
@@ -1067,7 +1067,7 @@ static void DarkSuccubus_MoveAlongArc(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames, 1);
-        ai_state->part_angle_z = EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f);
+        ai_state->part_angle_z = EntityMath_WrapAngle(entity->model->rotation[1] + PI);
         ai_state->pitch_speed = ai_state->part_angle_x;
         ai_state->heading_speed = 0.0f;
         ai_state->move_speed = 0.0f;

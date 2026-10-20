@@ -201,11 +201,11 @@ static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -250,7 +250,7 @@ static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
-                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                ai_state->turn_in_place = ABS(angle) > DEG_TO_RAD(30);
             }
             if (ai_state->turn_in_place != 0) {
                 entity->move_command = EntityAi_TurnCommand(entity);
@@ -274,7 +274,7 @@ static void GiantBeetle_TurnParts7And12(Entity *entity) {
     f32 limit;
     s32 i;
 
-    limit = 0.34906584f;
+    limit = DEG_TO_RAD(20);
     if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         angle = limit;
     } else if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
@@ -282,7 +282,7 @@ static void GiantBeetle_TurnParts7And12(Entity *entity) {
     } else {
         angle = 0.0f;
     }
-    limit = 0.34906584f;
+    limit = DEG_TO_RAD(20);
     if (angle > limit) {
         angle = limit;
     } else if (angle < -limit) {
@@ -311,7 +311,7 @@ static void GiantBeetle_TurnParts23To32(Entity *entity) {
     u16 count;
     s32 i;
 
-    limit = 0.34906584f;
+    limit = DEG_TO_RAD(20);
     command = entity->move_command;
     ai_state = &entity->ai_state;
     if (command & MOVE_COMMAND_TURN_RIGHT) {
@@ -319,7 +319,7 @@ static void GiantBeetle_TurnParts23To32(Entity *entity) {
     } else {
         turn = (command & MOVE_COMMAND_TURN_LEFT) ? -limit : 0.0f;
     }
-    limit = 0.34906584f;
+    limit = DEG_TO_RAD(20);
     if (limit < turn || (limit = -limit, turn < limit)) {
         turn = limit;
     }

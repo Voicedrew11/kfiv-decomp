@@ -97,11 +97,11 @@ static void Fadin_Think(Entity *entity, s32 unknown) {
             delta_y = tip[1] - from[1];
             delta_z = tip[2] - from[2];
             angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-            angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
+            angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + HALF_PI);
             angles[2] = angles[3] = 0.0f;
         } else {
             Vector_Copy(angles, entity->model->rotation);
-            angles[1] = EntityMath_WrapAngle(angles[1] + 3.1415927f);
+            angles[1] = EntityMath_WrapAngle(angles[1] + PI);
         }
         Vector_Copy(target, player_state);
         target[1] -= 190.0f;

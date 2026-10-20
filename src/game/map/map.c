@@ -889,7 +889,7 @@ void Map_RunFreeCamera(void) {
     reset_held = FALSE;
     memset(&position, 0, sizeof(position));
     position.z = 10000.0f;
-    rotation = (VuVector4){ -1.5707964f, player_state.rotation.y, 0.0f, 0.0f };
+    rotation = (VuVector4){ -HALF_PI, player_state.rotation.y, 0.0f, 0.0f };
     if (game_status.bit7) {
         f32 world_screen[16];
         f32 view_screen[16];
@@ -908,16 +908,16 @@ void Map_RunFreeCamera(void) {
             move.x = move.y = move.z = move.w = 0.0f;
             if (pad_state[0] & PAD_CIRCLE) {
                 if (pad_state[0] & PAD_DOWN) {
-                    rotation.x = Angle_Wrap(rotation.x + 0.08726646f);
+                    rotation.x = Angle_Wrap(rotation.x + DEG_TO_RAD(5));
                 }
                 if (pad_state[0] & PAD_UP) {
-                    rotation.x = Angle_Wrap(rotation.x - 0.08726646f);
+                    rotation.x = Angle_Wrap(rotation.x - DEG_TO_RAD(5));
                 }
                 if (pad_state[0] & PAD_LEFT) {
-                    rotation.y = Angle_Wrap(rotation.y + 0.08726646f);
+                    rotation.y = Angle_Wrap(rotation.y + DEG_TO_RAD(5));
                 }
                 if (pad_state[0] & PAD_RIGHT) {
-                    rotation.y = Angle_Wrap(rotation.y - 0.08726646f);
+                    rotation.y = Angle_Wrap(rotation.y - DEG_TO_RAD(5));
                 }
             } else {
                 if (pad_state[0] & PAD_LEFT) {
@@ -937,7 +937,7 @@ void Map_RunFreeCamera(void) {
                 if ((*(s32 *)pad_state & (PAD_L1 | PAD_R1)) == (PAD_L1 | PAD_R1)) {
                     reset_held = TRUE;
                     position.z = 10000.0f;
-                    rotation.x = -1.5707964f;
+                    rotation.x = -HALF_PI;
                     rotation.y = player_state.rotation.y;
                     position.x = 0.0f;
                     position.y = 0.0f;

@@ -191,11 +191,11 @@ float Vector_Dot3(void *left, void *right) {
 float Angle_WrapPlusMinusPi(float angle) {
     float wrapped;
 
-    wrapped = angle - (float)(int)(angle / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < wrapped) {
-        wrapped -= 6.2831855f;
-    } else if (wrapped < -3.1415927f) {
-        wrapped += 6.2831855f;
+    wrapped = angle - (float)(int)(angle / TWO_PI) * TWO_PI;
+    if (PI < wrapped) {
+        wrapped -= TWO_PI;
+    } else if (wrapped < -PI) {
+        wrapped += TWO_PI;
     }
     return wrapped;
 }

@@ -152,11 +152,11 @@ static void LivingArmor_ThinkCombat(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -198,7 +198,7 @@ static void LivingArmor_ThinkCombat(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
-                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                ai_state->turn_in_place = ABS(angle) > DEG_TO_RAD(30);
             }
             if (ai_state->turn_in_place != 0) {
                 entity->move_command = EntityAi_TurnCommand(entity);
@@ -238,7 +238,7 @@ static void LivingArmor_AimPart3AtPlayer(Entity *actor) {
     joint = &model->parts[3];
     if (joint != NULL && actor->animation_index == 0x11) {
         Bone_TurnPartToLook(model, (int)joint, (int)actor->ai_state.target_point, 1, player_state.position, 0, 10.0f);
-        angle = joint->rotation_x - 2.0943952f;
+        angle = joint->rotation_x - DEG_TO_RAD(120);
         joint->rotation_x = angle;
         joint->rotation_x = EntityMath_WrapAngle(angle);
     }
@@ -401,7 +401,7 @@ static void LivingArmor_MeleeAttack1(Entity *entity) {
                 delta_y = base[1] - tip[1];
                 delta_z = base[2] - tip[2];
                 angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
+                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + HALF_PI);
                 angles[2] = angles[3] = 0.0f;
                 delta_x = tip[0] - ai_state->part_angle_y;
                 delta_y = tip[1] - ai_state->part_angle_z;
@@ -562,7 +562,7 @@ static void LivingArmor_MeleeAttack0(Entity *entity) {
                 delta_y = base[1] - tip[1];
                 delta_z = base[2] - tip[2];
                 angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
+                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + HALF_PI);
                 angles[2] = angles[3] = 0.0f;
                 delta_x = tip[0] - ai_state->part_angle_y;
                 delta_y = tip[1] - ai_state->part_angle_z;

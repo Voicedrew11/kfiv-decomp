@@ -124,7 +124,7 @@ void Effect_Init(void) {
         table[i] += (int)table; /* file offsets become pointers */
     }
     Effect_CaptureTextures();
-    scale = 0.017453292f;
+    scale = DEG_TO_RAD(1);
     def = effect_table.defs;
     for (i = 0; i < EFFECT_DEF_COUNT; i++, def = next_def) {
         next_def = def + 1; // match: the next entry is worked out first

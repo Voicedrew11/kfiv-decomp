@@ -10,7 +10,7 @@
 #define IS_PLAYER(owner) ((owner) == (Entity *)&player_state)
 #define LARGER(first, second) ((first) < (second) ? (second) : (first))
 /* rand() scaled to 0-99 (the factor is 2 to the power -31) */
-#define ROLL_PERCENT() ((s32)(rand() * 100.0f * 0.0000000004656613f))
+#define ROLL_PERCENT() ((s32)(rand() * 100.0f * RAND_SCALE))
 /* a chance is never under 5 percent */
 #define AT_LEAST_5(chance) ((chance) < 5 ? 5 : (chance))
 #define ENTITY_TYPE_LAST_BOSS 99
@@ -1366,7 +1366,7 @@ void Attack_WearArmorFromHit(int damage, Unk1B1470Request *request) {
     if (request->hit_armor_part != 0) {
         part = request->hit_armor_part;
     } else {
-        part = (int)(rand() * 4.0f * 4.656613e-10f) + 1;
+        part = (int)(rand() * 4.0f * RAND_SCALE) + 1;
     }
     if (!((s32)(player_state.status_bits >> 35) & 1) && player_state.equipment[EQUIP_SHIELD] != ITEM_WORN_INDEX(ITEM_SHIELD_NONE)) {
         shield_exp = 1;

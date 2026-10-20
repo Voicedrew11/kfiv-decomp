@@ -51,10 +51,10 @@ void Interact_UpdateViewRay(void) {
         Vector_Copy(view_ray_status.view_origin, &player_state);
         view_ray_status.view_origin[1] = view_ray_status.view_origin[1] - 220.0f + player_state.landing_dip_offset + camera_state.height_offset;
         pitch = player_state.rotation.x - player_state.view_tilt_pitch;
-        if (pitch > 1.012291f) {
-            pitch = 1.012291f;
-        } else if (pitch < -1.012291f) {
-            pitch = -1.012291f;
+        if (pitch > DEG_TO_RAD(58)) {
+            pitch = DEG_TO_RAD(58);
+        } else if (pitch < -DEG_TO_RAD(58)) {
+            pitch = -DEG_TO_RAD(58);
         }
         heading = player_state.rotation.y;
     } else {

@@ -118,10 +118,10 @@ static void Npc_Animate(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
         look_at_target = ENTITY_FLAG_BITS(entity)->look_at_target;
-        limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
-        limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
-        limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
-        limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
+        limits[1] = DEG_TO_RAD(entity->params->pitch_limit_deg);
+        limits[0] = DEG_TO_RAD(-entity->params->pitch_limit_deg);
+        limits[3] = DEG_TO_RAD(entity->params->yaw_limit_deg);
+        limits[2] = DEG_TO_RAD(-entity->params->yaw_limit_deg);
         if (look_at_target) {
             EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, look_at_target, limits, ENTITY_CONTROLLER(entity)->action_frames);
         } else {
@@ -195,7 +195,7 @@ static void Npc_ThinkReactToPlayer(Entity *entity, s32 run_now) {
 
     direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
     angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
-    limit = (f32)ENTITY_CONTROLLER(entity)->far_distance * 0.017453292f;
+    limit = DEG_TO_RAD((f32)ENTITY_CONTROLLER(entity)->far_distance);
     if (0.0f <= angle ? limit < angle : limit < -angle) {
         if (0.0f <= angle) {
             ai_state->pause_timer = MOVE_COMMAND_ANIMATION_28;
@@ -220,7 +220,7 @@ static void Npc_ThinkTurnToPlayer(Entity *entity, s32 run_now) {
 
     direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
     angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
-    limit = (f32)ENTITY_CONTROLLER(entity)->far_distance * 0.017453292f;
+    limit = DEG_TO_RAD((f32)ENTITY_CONTROLLER(entity)->far_distance);
     if (0.0f <= angle ? limit < angle : limit < -angle) {
         EntityAi_StartAction(entity, Npc_TurnToPlayer, run_now);
     } else {
@@ -261,7 +261,7 @@ static void Npc_ThinkTurnBack(Entity *entity, s32 run_now) {
     f32 limit;
 
     angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->spawn_info->spawn_rotation_y);
-    limit = (f32)ENTITY_CONTROLLER(entity)->far_distance * 0.017453292f;
+    limit = DEG_TO_RAD((f32)ENTITY_CONTROLLER(entity)->far_distance);
     if (0.0f <= angle ? limit < angle : limit < -angle) {
         EntityAi_StartAction(entity, Npc_TurnToSpawnHeading, run_now);
     } else {

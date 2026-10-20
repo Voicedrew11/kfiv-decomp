@@ -133,10 +133,10 @@ static void FireGenie_Animate(Entity *entity) {
                 FireGenie_TurnPart3ToPlayer(entity, 1);
             }
         }
-        limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
-        limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
-        limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
-        limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
+        limits[1] = DEG_TO_RAD(entity->params->pitch_limit_deg);
+        limits[0] = DEG_TO_RAD(-entity->params->pitch_limit_deg);
+        limits[3] = DEG_TO_RAD(entity->params->yaw_limit_deg);
+        limits[2] = DEG_TO_RAD(-entity->params->yaw_limit_deg);
         look_at_target = ENTITY_FLAG_BITS(entity)->look_at_target;
         if (look_at_target) {
             EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, look_at_target, limits, 12.0f);
@@ -163,8 +163,8 @@ static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode) {
     if (bone != NULL) {
         if (mode != 0) {
             yaw = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-            if (yaw > 0.6981317f) {
-                yaw = 0.6981317f;
+            if (yaw > DEG_TO_RAD(40)) {
+                yaw = DEG_TO_RAD(40);
             }
             if (yaw < 0.0f) {
                 yaw = 0.0f;
@@ -247,7 +247,7 @@ static void FireGenie_Think(Entity *entity, s32 unknown) {
 static void FireGenie_ThinkDecide(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
 
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
     } else {
         entity->flags |= ENTITY_FLAG_ATTACKING;

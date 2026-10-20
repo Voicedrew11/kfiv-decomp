@@ -317,7 +317,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
     case 0:
         half = 0.5f;
         Motion_Start(entity, 0x12, 0, entity->params->motion_blend_frames, 1);
-        degree = 0.017453292f;
+        degree = DEG_TO_RAD(1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
@@ -354,7 +354,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
         if (48.0f < ai_state->part_angle_z) {
             ai_state->part_angle_z = 48.0f;
         }
-        launch_angle = 0.6981317f;
+        launch_angle = DEG_TO_RAD(40);
         ai_state->part_angle_x = -ai_state->part_angle_z * sinf(launch_angle);
         ai_state->part_angle_y = ai_state->part_angle_z * cosf(launch_angle);
         ai_state->pause_timer = 0;

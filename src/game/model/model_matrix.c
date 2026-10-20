@@ -34,8 +34,8 @@ float cosf(float);
 
 /* Brings an angle back into -pi..pi. */
 static inline f32 ModelMatrix_WrapAngle(f32 angle) {
-    angle += 3.1415927f;
-    return angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
+    angle += PI;
+    return angle - (f32)(s32)(angle / TWO_PI) * TWO_PI - PI;
 }
 
 /* Builds a part's local matrix from its scale, its three angles (applied x, z, y) and its offset. */
@@ -107,7 +107,7 @@ static void ModelMatrix_BuildFlattenedTilt(ModelInstance *model) {
     sceVu0RotMatrixX(matrix, identity_matrix, ModelMatrix_WrapAngle(model->rotation.x));
     sceVu0RotMatrixZ(matrix, matrix, ModelMatrix_WrapAngle(model->rotation.z));
     matrix[4] = matrix[5] = matrix[6] = matrix[7] = 0.0f;
-    sceVu0RotMatrixX(matrix, matrix, -1.5707964f);
+    sceVu0RotMatrixX(matrix, matrix, -HALF_PI);
     sceVu0TransMatrix(matrix, matrix, offset);
     Matrix_Multiply(model, model_extra_transform_matrix, matrix);
 }
@@ -187,9 +187,9 @@ void ModelMatrix_Build(ModelInstance *model, Vector4 *position, Vector4 *rotatio
                              atan2f(to_camera[1], sqrtf(to_camera[0] * to_camera[0] + to_camera[2] * to_camera[2])));
         }
         if (model->draw_flags & MODEL_DRAW_FACE_CAMERA_Y) {
-            angle = -atan2f(to_camera[2], to_camera[0]) - 1.5707964f;
-            if (angle < -3.1415927f) {
-                angle += 6.2831855f;
+            angle = -atan2f(to_camera[2], to_camera[0]) - HALF_PI;
+            if (angle < -PI) {
+                angle += TWO_PI;
             }
             sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, angle);
         }

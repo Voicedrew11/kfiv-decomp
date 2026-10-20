@@ -24,10 +24,10 @@ void MapObject_StartLight(MapObject *object) {
     sort = MAP_OBJECT_WORDS(object)->kind_param_6;
     if (sort >= 0) {
         if (sort <= 1) {
-            work[2] = (int)(rand() * 6.0f * 4.656613e-10f) + 0x14;
-            work[1] = work[2] * (f32)rand() * 4.656613e-10f;
-            work[4] = (int)(rand() * 6.0f * 4.656613e-10f) + 5;
-            work[3] = work[4] * (f32)rand() * 4.656613e-10f;
+            work[2] = (int)(rand() * 6.0f * RAND_SCALE) + 0x14;
+            work[1] = work[2] * (f32)rand() * RAND_SCALE;
+            work[4] = (int)(rand() * 6.0f * RAND_SCALE) + 5;
+            work[3] = work[4] * (f32)rand() * RAND_SCALE;
         }
     }
     MAP_OBJECT_BYTES(object)->step = 1;

@@ -694,10 +694,10 @@ void EntityAi_Animate(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
         look_at_target = ENTITY_FLAG_BITS(entity)->look_at_target;
-        limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
-        limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
-        limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
-        limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
+        limits[1] = DEG_TO_RAD(entity->params->pitch_limit_deg);
+        limits[0] = DEG_TO_RAD(-entity->params->pitch_limit_deg);
+        limits[3] = DEG_TO_RAD(entity->params->yaw_limit_deg);
+        limits[2] = DEG_TO_RAD(-entity->params->yaw_limit_deg);
         if (look_at_target) {
             EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, look_at_target, limits, 12.0f);
         } else {
@@ -892,11 +892,11 @@ void EntityAi_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -937,7 +937,7 @@ void EntityAi_ThinkCombat(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
-                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                ai_state->turn_in_place = ABS(angle) > DEG_TO_RAD(30);
             }
             if (ai_state->turn_in_place != 0) {
                 entity->move_command = EntityAi_TurnCommand(entity);

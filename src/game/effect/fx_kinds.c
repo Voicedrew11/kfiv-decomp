@@ -301,12 +301,12 @@ void EffectGroundFan_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     def = effect->def;
     heading.y = heading.y + (float)ground_fan_index * def->turn_rate;
     angle = heading.y;
-    quotient = (int)(angle / 6.28318548f);
-    angle = angle - (float)quotient * 6.28318548f;
-    if (3.14159274f < angle) {
-        angle -= 6.28318548f;
-    } else if (angle < -3.14159274f) {
-        angle += 6.28318548f;
+    quotient = (int)(angle / TWO_PI);
+    angle = angle - (float)quotient * TWO_PI;
+    if (PI < angle) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     heading.y = angle;
     EffectAngle_ToVector(def->speed, &motion->velocity, &heading);
@@ -1186,11 +1186,11 @@ void EffectTurnFan_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     Vector_Copy(&angles, &effect->model->rotation);
     angles.y += (f32)turn_fan_index * effect->def->turn_rate;
     heading = angles.y;
-    heading = heading - (f32)(int)(heading / 6.2831855f) * 6.2831855f;
-    if (heading > 3.1415927f) {
-        heading -= 6.2831855f;
-    } else if (heading < -3.1415927f) {
-        heading += 6.2831855f;
+    heading = heading - (f32)(int)(heading / TWO_PI) * TWO_PI;
+    if (heading > PI) {
+        heading -= TWO_PI;
+    } else if (heading < -PI) {
+        heading += TWO_PI;
     }
     angles.y = heading;
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &angles);
@@ -1278,11 +1278,11 @@ void EffectLevelFan_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectStart_TurnModel(effect, spawn_slot);
     EffectStart_PlaceModel(effect, spawn_slot);
     heading = effect->model->rotation.y + (f32)(effect->def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level) * effect->def->turn_rate;
-    heading = heading - (f32)(int)(heading / 6.2831855f) * 6.2831855f;
-    if (heading > 3.1415927f) {
-        heading -= 6.2831855f;
-    } else if (heading < -3.1415927f) {
-        heading += 6.2831855f;
+    heading = heading - (f32)(int)(heading / TWO_PI) * TWO_PI;
+    if (heading > PI) {
+        heading -= TWO_PI;
+    } else if (heading < -PI) {
+        heading += TWO_PI;
     }
     effect->model->rotation.y = heading;
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
@@ -1430,11 +1430,11 @@ void EffectWobble_Update(EffectActor *effect) {
     forward.x = 1.0f;
     forward.y = forward.z = forward.w = zero;
     heading = motion->heading + effect->def->turn_rate;
-    heading = heading - (f32)(int)(heading / 6.2831855f) * 6.2831855f;
-    if (heading > 3.1415927f) {
-        heading -= 6.2831855f;
-    } else if (heading < -3.1415927f) {
-        heading += 6.2831855f;
+    heading = heading - (f32)(int)(heading / TWO_PI) * TWO_PI;
+    if (heading > PI) {
+        heading -= TWO_PI;
+    } else if (heading < -PI) {
+        heading += TWO_PI;
     }
     motion->heading = heading;
     sceVu0RotMatrixZ(rotation_matrix, identity_matrix, heading);
@@ -1543,11 +1543,11 @@ void EffectSurroundPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     offset.z = (f32)effect->def->radius_half;
     offset.w = 0.0f;
     heading = (player_state.rotation.y + effect->def->rotation_base[1]) + (f32)(effect->def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level) * effect->def->turn_rate;
-    heading = heading - (f32)(int)(heading / 6.2831855f) * 6.2831855f;
-    if (heading > 3.1415927f) {
-        heading -= 6.2831855f;
-    } else if (heading < -3.1415927f) {
-        heading += 6.2831855f;
+    heading = heading - (f32)(int)(heading / TWO_PI) * TWO_PI;
+    if (heading > PI) {
+        heading -= TWO_PI;
+    } else if (heading < -PI) {
+        heading += TWO_PI;
     }
     sceVu0RotMatrixY(rotation_matrix, identity_matrix, heading);
     sceVu0ApplyMatrix(&offset, rotation_matrix, &offset);
@@ -2028,8 +2028,8 @@ void EffectScatterAroundPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot
     Vector_Add(&effect->model->position, &player_state, &offset);
     effect->model->position.x += ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->offset_spread[0];
     effect->model->position.z += ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->offset_spread[2];
-    effect->model->rotation.x = ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * 3.1415927f;
-    effect->model->rotation.y = ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * 3.1415927f;
+    effect->model->rotation.x = ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * PI;
+    effect->model->rotation.y = ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * PI;
     effect->model->rotation.z = 0.0f;
     effect->motion.velocity.x = 0.0f;
     motion->velocity.y = effect->def->speed;
@@ -2213,11 +2213,11 @@ void EffectCorkscrew_Update(EffectActor *effect) {
     spin_vector[3] = 0.0f;
     spin_vector[0] = motion->spin_speed = spin_speed;
     angle = motion->spin_angle + def->turn_rate;
-    angle -= (int)(angle / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < angle) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle -= (int)(angle / TWO_PI) * TWO_PI;
+    if (PI < angle) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     motion->spin_angle = angle;
     sceVu0RotMatrixZ(matrix, identity_matrix, angle);
@@ -2312,11 +2312,11 @@ void EffectJitterWobble_Update(EffectActor *effect) {
     axis[0] = 1.0f;
     axis[1] = axis[2] = axis[3] = 0.0f;
     angle = motion->spin_angle + effect->def->turn_rate + ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->spread_angle;
-    angle -= (int)(angle / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < angle) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle -= (int)(angle / TWO_PI) * TWO_PI;
+    if (PI < angle) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     motion->spin_angle = angle;
     sceVu0RotMatrixZ(matrix, identity_matrix, angle);

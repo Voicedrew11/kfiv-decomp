@@ -612,7 +612,7 @@ void ModelScreen_SetUvsFromScreen(ModelInstance *model) {
 
     screen_uv_frame_copy = screen_uv_frame = (screen_uv_frame + 1) % 60;
     for (i = 0; i < 60; i++) {
-        sines[i] = sin((f32)i * 6.2831855f / 60.0f) * 10.0;
+        sines[i] = sin((f32)i * TWO_PI / 60.0f) * 10.0;
     }
     part = model->parts;
     part_count = model->part_count;

@@ -149,27 +149,27 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
     side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->look_at_target = 1;
     angle = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
-    if (entity->distance_to_player_3d - entity->radius - 100.0f < 300.0f && ABS(angle) < 0.6981317f && ai_state->pause_timer == 0) {
+    if (entity->distance_to_player_3d - entity->radius - 100.0f < 300.0f && ABS(angle) < DEG_TO_RAD(40) && ai_state->pause_timer == 0) {
         entity->busy_flags = 0;
         entity->move_command = 0;
         entity->action_timer = 0;
         EntityAi_StartAction(entity, AncientMummy_ShootAndRelocate, 1);
         return;
     }
-    if (entity->distance_to_player_3d - entity->radius - 100.0f < 800.0f && ABS(angle) < 0.6981317f) {
+    if (entity->distance_to_player_3d - entity->radius - 100.0f < 800.0f && ABS(angle) < DEG_TO_RAD(40)) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-        if (ABS(angle) < 1.5707964f) {
+        if (ABS(angle) < HALF_PI) {
             ai_state->move_choice = 1;
             entity->target = &player_state;
             entity->combat_choice = 1;
@@ -211,7 +211,7 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
-                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                ai_state->turn_in_place = ABS(angle) > DEG_TO_RAD(30);
             }
             if (ai_state->turn_in_place != 0) {
                 entity->move_command = EntityAi_TurnCommand(entity);
@@ -323,7 +323,7 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
             height = EntityCollision_DistanceToPropFloor(entity->map_record, destination);
             if (height != ancient_mummy_no_floor_height[0]) {
                 yaw = EntityMath_AngleXZ(player_state.position, (char *)destination);
-                if (EntityMath_WrapAngle(yaw - player_state.heading) < -1.5707964f || EntityMath_WrapAngle(yaw - player_state.heading) > 1.5707964f) {
+                if (EntityMath_WrapAngle(yaw - player_state.heading) < -HALF_PI || EntityMath_WrapAngle(yaw - player_state.heading) > HALF_PI) {
                     ai_state->step_index = 1;
                     ai_state->target_point[1] += height;
                 }

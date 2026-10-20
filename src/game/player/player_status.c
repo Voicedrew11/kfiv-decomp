@@ -257,7 +257,7 @@ void Player_TiltViewFromHit(int damage) {
             if (player->view_tilt_frames < frames) {
                 float angle = player->view_tilt_pitch;
 
-                if (0.2617994f > angle) {
+                if (DEG_TO_RAD(15) > angle) {
                     player->view_tilt_frames = frames;
                 }
             }

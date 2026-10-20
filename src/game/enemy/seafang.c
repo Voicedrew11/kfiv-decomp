@@ -170,11 +170,11 @@ static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -311,11 +311,11 @@ static void Seafang_ThinkCombatRunAtPlayer(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -394,13 +394,13 @@ static void Seafang_Move(Entity *entity) {
     }
     entity->turn_delta_yaw += value;
     if (entity->move_command & MOVE_COMMAND_DOWN) {
-        pitch = -0.5235988f;
+        pitch = -DEG_TO_RAD(30);
     } else if (entity->move_command & MOVE_COMMAND_UP) {
-        pitch = 0.5235988f;
+        pitch = DEG_TO_RAD(30);
     } else {
         pitch = 0.0f;
     }
-    if (ABS(pitch - entity->model->rotation[0]) > 0.5235988f) {
+    if (ABS(pitch - entity->model->rotation[0]) > DEG_TO_RAD(30)) {
         rate = 60.0f;
     } else {
         rate = 30.0f;

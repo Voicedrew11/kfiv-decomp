@@ -338,7 +338,7 @@ void MapViewer_DrawPictureMap(void) {
         corner_us = viewer_marker_corner_us;
         corner_vs = viewer_marker_corner_vs;
         if (pulse_frame < 45) {
-            alpha = sinf(pulse_frame * 3.1415927f / 45.0f) * 128.0f;
+            alpha = sinf(pulse_frame * PI / 45.0f) * 128.0f;
         } else {
             alpha = 0;
         }
@@ -396,7 +396,7 @@ void MapViewer_DrawPictureMap(void) {
     }
     if (found == -1) {
         if (square_pulse_frame < 45) {
-            viewer_marker_rect.alpha = sinf(square_pulse_frame * 3.1415927f / 45.0f) * 128.0f;
+            viewer_marker_rect.alpha = sinf(square_pulse_frame * PI / 45.0f) * 128.0f;
         } else {
             viewer_marker_rect.alpha = 0;
         }
@@ -641,7 +641,7 @@ void MapViewer_RunKingsMap(void) {
     reset_held = FALSE;
     memset(&position, 0, sizeof(position));
     position.z = 10000.0f;
-    rotation = (VuVector4){ -1.5707964f, player_state.rotation.y, 0.0f, 0.0f };
+    rotation = (VuVector4){ -HALF_PI, player_state.rotation.y, 0.0f, 0.0f };
     {
         f32 world_screen[16];
         f32 view_screen[16];
@@ -664,16 +664,16 @@ void MapViewer_RunKingsMap(void) {
             move.x = move.y = move.z = move.w = 0.0f;
             if (held & PAD_CROSS) {
                 if (held & PAD_DOWN) {
-                    rotation.x = Angle_Wrap(rotation.x + 0.08726646f);
+                    rotation.x = Angle_Wrap(rotation.x + DEG_TO_RAD(5));
                 }
                 if (held & PAD_UP) {
-                    rotation.x = Angle_Wrap(rotation.x - 0.08726646f);
+                    rotation.x = Angle_Wrap(rotation.x - DEG_TO_RAD(5));
                 }
                 if (held & PAD_LEFT) {
-                    rotation.y = Angle_Wrap(rotation.y + 0.08726646f);
+                    rotation.y = Angle_Wrap(rotation.y + DEG_TO_RAD(5));
                 }
                 if (held & PAD_RIGHT) {
-                    rotation.y = Angle_Wrap(rotation.y - 0.08726646f);
+                    rotation.y = Angle_Wrap(rotation.y - DEG_TO_RAD(5));
                 }
             } else {
                 if (held & PAD_LEFT) {
@@ -693,7 +693,7 @@ void MapViewer_RunKingsMap(void) {
                 if ((held & (PAD_L1 | PAD_R1)) == (PAD_L1 | PAD_R1)) {
                     reset_held = TRUE;
                     position.z = 10000.0f;
-                    rotation.x = -1.5707964f;
+                    rotation.x = -HALF_PI;
                     rotation.y = player_state.rotation.y;
                     position.x = 0.0f;
                     position.y = 0.0f;
@@ -766,7 +766,7 @@ static void MapViewer_DrawKingsMap(void) {
     game_dbuff_context2_clear_color[0] = 0;
     game_dbuff_context2_clear_color[30] = 0;
     if (pulse_frame < 45) {
-        alpha = (int)(sinf(pulse_frame * 3.1415927f / 45.0f) * 108.0f) + 0x10;
+        alpha = (int)(sinf(pulse_frame * PI / 45.0f) * 108.0f) + 0x10;
     }
     period = 60; // match: the divisor is a variable
     pulse_frame = (pulse_frame + 1) % period;

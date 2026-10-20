@@ -132,7 +132,7 @@ static void Phagos_RunAwayAndRemove(Entity *entity) {
         } else {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         }
-        ai_state->part_angle_x = entity->heading_to_player + 1.5707964f + (f32)(rand() % 180) * 0.017453292f;
+        ai_state->part_angle_x = entity->heading_to_player + HALF_PI + DEG_TO_RAD((f32)(rand() % 180));
         ai_state->part_angle_x = EntityMath_WrapAngle(ai_state->part_angle_x);
         ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;

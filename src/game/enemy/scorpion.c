@@ -195,11 +195,11 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -221,14 +221,14 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
             return;
         case 1:
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-            if (ABS(angle) > 0.17453292f) {
+            if (ABS(angle) > DEG_TO_RAD(10)) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 60;
                 ai_state->move_choice = 0;
             } else {
                 heading = EntityMath_AngleXZ(player_state.position, (char *)entity->model->position) - player_state.heading;
                 heading = EntityMath_WrapAngle(heading);
-                if (ABS(heading) > 0.7853982f || rand() % 100 < entity->params->pitch_limit_deg) {
+                if (ABS(heading) > DEG_TO_RAD(45) || rand() % 100 < entity->params->pitch_limit_deg) {
                     entity->target = &player_state;
                     entity->action_timer = rand() % 60 + 120;
                     ai_state->move_choice = 1;
@@ -258,7 +258,7 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
-                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                ai_state->turn_in_place = ABS(angle) > DEG_TO_RAD(30);
             }
             if (ai_state->turn_in_place != 0) {
                 entity->move_command = EntityAi_TurnCommand(entity);
@@ -278,7 +278,7 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
                         entity->move_command |= MOVE_COMMAND_TURN_LEFT;
                     }
                 }
-                if (ABS(angle) <= 0.17453292f) {
+                if (ABS(angle) <= DEG_TO_RAD(10)) {
                     entity->action_timer = 0;
                 }
                 ENTITY_FLAG_BITS(entity)->motion_step_mode = 3;

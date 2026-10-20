@@ -288,7 +288,7 @@ void Wobble_ResetOscillators(void) {
     for (i = 0; i < 16; i++) {
         oscillator->amp_x = 0.01f;
         oscillator->amp_y = 0.0f;
-        oscillator->phase = (float)i * 6.2831855f * 0.0625f;
+        oscillator->phase = (float)i * TWO_PI * 0.0625f;
         oscillator++;
     }
 }
@@ -296,9 +296,9 @@ void Wobble_ResetOscillators(void) {
 /* Advances each of the 16 entries' phase and recomputes its sine offsets. */
 void Wobble_StepOscillators(void) {
     WaveOscillator *entry = (WaveOscillator *)wobble_oscillators;
-    float step = 0.06981317f;
-    float half_turn = 3.1415927f;
-    float two_pi = 6.2831855f;
+    float step = DEG_TO_RAD(4);
+    float half_turn = PI;
+    float two_pi = TWO_PI;
     int i;
 
     for (i = 0; i < 16; i++) {

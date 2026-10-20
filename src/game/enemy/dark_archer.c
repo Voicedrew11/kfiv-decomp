@@ -167,10 +167,10 @@ static void DarkArcher_Animate(Entity *entity) {
         }
         DarkArcher_PitchPart2ToPlayer(entity, (s32)((s64)(entity->flags << 22) >> 32) & ENTITY_FLAG_ACTIVE_LIST);
         params = entity->params;
-        limits[0] = -params->pitch_limit_deg * 0.017453292f;
-        limits[1] = params->pitch_limit_deg * 0.017453292f;
-        limits[3] = params->yaw_limit_deg * 0.017453292f;
-        limits[2] = -params->yaw_limit_deg * 0.017453292f;
+        limits[0] = DEG_TO_RAD(-params->pitch_limit_deg);
+        limits[1] = DEG_TO_RAD(params->pitch_limit_deg);
+        limits[3] = DEG_TO_RAD(params->yaw_limit_deg);
+        limits[2] = DEG_TO_RAD(-params->yaw_limit_deg);
         if (ENTITY_FLAG_BITS(entity)->look_at_target) {
             EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, ENTITY_FLAG_BITS(entity)->look_at_target, limits, 12.0f);
         } else {
@@ -195,10 +195,10 @@ static void DarkArcher_PitchPart2ToPlayer(Entity *entity, s32 mode) {
 
     if (bone != NULL) {
         pitch = EntityMath_WrapAngle(atan2(player_state.position[1] - entity->model->position[1], entity->distance_to_player));
-        if (pitch > 1.0471976f) {
-            pitch = 1.0471976f;
-        } else if (pitch < -1.0471976f) {
-            pitch = -1.0471976f;
+        if (pitch > DEG_TO_RAD(60)) {
+            pitch = DEG_TO_RAD(60);
+        } else if (pitch < -DEG_TO_RAD(60)) {
+            pitch = -DEG_TO_RAD(60);
         }
         if (mode > 0) {
             rate = 10.0f;
@@ -460,11 +460,11 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -490,7 +490,7 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
         case 1:
             entity->target = &player_state;
             angle = EntityMath_AngleDifference(player_state.heading, entity->heading_to_player);
-            if (ai_state->step_index != 0 && entity->distance_to_player < (f32)entity->params->near_distance && ABS(angle) < 0.6981317f) {
+            if (ai_state->step_index != 0 && entity->distance_to_player < (f32)entity->params->near_distance && ABS(angle) < DEG_TO_RAD(40)) {
                 EntityAi_StartAction(entity, DarkArcher_MoveAlongArc, unknown);
                 return;
             }
@@ -511,7 +511,7 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
-                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                ai_state->turn_in_place = ABS(angle) > DEG_TO_RAD(30);
             }
             if (ai_state->turn_in_place != 0) {
                 entity->move_command = EntityAi_TurnCommand(entity);
@@ -628,7 +628,7 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
         break;
     case 2:
         if (entity->model->level_tables->frame >= 0x11) {
-            ai_state->pitch_speed = EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f);
+            ai_state->pitch_speed = EntityMath_WrapAngle(entity->model->rotation[1] + PI);
             ai_state->heading_speed = -entity->params->far_distance;
             ai_state->keep_min_distance = 0.0f;
             ai_state->turn_rate = 0.0f;

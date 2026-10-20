@@ -131,7 +131,7 @@ void ScriptCmd_Nop217(ScriptThreadCommand *command) {
    4096-step table sine_table, then finishes. */
 void ScriptCmd_Sin(ScriptFloatQueryCommand *command) {
     ScriptArg *result = &command->result;
-    int step = (int)(command->input.value * 4096.0f / 6.2831855f);
+    int step = (int)(command->input.value * 4096.0f / TWO_PI);
     int wrapped = step + 0x1000;
     int index = wrapped % 4096;
 
@@ -143,7 +143,7 @@ void ScriptCmd_Sin(ScriptFloatQueryCommand *command) {
    quarter turn on), then finishes. */
 void ScriptCmd_Cos(ScriptFloatQueryCommand *command) {
     ScriptArg *result = &command->result;
-    int step = (int)(command->input.value * 4096.0f / 6.2831855f);
+    int step = (int)(command->input.value * 4096.0f / TWO_PI);
     int wrapped = step + 0x1000;
     int index = wrapped % 4096;
 
@@ -302,7 +302,7 @@ void ScriptCmd_TurnEntityToPlayer(ScriptStateWaitCommand *command) {
                 heading = EntityMath_HeadingTo(entity->model->position, &player_state.position.x);
                 turn = EntityMath_AngleDifference(entity->model->rotation[1], heading);
                 if (entity->state == 5) {
-                    if (ABS(turn) <= entity->params->far_distance * 0.017453292f) {
+                    if (ABS(turn) <= DEG_TO_RAD(entity->params->far_distance)) {
                         command->active = 0;
                         return;
                     }
@@ -489,7 +489,7 @@ void ScriptCmd_TurnEntityToward(ScriptMoveCommand *command) {
         return;
     }
     heading = Angle_Wrap(atan2f(command->x.value - ENTITY_MODEL(target)->position.x,
-                                   command->z.value - ENTITY_MODEL(target)->position.z) + 3.1415927f);
+                                   command->z.value - ENTITY_MODEL(target)->position.z) + PI);
     if (heading == ENTITY_MODEL(target)->rotation.y) {
         command->active = 0;
         return;

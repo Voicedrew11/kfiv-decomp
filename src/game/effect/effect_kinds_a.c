@@ -982,11 +982,11 @@ void EffectGroundSway_Update(EffectActor *effect) {
     motion->angle_speed += effect->def->spin_rate;
     motion->angle += motion->angle_speed;
     angle = motion->sway_rate * motion->angle;
-    angle -= (float)(int)(angle / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < angle) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle -= (float)(int)(angle / TWO_PI) * TWO_PI;
+    if (PI < angle) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     motion->angle = angle;
     sine = (float)sin((double)angle);
@@ -1545,11 +1545,11 @@ void EffectFan_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     sceVu0RotMatrixX(matrix, identity_matrix, actor->def->ground_height);
     step = (actor->def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level) * actor->def->turn_rate;
     angle = actor->model->rotation.z + step;
-    angle -= (int)(angle / 6.2831855f) * 6.2831855f;
-    if (angle > 3.1415927f) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle -= (int)(angle / TWO_PI) * TWO_PI;
+    if (angle > PI) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     sceVu0RotMatrixZ(matrix, matrix, angle);
     sceVu0RotMatrixY(matrix, matrix, spawn_slot->rotation.y);
@@ -1594,11 +1594,11 @@ void EffectBobHoming_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     actor->motion.velocity.x = motion->velocity.y = motion->velocity.w = 0.0f;
     motion->velocity.z = def->speed;
     angle = actor->model->rotation.y + (def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level) * def->turn_rate;
-    angle -= (int)(angle / 6.2831855f) * 6.2831855f;
-    if (angle > 3.1415927f) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle -= (int)(angle / TWO_PI) * TWO_PI;
+    if (angle > PI) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     sceVu0RotMatrixY(rotation, identity, angle);
     sceVu0ApplyMatrix(&motion->velocity, rotation, &motion->velocity);

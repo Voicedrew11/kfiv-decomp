@@ -606,11 +606,11 @@ int Sound_PlayCommonAt(float range, int sound, float *position) {
     distance = Sound_Delta(diff, position, &player_state.position.x);
     if (!(range < distance)) {
         angle = atan2f(position[0] - player_state.position.x, position[2] - player_state.position.z) - player_state.rotation.y;
-        angle -= (int)(angle / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < angle) {
-            angle -= 6.2831855f;
-        } else if (angle < -3.1415927f) {
-            angle += 6.2831855f;
+        angle -= (int)(angle / TWO_PI) * TWO_PI;
+        if (PI < angle) {
+            angle -= TWO_PI;
+        } else if (angle < -PI) {
+            angle += TWO_PI;
         }
         Sound_CosSin(angle, origin, offset);
         volume = (range - distance) * 64.0f * (1.0f / range);
@@ -696,11 +696,11 @@ int Sound_PlayMapAtRange(u8 sound, u8 mode, float *position, float range) {
         volume = 0x7F;
     }
     angle = atan2f(position[0] - player_state.position.x, position[2] - player_state.position.z) - player_state.rotation.y;
-    angle -= (int)(angle / 6.2831855f) * 6.2831855f;
-    if (3.1415927f < angle) {
-        angle -= 6.2831855f;
-    } else if (angle < -3.1415927f) {
-        angle += 6.2831855f;
+    angle -= (int)(angle / TWO_PI) * TWO_PI;
+    if (PI < angle) {
+        angle -= TWO_PI;
+    } else if (angle < -PI) {
+        angle += TWO_PI;
     }
     Sound_CosSin(angle, origin, offset);
     pan = (offset[0] + 1.0f) * 63.0f;
@@ -902,11 +902,11 @@ void Sound_UpdateTagged(void) {
                 }
                 angle = atan2f(nearest.x - player_state.position.x, nearest.z - player_state.position.z) -
                         player_state.rotation.y;
-                angle -= (int)(angle / 6.2831855f) * 6.2831855f;
-                if (3.1415927f < angle) {
-                    angle -= 6.2831855f;
-                } else if (angle < -3.1415927f) {
-                    angle += 6.2831855f;
+                angle -= (int)(angle / TWO_PI) * TWO_PI;
+                if (PI < angle) {
+                    angle -= TWO_PI;
+                } else if (angle < -PI) {
+                    angle += TWO_PI;
                 }
                 Sound_CosSin(angle, origin, offset);
                 pan = (offset[0] * 0.6f + 1.0f) * 63.0f;

@@ -327,15 +327,15 @@ int Gold_DropFromEntity(Entity *entity) {
         whole = entity->params->gold;
         half = whole / 2;
         sure = whole - half;
-        amount = (s32)((half + 1) * (f32)rand() * 4.656613e-10f) + sure;
+        amount = (s32)((half + 1) * (f32)rand() * RAND_SCALE) + sure;
     }
-    distance = entity->radius * rand() * 4.656613e-10f;
-    angle = rand() * 6.2831855f * 4.656613e-10f - 3.1415927f;
+    distance = entity->radius * rand() * RAND_SCALE;
+    angle = rand() * TWO_PI * RAND_SCALE - PI;
     position.x = entity->model->position[0] + cosf(angle) * distance;
     position.y = entity->model->position[1] - 20.0f;
     position.z = entity->model->position[2] + sinf(angle) * distance;
     rotation.x = 0.0f;
-    rotation.y = rand() * 6.2831855f * 4.656613e-10f - 3.1415927f;
+    rotation.y = rand() * TWO_PI * RAND_SCALE - PI;
     rotation.z = 0.0f;
     return Gold_Drop(&position, &rotation, entity->group_id, amount, 0, TRUE, TRUE);
 }

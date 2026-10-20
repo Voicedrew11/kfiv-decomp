@@ -134,10 +134,10 @@ static void FireLord_Animate(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
         look_at_target = ENTITY_FLAG_BITS(entity)->look_at_target;
-        limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
-        limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
-        limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
-        limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
+        limits[1] = DEG_TO_RAD(entity->params->pitch_limit_deg);
+        limits[0] = DEG_TO_RAD(-entity->params->pitch_limit_deg);
+        limits[3] = DEG_TO_RAD(entity->params->yaw_limit_deg);
+        limits[2] = DEG_TO_RAD(-entity->params->yaw_limit_deg);
         if (look_at_target) {
             EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, look_at_target, limits, 12.0f);
         } else {
@@ -293,7 +293,7 @@ static void FireLord_ThinkCombatSideAnimOrApproach(Entity *entity, s32 unknown) 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-    if (!(ABS(angle) > 0.34906584f)) {
+    if (!(ABS(angle) > DEG_TO_RAD(20))) {
         ai_state->alternate_anim_flag = ai_state->alternate_anim_flag == 0;
         EntityAi_StartAction(entity, FireLord_PlayAnim6Or7Alternately, unknown);
         return;
@@ -315,11 +315,11 @@ static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
-    if (FireLord_ShouldEvadeSwingOrMagic(entity, 600.0f, 0.5235988f)) {
+    if (FireLord_ShouldEvadeSwingOrMagic(entity, 600.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, FireLord_PlayAnim6Or7ThenMelee0, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -363,7 +363,7 @@ static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
-                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                ai_state->turn_in_place = ABS(angle) > DEG_TO_RAD(30);
             }
             if (ai_state->turn_in_place != 0) {
                 entity->move_command = EntityAi_TurnCommand(entity);
@@ -396,11 +396,11 @@ static void FireLord_ThinkCombatBackAway(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
-    if (FireLord_ShouldEvadeSwingOrMagic(entity, 600.0f, 0.5235988f)) {
+    if (FireLord_ShouldEvadeSwingOrMagic(entity, 600.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, FireLord_PlayAnim6Or7ThenMelee0, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -444,7 +444,7 @@ static void FireLord_ThinkCombatBackAway(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
-                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                ai_state->turn_in_place = ABS(angle) > DEG_TO_RAD(30);
             }
             if (ai_state->turn_in_place != 0) {
                 entity->move_command = EntityAi_TurnCommand(entity);
@@ -587,7 +587,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
                 delta_y = tip[1] - from[1];
                 delta_z = tip[2] - from[2];
                 angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
+                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + HALF_PI);
                 angles[2] = angles[3] = 0.0f;
                 delta_x = from[0] - ai_state->part_angle_x;
                 delta_y = from[1] - ai_state->part_angle_y;
@@ -683,7 +683,7 @@ static void FireLord_MeleeAttack1(Entity *entity) {
                 delta_y = tip[1] - from[1];
                 delta_z = tip[2] - from[2];
                 angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
+                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + HALF_PI);
                 angles[2] = angles[3] = 0.0f;
                 delta_x = from[0] - ai_state->part_angle_x;
                 delta_y = from[1] - ai_state->part_angle_y;

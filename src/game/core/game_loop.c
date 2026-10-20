@@ -553,7 +553,7 @@ void GameLoop_UpdateCameraShake(void) {
         }
     }
     if (camera_state.script_shake_frames != 0 && camera_state.script_shake_reach > 0.0f) {
-        angle = (f32)(int)((f32)rand() * 360.0f / 2147483648.0f) * 0.017453292f;
+        angle = (f32)(int)((f32)rand() * 360.0f / 2147483648.0f) * DEG_TO_RAD(1);
         angle = Angle_Wrap(angle + camera_state.roll);
         camera_state.script_shake_offset[0] = camera_state.script_shake_reach;
         camera_state.script_shake_offset[1] = 0.0f;
@@ -571,7 +571,7 @@ void GameLoop_UpdateCameraShake(void) {
         Vector_Copy(camera_state.script_shake_offset, origin_point);
     }
     if (camera_state.entity_shake_frames != 0 && camera_state.entity_shake_reach > 0.0f) {
-        angle = (f32)(int)((f32)rand() * 360.0f / 2147483648.0f) * 0.017453292f;
+        angle = (f32)(int)((f32)rand() * 360.0f / 2147483648.0f) * DEG_TO_RAD(1);
         angle = Angle_Wrap(angle + camera_state.roll);
         camera_state.entity_shake_offset[0] = camera_state.entity_shake_reach;
         camera_state.entity_shake_offset[1] = 0.0f;
@@ -672,7 +672,7 @@ void GameLoop_SetCameraMatrices(int projection, int mode) {
     sceVu0TransMatrix(world_view_matrix, identity_matrix, translation);
     sceVu0RotMatrixY(world_view_matrix, world_view_matrix, -camera_state.yaw);
     sceVu0RotMatrixX(world_view_matrix, world_view_matrix, -camera_state.pitch);
-    sceVu0RotMatrixY(inverse_camera_rotation, identity_matrix, Angle_Wrap(3.1415927f - camera_state.yaw));
+    sceVu0RotMatrixY(inverse_camera_rotation, identity_matrix, Angle_Wrap(PI - camera_state.yaw));
     sceVu0RotMatrixX(inverse_camera_rotation, inverse_camera_rotation, Angle_Wrap(-camera_state.pitch));
     sceVu0RotMatrixZ(inverse_camera_rotation, inverse_camera_rotation, camera_state.roll);
     sceVu0InversMatrix(inverse_camera_rotation, inverse_camera_rotation);

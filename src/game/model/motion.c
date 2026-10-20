@@ -263,27 +263,27 @@ static s32 Motion_PoseSlot(ModelInstance *model, s32 type, s32 table, s32 frame_
             tangent1->w = 1.0f;
             Vector_Hermite(&part->rotation_x, point0, point1, tangent0, tangent1, ratio);
             angle = part->rotation_x;
-            angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-            if (3.1415927f < angle) {
-                angle -= 6.2831855f;
-            } else if (angle < -3.1415927f) {
-                angle += 6.2831855f;
+            angle -= (f32)(s32)(angle / TWO_PI) * TWO_PI;
+            if (PI < angle) {
+                angle -= TWO_PI;
+            } else if (angle < -PI) {
+                angle += TWO_PI;
             }
             part->rotation_x = angle;
             tilt = part->rotation_y;
-            tilt -= (f32)(s32)(tilt / 6.2831855f) * 6.2831855f;
-            if (3.1415927f < tilt) {
-                tilt -= 6.2831855f;
-            } else if (tilt < -3.1415927f) {
-                tilt += 6.2831855f;
+            tilt -= (f32)(s32)(tilt / TWO_PI) * TWO_PI;
+            if (PI < tilt) {
+                tilt -= TWO_PI;
+            } else if (tilt < -PI) {
+                tilt += TWO_PI;
             }
             part->rotation_y = tilt;
             spin = part->rotation_z;
-            spin -= (f32)(s32)(spin / 6.2831855f) * 6.2831855f;
-            if (3.1415927f < spin) {
-                spin -= 6.2831855f;
-            } else if (spin < -3.1415927f) {
-                spin += 6.2831855f;
+            spin -= (f32)(s32)(spin / TWO_PI) * TWO_PI;
+            if (PI < spin) {
+                spin -= TWO_PI;
+            } else if (spin < -PI) {
+                spin += TWO_PI;
             }
             part->rotation_z = spin;
 
@@ -368,51 +368,51 @@ s32 Motion_BlendSlotToPose(ModelInstance *model, s32 type, s32 table, s16 frame,
                         tangent1->w = 1.0f;
                         Vector_Hermite(result, point0, point1, tangent0, tangent1, ratio);
                         diff = result->x - part->rotation_x;
-                        diff -= (f32)(s32)(diff / 6.2831855f) * 6.2831855f;
-                        if (3.1415927f < diff) {
-                            diff -= 6.2831855f;
-                        } else if (diff < -3.1415927f) {
-                            diff += 6.2831855f;
+                        diff -= (f32)(s32)(diff / TWO_PI) * TWO_PI;
+                        if (PI < diff) {
+                            diff -= TWO_PI;
+                        } else if (diff < -PI) {
+                            diff += TWO_PI;
                         }
                         part->rotation_x += diff * weight;
                         diff = result->y - part->rotation_y;
-                        diff -= (f32)(s32)(diff / 6.2831855f) * 6.2831855f;
-                        if (3.1415927f < diff) {
-                            diff -= 6.2831855f;
-                        } else if (diff < -3.1415927f) {
-                            diff += 6.2831855f;
+                        diff -= (f32)(s32)(diff / TWO_PI) * TWO_PI;
+                        if (PI < diff) {
+                            diff -= TWO_PI;
+                        } else if (diff < -PI) {
+                            diff += TWO_PI;
                         }
                         part->rotation_y += diff * weight;
                         diff = result->z - part->rotation_z;
-                        diff -= (f32)(s32)(diff / 6.2831855f) * 6.2831855f;
-                        if (3.1415927f < diff) {
-                            diff -= 6.2831855f;
-                        } else if (diff < -3.1415927f) {
-                            diff += 6.2831855f;
+                        diff -= (f32)(s32)(diff / TWO_PI) * TWO_PI;
+                        if (PI < diff) {
+                            diff -= TWO_PI;
+                        } else if (diff < -PI) {
+                            diff += TWO_PI;
                         }
                         part->rotation_z += diff * weight;
                         angle = part->rotation_x;
-                        angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-                        if (3.1415927f < angle) {
-                            angle -= 6.2831855f;
-                        } else if (angle < -3.1415927f) {
-                            angle += 6.2831855f;
+                        angle -= (f32)(s32)(angle / TWO_PI) * TWO_PI;
+                        if (PI < angle) {
+                            angle -= TWO_PI;
+                        } else if (angle < -PI) {
+                            angle += TWO_PI;
                         }
                         part->rotation_x = angle;
                         tilt = part->rotation_y;
-                        tilt -= (f32)(s32)(tilt / 6.2831855f) * 6.2831855f;
-                        if (3.1415927f < tilt) {
-                            tilt -= 6.2831855f;
-                        } else if (tilt < -3.1415927f) {
-                            tilt += 6.2831855f;
+                        tilt -= (f32)(s32)(tilt / TWO_PI) * TWO_PI;
+                        if (PI < tilt) {
+                            tilt -= TWO_PI;
+                        } else if (tilt < -PI) {
+                            tilt += TWO_PI;
                         }
                         part->rotation_y = tilt;
                         spin = part->rotation_z;
-                        spin -= (f32)(s32)(spin / 6.2831855f) * 6.2831855f;
-                        if (3.1415927f < spin) {
-                            spin -= 6.2831855f;
-                        } else if (spin < -3.1415927f) {
-                            spin += 6.2831855f;
+                        spin -= (f32)(s32)(spin / TWO_PI) * TWO_PI;
+                        if (PI < spin) {
+                            spin -= TWO_PI;
+                        } else if (spin < -PI) {
+                            spin += TWO_PI;
                         }
                         part->rotation_z = spin;
 
@@ -489,27 +489,27 @@ s32 Motion_MixSlotFirstKeys(ModelInstance *model, s32 type, s32 table_a, s32 tab
         *(MotionVector *)point1 = vectors_b[key_b->rotation];
         blend_vectors(result, point0, point1, ratio);
         angle = result->x;
-        angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < angle) {
-            angle -= 6.2831855f;
-        } else if (angle < -3.1415927f) {
-            angle += 6.2831855f;
+        angle -= (f32)(s32)(angle / TWO_PI) * TWO_PI;
+        if (PI < angle) {
+            angle -= TWO_PI;
+        } else if (angle < -PI) {
+            angle += TWO_PI;
         }
         part->rotation_x = angle;
         angle_alt = result->y;
-        angle_alt -= (f32)(s32)(angle_alt / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < angle_alt) {
-            angle_alt -= 6.2831855f;
-        } else if (angle_alt < -3.1415927f) {
-            angle_alt += 6.2831855f;
+        angle_alt -= (f32)(s32)(angle_alt / TWO_PI) * TWO_PI;
+        if (PI < angle_alt) {
+            angle_alt -= TWO_PI;
+        } else if (angle_alt < -PI) {
+            angle_alt += TWO_PI;
         }
         part->rotation_y = angle_alt;
         angle = result->z;
-        angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < angle) {
-            angle -= 6.2831855f;
-        } else if (angle < -3.1415927f) {
-            angle += 6.2831855f;
+        angle -= (f32)(s32)(angle / TWO_PI) * TWO_PI;
+        if (PI < angle) {
+            angle -= TWO_PI;
+        } else if (angle < -PI) {
+            angle += TWO_PI;
         }
         part->rotation_z = angle;
 
@@ -778,27 +778,27 @@ s32 Motion_StepModel(ModelInstance *model, s32 step, s32 backwards) {
             tangent1->w = 1.0f;
             Vector_Hermite(&part->rotation_x, point0, point1, tangent0, tangent1, ratio);
             angle = part->rotation_x;
-            angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-            if (3.1415927f < angle) {
-                angle -= 6.2831855f;
-            } else if (angle < -3.1415927f) {
-                angle += 6.2831855f;
+            angle -= (f32)(s32)(angle / TWO_PI) * TWO_PI;
+            if (PI < angle) {
+                angle -= TWO_PI;
+            } else if (angle < -PI) {
+                angle += TWO_PI;
             }
             part->rotation_x = angle;
             tilt = part->rotation_y;
-            tilt -= (f32)(s32)(tilt / 6.2831855f) * 6.2831855f;
-            if (3.1415927f < tilt) {
-                tilt -= 6.2831855f;
-            } else if (tilt < -3.1415927f) {
-                tilt += 6.2831855f;
+            tilt -= (f32)(s32)(tilt / TWO_PI) * TWO_PI;
+            if (PI < tilt) {
+                tilt -= TWO_PI;
+            } else if (tilt < -PI) {
+                tilt += TWO_PI;
             }
             part->rotation_y = tilt;
             spin = part->rotation_z;
-            spin -= (f32)(s32)(spin / 6.2831855f) * 6.2831855f;
-            if (3.1415927f < spin) {
-                spin -= 6.2831855f;
-            } else if (spin < -3.1415927f) {
-                spin += 6.2831855f;
+            spin -= (f32)(s32)(spin / TWO_PI) * TWO_PI;
+            if (PI < spin) {
+                spin -= TWO_PI;
+            } else if (spin < -PI) {
+                spin += TWO_PI;
             }
             part->rotation_z = spin;
 
@@ -914,54 +914,54 @@ s32 Motion_StepModelBlended(ModelInstance *model, s32 step, s32 backwards, f32 w
             tangent1->w = 1.0f;
             Vector_Hermite(result, point0, point1, tangent0, tangent1, ratio);
             angle = result->x;
-            angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-            if (3.1415927f < angle) {
-                angle -= 6.2831855f;
-            } else if (angle < -3.1415927f) {
-                angle += 6.2831855f;
+            angle -= (f32)(s32)(angle / TWO_PI) * TWO_PI;
+            if (PI < angle) {
+                angle -= TWO_PI;
+            } else if (angle < -PI) {
+                angle += TWO_PI;
             }
             result->x = angle;
             angle_alt = result->y;
-            angle_alt -= (f32)(s32)(angle_alt / 6.2831855f) * 6.2831855f;
-            if (3.1415927f < angle_alt) {
-                angle_alt -= 6.2831855f;
-            } else if (angle_alt < -3.1415927f) {
-                angle_alt += 6.2831855f;
+            angle_alt -= (f32)(s32)(angle_alt / TWO_PI) * TWO_PI;
+            if (PI < angle_alt) {
+                angle_alt -= TWO_PI;
+            } else if (angle_alt < -PI) {
+                angle_alt += TWO_PI;
             }
             result->y = angle_alt;
             angle = result->z;
-            angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-            if (3.1415927f < angle) {
-                angle -= 6.2831855f;
-            } else if (angle < -3.1415927f) {
-                angle += 6.2831855f;
+            angle -= (f32)(s32)(angle / TWO_PI) * TWO_PI;
+            if (PI < angle) {
+                angle -= TWO_PI;
+            } else if (angle < -PI) {
+                angle += TWO_PI;
             }
             result->z = angle;
             part->rotation_x = part->rotation_x * (1.0f - weight) + result->x * weight;
             part->rotation_y = part->rotation_y * (1.0f - weight) + result->y * weight;
             part->rotation_z = part->rotation_z * (1.0f - weight) + result->z * weight;
             angle_alt = part->rotation_x;
-            angle_alt -= (f32)(s32)(angle_alt / 6.2831855f) * 6.2831855f;
-            if (3.1415927f < angle_alt) {
-                angle_alt -= 6.2831855f;
-            } else if (angle_alt < -3.1415927f) {
-                angle_alt += 6.2831855f;
+            angle_alt -= (f32)(s32)(angle_alt / TWO_PI) * TWO_PI;
+            if (PI < angle_alt) {
+                angle_alt -= TWO_PI;
+            } else if (angle_alt < -PI) {
+                angle_alt += TWO_PI;
             }
             part->rotation_x = angle_alt;
             angle = part->rotation_y;
-            angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-            if (3.1415927f < angle) {
-                angle -= 6.2831855f;
-            } else if (angle < -3.1415927f) {
-                angle += 6.2831855f;
+            angle -= (f32)(s32)(angle / TWO_PI) * TWO_PI;
+            if (PI < angle) {
+                angle -= TWO_PI;
+            } else if (angle < -PI) {
+                angle += TWO_PI;
             }
             part->rotation_y = angle;
             angle_alt = part->rotation_z;
-            angle_alt -= (f32)(s32)(angle_alt / 6.2831855f) * 6.2831855f;
-            if (3.1415927f < angle_alt) {
-                angle_alt -= 6.2831855f;
-            } else if (angle_alt < -3.1415927f) {
-                angle_alt += 6.2831855f;
+            angle_alt -= (f32)(s32)(angle_alt / TWO_PI) * TWO_PI;
+            if (PI < angle_alt) {
+                angle_alt -= TWO_PI;
+            } else if (angle_alt < -PI) {
+                angle_alt += TWO_PI;
             }
             part->rotation_z = angle_alt;
 
@@ -1051,51 +1051,51 @@ s32 Motion_BlendToPose(ModelInstance *model, f32 weight) {
                 tangent1->w = 1.0f;
                 Vector_Hermite(result, point0, point1, tangent0, tangent1, ratio);
                 diff = result->x - part->rotation_x;
-                diff -= (f32)(s32)(diff / 6.2831855f) * 6.2831855f;
-                if (3.1415927f < diff) {
-                    diff -= 6.2831855f;
-                } else if (diff < -3.1415927f) {
-                    diff += 6.2831855f;
+                diff -= (f32)(s32)(diff / TWO_PI) * TWO_PI;
+                if (PI < diff) {
+                    diff -= TWO_PI;
+                } else if (diff < -PI) {
+                    diff += TWO_PI;
                 }
                 part->rotation_x += diff * weight;
                 diff = result->y - part->rotation_y;
-                diff -= (f32)(s32)(diff / 6.2831855f) * 6.2831855f;
-                if (3.1415927f < diff) {
-                    diff -= 6.2831855f;
-                } else if (diff < -3.1415927f) {
-                    diff += 6.2831855f;
+                diff -= (f32)(s32)(diff / TWO_PI) * TWO_PI;
+                if (PI < diff) {
+                    diff -= TWO_PI;
+                } else if (diff < -PI) {
+                    diff += TWO_PI;
                 }
                 part->rotation_y += diff * weight;
                 diff = result->z - part->rotation_z;
-                diff -= (f32)(s32)(diff / 6.2831855f) * 6.2831855f;
-                if (3.1415927f < diff) {
-                    diff -= 6.2831855f;
-                } else if (diff < -3.1415927f) {
-                    diff += 6.2831855f;
+                diff -= (f32)(s32)(diff / TWO_PI) * TWO_PI;
+                if (PI < diff) {
+                    diff -= TWO_PI;
+                } else if (diff < -PI) {
+                    diff += TWO_PI;
                 }
                 part->rotation_z += diff * weight;
                 angle = part->rotation_x;
-                angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-                if (3.1415927f < angle) {
-                    angle -= 6.2831855f;
-                } else if (angle < -3.1415927f) {
-                    angle += 6.2831855f;
+                angle -= (f32)(s32)(angle / TWO_PI) * TWO_PI;
+                if (PI < angle) {
+                    angle -= TWO_PI;
+                } else if (angle < -PI) {
+                    angle += TWO_PI;
                 }
                 part->rotation_x = angle;
                 angle_y = part->rotation_y;
-                angle_y -= (f32)(s32)(angle_y / 6.2831855f) * 6.2831855f;
-                if (3.1415927f < angle_y) {
-                    angle_y -= 6.2831855f;
-                } else if (angle_y < -3.1415927f) {
-                    angle_y += 6.2831855f;
+                angle_y -= (f32)(s32)(angle_y / TWO_PI) * TWO_PI;
+                if (PI < angle_y) {
+                    angle_y -= TWO_PI;
+                } else if (angle_y < -PI) {
+                    angle_y += TWO_PI;
                 }
                 part->rotation_y = angle_y;
                 angle = part->rotation_z;
-                angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-                if (3.1415927f < angle) {
-                    angle -= 6.2831855f;
-                } else if (angle < -3.1415927f) {
-                    angle += 6.2831855f;
+                angle -= (f32)(s32)(angle / TWO_PI) * TWO_PI;
+                if (PI < angle) {
+                    angle -= TWO_PI;
+                } else if (angle < -PI) {
+                    angle += TWO_PI;
                 }
                 part->rotation_z = angle;
 
@@ -1167,27 +1167,27 @@ s32 Motion_MixFirstKeys(ModelInstance *model, s32 table_a, s32 table_b, f32 rati
         *(MotionVector *)point1 = vectors_b[key_b->rotation];
         blend_vectors(result, point0, point1, ratio);
         angle = result->x;
-        angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < angle) {
-            angle -= 6.2831855f;
-        } else if (angle < -3.1415927f) {
-            angle += 6.2831855f;
+        angle -= (f32)(s32)(angle / TWO_PI) * TWO_PI;
+        if (PI < angle) {
+            angle -= TWO_PI;
+        } else if (angle < -PI) {
+            angle += TWO_PI;
         }
         part->rotation_x = angle;
         angle_alt = result->y;
-        angle_alt -= (f32)(s32)(angle_alt / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < angle_alt) {
-            angle_alt -= 6.2831855f;
-        } else if (angle_alt < -3.1415927f) {
-            angle_alt += 6.2831855f;
+        angle_alt -= (f32)(s32)(angle_alt / TWO_PI) * TWO_PI;
+        if (PI < angle_alt) {
+            angle_alt -= TWO_PI;
+        } else if (angle_alt < -PI) {
+            angle_alt += TWO_PI;
         }
         part->rotation_y = angle_alt;
         angle = result->z;
-        angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
-        if (3.1415927f < angle) {
-            angle -= 6.2831855f;
-        } else if (angle < -3.1415927f) {
-            angle += 6.2831855f;
+        angle -= (f32)(s32)(angle / TWO_PI) * TWO_PI;
+        if (PI < angle) {
+            angle -= TWO_PI;
+        } else if (angle < -PI) {
+            angle += TWO_PI;
         }
         part->rotation_z = angle;
 

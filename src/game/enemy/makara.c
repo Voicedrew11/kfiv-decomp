@@ -153,18 +153,18 @@ static void Makara_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
     if (ai_state->part_angle_x != makara_no_floor_height[0] && entity->collision_height * -0.5f < ai_state->part_angle_x) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
         angle = ABS(angle);
-        if (ai_state->pause_timer <= 0 && angle < entity->params->near_distance * 0.017453292f
+        if (ai_state->pause_timer <= 0 && angle < DEG_TO_RAD(entity->params->near_distance)
             && entity->params->far_distance < entity->distance_to_player) {
             EntityAi_StartAttack(entity, Makara_RangedAttack0, unknown, 1, 0);
             ai_state->pause_timer = entity->params->action_frames + rand() % 30;
@@ -208,7 +208,7 @@ static void Makara_ThinkCombat(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
-                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                ai_state->turn_in_place = ABS(angle) > DEG_TO_RAD(30);
             }
             if (ai_state->turn_in_place != 0) {
                 entity->move_command = EntityAi_TurnCommand(entity);

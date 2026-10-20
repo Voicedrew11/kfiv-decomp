@@ -227,12 +227,12 @@ void MapItem_RollFixedItems(int map) {
     ItemNode *node;
 
     for (i = 0; i < 16; i++) {
-        rolls[i] = rand() * 100.0f * 4.656613e-10f;
+        rolls[i] = rand() * 100.0f * RAND_SCALE;
     }
     node = fixed_items[map];
     for (i = 0; i < map_fixed_item_counts[map]; i++, node++) {
         if (rolls[node->def->group] < thresholds[node->def->group]) {
-            if ((s32)(rand() * 100.0f * 4.656613e-10f) < node->def->chance) {
+            if ((s32)(rand() * 100.0f * RAND_SCALE) < node->def->chance) {
                 MapItem_PlaceFixed(map, i);
             }
         }
@@ -348,7 +348,7 @@ s32 MapItem_DropFromEnemy(Entity *entity) {
         if (entity->params->drop_item == 0xFFFF) {
             return FALSE;
         }
-        value = rand() * 100.0f * 4.656613e-10f;
+        value = rand() * 100.0f * RAND_SCALE;
         if (value < entity->params->drop_chance) {
             item = entity->params->drop_item;
             priority = 0;
@@ -356,7 +356,7 @@ s32 MapItem_DropFromEnemy(Entity *entity) {
             if (entity->params->second_drop_item == 0xFFFF) {
                 return FALSE;
             }
-            value = rand() * 100.0f * 4.656613e-10f;
+            value = rand() * 100.0f * RAND_SCALE;
             if (value >= entity->params->second_drop_chance) {
                 return FALSE;
             }
@@ -367,8 +367,8 @@ s32 MapItem_DropFromEnemy(Entity *entity) {
     position[0] = entity->model->position[0];
     position[1] = entity->model->position[1] - entity->height * 0.5f;
     position[2] = entity->model->position[2];
-    rotation[1] = (s32)(rand() * 361.0f * 4.656613e-10f);
-    rotation[1] = Angle_Wrap(rotation[1] * 0.017453292f);
+    rotation[1] = (s32)(rand() * 361.0f * RAND_SCALE);
+    rotation[1] = Angle_Wrap(DEG_TO_RAD(rotation[1]));
     if (!Collision_FindFloorBelow(2000.0f, position)) {
         return FALSE;
     }
@@ -611,8 +611,8 @@ void MapItem_DrawAll(int with_picked) {
 
 /* an angle brought back into -pi..pi (for angles above -pi) */
 static inline f32 wrap_angle(f32 angle) {
-    angle += 3.1415927f;
-    return angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
+    angle += PI;
+    return angle - (f32)(s32)(angle / TWO_PI) * TWO_PI - PI;
 }
 
 /* Draws the item being picked up, over everything else: each part's own offset and turn are scaled by

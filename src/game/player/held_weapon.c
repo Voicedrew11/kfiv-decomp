@@ -244,13 +244,13 @@ void Player_UpdateArmModels(void) {
     held_item_arm_points_prev = held_item_arm_points;
     memset(&held_item_arm_points, 0, 0x20);
     if (player_state.item_action_step != 0) {
-        sceVu0RotMatrixY(matrix, identity_matrix, 3.1415927f);
+        sceVu0RotMatrixY(matrix, identity_matrix, PI);
         sceVu0TransMatrix(matrix, matrix, held_item_offsets);
         pitch = player_state.rotation.x - player_state.view_tilt_pitch;
-        if (pitch > 1.0122910f) {
-            pitch = 1.0122910f;
-        } else if (pitch < -1.0122910f) {
-            pitch = -1.0122910f;
+        if (pitch > DEG_TO_RAD(58)) {
+            pitch = DEG_TO_RAD(58);
+        } else if (pitch < -DEG_TO_RAD(58)) {
+            pitch = -DEG_TO_RAD(58);
         }
         sceVu0RotMatrixX(matrix, matrix, pitch);
         sceVu0RotMatrixY(matrix, matrix, player_state.rotation.y);

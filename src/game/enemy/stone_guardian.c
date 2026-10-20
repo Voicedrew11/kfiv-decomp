@@ -400,13 +400,13 @@ static void StoneGuardian_Mode2WalkToPost(Entity *entity) {
         post[1] = entity->spawn_info->spawn_y;
         post[2] = -4400.0f;
         post[3] = 0.0f;
-        facing = 1.5707964f;
+        facing = HALF_PI;
     } else if (player_state.position[0] > -4350.0f) {
         post[0] = -5200.0f;
         post[1] = entity->spawn_info->spawn_y;
         post[2] = -4400.0f;
         post[3] = 0.0f;
-        facing = -1.5707964f;
+        facing = -HALF_PI;
     } else if (player_state.position[2] < -4000.0f) {
         post[0] = -5200.0f;
         post[1] = entity->spawn_info->spawn_y;
@@ -418,7 +418,7 @@ static void StoneGuardian_Mode2WalkToPost(Entity *entity) {
         post[1] = entity->spawn_info->spawn_y;
         post[2] = -4000.0f - entity->collision_radius;
         post[3] = 0.0f;
-        facing = 3.1415927f;
+        facing = PI;
     }
     if (entity->model->position[2] < -4800.0f) {
         ai_state->target_point[0] = entity->spawn_info->spawn_x;
@@ -429,7 +429,7 @@ static void StoneGuardian_Mode2WalkToPost(Entity *entity) {
         entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f);
     } else if (EntityMath_DistanceXZ(entity->model->position, post) < 100.0f) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], facing);
-        if (ABS(angle) > 0.5235988f) {
+        if (ABS(angle) > DEG_TO_RAD(30)) {
             if (angle >= 0.0f) {
                 entity->move_command = MOVE_COMMAND_TURN_RIGHT;
             } else {
@@ -474,7 +474,7 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
             entity->target = &player_state;
             direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
-            if (ABS(angle) > 1.5707964f) {
+            if (ABS(angle) > HALF_PI) {
                 if (angle >= 0.0f) {
                     entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
@@ -494,7 +494,7 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
             entity->target = &player_state;
             direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
-            if (ABS(angle) > 1.5707964f) {
+            if (ABS(angle) > HALF_PI) {
                 if (angle >= 0.0f) {
                     entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
@@ -514,7 +514,7 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
             entity->target = &player_state;
             direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
-            if (ABS(angle) > 1.5707964f) {
+            if (ABS(angle) > HALF_PI) {
                 if (angle >= 0.0f) {
                     entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
@@ -535,7 +535,7 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
             entity->target = &player_state;
             direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
-            if (ABS(angle) > 1.5707964f) {
+            if (ABS(angle) > HALF_PI) {
                 if (angle >= 0.0f) {
                     entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
@@ -579,7 +579,7 @@ static void StoneGuardian_Mode2ReturnToSpawn(Entity *entity) {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     } else if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) < 100.0f) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->spawn_info->spawn_rotation_y);
-        if (ABS(angle) > 0.17453292f) {
+        if (ABS(angle) > DEG_TO_RAD(10)) {
             EntityAi_StartAction(entity, StoneGuardian_TurnToSpawnHeading, 1);
             return;
         }
@@ -683,8 +683,8 @@ static void StoneGuardian_Mode3WalkToPost(Entity *entity) {
     home[3] = 0.0f;
     range = 100.0f;
     if (EntityMath_DistanceXZ(entity->model->position, home) < range) {
-        angle = EntityMath_AngleDifference(entity->model->rotation[1], 3.1415927f);
-        if (ABS(angle) > 1.5707964f) {
+        angle = EntityMath_AngleDifference(entity->model->rotation[1], PI);
+        if (ABS(angle) > HALF_PI) {
             if (angle >= 0.0f) {
                 entity->move_command = MOVE_COMMAND_TURN_RIGHT;
             } else {
@@ -729,7 +729,7 @@ static void StoneGuardian_Mode3ChaseInBounds(Entity *entity) {
             entity->target = &player_state;
             direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
-            if (ABS(angle) > 1.5707964f) {
+            if (ABS(angle) > HALF_PI) {
                 if (angle >= 0.0f) {
                     entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
@@ -749,7 +749,7 @@ static void StoneGuardian_Mode3ChaseInBounds(Entity *entity) {
             entity->target = &player_state;
             direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
-            if (ABS(angle) > 1.5707964f) {
+            if (ABS(angle) > HALF_PI) {
                 if (angle >= 0.0f) {
                     entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
@@ -793,7 +793,7 @@ static void StoneGuardian_Mode3ReturnToSpawn(Entity *entity) {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     } else if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) < 100.0f) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->spawn_info->spawn_rotation_y);
-        if (ABS(angle) > 0.17453292f) {
+        if (ABS(angle) > DEG_TO_RAD(10)) {
             EntityAi_StartAction(entity, StoneGuardian_TurnToSpawnHeading, 1);
             return;
         }
@@ -896,8 +896,8 @@ static void StoneGuardian_Mode4WalkToPost(Entity *entity) {
     home[3] = 0.0f;
     range = 100.0f;
     if (EntityMath_DistanceXZ(entity->model->position, home) < range) {
-        angle = EntityMath_AngleDifference(entity->model->rotation[1], 3.1415927f);
-        if (ABS(angle) > 1.5707964f) {
+        angle = EntityMath_AngleDifference(entity->model->rotation[1], PI);
+        if (ABS(angle) > HALF_PI) {
             if (angle >= 0.0f) {
                 entity->move_command = MOVE_COMMAND_TURN_RIGHT;
             } else {
@@ -941,7 +941,7 @@ static void StoneGuardian_Mode4ChaseInBounds(Entity *entity) {
             entity->target = &player_state;
             direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
-            if (ABS(angle) > 1.5707964f) {
+            if (ABS(angle) > HALF_PI) {
                 if (angle >= 0.0f) {
                     entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
@@ -961,7 +961,7 @@ static void StoneGuardian_Mode4ChaseInBounds(Entity *entity) {
             entity->target = &player_state;
             direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
-            if (ABS(angle) > 1.5707964f) {
+            if (ABS(angle) > HALF_PI) {
                 if (angle >= 0.0f) {
                     entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
@@ -1003,7 +1003,7 @@ static void StoneGuardian_Mode4ReturnToSpawn(Entity *entity) {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     } else if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) < 100.0f) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->spawn_info->spawn_rotation_y);
-        if (ABS(angle) > 0.17453292f) {
+        if (ABS(angle) > DEG_TO_RAD(10)) {
             EntityAi_StartAction(entity, StoneGuardian_TurnToSpawnHeading, 1);
             return;
         }
@@ -1108,7 +1108,7 @@ static void StoneGuardian_Mode5WalkToPost(Entity *entity) {
     range = 100.0f;
     if (EntityMath_DistanceXZ(entity->model->position, home) < range) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], 0.0f);
-        if (ABS(angle) > 1.5707964f) {
+        if (ABS(angle) > HALF_PI) {
             if (angle >= 0.0f) {
                 entity->move_command = MOVE_COMMAND_TURN_RIGHT;
             } else {
@@ -1152,7 +1152,7 @@ static void StoneGuardian_Mode5ChaseInBounds(Entity *entity) {
             entity->target = &player_state;
             direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
-            if (ABS(angle) > 1.5707964f) {
+            if (ABS(angle) > HALF_PI) {
                 if (angle >= 0.0f) {
                     entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
@@ -1172,7 +1172,7 @@ static void StoneGuardian_Mode5ChaseInBounds(Entity *entity) {
             entity->target = &player_state;
             direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
-            if (ABS(angle) > 1.5707964f) {
+            if (ABS(angle) > HALF_PI) {
                 if (angle >= 0.0f) {
                     entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
@@ -1214,7 +1214,7 @@ static void StoneGuardian_Mode5ReturnToSpawn(Entity *entity) {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     } else if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) < 100.0f) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->spawn_info->spawn_rotation_y);
-        if (ABS(angle) > 0.17453292f) {
+        if (ABS(angle) > DEG_TO_RAD(10)) {
             EntityAi_StartAction(entity, StoneGuardian_TurnToSpawnHeading, 1);
             return;
         }
@@ -1364,7 +1364,7 @@ static void StoneGuardian_Mode6StayHidden(Entity *entity, s32 unknown) {
     model->position[0] = -16200.0f;
     model->position[1] = 3030.0f;
     model->position[2] = 4900.0f;
-    model->rotation[1] = 1.5707964f;
+    model->rotation[1] = HALF_PI;
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     EntityAi_StartAction(entity, entity->ai_state.move, unknown);
 }
@@ -1386,7 +1386,7 @@ static void StoneGuardian_Mode6WaitTurnHidden(Entity *entity, s32 unknown) {
     model->position[0] = -16200.0f;
     model->position[1] = 3030.0f;
     model->position[2] = 4900.0f;
-    model->rotation[1] = 1.5707964f;
+    model->rotation[1] = HALF_PI;
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     EntityAi_StartAction(entity, entity->ai_state.move, unknown);
 }
@@ -1419,8 +1419,8 @@ static void StoneGuardian_Mode6LeaveHiding(Entity *entity, s32 unknown) {
         point = ai_state->target_point;
         if (EntityMath_DistanceXZ(entity->model->position, point) < range) {
             ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
-            angle = EntityMath_AngleDifference(entity->model->rotation[1], 1.5707964f);
-            if (ABS(angle) > 0.17453292f) {
+            angle = EntityMath_AngleDifference(entity->model->rotation[1], HALF_PI);
+            if (ABS(angle) > DEG_TO_RAD(10)) {
                 if (angle >= 0.0f) {
                     entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
@@ -1528,8 +1528,8 @@ static void StoneGuardian_Mode6ReturnToHiding(Entity *entity, s32 unknown) {
     } else {
         point = ai_state->target_point;
         if (EntityMath_DistanceXZ(entity->model->position, point) < range) {
-            angle = EntityMath_AngleDifference(entity->model->rotation[1], -1.5707964f);
-            if (ABS(angle) > 0.17453292f) {
+            angle = EntityMath_AngleDifference(entity->model->rotation[1], -HALF_PI);
+            if (ABS(angle) > DEG_TO_RAD(10)) {
                 if (angle >= 0.0f) {
                     entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {

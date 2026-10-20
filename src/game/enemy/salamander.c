@@ -157,10 +157,10 @@ static void Salamander_Animate(Entity *entity) {
             EntityEvent_StartFrameCues(entity, slots->motion_slot_1.index, previous, slots->motion_slot_1.frame_fixed);
         }
     }
-    limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
-    limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
-    limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
-    limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
+    limits[1] = DEG_TO_RAD(entity->params->pitch_limit_deg);
+    limits[0] = DEG_TO_RAD(-entity->params->pitch_limit_deg);
+    limits[3] = DEG_TO_RAD(entity->params->yaw_limit_deg);
+    limits[2] = DEG_TO_RAD(-entity->params->yaw_limit_deg);
     if (ENTITY_FLAG_BITS(entity)->look_at_target && entity->target != NULL) {
         EntityAi_LookAtPoint(entity, (int)ai_state->look_part_angles, ENTITY_FLAG_BITS(entity)->look_at_target, (int)entity->target, (int)limits, 12.0f);
     } else {
@@ -583,8 +583,8 @@ static void Salamander_ThinkWanderAndShoot(Entity *entity, s32 unknown) {
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
-    if (EntityAi_IsPointInView(entity, player_state, entity->params->type_param_0 * 0.017453292f,
-                      entity->params->type_param_1 * 0.017453292f, entity->params->type_param_2) &&
+    if (EntityAi_IsPointInView(entity, player_state, DEG_TO_RAD(entity->params->type_param_0),
+                      DEG_TO_RAD(entity->params->type_param_1), entity->params->type_param_2) &&
         ai_state->sub_timer <= 0) {
         EntityAi_PickRangedAttack(entity);
         // match: an int result keeps $2 busy after the call
@@ -649,8 +649,8 @@ static void Salamander_ThinkCombat(Entity *entity, s32 unknown) {
             Vector_Copy(point, player_state);
             ai_state->target_point[1] -= 190.0f;
             entity->target = point;
-            if (EntityAi_IsPointInView(entity, point, entity->params->type_param_0 * 0.017453292f,
-                              entity->params->type_param_1 * 0.017453292f, entity->params->type_param_2)) {
+            if (EntityAi_IsPointInView(entity, point, DEG_TO_RAD(entity->params->type_param_0),
+                              DEG_TO_RAD(entity->params->type_param_1), entity->params->type_param_2)) {
                 if (EntityAi_PickAttack((char *)entity)) {
                     EntityAi_StartAction(entity, Salamander_RangedAttack, unknown);
                 } else {
@@ -666,7 +666,7 @@ static void Salamander_ThinkCombat(Entity *entity, s32 unknown) {
         case 2: {
             f32 *point = ai_state->target_point;
 
-            direction[0] = EntityMath_WrapAngle(entity->heading_to_player + 3.1415927f);
+            direction[0] = EntityMath_WrapAngle(entity->heading_to_player + PI);
             EntityMath_FacingVector((Vector4 *)point, direction[0]);
             Vector_Scale(point, point, 800.0f);
             Vector_Add(point, point, player_state);
@@ -702,13 +702,13 @@ static void Salamander_Move(Entity *entity) {
         if (ai_state->turn_rate < -entity->params->turn_limit) {
             ai_state->turn_rate = -entity->params->turn_limit;
         }
-        roll = 0.34906584f;
+        roll = DEG_TO_RAD(20);
     } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         ai_state->turn_rate += entity->params->turn_step_per_frame;
         if (ai_state->turn_rate > entity->params->turn_limit) {
             ai_state->turn_rate = entity->params->turn_limit;
         }
-        roll = -0.34906584f;
+        roll = -DEG_TO_RAD(20);
     } else {
         ai_state->turn_rate = 0.0f;
         roll = ai_state->turn_rate;
@@ -720,14 +720,14 @@ static void Salamander_Move(Entity *entity) {
     entity->turn_delta_yaw += value;
     EntityMath_EaseAngleToward(&entity->model->rotation[2], roll, 30.0f);
     if (entity->move_command & MOVE_COMMAND_DOWN) {
-        pitch = -0.5235988f;
+        pitch = -DEG_TO_RAD(30);
     } else if (entity->move_command & MOVE_COMMAND_UP) {
-        pitch = 0.5235988f;
+        pitch = DEG_TO_RAD(30);
     } else {
         pitch = 0.0f;
     }
     pitch_change = pitch - entity->model->rotation[0];
-    if (ABS(pitch_change) > 0.5235988f) {
+    if (ABS(pitch_change) > DEG_TO_RAD(30)) {
         pitch_rate = 60.0f;
     } else {
         pitch_rate = 30.0f;

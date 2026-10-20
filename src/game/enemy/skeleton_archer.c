@@ -120,10 +120,10 @@ static void SkeletonArcher_Animate(Entity *entity) {
         } else {
             ai_state->part_angle_x = 0.0f;
         }
-        limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
-        limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
-        limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
-        limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
+        limits[0] = DEG_TO_RAD(-entity->params->pitch_limit_deg);
+        limits[1] = DEG_TO_RAD(entity->params->pitch_limit_deg);
+        limits[2] = DEG_TO_RAD(-entity->params->yaw_limit_deg);
+        limits[3] = DEG_TO_RAD(entity->params->yaw_limit_deg);
         look_at_target = (s32)(entity->flags >> 9);
         if (look_at_target & 1) {
             EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, look_at_target & 1, limits, 12.0f);
@@ -143,10 +143,10 @@ static void SkeletonArcher_PitchPartToPlayer(Entity *entity) {
 
     if (part != NULL) {
         pitch = EntityMath_WrapAngle(atan2(player_state.position[1] - model->position[1], entity->distance_to_player));
-        if (0.87266463f < pitch) {
-            pitch = 0.87266463f;
-        } else if (pitch < -0.87266463f) {
-            pitch = -0.87266463f;
+        if (DEG_TO_RAD(50) < pitch) {
+            pitch = DEG_TO_RAD(50);
+        } else if (pitch < -DEG_TO_RAD(50)) {
+            pitch = -DEG_TO_RAD(50);
         }
         EntityMath_EaseAngleToward(&ai_state->part_angle_x, pitch, 10.0f);
         part->part_angles[0] = ai_state->part_angle_x;
@@ -192,11 +192,11 @@ static void SkeletonArcher_ThinkCombat(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }

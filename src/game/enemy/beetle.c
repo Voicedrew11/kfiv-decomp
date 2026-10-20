@@ -189,11 +189,11 @@ static void Beetle_ThinkCombat(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
-    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, DEG_TO_RAD(30))) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -232,7 +232,7 @@ static void Beetle_ThinkCombat(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
-                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                ai_state->turn_in_place = ABS(angle) > DEG_TO_RAD(30);
             }
             if (ai_state->turn_in_place != 0) {
                 entity->move_command = EntityAi_TurnCommand(entity);
@@ -264,7 +264,7 @@ static void Beetle_TurnParts7And12(void *entity_arg) {
     f32 limit;
     s32 i;
 
-    limit = 0.34906584f;
+    limit = DEG_TO_RAD(20);
     if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         angle = limit;
     } else if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
@@ -272,7 +272,7 @@ static void Beetle_TurnParts7And12(void *entity_arg) {
     } else {
         angle = 0.0f;
     }
-    limit = 0.34906584f;
+    limit = DEG_TO_RAD(20);
     if (angle > limit) {
         angle = limit;
     } else if (angle < -limit) {
@@ -301,7 +301,7 @@ static void Beetle_TurnParts23To32(Entity *entity) {
     s32 i;
 
     f32 limit2;
-    limit = 0.34906584f;
+    limit = DEG_TO_RAD(20);
     command = entity->move_command;
     ai_state = &entity->ai_state;
     if (command & MOVE_COMMAND_TURN_RIGHT) {
@@ -309,7 +309,7 @@ static void Beetle_TurnParts23To32(Entity *entity) {
     } else {
         lean = (command & MOVE_COMMAND_TURN_LEFT) ? -limit : 0.0f;
     }
-    limit2 = 0.34906584f;
+    limit2 = DEG_TO_RAD(20);
     if (limit2 < lean || (limit2 = -limit2, lean < limit2)) {
         lean = limit2;
     }

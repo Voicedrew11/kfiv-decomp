@@ -932,7 +932,7 @@ void Collision_CylinderArc(f32 *base, f32 *other, f32 radius, f32 height, f32 ot
         return;
     }
     half_angle += atan2f(radius + radius, sqrtf(distance));
-    angle = -(atan2f(delta[2], delta[0]) - 1.5707964f);
+    angle = -(atan2f(delta[2], delta[0]) - HALF_PI);
     angle = Angle_Wrap(angle - facing);
     if (angle < -half_angle) {
         return;
@@ -1000,7 +1000,7 @@ void Collision_CylinderArcPitch(f32 *base, f32 *other, f32 radius, f32 height, f
     }
     flat = sqrtf(distance);
     half_angle += atan2f(radius + radius, flat);
-    angle = -(atan2f(delta[2], delta[0]) - 1.5707964f);
+    angle = -(atan2f(delta[2], delta[0]) - HALF_PI);
     angle = Angle_Wrap(angle - facing);
     if (angle < -half_angle) {
         return;
@@ -1234,7 +1234,7 @@ void Collision_BallSwing(void *ball_centre, void *swing_origin, f32 radius, f32 
         return;
     }
     half_angle += atan2f(radius + radius, sqrtf(bottom));
-    top = Angle_Wrap(-(atan2f(delta[2], delta[0]) - 1.5707964f) - facing);
+    top = Angle_Wrap(-(atan2f(delta[2], delta[0]) - HALF_PI) - facing);
     if (top < -half_angle) {
         return;
     }
@@ -1292,7 +1292,7 @@ void Collision_BallSwingPitch(void *ball_centre, void *swing_origin, f32 radius,
     flat_distance = sqrtf(bottom);
     twice_radius = radius + radius;
     half_angle += atan2f(twice_radius, flat_distance);
-    top = Angle_Wrap(-(atan2f(delta[2], delta[0]) - 1.5707964f) - facing);
+    top = Angle_Wrap(-(atan2f(delta[2], delta[0]) - HALF_PI) - facing);
     if (top < -half_angle) {
         return;
     }

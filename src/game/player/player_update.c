@@ -417,7 +417,7 @@ void Player_Update(void) {
     }
     /* head bob, when the option is on */
     if (game_options[5] != 0) {
-        player_state.head_bob_offset = sinf((f32)player_state.stride_phase * 6.2831855f / 5120.0f) * 2.75f;
+        player_state.head_bob_offset = sinf((f32)player_state.stride_phase * TWO_PI / 5120.0f) * 2.75f;
     } else {
         player_state.head_bob_offset = 0.0f;
     }
@@ -498,7 +498,7 @@ void Player_Update(void) {
             sacrificial_mask_cooldown--;
         } else if (!(((s32)(player_state.status_bits >> 38) & 1) &&
                      player_state.water_surface_y < player_state.position.y - fx_table[0x7C].effect_depth_below) &&
-                   (s32)((f32)rand() * 451.0f * 0.0000000004656613f) == 0) {
+                   (s32)((f32)rand() * 451.0f * RAND_SCALE) == 0) {
             shot = Shot_Alloc();
             shot->is_magic_shot = 1;
             shot->player_power = 0;
@@ -829,9 +829,9 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             request.radius = def->swing_reach + 100.0f;
             request.height = 230.0f;
             request.facing = player_state.rotation.y;
-            request.half_angle = def->swing_yaw_arc_degrees * 0.5f * 0.017453292f;
+            request.half_angle = def->swing_yaw_arc_degrees * 0.5f * DEG_TO_RAD(1);
             request.pitch = player_state.rotation.x;
-            request.half_pitch = def->swing_pitch_arc_degrees * 0.5f * 0.017453292f;
+            request.half_pitch = def->swing_pitch_arc_degrees * 0.5f * DEG_TO_RAD(1);
             request.target_mask = 0x3E;
             *(PlayerShotStats *)&request.strengths = player_state.attack_stats;
             *(PlayerItemRates *)&request.ailment_chances = player_state.ailment_attack_rates;
@@ -1182,9 +1182,9 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
 
     if (player_state.view_tilt_frames != 0) {
         player_state.view_tilt_frames--;
-        player_state.view_tilt_pitch += 0.034906585f;
+        player_state.view_tilt_pitch += DEG_TO_RAD(2);
         player_state.view_tilt_roll += 0.0017453292f;
-        if (player_state.view_tilt_pitch > 1.012291f) {
+        if (player_state.view_tilt_pitch > DEG_TO_RAD(58)) {
             player_state.view_tilt_frames = 0;
         }
     } else {
@@ -1367,11 +1367,11 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
     }
     player_state.rotation.y = Angle_Wrap(player_state.rotation.y + delta.y);
     player_state.rotation.x += delta.x;
-    if (player_state.rotation.x > 1.012291f) {
-        player_state.rotation.x = 1.012291f;
+    if (player_state.rotation.x > DEG_TO_RAD(58)) {
+        player_state.rotation.x = DEG_TO_RAD(58);
     }
-    if (player_state.rotation.x < -1.012291f) {
-        player_state.rotation.x = -1.012291f;
+    if (player_state.rotation.x < -DEG_TO_RAD(58)) {
+        player_state.rotation.x = -DEG_TO_RAD(58);
     }
 
     delta.z = player_state.walk_speed;
@@ -1447,7 +1447,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
     }
 
     if ((s32)(player_state.status_bits >> 37) & 1) {
-        player_state.landing_dip_offset = (f32)sin((f32)player_state.landing_dip_frame * 3.1415927f / (f32)player_state.landing_dip_frames) * player_state.landing_dip_depth;
+        player_state.landing_dip_offset = (f32)sin((f32)player_state.landing_dip_frame * PI / (f32)player_state.landing_dip_frames) * player_state.landing_dip_depth;
         if (player_state.landing_dip_frame++ >= player_state.landing_dip_frames) {
             player_state.status_bits &= ~PLAYER_FLAG_37;
             player_state.landing_dip_offset = 0.0f;
@@ -1524,7 +1524,7 @@ void Player_ApplyGroundEffects(void) {
         if ((u16)player_state.timed_flags[0] == 0 && player_state.flag_timers[0] == 0) {
             if (player_state.ground_effect_frames % 60 == 0) {
                 // match: the chance (at least 5 in 100) is worked out after the roll, inside the comparison
-                if ((int)(rand() * 100.0f * 4.656613e-10f) < (20 - player_state.ailment_defence[0] > 4 ? 20 - player_state.ailment_defence[0] : 5)) {
+                if ((int)(rand() * 100.0f * RAND_SCALE) < (20 - player_state.ailment_defence[0] > 4 ? 20 - player_state.ailment_defence[0] : 5)) {
                     player_state.timed_flags[0] = 1800;
                     player_state.ailment0_start_frame = frame_counter;
                 }
@@ -1535,7 +1535,7 @@ void Player_ApplyGroundEffects(void) {
         if ((u16)player_state.timed_flags[0] == 0 && player_state.flag_timers[0] == 0) {
             if (player_state.ground_effect_frames % 60 == 0) {
                 // match: the chance (at least 5 in 100) is worked out after the roll, inside the comparison
-                if ((int)(rand() * 100.0f * 4.656613e-10f) < (50 - player_state.ailment_defence[0] > 4 ? 50 - player_state.ailment_defence[0] : 5)) {
+                if ((int)(rand() * 100.0f * RAND_SCALE) < (50 - player_state.ailment_defence[0] > 4 ? 50 - player_state.ailment_defence[0] : 5)) {
                     player_state.timed_flags[0] = 1800;
                     player_state.ailment0_start_frame = frame_counter;
                 }
@@ -1697,7 +1697,7 @@ void Player_UpdateDying(void)
         Sound_PlayCommon(0x28);
     }
     if (player->death_timer < 0x3C) {
-        player->rotation.x += (1.012291f - player->rotation.x) / (0x3D - player->death_timer);
+        player->rotation.x += (DEG_TO_RAD(58) - player->rotation.x) / (0x3D - player->death_timer);
         player->death_timer++;
     } else {
         game_status.bit9 = 1;
@@ -1933,7 +1933,7 @@ void Player_UpdateStatus(void) {
 
     if (player_state.weapon == 0x24) {
         if (is_frame_multiple(600)) {
-            if ((s32)(rand() * 100.0f * 4.656613e-10f) < 70) {
+            if ((s32)(rand() * 100.0f * RAND_SCALE) < 70) {
                 player_state.timed_flags[0] = 1800;
                 player_state.ailment0_start_frame = frame_counter;
             }
