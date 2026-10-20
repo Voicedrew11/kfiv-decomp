@@ -23,10 +23,12 @@
 #include "save/save_state.h"
 #include "sound/sound_game.h"
 
+/* the steps of ScriptCmd_ReloadArmModels (ScriptWaitCommand.started) */
+#define RELOAD_ARM_MODELS_STEP_STOP_VOICE   0       /* stops sound slot 2 */
+#define RELOAD_ARM_MODELS_STEP_REQUEST      1       /* sets GameStatus.bit14, asking for the reload */
+#define RELOAD_ARM_MODELS_STEP_WAIT_LOADED  2       /* waits until the main loop clears bit14 */
 
-
-
-static s32 waiting_for_menu = 0;            /* 0x446FD4 ScriptCmd_OpenMenu is waiting for the menu */
+static s32 waiting_for_menu = 0;           /* 0x446FD4 ScriptCmd_OpenMenu is waiting for the menu */
 static s32 waiting_for_trade = 0;           /* 0x446FD8 ScriptCmd_OpenTrade is waiting */
 static s32 waiting_for_smith = 0;           /* 0x446FDC ScriptCmd_OpenSmith is waiting */
 static s32 waiting_for_save = 0;            /* 0x446FE0 ScriptCmd_OpenSaveScreen is waiting */
@@ -1255,17 +1257,17 @@ void ScriptCmd_HoldFrameOnStart(ScriptValueCommand *command) {
    (GameStatus.bit14) and waits until it has. */
 void ScriptCmd_ReloadArmModels(ScriptWaitCommand *command) {
     switch (command->started) {
-    case 0:
+    case RELOAD_ARM_MODELS_STEP_STOP_VOICE:
         Sound_StopVoice(2);
-        command->started = 1;
+        command->started = RELOAD_ARM_MODELS_STEP_REQUEST;
         break;
-    case 1:
+    case RELOAD_ARM_MODELS_STEP_REQUEST:
         if (!game_status.bit14) {
             game_status.bit14 = TRUE;
-            command->started = 2;
+            command->started = RELOAD_ARM_MODELS_STEP_WAIT_LOADED;
         }
         break;
-    case 2:
+    case RELOAD_ARM_MODELS_STEP_WAIT_LOADED:
         if (!game_status.bit14) {
             command->active = 0;
         }
