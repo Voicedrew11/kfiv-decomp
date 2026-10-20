@@ -435,7 +435,7 @@ static void Seafang_Death(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DEATH_STEP_FADE_OUT:
         fall = 0.0f;
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;

@@ -13,6 +13,9 @@
 #include <stdlib.h>
 #include "model/motion.h"
 #include "player/player.h"
+
+/* Entity.action_step of WiddaQueen_MeleeAttack1 past the shared ones */
+#define WIDDA_QUEEN_MELEE_STEP_SWING  2   /* swings with its hit windows until frame 61, then ends */
 #include "entity/entity_ai.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
@@ -270,7 +273,7 @@ static void WiddaQueen_MeleeAttack1(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case WIDDA_QUEEN_MELEE_STEP_SWING:
         frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
             ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->frame, entity->model->rotation[1] - DEG_TO_RAD(45));
