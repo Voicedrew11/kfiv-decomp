@@ -124,7 +124,8 @@ its function names: structs with no `unkXX` field left, named fields (padding,
 `padXX` bytes no game code touches, is counted apart), globals and flag bits, and counts of what still reads as machine output:
 casts, `// match:` comments, gotos, long comments, stale `unkXX` names in
 comments, raw case labels and state values (enum candidates), `unknown`
-parameters and raw float constants. `tools/progress.py --write` refreshes
+parameters, raw float constants, and declarations a `.c` file makes itself
+instead of including its module header. `tools/progress.py --write` refreshes
 `docs/progress/` (a summary without per-function data, shields badges and a
 static page) and the table below; commit those with each batch of work.
 `docs/progress/index.html` can be served with GitHub Pages (Settings → Pages →
