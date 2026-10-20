@@ -20,6 +20,9 @@
 
 /* EntityAiState.move_choice 1 (0 is MOVE_CHOICE_CLOSE_IN): walks straight at the player, without running or turning first */
 #define WIND_ELEMENTAL_MOVE_CHOICE_WALK_STRAIGHT 1
+
+/* Entity.action_step of WindElemental_RunAtPlayer past the shared ones */
+#define WIND_ELEMENTAL_RUN_STEP_CHASE 2   /* runs at the player, dodging, guarding or attacking as it comes */
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void WindElemental_Think(Entity *entity, s32 run_now);
@@ -450,7 +453,7 @@ static void WindElemental_RunAtPlayer(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case WIND_ELEMENTAL_RUN_STEP_CHASE:
         if (WindElemental_ShouldDodgeMagic(entity, 200.0f, DEG_TO_RAD(60))) {
             EntityAi_StartAction(entity, WindElemental_Dodge, 1);
             break;
