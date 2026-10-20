@@ -457,7 +457,7 @@ static void WiddaArcher_StartMapObjectScript(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (entity->model->level_tables->frame == entity->spawn_info->script_anim_frame) {
             map_object = MapObject_GetById(entity->group_id, entity->spawn_info->second_map_object_id);
             if (map_object != NULL && map_object->source->use_script != 0 && entity->group_id == current_map_slot) {
