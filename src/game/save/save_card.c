@@ -12,6 +12,72 @@
 #include "ui/menu_draw.h"
 #include "player/player.h"
 
+/* CardStatus check_state: 0 checked, 1 not checked yet, 2 the check or a task failed */
+#define CARD_STATE_CHECKED          0
+#define CARD_STATE_NOT_CHECKED      1
+#define CARD_STATE_FAILED           2
+
+/* CardTask.step: the first step of every task */
+#define CARD_TASK_STEP_START        0
+
+/* CardTask.fail_step: the steps of SaveCard_Fail */
+#define CARD_FAIL_STEP_PROBE        0
+#define CARD_FAIL_STEP_PROBE_WAIT   1
+#define CARD_FAIL_STEP_DONE         2
+
+/* CardTask.step in SaveCard_StepCheck: card 0 runs steps 0..4, card 1 steps 5..9 */
+#define CARD_CHECK_STEP_CARD1_PROBE       5
+#define CARD_CHECK_STEP_CARD1_PROBE_WAIT  6
+#define CARD_CHECK_STEP_CARD1_TYPE        7
+#define CARD_CHECK_STEP_CARD1_DIR         8
+#define CARD_CHECK_STEP_CARD1_DIR_WAIT    9
+#define CARD_CHECK_STEP_DONE              10
+
+/* CardTask.step in SaveCard_StepRescan: card 0 runs steps 0..6, card 1 steps 7..13 */
+#define CARD_RESCAN_STEP_CARD1_PROBE      7
+#define CARD_RESCAN_STEP_CARD1_STATUS     8
+#define CARD_RESCAN_STEP_CARD1_DIR_WAIT   0xB
+#define CARD_RESCAN_STEP_CARD1_FILES      0xD
+
+/* CardTask.step in SaveCard_StepReadList */
+#define CARD_READ_LIST_STEP_CHECK           0
+#define CARD_READ_LIST_STEP_GET_GAME_DIR    1
+#define CARD_READ_LIST_STEP_GAME_DIR_WAIT   2
+#define CARD_READ_LIST_STEP_GET_SAVE_DIR    3
+#define CARD_READ_LIST_STEP_SAVE_DIR_WAIT   4
+#define CARD_READ_LIST_STEP_READ            5
+#define CARD_READ_LIST_STEP_READ_WAIT       6
+
+/* CardTask.step in SaveCard_StepSave */
+#define CARD_SAVE_STEP_PROBE                0
+#define CARD_SAVE_STEP_PROBE_WAIT           1
+#define CARD_SAVE_STEP_MKDIR                2
+#define CARD_SAVE_STEP_MKDIR_WAIT           3
+#define CARD_SAVE_STEP_ICON_PATH            4
+#define CARD_SAVE_STEP_WRITE_ICON           5
+#define CARD_SAVE_STEP_WRITE_ICON_WAIT      6
+#define CARD_SAVE_STEP_SAVE_PATH            7
+#define CARD_SAVE_STEP_WRITE_SAVE           8
+#define CARD_SAVE_STEP_WRITE_SAVE_WAIT      9
+#define CARD_SAVE_STEP_FILL_LIST            10
+#define CARD_SAVE_STEP_WRITE_LIST           11
+#define CARD_SAVE_STEP_WRITE_LIST_WAIT      12
+#define CARD_SAVE_STEP_WRITE_ICON_SYS       13
+#define CARD_SAVE_STEP_WRITE_ICON_SYS_WAIT  14
+
+/* CardTask.step in SaveCard_StepLoad */
+#define CARD_LOAD_STEP_PROBE                0
+#define CARD_LOAD_STEP_PROBE_WAIT           1
+#define CARD_LOAD_STEP_PATH                 2
+#define CARD_LOAD_STEP_READ                 3
+#define CARD_LOAD_STEP_READ_WAIT            4
+
+/* CardTask.step in SaveCard_StepFormat */
+#define CARD_FORMAT_STEP_PROBE              0
+#define CARD_FORMAT_STEP_PROBE_WAIT         1
+#define CARD_FORMAT_STEP_START              2
+#define CARD_FORMAT_STEP_WAIT               3
+
 
 static sceMcTblGetDir *dir_entries;     /* 0x447334 the eleven directory entries a directory request fills */
 static McIconSys *icon_sys;             /* 0x447338 */
@@ -49,7 +115,7 @@ s32 SaveCard_Init(void) {
         return -1;
     }
     card_task.kind = CARD_TASK_NONE;
-    card_task.step = 0;
+    card_task.step = CARD_TASK_STEP_START;
     card_task.retries = 0;
     card_check = card_task;
     return 0;
@@ -68,7 +134,7 @@ s32 SaveCard_Open(void) {
         return -1;
     }
     card_check.check_done = 0;
-    card_check.step = 0;
+    card_check.step = CARD_TASK_STEP_START;
     card_check.retries = 0;
     card_check.kind = CARD_TASK_CHECK;
     card_check.keep_open = 1;
@@ -104,7 +170,7 @@ s32 SaveCard_Open(void) {
 
 /* Forgets what is known of one card. */
 static void SaveCard_ResetRecord(CardRecord *card) {
-    card->status.bytes.check_state = 1;
+    card->status.bytes.check_state = CARD_STATE_NOT_CHECKED;
     card->status.bytes.card_type = 0;
     card->free_clusters = 0;
     card->present = 0;
@@ -127,8 +193,8 @@ int SaveCard_Update(void) {
     int result;
 
     check = &card_check;
-    if (check->kind == CARD_TASK_CHECK && card_records[0].status.bytes.check_state != 2 &&
-        card_records[1].status.bytes.check_state != 2) {
+    if (check->kind == CARD_TASK_CHECK && card_records[0].status.bytes.check_state != CARD_STATE_FAILED &&
+        card_records[1].status.bytes.check_state != CARD_STATE_FAILED) {
         result = SaveCard_StepCheck();
         task = &card_task;
         task->check_running = 1;
@@ -137,7 +203,7 @@ int SaveCard_Update(void) {
                 return 0;
             }
             task->kind = CARD_TASK_NONE;
-            task->step = 0;
+            task->step = CARD_TASK_STEP_START;
             task->retries = 0;
             task->check_running = 0;
             return 1;
@@ -154,7 +220,7 @@ int SaveCard_Update(void) {
                 }
                 check->check_done = result;
                 task->check_running = 0;
-                check->step = 0;
+                check->step = CARD_TASK_STEP_START;
             }
             return 1;
         }
@@ -175,8 +241,8 @@ s32 SaveCard_StartCheck(s8 reset) {
     }
     card_task.kind = card_task.last_kind = CARD_TASK_CHECK;
     for (i = 0; i < 2; i++) {
-        if (card_records[i].status.bytes.check_state != 0) {
-            card_records[i].status.bytes.check_state = 1;
+        if (card_records[i].status.bytes.check_state != CARD_STATE_CHECKED) {
+            card_records[i].status.bytes.check_state = CARD_STATE_NOT_CHECKED;
         }
     }
     if (reset != 0) {
@@ -204,7 +270,7 @@ static s32 SaveCard_StepCheck(void) {
         if (Mc_StartCheck(index, 0) != 0) {
             if (++task->retries == 5) {
                 card->no_card = 1;
-                card->status.bytes.check_state = 2;
+                card->status.bytes.check_state = CARD_STATE_FAILED;
                 card->message = 1;
                 task->retries = 0;
                 return 1;
@@ -221,12 +287,12 @@ static s32 SaveCard_StepCheck(void) {
         switch (Mc_GetStatus()) {
         case MC_STATUS_ERROR:
             card->no_card = 1;
-            card->status.bytes.check_state = 2;
+            card->status.bytes.check_state = CARD_STATE_FAILED;
             card->message = 1;
-            if (task->step == 6) {
+            if (task->step == CARD_CHECK_STEP_CARD1_PROBE_WAIT) {
                 return 1;
             }
-            task->step = 5;
+            task->step = CARD_CHECK_STEP_CARD1_PROBE;
             break;
         case MC_STATUS_UNFORMATTED:
         case 4:
@@ -258,25 +324,25 @@ static s32 SaveCard_StepCheck(void) {
             card->has_save_folder = 0;
             card->has_save_list = 0;
             card->message = 2;
-            if (task->step == 6) {
+            if (task->step == CARD_CHECK_STEP_CARD1_PROBE_WAIT) {
                 return 1;
             }
-            task->step = 5;
+            task->step = CARD_CHECK_STEP_CARD1_PROBE;
             return 0;
         case MC_STATUS_NO_CARD:
         default:
-            card->status.bytes.check_state = 0;
+            card->status.bytes.check_state = CARD_STATE_CHECKED;
             card->status.bytes.card_type = 0;
             card->present = 0;
             card->formatted = 0;
             card->has_save_folder = 0;
             card->has_save_list = 0;
             card->message = 2;
-            if (task->step == 6) {
-                task->step = 10;
+            if (task->step == CARD_CHECK_STEP_CARD1_PROBE_WAIT) {
+                task->step = CARD_CHECK_STEP_DONE;
                 return 1;
             }
-            task->step = 5;
+            task->step = CARD_CHECK_STEP_CARD1_PROBE;
             break;
         }
         break;
@@ -286,22 +352,22 @@ static s32 SaveCard_StepCheck(void) {
             card->free_clusters = Mc_GetFreeClusters(index, 0);
             task->step++;
             task->retries = 0;
-            card->status.bytes.check_state = 0;
+            card->status.bytes.check_state = CARD_STATE_CHECKED;
         } else {
-            card->status.bytes.check_state = 0;
-            if (task->step == 7) {
+            card->status.bytes.check_state = CARD_STATE_CHECKED;
+            if (task->step == CARD_CHECK_STEP_CARD1_TYPE) {
                 return 1;
             }
-            task->step = 5;
+            task->step = CARD_CHECK_STEP_CARD1_PROBE;
         }
         break;
     case 3:
         if (Mc_StartGetDir(index, 0, "/BASLUS-20318*", 0, 0xB, dir_entries) != 0) {
             if (++task->retries == 5) {
-                if (task->step == 8) {
+                if (task->step == CARD_CHECK_STEP_CARD1_DIR) {
                     return 1;
                 }
-                task->step = 5;
+                task->step = CARD_CHECK_STEP_CARD1_PROBE;
             }
         } else {
             task->retries = 0;
@@ -322,10 +388,10 @@ static s32 SaveCard_StepCheck(void) {
                 return 1;
             }
         } else {
-            if (task->step == 9) {
+            if (task->step == CARD_CHECK_STEP_CARD1_DIR_WAIT) {
                 return 1;
             }
-            task->step = 5;
+            task->step = CARD_CHECK_STEP_CARD1_PROBE;
         }
         break;
     }
@@ -343,8 +409,8 @@ s32 SaveCard_StartReadList(s32 card, char must_exist) {
     SaveCard_ClearSaveInfos();
     card_task.card_index = card;
     card_task.kind = card_task.last_kind = CARD_TASK_READ_LIST;
-    card_task.fail_step = 0;
-    card_task.step = 0;
+    card_task.fail_step = CARD_FAIL_STEP_PROBE;
+    card_task.step = CARD_TASK_STEP_START;
     card_task.fail_retries = 0;
     card_task.retries = 0;
     list_must_exist = must_exist;
@@ -359,7 +425,7 @@ static s32 SaveCard_StepReadList(void) {
     s32 result = 0;
 
     switch (task->step) {
-    case 0:
+    case CARD_READ_LIST_STEP_CHECK:
         if (Mc_Update() > 0) {
             break;
         }
@@ -367,13 +433,13 @@ static s32 SaveCard_StepReadList(void) {
             result = SaveCard_Fail();
             break;
         }
-        card->status.bytes.check_state = 1;
+        card->status.bytes.check_state = CARD_STATE_NOT_CHECKED;
         if (card->formatted == 0) {
             result = 1;
             break;
         }
         task->step++;
-    case 1:
+    case CARD_READ_LIST_STEP_GET_GAME_DIR:
         if (Mc_StartGetDir(task->card_index, 0, "/BASLUS-20318*", 0, 4, dir_entries) != 0) {
             if (++task->retries == 5) {
                 result = SaveCard_Fail();
@@ -383,7 +449,7 @@ static s32 SaveCard_StepReadList(void) {
             task->step++;
         }
         break;
-    case 2:
+    case CARD_READ_LIST_STEP_GAME_DIR_WAIT:
         if (Mc_Update() > 0) {
             break;
         }
@@ -404,7 +470,7 @@ static s32 SaveCard_StepReadList(void) {
             card->has_save_list = 0;
         }
         break;
-    case 3:
+    case CARD_READ_LIST_STEP_GET_SAVE_DIR:
         memset(dir_entries, 0, 0x2C0);
         if (Mc_StartGetDir(task->card_index, 0, "/BASLUS-20318S/*", 0, 0xB, dir_entries) == 0) {
             task->retries = 0;
@@ -413,7 +479,7 @@ static s32 SaveCard_StepReadList(void) {
             result = SaveCard_Fail();
         }
         break;
-    case 4:
+    case CARD_READ_LIST_STEP_SAVE_DIR_WAIT:
         if (Mc_Update() > 0) {
             break;
         }
@@ -452,7 +518,7 @@ static s32 SaveCard_StepReadList(void) {
             result = 1;
         }
         break;
-    case 5:
+    case CARD_READ_LIST_STEP_READ:
         if (Mc_StartReadChecked(task->card_index, 0, read_list_path, save_infos, 0x480) != 0) {
             if (++task->retries == 5) {
                 result = SaveCard_Fail();
@@ -462,7 +528,7 @@ static s32 SaveCard_StepReadList(void) {
             task->step++;
         }
         break;
-    case 6:
+    case CARD_READ_LIST_STEP_READ_WAIT:
         if (Mc_Update() > 0) {
             break;
         }
@@ -498,8 +564,8 @@ s32 SaveCard_StartSave(s32 card, s32 file, s32 *data) {
     task->save_index = file;
     task->last_kind = CARD_TASK_SAVE;
     task->kind = CARD_TASK_SAVE;
-    task->fail_step = 0;
-    task->step = 0;
+    task->fail_step = CARD_FAIL_STEP_PROBE;
+    task->step = CARD_TASK_STEP_START;
     task->fail_retries = 0;
     task->retries = 0;
     return 0;
@@ -516,7 +582,7 @@ static s32 SaveCard_StepSave(void) {
     char *flag;
 
     switch (task->step) {
-    case 0:
+    case CARD_SAVE_STEP_PROBE:
         if (Mc_Update() <= 0) {
             if (Mc_StartCheck(task->card_index, 0) != 0) {
                 if (++task->retries == 5) {
@@ -528,7 +594,7 @@ static s32 SaveCard_StepSave(void) {
             }
         }
         break;
-    case 1:
+    case CARD_SAVE_STEP_PROBE_WAIT:
         if (Mc_Update() <= 0) {
             if (Mc_GetStatus() != MC_STATUS_OK) {
                 return SaveCard_Fail();
@@ -539,18 +605,18 @@ static s32 SaveCard_StepSave(void) {
                     task->step++;
                 } else {
                     if (card->has_save_list == 0 || card->icon_missing == 1) {
-                        task->step = 4;
+                        task->step = CARD_SAVE_STEP_ICON_PATH;
                     } else {
-                        task->step = 7;
+                        task->step = CARD_SAVE_STEP_SAVE_PATH;
                     }
                 }
-                card->status.bytes.check_state = 1;
+                card->status.bytes.check_state = CARD_STATE_NOT_CHECKED;
             } else {
                 result = SaveCard_Fail();
             }
         }
         break;
-    case 2:
+    case CARD_SAVE_STEP_MKDIR:
         if (Mc_StartMkdir(task->card_index, 0, save_path) != 0) {
             if (++task->retries == 5) {
                 result = SaveCard_Fail();
@@ -560,7 +626,7 @@ static s32 SaveCard_StepSave(void) {
             task->step++;
         }
         break;
-    case 3:
+    case CARD_SAVE_STEP_MKDIR_WAIT:
         status = Mc_Update();
         if (status > 0) {
             break;
@@ -573,10 +639,10 @@ static s32 SaveCard_StepSave(void) {
             task->step++;
         }
         break;
-    case 4:
+    case CARD_SAVE_STEP_ICON_PATH:
         sprintf(save_path, "%s%s/%s", "/BASLUS-20318", "S", "KF4GAME.ICO");
         task->step++;
-    case 5:
+    case CARD_SAVE_STEP_WRITE_ICON:
         if (Mc_StartWrite(task->card_index, 0, save_path, card->icon_data, 0xDBF0) != 0) {
             if (++task->retries == 5) {
                 result = SaveCard_Fail();
@@ -586,7 +652,7 @@ static s32 SaveCard_StepSave(void) {
             task->step++;
         }
         break;
-    case 6:
+    case CARD_SAVE_STEP_WRITE_ICON_WAIT:
         status = Mc_Update();
         if (status > 0) {
             break;
@@ -597,10 +663,10 @@ static s32 SaveCard_StepSave(void) {
             task->step++;
         }
         break;
-    case 7:
+    case CARD_SAVE_STEP_SAVE_PATH:
         sprintf(save_path, "%s%s%s%s%02d", "/BASLUS-20318", "S", "/BASLUS-20318", "G", file);
         task->step++;
-    case 8:
+    case CARD_SAVE_STEP_WRITE_SAVE:
         if (Mc_StartWriteChecked(task->card_index, 0, save_path, card->save_data, *card->save_data) != 0) {
             if (++task->retries == 5) {
                 result = SaveCard_Fail();
@@ -610,7 +676,7 @@ static s32 SaveCard_StepSave(void) {
             task->step++;
         }
         break;
-    case 9:
+    case CARD_SAVE_STEP_WRITE_SAVE_WAIT:
         status = Mc_Update();
         if (status > 0) {
             break;
@@ -625,11 +691,11 @@ static s32 SaveCard_StepSave(void) {
             task->step++;
         }
         break;
-    case 10:
+    case CARD_SAVE_STEP_FILL_LIST:
         SaveCard_FillSaveInfo((void *)task->card_index, file);
         sprintf(save_path, "%s%s%s%s", "/BASLUS-20318", "S", "/BASLUS-20318", "S");
         task->step++;
-    case 11:
+    case CARD_SAVE_STEP_WRITE_LIST:
         if (Mc_StartWriteChecked(task->card_index, 0, save_path, save_infos, 0x480) != 0) {
             if (++task->retries == 5) {
                 result = SaveCard_Fail();
@@ -639,7 +705,7 @@ static s32 SaveCard_StepSave(void) {
             task->step++;
         }
         break;
-    case 12:
+    case CARD_SAVE_STEP_WRITE_LIST_WAIT:
         status = Mc_Update();
         if (status > 0) {
             break;
@@ -653,7 +719,7 @@ static s32 SaveCard_StepSave(void) {
             task->step++;
         }
         break;
-    case 13:
+    case CARD_SAVE_STEP_WRITE_ICON_SYS:
         if (Mc_StartWrite(task->card_index, 0, save_path, icon_sys, 0x3C4) != 0) {
             if (++task->retries == 5) {
                 result = SaveCard_Fail();
@@ -663,7 +729,7 @@ static s32 SaveCard_StepSave(void) {
             task->step++;
         }
         break;
-    case 14:
+    case CARD_SAVE_STEP_WRITE_ICON_SYS_WAIT:
         status = Mc_Update();
         if (status > 0) {
             break;
@@ -696,8 +762,8 @@ s32 SaveCard_StartLoad(s32 card, s32 file, s32 *data, s32 size) {
     task->card_index = card;
     task->last_kind = CARD_TASK_LOAD;
     task->kind = CARD_TASK_LOAD;
-    task->fail_step = 0;
-    task->step = 0;
+    task->fail_step = CARD_FAIL_STEP_PROBE;
+    task->step = CARD_TASK_STEP_START;
     task->fail_retries = 0;
     task->retries = 0;
     task->save_index = file;
@@ -714,7 +780,7 @@ static s32 SaveCard_StepLoad(void) {
     s32 code;
 
     switch (task->step) {
-    case 0:
+    case CARD_LOAD_STEP_PROBE:
         if (Mc_Update() <= 0) {
             if (Mc_StartCheck(task->card_index, 0) != 0) {
                 if (++task->retries == 5) {
@@ -726,7 +792,7 @@ static s32 SaveCard_StepLoad(void) {
             }
         }
         break;
-    case 1:
+    case CARD_LOAD_STEP_PROBE_WAIT:
         if (Mc_Update() <= 0) {
             if (Mc_GetStatus() != MC_STATUS_OK) {
                 return SaveCard_Fail();
@@ -734,13 +800,13 @@ static s32 SaveCard_StepLoad(void) {
             task->step++;
         }
         break;
-    case 2:
+    case CARD_LOAD_STEP_PATH:
         if (Mc_Update() > 0) {
             break;
         }
         sprintf(load_path, "%s%s%s%s%02d", "/BASLUS-20318", "S", "/BASLUS-20318", "G", file);
         task->step++;
-    case 3:
+    case CARD_LOAD_STEP_READ:
         if (Mc_StartReadChecked(task->card_index, 0, load_path, card->save_data, 0x20000) != 0) {
             if (++task->retries == 5) {
                 result = SaveCard_Fail();
@@ -750,7 +816,7 @@ static s32 SaveCard_StepLoad(void) {
             task->step++;
         }
         break;
-    case 4:
+    case CARD_LOAD_STEP_READ_WAIT:
         status = Mc_Update();
         if (status > 0) {
             break;
@@ -777,8 +843,8 @@ s32 SaveCard_StartFormat(s32 card) {
     card_task.card_index = card;
     card_task.retries = 0;
     card_task.last_kind = CARD_TASK_FORMAT;
-    card_task.fail_step = 0;
-    card_task.step = 0;
+    card_task.fail_step = CARD_FAIL_STEP_PROBE;
+    card_task.step = CARD_TASK_STEP_START;
     card_task.fail_retries = 0;
     card_task.kind = CARD_TASK_FORMAT;
     return 0;
@@ -793,7 +859,7 @@ static s32 SaveCard_StepFormat(void) {
     s32 status;
 
     switch (task->step) {
-    case 0:
+    case CARD_FORMAT_STEP_PROBE:
         if (Mc_Update() <= 0) {
             if (Mc_StartCheck(task->card_index, 0) != 0) {
                 if (++task->retries == 5) {
@@ -805,7 +871,7 @@ static s32 SaveCard_StepFormat(void) {
             }
         }
         break;
-    case 1:
+    case CARD_FORMAT_STEP_PROBE_WAIT:
         if (Mc_Update() <= 0) {
             status = Mc_GetStatus();
             if (status != MC_STATUS_UNFORMATTED) {
@@ -822,7 +888,7 @@ static s32 SaveCard_StepFormat(void) {
             }
         }
         break;
-    case 2:
+    case CARD_FORMAT_STEP_START:
         if (Mc_StartFormat(task->card_index, 0) != 0) {
             if (++task->retries == 5) {
                 result = SaveCard_Fail();
@@ -832,12 +898,12 @@ static s32 SaveCard_StepFormat(void) {
             task->step++;
         }
         break;
-    case 3:
+    case CARD_FORMAT_STEP_WAIT:
         if (Mc_Update() <= 0) {
             if (Mc_GetStatus() == MC_STATUS_FORMATTED) {
                 card->formatted = 1;
                 card->message = 0;
-                card->status.bytes.check_state = 0;
+                card->status.bytes.check_state = CARD_STATE_CHECKED;
                 result = 1;
             } else {
                 result = SaveCard_Fail();
@@ -852,8 +918,8 @@ static s32 SaveCard_StepFormat(void) {
 s32 SaveCard_StartRescan(void) {
     card_task.retries = 0;
     card_task.last_kind = CARD_TASK_RESCAN;
-    card_task.fail_step = 0;
-    card_task.step = 0;
+    card_task.fail_step = CARD_FAIL_STEP_PROBE;
+    card_task.step = CARD_TASK_STEP_START;
     card_task.fail_retries = 0;
     card_task.kind = CARD_TASK_RESCAN;
 
@@ -877,7 +943,7 @@ static s32 SaveCard_StepRescan(void) {
             task->retries = 0;
             task->step++;
         } else if (++task->retries == 5) {
-            card->status.bytes.check_state = 2;
+            card->status.bytes.check_state = CARD_STATE_FAILED;
             card->message = 1;
             result = 1;
         }
@@ -888,13 +954,13 @@ static s32 SaveCard_StepRescan(void) {
         }
         switch (Mc_GetStatus()) {
         case MC_STATUS_ERROR:
-            card->status.bytes.check_state = 2;
+            card->status.bytes.check_state = CARD_STATE_FAILED;
             card->message = 1;
-            if (task->step == 8) {
+            if (task->step == CARD_RESCAN_STEP_CARD1_STATUS) {
                 result = 1;
                 break;
             }
-            task->step = 7;
+            task->step = CARD_RESCAN_STEP_CARD1_PROBE;
             break;
         case MC_STATUS_UNFORMATTED:
         case 4:
@@ -924,13 +990,13 @@ static s32 SaveCard_StepRescan(void) {
             card->has_save_folder = 0;
             card->has_save_list = 0;
             card->free_clusters = 0;
-            card->status.bytes.check_state = 0;
+            card->status.bytes.check_state = CARD_STATE_CHECKED;
             card->status.bytes.card_type = 0;
-            if (task->step == 8) {
+            if (task->step == CARD_RESCAN_STEP_CARD1_STATUS) {
                 result = 1;
                 break;
             }
-            task->step = 7;
+            task->step = CARD_RESCAN_STEP_CARD1_PROBE;
             break;
         }
         break;
@@ -943,7 +1009,7 @@ static s32 SaveCard_StepRescan(void) {
                     break;
                 }
             }
-            card->status.bytes.check_state = 0;
+            card->status.bytes.check_state = CARD_STATE_CHECKED;
             result = 1;
         }
         break;
@@ -952,12 +1018,12 @@ static s32 SaveCard_StepRescan(void) {
             task->retries = 0;
             task->step++;
         } else if (++task->retries == 5) {
-            card->status.bytes.check_state = 2;
+            card->status.bytes.check_state = CARD_STATE_FAILED;
             if (task->step >= 0xA) {
                 result = 1;
                 break;
             }
-            task->step = 7;
+            task->step = CARD_RESCAN_STEP_CARD1_PROBE;
             break;
         }
         break;
@@ -966,25 +1032,25 @@ static s32 SaveCard_StepRescan(void) {
             break;
         }
         if (Mc_GetStatus() == MC_STATUS_OK) {
-            card->status.bytes.check_state = 0;
+            card->status.bytes.check_state = CARD_STATE_CHECKED;
             if (Mc_GetDirCount() > 0) {
                 task->retries = 0;
                 task->step++;
                 break;
             }
-            if (task->step == 0xB) {
+            if (task->step == CARD_RESCAN_STEP_CARD1_DIR_WAIT) {
                 result = 1;
                 break;
             }
-            task->step = 7;
+            task->step = CARD_RESCAN_STEP_CARD1_PROBE;
             break;
         }
-        card->status.bytes.check_state = 2;
-        if (task->step == 0xB) {
+        card->status.bytes.check_state = CARD_STATE_FAILED;
+        if (task->step == CARD_RESCAN_STEP_CARD1_DIR_WAIT) {
             result = 1;
             break;
         }
-        task->step = 7;
+        task->step = CARD_RESCAN_STEP_CARD1_PROBE;
         break;
     case 5:
         memset(dir_entries, 0, 0x2C0);
@@ -992,12 +1058,12 @@ static s32 SaveCard_StepRescan(void) {
             if (++task->retries < 5) {
                 break;
             }
-            card->status.bytes.check_state = 2;
+            card->status.bytes.check_state = CARD_STATE_FAILED;
             if (task->step >= 0xC) {
                 result = 1;
                 break;
             }
-            task->step = 7;
+            task->step = CARD_RESCAN_STEP_CARD1_PROBE;
             break;
         }
         task->retries = 0;
@@ -1012,37 +1078,37 @@ static s32 SaveCard_StepRescan(void) {
                 if (Mc_GetCheckResult(index, 0) == 0) {
                     card->has_save_list = 0;
                     // match: retail repeats the check tail here instead of falling into check
-                    if (task->step == 0xD) {
+                    if (task->step == CARD_RESCAN_STEP_CARD1_FILES) {
                         result = 1;
                         break;
                     }
-                    task->step = 7;
+                    task->step = CARD_RESCAN_STEP_CARD1_PROBE;
                     break;
                 }
-                if (task->step == 0xD) {
+                if (task->step == CARD_RESCAN_STEP_CARD1_FILES) {
                     result = 1;
                     break;
                 }
-                task->step = 7;
+                task->step = CARD_RESCAN_STEP_CARD1_PROBE;
                 break;
             }
             sprintf(rescan_path, "%s", "KF4GAME.ICO");
             if (SaveCard_FindFile(rescan_path, 0xDBF0) != 0) {
-                if (task->step == 0xD) {
+                if (task->step == CARD_RESCAN_STEP_CARD1_FILES) {
                     result = 1;
                     break;
                 }
-                task->step = 7;
+                task->step = CARD_RESCAN_STEP_CARD1_PROBE;
                 break;
             }
             sprintf(rescan_path, "icon.sys");
             if (SaveCard_FindFile(rescan_path, 0) != 0) {
                 card->has_save_folder = 0;
-                if (task->step == 0xD) {
+                if (task->step == CARD_RESCAN_STEP_CARD1_FILES) {
                     result = 1;
                     break;
                 }
-                task->step = 7;
+                task->step = CARD_RESCAN_STEP_CARD1_PROBE;
                 break;
             }
             sprintf(rescan_path, "%s%s", "BASLUS-20318", "S");
@@ -1054,8 +1120,8 @@ static s32 SaveCard_StepRescan(void) {
                 break;
             }
             card->has_save_folder = 0;
-            if (task->step != 0xD) {
-                task->step = 7;
+            if (task->step != CARD_RESCAN_STEP_CARD1_FILES) {
+                task->step = CARD_RESCAN_STEP_CARD1_PROBE;
             }
             result = 1;
             break;
@@ -1096,7 +1162,7 @@ static int SaveCard_StepTask(void) {
     }
     if (result == 1) {
         card_task.kind = CARD_TASK_NONE;
-        card_task.step = 0;
+        card_task.step = CARD_TASK_STEP_START;
         card_task.retries = 0;
     }
     return result;
@@ -1117,9 +1183,9 @@ static s32 SaveCard_Fail(void) {
     card = &card_records[task->card_index];
     task->kind = CARD_TASK_FAILED;
     result = 0;
-    card->status.bytes.check_state = 2;
+    card->status.bytes.check_state = CARD_STATE_FAILED;
     switch (task->fail_step) {
-    case 0:
+    case CARD_FAIL_STEP_PROBE:
         if (Mc_Update() <= 0) {
             Mc_StartCheck(task->card_index, 0);
             if (++task->fail_retries == 5) {
@@ -1132,7 +1198,7 @@ static s32 SaveCard_Fail(void) {
             }
         }
         break;
-    case 1:
+    case CARD_FAIL_STEP_PROBE_WAIT:
         if (Mc_Update() <= 0) {
             result = -1;
             Mc_GetStatus();
@@ -1140,7 +1206,7 @@ static s32 SaveCard_Fail(void) {
             task->fail_step++;
         }
         break;
-    case 2:
+    case CARD_FAIL_STEP_DONE:
         result = -1;
         break;
     default:
@@ -1505,9 +1571,9 @@ s8 SaveCard_IsDamaged(s32 index) {
 /* Drops the task in progress and marks both cards as not checked; the caller passes the selected card, which
    goes unused. */
 void SaveCard_Cancel(s32 index) {
-    card_records[0].status.bytes.check_state = 1;
+    card_records[0].status.bytes.check_state = CARD_STATE_NOT_CHECKED;
     card_task.kind = CARD_TASK_NONE;
-    card_records[1].status.bytes.check_state = 1;
+    card_records[1].status.bytes.check_state = CARD_STATE_NOT_CHECKED;
 }
 
 /* What stands in the way of saving to a card: 1 it is not checked or failed the check, 2 it is not a PS2
@@ -1515,7 +1581,7 @@ void SaveCard_Cancel(s32 index) {
 s32 SaveCard_GetCardProblem(s32 index) {
     CardRecord *card = &card_records[index];
 
-    if (card->status.bytes.check_state != 0) {
+    if (card->status.bytes.check_state != CARD_STATE_CHECKED) {
         return 1;
     } else {
         if (card->status.bytes.card_type != 2) {

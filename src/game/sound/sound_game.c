@@ -6,6 +6,12 @@
 #include <libcdvd.h>
 #include "common.h"
 #include "sound/sound.h"
+
+/* SoundChannel.kind (a queued request keeps it in mode): a point at origin, a segment origin..target, or a cue
+   that restarts with its volume */
+#define SOUND_KIND_POINT    1
+#define SOUND_KIND_SEGMENT  2
+#define SOUND_KIND_CUE      0x63
 #include "player/player.h"
 #include "model/model.h"
 #include "core/file.h"
@@ -676,7 +682,7 @@ int Sound_StartTagged(s8 sound, u8 voice, int volume) {
                 request->voice = 1;
                 request->sound_id = sound;
                 request->note_slot = voice;
-                request->mode = 0x63;
+                request->mode = SOUND_KIND_CUE;
                 request->volume_level = volume;
                 return 0;
             }
@@ -689,7 +695,7 @@ int Sound_StartTagged(s8 sound, u8 voice, int volume) {
     }
     channel = &sound_channels[i];
     channel->sound_id = sound;
-    channel->kind = 0x63;
+    channel->kind = SOUND_KIND_CUE;
     channel->volume_level = volume;
     voice_id = channel->note_slot = Sound_ClaimTaggedVoice();
     SoundDriver_NoteOn(voice_id, map_bank_job.job.result, 0, voice, 0x3C, volume, 0, 0x3F);
@@ -731,7 +737,7 @@ s32 Sound_StartTaggedAt(s8 sound_id, u8 voice, u8 mode, f32 volume, Vector4Arg *
     channel->origin.y = position->y;
     channel->origin.z = position->z;
     channel->mode = mode;
-    channel->kind = 1;
+    channel->kind = SOUND_KIND_POINT;
     channel->volume = volume;
     /* match: no return; "return channel" adds a $2 copy retail lacks (implicit-int style fall-off) */
 }
@@ -751,7 +757,7 @@ s32 Sound_StartTaggedAlong(s8 sound_id, u8 voice, u8 mode, Vector4Arg *origin, V
                 request->note_slot = voice;
                 request->volume = volume;
                 request->kind = mode;
-                request->mode = 2;
+                request->mode = SOUND_KIND_SEGMENT;
                 request->origin.x = origin->x;
                 request->origin.y = origin->y;
                 request->origin.z = origin->z;
@@ -778,7 +784,7 @@ s32 Sound_StartTaggedAlong(s8 sound_id, u8 voice, u8 mode, Vector4Arg *origin, V
     channel->target.y = target->y;
     channel->target.z = target->z;
     channel->mode = mode;
-    channel->kind = 2;
+    channel->kind = SOUND_KIND_SEGMENT;
     channel->volume = volume;
     /* match: no return; "return channel" adds a $2 copy retail lacks (implicit-int style fall-off) */
 }
@@ -799,7 +805,7 @@ void Sound_UpdateTagged(void) {
     s8 voice;
 
     for (i = 0; i < 0x80; i++, tagged_bend = 0) {
-        if (sound_channels[i].sound_id >= 0 && sound_channels[i].kind != 0x63) {
+        if (sound_channels[i].sound_id >= 0 && sound_channels[i].kind != SOUND_KIND_CUE) {
             Sound_TaggedNearestPoint(i, &nearest);
             distance = Sound_Delta(diff, &nearest.x, &player_state.position.x);
             if (sound_channels[i].volume < distance) {
@@ -986,18 +992,18 @@ static void Sound_StartQueued(void) {
             request = &tagged_requests[i];
             if (request->voice > 0) {
                 switch (request->mode) {
-                case 1:
+                case SOUND_KIND_POINT:
                     request->voice = -1;
                     Sound_StartTaggedAt(request->sound_id, request->note_slot, request->kind, request->volume, &request->origin);
                     break;
-                case 2:
+                case SOUND_KIND_SEGMENT:
                     request->voice = -1;
                     // match: target is indexed off the array; through request it is not strength-reduced
                     Sound_StartTaggedAlong(request->sound_id, request->note_slot, request->kind, &request->origin, &tagged_requests[i].target, request->volume);
                     break;
-                case 0x63:
+                case SOUND_KIND_CUE:
                     sound_channels[i].sound_id = request->sound_id;
-                    sound_channels[i].kind = 0x63;
+                    sound_channels[i].kind = SOUND_KIND_CUE;
                     sound_channels[i].volume_level = request->volume_level;
                     request->voice = -1;
                     sound_channels[i].note_slot = Sound_ClaimTaggedVoice();
@@ -1016,7 +1022,7 @@ void Sound_MuteTagged(void) {
 
     do {
         n--;
-        if (entry->sound_id >= 0 && entry->kind == 0x63) {
+        if (entry->sound_id >= 0 && entry->kind == SOUND_KIND_CUE) {
             SoundDriver_SetNoteControl(0, entry->note_slot, 0);
         }
         entry++;
@@ -1031,7 +1037,7 @@ void Sound_UnmuteTagged(void) {
 
     do {
         n--;
-        if (channel->sound_id >= 0 && channel->kind == 0x63) {
+        if (channel->sound_id >= 0 && channel->kind == SOUND_KIND_CUE) {
             volume = (int)((float)channel->volume_level * (float)game_options[2] * (1.0f / SOUND_VOLUME_LEVELS));
             SoundDriver_SetNoteControl(0, channel->note_slot, (volume >= 0x80) ? 0x7F : volume);
         }

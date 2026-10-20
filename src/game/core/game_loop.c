@@ -27,7 +27,28 @@
 #include "core/ini.h"
 #include "core/timer.h"
 #include "enemy/enemy.h"
+#include "core/ini.h"
+#include "core/timer.h"
+#include "enemy/enemy.h"
 #include "entity/entity.h"
+
+/* GameStatus.camera_mode: the camera follows the player, or the script places it */
+#define CAMERA_MODE_FOLLOW_PLAYER   0
+#define CAMERA_MODE_SCRIPT          1
+
+/* GameStatus.camera_look_mode: no look at a point, turn at once to it, or ease toward it */
+#define CAMERA_LOOK_NONE            0
+#define CAMERA_LOOK_SNAP            1
+#define CAMERA_LOOK_EASE            2
+
+/* sound_load_queue.step: which load runs (SoundLoadQueue.step) */
+#define SOUND_LOAD_STEP_IDLE        0
+#define SOUND_LOAD_STEP_MAP_BANK    1
+#define SOUND_LOAD_STEP_ENTITY_BANK 2
+#define SOUND_LOAD_STEP_BGM         3
+
+/* map_load_state.step: no map load is running (MapLoadState.step) */
+#define MAP_LOAD_STEP_IDLE          0
 #include "entity/entity_ai.h"
 #include "gfx/draw_list.h"
 #include "gfx/gs_draw.h"
@@ -406,7 +427,7 @@ void GameLoop_UpdateCameraShake(void) {
     MapRecordInfo *record;
     f32 angle;
 
-    if (game_status.camera_mode != 0) {
+    if (game_status.camera_mode != CAMERA_MODE_FOLLOW_PLAYER) {
         record = Map_FindRecordAtInSlot(camera_state.position, 100.0f, current_map_slot);
         if (record != NULL) {
             player_state.map_index = (u32)((char *)record - map_slots[current_map_slot].records) >> 14; // match: the byte offset of 0x80-byte records shifted by 14; 7 would give the record number
@@ -462,7 +483,7 @@ void GameLoop_UpdateCamera(void) {
     f32 length;
 
     switch (game_status.camera_mode) {
-    case 0:
+    case CAMERA_MODE_FOLLOW_PLAYER:
         Vector_Scale(target, view_ray_status.view_direction, view_ray_status.view_distance);
         Vector_Add(target, target, view_ray_status.view_origin);
         camera_state.position[0] = player_state.position.x;
@@ -475,7 +496,7 @@ void GameLoop_UpdateCamera(void) {
         camera_state.yaw = atan2f(direction[0], direction[2]);
         camera_state.roll = 0.0f;
         break;
-    case 1:
+    case CAMERA_MODE_SCRIPT:
         if (game_status.camera_move_enabled != 0) {
             Vector_Subtract(direction, camera_state.move_to_point, camera_state.position);
             length = sqrtf(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);
@@ -490,17 +511,17 @@ void GameLoop_UpdateCamera(void) {
     case 2:
         break;
     }
-    if (game_status.camera_mode != 0 && (s8)game_status.camera_look_mode != 0) {
+    if (game_status.camera_mode != CAMERA_MODE_FOLLOW_PLAYER && (s8)game_status.camera_look_mode != CAMERA_LOOK_NONE) {
         Vector_Subtract(direction, camera_state.look_at_point, camera_state.position);
         yaw = atan2f(direction[0], direction[2]);
         length = sqrtf(direction[0] * direction[0] + direction[2] * direction[2]);
         pitch = atan2f(-direction[1], length);
         switch ((s8)game_status.camera_look_mode) {
-        case 1:
+        case CAMERA_LOOK_SNAP:
             camera_state.pitch = pitch;
             camera_state.yaw = yaw;
             break;
-        case 2:
+        case CAMERA_LOOK_EASE:
             Angle_Approach(&camera_state.pitch, pitch, camera_state.turn_speed);
             Angle_Approach(&camera_state.yaw, yaw, camera_state.turn_speed);
             break;
@@ -572,45 +593,45 @@ void GameLoop_RunSoundLoads(void) {
         sound_load_queue.map_bank_load_pending = 1;
         sound_load_queue.next_map_slot = NULL;
     }
-    if (sound_load_queue.step == 3 && (sound_load_queue.map_bank_load_pending != 0 || sound_load_queue.entity_bank_load_pending != 0)) {
+    if (sound_load_queue.step == SOUND_LOAD_STEP_BGM && (sound_load_queue.map_bank_load_pending != 0 || sound_load_queue.entity_bank_load_pending != 0)) {
         if (Sound_BgmLoadCanYield() != 0) {
-            sound_load_queue.step = 0;
+            sound_load_queue.step = SOUND_LOAD_STEP_IDLE;
         }
     }
-    if (sound_load_queue.step == 0) {
+    if (sound_load_queue.step == SOUND_LOAD_STEP_IDLE) {
         if (sound_load_queue.map_bank_load_pending != 0) {
-            sound_load_queue.step = 1;
+            sound_load_queue.step = SOUND_LOAD_STEP_MAP_BANK;
             Sound_StopAll(0);
         } else if (sound_load_queue.entity_bank_load_pending != 0) {
-            sound_load_queue.step = 2;
+            sound_load_queue.step = SOUND_LOAD_STEP_ENTITY_BANK;
         } else if (sound_load_queue.bgm_load_pending != 0) {
-            sound_load_queue.step = 3;
+            sound_load_queue.step = SOUND_LOAD_STEP_BGM;
         }
     }
     switch (sound_load_queue.step) {
-    case 1:
+    case SOUND_LOAD_STEP_MAP_BANK:
         sound_load_queue.map_bank_load_pending = Sound_LoadMapBankStep((int)sound_load_queue.pending_map_slot, sound_load_queue.map_bank_load_pending);
         if (sound_load_queue.map_bank_load_pending == 0) {
             sound_load_queue.pending_map_slot = NULL;
-            sound_load_queue.step = 0;
+            sound_load_queue.step = SOUND_LOAD_STEP_IDLE;
         }
         break;
-    case 2:
+    case SOUND_LOAD_STEP_ENTITY_BANK:
         if (sound_load_queue.entity_bank_load_pending != 0) {
             sound_load_queue.entity_bank_load_pending = Sound_LoadEntityBankStep(sound_load_queue.entity_bank_args, sound_load_queue.entity_slot_index, sound_load_queue.entity_slot_voice_out + 7);
             if (sound_load_queue.entity_bank_load_pending == 0) {
-                sound_load_queue.step = 0;
+                sound_load_queue.step = SOUND_LOAD_STEP_IDLE;
             }
         }
         break;
-    case 3:
+    case SOUND_LOAD_STEP_BGM:
         if (sound_load_queue.bgm_load_pending != 0) {
             sound_load_queue.bgm_load_pending = Sound_LoadBgm(sound_load_queue.bgm_id, sound_load_queue.bgm_load_pending);
             if (sound_load_queue.bgm_load_pending == 0) {
-                sound_load_queue.step = 0;
+                sound_load_queue.step = SOUND_LOAD_STEP_IDLE;
             }
         } else {
-            sound_load_queue.step = 0;
+            sound_load_queue.step = SOUND_LOAD_STEP_IDLE;
         }
         break;
     }
@@ -751,7 +772,7 @@ void GameLoop_OpenRequestedMenu(void) {
         }
         MapViewer_Run();
     }
-    if (map_load_state.step != 0) {
+    if (map_load_state.step != MAP_LOAD_STEP_IDLE) {
         if (load_held) {
             File_Lock();
         }
