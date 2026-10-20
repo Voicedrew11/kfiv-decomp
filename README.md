@@ -140,20 +140,20 @@ static page) and the table below; commit those with each batch of work.
 
 | game readability | | |
 | --- | ---: | ---: |
-| structs recovered | 96.83% | 581 of 600 |
-| struct fields named | 99.17% | 3110 of 3136 |
+| structs recovered | 96.84% | 582 of 601 |
+| struct fields named | 99.17% | 3111 of 3137 |
 | padding fields | 624 | unused by game code |
-| field uses named | 99.95% | 59192 of 59224 |
+| field uses named | 99.95% | 59190 of 59222 |
 | globals named | 94.28% | 1385 of 1469 |
 | bit operations named | 92.22% | 3081 of 3341 |
-| function-pointer casts | 171 | left |
-| `// match:` comments | 872 | left |
+| function-pointer casts | 121 | left |
+| `// match:` comments | 844 | left |
 | gotos | 14 | left |
 | multi-line comments | 1797 | left |
 | unkXX names in comments | 790 | left |
 | raw `case N:` labels | 2525 | left |
 | raw state/mode values | 1399 | left |
-| plain pointer casts | 1527 | left |
+| plain pointer casts | 1516 | left |
 | placeholder parameters | 0 | left |
 | raw float constants | 21 | left |
 | local declarations | 3 | left |
