@@ -8,52 +8,19 @@
 #include "map_object/map_object.h"
 #include "effect/effect.h"
 #include "map/map_scroll.h"
+#include "core/display.h"
+#include "core/game.h"
+#include "enemy/enemy.h"
+#include "gfx/draw_list.h"
+#include "gfx/packet.h"
+#include "input/input.h"
+#include "item/item.h"
+#include "sound/sound_game.h"
+#include <stdio.h>
 
 extern void (*map_load_steps[])(void);
-void GameLoop_RunSoundLoads(void);
-void GameLoop_DrawFrame(int);
-int File_IsLocked(void);
-void File_Unlock(void);
-void Packet_SwapBuffers(void);
-void Packet_SendChain(void);
 void Packet_WaitForSend(void);
-void DrawList_Clear(void);
 void MapLoad_FinishAndEnter(void);
-void Entity_UpdatePool(void);
-void Sound_Update(void);
-void Input_StopRumble(void);
-void Display_SwapBuffers(int);
-void Map_MakeCurrent(int);
-void Map_UnlinkSlotRecords(int);
-void MapLoad_AfterUnloadHook(void);
-void MapItem_UnloadMap(int);
-void File_Lock(void);
-int File_GetSize(int);
-int sprintf(char *, char *, ...);
-void Map_ParseFile(int);
-void Map_BuildModels(int);
-void Map_OffsetRecords(int, f32 *);
-void Map_PlaceRecordModels(int);
-void MapLoad_BeforeObjectInitHook(void);
-void MapItem_InitMap(int);
-void MapItem_MoveMap(int, f32 *);
-void Game_MarkMapVisited(int);
-void MapLoad_Release(void);
-void MapSetup_RunForMap(int);
-void Entity_AddGroupToWaiting(int);
-void MapItem_RollFixedItems(int);
-extern MapLoadState map_load_state;
-extern MapLoadRequest map_load_request;
-extern int map_load_committed;
-extern MapSlot map_slots[];
-extern PlayerState player_state;
-extern int current_map_slot;
-extern MapSlotMemory map_slot_memory[2];
-extern char map_load_file_name_format[];
-extern u32 map_work_area_size;
-extern int map_file_area_size;
-extern char *map_file_area;
-extern char *map_work_area;
 
 /* Resets the background map load and the pending request. */
 void MapLoad_Reset(void) {

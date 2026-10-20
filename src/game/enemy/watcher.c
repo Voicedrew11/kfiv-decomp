@@ -3,23 +3,22 @@
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
 #include "entity/entity.h"
+#include "enemy/enemy.h"
+#include "entity/entity_events.h"
+#include "math/vu0.h"
+#include "player/player.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
-void Vector_Copy(void *, void *);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 s32 EntityAi_CanUseRanged(Entity *, s32);
-void Attack_DrainPlayerMp(s32);
 int Motion_Start(void *, int, int, u32, int);
-void EntityEvent_StartCueAlways(void *, int, int);
-void EntityEvent_OnDeath(Entity *);
 
 static void Watcher_Think(Entity *entity, s32 unknown);
 static void Watcher_Move(Entity *entity);

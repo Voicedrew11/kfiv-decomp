@@ -3,6 +3,12 @@
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
 #include "entity/entity.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_collision.h"
+#include "entity/entity_math.h"
+#include "player/player.h"
+#include <stdlib.h>
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
@@ -11,25 +17,14 @@ void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(Entity *);
-void EntityAi_OnHit(Entity *);
-void EntityAi_Move(Entity *);
-void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 int Motion_Start(void *, int, int, u32, int);
 void EntityAi_SetState(char *, u8);
-extern u32 frame_counter;
-extern f32 critter_no_ground_height[];
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
-f32 EntityCollision_DistanceToGround(f32 *);
-int EntityAi_ThinkReturn(void *, int);
-int rand(void);
 int EntityAi_TurnFromPush(void *, void *);
-float EntityMath_WrapAngle(float);
 s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
-float EntityMath_AngleDifference(float, float);
-extern PlayerData player_state;
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
@@ -38,10 +33,6 @@ int EntityAi_PickAttack(char *);
 void EntityAi_ClearTurnInPlace(Entity *);
 int EntityAi_TurnCommand(Entity *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
-void EntityAi_Dodge(Entity *);
-void EntityAi_Guard(Entity *);
-void EntityAi_MeleeAttack(Entity *);
-void EntityAi_RangedAttack(Entity *);
 
 static void Critter_Dormant(Entity *entity);
 static void Critter_Think(Entity *entity, s32 unknown);

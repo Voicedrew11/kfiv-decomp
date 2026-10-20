@@ -7,10 +7,12 @@
 #include "entity/entity_events.h"
 #include "model/motion.h"
 #include "entity/entity_math.h"
+#include "enemy/enemy.h"
+#include <libvu0.h>
+#include "math/vu0.h"
 
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
-void Vector_Copy(void *, void *);
 extern s32 entity_type_handlers[][2];
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 extern EntityGroupRecord entity_group_state[];
@@ -21,15 +23,7 @@ extern u8 map_script_flags[0x80][0x40];
 int EntityAi_AnimationFrameCount(void *, int);
 void EntityAi_SetAttackDelay(Entity *, s32);
 extern char story_flags[0x40];
-extern f32 identity_matrix[16];
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0RotMatrixZ(float *, float *, float);
-void Vector_ApplyMatrix(void *, void *, void *);
-void Vector_Normalize(void *, void *);
-void Vector_Scale(float *, float *, float);
 float EntityAi_Accelerate(Entity *, float);
-extern u32 frame_counter;
 void EntityAi_SensePlayer(Entity *, s32);
 void EntityAi_CheckFarFromSpawn(char *);
 

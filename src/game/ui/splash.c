@@ -4,32 +4,15 @@
 #include "gfx/gs.h"
 #include "gfx/packet.h"
 #include <eeregs.h>
-
-void *memset(void *, int, u32);
-void *memcpy(void *, const void *, u32);
-int sprintf(char *, const char *, ...);
+#include "gfx/gs_draw.h"
+#include "input/pad.h"
+#include "player/player_update.h"
+#include "sound/sound.h"
+#include <stdio.h>
+#include <string.h>
 
 extern GameStatus game_status;
-extern int bgm_load_pending[3];
-extern int suspended_updates[3];
-extern u16 pad_pressed[];
-extern u16 action_button;
-extern u32 *splash_image_packet;
 
-void File_Lock(void);
-void File_Unlock(void);
-int File_IsLocked(void);
-int File_Close(int);
-int File_Read(int, void *, int);
-void Packet_AppendToChain(u32 *, u32 *);
-u32 *Packet_Alloc(int);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-void GsDraw_QueueTexFlush(void);
-void GsDraw_QueueTexturedSprite(void *);
-void GsDraw_FillScreen(int, int, int, int, s64);
-void Player_StopWalking(void);
 static void Splash_BuildImagePacket(int tbp, int cbp);
 
 static s32 splash_state;              /* 0x447358 state machine index (0 = idle) */

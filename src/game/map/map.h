@@ -4,6 +4,9 @@
 
 #include "common.h"
 #include "model/model.h"
+#include "collision/collision.h"
+#include "gfx/screen.h"
+#include "gfx/texture.h"
 
 /* a map's flag block, MapSlot.flag_blocks[n] */
 typedef struct {
@@ -512,5 +515,112 @@ typedef struct {
 typedef struct {
     ObjectMark marks[16];
 } ObjectMarkRow;
+
+/* core/game_state.c */
+#define MAP_SLOT_COUNT 2
+extern MapSlot map_slots[];  // match: MAP_SLOT_COUNT of them; a sized declaration changes the code of its users
+extern MapHeader *map_slot0_header[];
+
+/* map/MapLoad_AfterUnloadHook.c */
+void MapLoad_AfterUnloadHook(void);
+
+/* map/MapLoad_BeforeObjectInitHook.c */
+void MapLoad_BeforeObjectInitHook(void);
+
+/* map/map.c */
+void Map_SetOffscreenTarget(void);
+u32 *Map_GetSlotPacket(int slot, int index);
+AreaNode *Map_FindRecordAt(f32 *point, f32 margin);
+MapRecordInfo *Map_FindRecordAtInSlot(f32 *point, f32 margin, int map);
+void Map_OffsetRecord(MapRecordBounds *record, f32 *offset);
+void Map_OffsetRecords(int map, f32 *offset);
+void Map_PlaceRecordModels(int map);
+int Map_TestFlagBlockBit(int slot, int index, int other_slot, int bit);
+void Map_DrawRecords(int mode);
+void Map_DrawLateRecords(int mode);
+void Map_ParseFile(int map);
+void Map_BuildModels(int map);
+void Map_MakeCurrent(int map);
+void Map_UnlinkSlotRecords(int map);
+int Map_IsPointInRecord(f32 *point, AreaNode *node, f32 margin);
+void Map_RunFreeCamera(void);
+void Map_CoverScreenWithMapTint(void);
+void Map_QueuePacket(int *packet);
+
+/* map/map_change.c */
+void MapChange_StartToMap(int new_value);
+int MapChange_StartPassage(int entry);
+void MapChange_RunToEnd(void);
+void MapChange_FadeOutCapture(void);
+void MapChange_DrawBlack(void);
+void MapChange_FadeMapToBlack(void);
+void MapChange_Idle(void);
+void MapChange_WaitForIdle(void);
+void MapChange_UnloadAll(void);
+void MapChange_OpenFile(void);
+void MapChange_WaitForRead(void);
+void MapChange_SetUpMap(void);
+void MapChange_EndWhenTimerDone(void);
+
+/* map/map_draw_state.c */
+extern u32 haze_layer_distances[8];
+extern int haze_layer_depths[8];
+extern s32 hud_visible[];
+extern MapFogBlock current_fog_block;
+extern MapLightBlockHalf current_light_block;
+
+/* map/map_init.c */
+void Map_LoadParamFiles(void);
+void Map_ResetGameState(void);
+void Map_ClearSlots(void);
+void Map_LoadAtOnce(int map);
+
+/* map/map_load.c */
+void MapLoad_Release(void);
+void MapLoad_Reset(void);
+void MapLoad_Update(void);
+/* the step handlers (map/map_load.c and map/map_change.c) */
+void MapLoad_StartRequest(void);
+void MapLoad_WaitTimer(void);
+void MapLoad_OpenFile(void);
+void MapLoad_ReadChunk(void);
+void MapLoad_WaitForChunk(void);
+void MapLoad_WaitForSetUp(void);
+void MapLoad_SetUpMap(void);
+void MapLoad_SkipStep(void);
+void MapLoad_ActivateMap(void);
+void MapLoad_RequestHold(void);
+int MapLoad_IsHeld(void);
+
+/* map/map_load_tables.c */
+extern MapLoadState map_load_state;
+extern MapLoadRequest map_load_request;
+
+/* map/map_setup.c */
+void MapSetup_RunForMap(int slot);
+
+/* data still in asm */
+extern MapSlotMemory map_slot_memory[2];
+extern char obj_prm_path[];
+extern char chr_prm_path[];
+extern char item_nam_prm_path[];
+extern char item_cmn_prm_path[];
+extern char item_wpn_prm_path[];
+extern char item_pct_prm_path[];
+extern char map_file_name_format[];
+extern char map_load_file_name_format[];
+extern char map_change_file_name_format[];
+extern f32 largest_float_record_best_distance[];  /* the largest float */
+extern f32 largest_float_record_slot_best_distance[];  /* the largest float */
+extern MapDrawRecord *record_draw_lists[2];
+extern MapDrawRecord *late_record_draw_lists[2];
+extern AreaNode *record_boxes;
+extern AreaNode *backdrop_record_boxes;
+extern TextureTableHeader *free_camera_texture_table;
+extern int map_load_committed;
+extern u32 map_work_area_size;
+extern int map_file_area_size;  /* the size it is given for that heap */
+extern char *map_file_area;  /* the memory area the movie player is given as its heap */
+extern char *map_work_area;
 
 #endif

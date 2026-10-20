@@ -6,6 +6,7 @@
 #include "model/model.h"
 #include "core/game.h"
 #include "item/item.h"
+#include "effect/effect.h"
 
 /* the slots of PlayerState.equipment, in the order of the ini presets' equip_ keys */
 #define EQUIP_SHIELD    0
@@ -392,5 +393,94 @@ typedef struct {
     char key[0x40];                 /* 0x00 the start of the line */
     void (*handler)(char *);        /* 0x40 gets the text after the "=" */
 } IniKeyHandler;
+
+/* item/item_defs.c */
+extern PlayerItemDef weapon_defs[];
+extern LevelRecordDef worn_defs[];
+extern LevelDef worn_name_defs[];
+
+/* player/attack.c */
+extern FxTableEntry fx_table[];  /* the magic table */
+
+s32 Attack_Run(Unk1B1470Request *request, Unk1B1470Extra *extra);
+void Attack_RollPlayerAilments(void *attack_chances);
+void Attack_WearWeapon(int idx, int amount);
+void Attack_WearWornItem(int idx, int amount);
+void Attack_LoadMagicTable(void);
+void Attack_DrainPlayerMp(int amount);
+int Attack_LaunchMagicEffect(u16 effect_id, void *shot, void *from, void *angles, void *entity);
+int Attack_RunEffectHitCheck(void *effect_actor);
+
+/* player/interact.c */
+void Interact_FindTarget(void);
+void Interact_OffsetViewRay(f32 *offset);
+
+/* player/player_collision.c */
+int Player_CollideWithMap(void);
+void Player_PushOutOfWalls(void);
+void Player_FindFloorMaterial(void);
+void Player_CollideWithEntities(int climb);
+void Player_CollideWithMapObjects(s32 climb);
+int Player_KnowsItemMenuMagic(void);
+
+/* player/player_items.c */
+int Player_CannotCarryItem(int idx);
+void Player_AddItem(int index);
+void Player_UseItem(void);
+
+/* player/player_state.c */
+extern PlayerState player_state;
+extern PlayerState player_previous;  /* the player as of the frame before */
+extern float player_rotation[];
+extern u8 player_weapon[];
+extern int player_hp_max[];  /* player_state.hp_max */
+extern int entity_under_player[];
+extern void *object_under_player[];
+extern u8 player_floor_block[];
+extern u8 player_weapon_step[];
+extern u64 player_status_bits[];  /* player_previous.unk1C8 */
+extern int player_previous_fade_level[];  /* player_previous + 0x2A4 */
+
+/* player/player_status.c */
+extern PlayerScreenTint player_screen_tint;
+
+void Player_TakeDamage(int damage);
+void Player_TakeDamageNoRumble(int value);
+int Player_LoseHp(int amount);
+void Player_FlashDamage(void);
+void Player_BounceWeapon(void);
+void Player_SumWornBonuses(void);
+void Player_KnockBack(Vector4 *target, f32 speed);
+void Player_KnockBackFromHit(void *source, int damage);
+void Player_TiltViewFromHit(int damage);
+void Player_StopFootstepSound(void);
+void Player_Kill(void);
+void Player_PickChargingMagic(void);
+void Player_AddWornItemValues(u16 *totals, u32 index);
+void Player_FindMapRecord(void);
+void Player_UpdateScreenFade(void);
+void Player_DrawScreenFade(void);
+void Player_AddExperience(int amount);
+void Player_CountMagicUse(int effect_id);
+void Player_CountWeaponUse(int weapon);
+void Player_BounceWeaponQuietly(void);
+void Player_StrikeSolidObject(int with_sound);
+void Player_EndSwingHits(void);
+
+/* data still in asm */
+extern const PlayerLevelStep player_level_steps[];
+extern CollisionListPick4 map_hit_strip_lists;
+extern const VuVector4 y_axis_vector;
+extern char last_boss_hits_format[];  /* "g_dmgLassBossCnt[%d]\n" */
+extern char hp_halved_format[];  /* "HP halved!! %d / 2 = %d" in Japanese */
+extern char magic_param_path[];
+extern CollisionListPick2 map_hit_floor_strip_lists[];
+extern CollisionListPick2 map_hit_wall_strip_lists[];
+extern s8 footstep_voice;  /* what the last footstep sound returned */
+extern int recent_damage_frames;
+extern f32 player_no_floor_height[];
+extern f32 largest_float[];  /* the largest float; an array so that it is not read through $gp */
+extern f32 view_ray_no_hit_distance[];
+extern float interact_out_of_range_distance[];
 
 #endif

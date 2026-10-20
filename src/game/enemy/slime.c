@@ -5,43 +5,33 @@
 #include "entity/entity.h"
 #include "common.h"
 #include "player/player.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_aim.h"
+#include "entity/entity_math.h"
+#include <libvu0.h>
+#include "math/vu0.h"
+#include <stdlib.h>
 
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 s32 Motion_StepModel(ModelInstance *, s32, s32);
-void EntityAi_Dormant(Entity *);
-void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);
 void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityAi_SetState(char *, u8);
-void EntityAi_ReactionHeavy(Entity *);
-extern u32 frame_counter;
 void EntityAi_StepState(void *);
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(void *);
-int rand(void);
-void EntityPoint_PickNear(float, void *, void *, void *);
-float EntityMath_DistanceXZ(void *, void *);
 float EntityAi_RandomAngle(void);
-float EntityMath_AngleDifference(float, float);
-extern PlayerState player_state;
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
-void EntityAi_Guard(Entity *);
-void EntityAi_RangedAttack(Entity *);
-extern f32 identity_matrix[16];
-void sceVu0RotMatrixY(float *, float *, float);
-void Vector_ApplyMatrix(void *, void *, void *);
-void Vector_Normalize(void *, void *);
-void Vector_Scale(float *, float *, float);
 float EntityAi_Accelerate(Entity *, float);
-float EntityMath_HeadingTo(void *, void *);
 int Motion_Start(void *, int, int, u32, int);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);

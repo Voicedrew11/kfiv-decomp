@@ -4,23 +4,11 @@
 #include "gfx/screen.h"
 #include "gfx/gs.h"
 #include <eeregs.h>
-
-double sin(double);
-void *memset(void *, int, u32);
-u32 *Packet_Alloc(int);
-void Packet_AppendToChain(u32 *, u32 *);
-void Matrix_Multiply(void *, void *, void *);
-void Vu0_ProjectToScreen3(int *, int *, int *, f32 *, f32 *, f32 *);
-void Vu0_LoadMatrix(void *);
-void Vu0_ProjectToScreen(int *, void *);
-float sinf(float);
-int rand(void);
-void srand(u32);
-
-extern const float wobble_phase_step;       /* 2 pi / 30: a full turn of the base phase takes 30 steps */
-extern const float wobble_phase_period;     /* 2 pi */
-extern const float wobble_sine_spacing;     /* pi / 8 between neighbouring sines */
-extern f32 world_screen_matrix[16];
+#include "core/file.h"
+#include <math.h>
+#include "math/camera.h"
+#include "math/vu0.h"
+#include <stdlib.h>
 
 /* the screen wobble: 16 oscillators and a table of sines they are drawn from */
 static float wobble_base_phase;                 /* 0x447058 advanced each frame by Wobble_AdvanceSines */

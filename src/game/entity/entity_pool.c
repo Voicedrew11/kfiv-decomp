@@ -5,57 +5,29 @@
 #include "model/model.h"
 #include "sound/sound.h"
 #include "effect/effect.h"
-
-void *memset(void *, int, u32);
-int sprintf(char *, char *, ...);
+#include "core/file.h"
+#include "core/memory.h"
+#include "enemy/enemy.h"
+#include "entity/entity_events.h"
+#include "gfx/gs_draw.h"
+#include "gfx/packet.h"
+#include "map/map.h"
+#include <math.h>
+#include "model/motion.h"
+#include <stdio.h>
 
 #define ENTITY_POOL_BLOCK_SIZE  0x80000
 
 /* the game's own data and functions, outside this file */
-extern Entity *active_entities_tail;        /* list C tail */
-extern int entity_pool_area_size;           /* the bytes of the pool blocks and work areas */
-extern char *entity_pool_area;              /* where they start */
-extern int screen_textured_entity_type;     /* type of the last entity given the screen-textured draw, -1: none */
-extern int map_spawn_counts[2];
-extern u32 frame_counter;
 extern float player_state[];
 extern char file_load_buffer[0x80000];
 extern SoundLoadQueue sound_load_queue;
-extern char *entity_params;
-extern int chr_file_slot;                   /* the file slot of the .chr being read, -1: none */
-extern char chr_directory[];                /* "chr/" */
-extern char chr_file_path_format[];         /* "%sc%4.4d.chr" */
-extern Entity entity_pool[][0x80];
-extern s64 entity_work_area[];
-extern ModelInstance entity_models[ENTITY_POOL_SLOT_COUNT];
 
 static EntityTypeFileHeader entity_type_file_header;                            /* 0x474B70 the loaded type file's first 0x20 bytes */
 static char entity_pool_slot_buffers[ENTITY_POOL_SLOT_COUNT][0x2000];            /* 0x474B90 the type data of each slot */
 char character_params[0x80000] __attribute__((section(".bss")));         /* 0x47EB90 param/chr.prm, read whole */
 
-int File_Sync(int, int);
-int File_Close(int);
-void File_Unlock(void);
-int File_IsLocked(void);
-int File_Open(char *, int, int);
-int File_Read(int, void *, int);
-void File_Lock(void);
-void Model_SetUpSkinned(ModelInstance *, int *, int *);
-s64 *Model_SaveGsWordsAndUvs(ModelInstance *, s64 *);
-MotionData *ModelMotion_LoadFile(MotionFile *, ModelChannel **, ModelInstance *, int);
-u32 *Map_GetSlotPacket(int, int);
-void Model_SetUpPosed(ModelInstance *, char **, char **);
-void Model_SetVu1Program(ModelInstance *, s32);
-void Model_SetPrimBits(ModelInstance *, s64, s64);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-void ModelTexture_SendForModel(void *);
-void GsDraw_QueueTexFlush(void);
-void GsDraw_ResetDrawTarget(void);
-void GsDraw_CopyFrameToTexture(int, int, int, int);
 void Model_SetBlockGsWords(void *, s64, s64, s64, s64);
-void Model_SetUvsFromScreen(void *);
 void Model_RestoreGsWordsAndUvs(void *);
 
 /* file-local functions, in order of definition */
@@ -104,8 +76,6 @@ static Entity *loading_entities_tail;       /* 0x4470B4 list B tail */
 static int waiting_entity_count;            /* 0x4470B8 list A count */
 static int loading_entity_count;            /* 0x4470BC list B count */
 static int active_entity_count;             /* 0x4470C0 list C count */
-
-float sqrtf(float);
 
 /* Clear the entity pool and empty every entity list. */
 void Entity_ResetAllLists(void) {

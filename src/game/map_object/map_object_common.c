@@ -1,16 +1,13 @@
 #include "model/model.h"
 #include "map_object/map_object.h"
 #include "map/map.h"
+#include "enemy/enemy.h"
+#include <libvu0.h>
+#include "math/vu0.h"
+#include "model/model_matrix.h"
+#include "model/motion.h"
+#include "sound/sound_game.h"
 
-void Vector_Add(void *, void *, void *);
-s32 Sound_StartTaggedAt(s8, u8, u8, f32, Vector4Arg *);
-u16 ModelMotion_GetLastFrame(char *);
-int Sound_StopTagged(char);
-void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void Model_MultiplyChildMatrices(ModelPart *);
-void sceVu0CopyMatrix(void *, void *);
-extern int current_map_slot;
 extern int sound_load_queue[0x28 / 4];
 
 /* Offset hook of every kind: moves the model and the object's source position by offset. */

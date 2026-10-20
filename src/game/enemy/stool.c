@@ -4,27 +4,19 @@
    and experience, with resistances and drops where two monsters share those. */
 #include "entity/entity.h"
 #include "common.h"
+#include "entity/entity_ai_handlers.h"
+#include "model/motion.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(Entity *);
-void EntityAi_Move(Entity *);
-void EntityAi_Dormant(Entity *);
-void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 void EntityAi_LowerWeightsAfterHit(char *);
-void EntityAi_RangedAttack(Entity *);
-void EntityAi_ReactionRewind(Entity *);
-void EntityAi_ReactionLight(Entity *);
-void EntityAi_ReactionHeavy(Entity *);
 int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 s32 EntityAi_CanAttack(Entity *);
 int EntityAi_PickAttack(char *);
-void EntityAi_MeleeAttack(Entity *);
 
 static void Stool_OnHit(Entity *entity);
 static void Stool_Think(Entity *entity, s32 unknown);

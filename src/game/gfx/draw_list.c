@@ -1,9 +1,8 @@
 #include "common.h"
 #include "model/model.h"
-
-void *memset(void *, int, u32);
-void Vector_Subtract(void *, void *, void *);
-float sqrtf(float);
+#include "core/file.h"
+#include <math.h>
+#include "math/vu0.h"
 
 extern f32 player_state[];
 

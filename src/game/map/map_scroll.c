@@ -2,20 +2,8 @@
 #include "gfx/gs.h"
 #include "map/map.h"
 #include "gfx/packet.h"
-
-extern MapSlot map_slots[];
-extern u32 frame_counter;
-
-void Packet_AppendToChain(u32 *, u32 *);
-u32 *Packet_Alloc(int);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-void GsDraw_QueueFlush(void);
-void GsDraw_QueueTexFlush(void);
-void GsDraw_SetDrawTarget(s64, s64, s64);
-void GsDraw_ResetDrawTarget(void);
-void GsDraw_QueueTexturedSprite(void *);
+#include "enemy/enemy.h"
+#include "gfx/gs_draw.h"
 
 static MapSlotPair map_scroll_copy_pairs[2][16]; /* 0x471F60 */
 static MapSlotPair map_scroll_draw_pairs[2][16];  /* 0x471FE0 */

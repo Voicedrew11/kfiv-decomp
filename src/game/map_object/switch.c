@@ -2,10 +2,6 @@
 #include "model/model.h"
 #include "core/game.h"
 
-void MapObject_UpdateOffSwitch(MapObject *switch_object);
-void MapObject_UpdateOnSwitch(MapObject *switch_object);
-extern u32 game_status_flags[];
-extern void *faced_object[];
 extern GameStatus game_status;
 extern EventRunner view_ray_status;
 

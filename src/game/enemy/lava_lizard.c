@@ -4,41 +4,32 @@
    hit points and experience, with resistances and drops where two monsters share those. */
 #include "entity/entity.h"
 #include "common.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_math.h"
+#include "math/vu0.h"
+#include <stdlib.h>
 
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
-void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(Entity *);
-void EntityAi_OnHit(Entity *);
-void EntityAi_Move(Entity *);
-void EntityAi_Dormant(Entity *);
-void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
-int EntityAi_ThinkReturn(void *, int);
-int EntityAi_ThinkIdle(void *, int);
-void EntityAi_ThinkPursue(Entity *, s32);
 extern float player_state[];
-int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
 void EntityAi_ClearTurnInPlace(Entity *);
-float EntityMath_AngleDifference(float, float);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
-void EntityAi_Dodge(Entity *);
-void EntityAi_Guard(Entity *);
-void EntityAi_MeleeAttack(Entity *);
 s32 EntityAi_CanUseMelee(Entity *, s32);
 int EntityAi_StartAttack(Entity *, void (*)(Entity *entity), int, int, int);
 int Motion_Start(void *, int, int, u32, int);

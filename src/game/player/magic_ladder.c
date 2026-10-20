@@ -3,39 +3,20 @@
 #include "effect/effect.h"
 #include "effect/shot.h"
 #include "entity/entity.h"
+#include "core/file.h"
+#include "core/game.h"
+#include "enemy/enemy.h"
+#include <math.h>
+#include "math/angle.h"
+#include "math/vu0.h"
+#include "sound/sound_game.h"
 
 #define LADDER_TURN_SPEED_RAD 0.029088821f /* 5/3 degrees per frame, in radians */
 
-void *memset(void *, s32, u32);
-float sqrtf(float);
-float sinf(float);
-
-extern PlayerState player_state;
-extern PlayerState player_previous;
-extern FxTableEntry fx_table[];
-extern Vector4 origin_point;
-extern s32 timed_boost_order;
-extern PlayerShot *channeled_shot;
-extern u32 frame_counter;
 /* 0x4145C8 the ladder's state handlers, one per LadderState (Ladder_DispatchPad picks one) */
 void (*ladder_state_handlers[6])(u16, u16) = {
     Ladder_WalkToFoot, Ladder_WaitOnRung, Ladder_ClimbRungUp, Ladder_ClimbRungDown,
 };
-extern u16 forward_button;
-extern u16 back_button;
-extern u16 turn_right_button;
-extern u16 turn_left_button;
-extern u16 step_right_button;
-extern u16 step_left_button;
-
-void Vector_Copy(void *, void *);
-void Vector_Add(void *, void *, void *);
-void Vector_Subtract(void *, void *, void *);
-void Vector_Scale(void *, void *, float);
-int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
-void Player_CountMagicUse(int);
-int Angle_Approach(float *, float, float);
-int Sound_PlayFootstep(int);
 
 static Vector4 ladder_foot_position;              /* 0x57B350 foot the player walks to before climbing */
 static Vector4 ladder_walk_step;                  /* 0x57B360 unit step toward the foot each frame */

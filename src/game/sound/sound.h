@@ -339,4 +339,41 @@ int SoundDriver_FreeReverb(u32 effect_index);
 /* Sends a reverb slot's settings to the driver */
 void SoundDriver_ApplyReverb(u32 effect_index);
 
+/* sound/sound_load_queue.c */
+extern int bgm_load_pending[3];
+
+/* sound/sound_rpc.c */
+extern int sound_rpc_args[];
+extern char sound_rpc_file_name[];
+
+/* sound/sound_tables.c */
+extern int bgm_header_buffer[];
+extern int bgm_sequence_buffer[];
+extern SoundBankSpec map_bank_files;
+extern f32 sound_cos_polynomial[4];
+extern u8 voice_ranges[][2];
+extern void *tracked_sound_players[];
+extern SoundChannel sound_channels[];
+
+/* data still in asm */
+extern char bgm_sq_format[];
+extern char bgm_hd_format[];
+extern char bgm_bd_format[];
+extern char se_com_hd_path[];
+extern char se_com_bd_path[];
+extern char sfx_com_hd_path[];
+extern char sfx_com_bd_path[];
+extern char map_bank_hd_path[];
+extern char map_bank_bd_path[];
+extern char sw_bank_hd_format[];
+extern char sw_bank_bd_format[];
+extern char mg_bank_hd_format[];
+extern char mg_bank_bd_format[];
+extern char rpc_timeout_message[];
+extern char voice_load_waiting_message[];
+extern int voice_load_failures;
+extern int voice_load_step;
+extern char sample_buffer_freed_message[];
+extern int sequence_load_step;
+
 #endif

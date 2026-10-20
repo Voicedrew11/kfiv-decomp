@@ -1,11 +1,7 @@
 /* Small sums the entity code shares: clamps, distances, and angles wrapped to -pi..pi, stepped or eased
    towards a goal. */
 #include "entity/entity_math.h"
-
-float atan2f(float, float);
-float sinf(float);
-float cosf(float);
-float sqrtf(float);
+#include <math.h>
 
 /* `value + amount`, kept within `low`..`high`. Nothing calls it. */
 s32 EntityMath_AddClamped(s32 value, s32 amount, s32 low, s32 high) {

@@ -77,4 +77,17 @@ typedef struct {
 /* the map slot an AreaNode's record belongs to: bit 27 of its doubleword (MAP_RECORD_MAP) */
 #define AREA_NODE_MAP(node) ((u8)(AREA_NODE_WORD(node) >> 27) & 1)
 
+/* gfx/wobble.c */
+void Wobble_AdvanceSines(void);
+void Wobble_DrawRippledModel(ModelInstance *model, int unk1, int unk2, int unk3, int unk4);
+int Wobble_ModelUsesTextures(ModelInstance *model, int first, int last);
+void Wobble_ResetOscillators(void);
+void Wobble_StepOscillators(void);
+void Wobble_BuildWaveUvs(ModelInstance *model, u32 *alloc);
+
+/* data still in asm */
+extern const float wobble_phase_step;  /* 2 pi / 30: a full turn of the base phase takes 30 steps */
+extern const float wobble_phase_period;  /* 2 pi */
+extern const float wobble_sine_spacing;  /* pi / 8 between neighbouring sines */
+
 #endif

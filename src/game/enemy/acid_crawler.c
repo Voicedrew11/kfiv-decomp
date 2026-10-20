@@ -5,6 +5,12 @@
    those. */
 #include "entity/entity.h"
 #include "common.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_math.h"
+#include "math/vu0.h"
+#include "model/model.h"
+#include <stdlib.h>
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 #define ALIGNED_ANGLE_EPSILON 0.0001f
@@ -12,26 +18,14 @@ void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 s32 Motion_StepModel(ModelInstance *, s32, s32);
-void Vector_Copy(void *, void *);
-void EntityAi_OnHit(Entity *);
-void EntityAi_Dormant(Entity *);
-void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-float EntityMath_HeadingTo(float *, float *);
-float EntityMath_AngleDifference(float, float);
-float EntityMath_StepToward(float *, float, float);
-extern u32 frame_counter;
-int rand(void);
-char *Model_GetSkinnedBonePoint(char *, u32);
 int EntityAi_LaunchShot(void *, int, void *, void *);
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
-int EntityAi_ThinkReturn(void *, int);
-int EntityAi_ThinkIdle(void *, int);
 extern PlayerData player_state;
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -41,10 +35,6 @@ void EntityAi_ClearTurnInPlace(Entity *);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
 int EntityAi_StartAttack(Entity *, void (*)(Entity *entity), int, int, int);
-void EntityAi_Dodge(Entity *);
-void EntityAi_Guard(Entity *);
-void EntityAi_MeleeAttack(Entity *);
-void EntityAi_RangedAttack(Entity *);
 int EntityAi_TurnToPoint(Entity *, f32 *, f32 *);
 int Motion_Start(void *, int, int, u32, int);
 

@@ -159,4 +159,53 @@ s32 MenuDraw_SetGsRegister(int reg_address, s64 reg_value);
 /* Draws a sprite like MenuSprite_DrawPlain, with handler entry_id % 1000; from 1000 on, with `variant` as its alpha. */
 void MenuSprite_Draw(int owner, int entry_id, int param, int variant);
 
+/* ui/menu_draw.c */
+extern s32 menu_number_44;  /* numbers 44 to 54: set by the screen that shows them */
+extern s32 menu_number_45;
+extern s32 menu_number_46;
+extern s32 menu_number_47;
+extern s32 menu_number_48;
+extern s32 menu_number_49;
+extern s32 menu_number_50;
+extern s32 menu_number_51;
+extern s32 menu_number_52;
+extern s32 menu_number_53;
+extern s32 menu_number_54;
+extern s32 menu_number_70;  /* numbers 70 to 94, likewise */
+extern s32 menu_number_71;
+extern s32 menu_number_72;  /* number 72; the weapon MenuSprite_TintWeaponStat compares with */
+extern s32 menu_number_73;
+extern s32 menu_number_74;
+extern s32 menu_number_75;
+extern s32 menu_number_76;
+extern s32 menu_number_77;
+extern s32 menu_number_78;
+extern s32 menu_number_79;
+extern s32 menu_number_80;
+extern s32 menu_number_81;
+extern s32 menu_number_82;
+extern s32 menu_number_83;
+extern s32 menu_number_84;
+extern s32 menu_number_85;
+extern s32 menu_number_86;
+extern s32 menu_number_87;
+extern s32 menu_number_88;
+extern s32 menu_number_89;
+extern s32 menu_number_90;
+extern s32 menu_number_91;
+extern s32 menu_number_92;
+extern s32 menu_number_93;
+extern s32 menu_number_94;
+extern int menu_file_block_count;  /* how many */
+extern u16 menu_buttons;  /* this frame's buttons, as the menus read them (MenuPad_Update) */
+extern LoadedBlockRef menu_file_blocks[];
+extern LoadedTexture menu_font_texture;
+extern PoolSlot pool_slots[32];
+extern f32 menu_view_screen_matrix[16];
+
+/* data still in asm */
+extern u64 *menu_font_page_tex0[];  /* where the TEX0 of each font page is kept */
+extern float pulse_sprite_alpha;  /* the alpha of the pulsing sprite, 80 to 128 */
+extern s8 pulse_sprite_falling;  /* TRUE while that alpha falls */
+
 #endif

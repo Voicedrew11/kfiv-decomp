@@ -164,6 +164,9 @@ int sceGsSetDefTexEnv(sceGsTexEnv *env, short flush, short tbp, short tbw, short
 
 void sceGsSetHalfOffset(void *draw, short x, short y, short half); /* definition in sce/ */
 int sceGsSwapDBuff(void *db, int id);                              /* definition in sce/ */
+void sceGsSetHalfOffset2(void *draw, short x, short y, short half); /* definition in sce/ */
+int sceGsSwapDBuffDc(void *db, int id);                            /* definition in sce/ */
+void sceGsSetDefDBuffDc(void *db, short psm, short w, short h, short ztst, short zpsm, short flag); /* definition in sce/ */
 int sceGsSyncPath(int mode, unsigned short timeout);               /* definition in sce/ */
 int sceGsSyncV(int mode);                                          /* definition in sce/ */
 short sceGszbufaddr(short psm, short width, short height);         /* definition in sce/ */

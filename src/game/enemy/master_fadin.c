@@ -4,6 +4,9 @@
    hit points and experience, with resistances and drops where two monsters share those. */
 #include "entity/entity.h"
 #include "entity/entity_world.h"
+#include <math.h>
+#include "math/vu0.h"
+#include "model/model.h"
 
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
@@ -15,15 +18,10 @@ extern s32 entity_type_handlers[][2];
 void EntityEvent_Respawn(char *);
 int Motion_Start(void *, int, int, u32, int);
 extern float player_state[];
-float sqrtf(float);
-float atan2f(float, float);
-double atan2(double, double);
-char *Model_GetSkinnedBonePoint(char *, u32);
 float EntityMath_WrapAngle(float);
 float EntityMath_DistanceXZ(void *, void *);
 float EntityMath_AngleXZ(float *, char *);
 f32 EntityMath_Approach(f32, f32, f32);
-void Vector_Copy(void *, void *);
 int EntityAi_LaunchShot(void *, int, void *, void *);
 void EntityEvent_StartCue(Entity *, s32, s32, s32);
 void EntityEvent_OnDeath(Entity *);

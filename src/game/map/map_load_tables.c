@@ -2,27 +2,6 @@
 #include "map/map.h"
 #include "gfx/screen.h"
 
-/* the step handlers (map/map_load.c and map/map_change.c) */
-void MapLoad_StartRequest();
-void MapLoad_WaitTimer();
-void MapLoad_OpenFile();
-void MapLoad_ReadChunk();
-void MapLoad_WaitForChunk();
-void MapLoad_WaitForSetUp();
-void MapLoad_SetUpMap();
-void MapLoad_SkipStep();
-void MapLoad_ActivateMap();
-void MapChange_FadeOutCapture();
-void MapChange_DrawBlack();
-void MapChange_FadeMapToBlack();
-void MapChange_Idle();
-void MapChange_WaitForIdle();
-void MapChange_UnloadAll();
-void MapChange_OpenFile();
-void MapChange_WaitForRead();
-void MapChange_SetUpMap();
-void MapChange_EndWhenTimerDone();
-
 void (*map_load_steps[12])(void) = { /* 0x38D5E0 what MapLoadState.step runs */
     MapLoad_StartRequest, MapLoad_WaitTimer,
     MapLoad_OpenFile, MapLoad_ReadChunk,

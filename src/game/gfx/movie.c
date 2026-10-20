@@ -10,15 +10,10 @@
 #include <eekernel.h>
 #include <eeregs.h>
 #include <libgraph.h>
+#include <stdio.h>
+#include <string.h>
 
-void *memcpy(void *, const void *, u32);
-void *memset(void *, int, u32);
-char *index(const char *, int);
-char *strncpy(char *, const char *, u32);
-int strcmp(const char *, const char *);
-u32 strlen(const char *);
 int toupper(int);
-int sprintf(char *, char *, ...);
 s32 sceSdRemote(s32, ...);
 int sceSifAllocIopHeap(int);
 int sceSifFreeIopHeap(int);

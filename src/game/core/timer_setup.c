@@ -1,9 +1,7 @@
 /* EE timer set-up. */
 #include "core/timer.h"
 #include <eeregs.h>
-
-int AddIntcHandler(int, void *, int);
-int EnableIntc(int);
+#include <eekernel.h>
 
 /* Programs one of the four EE timers (mode and compare value); timers 0 and 1 also get an interrupt handler.
    main sets timer 0 up with it. Returns -1 for a timer number above 3. */

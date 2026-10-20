@@ -25,4 +25,18 @@ int Player_CanFireAtAim(void);
 void Player_UpdateWeaponAim(void);
 void Player_Move(u16 held, u16 pressed); // match: retail passes both pad words; only held is used
 
+/* player/player_update.c */
+void Player_StopWalking(void);
+void Player_UpdateDying(void);
+void Player_RecomputeStats(void);
+void Player_ResetForNewGame(void);
+void Player_ResetGauges(void);
+void Player_MoveByOffset(f32 *offset);
+
+/* data still in asm */
+extern float view_ray_direction[];
+extern const s8 yellow_tint_pulse[30];
+extern int sacrificial_mask_cooldown;  /* frames until the item 0x32 may launch its effect again */
+extern f32 player_no_water_surface_y[];
+
 #endif

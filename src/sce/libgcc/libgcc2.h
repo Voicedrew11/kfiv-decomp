@@ -19,5 +19,6 @@ long long __fixunsdfdi(double a); /* definition in sce/libgcc/_fixunsdfdi.c */
 void __unpack_d(void *in, void *out);                        /* definition in sce/libgcc/dp-bit.c */
 int __make_dp(int class, int sign, int exp, long long frac); /* definition in sce/libgcc/dp-bit.c */
 void __make_fp(int class, int sign, int exp, int frac);      /* definition in sce/libgcc/fp-bit.c */
+unsigned int fptoui(float arg_a);                            /* definition in sce/libgcc/fp-bit.c */
 
 #endif /* SCE_LIBGCC_LIBGCC2_H */

@@ -4,54 +4,29 @@
 #include "gfx/gs.h"
 #include "map/map.h"
 #include "entity/entity.h"
+#include "core/file.h"
+#include "core/game.h"
+#include "enemy/enemy.h"
+#include "entity/entity_collision.h"
+#include "entity/entity_math.h"
+#include "gfx/draw_list.h"
+#include "gfx/packet.h"
+#include <libvu0.h>
+#include "math/vu0.h"
+#include "model/model.h"
+#include "model/model_matrix.h"
+#include "model/motion.h"
+#include <stdlib.h>
 
-void *memset(void *, int, u32);
-int rand(void);
-
-extern MapSlot map_slots[];
-extern MapSlotMemory map_slot_memory[2];
-extern Entity entity_pool[][0x80];
-extern int map_spawn_counts[2];
-extern EntitySpawnInfo *map_spawn_infos[2];
 extern char *entity_params;
-extern Vector4Arg entity_unit_scale;
 extern s32 entity_type_handlers[][2];
-extern int suspended_updates[3];
-extern Entity *active_entities_head;
 extern PlayerData player_state;
 extern MapDrawState map_draw_state;
-extern f32 identity_matrix[16];
-extern u32 frame_counter;
-extern int current_map_slot;
 extern u8 player_floor_block[];
-extern const f32 entity_no_hit_distance[];
 
-void Vector_Copy(void *, void *);
-void Vector_Scale(float *, float *, float);
-void Vector_MultiplyComponents(float *, float *, float *);
-int Motion_Start(void *, int, int, u32, int);
-void Vector_Add(void *, void *, void *);
-void Model_UpdateSkinnedBonePoints(ModelInstance *);
 s32 EntityAi_ShouldRespawn(Entity *);
 void EntityEvent_Respawn(char *);
 s32 EntityAi_RemoveIfFallen(Entity *);
-f32 EntityMath_Distance(f32 *, f32 *);
-float EntityMath_DistanceXZ(void *, void *);
-float EntityMath_HeadingTo(float *, float *);
-void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-float EntityMath_WrapAngle(float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0ApplyMatrix(float *, float *, float *);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-void DrawList_Add(ModelInstance *, s32, s32);
-void ModelTexture_SendForModel(void *);
-void Model_DrawSkinned(ModelInstance *);
-void FireLord_DrawAfterimages(Entity *, s32);
-void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void Model_MultiplyChildMatrices(ModelPart *);
-f32 EntityCollision_DistanceToPropFloor(void *, void *);
 
 #define SCRATCH_MATRIX ((f32 *)0x70000000)
 #define SCRATCH_VECTOR ((f32 *)0x70000040)

@@ -14,73 +14,25 @@
 #include "core/file.h"
 #include "map/map_scroll.h"
 #include "sound/sound.h"
+#include "core/display.h"
+#include "enemy/enemy.h"
+#include "gfx/draw_list.h"
+#include "gfx/gs_draw.h"
+#include "input/input.h"
+#include "item/item.h"
+#include <math.h>
+#include "math/vu0.h"
+#include "script/script.h"
+#include "sound/sound_game.h"
+#include <stdio.h>
 
 extern void (*screen_fade_steps[])(void);
 extern void (*screen_fade_draw_steps[])(void);
-int Game_FindTriggerOfItem(int, int *, int *);
-void GameLoop_RunSoundLoads(void);
-void GameLoop_CancelMenuRequests(void);
-void Packet_SwapBuffers(void);
-void Packet_SendChain(void);
 void Packet_WaitForSend(void);
-void DrawList_Clear(void);
 void MapChange_CaptureFrame(void);
-void Input_Update(void);
-void Display_SwapBuffers(int);
-void GameLoop_DrawFrame(int);
-void GsDraw_CopyFrame(int);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-void GsDraw_QueueTexturedSprite(void *);
-void GsDraw_FillScreen(int, int, int, int, s64);
-void Map_DrawRecords(int);
-int File_IsLocked(void);
-void MapLoad_Update(void);
-int EntityPool_IsLoading(void);
-void Entity_UpdatePool(void);
-void Sound_Update(void);
-void Map_UnlinkSlotRecords(int);
-void MapLoad_Reset(void);
-void MapLoad_AfterUnloadHook(void);
-void Player_EndSwingHits(void);
-void MapItem_UnloadMap(int);
-void File_Lock(void);
-void File_Unlock(void);
-int File_GetSize(int);
-int sprintf(char *, char *, ...);
-float cosf(float);
-float sinf(float);
-void Game_MarkMapVisited(int);
-void Game_StartFadeIn(int, int, int, int);
-void Map_ParseFile(int);
-void Map_BuildModels(int);
-void Map_PlaceRecordModels(int);
-void MapSetup_RunForMap(int);
-void Entity_AddGroupToWaiting(int);
-void Sound_StopAll(int);
-void MapLoad_BeforeObjectInitHook(void);
-void MapItem_InitMap(int);
-void MapItem_RollFixedItems(int);
-void Script_Init(int);
-int Script_Start(int, int);
-void Vector_Copy(void *, void *);
-extern int current_map_slot;
-extern MapSlot map_slots[2];
 extern ScreenFade screen_fade;
-extern PlayerState player_state;
 extern GameStatus game_status;
-extern MapLoadState map_load_state;
 extern MapProp *map_slot_props[2][0xFF];
-extern MapDrawRecord *record_draw_lists[2];
-extern MapDrawRecord *late_record_draw_lists[2];
-extern AreaNode *record_boxes;
-extern AreaNode *backdrop_record_boxes;
-extern MapSlotMemory map_slot_memory[2];
-extern char map_change_file_name_format[];
-extern u32 map_work_area_size;
-extern char *map_file_area;
-extern char *map_work_area;
 extern SoundLoadQueue sound_load_queue;
 
 /* Starts the change to map new_value, the player to stand at the map's start, unless a change is running
@@ -293,7 +245,7 @@ void MapChange_UnloadAll(void) {
     Player_EndSwingHits();
     Effect_FreePlayerMagic();
     current_map_slot = 0;
-    memset(map_slots, 0, sizeof(map_slots));
+    memset(map_slots, 0, sizeof(MapSlot) * MAP_SLOT_COUNT);
     memset(record_draw_lists, 0, sizeof(record_draw_lists));
     memset(late_record_draw_lists, 0, sizeof(late_record_draw_lists));
     memset(map_slot_props, 0, sizeof(map_slot_props));

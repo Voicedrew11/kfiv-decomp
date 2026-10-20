@@ -9,19 +9,16 @@
 #include "core/game.h"
 #include "model/linked_point.h"
 #include "collision/collision.h"
+#include "core/file.h"
+#include <libvu0.h>
+#include "math/vu0.h"
+#include "model/model.h"
+#include "save/save_state.h"
+#include "sound/sound_game.h"
+#include <stdlib.h>
 
 
-extern PlayerState player_state;
-extern float identity_matrix[16];
-int Attack_RunEffectHitCheck(void *);
-float Effect_Distance(void *from, void *target);
 void EffectAngle_FromVector(void *angles, void *direction);
-void Vector_Copy(void *dst, void *src);
-void Vector_Add(void *dst, void *lhs, void *rhs);
-void Vector_Scale(void *dst, void *src, float scale);
-void Vector_Subtract(void *dst, void *lhs, void *rhs);
-void sceVu0RotMatrixY(void *, void *, float);
-void sceVu0ApplyMatrix(void *, void *, void *);
 /* Wraps an angle into -pi..pi. */
 static inline f32 wrap_angle(f32 angle) {
     angle = angle - (float)(int)(angle / TWO_PI) * TWO_PI;
@@ -32,149 +29,19 @@ static inline f32 wrap_angle(f32 angle) {
     }
     return angle;
 }
-s16 Effect_FramesToImpact(float, void *, void *, void *);
 void EffectHit_CheckAndEnd(EffectActor *effect, void *state);
-void sceVu0AddVector(void *, void *, void *);
-extern int ground_fan_index;
-int Collision_FindFloorBelow(f32, void *);
 typedef float Mat[4][4] __attribute__((aligned(16)));
-int rand(void);
-void sceVu0RotMatrixX(void *, void *, float);
-void Vector_Normalize(void *, void *);
 extern void (*effect_kind_handlers[][2])();
-extern u8 player_weapon[];
-extern int bolt_start_count;
-void Model_UpdateSkinnedBonePoints(ModelInstance *);
-char *Model_GetSkinnedBonePoint(char *, u32);
-void sceVu0RotMatrixZ(void *, void *, float);
-void *memset(void *, int, u32);
-extern int turn_fan_index;
-void Collision_CastRayAtMap(f32, void *, void *);
-int Sound_PlayMapAt(u8 sound, float *position);
-int Collision_FindWaterBelow(f32, void *);
 extern GameStatus game_status;
 extern u16 pad_state[];
-extern u16 attack_button;
 int EffectHit_FindAimedEntity(void *, void *, void *);
-extern s64 light_point_start_target[2];
 /* LinkedPoint_StartDefault called as returning s16 (the caller keeps the handle in a halfword) */
 // match: only this type matches; model/linked_point.c defines it as returning int
 #define LINKED_POINT_START_S16 ((s16(*)(f32, void *, void *))LinkedPoint_StartDefault)
-extern u8 dark_sanctuary_idol_of_sorrow_placed[];
-extern u8 loop_effect_stop_state[];
-void Sound_PlaySw(int mode);
 /* 0x402D50 seven (weapon, effect param) pairs EffectWeaponSound_Start matches to play sound 3 */
 u32 weapon_sound_pairs[14] = { '%', '[', '&', ']', '\'', '^', '(', '\\', ')', '`', ',', 'a', '.', 'b' };
 
-void EffectImpactLob_Start(EffectActor *actor, EffectSlot *spawn_slot);
-void EffectImpactLob_Update(EffectActor *actor);
-void EffectGroundFan_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectGroundFan_Update(EffectActor *actor);
-void EffectLevelHeight_Start(EffectActor *actor, EffectSlot *spawn_slot);
-void EffectLevelHeight_Update(EffectActor *effect);
-void EffectWhileGroundFan_Start(EffectActor *actor, EffectSlot *spawn_slot);
-void EffectWhileGroundFan_Update(EffectActor *effect);
-void EffectConverge_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectConverge_StartInSpread(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectConverge_Update(EffectActor *effect);
-void EffectHandover_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectHandover_StartBySurface(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectHandover_StartNext(EffectActor *effect, Vector4 *position, int effect_id);
 static void EffectHandover_RunKeys(EffectActor *effect);
-void EffectHandover_Update(EffectActor *effect);
-void EffectHitWindow_Start(EffectActor *actor, EffectSlot *spawn_slot);
-void EffectHitWindow_Update(EffectActor *effect);
-void EffectBolt_Start(EffectActor *actor, EffectSlot *spawn_slot);
-void EffectBolt_StartBySurface(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectBolt_StartWithTargeters(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectBolt_StartCounted(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectBolt_Update(EffectActor *actor);
-void EffectFollowPose_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectFollowPose_Update(EffectActor *effect);
-void EffectFollowPosition_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectFollowPosition_Update(EffectActor *effect);
-void EffectBoneFade_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectBoneFade_Update(EffectActor *actor);
-void EffectDistanceFade_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectDistanceFade_Update(EffectActor *effect);
-void EffectSpray_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectSpray_Update(EffectActor *effect);
-void EffectLateFall_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectLateFall_StartWithTargeters(EffectActor *actor, EffectSlot *spawn_slot);
-void EffectLateFall_Update(EffectActor *actor);
-void EffectFallToFloor_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectFallToFloor_Update(EffectActor *actor);
-void EffectFloorChase_Start(EffectActor *actor, EffectSlot *spawn_slot);
-void EffectFloorChase_Update(EffectActor *actor);
-void EffectHomeOnPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectHomeOnPlayer_Update(EffectActor *effect);
-void EffectTiltFall_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectTiltFall_Update(EffectActor *effect);
-void EffectFloorDelay_Start(EffectActor *actor, EffectSlot *spawn_slot);
-void EffectFloorDelay_Update(EffectActor *effect);
-void EffectTurnFan_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectTurnFan_Update(EffectActor *effect);
-void EffectDelayedShot_Start(EffectActor *actor, EffectSlot *spawn_slot);
-void EffectDelayedShot_Update(EffectActor *effect);
-void EffectLevelFan_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectLevelFan_Update(EffectActor *effect);
-void EffectRay_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectRay_StartAtPlayer(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectRay_Update(EffectActor *effect);
-void EffectBeamStretch_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectBeamStretch_Update(EffectActor *effect);
-void EffectWobble_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectWobble_Update(EffectActor *effect);
-void EffectSeekPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectSeekPlayer_Update(EffectActor *actor);
-void EffectProbedFall_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectProbedFall_Update(EffectActor *effect);
-void EffectSurroundPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectSurroundPlayer_Update(EffectActor *effect);
-void EffectChain_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectChain_Update(EffectActor *effect);
-void EffectOwnerFloor_Start(EffectActor *actor, EffectSlot *spawn_slot);
-void EffectOwnerFloor_Update(EffectActor *effect);
-void EffectLaunchFromOwner_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectLaunchFromOwner_Update(EffectActor *effect);
-void EffectBowDraw_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectBowDraw_Update(EffectActor *actor);
-void EffectInheritSpeed_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectInheritSpeed_Update(EffectActor *effect);
-void EffectHomeOnEntity_Start(EffectActor *actor, EffectSlot *spawn_slot);
-void EffectHomeOnEntity_Update(EffectActor *actor);
-void EffectImpactShot_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectImpactShot_Update(EffectActor *effect);
-void EffectFollowLight_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectFollowLight_Update(EffectActor *effect);
-void EffectLight_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectLight_Update(EffectActor *effect);
-void EffectSpiral_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectSpiral_Update(EffectActor *effect);
-void EffectScatterAroundPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectScatterAroundPlayer_Update(EffectActor *effect);
-void EffectDrop_Start(EffectActor *actor, EffectSlot *spawn_slot);
-void EffectDrop_Update(EffectActor *effect);
-void EffectPitchScale_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectPitchScale_Update(EffectActor *effect);
-void EffectRepeater_Start(EffectActor *actor, EffectSlot *spawn_slot);
-void EffectRepeater_Update(EffectActor *effect);
-void EffectCorkscrew_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectCorkscrew_Update(EffectActor *effect);
-void EffectWander_Start(EffectActor *actor, EffectSlot *spawn_slot);
-void EffectWander_Update(EffectActor *effect);
-void EffectFollowPoseScaled_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectFollowPoseScaled_Update(EffectActor *effect);
-void EffectJitterWobble_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectJitterWobble_Update(EffectActor *effect);
-void EffectJitterOrbit_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectJitterOrbit_Update(EffectActor *effect);
-void EffectSeekPoint_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectSeekPoint_Update(EffectActor *effect);
-void EffectLoopUntilFlag_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectLoopUntilFlag_Update(EffectActor *effect);
-void EffectWeaponSound_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectSound_Start(EffectActor *effect, EffectSlot *spawn_slot);
 
 /* Kind 33 update: at the arrival frame spawns the end effect at the aim (first level only) and, when the
    aim has ground under it, starts a sweep: the aim then circles outward and spawns def->unkF0 where the hit

@@ -6,43 +6,24 @@
 #include "ui/title.h"
 #include "ui/menu_screens.h"
 #include "core/timer.h"
+#include "core/display.h"
+#include "core/file.h"
+#include "core/system.h"
+#include "debug/screen_dump.h"
+#include "enemy/enemy.h"
+#include "entity/entity_world.h"
+#include "gfx/packet.h"
+#include "gfx/screen.h"
+#include "input/input.h"
+#include "map/map.h"
+#include "save/save_card.h"
+#include "sound/sound.h"
+#include "sound/sound_game.h"
+#include <stdlib.h>
 
 extern GameStatus game_status;
-extern PlayerState player_state;
-extern int save_loaded;          /* nonzero: a saved game was loaded */
-extern int saved_map_tag;
-extern u32 frame_counter;          /* the frame counter */
 
-void System_Init(void);
-void Display_Init(void);
 int sceGsSyncV(int);
-void Vram_Clear(int, int);
-int SoundDriver_Init(void);
-void SoundDriver_ReleaseAll(void);
-void System_InitMemory(void);
-void Input_Init(void);
-void Input_SetDefaultControls(void);
-void Game_SetDefaultOptions(void);
-void Timer_CountOverflow(void);
-int Timer_Setup(u32, int, int, void *);
-void Timer_Restart(void);
-void File_LoadArchiveToc(void);
-void Map_LoadParamFiles(void);
-void Game_ResetProgress(void);
-void Input_StartupHook(void);
-void Entity_StartupHook(void);
-void Sound_Init(void);
-s32 SaveCard_Init(void);
-void Packet_Init(void);
-void Wobble_ResetOscillators(void);
-void Game_ProjectHazeLayers(void);
-int Timer_GetTicks(void);
-void srand(u32);
-int TitleMenu_Run(void);
-void Movie_PlayOpening(void);
-void GameLoop_ResetSystems(int);
-void GameLoop_Run(int);
-void Movie_PlayEnding(void);
 
 /* Sets everything up, then loops for ever: the intro, the title screen, one game. */
 int main(void) {

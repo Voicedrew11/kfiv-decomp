@@ -5,34 +5,32 @@
 #include "entity/entity.h"
 #include "common.h"
 #include "effect/effect.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "gfx/draw_list.h"
+#include <math.h>
+#include "math/vu0.h"
+#include "model/model.h"
+#include <stdlib.h>
 
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
-void Vector_Copy(void *, void *);
-void EntityAi_OnHit(Entity *);
-void EntityAi_Dormant(Entity *);
-void EntityAi_Death(Entity *);
-extern ModelInstanceBlock fire_lord_model[2];
 // match: fire_lord_model[1], which the set-up function reaches by its own address
 extern ModelInstanceBlock fire_lord_older_afterimage;
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-extern u32 frame_counter;
 extern PlayerData player_state;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
-int EntityAi_ThinkReturn(void *, int);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
 s32 EntityAi_CanShoot(Entity *);
 s32 EntityAi_PickRangedAttack(Entity *);
-void EntityAi_RangedAttack(Entity *);
 float EntityMath_AngleDifference(float, float);
-int rand(void);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
@@ -40,24 +38,16 @@ int EntityAi_PickAttack(char *);
 void EntityAi_ClearTurnInPlace(Entity *);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
-void EntityAi_Dodge(Entity *);
-void EntityAi_MeleeAttack(Entity *);
 float EntityMath_HeadingTo(float *, float *);
 int Motion_Start(void *, int, int, u32, int);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-float sqrtf(float);
-float atan2f(float, float);
-char *Model_GetSkinnedBonePoint(char *, u32);
 float EntityMath_WrapAngle(float);
 void EntityMath_FacingVector(Vector4 *, float);
-void Vector_Scale(float *, float *, float);
 int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 void EntityAi_SetAttackDelay(Entity *, s32);
 float EntityMath_AngleXZ(float *, char *);
 s32 EntityAi_CanUseMelee(Entity *, s32);
 extern u8 player_weapon_step[];
-extern EntityModel *held_item_model_ptr;
-void DrawList_Add(ModelInstance *, s32, s32);
 
 static void FireLord_Animate(Entity *entity);
 static void FireLord_Think(Entity *entity, s32 unknown);
@@ -74,7 +64,6 @@ static void FireLord_MeleeAttack1(Entity *entity);
 static void FireLord_PlayAnim6Or7ThenMelee0(Entity *entity);
 static void FireLord_Move(Entity *entity);
 static s32 FireLord_ShouldEvadeSwingOrMagic(Entity *entity, f32 max_distance, f32 max_angle);
-void FireLord_DrawAfterimages(Entity *entity, s32 list);
 
 /* Set-up of a type 24 entity: clears its work area and installs the type's handlers. */
 void FireLord_Init(Entity *entity) {

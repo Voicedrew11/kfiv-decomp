@@ -14,4 +14,7 @@ void ModelMatrix_Build(ModelInstance *model, Vector4 *position, Vector4 *rotatio
 void ModelMatrix_BuildDrawMatrices(ModelInstance *model, s32 normal_src, s32 light_src, void *normal_dest,
                                    void *light_dest);
 
+/* data still in asm */
+extern Vector4Arg mirrored_flat_offset;  /* (0, -160000, 32768, 1): z times sin(pitch) is added to y */
+
 #endif

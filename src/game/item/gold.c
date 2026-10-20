@@ -8,39 +8,22 @@
 #include "gfx/screen.h"
 #include "ui/message.h"
 #include "gfx/gs.h"
+#include "core/file.h"
+#include "enemy/enemy.h"
+#include "gfx/draw_list.h"
+#include "gfx/packet.h"
+#include "input/pad.h"
+#include "map/map.h"
+#include <math.h>
+#include "math/vu0.h"
+#include "model/model_matrix.h"
+#include <stdlib.h>
 
-void *memset(void *, int, u32);
-int File_Open(char *, int, int);
-int File_Read(int, void *, int);
-int File_Close(int);
-void Model_SetUpSkinned(ModelInstance *, int *, int *);
 void Gold_PrepareFadedDraw(OverlaySprite *);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-void ModelTexture_SendForModel(void *);
-void Model_DrawSkinned(ModelInstance *);
-void DrawList_Add(ModelInstance *, s32, s32);
-int Collision_FindFloorBelow(f32, void *);
-void Vector_Copy(void *, void *);
-void Vector_Add(void *, void *, void *);
-int rand(void);
-float cosf(float);
-float sinf(float);
 
-void Vector_Subtract(void *, void *, void *);
 extern MapDrawState map_draw_state;
-extern MapSlot map_slots[];
 extern ObjectMarkRow map_object_marks[];
-extern MapLoadState map_load_state;
 extern GameStatus game_status;
-extern f32 identity_matrix[16];
-extern u16 pad_pressed[];
-extern PlayerState player_state;
-extern u16 action_button;
-extern int current_map_slot;
-extern f32 gold_drop_unmeasured_distance[];
 
 MapActor *Gold_FindFree(int slot);
 MapActor *Gold_FindOldest(int slot);
@@ -51,8 +34,6 @@ void Gold_ClearMark(MapActor *actor);
 
 #define GOLD_MAX 999999
 
-extern MapActor *map_actors_in_use;
-extern s32 map_actor_drop_counts[2];
 static MapActor map_actors[2][MAP_ACTOR_COUNT]; /* 0x5B6100 sixteen piles per loaded map */
 static ModelInstance map_actor_models[2][MAP_ACTOR_COUNT]; /* 0x5B6680 */
 static char map_gold_texture[0x2000];           /* 0x5B9E80 item/i0000.tx2 */

@@ -10,6 +10,13 @@
 #include "map/map.h"
 #include "effect/effect.h"
 #include "sound/sound_game.h"
+#include "core/memory.h"
+#include <eekernel.h>
+#include "enemy/enemy.h"
+#include <math.h>
+#include "save/save_state.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 /* the sound is silent at this distance: the falloff is 1 - (distance / 2500)^2 */
 #define SOUND_INVERSE_RANGE (1.0f / 2500.0f)
@@ -20,91 +27,25 @@
 #define SOUND_INVERSE_RANGE (1.0f / 2500.0f)
 /* volumes run from 0 to 64 */
 #define SOUND_VOLUME_LEVELS 64.0f
-
-int File_IsLocked(void);
-int File_Sync(int, int);
 
 extern LoadJob bgm_load_job;
 extern SoundJob se_com_job;
 extern SoundJob sfx_com_job;
 extern SoundFileBuffer se_com_bank;
 extern SoundFileBuffer sfx_com_bank;
-extern SoundChannel sound_channels[];
-extern char sound_heap_base[];
-extern int sound_unread_limit;            /* Sound_Init sets it to 0x40; nothing reads it */
-extern float sound_unread_scale;          /* Sound_Init sets it to 0.013; nothing reads it */
-extern int sound_unread_switch;           /* Sound_Init sets it to 1; nothing reads it */
-extern s8 map_reverb_set;
-extern char map_sounds_enabled;
-extern char reverb_change_pending;
-extern s8 map_reverb_volume;
-extern u8 loaded_bgm;
-extern u8 bgm_load_running;
-extern s8 positional_sounds_muted;
-extern u8 loading_bgm;
-void *memset(void *, int, u32);
-extern u8 game_options[];
-extern f32 sound_cos_polynomial[4];
-extern u8 voice_ranges[][2];
-extern u8 voice_range_cursors[8];
 extern SoundJob map_bank_job;
 extern SoundJob sw_bank_job;
 extern SoundJob mg_bank_job;
-extern u8 music_volume[];
-extern int bgm_fade_level;
-extern void *tracked_sound_players[];
-extern PlayerState player_state;
-extern u8 sfx_volume[];
-double sqrt(double);
-int rand(void);
-float atan2f(float, float);
-extern int tagged_bend;
-extern int tagged_bend_high;
-extern int tagged_bend_low;
-extern char tagged_bend_falling;
-extern int bgm_load_step;
-extern int bgm_load_can_yield;
-extern char *sound_bank_area;
-extern int bgm_bd_size;
-extern int sound_heap_next;
-void File_Lock(void);
-int File_GetSize(int);
-int sprintf(char *, char *, ...);
-void File_Unlock(void);
-extern int bgm_header_buffer[];
-extern int bgm_hd_size;
-int File_Open(char *name, int nowait, int pack);
-int File_Read(int file, void *buf, int size);
-extern int bgm_sequence_buffer[];
-extern int bgm_sq_size;
-extern u8 bgm_reverb_slot;
-extern int heap_file_read_step;
-extern int heap_file_handle;
-int File_Close(int file);
-extern s32 map_bank_file_read_step;
-extern s32 map_bank_file_handle;
-extern MapHeader *map_slot0_header[];
-int FlushCache(int);
 int sceCdBreak(void);
 extern int (*const bgm_load_steps[])(LoadJob *, s32);
-extern char rev_para_path[];
-extern s32 sound_file_load_step;
 extern s32 (*const sound_file_load_steps[])(void);
-extern int entity_bank_load_step;
 extern int (*entity_bank_load_steps[])(SoundJob *job);
 /* the falloff players Sound_PlayFalloff picks from (the Sfx and Map ones take no bank) */
 extern int (*falloff_sound_players[])(int, int); // match: an int result, though the players are void
-extern int map_bank_load_step;
-extern SoundScriptState map_reverb_cue_indices;
-extern u8 map_reverb_slot;
-extern int map_bank_unread_flag;          /* cleared by Sound_MapBankFinishUnlessFirst; nothing reads it */
 extern int (*map_bank_load_steps[])(SoundJob *job);
-extern SoundBankSpec map_bank_files;
 extern SoundFileBuffer sw_bank;
 extern SoundFileBuffer mg_bank;
 extern int sound_load_queue[0x28 / 4];
-extern MapSlot map_slots[];
-extern int current_map_slot;
 
 static char sound_file_path[0x80];         /* 0x4FF3C0 a file name for sprintf */
 static char map_bank_file_path[0x80];         /* 0x4FF440 the map bank's file name */

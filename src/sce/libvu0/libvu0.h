@@ -27,6 +27,7 @@ void sceVu0ClampVector(void *dst, void *src, float min, float max); /* definitio
 void sceVu0CopyMatrix(void *dst, void *src);
 void sceVu0CopyVector(void *dst, void *src);
 void sceVu0DivVector(void *dst, void *src, float q);             /* definition in sce/ */
+void sceVu0DivVectorXYZ(void *dst, void *src, float q);          /* definition in sce/ */
 void sceVu0FTOI0Vector(void *dst, void *src);                    /* definition in sce/ */
 void sceVu0FTOI4Vector(void *dst, void *src);                    /* definition in sce/ */
 void sceVu0ITOF0Vector(void *dst, void *src);                    /* definition in sce/ */
@@ -35,6 +36,7 @@ void sceVu0InterVector(void *dst, void *a, void *b, float t);    /* definition i
 void sceVu0InterVectorXYZ(void *dst, void *a, void *b, float t); /* definition in sce/ */
 void sceVu0InversMatrix(void *dst, void *src);
 void sceVu0MulMatrix(void *dst, void *m0, void *m1);  /* definition in sce/ */
+void sceVu0MulVector(void *dst, void *a, void *b);    /* definition in sce/ */
 void sceVu0Normalize(void *dst, void *src);           /* definition in sce/ */
 void sceVu0OuterProduct(void *dst, void *a, void *b); /* definition in sce/ */
 void sceVu0RotMatrixX(void *d, void *s, float a);
@@ -45,6 +47,9 @@ void sceVu0ScaleVector(void *dst, void *src, float scale);        /* definition 
 void sceVu0ScaleVectorXYZ(void *dst, void *src, float scale);     /* definition in sce/ */
 void sceVu0SubVector(void *dst, void *a, void *b);                /* definition in sce/ */
 void sceVu0TransposeMatrix(void *dst, void *src);
+void sceVu0TransMatrix(void *dst, void *src, void *tv); /* definition in sce/ */
+void sceVu0ViewScreenMatrix(float *m, float scrz, float ax, float ay, float cx, float cy, float zmin, float zmax,
+                            float nearz, float farz); /* definition in sce/ */
 void sceVu0UnitMatrix(void *m); /* definition in sce/ */
 
 #endif /* SCE_LIBVU0_LIBVU0_H */

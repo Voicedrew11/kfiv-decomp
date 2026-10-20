@@ -6,67 +6,53 @@
 #include "entity/entity_world.h"
 #include "entity/entity.h"
 #include "map/map.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_aim.h"
+#include "entity/entity_collision.h"
+#include <math.h>
+#include "math/vu0.h"
+#include "model/motion.h"
+#include <stdlib.h>
 
-extern u32 frame_counter;
-extern s32 current_map_slot;
 extern PlayerData player_state;
-extern MapSlot map_slots[];
-extern f32 greater_demon_no_floor_height_think[];
-extern f32 greater_demon_no_floor_height_attack[];
 
 static KfVector climb_points[3]; /* 0x4FF390 the points GreaterDemon_Think climbs over (it indexes up to 5) */
 
 void EntityAi_SetUpdate(char *, s32);
-void Motion_ClearPartSlots(EntityModel *);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
-void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(Entity *);
-void EntityAi_Dormant(Entity *);
-void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 int EntityShot_Launch(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *);
 static void GreaterDemon_Think(Entity *entity, s32 unknown);
 static void GreaterDemon_Move(Entity *entity);
 static void GreaterDemon_OnHit(Entity *entity);
 void EntityAi_SensePlayer(void *, int);
-void EntityPoint_PickNear(float, void *, void *, void *);
-f32 EntityCollision_DistanceToPropFloor(void *, void *);
 void EntityAi_CheckFarFromSpawn(void *);
 void EntityAi_StepState(void *);
-int EntityAi_ThinkReturn(void *, int);
-int EntityAi_ThinkIdle(void *, int);
-void EntityAi_ThinkPursue(Entity *, s32);
 static void GreaterDemon_ThinkCombat(Entity *, s32);
-int rand(void);
 static s32 GreaterDemon_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 static int GreaterDemon_SetRanged2Weight(Entity *entity);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
-s32 EntitySight_EntityInWay(Entity *);
 void EntityAi_ClearTurnInPlace(Entity *);
 float EntityMath_AngleDifference(float, float);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void EntityAi_Dodge(Entity *);
-void EntityAi_MeleeAttack(Entity *);
 static void GreaterDemon_Rise(Entity *);
 static void GreaterDemon_SlideToStop(Entity *);
 static void GreaterDemon_PlayAnim6Or7BySide(Entity *);
 static void GreaterDemon_Guard(Entity *);
 static void GreaterDemon_RangedAttack2(Entity *);
 static void GreaterDemon_RangedAttack(Entity *);
-int Motion_Start(void *, int, int, u32, int);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 static void GreaterDemon_DescendAtPlayer(Entity *);
 int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 float EntityMath_WrapAngle(float);
-float sinf(float);
-float cosf(float);
 float EntityMath_AngleXZ(float *, char *);
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);

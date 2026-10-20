@@ -17,36 +17,22 @@
 #include "gfx/gs.h"
 #include "save/save_card.h"
 #include "ui/menu_screens.h"
+#include "core/display.h"
+#include "core/file.h"
+#include "core/memory.h"
+#include "core/play_time.h"
+#include "debug/screen_dump.h"
+#include "gfx/gs_draw.h"
+#include "input/input.h"
+#include <libvu0.h>
+#include "sound/sound_game.h"
+#include <stdio.h>
+#include "ui/menu_draw.h"
 
 extern u8 item_counts[380];
 extern LevelDef item_name_defs[380];
 extern LevelRecord weapon_level_records[70];
 extern LevelRecord worn_item_level_records[160];
-extern MenuItem common_item_entries[150];
-extern MenuItem all_item_entries[380];
-extern MenuItem weapon_entries[70];
-extern MenuItem shield_entries[30];
-extern MenuItem helm_entries[25];
-extern MenuItem armor_entries[25];
-extern MenuItem gauntlet_entries[25];
-extern MenuItem boot_entries[25];
-extern MenuItem ring_entries[10];
-extern MenuItem bracelet_entries[10];
-extern MenuItem amulet_entries[10];
-extern MenuItem *item_list_cursor[4];
-extern MenuItem *item_list_top[4];
-extern MenuItem *item_list_page_mark[4];
-extern MenuItem *trade_stock_list_top[4]; /* the stock list's first row on screen */
-extern MenuItem *trade_stock_list_page_mark[4]; /* the stock list's page mark: its prev is the last row on screen */
-extern MenuItem *trade_stock_list_cursor[4]; /* the stock item under the cursor */
-/* the ring of items that may be handed over (item_list_cursor; the smith's ring of items to hand in) */
-extern MenuItem *handover_list_first;  /* its first node */
-extern MenuItem *handover_list_last_page; /* the row the window starts at on the ring's last page */
-/* the menu's ring of everything owned; here they hold the stock ring (the smith's: the items to collect) */
-extern MenuItem *owned_list_first;
-extern MenuItem *owned_list_last_page;
-extern s32 handover_list_count;        /* how many nodes the ring has */
-extern s32 owned_list_count;
 /* Appends node to the ring being built; the seventh one becomes the page mark. */
 #define LINK_ITEM(node, page_mark)          \
     count++;                                \
@@ -68,118 +54,16 @@ extern s32 owned_list_count;
             LINK_ITEM(&(nodes)[i], item_list_page_mark)                                                                     \
         }                                                                                                          \
     }
-int sceGsSyncPath(int, int);
 int sceGsSyncV(int);
-void Vram_Clear(int, int);
-void Sound_MutePositional(void);
-void Sound_UnmutePositional(void);
-void Sound_UpdateTagged(void);
-void Input_Update(void);
-s16 MenuPad_Update(void);
-void MenuHeap_FreeToMark(void);
-extern s8 modal_input_locked;       /* TRUE while a trade or smith screen fades: the buttons are not read */
-extern s8 trade_amount_down_locked;  /* TRUE stops LEFT lowering the take amount; the game only clears it */
-extern s8 menu_mode;
-extern s32 modal_pad_mode;          /* Pad_GetMode of pad 0 this frame; 0xFF: no pad */
-extern s32 modal_pad_mode_last;     /* the same, last frame */
-extern s32 modal_even_field;       /* what Menu_EndFrame returned (the field); never read */
-extern s32 trade_pad_change_frames; /* counts 20 frames without buttons after the pad type changed */
-extern u16 menu_buttons;
-extern s32 trade_run_step;          /* which of trade_run_steps runs */
-extern u64 menu_first_draw_env[47];             /* the frame register of the first buffer ([0]) and of the second ([46]) */
-extern int context1_buffer_half;
-extern int trade_step;              /* which of trade_steps runs */
-extern HandlerContext trade_context; /* what the trade steps and handlers get */
-extern f32 screen_part_alphas[0x100];
-extern f32 panel_part_alphas[0x100];
-extern f32 message_part_alphas[0x100]; /* the fade level of each part of the shop's (smith's) message window */
-extern LoadedBlockRef menu_file_blocks[];
-extern ColorBytes menu_draw_color;
-extern ColorBytes model_draw_color;
-extern s8 pulse_sprite_falling;
-extern s8 pulse_value_falling;
 /* the ring the list on screen walks: a copy of the handover_list_* or the owned_list_* three */
-extern MenuItem *item_list_first;
-extern MenuItem *item_list_last_page;
-extern s32 item_list_count;
-extern void (*trade_handler)(HandlerContext *); /* the screen Trade_RunHandler runs */
-extern s32 menu_file_block_count;
-extern s32 menu_heap;
-extern s32 trade_menu_arena;
-void *memset(void *, int, u32);
-void Packet_OnFrameStart(void);
-void Packet_OnFrameEnd(void);
-void Packet_SwapBuffers(void);
-void Packet_SendChain(void);
 void Packet_WaitForSend(void);
-void GsDraw_QueueTexFlush(void);
-void TextureTable_QueueAll(TextureTableHeader *);
-s32 MenuArena_Init(s32 value);
-void MenuTexture_Upload(void *, LoadedBlockRef *);
-extern LinkNode *model_load_chain;
 /* the loads of the model shown and of the four the cursor brings on with up (0x10), down (0x40), left (0x80) and
    right (0x20): in a list a row and a page either way, on the equipment screen the next list and the next item */
-extern LinkNode model_load_shown;
-extern LinkNode model_load_up;
-extern LinkNode model_load_down;
-extern LinkNode model_load_left;
-extern LinkNode model_load_right;
-extern u32 preshop_part_count;
-extern SpritePacket *preshop_parts;
-extern s8 trade_screen_state;       /* 0: fading in, 1: open, 2 and up: fading out to the next screen */
-s32 Sound_PlayMenu(s32);
-int Menu_SetBlendMode(u8 mode);
-void MenuDraw_Bar(MenuCursorBar *);
-void MenuSprite_Draw(int, int, int, int);
 /* match: the part number is passed sign-extended and no result is kept (the definition takes a u8 and returns int) */
 #define SELECT_PART(part) ((void (*)(s32))Menu_SetBlendMode)(part)
-extern LevelRecordDef worn_defs[];
-extern PlayerItemDef weapon_defs[];
-extern u8 player_weapon[];
 /* the three kind words table 4's stock list shows: "Bones", "Scales", "Claws" in half-width glyph codes
    (0x800 | character - 0x20; MenuText_DrawWrapped draws code 0x800 + n as half-width cell n) */
-extern TradeValue bones_label[4];
-extern TradeValue scales_label[4];
-extern TradeValue claws_label[4];
-extern f32 trade_stock_list_model_position[4]; /* where Trade_UpdateStockList draws the item's model */
-extern f32 menu_view_screen_matrix[16];
-extern u32 shop_part_count;
-extern u32 shop_g2_part_count;
-extern u32 shop_a_part_count;
-extern u32 shop_g_part_count;
-extern SpritePacket *shop_parts;
-extern SpritePacket *shop_g2_parts;
-extern SpritePacket *shop_a_parts;
-extern SpritePacket *shop_g_parts;
-extern u8 trade_panel_shown;        /* TRUE while the selected item's panel is up */
-extern s32 trade_stock_list_panel_sound_pending; /* TRUE until the panel's opening sound has played */
-extern f32 trade_stock_list_model_angle; /* the model's turn */
-extern s32 menu_number_44;
-extern s32 menu_number_45;
-extern s32 menu_number_46;
-extern s32 menu_number_47;
-extern s32 menu_number_48;
-extern s32 menu_number_49;
-extern s32 menu_number_50;
-extern s32 menu_number_51;
-extern s32 menu_number_52;
-extern s32 menu_number_54;
-extern s32 menu_number_70;
-extern s32 menu_number_71;
-extern s32 menu_number_72;
-extern s32 menu_number_73;
-extern s32 menu_number_77;
-extern s32 menu_number_94;
-extern s8 trade_panel_state;        /* the panel's fade: 0 in, 1 open, 2 out and close, 3 out */
-void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, float, float, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0TransMatrix(float *, float *, float *);
 int Menu_DrawItemModel(f32 *); // match: an int result keeps $2 for the load after the call
-int Menu_IsEquipSlotFilled(s32, u32);
-s32 MenuText_SetColor(ColorBytes bytes);
-s32 MenuText_DrawWrapped(u16 *, s32);
-s32 MenuText_DrawLine(u16 *text, s32 limit);
-s32 MenuText_DrawWordWrappedLong(u16 *, s32);
 /* value * percent / divisor. match: an inline function, so every use loads its own divisor (the dead `li 100`s) */
 static inline s32 ScaleValue(s32 value, s32 percent, s32 divisor) {
     return value * percent / divisor;
@@ -197,34 +81,11 @@ static inline s32 ScaleValue(s32 value, s32 percent, s32 divisor) {
         MenuSprite_Draw((int)&(packets)[i], (packets)[i].handler_index + 1000, (param), (int)panel_part_alphas[i]); \
         SELECT_PART(0);                                                                              \
     }
-extern PlayerState player_state;
-extern f32 trade_take_amount_model_position[4];
-extern u32 shop_mess_part_count;
-extern SpritePacket *shop_mess_parts;
-extern s32 trade_take_amount_panel_sound_pending;
-extern f32 trade_take_amount_model_angle;
-extern s32 menu_number_74;
-extern s32 menu_number_79;
-extern s32 menu_number_80;
-extern s32 menu_number_81;
-extern s32 menu_number_82;
-s32 MenuText_DrawLineCentered(u16 *, s32);
-extern f32 trade_owned_list_model_position[4];
-extern f32 trade_owned_list_model_angle;
 /* Starts every packet of a list at its full alpha. match: the alpha is read as an unsigned bit-field */
 #define FILL_FADE_2(levels, packets, count)                               \
     for (i = 0; i < (count); i++) {                                     \
         (levels)[i] = SPRITE_PACKET_COLOR(&(packets)[i])->alpha;        \
     }
-extern f32 trade_give_amount_model_position[4];
-extern f32 trade_give_amount_model_angle;
-void Menu_ClearEquipSlot(s8);
-int sprintf(char *, char *, ...);
-extern char model_name_shown[];           /* the names of the five link nodes at model_load_shown */
-extern char model_name_up[];
-extern char model_name_down[];
-extern char model_name_left[];
-extern char model_name_right[];
 #define PAGE_ROWS 7
 /* Scrolls the window and the cursor up one row; FALSE once the window is at the top of the list. */
 static inline s32 Trade_StockListScrollUp(void) {
@@ -240,12 +101,7 @@ static inline s32 Trade_StockListScrollDown(void) {
     trade_stock_list_cursor[0] = trade_stock_list_top[0];
     return trade_stock_list_top[0] != item_list_first;
 }
-extern MenuItem *smith_collect_list_top[4]; /* the same three for the list of items to collect */
-extern MenuItem *smith_collect_list_page_mark[4];
-extern MenuItem *smith_collect_list_cursor[];
 extern ClockTime current_play_time;
-void PlayTime_Update(void);
-int PlayTime_SecondsBetween(ClockTime, ClockTime);
 /* Adds a node to the end of the ring being built; `seventh` remembers the seventh one added. */
 #define APPEND(node, seventh) \
     count++; \
@@ -275,29 +131,7 @@ int PlayTime_SecondsBetween(ClockTime, ClockTime);
             APPEND(&nodes[i], item_list_page_mark[0]) \
         } \
     }
-extern s8 smith_confirm_shown;      /* TRUE while Smith_UpdateListWithConfirm shows its question */
-extern s8 smith_unread_flag;         /* cleared with the smith screen state; nothing sets or reads it */
-extern s8 smith_upgrade_choice;     /* which of the three lines of Smith_UpdateItemScreen is picked */
-extern s32 smith_pad_change_frames; /* counts 20 frames without buttons after the pad type changed */
-extern s32 smith_run_step;          /* which of smith_run_steps runs */
-extern void (*smith_handler)(HandlerContext *); /* the screen Smith_RunHandler runs */
-extern s32 smith_step;              /* which of smith_steps runs */
-extern HandlerContext smith_context; /* what the smith steps and handlers get */
-extern u32 pretune_part_count;              /* how many parts the screen has */
-extern u32 tune_mess_part_count;
 extern s32 detail_panel_open; // match: this file reads and writes it as a word
-extern SpritePacket *pretune_parts;
-extern SpritePacket *tune_mess_parts;
-extern s8 smith_choices_active;     /* nonzero once the cursor is on the three lines */
-extern s8 smith_screen_state;       /* 0: fading in, 1: open, 2 to 4: fading out to a list, 5: fading out to leave */
-void MenuSprite_DrawPlain(int, int, int);
-extern f32 smith_upgrade_list_model_position[4];
-extern u32 tune_part_count;              /* how many parts the screen has */
-extern SpritePacket *tune_parts;
-extern s32 smith_upgrade_list_panel_sound_pending;
-extern f32 smith_upgrade_list_model_angle;
-extern s32 menu_number_75;
-extern s8 smith_panel_state;        /* the same for the selected item's panel */
 /* match: the two level lookups are inline functions taking the record index, so the subtraction is not folded into
    the table address; each caller picks the table itself and uses the level inside its own branch. */
 static inline u8 GetWeaponLevel(s32 index) {
@@ -311,10 +145,6 @@ static inline void SetCorner(GsPackedWord *corner, s32 left, s32 top, s32 depth)
     corner->f.mid16 = top;
     corner->f.mid24 = depth;
 }
-extern f32 smith_upgrade_confirm_model_position[4];
-extern s32 smith_upgrade_confirm_panel_sound_pending;
-extern f32 smith_upgrade_confirm_model_angle;
-extern s32 menu_number_76;
 /* match: the records are written through these two for the same reason. */
 static inline LevelRecord *GetWeaponRecord(s32 index) {
     return &weapon_level_records[index];
@@ -322,16 +152,6 @@ static inline LevelRecord *GetWeaponRecord(s32 index) {
 static inline LevelRecord *GetItemRecord(s32 index) {
     return &worn_item_level_records[index];
 }
-extern f32 smith_confirm_list_model_position[4];
-extern s32 smith_confirm_list_panel_sound_pending;
-extern f32 smith_confirm_list_model_angle;
-extern f32 smith_item_screen_model_position[4];
-extern u32 tune_s_part_count;              /* how many parts the screen has */
-extern SpritePacket *tune_s_parts;
-extern f32 smith_item_screen_model_angle;
-extern f32 smith_collect_list_model_position[4];
-extern s32 smith_collect_list_panel_sound_pending;
-extern f32 smith_collect_list_model_angle;
 /* match: inline like the level lookups, so the record index is not folded into the table address */
 static inline void ClearWeaponMark(s32 index) {
     weapon_level_records[index].in_smith_rings = 0;
@@ -353,60 +173,7 @@ static inline s32 Smith_CollectListScrollDown(void) {
     smith_collect_list_cursor[0] = smith_collect_list_top[0];
     return smith_collect_list_top[0] != item_list_first;
 }
-extern s32 save_screen_run_step;    /* which of save_screen_run_steps runs */
-extern int save_screen_step;        /* which of save_screen_steps runs */
-extern int save_screen_pad_change_frames; /* counts 20 frames without buttons after the pad type changed */
-extern u8 menu_draw_color_alpha;    /* the alpha byte of menu_draw_color */
-extern u8 model_draw_color_alpha;   /* the alpha byte of model_draw_color */
-extern HandlerContext save_screen_context; /* what the save screen steps get */
-extern int (*save_screen_handler)(); /* the screen SaveScreen_RunHandler runs */
-extern float pulse_sprite_alpha;
-s32 SaveCard_Open(void);
-s32 SaveCard_StartCheck(s8);
-extern s32 save_line_slots[3];      /* the save slot each of the three lines shows */
-extern s32 save_line_write_slots[3]; /* the save slot a save from each line is written to */
-extern u32 slot_part_count;
-extern SpritePacket *slot_parts;
-extern s8 system_screen_state;
-s32 SaveCard_Update(void);
-s32 SaveCard_StartReadList(s32, char);
-s32 SaveCard_StartFormat(s32);
-void SaveCard_Close(void);
-s32 SaveCard_CheckBusy(void);
-s32 SaveCard_HasCard(s32);
-s32 SaveCard_HasRoomForFolder(s32);
-s32 SaveCard_GetSaveMask(void);
-s8 SaveCard_IsCheckRunning(void);
-s8 SaveCard_IsPresent(s32);
-s8 SaveCard_IsFormatted(s32);
-s8 SaveCard_HasSaveFolder(s32);
-s8 SaveCard_IsDamaged(s32);
-void SaveCard_Cancel(s32);
-s32 SaveCard_HasAnySave(void);
 extern u8 save_image[];
-extern u32 data_part_count;
-extern u32 mc_part_count;
-extern SpritePacket *data_parts;
-extern SpritePacket *mc_parts;
-extern s32 save_lines_reorder_pending; /* TRUE while a save into an empty slot runs: the lines are reordered after it */
-extern s32 menu_number_53;
-extern s32 menu_number_78;
-extern s32 menu_number_83;
-extern s32 menu_number_84;
-extern s32 menu_number_85;
-extern s32 menu_number_86;
-extern s32 menu_number_87;
-extern s32 menu_number_88;
-extern s32 menu_number_89;
-extern s32 menu_number_90;
-extern s32 menu_number_91;
-extern s32 menu_number_92;
-extern s32 menu_number_93;
-void Game_WriteSaveImage(void);
-s32 SaveCard_StartSave(s32, s32, s32 *);
-s8 SaveCard_GetSaveState(s32);
-s32 SaveCard_HasRoomFor(s32, s32, s32);
-s32 SaveCard_GetFreeClusters(s32);
 // match: called as a void function, so the result register is free at once
 #define SET_PART_MODE(mode) ((void (*)(u8))Menu_SetBlendMode)(mode)
 // match: this file hands Menu_SetBlendMode a signed byte
@@ -451,12 +218,6 @@ static void SaveScreen_UpdateSaveList(void);
 
 /* the six value tables (trade_value_tables), numbered from 1 like trade_stock_1...: trade_values_N is the one
    of trade table N - 1, the number the script hands Trade_Run */
-extern TradeValue trade_values_1[];
-extern TradeValue trade_values_2[];
-extern TradeValue trade_values_3[];
-extern TradeValue trade_values_4[];
-extern TradeValue trade_values_5[];
-extern TradeValue trade_values_6[];
 extern u8 trade_stock_1[];
 extern u8 trade_stock_2[];
 extern u8 trade_stock_3[];

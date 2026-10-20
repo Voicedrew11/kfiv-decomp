@@ -140,4 +140,7 @@ typedef struct {
     s32 texture_offset;             /* 0x0C from the file's start to its TextureHeader */
 } KeyItemModelFile;
 
+/* core/load_buffer.c */
+extern char sound_heap_base[];
+
 #endif

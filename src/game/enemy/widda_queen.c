@@ -4,40 +4,32 @@
    hit points and experience, with resistances and drops where two monsters share those. */
 #include "entity/entity.h"
 #include "common.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_events.h"
+#include "entity/entity_math.h"
+#include "math/vu0.h"
+#include <stdlib.h>
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 s32 Motion_StepModel(ModelInstance *, s32, s32);
-void Vector_Copy(void *, void *);
-void EntityAi_OnHit(Entity *);
-void EntityAi_Dormant(Entity *);
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-float EntityMath_AngleDifference(float, float);
-float EntityMath_EaseAngleToward(float *, float, float);
-extern u32 frame_counter;
-void EntityAi_StepState(void *);
 void EntityAi_SensePlayer(void *, int);
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-void EntityAi_Guard(Entity *);
 int Motion_Start(void *, int, int, u32, int);
 s32 EntityAi_CheckMeleeHitAt(Entity *, void *, s32, s32, s32, f32);
-float EntityMath_WrapAngle(float);
 void EntityAi_SetAttackDelay(Entity *, s32);
-void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
-int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 extern PlayerData player_state;
 int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
 // match: the definitions take the float last, but retail sets it up before the index
 int EntityAi_CanUseMeleeFacing(Entity *, f32, s32);
 int EntityAi_CanUseRangedFacing(Entity *, f32, s32); // match: as EntityAi_CanUseMeleeFacing
-int rand(void);
-void EntityAi_LowerAttackWeight(Entity *);
-void EntityEvent_OnDeath(Entity *);
 
 static void WiddaQueen_Animate(Entity *entity);
 static void WiddaQueen_TurnPart9ToPlayer(Entity *entity, s32 mode);

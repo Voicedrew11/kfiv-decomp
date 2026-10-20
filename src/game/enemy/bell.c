@@ -5,14 +5,12 @@
    official guide (2004): shoot the bell with a bow to ring it and destroy the skeletons. */
 #include "entity/entity.h"
 #include "common.h"
+#include "math/vu0.h"
+#include "model/motion.h"
 
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
-void Vector_Copy(void *, void *);
 extern s32 entity_type_handlers[][2];
-int Motion_Step(void *, int);
 extern PlayerData player_state;
 float EntityMath_AngleXZ(float *, char *);
 float EntityMath_WrapAngle(float);

@@ -4,25 +4,24 @@
    hit points and experience, with resistances and drops where two monsters share those. */
 #include "entity/entity.h"
 #include "common.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_aim.h"
+#include <libvu0.h>
+#include "math/vu0.h"
+#include <stdlib.h>
 
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
-void EntityAi_OnHit(Entity *);
-void EntityAi_Dormant(Entity *);
-void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);
-extern u32 frame_counter;
-int EntityAi_ThinkReturn(void *, int);
 void EntityAi_StepState(void *);
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(void *);
-int rand(void);
 int EntityAi_TurnFromPush(void *, void *);
-void EntityPoint_PickNear(float, void *, void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
 extern PlayerData player_state;
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
@@ -34,18 +33,7 @@ float EntityMath_WrapAngle(float);
 float EntityMath_AngleXZ(float *, char *);
 float EntityMath_AngleDifference(float, float);
 int EntityAi_TurnCommand(Entity *);
-void EntityAi_Dodge(Entity *);
-void EntityAi_Guard(Entity *);
-void EntityAi_MeleeAttack(Entity *);
-void EntityAi_RangedAttack(Entity *);
 void EntityAi_ClearTurnInPlace(Entity *);
-extern f32 identity_matrix[16];
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0RotMatrixZ(float *, float *, float);
-void Vector_ApplyMatrix(void *, void *, void *);
-void Vector_Normalize(void *, void *);
-void Vector_Scale(float *, float *, float);
 float EntityAi_Accelerate(Entity *, float);
 int Motion_Start(void *, int, int, u32, int);
 

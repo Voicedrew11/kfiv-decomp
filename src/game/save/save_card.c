@@ -5,19 +5,13 @@
 #include "core/file.h"
 #include "save/mc.h"
 #include <libmc.h>
-
-void *memset(void *, int, u32);
-int sprintf(char *, const char *, ...);
-void *memcpy(void *, const void *, u32);
-int strcmp(const char *, const char *);
-void SyncDCache(void *start, void *end);
-
-void *MenuHeap_Alloc(int);
-int File_OpenUnflagged(char *, int, int);
+#include "core/game.h"
+#include <eekernel.h>
+#include <stdio.h>
+#include <string.h>
+#include "ui/menu_draw.h"
 
 extern GameStatus game_status;
-extern int save_loaded;
-extern s32 save_area_name_id[];
 extern s32 player_state[];
 extern PlayTime current_play_time;
 

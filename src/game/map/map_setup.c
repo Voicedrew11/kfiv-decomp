@@ -7,6 +7,7 @@
 #include "model/model.h"
 #include "collision/collision.h"
 #include "effect/effect.h"
+#include "item/item.h"
 
 void MapSetup_Armory(int);
 void MapSetup_Forge017(int);
@@ -26,11 +27,8 @@ void MapSetup_CraftsmansRoom(int);
 void MapSetup_CentralTowerLevel2(int);
 void MapSetup_PlaceItemLowered(int);
 void MapSetup_OceanShoreFrame(int);
-int MapItem_PlaceFixedById(int, int);
 void *Map_GetRecordById(int, int);
-void Map_OffsetRecord(MapRecordBounds *, f32 *);
 void *MapItem_GetFixedById(int);
-extern MapSlot map_slots[];
 extern u8 map_script_flags[];
 extern u8 entity_group_state[];
 extern u8 forge_door_open[];

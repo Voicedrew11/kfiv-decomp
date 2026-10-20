@@ -1,91 +1,10 @@
 /* Per-entity-type handlers and the Fire Lord's model templates. */
 #include "entity/entity_ai_handlers.h"
 #include "model/model.h"
-
-/* the set-up function of every entity type that has one of its own (enemy/*.c, entity/npc.c) */
-void AcidCrawler_Init(Entity *entity);
-void AncientKing_Init(Entity *entity);
-void AncientMummy_Init(Entity *entity);
-void Aqualizard_Init(Entity *entity);
-void Beetle_Init(Entity *entity);
-void Bell_Init(Entity *entity);
-void BloodBat_Init(Entity *entity);
-void Critter_Init(Entity *entity);
-void Crow_Init(Entity *entity);
-void DarkArcher_Init(Entity *entity);
-void DarkBird_Init(Entity *entity);
-void DarkFlower_Init(Entity *entity);
-void DarkKnight_Init(Entity *entity);
-void DarkOne_Init(Entity *entity);
-void DarkPuppet_Init(Entity *entity);
-void DarkSoldier_Init(Entity *entity);
-void DarkSorcerer_Init(Entity *entity);
-void DarkSuccubus_Init(Entity *entity);
-void DragonFly_Init(Entity *entity);
-void EarthElemental_Init(Entity *entity);
-void EarthKing_Init(Entity *entity);
-void EntityType72_Init(Entity *entity);
-void ExpeditionArcher_Init(Entity *entity);
-void ExpeditionSoldier_Init(Entity *entity);
-void EyePedestal_Init(Entity *entity);
-void Fadin_Init(Entity *entity);
-void FireElemental_Init(Entity *entity);
-void FireGenie_Init(Entity *entity);
-void FireLord_Init(Entity *entity);
-void ForestGolem_Init(Entity *entity);
-void GiantBeetle_Init(Entity *entity);
-void GiantLeader_Init(Entity *entity);
-void GiantSpider_Init(Entity *entity);
-void Giant_Init(Entity *entity);
-void GoldenStatue_Init(Entity *entity);
-void GreaterDemon_Init(Entity *entity);
-void HammerSkeleton_Init(Entity *entity);
-void HighSkeleton_Init(Entity *entity);
-void IceGolem_Init(Entity *entity);
-void Larva_Init(Entity *entity);
-void LavaBird_Init(Entity *entity);
-void LavaFace_Init(Entity *entity);
-void LavaLizard_Init(Entity *entity);
-void LivingArmor_Init(Entity *entity);
-void LivingDead_Init(Entity *entity);
-void LivingStatue_Init(Entity *entity);
-void Makara_Init(Entity *entity);
-void MalformedGiant_Init(Entity *entity);
-void Malice_Init(Entity *entity);
-void MasterFadin_Init(Entity *entity);
-void Minion_Init(Entity *entity);
-void Mummy_Init(Entity *entity);
-void MutantCeiling_Init(Entity *entity);
-void MutantWall_Init(Entity *entity);
-void Npc_Init(Entity *entity);
-void Npc_InitType81(Entity *entity);
-void Onyx_Init(Entity *entity);
-void ParaStool_Init(Entity *entity);
-void Phagos_Init(Entity *entity);
-void Reaper_Init(Entity *entity);
-void Salamander_Init(Entity *entity);
-void Scorpion_Init(Entity *entity);
-void Seafang_Init(Entity *entity);
-void Sentinel_Init(Entity *entity);
-void SkeletonArcher_Init(Entity *entity);
-void SkeletonSoldier_Init(Entity *entity);
-void Skull_Init(Entity *entity);
-void Slasher_Init(Entity *entity);
-void Slime_Init(Entity *entity);
-void Snake_Init(Entity *entity);
-void Spider_Init(Entity *entity);
-void StoneGuardian_Init(Entity *entity);
-void Stool_Init(Entity *entity);
-void Watcher_Init(Entity *entity);
-void WaterElemental_Init(Entity *entity);
-void WiddaArcher_Init(Entity *entity);
-void WiddaQueen_Init(Entity *entity);
-void Widda_Init(Entity *entity);
-void Widdacona_Init(Entity *entity);
-void WindElemental_Init(Entity *entity);
-void Zombie_Init(Entity *entity);
-void Entity_InitInert(Entity *entity);
-void Entity_UpdateInert();
+#include "enemy/enemy.h"
+#include "entity/entity.h"
+#include "entity/entity_world.h"
+#include "entity/npc.h"
 
 /* 0x3E6E40 [type][0] set-up, [type][1] update; types without a row act as type 0 */
 s32 entity_type_handlers[0x60][2] = {

@@ -7,12 +7,12 @@
    trap of the next room. The game itself names them nowhere. */
 #include "entity/entity.h"
 #include "common.h"
+#include "math/vu0.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
 void Motion_ClearPartSlots(EntityModel *);
 s32 Motion_StepModel(ModelInstance *, s32, s32);
-void Vector_Copy(void *, void *);
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);

@@ -6,38 +6,28 @@
 #include "map_object/map_object.h"
 #include "map/map.h"
 #include "effect/effect.h"
+#include "core/game.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_collision.h"
+#include "math/vu0.h"
+#include "save/save_state.h"
+#include "script/script.h"
 
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
-void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(Entity *);
-void EntityAi_OnHit(Entity *);
-void EntityAi_Move(Entity *);
-void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 int Motion_Start(void *, int, int, u32, int);
 void EntityAi_SetState(char *, u8);
-extern u8 map_script_flags[];
-f32 EntityCollision_DistanceToPropFloor(void *, void *);
 void EntityMath_FacingVector(Vector4 *, float);
-void Vector_Scale(float *, float *, float);
 float EntityMath_DistanceXZ(void *, void *);
-extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
-void EntityAi_StepState(void *);
-int EntityAi_ThinkReturn(void *, int);
-int EntityAi_ThinkIdle(void *, int);
-void EntityAi_ThinkPursue(Entity *, s32);
-void EntityAi_ThinkCombat(Entity *, s32);
-extern EntitySpawnInfo *map_spawn_infos[2];
-extern MapSlot map_slots[];
-extern int current_map_slot;
-void Game_CountSpawnDeath(u32, int);
-int Script_Start(int, int);
 
 static void Snake_DormantHoldAnim2(Entity *entity);
 static void Snake_DormantHoldAnim8ThenMove(Entity *entity);

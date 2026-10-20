@@ -75,8 +75,8 @@ typedef struct {
     ScriptArg args[20];             /* 0x04 */
 } ScriptThreadCommand;
 
-/* what a command's handler is called with */
-typedef void (*ScriptCommandHandler)(ScriptThreadCommand *command);
+/* a command's handler: unprototyped, as each takes its own view of the command (ScriptValueCommand...) */
+typedef void (*ScriptCommandHandler)();
 
 /* a script thread (0xC4C bytes, 24 of them: threads in script/script.c) */
 typedef struct {
@@ -553,5 +553,189 @@ int Script_StoreResult(ScriptArg *target, int value);
 
 /* The command handlers are only reached through the handler tables in script/script_tables.c:
    script_general_command_handlers, script_world_command_handlers and script_entity_command_handlers. */
+
+/* script/script.c */
+void ScriptCmd_Stall(void);
+void ScriptCmd_Wait(ScriptValueCommand *command);
+void ScriptCmd_RunScript(ScriptRunScriptCommand *command);
+void ScriptCmd_Nop3(ScriptThreadCommand *command);
+void ScriptCmd_WaitForever4(void);
+void ScriptCmd_StopAllScripts(ScriptThreadCommand *command);
+void ScriptCmd_Nop8(ScriptThreadCommand *command);
+void ScriptCmd_Nop6(ScriptThreadCommand *command);
+void ScriptCmd_Nop7(ScriptThreadCommand *command);
+void ScriptCmd_StoreUninitializedResult9(ScriptLateResultCommand *command);
+void ScriptCmd_StoreUninitializedResult10(ScriptLateResultCommand *command);
+void ScriptCmd_Nop15(ScriptThreadCommand *command);
+void ScriptCmd_Nop16(ScriptThreadCommand *command);
+void ScriptCmd_Nop17(ScriptThreadCommand *command);
+void ScriptCmd_Nop18(ScriptThreadCommand *command);
+void ScriptCmd_WaitForever19(void);
+void ScriptCmd_WaitForever20(void);
+void ScriptCmd_SetCameraUnk48(ScriptFloatValueCommand *command);
+void ScriptCmd_AdvanceRecollectionPage(ScriptValueCommand *command);
+void ScriptCmd_GetRecollectionPage(ScriptQueryCommand *command);
+void ScriptCmd_SetRecollectionPage(ScriptPairCommand *command);
+void ScriptCmd_ShowSplash(ScriptWaitCommand *command);
+void ScriptCmd_SetVolumes(ScriptValueCommand *command);
+void ScriptCmd_SetSeVolume(ScriptValueCommand *command);
+void ScriptCmd_MoveRecollectionPage(ScriptPairCommand *command);
+void ScriptCmd_MarkMessageHeard(ScriptValueCommand *command);
+void ScriptCmd_RequestSoundLoad(ScriptValueCommand *command);
+void ScriptCmd_SetBgmVolume(ScriptValueCommand *command);
+void ScriptCmd_KillPlayer(ScriptThreadCommand *command);
+void ScriptCmd_ShowSplashTimed(ScriptSplashCommand *command);
+void ScriptCmd_GetEntityCounter(ScriptCallCommand *command);
+void ScriptCmd_EmptyPlayerGauges(ScriptThreadCommand *command);
+
+/* script/script_entity.c */
+void ScriptCmd_Nop200(ScriptThreadCommand *command);
+void ScriptCmd_Nop201(ScriptThreadCommand *command);
+void ScriptCmd_Nop202(ScriptThreadCommand *command);
+void ScriptCmd_Nop203(ScriptThreadCommand *command);
+void ScriptCmd_Nop204(ScriptThreadCommand *command);
+void ScriptCmd_Nop205(ScriptThreadCommand *command);
+void ScriptCmd_Nop206(ScriptThreadCommand *command);
+void ScriptCmd_Nop207(ScriptThreadCommand *command);
+void ScriptCmd_Nop208(ScriptThreadCommand *command);
+void ScriptCmd_Nop209(ScriptThreadCommand *command);
+void ScriptCmd_Nop210(ScriptThreadCommand *command);
+void ScriptCmd_Nop211(ScriptThreadCommand *command);
+void ScriptCmd_Nop212(ScriptThreadCommand *command);
+void ScriptCmd_Nop213(ScriptThreadCommand *command);
+void ScriptCmd_Nop214(ScriptThreadCommand *command);
+void ScriptCmd_Nop215(ScriptThreadCommand *command);
+void ScriptCmd_Nop216(ScriptThreadCommand *command);
+void ScriptCmd_Nop217(ScriptThreadCommand *command);
+void ScriptCmd_Sin(ScriptFloatQueryCommand *command);
+void ScriptCmd_Cos(ScriptFloatQueryCommand *command);
+void ScriptCmd_Random(ScriptQueryCommand *command);
+void ScriptCmd_RandomFloat(ScriptFloatQueryCommand *command);
+void ScriptCmd_GetPointFromPlayer(ScriptPointAheadCommand *command);
+void ScriptCmd_Atan2(ScriptAngleCommand *command);
+void ScriptCmd_GivePlayerControl(ScriptThreadCommand *command);
+void ScriptCmd_TakePlayerControl(ScriptThreadCommand *command);
+void ScriptCmd_ShowMessageBox(ScriptMessageBoxCommand *command);
+void ScriptCmd_ShowNotice(ScriptMessageCommand *command);
+void ScriptCmd_StartEntityMotion(ScriptCallCommand *command);
+void ScriptCmd_PlayEntityMotion(ScriptMotionCommand *command);
+void ScriptCmd_WaitEntityMotion(ScriptCallCommand *command);
+void ScriptCmd_TurnEntityToPlayer(ScriptStateWaitCommand *command);
+void ScriptCmd_TurnEntityBack(ScriptWaitCommand *command);
+void ScriptCmd_WalkEntityTo(ScriptWalkToCommand *command);
+void ScriptCmd_WalkEntityToFlat(ScriptWalkToFlatCommand *command);
+void ScriptCmd_TurnEntityBy(ScriptMoveCommand *command);
+void ScriptCmd_TurnEntityToward(ScriptMoveCommand *command);
+void ScriptCmd_SetEntitiesFlag5(ScriptFlagCommand *command);
+void ScriptCmd_IsEntityFacing(ScriptFacingCommand *command);
+void ScriptCmd_SetEntityAnimSpeed(ScriptCallCommand *command);
+void ScriptCmd_GetEntityPosition(ScriptEntityVectorCommand *command);
+void ScriptCmd_GetEntityRotation(ScriptEntityVectorCommand *command);
+void ScriptCmd_GetEntitySpawnPosition(ScriptEntityVectorCommand *command);
+void ScriptCmd_GetEntitySpawnRotation(ScriptEntityVectorCommand *command);
+void ScriptCmd_Distance(ScriptDistanceCommand *command);
+void ScriptCmd_Distance2D(ScriptDistance2DCommand *command);
+void ScriptCmd_SetEntityFlags(ScriptSetFlagsCommand *command);
+void ScriptCmd_GetEntityFlags(ScriptQueryCommand *command);
+void ScriptCmd_SetEntityPosition(ScriptEntityVectorCommand *command);
+void ScriptCmd_SetEntityRotation(ScriptEntityVectorCommand *command);
+void ScriptCmd_TrySetEntityFlag18(ScriptQueryCommand *command);
+void ScriptCmd_ClearEntityFlag18(ScriptObjectCommand *command);
+
+/* script/script_tables.c */
+extern ScriptCommandHandler script_general_command_handlers[];
+extern u8 *script_game_var_blocks[];
+extern ScriptCommandHandler script_world_command_handlers[];
+extern ScriptCommandHandler script_entity_command_handlers[];
+
+/* script/script_world.c */
+void ScriptCmd_OpenMenu(ScriptThreadCommand *command);
+void ScriptCmd_OpenTrade(ScriptValueCommand *command);
+void ScriptCmd_OpenSmith(ScriptThreadCommand *command);
+void ScriptCmd_OpenSaveScreen(ScriptThreadCommand *command);
+void ScriptCmd_Nop109(ScriptThreadCommand *command);
+void ScriptCmd_PlaceMapItem(ScriptValueCommand *command);
+void ScriptCmd_StartItemPickup(ScriptPairCommand *command);
+void ScriptCmd_MoveItemTo(ScriptMoveCommand *command);
+void ScriptCmd_TurnItemTo(ScriptMoveCommand *command);
+void ScriptCmd_DropItemFromEntity(ScriptSetValueCommand *command);
+void ScriptCmd_MoveItemBy(ScriptMoveCommand *command);
+void ScriptCmd_TurnItemBy(ScriptMoveCommand *command);
+void ScriptCmd_GetItemPosition(ScriptMoveCommand *command);
+void ScriptCmd_GetItemRotation(ScriptMoveCommand *command);
+void ScriptCmd_ActivateMapObject(ScriptObjectCommand *command);
+void ScriptCmd_DeactivateMapObject(ScriptObjectCommand *command);
+void ScriptCmd_MoveMapObjectTo(ScriptMoveCommand *command);
+void ScriptCmd_TurnMapObjectTo(ScriptMoveCommand *command);
+void ScriptCmd_BreakMapObject(ScriptObjectCommand *command);
+void ScriptCmd_IsMapObjectOpen(ScriptCallCommand *command);
+void ScriptCmd_SetMapObjectScripted(ScriptCallCommand *command);
+void ScriptCmd_PlayMapObjectAnim(ScriptCallCommand *command);
+void ScriptCmd_PlayMapObjectAnimRunning(ScriptCallCommand *command);
+void ScriptCmd_WaitMapObjectMotion(ScriptObjectCommand *command);
+void ScriptCmd_IsMapObjectMotionDone(ScriptCallCommand *command);
+void ScriptCmd_SetMapObjectColor(ScriptObjectValuesCommand *command);
+void ScriptCmd_SetMapObjectPartShown(ScriptCallCommand *command);
+void ScriptCmd_SignalMapObject(ScriptCallCommand *command);
+void ScriptCmd_GetMapObjectParams(ScriptObjectValuesCommand *command);
+void ScriptCmd_SetMapObjectParams(ScriptObjectShortsCommand *command);
+void ScriptCmd_MoveMapObjectBy(ScriptMoveCommand *command);
+void ScriptCmd_TurnMapObjectBy(ScriptMoveCommand *command);
+void ScriptCmd_GetMapObjectPosition(ScriptPointCommand *command);
+void ScriptCmd_GetMapObjectRotation(ScriptMoveCommand *command);
+void ScriptCmd_ResumeMapObjectAnim(ScriptObjectCommand *command);
+void ScriptCmd_PauseMapObjectAnim(ScriptObjectCommand *command);
+void ScriptCmd_MovePlayerTo(ScriptTripleCommand *command);
+void ScriptCmd_TurnPlayerTo(ScriptBlendCommand *command);
+void ScriptCmd_AddItem(ScriptPairCommand *command);
+void ScriptCmd_GetItemCount(ScriptQueryCommand *command);
+void ScriptCmd_AddPlayerHp(ScriptValueCommand *command);
+void ScriptCmd_AddPlayerMp(ScriptValueCommand *command);
+void ScriptCmd_SetPlayerCanRun(ScriptValueCommand *command);
+void ScriptCmd_GetPlayerStepCounter(ScriptValueCommand *command);
+void ScriptCmd_GetPlayerHp(ScriptPairCommand *command);
+void ScriptCmd_GetPlayerMp(ScriptPairCommand *command);
+void ScriptCmd_StartEffect(ScriptPointCommand *command);
+void ScriptCmd_FlashScreenRed(ScriptThreadCommand *command);
+void ScriptCmd_StartEffectAtPlayer(ScriptValueCommand *command);
+void ScriptCmd_LaunchShot(ScriptPointCommand *command);
+void ScriptCmd_SetCameraMode(ScriptValueCommand *command);
+void ScriptCmd_SetCameraLookAt(ScriptPointCommand *command);
+void ScriptCmd_MoveCameraTo(ScriptTripleCommand *command);
+void ScriptCmd_TurnCameraTo(ScriptTripleCommand *command);
+void ScriptCmd_ShakeCamera(ScriptCameraShakeCommand *command);
+void ScriptCmd_SetPropColor(ScriptObjectValuesCommand *command);
+void ScriptCmd_LoadMap(ScriptValueCommand *command);
+void ScriptCmd_CommitMapLoad(ScriptThreadCommand *command);
+void ScriptCmd_SetPropSolid(ScriptCallCommand *command);
+void ScriptCmd_MovePropTo(ScriptMoveCommand *command);
+void ScriptCmd_TurnPropTo(ScriptMoveCommand *command);
+void ScriptCmd_MovePropBy(ScriptMoveCommand *command);
+void ScriptCmd_TurnPropBy(ScriptMoveCommand *command);
+void ScriptCmd_GetPropPosition(ScriptPointCommand *command);
+void ScriptCmd_GetPropRotation(ScriptMoveCommand *command);
+void ScriptCmd_SetMapFog(ScriptFogCommand *command);
+void ScriptCmd_SetMapLight(ScriptLightCommand *command);
+void ScriptCmd_SetMapAmbientLight(ScriptColorCommand *command);
+void ScriptCmd_PlaySound(ScriptCallCommand *command);
+void ScriptCmd_PlaySoundAt(ScriptSoundAtCommand *command);
+void ScriptCmd_PlaySoundAtPoint(ScriptPointSoundCommand *command);
+void ScriptCmd_PlayVoiceSound(ScriptCallCommand *command);
+void ScriptCmd_PlayVoiceSoundAt(ScriptVoiceSoundCommand *command);
+void ScriptCmd_PlayVoiceSoundAtWithMode(ScriptVoiceSoundModeCommand *command);
+void ScriptCmd_StopSound(ScriptValueCommand *command);
+void ScriptCmd_PlayMovingSound(ScriptMovingSoundCommand *command);
+void ScriptCmd_PlayMovingSoundWithMode(ScriptMovingSoundModeCommand *command);
+void ScriptCmd_ChangeMap(ScriptValueCommand *command);
+void ScriptCmd_ExitMainLoop(ScriptValueCommand *command);
+void ScriptCmd_HoldFrameOnStart(ScriptValueCommand *command);
+void ScriptCmd_ReloadArmModels(ScriptWaitCommand *command);
+void ScriptCmd_SetHudShown(ScriptValueCommand *command);
+void ScriptCmd_SetScreenColor(ScriptScreenColorCommand *command);
+void ScriptCmd_RumblePad(ScriptShakeCommand *command);
+void ScriptCmd_IsScriptRunning(ScriptQueryCommand *command);
+
+/* data still in asm */
+extern char script_error_flags[];
 
 #endif

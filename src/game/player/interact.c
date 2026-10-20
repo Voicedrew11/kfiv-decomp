@@ -5,39 +5,22 @@
 #include "map_object/map_object.h"
 #include "collision/collision.h"
 #include "math/vu0.h"
+#include "core/timer.h"
+#include "enemy/enemy.h"
+#include "item/item.h"
+#include <libvu0.h>
+#include <math.h>
+#include "script/script.h"
 
 #define INTERACT_CONE_COS 0.866025f /* cos 30 degrees: objects further off the view direction are skipped */
 
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-int Timer_GetTicks(void);
-void Interact_UpdateViewRay(void);
-void Collision_CastRayAtMapLists(f32, void *, void *, s32);
 float Interact_GetDistanceWithin(float, float *, float *);
 void Collision_RayCylinder(f32, f32, f32, void *, void *, void *);
-void Collision_HitRayObj(MapObject *, f32 *, f32 *, f32);
-void sceVu0SubVector(void *, void *, void *);
-void sceVu0Normalize(float *, float *);
-float sceVu0InnerProduct(float *, float *);
-float sqrtf(float);
 int MapItem_IsPickable(void *);
 int ModelMotion_GetLastFrame(char *); // match: its u16 is halved as an int
-int Script_Start(int, int);
-int Script_IsRunning(int);
-int MapItem_StartPickup(ItemNode *);
 extern GameStatus game_status;
-extern PlayerState player_state;
 extern EventRunner view_ray_status;
 extern CameraState camera_state;
-extern f32 identity_matrix[16];
-extern MapSlot map_slots[2];
-extern MapObject map_slot_objects[][0x200];
-extern s32 map_object_counts[2];
-extern int current_map_slot;
-extern ItemNode *lying_items;
-extern ItemNode *pickup_item;
-extern f32 view_ray_no_hit_distance[];
-extern float interact_out_of_range_distance[];
 
 /* Keep last frame's view ray, then rebuild it: from the player's eyes (or the camera, in a cutscene) along the
    direction looked in. */

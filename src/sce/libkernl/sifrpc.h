@@ -105,6 +105,7 @@ int _sceSifLoadModule(void *name, int arglen, int args, int ret,
 int _sceSifLoadModuleBuffer(void *addr, int arglen, int args, void *ret);
 int _sceSifSendCmd(int cid, int mode, void *pkt, int pktsize, void *src, void *dest, int size);
 int sceSifAllocIopHeap(int size); /* definition in sce/ */
+int sceSifLoadIopHeap(char *name, void *addr); /* definition in sce/ */
 int sceSifBindRpc(struct sceSifRpcClientData *cd, unsigned int sid, int mode);
 
 int sceSifCallRpc(struct sceSifRpcClientData *cd, unsigned int rpc_number, unsigned int mode,

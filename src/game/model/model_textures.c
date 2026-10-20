@@ -1,17 +1,14 @@
 #include "common.h"
 #include "model/model.h"
 #include "gfx/texture.h"
-
-void *memset(void *, int, u32);
-void GsDraw_QueueTexFlush(void);
-void TextureTable_QueueEnabled(TextureTableHeader *, s32);
-void Map_QueuePacket(int *);
+#include "core/file.h"
+#include "gfx/gs_draw.h"
+#include "map/map.h"
 
 static int sent_texture_19C;        /* 0x447048 last model texture sent from unk19C */
 static int sent_texture_1A0;        /* 0x44704C last model texture sent from unk1A0 */
 /* 0x447050 the model texture taken as sent from unk198, by unk192; only [0] is read, and nothing but the reset
    writes it. A 4-byte object: [1] would be screen_uv_frame_copy (model/model_screen.c), so it stays extern. */
-extern int shared_texture_packet_sent[2];
 static int texture_slots[4];        /* 0x468190 chunk table last sent for each unk190 slot */
 
 /* Forgets every texture slot. */

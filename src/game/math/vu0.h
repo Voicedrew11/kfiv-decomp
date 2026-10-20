@@ -4,6 +4,7 @@
 #define KF_VU0_H
 
 #include "common.h"
+#include "model/model.h"
 
 /* Copies one 16-byte vector. */
 void Vector_Copy(void *dst, void *src);
@@ -89,5 +90,12 @@ void Vector_WeightedSum4(void *dst, void *vector0, void *vector1, void *vector2,
 
 /* dst = src scaled to length 1 (x, y, z). */
 void Vector_Normalize(void *dst, void *src);
+
+/* math/scratch_matrices.c */
+extern f32 identity_matrix[0x10];  /* the unit matrix */
+extern f32 scale_matrices[0x30];
+extern f32 fixed_normal_matrix[0x10];
+extern f32 fixed_light_matrix[0x14];
+extern Vector4 origin_point;
 
 #endif

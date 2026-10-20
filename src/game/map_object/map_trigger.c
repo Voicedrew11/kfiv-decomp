@@ -4,32 +4,17 @@
 #include "map_object/map_object.h"
 #include "map/map.h"
 #include "item/item.h"
+#include "core/file.h"
+#include <libvu0.h>
+#include "math/vu0.h"
+#include "model/model_matrix.h"
+#include <stdlib.h>
 
 /* Fade progress added each frame by the map object fade (MapObject_FadeInObject). */
 #define MAP_TRIGGER_FADE_STEP 6.6666f
 
-void MapObject_UpdateBreakingItemHolder(MapObject *);
-void MapObject_SetupItemHolder(MapObject *);
-void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void Model_MultiplyChildMatrices(ModelPart *);
-void Matrix_Multiply(void *, void *, void *);
-void sceVu0CopyMatrix(void *, void *);
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0RotMatrixZ(float *, float *, float);
-void sceVu0TransMatrix(float *, float *, float *);
-void Vector_Scale(float *, float *, float);
-void Model_SetPrimBits(ModelInstance *, s64, s64);
-void Model_SetAlphaBlend(ModelInstance *, s64);
 void Model_SetVertexColour(void *, int, int, int, int);
-int Model_FadeVertexColoursNear(int, void *, int *, int *, float);
-void *memset(void *, int, u32);
-int rand(void);
 extern GameStatus game_status;
-extern void *faced_object[];
-extern u32 game_status_flags[];
-extern f32 identity_matrix[16];
 
 /* Start handler of the save point: step 1. */
 void MapObject_StartSavePoint(MapObject *object) {

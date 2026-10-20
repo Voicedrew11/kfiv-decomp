@@ -5,62 +5,45 @@
 #include "entity/entity.h"
 #include "common.h"
 #include "effect/shot.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_aim.h"
+#include "entity/entity_collision.h"
+#include "entity/entity_events.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/vu0.h"
+#include "model/model.h"
+#include "model/motion.h"
+#include <stdlib.h>
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 extern s32 entity_type_handlers[][2];
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-void Motion_SetPartSlots(EntityModel *, s32, s32, s32);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
-void Vector_Copy(void *, void *);
-void EntityAi_Dormant(Entity *);
-extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 int EntityAi_StartSlotMotion(void *, void *, int, int, int, int, int);
 void EntityAi_CheckFarFromSpawn(void *);
 void EntityAi_StepState(void *);
-int EntityAi_ThinkReturn(void *, int);
-void EntityAi_ThinkPursue(Entity *, s32);
 extern PlayerData player_state;
-int rand(void);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
-f32 EntityCollision_DistanceToPropFloor(void *, void *);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
 int EntityAi_TurnFromPush(void *, void *);
-void EntityPoint_PickNear(float, void *, void *, void *);
-extern f32 identity_matrix[16];
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0RotMatrixZ(float *, float *, float);
-void Vector_ApplyMatrix(void *, void *, void *);
-void Vector_Scale(float *, float *, float);
 float EntityMath_HeadingTo(float *, float *);
 float EntityMath_AngleDifference(float, float);
-float sinf(float);
-float cosf(float);
-int Motion_Start(void *, int, int, u32, int);
 void EntityAi_SetState(char *, u8);
 float EntityMath_WrapAngle(float);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 void EntityAi_SetAttackDelay(Entity *entity, s32 base);
-double atan2(double, double);
-char *Model_GetSkinnedBonePoint(char *, u32);
 float EntityMath_DistanceXZ(void *, void *);
-float sqrtf(float);
-float atan2f(float, float);
 float EntityMath_AngleXZ(float *, char *);
 f32 EntityMath_Approach(f32, f32, f32);
 int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
 void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
-void EntityEvent_OnDeath(Entity *);
 int EntityAi_StepSlotMotion(Entity *, EntityMotionSlot *, int, f32);
-s32 Motion_StepSlot(Entity *, EntityAiMotionSlotBits *, s32, s32);
-void EntityEvent_StartFrameEffects(Entity *, s32, s32, s32);
 int EntityAi_LookAtPoint(void *, int, int, int, int, float);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 

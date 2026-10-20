@@ -5,38 +5,21 @@
 #include "entity/entity_math.h"
 #include "map/map.h"
 #include "collision/collision.h"
+#include "enemy/enemy.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/vu0.h"
+#include <stdlib.h>
 
 #define VERTICAL_FACE_NORMAL_Y_EPSILON 0.00001f
 #define EDGE_PERPENDICULAR_TO_FLAT_EPSILON 0.000001f
 
 extern PlayerData player_state;
-void Vector_Normalize(void *, void *);
-double sqrt(double);
-void Vector_Subtract(void *, void *, void *);
-void sceVu0Normalize(float *, float *);
-void Vector_Scale(float *, float *, float);
-void Vector_Add(void *, void *, void *);
-int rand(void);
-u32 Collision_GetSurfaceEffect(u32, u32, int);
-extern u32 frame_counter;
-int Collision_TransformMeshPoints(void *);
-u32 Collision_GetBarrierLevel(u32, u32, int);
-u32 Collision_IsBarrierFloor(u32, u32, int);
-u32 Collision_GetFloorMaterial(int, u32, u32);
-void Collision_DropOnTriangle(void *corner_a, void *corner_b, void *corner_c, void *point);
-void Collision_CapsuleTriangle(f32 *, f32 *, f32 *, f32 *, f32, f32);
-extern MapSlot map_slots[2];
-void Vector_Copy(void *, void *);
-extern int current_map_slot;
 extern s32 map_objects_started[2];
 extern s32 map_object_counts[2];
 extern MapObject map_slot_objects[];
 extern MapObject map_slot1_objects[];
-void Collision_CylinderEdge(void *, void *, f32, void *, f32, f32);
 void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
-void Collision_BallEdge(void *, void *, f32, void *, f32);
-void Collision_HitRayObj(MapObject *, f32 *, f32 *, f32);
-extern ModelInstanceBlock *map_slot_record_models[];
 
 /* tests the entity's upright capsule against the triangle at `point` and pushes `position`
    sideways out of it */

@@ -7,17 +7,13 @@
 #include <eeregs.h>
 #include <libgraph.h>
 #include "ui/menu_screens.h"
+#include "gfx/texture.h"
+#include "map/map.h"
+#include "sound/sound_game.h"
 
 #define LOGO_FRAMES         300  /* each logo stays this long */
 #define PRESS_START_FRAMES  3600 /* the PRESS START screen goes back to the logos after this long */
 #define TITLE_FADE_FRAMES   30
-
-extern char *map_file_area;
-
-int SoundDriver_PlayStreamFile(int, char *, int);
-s32 Sound_PlayMenu(s32);
-int SoundDriver_FlushCommands(void);
-void Texture_SendTexFlush(void);
 
 typedef void (*TitleScreenInit)(void);
 

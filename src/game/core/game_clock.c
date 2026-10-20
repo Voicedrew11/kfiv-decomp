@@ -1,10 +1,8 @@
 /* The game clock (GameClock.ticks, a tick a second of game time): stepping it, and moving it on to a time of
    day. Nothing calls either function. */
 #include "core/game.h"
-
-extern ClockControl game_clock_control;
-extern u32 frame_counter;              /* the frame counter */
-extern int game_clock_speed_flags;
+#include "core/display.h"
+#include "enemy/enemy.h"
 
 GameClock game_clock = { 0 };       /* 0x431CE8 the game clock */
 u32 game_clock_tail_pad[0x13E] = { 0 };      /* 0x431CF8 zero fill up to the map slot memory */

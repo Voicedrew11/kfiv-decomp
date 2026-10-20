@@ -1,8 +1,7 @@
 /* Stepping values and angles toward a target, angle wrapping, a triangle normal. */
 #include "common.h"
 #include "math/angle.h"
-
-void Vector_Subtract(float *dst, float *a, float *b);
+#include "math/vu0.h"
 
 static int Step_TowardInt(int *value, int target, int step);
 static int Step_Toward(f32 target, f32 step, f32 *value);

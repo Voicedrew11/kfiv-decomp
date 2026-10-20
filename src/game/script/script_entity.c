@@ -8,35 +8,22 @@
 #include "core/game.h"
 #include "ui/message.h"
 #include "player/player.h"
+#include "enemy/enemy.h"
+#include "entity/entity_math.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/angle.h"
+#include "math/vu0.h"
+#include <stdlib.h>
 
 
 int Script_StoreFloatResult(ScriptArg *target, double value); // match: the definition takes a float, but retail converts the argument to double here (fptodp): there was no prototype in scope
-int rand(void);
-float atan2f(float, float);
-double sqrt(double);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0ApplyMatrix(float *, float *, float *);
-void Vector_Scale(void *, void *, float);
-void Vector_Add(void *dest, void *a, void *b);
-void Game_MarkMessageHeard(int flag);
 int Motion_Start(void *, int, int, u32, int);
 int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);
-float EntityMath_HeadingTo(float *from, float *to);
-float EntityMath_AngleDifference(float angle, float heading);
 void EntityAi_SetState(char *, u8);
-f32 EntityMath_Distance(f32 *a, f32 *b);
-float EntityMath_DistanceXZ(void *a, void *b);
-float EntityMath_WrapAngle(float angle);
-float Angle_Wrap(float angle);
 
-extern f32 sine_table[];
-extern f32 identity_matrix[16];
 extern GameStatus game_status;
-extern PlayerState player_state;
-extern Entity entity_pool[][0x80];
-extern s32 current_map_slot;
-extern s32 map_spawn_counts[2];
 
 /* Command 200, and every unused number from 200 to 299: finishes at once. */
 void ScriptCmd_Nop200(ScriptThreadCommand *command) {

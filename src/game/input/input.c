@@ -1,34 +1,12 @@
 #include "input/pad.h"
 #include "core/game.h"
+#include "core/file.h"
+#include "input/input.h"
 
-void *memset(void *, int, u32);
 void Input_ReadPort(int);
-void Input_StartRumble(u8, u8, u8);
-void Input_Update(void);
 
 extern PadState pad_state;
-extern PadState pad_states[2];
-extern u16 forward_button;
-extern u16 back_button;
-extern u16 turn_right_button;
-extern u16 turn_left_button;
-extern u16 step_right_button;
-extern u16 step_left_button;
-extern u16 look_down_button;
-extern u16 look_up_button;
-extern u16 attack_button;
-extern u16 magic_button;
-extern u16 action_button;
-extern u16 menu_button;
-extern u16 shortcut_button;
-extern u16 pause_button;
 extern s8 sfx_volume[];
-extern u8 rumble_active;
-extern u8 rumble_strength;
-extern u8 rumble_frames_left;
-extern u8 rumble_frames;
-extern u8 rumble_fades;
-extern u8 rumble_paused;
 
 /* Opens controller port 0 and clears both pad states. */
 void Input_Init(void) {

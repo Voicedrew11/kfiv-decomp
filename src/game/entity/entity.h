@@ -1307,4 +1307,30 @@ void Entity_ResetAllLists(void);
 void Entity_FreeAllInGroup(int group_id);
 void Entity_DespawnOutOfRange(void);
 
+/* entity/entity_pool.c */
+int EntityPool_IsLoading(void);
+void Entity_AddGroupToWaiting(int idx);
+void Entity_UpdatePool(void);
+
+/* entity/entity_pools.c */
+extern ModelInstance entity_models[];
+extern Entity entity_pool[][0x80];
+extern Entity entity_pool_last;  /* the last entity of entity_pool */
+extern s64 entity_work_area[];
+
+/* entity/entity_type72.c */
+void EntityType72_Init(Entity *entity);
+
+/* entity/entity_types.c */
+extern ModelInstanceBlock fire_lord_model[2];
+extern ModelInstanceBlock fire_lord_older_afterimage;
+
+/* data still in asm */
+extern char chr_file_path_format[];  /* "%sc%4.4d.chr" */
+extern int chr_file_slot;  /* the file slot of the .chr being read, -1: none */
+extern char chr_directory[];  /* "chr/" */
+extern int map_spawn_counts[2];
+extern Entity *active_entities_tail;  /* list C tail */
+extern int screen_textured_entity_type;  /* type of the last entity given the screen-textured draw, -1: none */
+
 #endif

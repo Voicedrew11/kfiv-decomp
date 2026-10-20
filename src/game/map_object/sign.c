@@ -2,9 +2,7 @@
 #include "model/model.h"
 #include "ui/splash.h"
 #include "ui/message.h"
-
-extern u32 game_status_flags[];
-extern void *faced_object[];
+#include "map_object/map_object.h"
 
 /* Step 0 of the things that are only examined (kind 0xB): takes the message (the definition's name when the
    source gives none) and, from the source, whether a sign picture goes with it; step 1. */

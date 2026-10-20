@@ -6,13 +6,18 @@
 #include "common.h"
 #include "entity/entity_world.h"
 #include "effect/effect.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_events.h"
+#include "math/vu0.h"
+#include "model/model.h"
+#include <stdlib.h>
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 s32 Motion_StepModel(ModelInstance *, s32, s32);
-void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to its file
 void EntityAi_Move(Entity *);
 extern s32 entity_type_handlers[][2];
@@ -21,27 +26,18 @@ int Motion_BlendToPose(EntityModel *, f32);
 void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityAi_SetState(char *, u8);
-void EntityAi_ReactionHeavy(Entity *);
 extern PlayerData player_state;
 int Motion_Start(void *, int, int, u32, int);
-char *Model_GetSkinnedBonePoint(char *, u32);
-void EntityEvent_OnDeath(Entity *);
 int EntityAi_AnimationFrameCount(void *, int);
-extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_StepState(void *);
-int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
 int EntityAi_TurnCommand(Entity *);
-void EntityAi_Dodge(Entity *);
-void EntityAi_Guard(Entity *);
-void EntityAi_MeleeAttack(Entity *);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 void EntityAi_SetAttackDelay(Entity *, s32);
 
 static void Widdacona_Animate(Entity *entity);

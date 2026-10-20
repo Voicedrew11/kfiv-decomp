@@ -8,6 +8,9 @@
 #include "gfx/gs.h"
 #include "entity/entity.h"
 #include "libvu0.h"
+#include "libgcc2.h"
+#include "math.h"
+#include "stdlib.h"
 #include "ui/menu_screens.h"
 #include "ui/message.h"
 
@@ -85,11 +88,6 @@ static int wobble_grid_previous[8][11][2];     /* 0x467C00 the points of the fra
 static float wobble_grid_forces[8][11][2];   /* 0x467EC0 the force on each point */
 static int fade_color[3];            /* 0x468180 the fade colour */
 
-float sqrtf(float);
-int rand(void);
-u32 fptoui(float);
-void sceVu0TransMatrix(void *, void *, void *);
-void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, float, float, float);
 void Vu0_LoadMatrix(void *);
 void Vu0_ProjectToScreen(int *, void *);
 void Vector_MultiplyComponents(float *, float *, float *);
@@ -896,7 +894,7 @@ void Game_ProjectHazeLayers(void) {
     sceVu0TransMatrix(work_matrix, identity_matrix, translation);
     sceVu0RotMatrixY(work_matrix, world_view_matrix, 0.0f);
     sceVu0RotMatrixX(work_matrix, world_view_matrix, 0.0f);
-    sceVu0ViewScreenMatrix(view_matrix, 512.0f, 1.0f, 1.0f, 2048.0f, 2048.0f, 1.0f, 1048560.0f, 1.0f, 65535.0f);
+    sceVu0ViewScreenMatrix(view_matrix[0], 512.0f, 1.0f, 1.0f, 2048.0f, 2048.0f, 1.0f, 1048560.0f, 1.0f, 65535.0f);
     sceVu0MulMatrix(screen_matrix, view_matrix, work_matrix);
     sceVu0MulMatrix(screen_matrix, screen_matrix, identity_matrix);
     Vu0_LoadMatrix(screen_matrix);

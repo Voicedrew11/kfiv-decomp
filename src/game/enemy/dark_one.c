@@ -5,31 +5,25 @@
    each weapon hit counts dark_one_hits_left down and throws the player back, magic does nothing, and the hit
    that takes the count to 0 kills him; Prima's official guide (2004) describes the same fight. */
 #include "entity/entity.h"
+#include "effect/shot.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_events.h"
+#include "math/vu0.h"
+#include "player/player.h"
+#include "sound/sound_game.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32); // match: an int result keeps $2 busy after the call
-void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(Entity *);
-void EntityAi_OnHit(Entity *);
-void EntityAi_Move(Entity *);
-void EntityAi_Dormant(Entity *);
 extern s32 entity_type_handlers[][2];
-extern s32 dark_one_hits_left;
-extern u32 frame_counter;
-void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
-void EntityEvent_StartCue(Entity *, s32, s32, s32);
-int Sound_PlayMapAtRange(u8, u8, float *, float);
 void EntityAi_SensePlayer(void *, int);
-void EntityAi_StepState(void *);
-int EntityAi_ThinkIdle(void *, int);
-void EntityAi_ThinkCombat(Entity *, s32);
-extern u8 player_weapon[];
 int Motion_Start(void *, int, int, u32, int);
-void EntityEvent_OnDeath(Entity *);
 
 static void DarkOne_Think(Entity *entity, s32 unknown);
 static void DarkOne_Death(Entity *entity);

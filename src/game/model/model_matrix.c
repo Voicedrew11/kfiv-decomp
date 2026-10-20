@@ -3,32 +3,16 @@
    matrices a model is drawn with. Several builders are not called by anything. */
 #include "model/model_matrix.h"
 #include "core/game.h"
+#include "core/file.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/vu0.h"
 
-extern f32 identity_matrix[16];          /* the unit matrix */
-extern f32 scale_matrices[4][4];
-extern f32 fixed_normal_matrix[16];
-extern f32 fixed_light_matrix[16];
 extern f32 view_screen_matrix[16];
 extern f32 model_extra_transform_matrix[16];
 extern f32 world_screen_matrix[16];
 extern f32 flagged_model_transform_matrix[16];
 extern CameraState camera_state;
-extern Vector4Arg mirrored_flat_offset; /* (0, -160000, 32768, 1): z times sin(pitch) is added to y */
-
-void sceVu0CopyMatrix(void *, void *);
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0RotMatrixZ(float *, float *, float);
-void sceVu0TransMatrix(float *, float *, float *);
-void sceVu0DivVectorXYZ(void *, void *, float);
-void sceVu0SubVector(void *, void *, void *);
-void Matrix_Multiply(void *, void *, void *);
-void Vector_ApplyMatrix(void *, void *, void *);
-void *memset(void *, int, u32);
-float atan2f(float, float);
-float sqrtf(float);
-float sinf(float);
-float cosf(float);
 
 #define SCRATCH_MATRIX MODEL_MATRIX_SCRATCH
 

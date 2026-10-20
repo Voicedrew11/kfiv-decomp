@@ -14,4 +14,10 @@ int Angle_Approach(float *angle, float target, float step);
 /* Eases an angle toward target over frames steps along the shortest way round; returns 1 once it has arrived */
 int Angle_EaseToward(float target, float *angle, int frames);
 
+/* math/sine_table.c */
+extern f32 sine_table[];
+
+/* data still in asm */
+extern f32 negative_zero_angle_step_limit[];  /* -0.0f */
+
 #endif

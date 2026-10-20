@@ -2,25 +2,10 @@
    wall edges and the arc of a swing. Each leaves its result in COLLISION_RESULT at the start of the scratchpad. */
 #include "collision/collision.h"
 #include "entity/entity.h"
-
-extern const f32 negative_zero_point_triangle_limit[];      /* -0.0f */
-extern const f32 negative_zero_capsule_limit[];      /* -0.0f */
-extern const f32 negative_zero_ray_triangle_limit[];      /* -0.0f */
-extern const f32 negative_zero_drop_triangle_limit[];      /* -0.0f */
-extern const f32 negative_zero_ray_cylinder_limit[];      /* -0.0f */
-extern const f32 negative_zero_sphere_cylinder_limit[];      /* -0.0f */
-
-void Vector_Subtract(void *, void *, void *);
-void Vector_Scale(float *, float *, float);
-void Vector_Copy(void *, void *);
-void Vector_Add(void *, void *, void *);
-void Vector_Normalize(void *, void *);
-void sceVu0Normalize(float *, float *);
-float sqrtf(float);
-float atan2f(float, float);
-float asinf(float);
-float cosf(float);
-float Angle_Wrap(float);
+#include <libvu0.h>
+#include <math.h>
+#include "math/angle.h"
+#include "math/vu0.h"
 
 /* records a hit at `from`. The result is written through constant addresses (*&), not through
    a shared base register. */

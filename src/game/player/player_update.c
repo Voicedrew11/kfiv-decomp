@@ -11,6 +11,14 @@
 #include "effect/shot.h"
 #include "sound/sound.h"
 #include "math/vu0.h"
+#include "core/file.h"
+#include "gfx/gs_draw.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/angle.h"
+#include "model/motion.h"
+#include "sound/sound_game.h"
+#include <stdlib.h>
 
 static s32 swing_magic_frames;                    /* 0x447114 frames the swing-cast magic still runs */
 static s32 swing_magic_id;                        /* 0x447118 magic id cast from the swing */
@@ -26,13 +34,7 @@ extern struct PlayerWeaponModel *held_item_model_ptr;
 #define FALL_DAMAGE_MIN_SPEED 66.666664f
 #define SCREEN_TINT_STEP_PER_FRAME (1.0f / 128.0f)
 
-extern PlayerState player_state;
-extern PlayerState player_previous;      /* the player as of the frame before */
-extern PlayerScreenTint player_screen_tint;
-extern PlayerItemDef weapon_defs[];
 extern GameStatus game_status;
-extern MapSlot map_slots[];
-extern FxTableEntry fx_table[];
 extern SoundLoadQueue sound_load_queue;
 extern u16 pad_state[];
 extern u8 item_counts[];
@@ -40,25 +42,6 @@ extern s8 game_options[];
 extern u8 guardians_room_water_purified[];
 extern int current_map_slot;
 extern u32 frame_counter;
-extern int sacrificial_mask_cooldown;              /* frames until the item 0x32 may launch its effect again */
-extern f32 player_no_water_surface_y[];
-extern s8 footstep_voice;               /* what the last footstep sound returned */
-extern int recent_damage_frames;
-
-/* the pad bits of each control */
-extern u16 forward_button;              /* forward */
-extern u16 back_button;              /* back */
-extern u16 turn_right_button;              /* turn right */
-extern u16 turn_left_button;              /* turn left */
-extern u16 step_right_button;              /* step right */
-extern u16 step_left_button;              /* step left */
-extern u16 look_down_button;              /* look down */
-extern u16 look_up_button;              /* look up */
-extern u16 attack_button;
-extern u16 magic_button;
-extern u16 action_button;              /* run; pressed: use what is in front */
-extern u16 menu_button;
-extern u16 shortcut_button;
 
 /* The player's movement tables, tint colours, weapon tip and held item handlers (this file's scratch). */
 /* 0x413DE0 the top speed of each row of the movement tables (see movement_row) */
@@ -88,35 +71,14 @@ void (*item_step_handlers[8])(u16, u16) = {
     Player_HolsterWeapon, 0, 0, 0,
 };
 
-void *memset(void *, int, u32);
-float sinf(float);
-int rand(void);
-int Sound_PlayFootstep(int);
-int Sound_PlayCommon(int);
-int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
 void Player_Move(u16 held, u16 pressed); // match: retail passes both pad words
 void Player_ApplyGroundEffects(void);
 void Player_TakeFallDamage(float);
-void Player_StopWalking(void);
 void Player_UpdateBreath(void);
 void Player_UpdateAilmentImmunity(void);
-void Player_UpdateDying(void);
 void Player_UpdateStatus(void);
-void Player_RecomputeStats(void);
-void Player_SumWornBonuses(void);
-void Player_TakeDamage(int);
-void Player_TakeDamageNoRumble(int);
-int Player_LoseHp(int);
-void Player_PickChargingMagic(void);
-void Player_AddWornItemValues(u16 *, u32);
-void Player_FindMapRecord(void);
-void Player_UpdateScreenFade(void);
-int Player_KnowsItemMenuMagic(void);
-void Attack_WearWeapon(int, int);
-void Attack_WearWornItem(int idx, int amount);
 
 extern u8 spell_levels[6][5];
-extern u64 player_status_bits[];            /* player_previous.unk1C8 */
 extern GameDefinition weapon_name_defs[70];
 extern LevelRecord weapon_level_records[70];
 extern LevelDef item_name_defs[0x17C];
@@ -517,8 +479,6 @@ void Player_Update(void) {
     game_status.movement_input_enabled = 1;
 }
 
-void GsDraw_FillScreen(int, int, int, int, s64);
-
 /* Draws the colours that lie over the screen (PlayerScreenTint). */
 void Player_DrawScreenTints(void) {
     if (player_screen_tint.green_tint_alpha != 0 && player_screen_tint.kind == 0) {
@@ -552,7 +512,6 @@ void Player_DrawScreenTints(void) {
 }
 
 extern MapDrawState map_draw_state;
-extern const s8 yellow_tint_pulse[30];
 
 /* Works out the colours laid over the screen (PlayerScreenTint) for the frame: which timed
    flag shows, how strong each tint is, and the map's glow. */
@@ -746,11 +705,6 @@ void Player_UpdateActions(u16 held, u16 pressed) {
 
 extern LevelRecord weapon_level_records[];
 
-void ModelMotion_Select(ModelInstance *, int);
-void ModelMotion_Step(void *);
-void Sound_PlaySw(int mode);
-s32 Attack_Run(Unk1B1470Request *, Unk1B1470Extra *);
-
 /* Handler of a weapon that is swung: the button starts the swing; while its motion runs the
    swing hits what it reaches, plays its sound and casts the weapon's two magics when they were
    asked for in time. */
@@ -892,8 +846,6 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
     }
 }
 
-extern u8 player_weapon_step[];
-
 void Player_InvokeTargetHandler(u16 target_id, u16 command) {
     Player_UpdateWeaponAim();
     item_step_handlers[player_weapon_step[0]](target_id, command);
@@ -926,9 +878,6 @@ void Player_FireProjectile(u16 held, u16 pressed) {
 extern GameDefinition weapon_name_defs[];
 static u8 bow_shot_requests_lead_pad[8] __attribute__((section(".bss")));  /* 0x57A348 the eight bytes before the requests */
 static Unk1B1470Request bow_shot_requests[32];                     /* 0x57A350 the bow's requests, one per shot */
-
-int ModelMotion_BlendInto(ModelInstance *model, u8 index, u16 speed);
-void Sound_StopVoice(s8 slot);
 
 /* Handler of a drawn weapon while the button is held: the draw motion runs to its last frame and the
    strength builds up; letting go looses the shot, anything else lowers the weapon. */
@@ -1025,8 +974,6 @@ void Player_HolsterWeapon(u16 held, u16 pressed) {
     }
 }
 
-extern float view_ray_direction[];
-
 int Player_CanFireAtAim(void) {
     float vec[4];
     int result;
@@ -1040,9 +987,6 @@ int Player_CanFireAtAim(void) {
     }
     return result;
 }
-
-float atan2f(float, float);
-float sqrtf(float);
 
 void Player_UpdateWeaponAim(void) {
     float vec[4];
@@ -1058,23 +1002,7 @@ void Player_UpdateWeaponAim(void) {
     weapon_tip_angles[1] = atan2f(vec[0], vec[2]);
 }
 
-extern f32 identity_matrix[16];
-
 /* the pad bits of each control */
-
-float cosf(float);
-double sin(double);
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0RotMatrixZ(float *, float *, float);
-float Angle_Wrap(float);
-int Angle_Approach(float *, float, float);
-int Sound_PlayMap(int);
-int Player_CollideWithMap(void);
-void Player_PushOutOfWalls(void);
-void Player_FindFloorMaterial(void);
-void Player_CollideWithEntities(int);
-void Player_CollideWithMapObjects(int);
 
 #define PLAYER_FLAG_32 0x100000000L /* the view is levelling out */
 #define PLAYER_FLAG_37 0x2000000000L /* the view dips after a landing */

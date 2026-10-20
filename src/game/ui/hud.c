@@ -4,19 +4,13 @@
 #include "gfx/packet.h"
 #include "player/player.h"
 #include "gfx/texture.h"
+#include "core/memory.h"
+#include "gfx/gs_draw.h"
+#include "map/map.h"
 
 void TextureTable_SetBasePointers(char *, int, int);
-void Hud_InitSprite(ScreenSprite *, s64, u64, u64, u8, u8, u8, u8, s32, s32, u32, s32, s32, s32, s32, s32, s32);
-void TextureTable_QueueAll(TextureTableHeader *);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-void GsDraw_QueueTexturedSprite(void *);
 
 extern char game_options[0x10]; // match: read as a signed byte here
-extern s32 hud_visible[];
-extern PlayerState player_state;
-extern char *hud_area;          /* the HUD area, where gage.tx2 is loaded */
 
 static TextureTableHeader *pause_texture_table; /* 0x4471F0 pause.tx2, loaded after gage.tx2 */
 static ScreenSprite hud_sprites[10];            /* 0x5CDE18 the frame and bars of the HUD */

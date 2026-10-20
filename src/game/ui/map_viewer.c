@@ -12,6 +12,22 @@
 #include "gfx/texture.h"
 #include "input/pad.h"
 #include "ui/message.h"
+#include "core/display.h"
+#include "core/file.h"
+#include "enemy/enemy.h"
+#include "gfx/draw_list.h"
+#include "gfx/gs_draw.h"
+#include "input/input.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/angle.h"
+#include "math/vu0.h"
+#include "model/model.h"
+#include "model/model_matrix.h"
+#include "save/save_state.h"
+#include "sound/sound.h"
+#include "sound/sound_game.h"
+#include <stdio.h>
 
 /* Picture pixels per 1000 world units on each map picture of the viewer. */
 #define CARETAKERS_MAP_X_SCALE 24.615385f
@@ -29,71 +45,13 @@ int MapViewer_IsKingsMapUsable(int);
 void MapViewer_Reset(void);
 static void MapViewer_RestorePacketBuffers(void);
 static int MapViewer_Load(void);
-void Sound_MuteTracked(void);
-void Sound_UnmuteTracked(void);
-void Sound_UpdateTagged(void);
-void Sound_MuteTagged(void);
-void Sound_UnmuteTagged(void);
-void Sound_UnmutePositional(void);
-void Sound_MutePositional(void);
-int SoundDriver_FlushCommands(void);
-void *memset(void *, int, u32);
 u8 Packet_WaitForSend(void); // match: u8 here; declared void, the call site is compiled differently
-void Packet_LayOutBuffers(int);
-int sprintf(char *, char *, ...);
-int File_Open(char *, int, int);
-int File_Close(int);
-int File_Read(int, void *, int);
-void Packet_GetSpareArea(int *, int *);
 void TextureTable_SetBasePointers(char *, int, int);
-void Model_MultiplyChildMatrices(ModelPart *);
-void Model_SetUpPosed(ModelInstance *, char **, char **);
-void Model_SetPrimBits(ModelInstance *, s64, s64);
-void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-void Vector_Copy(void *, void *);
-void Display_SwapBuffers(int);
-void Packet_SendChain(void);
-void Packet_SwapBuffers(void);
-void DrawList_Clear(void);
-void Packet_OnFrameStart(void);
-void Packet_OnFrameEnd(void);
-void Input_Update(void);
-float cosf(float);
-float sinf(float);
-void Game_ApplyBrightness(int);
-void Packet_AppendToChain(u32 *, u32 *);
-u32 *Packet_Alloc(int);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-void GsDraw_QueueFlush(void);
-void GsDraw_QueueTexFlush(void);
-void GsDraw_QueueTexturedSprite(void *);
-void TextureTable_QueueOne(TextureTableHeader *, s32);
-void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, float, float, float);
-void sceVu0TransMatrix(float *, float *, float *);
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0MulMatrix(void *, void *, void *);
-void Vector_Scale(float *, float *, float);
-void Vector_Subtract(void *, void *, void *);
-void GsDraw_QueueVu1Matrix(void *);
 static void MapViewer_DrawKingsMap(void);
 void MapViewer_DrawPictureMap(void);
-float Angle_Wrap(float);
-void Vector_Add(void *, void *, void *);
-void Vector_Normalize(void *, void *);
-void Game_BlendScreenOffsetDown(void);
-void Game_TintScreen(int, int, int);
-void Model_DrawPosed(ModelInstance *);
 
 extern int game_status[];
-extern MapSlot map_slots[];
-extern int current_map_slot;
-extern u8 game_options[0x10];
 extern u16 pad_state[];
-extern PlayerState player_state;
 extern ViewerEntry viewer_entries[];
 extern ScreenQuad viewer_marker_rect;
 extern ScreenQuad viewer_picture_rect;
@@ -106,13 +64,10 @@ extern char viewer_texture_file_name_format[];       /* "map_view/%3.3d.tx2" */
 extern char viewer_pointer_model_path[];       /* "map_view/pointer.omd" */
 extern f32 float_largest_value[];        /* the largest float */
 extern f32 float_lowest_value[];        /* the lowest float */
-extern f32 identity_matrix[16];      /* the unit matrix */
 extern MapDrawState map_draw_state;
 extern MapLightBlock viewer_default_lights;
 extern char kings_map_overlay_rect[0x40];
 extern char kings_map_corner_rect[0x40];
-extern s64 game_dbuff_clear_color[];
-extern s64 game_dbuff_context2_clear_color[];
 
 /* the map viewer: the picture data read into the spare area, the viewer picked, and its animation */
 static char *viewer_data;                   /* 0x44705C the spare area the viewer's textures are read into */

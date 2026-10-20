@@ -3,24 +3,16 @@
 #include "map_object/map_object.h"
 #include "item/gold.h"
 #include "core/game.h"
+#include "core/file.h"
+#include "sound/sound_game.h"
 
 ItemNode *MapItem_PutOutForObject(int, int, void *, void *, void *, void *);
 int MapItem_StartPickup(ModelNode *);
 void MapObject_SpawnHeldItem(MapObject *);
-void MapObject_UpdateBreaking(MapObject *);
-void *memset(void *, int, u32);
-void MapObject_ShowKeyUsed(int);
-int Sound_PlayMapAtRange(u8, u8, float *, float);
-void MapObject_UpdateOpenChest(MapObject *);
 ModelNode *MapItem_FindForObject(int);
-void MapObject_UpdateClosedChest(void *, int);
-void MapObject_SetupItemHolder(MapObject *);
 extern void (*map_object_update_hooks[])(MapObject *);
-extern Qword object_item_scale;
-extern void *faced_object[];
 extern u8 item_counts[];
 extern GameStatus game_status;
-extern u32 game_status_flags[];
 extern EventRunner view_ray_status;
 
 /* Step 1 of the bones and gravestones (kind 3): used by the player, one that still holds its item spawns it

@@ -5,45 +5,26 @@
 #include "gfx/gs.h"
 #include "ui/message.h"
 #include "gfx/screen.h"
+#include "gfx/gs_draw.h"
+#include "gfx/packet.h"
+#include "input/input.h"
+#include "math/vu0.h"
+#include "model/motion.h"
+#include "player/player_update.h"
+#include "save/save_state.h"
 
 /* one of the nine values: the item's base plus what it gained, scaled by LevelRecord.level in percent */
 #define ADD_SCALED(n) totals[n] += (def->base_values[n] + record->gained_values[n]) * record->level / 100
 
-void Vector_Normalize(void *dst, void *src);
-void Input_StartRumble(u8, u8, u8);
-void Player_UpdateDying(void);
 void Player_AddItemBonuses(int);
-void Player_TakeDamageNoRumble(int);
-int Player_LoseHp(int);
-void Player_FlashDamage(void);
-MapRecordInfo *Map_FindRecordAtInSlot(CameraState *, f32, int);
-int ModelMotion_BlendInto(ModelInstance *model, u8 index, u16 speed);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-void GsDraw_FillScreen(int, int, int, int, s64);
 int Sound_PlaySw(int); // match: an int return (the definition is void) keeps $2 busy in Player_BounceWeapon
 int Sound_PlayCommon(int);
 
-extern PlayerState player_state;
-extern int player_hp_max[];            /* player_state.hp_max */
-extern int player_previous_fade_level[];            /* player_previous + 0x2A4 */
 /* 0x414580 the tint the damage and the statuses fade the screen with (Player_DrawScreenTints draws it) */
 PlayerScreenTint player_screen_tint = { 0 };
-extern PlayerItemDef weapon_defs[];
-extern FxTableEntry fx_table[];
-extern LevelRecord weapon_level_records[70];
-extern LevelRecord worn_item_level_records[];
-extern LevelRecordDef worn_defs[];
-extern const PlayerLevelStep player_level_steps[];
 extern GameStatus game_status;
-extern MapSlot map_slots[];
 extern DisplayContext *held_item_model_ptr;
 extern int current_map_slot;
-extern s8 footstep_voice;
-extern int recent_damage_frames;
-extern u8 spell_levels[6][5];
-extern u16 spell_experience[6][5];
 
 /* Works out what the worn items add: clears unkDC to unk10C, lets every worn item add its part, then
    turns the four rates into frame counts. */
@@ -348,7 +329,7 @@ void Player_FindMapRecord(void) {
     PlayerState *player = &player_state;
     MapRecordInfo *record;
 
-    record = Map_FindRecordAtInSlot((CameraState *)player, 100.0f, current_map_slot);
+    record = Map_FindRecordAtInSlot((f32 *)player, 100.0f, current_map_slot);
     if (record != NULL) {
         // match: retail shifts by 14, not by 7 (the records are 0x80 bytes each)
         player->map_index = (u32)((char *)record - map_slots[current_map_slot].records) >> 14;

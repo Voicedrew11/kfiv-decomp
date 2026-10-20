@@ -5,37 +5,34 @@
 #include "entity/entity.h"
 #include "common.h"
 #include "entity/entity_world.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_collision.h"
+#include "entity/entity_events.h"
+#include <libvu0.h>
+#include "math/vu0.h"
+#include <stdlib.h>
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 s32 Motion_StepModel(ModelInstance *, s32, s32);
-void Vector_Copy(void *, void *);
-void EntityAi_Dormant(Entity *);
 extern s32 entity_type_handlers[][2];
 void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityAi_SetState(char *, u8);
-void EntityAi_ReactionRewind(Entity *);
 int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-extern u32 frame_counter;
 extern PlayerData player_state;
 extern u8 dark_succubus_fight_started[];
 // match: the size is unknown; a complete small type would be read through $gp
 extern f32 dark_succubus_no_floor_height_think[];
-int rand(void);
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(void *);
 void EntityAi_StepState(void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
-int EntityAi_ThinkReturn(void *, int);
-int EntityAi_ThinkIdle(void *, int);
-void EntityAi_ThinkPursue(Entity *, s32);
-f32 EntityCollision_DistanceToPropFloor(void *, void *);
-void EntityEvent_StartCue(Entity *, s32, s32, s32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 float EntityMath_AngleXZ(float *, char *);
 float EntityMath_AngleDifference(float angle_from, float angle_to);
@@ -49,20 +46,10 @@ s32 EntityAi_IsPushedFromFront(Entity *, f32);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_PickAttack(char *);
 int Motion_Start(void *, int, int, u32, int);
-extern f32 identity_matrix[16];
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0RotMatrixZ(float *, float *, float);
-void Vector_ApplyMatrix(void *, void *, void *);
-void Vector_Scale(float *, float *, float);
-void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
 void EntityAi_SetAttackDelay(Entity *, s32);
-void EntityEvent_OnDeath(Entity *);
 s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
-int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 // match: the size is unknown (a complete small type would be read through $gp) and it is
 // const: the store to unk54 may then be scheduled after the lui of this address
-extern const f32 dark_succubus_no_floor_height_arc[];
 f32 EntityMath_Approach(f32, f32, f32);
 int EntityAi_AnimationFrameCount(void *, int);
 
