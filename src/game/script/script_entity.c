@@ -23,6 +23,10 @@
 
 
 
+/* the steps of ScriptCmd_TurnEntityToPlayer (ScriptStateWaitCommand.step) */
+#define TURN_ENTITY_TO_PLAYER_STEP_TURN     0       /* sets the entity to turn to the player */
+#define TURN_ENTITY_TO_PLAYER_STEP_WAIT     1       /* waits for the turn to finish */
+
 /* Command 200, and every unused number from 200 to 299: finishes at once. */
 void ScriptCmd_Nop200(ScriptThreadCommand *command) {
     command->active = 0;
@@ -284,7 +288,7 @@ void ScriptCmd_TurnEntityToPlayer(ScriptStateWaitCommand *command) {
         }
         if (entity->params->flags & ENTITY_PARAMS_FLAG_TURNS_IN_PLACE) {
             switch (command->step) {
-            case 0:
+            case TURN_ENTITY_TO_PLAYER_STEP_TURN:
                 heading = EntityMath_HeadingTo(entity->model->position, &player_state.position.x);
                 turn = EntityMath_AngleDifference(entity->model->rotation[1], heading);
                 if (entity->state == NPC_STATE_WATCH_PLAYER) {
@@ -296,7 +300,7 @@ void ScriptCmd_TurnEntityToPlayer(ScriptStateWaitCommand *command) {
                 EntityAi_SetState(entity, NPC_STATE_TURN_TO_PLAYER);
                 command->step++;
                 return;
-            case 1:
+            case TURN_ENTITY_TO_PLAYER_STEP_WAIT:
                 if (--command->frames.value > 0) {
                     return;
                 }
@@ -310,7 +314,7 @@ void ScriptCmd_TurnEntityToPlayer(ScriptStateWaitCommand *command) {
             }
         } else {
             switch (command->step) {
-            case 0:
+            case TURN_ENTITY_TO_PLAYER_STEP_TURN:
                 if (entity->state == NPC_STATE_WATCH_PLAYER) {
                     command->active = 0;
                     return;
@@ -318,7 +322,7 @@ void ScriptCmd_TurnEntityToPlayer(ScriptStateWaitCommand *command) {
                 EntityAi_SetState(entity, NPC_STATE_TURN_TO_PLAYER);
                 command->step++;
                 return;
-            case 1:
+            case TURN_ENTITY_TO_PLAYER_STEP_WAIT:
                 if (--command->frames.value > 0) {
                     return;
                 }
