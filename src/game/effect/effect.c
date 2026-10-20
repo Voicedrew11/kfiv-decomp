@@ -22,6 +22,11 @@
 #include "model/model_matrix.h"
 #include "sound/sound_game.h"
 
+/* EffectDef.texture_anim_mode: how the texture frames run */
+#define EFFECT_TEXTURE_ANIM_LOOP            0       /* loops back to the first frame */
+#define EFFECT_TEXTURE_ANIM_ONCE            1       /* runs once */
+#define EFFECT_TEXTURE_ANIM_ONCE_HOLD       2       /* runs once and holds the last frame */
+
 
 extern void (*effect_draw_hooks[4][4])(ModelInstance *);
 extern void (*effect_kind_handlers[][2])();
@@ -430,16 +435,16 @@ void Effect_DrawAll(int pass) {
         if (effect->def->texture_frame_count != 0) {
             step = (effect->frame + 1) / (effect->def->texture_frame_interval + 1);
             switch (effect->def->texture_anim_mode) {
-            case 0:
+            case EFFECT_TEXTURE_ANIM_LOOP:
                 record_id = step % effect->def->texture_frame_count;
                 break;
-            case 1:
+            case EFFECT_TEXTURE_ANIM_ONCE:
                 // match: past the last frame record_id keeps whatever the effect before left in it
                 if (step < effect->def->texture_frame_count) {
                     record_id = step;
                 }
                 break;
-            case 2:
+            case EFFECT_TEXTURE_ANIM_ONCE_HOLD:
                 record_id = effect->def->texture_frame_count - 1;
                 if (step < effect->def->texture_frame_count) {
                     record_id = step;
