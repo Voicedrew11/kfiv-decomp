@@ -19,6 +19,10 @@
 #include "save/save_state.h"
 #include "player/player.h"
 
+/* Entity.action_step values of the forest golem's own actions past the shared ones */
+#define FOREST_GOLEM_STEP_START_SCRIPT  2   /* on its action frame starts its map script, on the current map only */
+#define FOREST_GOLEM_STEP_RUMBLE        3   /* rumbles the controller on its shake frames, ends with the motion */
+
 /* ai_state->move_choice: walks straight at the player */
 #define FOREST_GOLEM_MOVE_CHOICE_WALK_IN 1
 
@@ -170,7 +174,7 @@ static void ForestGolem_StartScriptAndRumble(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case FOREST_GOLEM_STEP_START_SCRIPT:
         if ((s16)entity->params->action_frames < entity->model->level_tables->frame) { // match: read signed here
             if (entity->group_id == current_map_slot) {
                 // match: an int result keeps $2 busy after the call
@@ -179,7 +183,7 @@ static void ForestGolem_StartScriptAndRumble(Entity *entity) {
             }
         }
         break;
-    case 3:
+    case FOREST_GOLEM_STEP_RUMBLE:
         for (i = 0; i < 4; i++) {
             if (entity->model->level_tables->frame == shake_frames.frames[i]) {
                 if (entity->distance_to_player < 3000.0f) {
@@ -461,7 +465,7 @@ static void ForestGolem_SignalMapObject(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (entity->model->level_tables->frame == 0x14) {
             map_object = MapObject_GetById(entity->group_id, ai_state->action_flags);
             if (map_object != NULL) {

@@ -15,6 +15,10 @@
 #include "entity/entity_math.h"
 #include "player/player.h"
 
+/* Entity.action_step values past the shared ones */
+#define FIRE_ELEMENTAL_STAND_STEP_WATCH       2   /* stands its ground facing the player, dodging, guarding or attacking */
+#define FIRE_ELEMENTAL_BACK_AWAY_STEP_BACK    2   /* backs away from the player until it is far from its spawn */
+
 static void FireElemental_Think(Entity *entity, s32 run_now);
 static void FireElemental_ThinkCombat(Entity *entity, s32 run_now);
 static void FireElemental_StandAndAttack(Entity *entity);
@@ -241,7 +245,7 @@ static void FireElemental_StandAndAttack(Entity *entity) {
         }
         EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         break;
-    case 2:
+    case FIRE_ELEMENTAL_STAND_STEP_WATCH:
         if (ai_state->sub_timer > 0) {
             ai_state->sub_timer--;
         }
@@ -576,7 +580,7 @@ static void FireElemental_BackAwayFromPlayer(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case FIRE_ELEMENTAL_BACK_AWAY_STEP_BACK:
         if (FireElemental_ShouldDodgeMagic(entity, 200.0f, DEG_TO_RAD(60))) {
             EntityAi_StartAction(entity, EntityAi_Dodge, 1);
             break;
