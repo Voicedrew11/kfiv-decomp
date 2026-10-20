@@ -21,6 +21,9 @@
 /* Entity.ai_state.move_choice 1: walks to the point near the spawn, stopping 50 short of it */
 #define SPIDER_MOVE_CHOICE_TO_POINT 1
 
+/* Spider_Dormant: Entity.action_step */
+#define SPIDER_DORMANT_STEP_LEAVE_SPAWN 1           /* waits until it is pitch_limit_deg from its spawn point, then thinks */
+
 static void Spider_Animate(Entity *entity);
 static void Spider_Think(Entity *entity, s32 run_now);
 static void Spider_ThinkWander(Entity *entity, s32 run_now);
@@ -342,7 +345,7 @@ static void Spider_Dormant(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
         entity->action_step++;
         break;
-    case 1:
+    case SPIDER_DORMANT_STEP_LEAVE_SPAWN:
         if (EntityMath_DistanceXZ(entity->model->position, &entity->spawn_info->spawn_x) >= (f32)entity->params->pitch_limit_deg) {
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
             ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
