@@ -15,6 +15,14 @@
 #include "player/player.h"
 #include "save/save_state.h"
 
+/* Entity.state of type 15 (its own state machine; states 0 to 3 stand) */
+#define NPC_STATE_REACT     4   /* turns to the player, or reacts to it (Npc_ThinkReactToPlayer) */
+#define NPC_STATE_WATCH     5   /* watches the player until it is farther than EntityParams.attack_range */
+#define NPC_STATE_TURN_BACK 6   /* turns back to the spawn heading, or stops watching */
+
+
+/* EntitySpawnInfo.spawn_mode: the spawn whose map script flag plays its turn animations 0x1E and 0x1F */
+#define NPC_SPAWN_MODE_SCRIPTED 1
 
 static void Npc_Animate(Entity *entity);
 static void Npc_OnHit(Entity *entity);
@@ -129,20 +137,20 @@ static void Npc_OnHit(Entity *entity) {
 void Npc_Think(Entity *entity, s32 run_now) {
     if (entity->busy_flags == 0) {
         switch (entity->state) {
-        case 4:
+        case NPC_STATE_REACT:
             if (entity->params->flags & ENTITY_PARAMS_FLAG_TURNS_IN_PLACE) {
                 Npc_ThinkTurnToPlayer(entity, run_now);
             } else {
                 Npc_ThinkReactToPlayer(entity, run_now);
             }
             break;
-        case 5:
+        case NPC_STATE_WATCH:
             Npc_ThinkWatchPlayer(entity, run_now);
             if (entity->params->attack_range < entity->distance_to_player) {
-                EntityAi_SetState(entity, 6);
+                EntityAi_SetState(entity, NPC_STATE_TURN_BACK);
             }
             break;
-        case 6:
+        case NPC_STATE_TURN_BACK:
             if (entity->params->flags & ENTITY_PARAMS_FLAG_TURNS_IN_PLACE) {
                 Npc_ThinkTurnBack(entity, run_now);
             } else {
@@ -266,7 +274,7 @@ static void Npc_TurnToPlayer(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-        if (entity->spawn_info->spawn_mode == 1
+        if (entity->spawn_info->spawn_mode == NPC_SPAWN_MODE_SCRIPTED
             && map_script_flags[entity->spawn_info->map_object_id + entity->spawn_info->variant * 0x40] == entity->spawn_info->second_map_object_id) {
             if (0.0f <= angle) {
                 Motion_Start(entity, 0x1F, 0, entity->params->motion_blend_frames, 0);
@@ -317,7 +325,7 @@ static void Npc_TurnToSpawnHeading(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->spawn_info->spawn_rotation_y);
-        if (entity->spawn_info->spawn_mode == 1
+        if (entity->spawn_info->spawn_mode == NPC_SPAWN_MODE_SCRIPTED
             && map_script_flags[entity->spawn_info->map_object_id + entity->spawn_info->variant * 0x40] == entity->spawn_info->second_map_object_id) {
             if (0.0f <= angle) {
                 Motion_Start(entity, 0x1F, 0, entity->params->motion_blend_frames, 0);
@@ -367,7 +375,7 @@ static void Npc_ReactionHeavy(Entity *entity) {
     entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
     case 0:
-        if (entity->spawn_info->spawn_mode == 1
+        if (entity->spawn_info->spawn_mode == NPC_SPAWN_MODE_SCRIPTED
             && map_script_flags[entity->spawn_info->map_object_id + entity->spawn_info->variant * 0x40] == entity->spawn_info->second_map_object_id) {
             Motion_Start(entity, 0x12, 0, 5, 1);
         } else {
@@ -384,7 +392,7 @@ static void Npc_ReactionHeavy(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = kind;
         }
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAG_BITS(entity)->animates = 1;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->attack_window = 0;
         ENTITY_FLAG_BITS(entity)->guarding = 0;
         if (ENTITY_PARAMS_MOVEMENT_KIND(params) == ENTITY_PARAMS_MOVEMENT_WALK) {
@@ -426,7 +434,7 @@ static void Npc_Death(Entity *entity) {
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
-        if (entity->spawn_info->spawn_mode == 1
+        if (entity->spawn_info->spawn_mode == NPC_SPAWN_MODE_SCRIPTED
             && map_script_flags[entity->spawn_info->map_object_id + entity->spawn_info->variant * 0x40] == entity->spawn_info->second_map_object_id) {
             Motion_Start(entity, 0x13, 0, 5, 1);
         } else {
@@ -442,7 +450,7 @@ static void Npc_Death(Entity *entity) {
             }
             ENTITY_FLAG_BITS(entity)->motion_step_mode = kind;
         }
-        ENTITY_FLAG_BITS(entity)->animates = 1;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
         ENTITY_FLAG_BITS(entity)->dying = 1;
         ENTITY_FLAG_BITS(entity)->no_player_collision = 1;
@@ -457,7 +465,7 @@ static void Npc_Death(Entity *entity) {
     case 2:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->action_timer = 20;
-            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;
             ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             EntityEvent_OnDeath(entity);
@@ -539,7 +547,7 @@ static void Npc_Move(Entity *entity) {
     } else {
         ai_state->move_speed = 0.0f;
     }
-    if (entity->spawn_info->spawn_mode == 1
+    if (entity->spawn_info->spawn_mode == NPC_SPAWN_MODE_SCRIPTED
         && map_script_flags[entity->spawn_info->map_object_id + entity->spawn_info->variant * 0x40] == entity->spawn_info->second_map_object_id) {
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 0);
     } else if (entity->move_command & MOVE_COMMAND_FORWARD) {

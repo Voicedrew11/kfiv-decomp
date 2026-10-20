@@ -14,6 +14,9 @@
 #include "model/motion.h"
 #include "player/player.h"
 
+/* EntitySpawnInfo.spawn_mode: the default spawn, which keeps the think handler with states */
+#define LAVA_LIZARD_SPAWN_MODE_DEFAULT 0
+
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void LavaLizard_Think(Entity *entity, s32 run_now);
@@ -33,7 +36,7 @@ void LavaLizard_Init(Entity *entity) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
     EntityAi_SetUpdate(entity, entity_type_handlers[entity->params->entity_type][1]);
-    if (entity->spawn_info->spawn_mode != 0) {
+    if (entity->spawn_info->spawn_mode != LAVA_LIZARD_SPAWN_MODE_DEFAULT) {
         ai_state->think = LavaLizard_ThinkNoStates;
     } else {
         ai_state->think = LavaLizard_Think;
@@ -85,13 +88,13 @@ static void LavaLizard_Think(Entity *entity, s32 run_now) {
             EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 EntityAi_ThinkIdle(entity, run_now);
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 LavaLizard_ThinkCombat(entity, run_now);
                 break;
             default:
@@ -134,14 +137,14 @@ static void LavaLizard_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, LavaLizard_RangedAttack0, run_now);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->step_index == 0 && ABS(angle) < DEG_TO_RAD(60) &&
                 (f32)ENTITY_CONTROLLER(entity)->action_frames < entity->distance_to_player) {
@@ -150,18 +153,18 @@ static void LavaLizard_ThinkCombat(Entity *entity, s32 run_now) {
             }
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -313,13 +316,13 @@ static void LavaLizard_ThinkDecideShootOrTurn(Entity *entity, s32 run_now) {
         if (ABS(angle) > DEG_TO_RAD(30)) {
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
         } else {
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         entity->move_command = EntityAi_TurnCommand(entity);
     }
     EntityAi_StartAction(entity, ai_state->move, run_now);

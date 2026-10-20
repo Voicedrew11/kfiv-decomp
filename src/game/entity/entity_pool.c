@@ -467,8 +467,8 @@ static int EntityPool_ClaimBlock(void) {
         slot = &entity_pool_slots[i];
         if ((slot->head.word >> 9) & 1) { continue; }
         if ((slot->head.word >> 8) & 1) { continue; }
-        if (slot->head.fields.kind == 0) { return i; }
-        if (slot->head.fields.kind != 4) { continue; }
+        if (slot->head.fields.kind == ENTITY_POOL_FREE) { return i; }
+        if (slot->head.fields.kind != ENTITY_POOL_READY) { continue; }
         if (slot->entity_count != 0) { continue; }
         if (slot->reuse_delay != 0) { continue; }
         if (best == -1 || (u32)slot->age < (u32)entity_pool_slots[best].age) {
@@ -476,9 +476,9 @@ static int EntityPool_ClaimBlock(void) {
         }
     }
     if (best >= 0) {
-        entity_pool_slots[best].head.fields.kind = 0;
-        if ((i = best + 1) < 5 && entity_pool_slots[i].head.fields.kind == 5) {
-            entity_pool_slots[i].head.fields.kind = 0;
+        entity_pool_slots[best].head.fields.kind = ENTITY_POOL_FREE;
+        if ((i = best + 1) < 5 && entity_pool_slots[i].head.fields.kind == ENTITY_POOL_EXTENSION) {
+            entity_pool_slots[i].head.fields.kind = ENTITY_POOL_FREE;
         }
     }
     return best;

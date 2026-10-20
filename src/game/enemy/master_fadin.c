@@ -14,6 +14,15 @@
 #include "model/motion.h"
 #include "player/player.h"
 
+/* Entity.state: this type sets it itself, not with EntityAi_StepState */
+#define MASTER_FADIN_STATE_IDLE     0
+#define MASTER_FADIN_STATE_SHOOTING 1   /* shoots at the player; the state is set elsewhere */
+#define MASTER_FADIN_STATE_ALERT    2   /* shoots; set when the partner dies (MasterFadin_AlertPartner) */
+
+/* EntitySpawnInfo.spawn_mode */
+#define MASTER_FADIN_SPAWN_MODE_RESPAWN 1   /* respawns the others with the same params */
+#define MASTER_FADIN_SPAWN_MODE_PARTNER 2   /* takes the state of its partner and alerts it on death */
+
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void MasterFadin_Think(Entity *entity, s32 run_now);
@@ -69,7 +78,7 @@ static void MasterFadin_Think(Entity *entity, s32 run_now) {
     Entity *leader;
     Entity *other;
 
-    if (entity->spawn_info->spawn_mode == 2) {
+    if (entity->spawn_info->spawn_mode == MASTER_FADIN_SPAWN_MODE_PARTNER) {
         leader = Entity_GetBySpawnId(entity->spawn_info->variant);
         if (leader != NULL) {
             if (ENTITY_FLAG_BITS(leader)->dying >= 2) {
@@ -80,7 +89,7 @@ static void MasterFadin_Think(Entity *entity, s32 run_now) {
             entity->state = leader->state;
         }
     }
-    if (entity->spawn_info->spawn_mode == 1) {
+    if (entity->spawn_info->spawn_mode == MASTER_FADIN_SPAWN_MODE_RESPAWN) {
         for (other = active_entities_head; other != NULL; other = other->next) {
             if (other->params == entity->params && other != entity && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST)) {
                 if (!ENTITY_FLAG_BITS(other)->live || ENTITY_FLAG_BITS(other)->dying >= 3) {
@@ -91,11 +100,11 @@ static void MasterFadin_Think(Entity *entity, s32 run_now) {
     }
     if (entity->busy_flags == 0) {
         switch (entity->state) {
-        case 1:
-        case 2:
+        case MASTER_FADIN_STATE_SHOOTING:
+        case MASTER_FADIN_STATE_ALERT:
             MasterFadin_ThinkShootAtPlayer(entity, run_now);
             break;
-        case 0:
+        case MASTER_FADIN_STATE_IDLE:
         default:
             EntityAi_StartAction(entity, ai_state->move, run_now);
             break;
@@ -105,7 +114,7 @@ static void MasterFadin_Think(Entity *entity, s32 run_now) {
     if (ai_state->pause_timer > 0) {
         ai_state->pause_timer--;
     } else {
-        entity->state = 0;
+        entity->state = MASTER_FADIN_STATE_IDLE;
     }
 }
 
@@ -230,11 +239,11 @@ static void MasterFadin_Death(Entity *entity) {
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
-            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;
             ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             entity->action_timer = 20;
-            if (entity->spawn_info->spawn_mode != 2) {
+            if (entity->spawn_info->spawn_mode != MASTER_FADIN_SPAWN_MODE_PARTNER) {
                 EntityEvent_OnDeath(entity);
             } else {
                 MasterFadin_AlertPartner(entity);
@@ -262,7 +271,7 @@ static void MasterFadin_AlertPartner(Entity *entity) {
     partner = Entity_GetBySpawnId(entity->spawn_info->variant);
     if (partner != NULL) {
         if ((partner->flags & (ENTITY_FLAG_LIVE | ENTITY_FLAG_DYING_MASK)) == 2) {
-            partner->state = 2;
+            partner->state = MASTER_FADIN_STATE_ALERT;
             partner->ai_state.pause_timer = partner->params->type_param_0;
         }
     }

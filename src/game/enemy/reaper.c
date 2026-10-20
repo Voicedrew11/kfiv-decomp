@@ -79,10 +79,10 @@ static void Reaper_Think(Entity *entity, s32 run_now) {
     if (entity->busy_flags == 0) {
         EntityAi_StepState(entity);
         switch (entity->state) {
-        case 0:
-        case 1:
+        case ENTITY_STATE_UNAWARE:
+        case ENTITY_STATE_SEARCHING:
             break;
-        case 2:
+        case ENTITY_STATE_NOTICED:
             Reaper_ThinkCombat(entity, run_now);
             break;
         }
@@ -117,7 +117,7 @@ static void Reaper_ThinkCombat(Entity *entity, s32 run_now) {
                 entity->choice_change_frame = frame_counter;
             }
             EntityAi_LowerChoiceWeight(entity, side);
-            if (entity->combat_choice == 0) {
+            if (entity->combat_choice == COMBAT_CHOICE_ATTACK) {
                 if (EntityAi_CanShoot(entity)) {
                     EntityAi_PickRangedAttack(entity);
                     EntityAi_StartAction(entity, Reaper_RangedAttack, run_now);

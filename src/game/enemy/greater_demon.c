@@ -20,6 +20,9 @@
 #include "entity/entity_math.h"
 #include "player/player.h"
 
+/* EntitySpawnInfo.spawn_mode: the spawn that weights its ranged attack 2 (GreaterDemon_SetRanged2Weight) */
+#define GREATER_DEMON_SPAWN_MODE_RANGED2 1
+
 static KfVector climb_points[3]; /* 0x4FF390 the points GreaterDemon_Think climbs over (it indexes up to 5) */
 
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
@@ -130,13 +133,13 @@ static void GreaterDemon_Think(Entity *entity, s32 run_now) {
             EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 EntityAi_ThinkIdle(entity, run_now);
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 GreaterDemon_ThinkCombat(entity, run_now);
                 break;
             default:
@@ -168,7 +171,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 run_now) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    if (entity->spawn_info->spawn_mode == 1) {
+    if (entity->spawn_info->spawn_mode == GREATER_DEMON_SPAWN_MODE_RANGED2) {
         GreaterDemon_SetRanged2Weight(entity);
     } else {
         entity->params->ranged_attacks[2].record.ranged_weight = 0;
@@ -192,7 +195,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (ai_state->sliding == 1) {
                 EntityAi_StartAction(entity, GreaterDemon_SlideToStop, run_now);
             } else if (EntityAi_PickAttack(entity)) {
@@ -205,28 +208,28 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 run_now) {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             if (ai_state->player_far == 1 && ai_state->sliding == 0 && EntitySight_EntityInWay(entity) == 0) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 0xF0;
-                ai_state->move_choice = 0;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
                 EntityAi_StartAction(entity, GreaterDemon_Rise, run_now);
                 return;
             }
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 0x78;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 0x1E;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (entity->combat_choice == 1) {
+    if (entity->combat_choice == COMBAT_CHOICE_CLOSE_IN) {
         turn = EntityAi_TurnFromPush(entity, direction);
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
@@ -244,7 +247,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 run_now) {
             if (EntitySight_EntityInWay(entity) == 0 && ai_state->sliding == 0) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 0xF0;
-                ai_state->move_choice = 0;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
                 EntityAi_StartAction(entity, GreaterDemon_Rise, run_now);
                 return;
             }
@@ -628,7 +631,7 @@ static void GreaterDemon_ReactionHeavy(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? MOTION_STEP_MOVE_FLAT : MOTION_STEP_MOVE;
         }
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAG_BITS(entity)->animates = 1;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->attack_window = 0;
         ENTITY_FLAG_BITS(entity)->guarding = 0;
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
@@ -693,7 +696,7 @@ static void GreaterDemon_Guard(Entity *entity) {
         EntityEvent_StartEffectAtPoint((char **)entity, 0x32F, 0, (int)entity->model->rotation);
         if (entity->action_timer == 0) {
             ENTITY_FLAG_BITS(entity)->guarding = 0;
-            ENTITY_FLAG_BITS(entity)->animates = 1;
+            ENTITY_FLAG_BITS(entity)->animates = TRUE;
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
