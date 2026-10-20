@@ -158,8 +158,8 @@ void ModelMotion_Step(void *model_arg) {
             part = &model->parts[i];
             if (record->thresholds != NULL && record->count != 0) {
                 // match: the level is read twice, as a shift and mask of the whole doubleword
-                key = (MotionKey *)record->thresholds + ((u32)(MODEL_PART_WORD(part) >> 39) & 0x7F);
-                level = (u32)(MODEL_PART_WORD(part) >> 39) & 0x7F;
+                key = (MotionKey *)record->thresholds + MODEL_PART_LEVEL(part);
+                level = MODEL_PART_LEVEL(part);
                 while (level < record->count && channel->frame >= key->frame) {
                     level++;
                     key++;
