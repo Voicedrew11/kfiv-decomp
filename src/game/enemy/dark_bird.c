@@ -23,6 +23,10 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
+/* Entity.action_step and reaction_step values past the shared ones */
+#define DARK_BIRD_APPROACH_STEP_FLY 1   /* flies towards the player until a melee attack starts or the approach times out */
+#define DARK_BIRD_REACTION_STEP_END 2   /* ends the light reaction and thinks again */
+
 /* EntitySpawnInfo.spawn_mode: how the spawn is placed and held */
 #define DARK_BIRD_SPAWN_MODE_FLOOR    0
 #define DARK_BIRD_SPAWN_MODE_CIRCLE   1
@@ -573,7 +577,7 @@ static void DarkBird_ApproachForMelee(Entity *entity) {
         entity->target = &player_state;
         ai_state->action_frames = 0;
         entity->action_step++;
-    case 1:
+    case DARK_BIRD_APPROACH_STEP_FLY:
         if (entity->distance_to_player < entity->radius + 250.0f + 100.0f) {
             f32 above = player_state.position.y - entity->model->position[1];
 
@@ -640,7 +644,7 @@ static void DarkBird_MeleeAttack(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (ai_state->motion_slot_0.frames_left == 0) {
             entity->action_step++;
         }
@@ -648,7 +652,7 @@ static void DarkBird_MeleeAttack(Entity *entity) {
             EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ai_state->motion_slot_0.frame <= unk240->hit_start_frame) {
             EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
         } else {
@@ -714,7 +718,7 @@ static void DarkBird_RangedAttack(Entity *entity) {
         }
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (ai_state->motion_slot_0.frames_left == 0) {
             entity->action_step++;
         }
@@ -722,7 +726,7 @@ static void DarkBird_RangedAttack(Entity *entity) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ai_state->motion_slot_0.frame <= record->turn_frames) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
@@ -894,12 +898,12 @@ static void DarkBird_ReactionLight(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->reaction_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (ai_state->motion_slot_0.frames_left == 0) {
             entity->reaction_step++;
         }
         break;
-    case 2:
+    case DARK_BIRD_REACTION_STEP_END:
         EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
         EntityAi_SetReaction(entity, NULL, 0);
         entity->busy_flags = 0;
@@ -944,12 +948,12 @@ static void DarkBird_ReactionHeavy(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->reaction_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (ai_state->motion_slot_0.frames_left == 0) {
             entity->reaction_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
             EntityAi_SetReaction(entity, NULL, 0);
@@ -996,12 +1000,12 @@ static void DarkBird_Death(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (ai_state->motion_slot_0.frames_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;
@@ -1011,7 +1015,7 @@ static void DarkBird_Death(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DEATH_STEP_FADE_OUT:
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
