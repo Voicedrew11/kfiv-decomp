@@ -22,6 +22,11 @@
 
 /* EntitySpawnInfo.spawn_mode: 0 is the normal dormant, else Larva_DormantHeldAtModelPoint */
 #define LARVA_SPAWN_MODE_NORMAL 0
+
+/* Entity.action_step values of the larva's own actions */
+#define LARVA_DORMANT_STEP_HELD     1   /* held at a model point of another entity until the script moves it */
+#define LARVA_DORMANT_STEP_ARC      1   /* flies along the arc until it lands on the floor */
+#define LARVA_DEATH_STEP_FADE_OUT   1   /* fades the model out over action_timer, then frees it */
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void Larva_Think(Entity *entity, s32 run_now);
@@ -101,11 +106,11 @@ static void Larva_Think(Entity *entity, s32 run_now) {
     if (entity->busy_flags == 0) {
         EntityAi_StepState(entity);
         switch (entity->state) {
-        case 1:
-        case 2:
+        case ENTITY_STATE_SEARCHING:
+        case ENTITY_STATE_NOTICED:
             EntityAi_ThinkCombat(entity, run_now);
             break;
-        case 0:
+        case ENTITY_STATE_UNAWARE:
         default:
             EntityAi_ThinkIdle(entity, run_now);
             break;
@@ -260,7 +265,7 @@ static void Larva_DormantHeldAtModelPoint(Entity *entity) {
         entity->flags |= ENTITY_FLAG_NO_SECOND_WALL_COLLISION;
         entity->flags |= ENTITY_FLAG_NO_PLAYER_COLLISION;
         entity->action_step++;
-    case 1:
+    case LARVA_DORMANT_STEP_HELD:
         if (ai_state->step_index > 0) {
             EntityAi_StartAction(entity, Larva_DormantMoveAlongArc, 1);
             return;
@@ -347,7 +352,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
         ai_state->action_counter = 0;
         entity->action_step++;
         break;
-    case 1:
+    case LARVA_DORMANT_STEP_ARC:
         ai_state->part_angle_x += (f32)entity->params->pitch_limit_deg * ((f32)ai_state->pause_timer / 30.0f);
         if ((f32)entity->params->yaw_limit_deg < ai_state->part_angle_x) {
             ai_state->part_angle_x = (f32)entity->params->yaw_limit_deg;
@@ -410,7 +415,7 @@ static void Larva_DeathFallAndFade(Entity *entity) {
         entity->action_timer = 20;
         ai_state->pause_timer = 0;
         entity->action_step++;
-    case 1:
+    case LARVA_DEATH_STEP_FADE_OUT:
         ai_state->part_angle_x += (f32)entity->params->pitch_limit_deg * ((f32)ai_state->pause_timer / 30.0f);
         if ((f32)entity->params->yaw_limit_deg < ai_state->part_angle_x) {
             ai_state->part_angle_x = (f32)entity->params->yaw_limit_deg;
