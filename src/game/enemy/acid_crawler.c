@@ -19,6 +19,9 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 #define ALIGNED_ANGLE_EPSILON 0.0001f
 
+/* EntityAiState.move_choice: the only value set is 1, to run at the player */
+#define ACID_CRAWLER_MOVE_CHOICE_RUN_IN 1
+
 static void AcidCrawler_Animate(Entity *entity);
 static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg);
 static void AcidCrawler_Think(Entity *entity, s32 run_now);
@@ -119,7 +122,7 @@ static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg) {
     s32 part_index;
 
     part = (EntityModelPart80 *)entity->model->parts;
-    if (entity->animation_index != 0 && entity->animation_index != 3 && entity->animation_index != 4 && entity->animation_index != 0xB &&
+    if (entity->animation_index != ENTITY_MOTION_STAND && entity->animation_index != ENTITY_MOTION_WALK && entity->animation_index != ENTITY_MOTION_RUN && entity->animation_index != 0xB &&
         entity->animation_index != 0xC) {
         ai_state->neck_bend[2] = ai_state->neck_bend[3] = ai_state->neck_bend[4] = ai_state->neck_bend[5] = ai_state->neck_bend[6] = 0.0f;
         return;
@@ -311,7 +314,7 @@ static void AcidCrawler_ThinkCombat(Entity *entity, s32 run_now) {
                 ai_state->turn_in_place = 0;
             }
         }
-    } else if (ai_state->move_choice == 1) {
+    } else if (ai_state->move_choice == ACID_CRAWLER_MOVE_CHOICE_RUN_IN) {
         entity->target = &player_state;
         turn = EntityAi_TurnFromPush(entity, direction);
         if (turn > 0) {
@@ -322,7 +325,7 @@ static void AcidCrawler_ThinkCombat(Entity *entity, s32 run_now) {
             entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_TO_TARGET);
         }
     } else {
-        ai_state->move_choice = 1;
+        ai_state->move_choice = ACID_CRAWLER_MOVE_CHOICE_RUN_IN;
     }
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }

@@ -18,6 +18,9 @@
 #include "model/motion.h"
 #include "player/player.h"
 
+/* EntityAiState.move_choice 1 (0 is MOVE_CHOICE_CLOSE_IN): runs at the player */
+#define SKULL_MOVE_CHOICE_RUN_IN 1
+
 
 static void Skull_Think(Entity *entity, s32 run_now);
 static void Skull_ThinkCombat(Entity *entity, s32 run_now);
@@ -98,13 +101,13 @@ static void Skull_Think(Entity *entity, s32 run_now) {
             EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 EntityAi_ThinkIdle(entity, run_now);
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 Skull_ThinkCombat(entity, run_now);
                 break;
             default:
@@ -179,7 +182,7 @@ static void Skull_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, mode);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (entity->model->position[1] < player_state.position.y - 50.0f && player_state.position.y - 300.0f < entity->model->position[1]) {
                 if (EntityAi_PickAttack(entity)) {
                     EntityAi_StartAction(entity, Skull_RangedAttack0, run_now);
@@ -195,25 +198,25 @@ static void Skull_ThinkCombat(Entity *entity, s32 run_now) {
             }
             ai_state->sub_timer = rand() % 15 + 15;
             break;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
             if (rand() % 3 == 0) {
-                ai_state->move_choice = 1;
+                ai_state->move_choice = SKULL_MOVE_CHOICE_RUN_IN;
             } else {
-                ai_state->move_choice = 0;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             }
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (entity->combat_choice == 1) {
+    if (entity->combat_choice == COMBAT_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -229,7 +232,7 @@ static void Skull_ThinkCombat(Entity *entity, s32 run_now) {
         } else {
             side = EntityAi_TurnFromPush(entity, direction);
             switch (ai_state->move_choice) {
-            case 0:
+            case MOVE_CHOICE_CLOSE_IN:
                 if (side > 0) {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                 } else if (side < 0) {
@@ -238,7 +241,7 @@ static void Skull_ThinkCombat(Entity *entity, s32 run_now) {
                     entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
                 break;
-            case 1:
+            case SKULL_MOVE_CHOICE_RUN_IN:
                 if (side > 0) {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
                 } else if (side < 0) {
@@ -287,7 +290,7 @@ static void Skull_Death(Entity *entity) {
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
-            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;
             ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             entity->action_timer = 20;

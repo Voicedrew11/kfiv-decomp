@@ -16,6 +16,10 @@
 #include "entity/entity_math.h"
 #include "player/player.h"
 
+/* EntityAiState.move_choice 1, 2 (0 is MOVE_CHOICE_CLOSE_IN): 1 backs off, 2 stands still */
+#define EARTH_ELEMENTAL_MOVE_CHOICE_BACK  1
+#define EARTH_ELEMENTAL_MOVE_CHOICE_STAND 2
+
 static void EarthElemental_Think(Entity *entity, s32 run_now);
 static void EarthElemental_ThinkCombat(Entity *entity, s32 run_now);
 static void EarthElemental_PlayTurnAnim(Entity *entity);
@@ -106,13 +110,13 @@ static void EarthElemental_Think(Entity *entity, s32 run_now) {
             entity->move_command |= (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 EntityAi_ThinkIdle(entity, run_now);
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 EarthElemental_ThinkCombat(entity, run_now);
                 break;
             default:
@@ -166,7 +170,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, mode);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             ai_state->reload_timer = entity->params->near_distance;
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
@@ -174,12 +178,12 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 run_now) {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             player_angle = EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position));
             if (ABS(player_angle) > DEG_TO_RAD(35)) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 30 + 60;
-                ai_state->move_choice = 1;
+                ai_state->move_choice = EARTH_ELEMENTAL_MOVE_CHOICE_BACK;
             } else {
                 entity->target = &player_state;
                 if (HALF_PI < ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]))) {
@@ -189,15 +193,15 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 run_now) {
                 }
                 entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 60;
-                ai_state->move_choice = 0;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             }
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = 2;
+            ai_state->move_choice = EARTH_ELEMENTAL_MOVE_CHOICE_STAND;
             break;
         default:
-            ai_state->move_choice = 2;
+            ai_state->move_choice = EARTH_ELEMENTAL_MOVE_CHOICE_STAND;
             break;
         }
     }
@@ -212,7 +216,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 run_now) {
     if (ai_state->sub_timer <= entity->params->type_param_0) {
         ai_state->sub_timer++;
     }
-    if (entity->combat_choice == 1) {
+    if (entity->combat_choice == COMBAT_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -228,7 +232,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 run_now) {
         } else {
             side = EntityAi_TurnFromPush(entity, direction);
             switch (ai_state->move_choice) {
-            case 0:
+            case MOVE_CHOICE_CLOSE_IN:
                 if (side > 0) {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
                 } else if (side < 0) {
@@ -244,7 +248,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 run_now) {
                 }
                 ai_state->sub_timer = 0;
                 break;
-            case 1:
+            case EARTH_ELEMENTAL_MOVE_CHOICE_BACK:
                 if (side > 0) {
                     entity->move_command = (MOVE_COMMAND_BACK | MOVE_COMMAND_TURN_RIGHT);
                 } else if (side < 0) {
@@ -528,12 +532,12 @@ static void EarthElemental_BackAwayOrRunAtPlayer(Entity *entity) {
         ENTITY_FLAGS(entity) |= ENTITY_FLAG_LOOK_AT_TARGET;
         if (side == 0) {
             entity->prev_combat_choice = entity->combat_choice;
-            entity->combat_choice = 0;
-            if (entity->prev_combat_choice != 0) {
+            entity->combat_choice = COMBAT_CHOICE_ATTACK;
+            if (entity->prev_combat_choice != COMBAT_CHOICE_ATTACK) {
                 entity->choice_change_frame = frame_counter;
             }
             EntityAi_LowerChoiceWeight(entity, 0);
-            if (entity->combat_choice == 0) {
+            if (entity->combat_choice == COMBAT_CHOICE_ATTACK) {
                 ai_state->pause_timer = 2;
                 if (EntityAi_PickAttack(entity)) {
                     EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
