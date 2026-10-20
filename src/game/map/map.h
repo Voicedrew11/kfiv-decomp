@@ -300,7 +300,7 @@ typedef struct {
 typedef struct {
     char pad00[0x34];
     u8 draw_block_index;            /* 0x34 which block of the map's draw state its models use */
-    u8 unk35;                       /* 0x35 */
+    u8 pad35;                       /* 0x35 */
     char pad36[0x02];
     u8 flag_block_bit;              /* 0x38 its bit in the map's flag block: are its objects in use */
     u8 needs_neighbour_map;         /* 0x39 nonzero: the neighbouring map must be loaded before going on */
@@ -398,7 +398,7 @@ typedef struct {
 typedef union {
     u32 word;                       /* MAP_TRIGGER_FLAG_20000 in bit 17 */
     struct {
-        u32 unk10 : 8;
+        u32 pad10 : 8;
         u32 type : 8;
         u32 pad16 : 1;
         u32 flag_20000 : 1;         /* MAP_TRIGGER_FLAG_20000 */

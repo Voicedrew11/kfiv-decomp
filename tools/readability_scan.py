@@ -5,14 +5,15 @@
 
 Struct layouts: compiles every .c under src/game with -g and reads each struct and
 union defined in src/game/ from ee-gcc's stabs, which give every field's exact
-bit offset and size. A field is unknown while it is still named unkXX or
-padXX; a struct is recovered once no field is. A field whose type is another
+bit offset and size. A field is unknown while it is still named unkXX; padXX
+(or pad) is padding, bytes no game code touches, counted apart and not as a
+field. A struct is recovered once no field is unknown. A field whose type is another
 named game struct is left to that struct, so each field is counted once;
 anonymous nested structs are counted inside their parent. Fields are counted,
 not bytes: a few large named buffers would swamp a byte measure.
 
 Source text (comments and strings stripped):
-  field uses      `->x` / `.x` accesses whose field is not unkXX/padXX
+  field uses      `->x` / `.x` accesses whose field is not unkXX
   bit operations  `& | ^` (and `&= |= ^=`) with a constant, plus `(x >> N) & 1`
                   tests; named when the constant is an UPPER_CASE name. Low-bit
                   masks (0xFF, 0xFFFF, ...) are truncation, not flags: skipped.
@@ -40,7 +41,8 @@ CC_DIR = ROOT / "tools" / "cc" / "ee-gcc2.9-991111"
 SCE_OBJS = ROOT / "build" / "src" / "sce"
 ELF = ROOT / "build" / "kfiv.elf"
 AUTO_DATA = re.compile(r"(D|jtbl)_[0-9A-Fa-f]{8}$")
-UNKNOWN = re.compile(r"(unk|pad)(_?[0-9A-Fa-f]+)?(_\w*)?$")
+UNKNOWN = re.compile(r"unk(_?[0-9A-Fa-f]+)?(_\w*)?$")
+PADDING = re.compile(r"pad(_?[0-9A-F]+)?(_\d+)?$")
 STABS = re.compile(r'^\s*\.stabs\s+"((?:[^"\\]|\\.)*)"')
 
 
@@ -181,7 +183,8 @@ def scan_file(asm: str, wanted: set) -> dict:
             if base[0] == "struct" and t[0] != "array":
                 yield from leaves(base, prefix + fname + ".")
                 continue
-            yield prefix + fname, not UNKNOWN.match(fname), bits
+            kind = "padding" if PADDING.match(fname) else "unknown" if UNKNOWN.match(fname) else "named"
+            yield prefix + fname, kind, bits
 
     out = {}
     for name, d in named.items():
@@ -264,8 +267,13 @@ def struct_rows(sources) -> list:
                 # one layout per name; static structs that share a name get the file
                 key = name if structs.get(name, (fields,))[0] == fields else f"{name}@{src.name}"
                 structs.setdefault(key, (fields, src.name))
-    return [{"name": name, "fields": len(fields), "named_fields": sum(1 for _, k, _ in fields if k)}
-            for name, (fields, _) in sorted(structs.items()) if fields]
+    rows = []
+    for name, (fields, _) in sorted(structs.items()):
+        kinds = [k for _, k, _ in fields]
+        if kinds.count("padding") < len(kinds):
+            rows.append({"name": name, "fields": len(kinds) - kinds.count("padding"),
+                         "named_fields": kinds.count("named"), "padding_fields": kinds.count("padding")})
+    return rows
 
 
 def main():
@@ -281,6 +289,7 @@ def main():
         "recovered_structs": sum(1 for r in rows if r["named_fields"] == r["fields"]),
         "total_fields": sum(r["fields"] for r in rows),
         "named_fields": sum(r["named_fields"] for r in rows),
+        "padding_fields": sum(r["padding_fields"] for r in rows),
         **source_measures(sources),
         **global_measures(),
     }

@@ -189,7 +189,7 @@ typedef struct {
     u64 shape : 2;                  /* 0x4C which hit shape: 0 sphere, 3 swept, 1 and 2 do nothing */
     u64 cleared_on_effect_check : 1;  /* bit only zeroed in the effect hit check */
     u64 knockback : 1;              /* not 0: the hit knocks the player back */
-    u64 unk4C_4 : 4;
+    u64 pad4C_4 : 4;
     u8 target_mask;                 /* 0x4D what it may hit: 1 player, 2 entities, 4 objects, 8/0x10 the map */
     u8 hit_armor_part;              /* 0x4E which worn piece a hit on the player wears out, 1 to 4 */
     u8 stun_frames;                 /* 0x4F copied to Entity.stun_frames by a hit of kind 1 */
@@ -267,7 +267,7 @@ typedef struct {
 
 /* a whole 0x1C-byte record at EntityParams+0x3D8 (EntityParamsUnk3D8 is its first word) */
 typedef struct {
-    u8 unk00;                       /* 0x00 */
+    u8 pad00;                       /* 0x00 */
     u8 turn_frames;                 /* 0x01 the entity turns to the player until the motion reaches this frame */
     u8 attack_delay;                /* 0x02 passed to EntityAi_SetAttackDelay when the attack ends */
     u8 attack_end_frame;            /* 0x03 last animation frame the ranged attack is active */
@@ -331,10 +331,10 @@ typedef struct {
 typedef struct {
     u32 model_number : 16;          /* 0x00 the chr/cNNNN.chr model file number, 0xFFFF: none */
     u32 entity_type : 8;            /* 0x02 index into entity_type_handlers */
-    u32 unk03_0 : 1;                /* 0x03 */
+    u32 pad03_0 : 1;                /* 0x03 */
     u32 movement_kind : 2;          /* 0x03 bits 25-26: how it moves and collides (ENTITY_PARAMS_MOVEMENT_KIND) */
     u32 sphere_collision : 1;       /* 0x03 bit 27: it collides as a sphere, not as a cylinder */
-    u32 unk03_4 : 4;
+    u32 pad03_4 : 4;
     u16 body_radius;                /* 0x04 Entity.body_radius before scaling */
     u16 map_collision_radius;       /* 0x06 Entity.collision_radius before scaling */
     u16 map_collision_height;       /* 0x08 Entity.collision_height before scaling */
@@ -474,10 +474,10 @@ typedef struct {
 /* the first word of EntityParams as plain bytes: unlike a bit-field read, a
    read through this does not depend on every store before it */
 typedef struct {
-    u8 unk00;                       /* 0x00 */
-    u8 unk01;                       /* 0x01 */
+    u8 pad00;                       /* 0x00 */
+    u8 pad01;                       /* 0x01 */
     u8 entity_type;                 /* 0x02 index into entity_type_handlers */
-    u8 unk03;                       /* 0x03 */
+    u8 pad03;                       /* 0x03 */
 } EntityParamsBytes;
 
 /* the first word of EntityParams read whole (model_number, entity_type and the 0x03 bits together) */
@@ -590,7 +590,7 @@ typedef struct {
     f32 forward_speed;              /* 0x48 speed forwards */
     f32 pitch_speed;                /* 0x4C pitch speed */
     char pad50[0x28];
-    s8 unk78;                       /* 0x78 */
+    s8 pad78;                       /* 0x78 */
     s8 climb_command;               /* 0x79 climb (above 0), dive (below 0) or level out (0) */
     char pad7A[0x06];
     EntityAiMotionSlot motion_slot_0;  /* 0x80 */
@@ -604,7 +604,7 @@ typedef struct {
     char pad04[0x14];
     void (*move)(struct Entity *entity);/* 0x18 */
     s32 turn_rate;                  /* 0x1C turn rate of the move command, cleared when one starts */
-    f32 unk20[4];                   /* 0x20 */
+    f32 pad20[4];                   /* 0x20 */
     f32 target_point[4];            /* 0x30 where the entity walks to (Entity.target points here) */
     char pad40[0x3A];
     s8 map_object_42_state;         /* 0x7A state of map object spawn_info->unk42 */

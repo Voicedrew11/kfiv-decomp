@@ -34,10 +34,12 @@ DOCS = ROOT / "docs" / "progress"
 README = ROOT / "README.md"
 START, END = "<!-- progress:start -->", "<!-- progress:end -->"
 READABILITY = ROOT / "build" / "readability.json"
-# (label, done key, total key); a total of None is a debt count, lower is better
+# (label, done key, total key); a total of None is a debt count, lower is better, and a string
+# total is a plain count with that note
 READABILITY_ROWS = [
     ("structs recovered", "recovered_structs", "total_structs"),
     ("struct fields named", "named_fields", "total_fields"),
+    ("padding fields", "padding_fields", "unused by game code"),
     ("field uses named", "named_field_uses", "field_uses"),
     ("globals named", "named_globals", "total_globals"),
     ("bit operations named", "named_bit_ops", "bit_ops"),
@@ -84,6 +86,8 @@ def readability_rows(data) -> list:
             continue
         if total is None:
             out.append((label, str(r[done]), "left"))
+        elif isinstance(total, str):
+            out.append((label, str(r[done]), total))
         else:
             out.append((label, f"{pct(r[done], r[total]):.2f}%", f"{r[done]} of {r[total]}"))
     return out

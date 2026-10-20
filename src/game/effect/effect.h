@@ -86,7 +86,7 @@ typedef struct {
 typedef struct {
     Vector4 velocity;               /* 0x00 (EffectActor+0x10) */
     Vector4 kind_state_vector;      /* 0x10 Per-kind Vector4: copied rotation, spawn point or scale */
-    char unk20[0x10];               /* 0x20 */
+    char pad20[0x10];               /* 0x20 */
 } EffectMotion;
 
 /* EffectMotion as EffectShot_Update uses it */
@@ -154,7 +154,7 @@ typedef struct {
     f32 speed;                      /* 0x10 the target's velocity.x */
     s32 cleared_on_start;           /* 0x14 Word zeroed at spawn, otherwise unused */
     f32 scale;                      /* 0x18 Float set to 1.0 at spawn, otherwise unused */
-    u8 unk1C;                       /* 0x1C */
+    u8 pad1C;                       /* 0x1C */
     char pad1D[0x03];
     s8 ended;                       /* 0x20 set once the effect has ended */
     char pad21[0x0F];
@@ -423,7 +423,7 @@ typedef struct {
 /* EffectMotion as EffectBolt_Update uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    char unk10[0x10];               /* 0x10 */
+    char pad10[0x10];               /* 0x10 */
     u16 spawn_effect;               /* 0x20 */
     u16 end_frame;                  /* 0x22 */
     s8 spent;                       /* 0x24 */
@@ -718,7 +718,7 @@ typedef struct {
     Vector4 velocity;               /* 0x00 */
     Vector4 end_position;           /* 0x10 */
     f32 velocity_scale;             /* 0x20 factor the drift is scaled by; grows by EffectDef.scale_per_frame */
-    f32 unk24;                      /* 0x24 */
+    f32 pad24;                      /* 0x24 */
     char pad28[0x08];
 } DriftMotion;
 
@@ -943,7 +943,7 @@ typedef struct {
     int frames_left;                /* 0x40 frames left before the effect's spawn check runs again */
     s16 linked_point_index;         /* 0x44 the linked point it holds, -1: none */
     s8 sound_track;                 /* 0x46 the tracked sound it plays, -1: none */
-    u8 unk47;                       /* 0x47 */
+    u8 pad47;                       /* 0x47 */
 } EffectActorFlagParts;
 
 #define EFFECT_FLAG_PARTS(effect) ((EffectActorFlagParts *)&(effect)->flags)
@@ -981,8 +981,8 @@ typedef struct {
     u64 bit33 : 1;                  /* copied from EffectActor flag bit 59 */
     u64 pad34 : 6;
     u64 level : 8;
-    u64 unk26 : 8;
-    u64 unk27 : 8;
+    u64 pad26 : 8;
+    u64 pad27 : 8;
 } EffectSlotFlagBits;
 
 #define EFFECT_SLOT_FLAG_BITS(slot) ((EffectSlotFlagBits *)&(slot)->flags)
@@ -990,7 +990,7 @@ typedef struct {
 /* EffectSlot.flags as the bytes some functions read */
 typedef struct {
     EffectDef *def;                 /* 0x20 */
-    u8 unk24;                       /* 0x24 */
+    u8 pad24;                       /* 0x24 */
     u8 level;                       /* 0x25 the spawner's level, from EffectDef.max_level */
     u8 frames_to_firing;            /* 0x26 frames to the next firing */
     u8 start_delay_frames;          /* 0x27 frames before the first firing, from EffectDef.spawn_start_delay */
@@ -1004,7 +1004,7 @@ typedef struct {
 typedef struct {
     char pad00[0x20];
     EffectDef *def;                 /* 0x20 */
-    u8 unk24;                       /* 0x24 */
+    u8 pad24;                       /* 0x24 */
     u8 level;                       /* 0x25 the firings left */
     u8 frames_to_firing;            /* 0x26 frames to the next firing */
     u8 start_delay_frames;          /* 0x27 frames before the first firing, from EffectDef.spawn_start_delay */

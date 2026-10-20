@@ -41,12 +41,12 @@ typedef struct {
 typedef struct {
     char name[0x34];
     u32 size;
-    int unk38;
+    int pad38;
     u32 offset;    /* bytes from the start of KF4.DAT */
 } KFDirEntry;
 
 typedef struct {
-    int unk0;
+    int pad0;
     u32 count;
     int lsn;                /* first sector of KF4.DAT */
     char pad[0x34];

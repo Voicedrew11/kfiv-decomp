@@ -152,11 +152,11 @@ typedef struct {
 
 /* an 8-byte wall-clock time passed by value (PlayTime_DayOfYear, PlayTime_ClockSecondsBetween, PlayTime_ClockMinutesBetween) */
 typedef struct {
-    char unk0;                      /* 0x00 */
+    char pad0;                      /* 0x00 */
     u8 sec;                         /* 0x01 */
     u8 min;                         /* 0x02 */
     u8 hour;                        /* 0x03 */
-    char unk4;                      /* 0x04 */
+    char pad4;                      /* 0x04 */
     u8 mday;                        /* 0x05 */
     u8 mon;                         /* 0x06 */
     u8 year;                        /* 0x07 years since 2000 */
@@ -265,7 +265,7 @@ typedef struct {
 typedef struct {
     char pad00[0x30];
     u32 file_number : 16;           /* 0x30 */
-    u32 unk30_16 : 16;
+    u32 pad30_16 : 16;
     char pad34[0x0C];
 } GameDefinitionWords;
 
@@ -340,7 +340,7 @@ typedef struct PoolSlot {
 /* a texture header's two GS register values (TextureHeader.tex0 and unk18), which PoolSlot_LoadGroup copies as one */
 typedef struct {
     u64 tex0;                       /* 0x00 */
-    u64 unk08;                      /* 0x08 */
+    u64 pad08;                      /* 0x08 */
 } PoolSlotRegisters;
 
 /* a PoolSlot with tex0 and unk60 as the one member they are copied as */

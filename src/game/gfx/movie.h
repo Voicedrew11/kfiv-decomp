@@ -52,7 +52,7 @@ typedef struct {
 /* a source-chain DMA tag in the low half of a quadword */
 typedef struct {
     u64 tag;                        /* 0x00 address << 32 | id << 28 | qwc */
-    u64 unk08;                      /* 0x08 */
+    u64 pad08;                      /* 0x08 */
 } MovieDmaTag;
 
 /* the movie file being played: streamed from the disc when its path starts with "cdrom0:", read with sceRead

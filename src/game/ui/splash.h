@@ -7,8 +7,8 @@
 
 /* the image file as loaded, at file_load_buffer */
 typedef struct {
-    u64 unk00;                      /* 0x00 */
-    u64 unk08;                      /* 0x08 */
+    u64 pad00;                      /* 0x00 */
+    u64 pad08;                      /* 0x08 */
     u64 tex0;                       /* 0x10 GS TEX0 of the image */
     u64 tex1;                       /* 0x18 GS TEX1 of the image, copied to the sprite */
 } SplashImage;
@@ -59,7 +59,7 @@ typedef struct {
     int image_size;                 /* 0x04 bytes of pixels; the palette follows them */
     char pad08[0x08];
     BootTex0 tex0;                  /* 0x10 */
-    u64 unk18;                      /* 0x18 */
+    u64 pad18;                      /* 0x18 */
 } SplashImageBits;
 
 /* the 0x70 bytes Splash_BuildImagePacket puts in front of image data it sends to GS memory: five registers, then the tag of the data */

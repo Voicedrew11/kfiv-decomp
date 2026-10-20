@@ -62,7 +62,7 @@ typedef struct {
 typedef struct {
     s32 strip_count;                /* 0x00 */
     Strip *strips;                  /* 0x04 */
-    s32 unk08;                      /* 0x08 */
+    s32 pad08;                      /* 0x08 */
     u32 total_vertex_count;         /* 0x0C gate: collision needs at least 4 */
 } ModelStripList;
 
@@ -632,8 +632,8 @@ typedef struct {
 /* AnimObject+0x40 */
 typedef struct {
     char pad00[0x14];
-    s32 unk14;                      /* 0x14 */
-    s32 unk18;                      /* 0x18 */
+    s32 pad14;                      /* 0x14 */
+    s32 pad18;                      /* 0x18 */
 } AnimObjectBody;
 
 /* an animated object: the model, its animation table and a small state machine */
@@ -699,7 +699,7 @@ typedef struct {
 
 /* MapObject.work as most kinds use it */
 typedef struct {
-    Vector4 unk00;                  /* 0x00 */
+    Vector4 pad00;                  /* 0x00 */
     f32 base_x;                     /* 0x10 the x of part 1's position at the start */
     f32 base_y;                     /* 0x14 the y of part 1's position at the start */
     f32 base_z;                     /* 0x18 the z of part 1's position at the start */
@@ -766,7 +766,7 @@ typedef struct {
 typedef struct {
     u8 map_slot;                    /* 0x10 bit 0: the map slot */
     u8 step;                        /* 0x11 */
-    u8 unk02;                       /* 0x12 */
+    u8 pad02;                       /* 0x12 */
     s8 anim;                        /* 0x13 */
 } MapObjectBytes;
 
@@ -802,7 +802,7 @@ typedef struct {
 /* what pickup_item points at: one of the nodes at fixed_items. lying_items heads
    the list of the ones in use. */
 typedef struct ModelNode {
-    s32 unk00;                      /* 0x00 */
+    s32 pad00;                      /* 0x00 */
     s32 unk04;                      /* 0x04 cleared when the node is unlinked */
     s32 unk08;                      /* 0x08 cleared when the node is unlinked */
     s32 unk0C;                      /* 0x0C bit 0: the map slot */
