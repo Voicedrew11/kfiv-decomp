@@ -18,9 +18,9 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 static void Beetle_Animate(Entity *entity);
-static void Beetle_Think(Entity *entity, s32 unknown);
-static void Beetle_ThinkWander(Entity *entity, s32 unknown);
-static void Beetle_ThinkCombat(Entity *entity, s32 unknown);
+static void Beetle_Think(Entity *entity, s32 run_now);
+static void Beetle_ThinkWander(Entity *entity, s32 run_now);
+static void Beetle_ThinkCombat(Entity *entity, s32 run_now);
 static void Beetle_TurnParts7And12(void *entity_arg);
 static void Beetle_TurnParts23To32(Entity *entity);
 static void Beetle_RangedAttack0(Entity *entity);
@@ -88,7 +88,7 @@ static void Beetle_Animate(Entity *entity) {
 /* The think handler: as EntityAi_Think, with Beetle_ThinkCombat for state 2 and Beetle_ThinkWander
    for states 0 and 1; when it comes to state 0 from another state it starts the shared action
    EntityAi_StandOnce instead. */
-static void Beetle_Think(Entity *entity, s32 unknown) {
+static void Beetle_Think(Entity *entity, s32 run_now) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -98,31 +98,31 @@ static void Beetle_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
     case 0:
         if (entity->prev_state != 0) {
-            EntityAi_StartAction(entity, EntityAi_StandOnce, unknown);
+            EntityAi_StartAction(entity, EntityAi_StandOnce, run_now);
         } else {
-            Beetle_ThinkWander(entity, unknown);
+            Beetle_ThinkWander(entity, run_now);
         }
         return;
     case 1:
         break;
     case 2:
-        Beetle_ThinkCombat(entity, unknown);
+        Beetle_ThinkCombat(entity, run_now);
         return;
     }
-    Beetle_ThinkWander(entity, unknown);
+    Beetle_ThinkWander(entity, run_now);
 }
 
 /* The think function of every state but 2 (Beetle_Think calls it): wanders. Each time the
    timer runs out it picks a point near the spawn point (EntityPoint_PickNear; 79 times in 100, for 120 to
    179 frames) or no target (60 to 89 frames), takes the command of EntityAi_MoveCommand towards it (or the
    turn away from a push, EntityAi_TurnFromPush) and starts the move action. */
-static void Beetle_ThinkWander(Entity *entity, s32 unknown) {
+static void Beetle_ThinkWander(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 turn;
@@ -146,13 +146,13 @@ static void Beetle_ThinkWander(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat with Beetle_RangedAttack0 as the
    ranged attack; it leaves flag bits 9 and 10 as they are, and closes in with command bit 0x40
    (EntityAi_MoveCommand with range 0, far marked). */
-static void Beetle_ThinkCombat(Entity *entity, s32 unknown) {
+static void Beetle_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -179,9 +179,9 @@ static void Beetle_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, Beetle_RangedAttack0, unknown);
+                EntityAi_StartAction(entity, Beetle_RangedAttack0, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -222,7 +222,7 @@ static void Beetle_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* Helper of Beetle_Animate: eases work float unk48 towards 20 degrees on the side the command

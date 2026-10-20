@@ -23,9 +23,9 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
-static void DarkBird_Think(Entity *entity, s32 unknown);
-static void DarkBird_ThinkCombat(Entity *entity, s32 unknown);
-static void DarkBird_ThinkIdle(Entity *entity, s32 unknown);
+static void DarkBird_Think(Entity *entity, s32 run_now);
+static void DarkBird_ThinkCombat(Entity *entity, s32 run_now);
+static void DarkBird_ThinkIdle(Entity *entity, s32 run_now);
 static void DarkBird_Move(Entity *entity);
 static void DarkBird_ApplyMoveCommand(Entity *entity);
 static int DarkBird_SteerToTargetCommand(Entity *entity, s32 unused, f32 unused_weight);
@@ -100,7 +100,7 @@ void DarkBird_Init(Entity *entity) {
    DarkBird_ApproachForMelee instead. It keeps flag bit 28 set except in the death action, keeps
    animation 3 on the second motion slot outside attacks, heavy-hit reactions and the death, and
    calls DarkBird_ApplyMoveCommand while the entity is not busy or is in a hit reaction. */
-static void DarkBird_Think(Entity *entity, s32 unknown) {
+static void DarkBird_Think(Entity *entity, s32 run_now) {
     EntityAiStateKind1740A8 *ai_state = (EntityAiStateKind1740A8 *)&entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -118,26 +118,26 @@ static void DarkBird_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
                 ai_state->think_flag = 0;
-                DarkBird_ThinkIdle(entity, unknown);
+                DarkBird_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
                 if (ai_state->think_flag == 0) {
-                    EntityAi_StartAction(entity, DarkBird_ApproachForMelee, unknown);
+                    EntityAi_StartAction(entity, DarkBird_ApproachForMelee, run_now);
                     ai_state->think_flag = 1;
                 } else {
-                    DarkBird_ThinkCombat(entity, unknown);
+                    DarkBird_ThinkCombat(entity, run_now);
                 }
                 break;
             default:
-                DarkBird_ThinkIdle(entity, unknown);
+                DarkBird_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -154,7 +154,7 @@ static void DarkBird_Think(Entity *entity, s32 unknown) {
    ranged attack is DarkBird_RangedAttack, but only when the player's y less its own is 200 or
    more; a melee one is DarkBird_MeleeAttack when that difference is between 100 and 400, else
    DarkBird_ApproachForMelee. */
-static void DarkBird_ThinkCombat(Entity *entity, s32 unknown) {
+static void DarkBird_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiStateKind1740A8 *ai_state = (EntityAiStateKind1740A8 *)&entity->ai_state;
     f32 direction[4];
     f32 height;
@@ -242,15 +242,15 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 unknown) {
                     entity->combat_choice = 1;
                     ai_state->climb_command = 2;
                 } else {
-                    EntityAi_StartAction(entity, DarkBird_RangedAttack, unknown);
+                    EntityAi_StartAction(entity, DarkBird_RangedAttack, run_now);
                     return;
                 }
             } else {
                 height = player_state.position.y - entity->model->position[1];
                 if (100.0f < height && height < 400.0f) {
-                    EntityAi_StartAction(entity, DarkBird_MeleeAttack, unknown);
+                    EntityAi_StartAction(entity, DarkBird_MeleeAttack, run_now);
                 } else {
-                    EntityAi_StartAction(entity, DarkBird_ApproachForMelee, unknown);
+                    EntityAi_StartAction(entity, DarkBird_ApproachForMelee, run_now);
                 }
                 return;
             }
@@ -278,13 +278,13 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 unknown) {
             entity->move_command = DarkBird_SteerToTargetCommand(entity, 0, 0.0f);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 0: as EntityAi_ThinkIdle, always with a point to go to, the head
    following, the command of DarkBird_SteerToTargetCommand, and the pitch command (work byte unk79) picked as in
    DarkBird_ThinkCombat. */
-static void DarkBird_ThinkIdle(Entity *entity, s32 unknown) {
+static void DarkBird_ThinkIdle(Entity *entity, s32 run_now) {
     EntityAiStateKind1740A8 *ai_state = (EntityAiStateKind1740A8 *)&entity->ai_state;
     f32 direction[4];
     s32 turn;
@@ -358,7 +358,7 @@ static void DarkBird_ThinkIdle(Entity *entity, s32 unknown) {
         // match: retail passes two more arguments here and takes the result as 16 bits
         entity->move_command = DarkBird_SteerToTargetCommand(entity, 0, 0.0f);
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: keeps animation 3 on both motion slots, flag bits 11 to 13 at 0. DarkBird_ApplyMoveCommand

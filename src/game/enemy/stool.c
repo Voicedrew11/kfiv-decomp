@@ -13,7 +13,7 @@
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void Stool_OnHit(Entity *entity);
-static void Stool_Think(Entity *entity, s32 unknown);
+static void Stool_Think(Entity *entity, s32 run_now);
 
 /* Set-up of a type 8 entity: clears its work area and installs the type's handlers. */
 void Stool_Init(Entity *entity) {
@@ -82,19 +82,19 @@ static void Stool_OnHit(Entity *entity) {
 /* The think handler: no states and no look at the player. While the entity is not busy it starts
    the attack EntityAi_PickAttack picks when EntityAi_CanAttack says so and the pause Entity.attack_delay_frames is over;
    else it starts the move action. */
-static void Stool_Think(Entity *entity, s32 unknown) {
+static void Stool_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state;
 
     ai_state = &entity->ai_state;
     if (entity->busy_flags == 0) {
         if (EntityAi_CanAttack(entity) != 0 && entity->attack_delay_frames == 0) {
             if (EntityAi_PickAttack(entity) != 0) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
         } else {
-            EntityAi_StartAction(entity, ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, run_now);
         }
     }
 }

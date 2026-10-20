@@ -21,8 +21,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 static void DarkKnight_OnHit(Entity *entity);
-static void DarkKnight_Think(Entity *entity, s32 unknown);
-static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown);
+static void DarkKnight_Think(Entity *entity, s32 run_now);
+static void DarkKnight_ThinkCombat(Entity *entity, s32 run_now);
 static void DarkKnight_PlayTurnAnim(Entity *entity);
 static void DarkKnight_HoldGuardPose(Entity *entity);
 static void DarkKnight_GuardThenMeleeAttack(Entity *entity);
@@ -100,7 +100,7 @@ static void DarkKnight_OnHit(Entity *entity) {
    is over; it counts down work word unk6C, set to EntityParams.type_param_0 while player_state.unk259 is
    not 0; and while work word unk6A counts down it keeps flag bit 35 set, with effect 0x25C every
    third frame. */
-static void DarkKnight_Think(Entity *entity, s32 unknown) {
+static void DarkKnight_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityAiStateKind162BC8 *aims = (EntityAiStateKind162BC8 *)ai_state;
     f32 delta[4];
@@ -187,20 +187,20 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                DarkKnight_ThinkCombat(entity, unknown);
+                DarkKnight_ThinkCombat(entity, run_now);
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -213,7 +213,7 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
    DarkKnight_RangedAttack1 and melee index 3 DarkKnight_MeleeAttack2; closing in from more than
    500 away adds command bits 0x40 and 0x400; and with Entity.heading_to_player more than 90 degrees off the
    heading it may start DarkKnight_PlayTurnAnim (work byte unk7B: the side). */
-static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
+static void DarkKnight_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityAiStateKind162BC8 *work = (EntityAiStateKind162BC8 *)ai_state;
     f32 direction[4];
@@ -231,7 +231,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     if (DarkKnight_ShouldRangedAttack0(entity)) {
-        EntityAi_StartAction(entity, DarkKnight_RangedAttack0, unknown);
+        EntityAi_StartAction(entity, DarkKnight_RangedAttack0, run_now);
         return;
     }
     mode = EntityAi_PickCombatChoice(entity, 0);
@@ -247,15 +247,15 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 1) {
-                    EntityAi_StartAction(entity, DarkKnight_RangedAttack1, unknown);
+                    EntityAi_StartAction(entity, DarkKnight_RangedAttack1, run_now);
                 } else {
-                    EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                    EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
                 }
             } else {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 3) {
-                    EntityAi_StartAction(entity, DarkKnight_MeleeAttack2, unknown);
+                    EntityAi_StartAction(entity, DarkKnight_MeleeAttack2, run_now);
                 } else {
-                    EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                    EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
                 }
             }
             return;
@@ -299,7 +299,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
                 if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > HALF_PI
                     && frame_counter % 15U == 0 && !(rand() & 1)) {
                     ai_state->action_flags = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
-                    EntityAi_StartAction(entity, DarkKnight_PlayTurnAnim, unknown);
+                    EntityAi_StartAction(entity, DarkKnight_PlayTurnAnim, run_now);
                     return;
                 }
                 entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
@@ -314,14 +314,14 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
                 if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > HALF_PI
                     && frame_counter % 15U == 0 && !(rand() & 1)) {
                     ai_state->action_flags = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
-                    EntityAi_StartAction(entity, DarkKnight_PlayTurnAnim, unknown);
+                    EntityAi_StartAction(entity, DarkKnight_PlayTurnAnim, run_now);
                     return;
                 }
                 entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* An action (busy bit 0x1000) that DarkKnight_ThinkCombat starts: plays animation 12 or 11, by

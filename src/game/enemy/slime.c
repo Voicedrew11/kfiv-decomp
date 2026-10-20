@@ -19,10 +19,10 @@
 
 static void Slime_Animate(Entity *entity);
 static void Slime_OnHit(Entity *entity);
-static void Slime_Think(Entity *entity, s32 unknown);
-static void Slime_ThinkReturn(Entity *entity, s32 unknown);
-static void Slime_ThinkWander(Entity *entity, s32 unknown);
-static void Slime_ThinkCombat(Entity *entity, s32 unknown);
+static void Slime_Think(Entity *entity, s32 run_now);
+static void Slime_ThinkReturn(Entity *entity, s32 run_now);
+static void Slime_ThinkWander(Entity *entity, s32 run_now);
+static void Slime_ThinkCombat(Entity *entity, s32 run_now);
 static void Slime_Move(Entity *entity);
 static void Slime_MeleeAttack(Entity *entity);
 
@@ -94,7 +94,7 @@ static void Slime_OnHit(Entity *entity) {
 /* The think handler: as EntityAi_Think, with an if in place of the switch: Slime_ThinkReturn
    while flag bit 53 is set, Slime_ThinkCombat in state 2, Slime_ThinkWander in the other states.
    */
-static void Slime_Think(Entity *entity, s32 unknown) {
+static void Slime_Think(Entity *entity, s32 run_now) {
     u32 phase;
 
     phase = frame_counter % 10U;
@@ -107,33 +107,33 @@ static void Slime_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        Slime_ThinkReturn(entity, unknown);
+        Slime_ThinkReturn(entity, run_now);
         return;
     }
     if (entity->state == 2) {
-        Slime_ThinkCombat(entity, unknown);
+        Slime_ThinkCombat(entity, run_now);
         return;
     }
-    Slime_ThinkWander(entity, unknown);
+    Slime_ThinkWander(entity, run_now);
 }
 
 /* The think function while flag bit 53 is set: makes the spawn point the target, gives command 1
    and starts the move action (Slime_Move goes straight for the target). */
-static void Slime_ThinkReturn(Entity *entity, s32 unknown) {
+static void Slime_ThinkReturn(Entity *entity, s32 run_now) {
     f32 unused[8]; // match: retail reserves 0x20 bytes, which also keeps the call from being a jump
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     entity->target = entity->spawn_info;
     entity->move_command = MOVE_COMMAND_FORWARD;
     entity->action_timer = 0;
-    EntityAi_StartAction(entity, entity->ai_state.move, unknown);
+    EntityAi_StartAction(entity, entity->ai_state.move, run_now);
 }
 
 /* The think function of every state but 2 (Slime_Think calls it): wanders. Each time the
    timer runs out it draws: walk to a point near the spawn point (EntityPoint_PickNear; forward command
    while farther than 50), turn on the spot to a random heading (EntityAi_RandomAngle), or stand; then
    starts the move action. */
-static void Slime_ThinkWander(Entity *entity, s32 unknown) {
+static void Slime_ThinkWander(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 roll;
     f32 turn;
@@ -168,7 +168,7 @@ static void Slime_ThinkWander(Entity *entity, s32 unknown) {
             entity->move_command = (turn >= 0.0f) ? MOVE_COMMAND_TURN_RIGHT : MOVE_COMMAND_TURN_LEFT;
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 2 (called under `entity->state == 2`, not from a switch): guards the
@@ -176,7 +176,7 @@ static void Slime_ThinkWander(Entity *entity, s32 unknown) {
    has no dodge, and its melee attack is Slime_MeleeAttack. Closing in is for 480 to 599
    frames, on the player (EntityParams.pitch_limit_deg times in 100) or on a point near the spawn point, with
    command 1 while the target is farther than the range. */
-static void Slime_ThinkCombat(Entity *entity, s32 unknown) {
+static void Slime_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 side;
 
@@ -196,10 +196,10 @@ static void Slime_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
                 return;
             }
-            EntityAi_StartAction(entity, Slime_MeleeAttack, unknown);
+            EntityAi_StartAction(entity, Slime_MeleeAttack, run_now);
             return;
         case 1:
             if (rand() % 100 < entity->params->pitch_limit_deg) {
@@ -238,7 +238,7 @@ static void Slime_ThinkCombat(Entity *entity, s32 unknown) {
         }
         break;
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: turns as the command bits in Entity.move_command say and, with command bit 1, moves

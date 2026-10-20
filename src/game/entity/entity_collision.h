@@ -12,7 +12,7 @@
 void EntityCollision_PushApart(Entity *entity);
 
 /* Applies the effect of a surface the entity touches (a timer, or damage). */
-void EntityCollision_ApplySurfaceEffect(Entity *entity, s32 unknown_a, s32 unknown_b, s32 unknown_c);
+void EntityCollision_ApplySurfaceEffect(Entity *entity, s32 material_first, s32 material_second, s32 material_third);
 
 /* Collides a walking entity with a model's mesh; TRUE if it found a floor. */
 s32 EntityCollision_WalkAgainstMesh(Entity *entity, ModelInstance *model, f32 *position, f32 *normal_sum, f32 *floor_y);

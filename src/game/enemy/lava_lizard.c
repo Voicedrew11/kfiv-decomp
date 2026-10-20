@@ -16,12 +16,12 @@
 
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
-static void LavaLizard_Think(Entity *entity, s32 unknown);
-static void LavaLizard_ThinkCombat(Entity *entity, s32 unknown);
+static void LavaLizard_Think(Entity *entity, s32 run_now);
+static void LavaLizard_ThinkCombat(Entity *entity, s32 run_now);
 static void LavaLizard_RunAtPlayer(Entity *entity);
 static void LavaLizard_RangedAttack0(Entity *entity);
-static void LavaLizard_ThinkNoStates(Entity *entity, s32 unknown);
-static void LavaLizard_ThinkDecideShootOrTurn(Entity *entity, s32 unknown);
+static void LavaLizard_ThinkNoStates(Entity *entity, s32 run_now);
+static void LavaLizard_ThinkDecideShootOrTurn(Entity *entity, s32 run_now);
 
 /* Set-up of a type 34 entity: clears its work area and installs the type's handlers. */
 void LavaLizard_Init(Entity *entity) {
@@ -69,7 +69,7 @@ void LavaLizard_Init(Entity *entity) {
 /* The think handler: as EntityAi_Think, with LavaLizard_ThinkCombat for state 2. Counts down work
    byte unk7A, the pause before the next LavaLizard_RunAtPlayer (set from EntityParams.far_distance
    while flag bit 45, 47 or 48 is set). */
-static void LavaLizard_Think(Entity *entity, s32 unknown) {
+static void LavaLizard_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (entity->flags & (ENTITY_FLAG_WALL_PUSH | ENTITY_FLAG_OBJECT_PUSH | ENTITY_FLAG_ENTITY_PUSH)) {
@@ -82,20 +82,20 @@ static void LavaLizard_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                LavaLizard_ThinkCombat(entity, unknown);
+                LavaLizard_ThinkCombat(entity, run_now);
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -108,7 +108,7 @@ static void LavaLizard_Think(Entity *entity, s32 unknown) {
 /* The think function of state 2: as EntityAi_ThinkCombat, but the ranged attack is
    LavaLizard_RangedAttack0, and instead of closing in it starts LavaLizard_RunAtPlayer when the
    player is farther than EntityParams.action_frames, within 60 degrees ahead, and the pause is over. */
-static void LavaLizard_ThinkCombat(Entity *entity, s32 unknown) {
+static void LavaLizard_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -136,16 +136,16 @@ static void LavaLizard_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, LavaLizard_RangedAttack0, unknown);
+                EntityAi_StartAction(entity, LavaLizard_RangedAttack0, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->step_index == 0 && ABS(angle) < DEG_TO_RAD(60) &&
                 (f32)ENTITY_CONTROLLER(entity)->action_frames < entity->distance_to_player) {
-                EntityAi_StartAction(entity, LavaLizard_RunAtPlayer, unknown);
+                EntityAi_StartAction(entity, LavaLizard_RunAtPlayer, run_now);
                 return;
             }
             entity->target = &player_state;
@@ -185,7 +185,7 @@ static void LavaLizard_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* An action (busy bit 0x1000): plays animation 4, turning to the player, for EntityParams.near_distance
@@ -277,14 +277,14 @@ static void LavaLizard_RangedAttack0(Entity *entity) {
 
 /* The think handler of a spawn whose EntitySpawnInfo.spawn_mode is set: no states; while the entity is
    not busy it calls LavaLizard_ThinkDecideShootOrTurn. */
-static void LavaLizard_ThinkNoStates(Entity *entity, s32 unknown) {
+static void LavaLizard_ThinkNoStates(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {
-        LavaLizard_ThinkDecideShootOrTurn(entity, unknown);
+        LavaLizard_ThinkDecideShootOrTurn(entity, run_now);
     }
     if (ai_state->step_index > 0) {
         ai_state->step_index--;
@@ -294,7 +294,7 @@ static void LavaLizard_ThinkNoStates(Entity *entity, s32 unknown) {
 /* Decides for LavaLizard_ThinkNoStates: guards the player's swing, starts LavaLizard_RangedAttack0
    when EntityAi_CanUseRanged finds the player in reach, else turns on the spot towards the player from time
    to time. */
-static void LavaLizard_ThinkDecideShootOrTurn(Entity *entity, s32 unknown) {
+static void LavaLizard_ThinkDecideShootOrTurn(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 angle;
 
@@ -305,7 +305,7 @@ static void LavaLizard_ThinkDecideShootOrTurn(Entity *entity, s32 unknown) {
     }
     ENTITY_FLAG_BITS(entity)->look_at_target = 1;
     if (entity->attack_delay_frames == 0 && EntityAi_CanUseRanged(entity, 1)) {
-        EntityAi_StartAttack(entity, LavaLizard_RangedAttack0, unknown, 1, 0);
+        EntityAi_StartAttack(entity, LavaLizard_RangedAttack0, run_now, 1, 0);
         return;
     }
     if (entity->action_timer == 0) {
@@ -322,5 +322,5 @@ static void LavaLizard_ThinkDecideShootOrTurn(Entity *entity, s32 unknown) {
     if (ai_state->move_choice == 0) {
         entity->move_command = EntityAi_TurnCommand(entity);
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }

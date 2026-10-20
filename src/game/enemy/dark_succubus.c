@@ -23,10 +23,10 @@
 
 static void DarkSuccubus_OnHit(Entity *entity);
 static void DarkSuccubus_Animate(Entity *entity);
-static void DarkSuccubus_Think(Entity *entity, s32 unknown);
-static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown);
-static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown);
-static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknown);
+static void DarkSuccubus_Think(Entity *entity, s32 run_now);
+static void DarkSuccubus_ThinkCombat(Entity *entity, s32 run_now);
+static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 run_now);
+static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 run_now);
 static void DarkSuccubus_Move(Entity *entity);
 static void DarkSuccubus_ApplyMoveCommand(Entity *entity);
 static void DarkSuccubus_ReactionLight(Entity *entity);
@@ -153,7 +153,7 @@ static void DarkSuccubus_Animate(Entity *entity) {
    bit 21 are set and Entity.model_alpha is 0x80; work word unk6A is the pause after it. With unk7C at 0
    the handler starts that time itself now and then, taking unkD6 down over 20 frames first. Work
    word unk6C is put to EntityParams.type_param_0 while player_state.unk259 is set and counts down. */
-static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
+static void DarkSuccubus_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityAiStateKind15F8C0 *timers = (EntityAiStateKind15F8C0 *)ai_state;
     f32 height;
@@ -185,28 +185,28 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
             ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
             entity->target = entity->spawn_info;
             entity->move_command = EntityAi_MoveCommand(entity, 0, 500.0f) | (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST);
-            EntityAi_StartAction(entity, ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, run_now);
         } else if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
                 if (timers->combat_mode == 0) {
-                    DarkSuccubus_ThinkCombat(entity, unknown);
+                    DarkSuccubus_ThinkCombat(entity, run_now);
                 } else if (timers->combat_mode == 1) {
-                    DarkSuccubus_ThinkCombatCircleNear(entity, unknown);
+                    DarkSuccubus_ThinkCombatCircleNear(entity, run_now);
                 } else {
-                    DarkSuccubus_ThinkCombatKeepAwayWhenFaced(entity, unknown);
+                    DarkSuccubus_ThinkCombatKeepAwayWhenFaced(entity, run_now);
                 }
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -268,7 +268,7 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
    DarkSuccubus_MoveAlongArc with the player nearer than 350 and Entity.heading_to_player within 40 degrees of
    the player's facing, or goes sideways round the player for 30 frames (work byte unk78: 2 or 3 the
    side, 1 backwards, 0 towards, 4 turning only). */
-static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
+static void DarkSuccubus_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -290,7 +290,7 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
     ai_state->keep_max_distance = 250.0f;
     if (entity->attack_delay_frames == 0 && EntityAi_CanMelee(entity)) {
         EntityAi_PickMeleeAttack(entity);
-        EntityAi_StartAction(entity, DarkSuccubus_MeleeAttack, unknown);
+        EntityAi_StartAction(entity, DarkSuccubus_MeleeAttack, run_now);
         return;
     }
     mode = EntityAi_PickCombatChoice(entity, 0);
@@ -305,7 +305,7 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
             entity->target = &player_state;
             angle = EntityMath_AngleDifference(player_state.rotation.y, entity->heading_to_player);
             if (entity->distance_to_player < 350.0f && ABS(angle) < DEG_TO_RAD(40)) {
-                EntityAi_StartAction(entity, DarkSuccubus_MoveAlongArc, unknown);
+                EntityAi_StartAction(entity, DarkSuccubus_MoveAlongArc, run_now);
                 return;
             }
             if (EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position)) > 0.0f) {
@@ -367,7 +367,7 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
         entity->move_command |= EntityAi_TurnCommand(entity);
         break;
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 2 while one to three of the six entities DarkSuccubus_CountLiveSpawns counts are
@@ -376,7 +376,7 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
    DarkSuccubus_MoveAlongArc with the player nearer than 350 and Entity.heading_to_player within 40 degrees of his facing,
    else now and then DarkSuccubus_FadeOut, else goes sideways round the player for 30 frames, keeping 100 to 250
    from him (work byte unk78). */
-static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown) {
+static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityAiStateKind15F8C0 *timers = (EntityAiStateKind15F8C0 *)ai_state;
     f32 direction[4];
@@ -410,20 +410,20 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, DarkSuccubus_RangedAttack, unknown);
+                EntityAi_StartAction(entity, DarkSuccubus_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, DarkSuccubus_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, DarkSuccubus_MeleeAttack, run_now);
             }
             return;
         case 1:
             entity->target = &player_state;
             angle = EntityMath_AngleDifference(player_state.rotation.y, entity->heading_to_player);
             if (may_strike && entity->distance_to_player < 350.0f && ABS(angle) < DEG_TO_RAD(40)) {
-                EntityAi_StartAction(entity, DarkSuccubus_MoveAlongArc, unknown);
+                EntityAi_StartAction(entity, DarkSuccubus_MoveAlongArc, run_now);
                 return;
             }
             if (timers->vanish_frames == 0 && timers->vanish_cooldown == 0 && rand() % 100 < 60) {
-                EntityAi_StartAction(entity, DarkSuccubus_FadeOut, unknown);
+                EntityAi_StartAction(entity, DarkSuccubus_FadeOut, run_now);
                 return;
             }
             if (EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position)) > 0.0f) {
@@ -492,14 +492,14 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown) {
         entity->move_command |= EntityAi_TurnCommand(entity);
         break;
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 2 while four to six of them are alive (work byte unk7C 2): as
    DarkSuccubus_ThinkCombatCircleNear, but while the entity is within 50 degrees of the player's facing and not
    faded out (work word unk68 0) it keeps 500 to 800 from him, closing in or going backwards before it goes
    sideways, and only then may start DarkSuccubus_MoveAlongArc. */
-static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknown) {
+static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityAiStateKind15F8C0 *timers = (EntityAiStateKind15F8C0 *)ai_state;
     f32 direction[4];
@@ -539,16 +539,16 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknow
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, DarkSuccubus_RangedAttack, unknown);
+                EntityAi_StartAction(entity, DarkSuccubus_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, DarkSuccubus_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, DarkSuccubus_MeleeAttack, run_now);
             }
             return;
         case 1:
             entity->target = &player_state;
             angle = EntityMath_AngleDifference(player_state.rotation.y, entity->heading_to_player);
             if (may_strike && entity->distance_to_player < 350.0f && ABS(angle) < DEG_TO_RAD(40)) {
-                EntityAi_StartAction(entity, DarkSuccubus_MoveAlongArc, unknown);
+                EntityAi_StartAction(entity, DarkSuccubus_MoveAlongArc, run_now);
                 return;
             }
             if (entity->distance_to_player > ai_state->keep_max_distance) {
@@ -557,7 +557,7 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknow
                 ai_state->move_choice = 1;
             } else {
                 if (timers->vanish_frames == 0 && timers->vanish_cooldown == 0 && rand() % 100 < 60) {
-                    EntityAi_StartAction(entity, DarkSuccubus_FadeOut, unknown);
+                    EntityAi_StartAction(entity, DarkSuccubus_FadeOut, run_now);
                     return;
                 }
                 if (EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position)) > 0.0f) {
@@ -627,7 +627,7 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknow
         entity->move_command |= EntityAi_TurnCommand(entity);
         break;
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: only picks the animation (6 or 7 sideways, 3 forwards, 5 backwards, else 0);

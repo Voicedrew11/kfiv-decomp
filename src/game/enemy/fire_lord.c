@@ -19,14 +19,14 @@
 #include "player/player.h"
 
 static void FireLord_Animate(Entity *entity);
-static void FireLord_Think(Entity *entity, s32 unknown);
-static void FireLord_ThinkIdle(Entity *entity, s32 unknown);
-static void FireLord_ThinkCombat(Entity *entity, s32 unknown);
+static void FireLord_Think(Entity *entity, s32 run_now);
+static void FireLord_ThinkIdle(Entity *entity, s32 run_now);
+static void FireLord_ThinkCombat(Entity *entity, s32 run_now);
 static void FireLord_ThinkCombatApproach(Entity *entity, int invoke_now);
-static void FireLord_ThinkCombatShootOrApproach(Entity *entity, s32 unknown);
-static void FireLord_ThinkCombatSideAnimOrApproach(Entity *entity, s32 unknown);
-static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 unknown);
-static void FireLord_ThinkCombatBackAway(Entity *entity, s32 unknown);
+static void FireLord_ThinkCombatShootOrApproach(Entity *entity, s32 run_now);
+static void FireLord_ThinkCombatSideAnimOrApproach(Entity *entity, s32 run_now);
+static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 run_now);
+static void FireLord_ThinkCombatBackAway(Entity *entity, s32 run_now);
 static void FireLord_PlayAnim6Or7Alternately(Entity *entity);
 static void FireLord_MeleeAttack0(Entity *entity);
 static void FireLord_MeleeAttack1(Entity *entity);
@@ -109,7 +109,7 @@ static void FireLord_Animate(Entity *entity) {
    fire_lord_model, each at half the alpha of the one before, clears work byte unk7E, and counts down
    work word unk6A, which it sets to EntityParams.action_frames while player_state.unk259 is not 0. Counts
    down work byte unk7D. */
-static void FireLord_Think(Entity *entity, s32 unknown) {
+static void FireLord_Think(Entity *entity, s32 run_now) {
     EntityAiStateKind131390 *ai_state = (EntityAiStateKind131390 *)&entity->ai_state;
     ModelInstanceBlock *block;
     ModelInstanceBlock *previous;
@@ -134,16 +134,16 @@ static void FireLord_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 1:
             case 2:
-                FireLord_ThinkCombat(entity, unknown);
+                FireLord_ThinkCombat(entity, run_now);
                 break;
             case 0:
             default:
-                FireLord_ThinkIdle(entity, unknown);
+                FireLord_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -154,11 +154,11 @@ static void FireLord_Think(Entity *entity, s32 unknown) {
 }
 
 /* The think function of state 0: no command, flag bit 9 clear; starts the move action. */
-static void FireLord_ThinkIdle(Entity *entity, s32 unknown) {
+static void FireLord_ThinkIdle(Entity *entity, s32 run_now) {
     entity->move_command = 0;
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
-    EntityAi_StartAction(entity, entity->ai_state.move, unknown);
+    EntityAi_StartAction(entity, entity->ai_state.move, run_now);
 }
 
 /* The think function of states 1 and 2: every 10 frames (work byte unk7D) sorts the distance to the
@@ -167,7 +167,7 @@ static void FireLord_ThinkIdle(Entity *entity, s32 unknown) {
    FireLord_ThinkCombatApproach, FireLord_ThinkCombatShootOrApproach,
    FireLord_ThinkCombatSideAnimOrApproach, FireLord_ThinkCombatCloseIn or
    FireLord_ThinkCombatBackAway. */
-static void FireLord_ThinkCombat(Entity *entity, s32 unknown) {
+static void FireLord_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiStateKind131390 *ai_state = (EntityAiStateKind131390 *)&entity->ai_state;
     f32 distance;
 
@@ -192,22 +192,22 @@ static void FireLord_ThinkCombat(Entity *entity, s32 unknown) {
     }
     switch (ai_state->distance_band) {
     case 0:
-        FireLord_ThinkCombatApproach(entity, unknown);
+        FireLord_ThinkCombatApproach(entity, run_now);
         break;
     case 1:
-        FireLord_ThinkCombatShootOrApproach(entity, unknown);
+        FireLord_ThinkCombatShootOrApproach(entity, run_now);
         break;
     case 2:
-        FireLord_ThinkCombatSideAnimOrApproach(entity, unknown);
+        FireLord_ThinkCombatSideAnimOrApproach(entity, run_now);
         break;
     case 3:
-        FireLord_ThinkCombatCloseIn(entity, unknown);
+        FireLord_ThinkCombatCloseIn(entity, run_now);
         break;
     case 4:
-        FireLord_ThinkCombatBackAway(entity, unknown);
+        FireLord_ThinkCombatBackAway(entity, run_now);
         break;
     default:
-        FireLord_ThinkCombatApproach(entity, unknown);
+        FireLord_ThinkCombatApproach(entity, run_now);
         break;
     }
 }
@@ -227,24 +227,24 @@ static void FireLord_ThinkCombatApproach(Entity *entity, int invoke_now) {
 /* Band 1 of FireLord_ThinkCombat: when EntityAi_CanShoot finds the player in reach of a ranged
    attack, starts EntityAi_RangedAttack with the record EntityAi_PickRangedAttack draws; else goes for the
    player as band 0 does. */
-static void FireLord_ThinkCombatShootOrApproach(Entity *entity, s32 unknown) {
+static void FireLord_ThinkCombatShootOrApproach(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (EntityAi_CanShoot(entity)) {
         EntityAi_PickRangedAttack(entity);
-        EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+        EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
         return;
     }
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     entity->target = &player_state;
     entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f);
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* Band 2 of FireLord_ThinkCombat: when the heading is within 20 degrees of Entity.heading_to_player, flips
    work byte unk7B and starts FireLord_PlayAnim6Or7Alternately; else goes for the player as band 0 does. */
-static void FireLord_ThinkCombatSideAnimOrApproach(Entity *entity, s32 unknown) {
+static void FireLord_ThinkCombatSideAnimOrApproach(Entity *entity, s32 run_now) {
     EntityAiStateKind131390 *ai_state = (EntityAiStateKind131390 *)&entity->ai_state;
     f32 angle;
 
@@ -253,19 +253,19 @@ static void FireLord_ThinkCombatSideAnimOrApproach(Entity *entity, s32 unknown) 
     angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
     if (!(ABS(angle) > DEG_TO_RAD(20))) {
         ai_state->alternate_anim_flag = ai_state->alternate_anim_flag == 0;
-        EntityAi_StartAction(entity, FireLord_PlayAnim6Or7Alternately, unknown);
+        EntityAi_StartAction(entity, FireLord_PlayAnim6Or7Alternately, run_now);
         return;
     }
     entity->target = &player_state;
     entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f);
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* Band 3 of FireLord_ThinkCombat (the player 100 to 500 away): as EntityAi_ThinkCombat, closing
    in on the player with the forward command; but in place of the guard it starts
    FireLord_PlayAnim6Or7ThenMelee0 when FireLord_ShouldEvadeSwingOrMagic says so, and melee records 0 and 1 have
    the type's own actions (FireLord_MeleeAttack0, FireLord_MeleeAttack1). */
-static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 unknown) {
+static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -293,13 +293,13 @@ static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
-                EntityAi_StartAction(entity, FireLord_MeleeAttack0, unknown);
+                EntityAi_StartAction(entity, FireLord_MeleeAttack0, run_now);
             } else if (ENTITY_FLAG_BITS(entity)->attack_index == 1) {
-                EntityAi_StartAction(entity, FireLord_MeleeAttack1, unknown);
+                EntityAi_StartAction(entity, FireLord_MeleeAttack1, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -340,13 +340,13 @@ static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* Band 4 of FireLord_ThinkCombat (the player nearer than 100): as
    FireLord_ThinkCombatCloseIn, but where that one closes in this one gives command bit 2
    (backwards), with a turn bit when the target is off the heading by more than the turn limit. */
-static void FireLord_ThinkCombatBackAway(Entity *entity, s32 unknown) {
+static void FireLord_ThinkCombatBackAway(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -374,13 +374,13 @@ static void FireLord_ThinkCombatBackAway(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
-                EntityAi_StartAction(entity, FireLord_MeleeAttack0, unknown);
+                EntityAi_StartAction(entity, FireLord_MeleeAttack0, run_now);
             } else if (ENTITY_FLAG_BITS(entity)->attack_index == 1) {
-                EntityAi_StartAction(entity, FireLord_MeleeAttack1, unknown);
+                EntityAi_StartAction(entity, FireLord_MeleeAttack1, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -430,7 +430,7 @@ static void FireLord_ThinkCombatBackAway(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* An action (busy bit 0x1000) that FireLord_ThinkCombatSideAnimOrApproach starts: plays animation 6 or 7

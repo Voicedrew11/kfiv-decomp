@@ -16,8 +16,8 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
-static void Reaper_Think(Entity *entity, s32 unknown);
-static void Reaper_ThinkCombat(Entity *entity, s32 unknown);
+static void Reaper_Think(Entity *entity, s32 run_now);
+static void Reaper_ThinkCombat(Entity *entity, s32 run_now);
 static void Reaper_Move(Entity *entity);
 static void Reaper_Dormant(Entity *entity);
 static void Reaper_RangedAttack(Entity *entity);
@@ -69,7 +69,7 @@ void Reaper_Init(Entity *entity) {
 /* The think handler: every tenth frame updates what the entity knows of the player; while it is not
    busy it steps Entity.state and in state 2 calls Reaper_ThinkCombat. States 0 and 1 do
    nothing, and flag bit 53 is not looked at. Always sets flag bit 9. */
-static void Reaper_Think(Entity *entity, s32 unknown) {
+static void Reaper_Think(Entity *entity, s32 run_now) {
     u32 phase;
 
     phase = frame_counter % 10U;
@@ -83,7 +83,7 @@ static void Reaper_Think(Entity *entity, s32 unknown) {
         case 1:
             break;
         case 2:
-            Reaper_ThinkCombat(entity, unknown);
+            Reaper_ThinkCombat(entity, run_now);
             break;
         }
     }
@@ -95,7 +95,7 @@ static void Reaper_Think(Entity *entity, s32 unknown) {
    is over; else sets flag bit 32 and, each time the timer runs out with EntityAi_PickCombatChoice choosing the
    attack and EntityAi_CanShoot finding a ranged record in reach (EntityAi_PickRangedAttack picks it), starts
    Reaper_RangedAttack; else starts the move action. It gives no movement command. */
-static void Reaper_ThinkCombat(Entity *entity, s32 unknown) {
+static void Reaper_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 side;
 
@@ -106,7 +106,7 @@ static void Reaper_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (EntityAi_CanMelee(entity) && entity->attack_delay_frames == 0) {
         EntityAi_PickMeleeAttack(entity);
-        EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+        EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
     } else {
         ENTITY_FLAG_BITS(entity)->player_in_reach = TRUE;
         side = EntityAi_PickCombatChoice(entity, 0);
@@ -120,14 +120,14 @@ static void Reaper_ThinkCombat(Entity *entity, s32 unknown) {
             if (entity->combat_choice == 0) {
                 if (EntityAi_CanShoot(entity)) {
                     EntityAi_PickRangedAttack(entity);
-                    EntityAi_StartAction(entity, Reaper_RangedAttack, unknown);
+                    EntityAi_StartAction(entity, Reaper_RangedAttack, run_now);
                     return;
                 }
             } else {
                 entity->action_timer = rand() % 60 + 0x3C;
             }
         }
-        EntityAi_StartAction(entity, ai_state->move, unknown);
+        EntityAi_StartAction(entity, ai_state->move, run_now);
     }
 }
 

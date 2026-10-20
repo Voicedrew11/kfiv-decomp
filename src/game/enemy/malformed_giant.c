@@ -17,10 +17,10 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
-static void MalformedGiant_Think(Entity *entity, s32 unknown);
-static void MalformedGiant_ThinkCombat(Entity *entity, s32 unknown);
-static void MalformedGiant_ThinkIdle(Entity *entity, s32 unknown);
-static void MalformedGiant_ThinkPursue(Entity *entity, s32 unknown);
+static void MalformedGiant_Think(Entity *entity, s32 run_now);
+static void MalformedGiant_ThinkCombat(Entity *entity, s32 run_now);
+static void MalformedGiant_ThinkIdle(Entity *entity, s32 run_now);
+static void MalformedGiant_ThinkPursue(Entity *entity, s32 run_now);
 static void MalformedGiant_PlayAnim0ToFrame80(Entity *entity);
 
 /* Set-up of a type 41 entity: clears its work area and installs the type's handlers. */
@@ -69,7 +69,7 @@ void MalformedGiant_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think with the type's own functions for the three states. Counts
    the frames with flag bit 41 set in work byte unk7A and at 10 starts MalformedGiant_PlayAnim0ToFrame80. */
-static void MalformedGiant_Think(Entity *entity, s32 unknown) {
+static void MalformedGiant_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -89,23 +89,23 @@ static void MalformedGiant_Think(Entity *entity, s32 unknown) {
         entity->action_timer = 0;
         ENTITY_UNK5C(entity)->as_s32 = 0;
         ai_state->step_index = 0;
-        EntityAi_StartAction(entity, MalformedGiant_PlayAnim0ToFrame80, unknown);
+        EntityAi_StartAction(entity, MalformedGiant_PlayAnim0ToFrame80, run_now);
         return;
     } else if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
     } else {
         switch (entity->state) {
         case 0:
-            MalformedGiant_ThinkIdle(entity, unknown);
+            MalformedGiant_ThinkIdle(entity, run_now);
             break;
         case 1:
-            MalformedGiant_ThinkPursue(entity, unknown);
+            MalformedGiant_ThinkPursue(entity, run_now);
             break;
         case 2:
-            MalformedGiant_ThinkCombat(entity, unknown);
+            MalformedGiant_ThinkCombat(entity, run_now);
             break;
         default:
-            MalformedGiant_ThinkIdle(entity, unknown);
+            MalformedGiant_ThinkIdle(entity, run_now);
             break;
         }
     }
@@ -114,7 +114,7 @@ static void MalformedGiant_Think(Entity *entity, s32 unknown) {
 /* The think function of state 2: as EntityAi_ThinkCombat, but when it would start closing in it
    starts MalformedGiant_PlayAnim0ToFrame80 instead with a chance of EntityParams.action_frames in 100, and closing
    in never runs. */
-static void MalformedGiant_ThinkCombat(Entity *entity, s32 unknown) {
+static void MalformedGiant_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -146,9 +146,9 @@ static void MalformedGiant_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -157,7 +157,7 @@ static void MalformedGiant_ThinkCombat(Entity *entity, s32 unknown) {
                 entity->move_command = 0;
                 entity->action_timer = 0;
                 entity->target = NULL;
-                EntityAi_StartAction(entity, MalformedGiant_PlayAnim0ToFrame80, unknown);
+                EntityAi_StartAction(entity, MalformedGiant_PlayAnim0ToFrame80, run_now);
                 ai_state->step_index = 0;
                 return;
             }
@@ -198,12 +198,12 @@ static void MalformedGiant_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 0: as EntityAi_ThinkIdle, but it picks no point to go to: it only
    gives the command towards the target it has. */
-static void MalformedGiant_ThinkIdle(Entity *entity, s32 unknown) {
+static void MalformedGiant_ThinkIdle(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[2];
     s32 turn;
@@ -225,12 +225,12 @@ static void MalformedGiant_ThinkIdle(Entity *entity, s32 unknown) {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
     handler = ai_state->move;
-    EntityAi_StartAction(entity, handler, unknown);
+    EntityAi_StartAction(entity, handler, run_now);
 }
 
 /* The think function of state 1: as EntityAi_ThinkPursue, but each time the timer Entity.action_timer is
    at 0 it starts MalformedGiant_PlayAnim0ToFrame80 with a chance of EntityParams.action_frames in 100. */
-static void MalformedGiant_ThinkPursue(Entity *entity, s32 unknown) {
+static void MalformedGiant_ThinkPursue(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 turn;
@@ -248,7 +248,7 @@ static void MalformedGiant_ThinkPursue(Entity *entity, s32 unknown) {
             entity->move_command = 0;
             entity->action_timer = 0;
             entity->target = NULL;
-            EntityAi_StartAction(entity, MalformedGiant_PlayAnim0ToFrame80, unknown);
+            EntityAi_StartAction(entity, MalformedGiant_PlayAnim0ToFrame80, run_now);
             ai_state->step_index = 0;
             return;
         }
@@ -262,7 +262,7 @@ static void MalformedGiant_ThinkPursue(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* An action (busy bit 0x1000): stands in animation 0 with flag bit 9 clear until the animation is

@@ -15,8 +15,8 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
-static void Onyx_Think(Entity *entity, s32 unknown);
-static void Onyx_ThinkCombat(Entity *entity, s32 unknown);
+static void Onyx_Think(Entity *entity, s32 run_now);
+static void Onyx_ThinkCombat(Entity *entity, s32 run_now);
 static void Onyx_RangedAttack0(Entity *entity);
 static void Onyx_SwitchAttack(Entity *entity);
 static s32 Onyx_PickAttack(Entity *entity);
@@ -115,7 +115,7 @@ void Onyx_Init(Entity *entity) {
 /* The think handler: as EntityAi_Think, with Onyx_ThinkCombat for state 2. Counts down work
    word unk6E; once it is 0 (and Onyx_SwitchAttack is not running) it puts the weights of
    ranged record 0 and melee records 1 and 2 back in work words unk68, unk6A and unk6C. */
-static void Onyx_Think(Entity *entity, s32 unknown) {
+static void Onyx_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -135,21 +135,21 @@ static void Onyx_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
     case 0:
-        EntityAi_ThinkIdle(entity, unknown);
+        EntityAi_ThinkIdle(entity, run_now);
         return;
     case 1:
-        EntityAi_ThinkPursue(entity, unknown);
+        EntityAi_ThinkPursue(entity, run_now);
         return;
     case 2:
-        Onyx_ThinkCombat(entity, unknown);
+        Onyx_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but the motion never moves the entity and
@@ -158,7 +158,7 @@ static void Onyx_Think(Entity *entity, s32 unknown) {
    Onyx_RangedAttack0 or EntityAi_MeleeAttack; a draw of melee record 0 makes it close in
    for 30 to 89 frames instead. Closing in with unk7A at 0 keeps a distance
    (Onyx_GetKeepRangeCommand); it never runs. */
-static void Onyx_ThinkCombat(Entity *entity, s32 unknown) {
+static void Onyx_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -195,17 +195,17 @@ static void Onyx_ThinkCombat(Entity *entity, s32 unknown) {
             }
             if (ai_state->action_flags != 0) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == ai_state->step_index) {
-                    EntityAi_StartAction(entity, Onyx_RangedAttack0, unknown);
+                    EntityAi_StartAction(entity, Onyx_RangedAttack0, run_now);
                 } else {
                     ai_state->step_index = ENTITY_FLAG_BITS(entity)->attack_index;
-                    EntityAi_StartAction(entity, Onyx_SwitchAttack, unknown);
+                    EntityAi_StartAction(entity, Onyx_SwitchAttack, run_now);
                 }
             } else {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == ai_state->step_index) {
-                    EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                    EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
                 } else {
                     ai_state->step_index = ENTITY_FLAG_BITS(entity)->attack_index;
-                    EntityAi_StartAction(entity, Onyx_SwitchAttack, unknown);
+                    EntityAi_StartAction(entity, Onyx_SwitchAttack, run_now);
                 }
             }
             return;
@@ -263,7 +263,7 @@ static void Onyx_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The ranged attack with record 0 (busy bit 1): animation 23, turning to the player throughout;

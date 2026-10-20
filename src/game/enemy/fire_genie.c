@@ -22,8 +22,8 @@
 static void FireGenie_Animate(Entity *entity);
 static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode);
 static void FireGenie_OnHit(Entity *entity);
-static void FireGenie_Think(Entity *entity, s32 unknown);
-static void FireGenie_ThinkDecide(Entity *entity, s32 unknown);
+static void FireGenie_Think(Entity *entity, s32 run_now);
+static void FireGenie_ThinkDecide(Entity *entity, s32 run_now);
 static void FireGenie_RangedAttack0(Entity *entity);
 static void FireGenie_RespawnOther(Entity *entity);
 static void FireGenie_Death(Entity *entity);
@@ -193,7 +193,7 @@ static void FireGenie_OnHit(Entity *entity) {
 
 /* The think handler: no states; every tenth frame updates what the entity knows of the player, and
    while it is not busy calls FireGenie_ThinkDecide. Counts down work word unk68. */
-static void FireGenie_Think(Entity *entity, s32 unknown) {
+static void FireGenie_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -201,7 +201,7 @@ static void FireGenie_Think(Entity *entity, s32 unknown) {
     }
     if (entity->busy_flags == 0) {
         EntityAi_StepState(entity);
-        FireGenie_ThinkDecide(entity, unknown);
+        FireGenie_ThinkDecide(entity, run_now);
     }
     if (ai_state->pause_timer != 0) {
         ai_state->pause_timer--;
@@ -212,7 +212,7 @@ static void FireGenie_Think(Entity *entity, s32 unknown) {
    FireGenie_ShouldRespawnOther says so; when an attack reaches (FireGenie_CanAttack) starts
    the one FireGenie_PickAttack draws, FireGenie_RangedAttack0 for ranged record 0; else
    starts the move action. */
-static void FireGenie_ThinkDecide(Entity *entity, s32 unknown) {
+static void FireGenie_ThinkDecide(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (EntityAi_ShouldGuard(entity, 300.0f, DEG_TO_RAD(30))) {
@@ -221,19 +221,19 @@ static void FireGenie_ThinkDecide(Entity *entity, s32 unknown) {
         entity->flags |= ENTITY_FLAG_ATTACKING;
         entity->flags |= ENTITY_FLAG_LOOK_AT_TARGET;
         if (FireGenie_ShouldRespawnOther(entity)) {
-            EntityAi_StartAction(entity, FireGenie_RespawnOther, unknown);
+            EntityAi_StartAction(entity, FireGenie_RespawnOther, run_now);
         } else if (entity->attack_delay_frames == 0 && FireGenie_CanAttack(entity)) {
             if (FireGenie_PickAttack(entity)) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
-                    EntityAi_StartAction(entity, FireGenie_RangedAttack0, unknown);
+                    EntityAi_StartAction(entity, FireGenie_RangedAttack0, run_now);
                 } else {
-                    EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                    EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
                 }
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
         } else {
-            EntityAi_StartAction(entity, ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, run_now);
         }
     }
 }

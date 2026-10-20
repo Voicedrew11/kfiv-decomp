@@ -16,8 +16,8 @@
 
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
-static void MasterFadin_Think(Entity *entity, s32 unknown);
-static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 unknown);
+static void MasterFadin_Think(Entity *entity, s32 run_now);
+static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 run_now);
 static void MasterFadin_Dormant(Entity *entity);
 static void MasterFadin_Death(Entity *entity);
 static void MasterFadin_AlertPartner(Entity *entity);
@@ -64,7 +64,7 @@ void MasterFadin_Init(Entity *entity) {
    clear or whose bits 2-3 are 3. While the entity is not busy it calls MasterFadin_ThinkShootAtPlayer in states 1
    and 2, and in state 0 starts what the move slot holds (the set-up function leaves it NULL). Keeps
    animation 0; once work word unk68 has run out it puts the state back to 0. */
-static void MasterFadin_Think(Entity *entity, s32 unknown) {
+static void MasterFadin_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     Entity *leader;
     Entity *other;
@@ -93,11 +93,11 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
         switch (entity->state) {
         case 1:
         case 2:
-            MasterFadin_ThinkShootAtPlayer(entity, unknown);
+            MasterFadin_ThinkShootAtPlayer(entity, run_now);
             break;
         case 0:
         default:
-            EntityAi_StartAction(entity, ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, run_now);
             break;
         }
     }
@@ -113,7 +113,7 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
    from model point unk432 (along the line to the next point; point 0xFF: along the heading turned round),
    turned towards the player 190 above his feet by at most unk436 in pitch and unk438 in yaw, starts cue 0 and
    sets unkA0 to unk434. Keeps animation 0 and starts the move action. */
-static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 unknown) {
+static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 angles[4];
     f32 target[4];
@@ -152,7 +152,7 @@ static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 unknown) {
         }
     }
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The dormant action (busy bit 0x20): as EntityAi_Dormant with flag bits 11 to 13 at 0; flag bit 43

@@ -21,8 +21,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 static void DarkPuppet_OnHit(Entity *entity);
-static void DarkPuppet_Think(Entity *entity, s32 unknown);
-static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown);
+static void DarkPuppet_Think(Entity *entity, s32 run_now);
+static void DarkPuppet_ThinkCombat(Entity *entity, s32 run_now);
 static void DarkPuppet_Move(Entity *entity);
 static void DarkPuppet_ApplyMoveCommand(Entity *entity);
 static void DarkPuppet_MeleeAttack(Entity *entity);
@@ -96,7 +96,7 @@ static void DarkPuppet_OnHit(Entity *entity) {
    bit is set it adds command bit 0x20 or 0x10 by the height EntityCollision_DistanceToPropFloor reads (work byte unk7A:
    set above EntityParams.type_param_1, cleared below type_param_2); and it calls DarkPuppet_ApplyMoveCommand while the entity
    is not busy or is in a hit reaction. */
-static void DarkPuppet_Think(Entity *entity, s32 unknown) {
+static void DarkPuppet_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 height;
 
@@ -107,20 +107,20 @@ static void DarkPuppet_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                DarkPuppet_ThinkCombat(entity, unknown);
+                DarkPuppet_ThinkCombat(entity, run_now);
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -156,7 +156,7 @@ static void DarkPuppet_Think(Entity *entity, s32 unknown) {
    four ways, kept in work byte unk78: 0 forward (the player farther than unk438), 1 backwards
    (nearer than unk436), 2 and 3 sideways (command bits 4 and 8) while keeping between the two
    distances; EntityAi_IsPushedFromFront makes it change the way. Waiting (4) it turns to the player. */
-static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
+static void DarkPuppet_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -185,12 +185,12 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
-                    EntityAi_StartAction(entity, DarkPuppet_RangedAttack0, unknown);
+                    EntityAi_StartAction(entity, DarkPuppet_RangedAttack0, run_now);
                 } else {
-                    EntityAi_StartAction(entity, DarkPuppet_RangedAttack, unknown);
+                    EntityAi_StartAction(entity, DarkPuppet_RangedAttack, run_now);
                 }
             } else {
-                EntityAi_StartAction(entity, DarkPuppet_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, DarkPuppet_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -282,7 +282,7 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: only picks the animation, 6 or 7 for command bits 4 and 8, 3 forward, 5

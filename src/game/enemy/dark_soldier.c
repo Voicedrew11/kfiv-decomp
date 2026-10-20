@@ -30,8 +30,8 @@ static inline void move_along_arc(Entity *entity, EntityAiState *ai_state) {
     }
 }
 
-static void DarkSoldier_Think(Entity *entity, s32 unknown);
-static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown);
+static void DarkSoldier_Think(Entity *entity, s32 run_now);
+static void DarkSoldier_ThinkCombat(Entity *entity, s32 run_now);
 static void DarkSoldier_Move(Entity *entity);
 static void DarkSoldier_MeleeAttack(Entity *entity);
 static void DarkSoldier_PlayAnim6Or7BySide(Entity *entity);
@@ -89,7 +89,7 @@ void DarkSoldier_Init(Entity *entity) {
    the spawn point (flag bit 53) gets command bits 0x440 added. Work byte unk7A goes to 0 with the
    player nearer than the radius plus 400 and to 1 with the player farther than the radius plus
    1100. */
-static void DarkSoldier_Think(Entity *entity, s32 unknown) {
+static void DarkSoldier_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state;
 
     ai_state = &entity->ai_state;
@@ -107,21 +107,21 @@ static void DarkSoldier_Think(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             // match: called as returning nothing, so $2 is free for the next statement
             // match: the result is not used, retail calls it as void
-            ((void (*)(void *, int))EntityAi_ThinkReturn)(entity, unknown);
+            ((void (*)(void *, int))EntityAi_ThinkReturn)(entity, run_now);
             entity->move_command |= (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                DarkSoldier_ThinkCombat(entity, unknown);
+                DarkSoldier_ThinkCombat(entity, run_now);
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -136,7 +136,7 @@ static void DarkSoldier_Think(Entity *entity, s32 unknown) {
    true). A melee attack draws for the same two actions first, with work byte unk7B at 1 so that the
    attack follows them. In place of waiting it goes to a point EntityPoint_PickNear picks round the spawn
    point; closing in is at the run with command bit 0x400. */
-static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
+static void DarkSoldier_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 point[4];
     f32 direction[4];
@@ -162,13 +162,13 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
         if (rand() % 100 < entity->params->near_distance && ABS(angle) < DEG_TO_RAD(60)
             && ABS(entity->heading_to_player - entity->model->rotation[1]) < DEG_TO_RAD(60)) {
             ai_state->action_flags = 0;
-            EntityAi_StartAction(entity, DarkSoldier_PlayAnim6Or7BySide, unknown);
+            EntityAi_StartAction(entity, DarkSoldier_PlayAnim6Or7BySide, run_now);
             return;
         }
         if (rand() % 100 < entity->params->far_distance && ABS(angle) < HALF_PI && entity->spawn_info->spawn_mode == 0
             && DarkSoldier_CanMoveAlongArc(entity)) {
             ai_state->action_flags = 0;
-            EntityAi_StartAction(entity, DarkSoldier_MoveAlongArc, unknown);
+            EntityAi_StartAction(entity, DarkSoldier_MoveAlongArc, run_now);
             return;
         }
     }
@@ -184,22 +184,22 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
                 return;
             }
             angle = EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position));
             if (rand() % 100 < entity->params->near_distance && ABS(angle) < DEG_TO_RAD(40)) {
                 ai_state->action_flags = 1;
-                EntityAi_StartAction(entity, DarkSoldier_PlayAnim6Or7BySide, unknown);
+                EntityAi_StartAction(entity, DarkSoldier_PlayAnim6Or7BySide, run_now);
                 return;
             }
             if (rand() % 100 < entity->params->far_distance && ABS(angle) < HALF_PI && entity->spawn_info->spawn_mode == 0
                 && DarkSoldier_CanMoveAlongArc(entity)) {
                 ai_state->action_flags = 1;
-                EntityAi_StartAction(entity, DarkSoldier_MoveAlongArc, unknown);
+                EntityAi_StartAction(entity, DarkSoldier_MoveAlongArc, run_now);
                 return;
             }
-            EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+            EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             return;
         case 1:
             entity->target = &player_state;
@@ -243,7 +243,7 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
             entity->move_command |= MOVE_COMMAND_TURN_FAST;
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: as EntityAi_Move, but it only turns the entity (twice as fast for command bits

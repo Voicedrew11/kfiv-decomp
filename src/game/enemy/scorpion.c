@@ -18,9 +18,9 @@
 
 
 static void Scorpion_Animate(Entity *entity);
-static void Scorpion_Think(Entity *entity, s32 unknown);
-static int Scorpion_ThinkWander(Entity *entity, s32 unknown);
-static int Scorpion_ThinkCombat(Entity *entity, s32 unknown);
+static void Scorpion_Think(Entity *entity, s32 run_now);
+static int Scorpion_ThinkWander(Entity *entity, s32 run_now);
+static int Scorpion_ThinkCombat(Entity *entity, s32 run_now);
 static void Scorpion_Move(Entity *entity);
 
 /* Set-up of a type 16 entity: clears its work area and installs the type's handlers. */
@@ -82,7 +82,7 @@ static void Scorpion_Animate(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with Scorpion_ThinkCombat for state 2 and Scorpion_ThinkWander
    for the other states. */
-static void Scorpion_Think(Entity *entity, s32 unknown) {
+static void Scorpion_Think(Entity *entity, s32 run_now) {
     u32 phase;
 
     phase = frame_counter % 10U;
@@ -95,7 +95,7 @@ static void Scorpion_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
@@ -103,17 +103,17 @@ static void Scorpion_Think(Entity *entity, s32 unknown) {
     case 1:
         break;
     case 2:
-        Scorpion_ThinkCombat(entity, unknown);
+        Scorpion_ThinkCombat(entity, run_now);
         return;
     }
-    Scorpion_ThinkWander(entity, unknown);
+    Scorpion_ThinkWander(entity, run_now);
 }
 
 /* The think function of every state but 2 (Scorpion_Think calls it): wanders. Each time the
    timer runs out it picks a point near the spawn point (EntityPoint_PickNear; 21 times in 100, for 60 to
    89 frames) or no target (120 to 179 frames), takes the command of EntityAi_MoveCommand towards it (or
    the turn away from a push, EntityAi_TurnFromPush) and starts the move action. */
-static int Scorpion_ThinkWander(Entity *entity, s32 unknown) {
+static int Scorpion_ThinkWander(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 turn;
@@ -141,7 +141,7 @@ static int Scorpion_ThinkWander(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 2: guard, dodge and the choice among attacking, closing in and
@@ -150,7 +150,7 @@ static int Scorpion_ThinkWander(Entity *entity, s32 unknown) {
    bits 11 to 13 at 3); 1 goes for the player; 2 moves sideways (command bit 4 or 8, by the side of
    the player's facing the entity is on, work byte unk7A) until flag bit 45, 47 or 48 is set, which
    puts it on way 1. */
-static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
+static int Scorpion_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 heading;
     f32 angle;
@@ -182,9 +182,9 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -280,7 +280,7 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: as EntityAi_Move, but it turns the heading only while the command has more than

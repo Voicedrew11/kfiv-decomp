@@ -22,32 +22,32 @@ static void StoneGuardian_OnHit(Entity *entity);
 static void StoneGuardian_Move(Entity *entity);
 static void StoneGuardian_TurnToSpawnHeading(Entity *entity);
 static void StoneGuardian_HoldAnim1(Entity *entity);
-static void StoneGuardian_ThinkHoldAnim17(Entity *entity, s32 unknown);
-static void StoneGuardian_ThinkMode2StayInBounds(Entity *entity, s32 unknown);
+static void StoneGuardian_ThinkHoldAnim17(Entity *entity, s32 run_now);
+static void StoneGuardian_ThinkMode2StayInBounds(Entity *entity, s32 run_now);
 static void StoneGuardian_Mode2WalkToPost(Entity *entity);
 static void StoneGuardian_Mode2ChaseInBounds(Entity *entity);
 static void StoneGuardian_Mode2ReturnToSpawn(Entity *entity);
-static void StoneGuardian_ThinkMode3StayInBounds(Entity *entity, s32 unknown);
+static void StoneGuardian_ThinkMode3StayInBounds(Entity *entity, s32 run_now);
 static void StoneGuardian_Mode3WalkToPost(Entity *entity);
 static void StoneGuardian_Mode3ChaseInBounds(Entity *entity);
 static void StoneGuardian_Mode3ReturnToSpawn(Entity *entity);
-static void StoneGuardian_ThinkMode4StayInBounds(Entity *entity, s32 unknown);
+static void StoneGuardian_ThinkMode4StayInBounds(Entity *entity, s32 run_now);
 static void StoneGuardian_Mode4WalkToPost(Entity *entity);
 static void StoneGuardian_Mode4ChaseInBounds(Entity *entity);
 static void StoneGuardian_Mode4ReturnToSpawn(Entity *entity);
-static void StoneGuardian_ThinkMode5StayInBounds(Entity *entity, s32 unknown);
+static void StoneGuardian_ThinkMode5StayInBounds(Entity *entity, s32 run_now);
 static void StoneGuardian_Mode5WalkToPost(Entity *entity);
 static void StoneGuardian_Mode5ChaseInBounds(Entity *entity);
 static void StoneGuardian_Mode5ReturnToSpawn(Entity *entity);
-static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 unknown);
-static void StoneGuardian_Mode6StayHidden(Entity *entity, s32 unknown);
-static void StoneGuardian_Mode6WaitTurnHidden(Entity *entity, s32 unknown);
-static void StoneGuardian_Mode6LeaveHiding(Entity *entity, s32 unknown);
+static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 run_now);
+static void StoneGuardian_Mode6StayHidden(Entity *entity, s32 run_now);
+static void StoneGuardian_Mode6WaitTurnHidden(Entity *entity, s32 run_now);
+static void StoneGuardian_Mode6LeaveHiding(Entity *entity, s32 run_now);
 static void StoneGuardian_PlayAnim9(Entity *entity);
-static void StoneGuardian_Mode6WaitTurnShown(Entity *entity, s32 unknown);
-static void StoneGuardian_Mode6ReturnToHiding(Entity *entity, s32 unknown);
+static void StoneGuardian_Mode6WaitTurnShown(Entity *entity, s32 run_now);
+static void StoneGuardian_Mode6ReturnToHiding(Entity *entity, s32 run_now);
 static void StoneGuardian_PlayAnim8(Entity *entity);
-static void StoneGuardian_Mode6WalkToHidePoint(Entity *entity, s32 unknown);
+static void StoneGuardian_Mode6WalkToHidePoint(Entity *entity, s32 run_now);
 static s32 StoneGuardian_Mode6IsStepFree(Entity *entity, s32 value);
 static s32 StoneGuardian_Mode6IsNearestWaiting(Entity *entity, f32 limit);
 
@@ -254,10 +254,10 @@ static void StoneGuardian_HoldAnim1(Entity *entity) {
 
 /* The think handler of mode 1 (EntitySpawnInfo.spawn_mode is 1): holds animation 17 with flag bits 16,
    18, 21 to 24 and 28 set and starts no action. */
-static void StoneGuardian_ThinkHoldAnim17(Entity *entity, s32 unknown) {
+static void StoneGuardian_ThinkHoldAnim17(Entity *entity, s32 run_now) {
     s64 flags;
 
-    Motion_Start(entity, 0x11, 0, 0, unknown);
+    Motion_Start(entity, 0x11, 0, 0, run_now);
     flags = entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
     flags |= ENTITY_FLAG_400000;
     flags |= ENTITY_FLAG_NO_WALL_COLLISION;
@@ -275,7 +275,7 @@ static void StoneGuardian_ThinkHoldAnim17(Entity *entity, s32 unknown) {
    clear the state is 2 with the player inside a fixed rectangle, else 1; once the bit is set it is
    3 until the entity is back at its place, then 0. Every frame it clamps the entity's position to
    fixed bounds. */
-static void StoneGuardian_ThinkMode2StayInBounds(Entity *entity, s32 unknown) {
+static void StoneGuardian_ThinkMode2StayInBounds(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     MapObject *map_object;
     s32 is_open;
@@ -310,24 +310,24 @@ static void StoneGuardian_ThinkMode2StayInBounds(Entity *entity, s32 unknown) {
         }
         switch (entity->state) {
         case 0:
-            EntityAi_StartAction(entity, StoneGuardian_HoldAnim1, unknown);
+            EntityAi_StartAction(entity, StoneGuardian_HoldAnim1, run_now);
             ai_state->pause_timer = entity->params->pitch_limit_deg;
             break;
         case 1:
             if (ai_state->pause_timer == 0) {
-                EntityAi_StartAction(entity, StoneGuardian_Mode2WalkToPost, unknown);
+                EntityAi_StartAction(entity, StoneGuardian_Mode2WalkToPost, run_now);
                 ai_state->sub_timer = entity->params->yaw_limit_deg;
             }
             break;
         case 2:
             if (ai_state->pause_timer == 0) {
-                EntityAi_StartAction(entity, StoneGuardian_Mode2ChaseInBounds, unknown);
+                EntityAi_StartAction(entity, StoneGuardian_Mode2ChaseInBounds, run_now);
                 ai_state->sub_timer = entity->params->yaw_limit_deg;
             }
             break;
         case 3:
             if (ai_state->pause_timer == 0) {
-                EntityAi_StartAction(entity, StoneGuardian_Mode2ReturnToSpawn, unknown);
+                EntityAi_StartAction(entity, StoneGuardian_Mode2ReturnToSpawn, run_now);
             }
             break;
         default:
@@ -575,7 +575,7 @@ static void StoneGuardian_Mode2ReturnToSpawn(Entity *entity) {
 /* The think handler of mode 3: as StoneGuardian_ThinkMode2StayInBounds with its own rectangle,
    bounds and actions (StoneGuardian_Mode3WalkToPost, StoneGuardian_Mode3ChaseInBounds,
    StoneGuardian_Mode3ReturnToSpawn). */
-static void StoneGuardian_ThinkMode3StayInBounds(Entity *entity, s32 unknown) {
+static void StoneGuardian_ThinkMode3StayInBounds(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     MapObject *map_object;
     s32 is_open;
@@ -607,18 +607,18 @@ static void StoneGuardian_ThinkMode3StayInBounds(Entity *entity, s32 unknown) {
         }
         switch (entity->state) {
         case 0:
-            EntityAi_StartAction(entity, StoneGuardian_HoldAnim1, unknown);
+            EntityAi_StartAction(entity, StoneGuardian_HoldAnim1, run_now);
             break;
         case 1:
-            EntityAi_StartAction(entity, StoneGuardian_Mode3WalkToPost, unknown);
+            EntityAi_StartAction(entity, StoneGuardian_Mode3WalkToPost, run_now);
             ai_state->sub_timer = entity->params->yaw_limit_deg;
             break;
         case 2:
-            EntityAi_StartAction(entity, StoneGuardian_Mode3ChaseInBounds, unknown);
+            EntityAi_StartAction(entity, StoneGuardian_Mode3ChaseInBounds, run_now);
             ai_state->sub_timer = entity->params->yaw_limit_deg;
             break;
         case 3:
-            EntityAi_StartAction(entity, StoneGuardian_Mode3ReturnToSpawn, unknown);
+            EntityAi_StartAction(entity, StoneGuardian_Mode3ReturnToSpawn, run_now);
             break;
         default:
             entity->state = 0;
@@ -789,7 +789,7 @@ static void StoneGuardian_Mode3ReturnToSpawn(Entity *entity) {
 /* The think handler of mode 4: as StoneGuardian_ThinkMode3StayInBounds with its own rectangle,
    bounds and actions (StoneGuardian_Mode4WalkToPost, StoneGuardian_Mode4ChaseInBounds,
    StoneGuardian_Mode4ReturnToSpawn). */
-static void StoneGuardian_ThinkMode4StayInBounds(Entity *entity, s32 unknown) {
+static void StoneGuardian_ThinkMode4StayInBounds(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     MapObject *map_object;
     s32 is_open;
@@ -821,18 +821,18 @@ static void StoneGuardian_ThinkMode4StayInBounds(Entity *entity, s32 unknown) {
         }
         switch (entity->state) {
         case 0:
-            EntityAi_StartAction(entity, StoneGuardian_HoldAnim1, unknown);
+            EntityAi_StartAction(entity, StoneGuardian_HoldAnim1, run_now);
             break;
         case 1:
-            EntityAi_StartAction(entity, StoneGuardian_Mode4WalkToPost, unknown);
+            EntityAi_StartAction(entity, StoneGuardian_Mode4WalkToPost, run_now);
             ai_state->sub_timer = entity->params->yaw_limit_deg;
             break;
         case 2:
-            EntityAi_StartAction(entity, StoneGuardian_Mode4ChaseInBounds, unknown);
+            EntityAi_StartAction(entity, StoneGuardian_Mode4ChaseInBounds, run_now);
             ai_state->sub_timer = entity->params->yaw_limit_deg;
             break;
         case 3:
-            EntityAi_StartAction(entity, StoneGuardian_Mode4ReturnToSpawn, unknown);
+            EntityAi_StartAction(entity, StoneGuardian_Mode4ReturnToSpawn, run_now);
             break;
         default:
             entity->state = 0;
@@ -999,7 +999,7 @@ static void StoneGuardian_Mode4ReturnToSpawn(Entity *entity) {
 /* The think handler of mode 5: as StoneGuardian_ThinkMode3StayInBounds with its own rectangle,
    bounds and actions (StoneGuardian_Mode5WalkToPost, StoneGuardian_Mode5ChaseInBounds,
    StoneGuardian_Mode5ReturnToSpawn). */
-static void StoneGuardian_ThinkMode5StayInBounds(Entity *entity, s32 unknown) {
+static void StoneGuardian_ThinkMode5StayInBounds(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     MapObject *map_object;
     s32 is_open;
@@ -1032,18 +1032,18 @@ static void StoneGuardian_ThinkMode5StayInBounds(Entity *entity, s32 unknown) {
         }
         switch (entity->state) {
         case 0:
-            EntityAi_StartAction(entity, StoneGuardian_HoldAnim1, unknown);
+            EntityAi_StartAction(entity, StoneGuardian_HoldAnim1, run_now);
             break;
         case 1:
-            EntityAi_StartAction(entity, StoneGuardian_Mode5WalkToPost, unknown);
+            EntityAi_StartAction(entity, StoneGuardian_Mode5WalkToPost, run_now);
             ai_state->sub_timer = entity->params->yaw_limit_deg;
             break;
         case 2:
-            EntityAi_StartAction(entity, StoneGuardian_Mode5ChaseInBounds, unknown);
+            EntityAi_StartAction(entity, StoneGuardian_Mode5ChaseInBounds, run_now);
             ai_state->sub_timer = entity->params->yaw_limit_deg;
             break;
         case 3:
-            EntityAi_StartAction(entity, StoneGuardian_Mode5ReturnToSpawn, unknown);
+            EntityAi_StartAction(entity, StoneGuardian_Mode5ReturnToSpawn, run_now);
             break;
         default:
             entity->state = 0;
@@ -1213,7 +1213,7 @@ static void StoneGuardian_Mode5ReturnToSpawn(Entity *entity) {
    2); when one clears it comes out, one entity of the five in stone_guardian_spawn_ids at a time (step 3,
    StoneGuardian_PlayAnim9, then 0); when both are set again it goes back the same way (steps 4 to 7,
    StoneGuardian_PlayAnim8). The functions named Mode6... do the work of a step. */
-static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 unknown) {
+static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 post[4];
     MapObject *map_object;
@@ -1245,30 +1245,30 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 unknown) {
     case 1:
         if (!both_open) {
             ai_state->step_index++;
-            EntityAi_StartAction(entity, ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, run_now);
         } else {
-            StoneGuardian_Mode6StayHidden(entity, unknown);
+            StoneGuardian_Mode6StayHidden(entity, run_now);
         }
         break;
     case 2:
         if (!both_open) {
             if (!StoneGuardian_Mode6IsStepFree(entity, 3) || !StoneGuardian_Mode6IsStepFree(entity, 6) || !StoneGuardian_Mode6IsStepFree(entity, 7)) {
-                StoneGuardian_Mode6WaitTurnHidden(entity, unknown);
+                StoneGuardian_Mode6WaitTurnHidden(entity, run_now);
             } else {
                 ai_state->step_index++;
-                EntityAi_StartAction(entity, ai_state->move, unknown);
+                EntityAi_StartAction(entity, ai_state->move, run_now);
             }
         } else {
             ai_state->step_index = 1;
-            EntityAi_StartAction(entity, ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, run_now);
         }
         break;
     case 3:
         if (!both_open) {
-            StoneGuardian_Mode6LeaveHiding(entity, unknown);
+            StoneGuardian_Mode6LeaveHiding(entity, run_now);
         } else {
             ai_state->step_index = 7;
-            EntityAi_StartAction(entity, ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, run_now);
         }
         break;
     case 4:
@@ -1277,34 +1277,34 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 unknown) {
         post[2] = 4900.0f;
         ai_state->pitch_speed = EntityMath_DistanceXZ(entity->model->position, post);
         ai_state->step_index++;
-        EntityAi_StartAction(entity, ai_state->move, unknown);
+        EntityAi_StartAction(entity, ai_state->move, run_now);
         break;
     case 5:
         if (!both_open) {
             ai_state->step_index = 0;
-            EntityAi_StartAction(entity, ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, run_now);
         } else if (StoneGuardian_Mode6IsStepFree(entity, 3) && StoneGuardian_Mode6IsStepFree(entity, 6) && StoneGuardian_Mode6IsStepFree(entity, 7) &&
                    StoneGuardian_Mode6IsNearestWaiting(entity, ai_state->pitch_speed)) {
             ai_state->step_index++;
-            EntityAi_StartAction(entity, ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, run_now);
         } else {
-            StoneGuardian_Mode6WaitTurnShown(entity, unknown);
+            StoneGuardian_Mode6WaitTurnShown(entity, run_now);
         }
         break;
     case 6:
         if (!both_open) {
             ai_state->step_index = 0;
-            EntityAi_StartAction(entity, ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, run_now);
         } else {
-            StoneGuardian_Mode6ReturnToHiding(entity, unknown);
+            StoneGuardian_Mode6ReturnToHiding(entity, run_now);
         }
         break;
     case 7:
         if (!both_open) {
             ai_state->step_index = 3;
-            EntityAi_StartAction(entity, ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, run_now);
         } else {
-            StoneGuardian_Mode6WalkToHidePoint(entity, unknown);
+            StoneGuardian_Mode6WalkToHidePoint(entity, run_now);
         }
         break;
     default:
@@ -1318,9 +1318,9 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 unknown) {
         entity->model_alpha = 0x80;
         if (both_open) {
             ai_state->step_index = 4;
-            EntityAi_StartAction(entity, ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, run_now);
         } else {
-            EntityAi_Think(entity, unknown);
+            EntityAi_Think(entity, run_now);
         }
         break;
     }
@@ -1328,7 +1328,7 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 unknown) {
 
 /* Step 1 of StoneGuardian_ThinkMode6HideSequence: keeps the entity unseen (Entity.model_alpha 0; flag bits 18, 20, 21,
    26, 27) at a fixed point. */
-static void StoneGuardian_Mode6StayHidden(Entity *entity, s32 unknown) {
+static void StoneGuardian_Mode6StayHidden(Entity *entity, s32 run_now) {
     EntityModel *model;
 
     model = entity->model;
@@ -1345,13 +1345,13 @@ static void StoneGuardian_Mode6StayHidden(Entity *entity, s32 unknown) {
     model->position[2] = 4900.0f;
     model->rotation[1] = HALF_PI;
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
-    EntityAi_StartAction(entity, entity->ai_state.move, unknown);
+    EntityAi_StartAction(entity, entity->ai_state.move, run_now);
 }
 
 /* Step 2 of StoneGuardian_ThinkMode6HideSequence: the same as StoneGuardian_Mode6StayHidden. What
    differs is when the think handler calls it: one of the two map objects has its bit clear, and
    another of the five entities is still at step 3, 6 or 7 (StoneGuardian_Mode6IsStepFree). */
-static void StoneGuardian_Mode6WaitTurnHidden(Entity *entity, s32 unknown) {
+static void StoneGuardian_Mode6WaitTurnHidden(Entity *entity, s32 run_now) {
     EntityModel *model = entity->model;
 
     ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
@@ -1367,12 +1367,12 @@ static void StoneGuardian_Mode6WaitTurnHidden(Entity *entity, s32 unknown) {
     model->position[2] = 4900.0f;
     model->rotation[1] = HALF_PI;
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
-    EntityAi_StartAction(entity, entity->ai_state.move, unknown);
+    EntityAi_StartAction(entity, entity->ai_state.move, run_now);
 }
 
 /* Step 3 of StoneGuardian_ThinkMode6HideSequence: shows the entity, walks it to a second fixed point, turns it
    to heading 90 degrees and starts StoneGuardian_PlayAnim9. */
-static void StoneGuardian_Mode6LeaveHiding(Entity *entity, s32 unknown) {
+static void StoneGuardian_Mode6LeaveHiding(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 *point;
     f32 angle;
@@ -1407,7 +1407,7 @@ static void StoneGuardian_Mode6LeaveHiding(Entity *entity, s32 unknown) {
                 }
                 ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
             } else {
-                EntityAi_StartAction(entity, StoneGuardian_PlayAnim9, unknown);
+                EntityAi_StartAction(entity, StoneGuardian_PlayAnim9, run_now);
                 return;
             }
         } else {
@@ -1415,7 +1415,7 @@ static void StoneGuardian_Mode6LeaveHiding(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand(entity, 0, range);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* An action (busy bit 0x1000) of mode 6, which StoneGuardian_Mode6LeaveHiding starts: plays
@@ -1469,7 +1469,7 @@ static void StoneGuardian_PlayAnim9(Entity *entity) {
    calls it while both map objects have their bit set and it is not yet this entity's turn to go
    back: another one is at step 3, 6 or 7 (StoneGuardian_Mode6IsStepFree) or waits nearer
    (StoneGuardian_Mode6IsNearestWaiting). */
-static void StoneGuardian_Mode6WaitTurnShown(Entity *entity, s32 unknown) {
+static void StoneGuardian_Mode6WaitTurnShown(Entity *entity, s32 run_now) {
     ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
     ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit20 = FALSE;
@@ -1479,12 +1479,12 @@ static void StoneGuardian_Mode6WaitTurnShown(Entity *entity, s32 unknown) {
     ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     entity->model_alpha = 0x80;
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
-    EntityAi_StartAction(entity, entity->ai_state.move, unknown);
+    EntityAi_StartAction(entity, entity->ai_state.move, run_now);
 }
 
 /* Step 6 of StoneGuardian_ThinkMode6HideSequence: walks the entity to a third fixed point, turns it to heading
    -90 degrees and starts StoneGuardian_PlayAnim8. */
-static void StoneGuardian_Mode6ReturnToHiding(Entity *entity, s32 unknown) {
+static void StoneGuardian_Mode6ReturnToHiding(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 *point;
     f32 angle;
@@ -1516,7 +1516,7 @@ static void StoneGuardian_Mode6ReturnToHiding(Entity *entity, s32 unknown) {
                 }
                 ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
             } else {
-                EntityAi_StartAction(entity, StoneGuardian_PlayAnim8, unknown);
+                EntityAi_StartAction(entity, StoneGuardian_PlayAnim8, run_now);
                 return;
             }
         } else {
@@ -1524,7 +1524,7 @@ static void StoneGuardian_Mode6ReturnToHiding(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand(entity, 0, range);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* An action (busy bit 0x1000) of mode 6, which StoneGuardian_Mode6ReturnToHiding starts: plays
@@ -1574,7 +1574,7 @@ static void StoneGuardian_PlayAnim8(Entity *entity) {
 
 /* Step 7 of StoneGuardian_ThinkMode6HideSequence: walks the entity back to the first fixed point, then puts the
    sequence at 1. */
-static void StoneGuardian_Mode6WalkToHidePoint(Entity *entity, s32 unknown) {
+static void StoneGuardian_Mode6WalkToHidePoint(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 *point = ai_state->target_point;
     f32 range = 50.0f;
@@ -1597,7 +1597,7 @@ static void StoneGuardian_Mode6WalkToHidePoint(Entity *entity, s32 unknown) {
         entity->move_command = EntityAi_MoveCommand(entity, 0, range);
     }
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* Helper of StoneGuardian_ThinkMode6HideSequence: whether none of the other live entities among the five in

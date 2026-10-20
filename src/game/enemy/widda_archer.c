@@ -24,11 +24,11 @@
 static void WiddaArcher_Animate(Entity *entity);
 static void WiddaArcher_PitchPartToPlayer(Entity *entity);
 static void WiddaArcher_AimPartsAtTarget(Entity *entity);
-static void WiddaArcher_Think(Entity *entity, s32 unknown);
-static void WiddaArcher_ThinkCombat(Entity *entity, s32 unknown);
+static void WiddaArcher_Think(Entity *entity, s32 run_now);
+static void WiddaArcher_ThinkCombat(Entity *entity, s32 run_now);
 static void WiddaArcher_RangedAttack(Entity *entity);
-static void WiddaArcher_ThinkUseMapObject(Entity *entity, s32 unknown);
-static void WiddaArcher_WalkToMapObject(Entity *entity, s32 unknown);
+static void WiddaArcher_ThinkUseMapObject(Entity *entity, s32 run_now);
+static void WiddaArcher_WalkToMapObject(Entity *entity, s32 run_now);
 static void WiddaArcher_StartMapObjectScript(Entity *entity);
 
 /* Set-up of a type 20 entity: clears its work area and installs the type's handlers. */
@@ -183,7 +183,7 @@ static void WiddaArcher_AimPartsAtTarget(Entity *entity) {
 /* The think handler: as EntityAi_Think, with WiddaArcher_ThinkCombat for state 2. Before that it sets bit 40
    of model part 29's unk68 during frames 7 to 35 of animation 23 and frames 25 to 49 of animation
    24, and clears it otherwise. */
-static void WiddaArcher_Think(Entity *entity, s32 unknown) {
+static void WiddaArcher_Think(Entity *entity, s32 run_now) {
     if (entity->model->level_tables->blend_left == 0 &&
         ((entity->animation_index == 0x17 && entity->model->level_tables->frame >= 7 && entity->model->level_tables->frame < 0x24) ||
          (entity->animation_index == 0x18 && entity->model->level_tables->frame >= 0x19 && entity->model->level_tables->frame < 0x32))) {
@@ -200,21 +200,21 @@ static void WiddaArcher_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
     case 0:
-        EntityAi_ThinkIdle(entity, unknown);
+        EntityAi_ThinkIdle(entity, run_now);
         return;
     case 1:
-        EntityAi_ThinkPursue(entity, unknown);
+        EntityAi_ThinkPursue(entity, run_now);
         return;
     case 2:
-        WiddaArcher_ThinkCombat(entity, unknown);
+        WiddaArcher_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, with WiddaArcher_RangedAttack for a ranged attack and
@@ -222,7 +222,7 @@ static void WiddaArcher_Think(Entity *entity, s32 unknown) {
    frames. On every tenth frame, with Entity.distance_to_player_3d less the radius and 100 under 200 and the entity within 40
    degrees of the player's facing, it may start EntityAi_Dodge (the more health lost, the likelier) when
    Entity.heading_to_player is 40 to 90 degrees off the heading. */
-static void WiddaArcher_ThinkCombat(Entity *entity, s32 unknown) {
+static void WiddaArcher_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -251,9 +251,9 @@ static void WiddaArcher_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, WiddaArcher_RangedAttack, unknown);
+                EntityAi_StartAction(entity, WiddaArcher_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -291,7 +291,7 @@ static void WiddaArcher_ThinkCombat(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_TurnCommand(entity);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, but its shots are aimed at a point 190
@@ -355,7 +355,7 @@ static void WiddaArcher_RangedAttack(Entity *entity) {
 /* The think handler of a spawn whose EntitySpawnInfo.spawn_mode is set: as WiddaArcher_Think, but while
    the byte of map_script_flags that EntitySpawnInfo.map_object_id and variant index is not 0 it calls
    WiddaArcher_WalkToMapObject instead of stepping the states. */
-static void WiddaArcher_ThinkUseMapObject(Entity *entity, s32 unknown) {
+static void WiddaArcher_ThinkUseMapObject(Entity *entity, s32 run_now) {
     if (entity->model->level_tables->blend_left == 0 &&
         ((entity->animation_index == 0x17 && entity->model->level_tables->frame >= 7 && entity->model->level_tables->frame < 0x24) ||
          (entity->animation_index == 0x18 && entity->model->level_tables->frame >= 0x19 && entity->model->level_tables->frame < 0x32))) {
@@ -370,33 +370,33 @@ static void WiddaArcher_ThinkUseMapObject(Entity *entity, s32 unknown) {
         return;
     }
     if (map_script_flags[entity->spawn_info->map_object_id + entity->spawn_info->variant * 64] != 0) {
-        WiddaArcher_WalkToMapObject(entity, unknown);
+        WiddaArcher_WalkToMapObject(entity, run_now);
         return;
     }
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
     case 0:
-        EntityAi_ThinkIdle(entity, unknown);
+        EntityAi_ThinkIdle(entity, run_now);
         return;
     case 1:
-        EntityAi_ThinkPursue(entity, unknown);
+        EntityAi_ThinkPursue(entity, run_now);
         return;
     case 2:
-        WiddaArcher_ThinkCombat(entity, unknown);
+        WiddaArcher_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* Helper of WiddaArcher_ThinkUseMapObject, which calls it in place of the state functions: walks to a
    point 100 in z from the map object EntitySpawnInfo.second_map_object_id names, turns to the object there, and
    then starts WiddaArcher_StartMapObjectScript; until then it starts the move action. */
-static void WiddaArcher_WalkToMapObject(Entity *entity, s32 unknown) {
+static void WiddaArcher_WalkToMapObject(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 stand_point[4];
     f32 face_point[4];
@@ -423,7 +423,7 @@ static void WiddaArcher_WalkToMapObject(Entity *entity, s32 unknown) {
         entity->target = ai_state->target_point;
         entity->move_command = EntityAi_TurnCommand(entity);
         if (entity->move_command == 0) {
-            EntityAi_StartAction(entity, WiddaArcher_StartMapObjectScript, unknown);
+            EntityAi_StartAction(entity, WiddaArcher_StartMapObjectScript, run_now);
             return;
         }
     } else {
@@ -431,7 +431,7 @@ static void WiddaArcher_WalkToMapObject(Entity *entity, s32 unknown) {
         entity->target = ai_state->target_point;
         entity->move_command = EntityAi_MoveCommand(entity, 0, reach * 0.5f);
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* An action (busy bit 0x1000) that WiddaArcher_WalkToMapObject starts: plays animation 17 to its

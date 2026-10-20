@@ -15,8 +15,8 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
-static void Giant_Think(Entity *entity, s32 unknown);
-static void Giant_ThinkCombat(Entity *entity, s32 unknown);
+static void Giant_Think(Entity *entity, s32 run_now);
+static void Giant_ThinkCombat(Entity *entity, s32 run_now);
 static void Giant_PlayAnim17(Entity *entity);
 
 /* Set-up of a type 35 entity: clears its work area and installs the type's handlers. */
@@ -66,7 +66,7 @@ void Giant_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with Giant_ThinkCombat for state 2. Back in state 0
    after state 1 it plays Giant_PlayAnim17 once (work word unk6C says whether it has). */
-static void Giant_Think(Entity *entity, s32 unknown) {
+static void Giant_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -78,7 +78,7 @@ static void Giant_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         if (entity->state == 2 && ENTITY_CONTROLLER(entity)->action_frames != 0) {
             entity->move_command |= (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST);
         }
@@ -87,26 +87,26 @@ static void Giant_Think(Entity *entity, s32 unknown) {
     switch (entity->state) {
     case 0:
         if (ai_state->mode_timer == 0) {
-            EntityAi_StartAction(entity, Giant_PlayAnim17, unknown);
+            EntityAi_StartAction(entity, Giant_PlayAnim17, run_now);
             ai_state->mode_timer = 1;
             return;
         }
-        EntityAi_ThinkIdle(entity, unknown);
+        EntityAi_ThinkIdle(entity, run_now);
         return;
     case 1:
         ai_state->mode_timer = 0;
-        EntityAi_ThinkPursue(entity, unknown);
+        EntityAi_ThinkPursue(entity, run_now);
         return;
     case 2:
-        Giant_ThinkCombat(entity, unknown);
+        Giant_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat; closing in it adds command bits 0x440
    when EntityParams.action_frames is set. */
-static void Giant_ThinkCombat(Entity *entity, s32 unknown) {
+static void Giant_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -138,9 +138,9 @@ static void Giant_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -184,7 +184,7 @@ static void Giant_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* An action (busy bit 0x1000): plays animation 17 to its end. Giant_Think starts it once

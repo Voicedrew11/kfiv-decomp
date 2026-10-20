@@ -16,8 +16,8 @@
 #include "entity/entity_math.h"
 #include "player/player.h"
 
-static void EarthElemental_Think(Entity *entity, s32 unknown);
-static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown);
+static void EarthElemental_Think(Entity *entity, s32 run_now);
+static void EarthElemental_ThinkCombat(Entity *entity, s32 run_now);
 static void EarthElemental_PlayTurnAnim(Entity *entity);
 static s32 EarthElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 max_angle);
 static s32 EarthElemental_ShouldGuard(Entity *entity, f32 max_distance, f32 max_angle);
@@ -73,7 +73,7 @@ void EarthElemental_Init(Entity *entity) {
    while player_state.unk259 is set and counts down; work word unk6C is EntityParams.far_distance while work
    word unk6E counts down and EntityParams.guard_chance otherwise. While work word unk68 is 1
    (EarthElemental_AlertSameKind of another entity sets it) it only starts EarthElemental_BackAwayOrRunAtPlayer. */
-static void EarthElemental_Think(Entity *entity, s32 unknown) {
+static void EarthElemental_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state;
 
     ai_state = &entity->ai_state;
@@ -104,21 +104,21 @@ static void EarthElemental_Think(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             // match: called as returning nothing, so $2 is free for the next statement
             // match: the result is not used, retail calls it as void
-            ((void (*)(void *, int))EntityAi_ThinkReturn)(entity, unknown);
+            ((void (*)(void *, int))EntityAi_ThinkReturn)(entity, run_now);
             entity->move_command |= (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                EarthElemental_ThinkCombat(entity, unknown);
+                EarthElemental_ThinkCombat(entity, run_now);
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -133,7 +133,7 @@ static void EarthElemental_Think(Entity *entity, s32 unknown) {
    more than 90 degrees off its heading it starts EarthElemental_PlayTurnAnim. Work word unk6A counts
    the frames it is not going for the player; above EntityParams.type_param_0, with the player within 30
    degrees ahead and nearer than 1000, it starts EarthElemental_RangedAttack0. */
-static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
+static void EarthElemental_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -171,9 +171,9 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
         case 0:
             ai_state->reload_timer = entity->params->near_distance;
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -186,7 +186,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
                 entity->target = &player_state;
                 if (HALF_PI < ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]))) {
                     ai_state->step_index = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
-                    EntityAi_StartAction(entity, EarthElemental_PlayTurnAnim, unknown);
+                    EntityAi_StartAction(entity, EarthElemental_PlayTurnAnim, run_now);
                     return;
                 }
                 entity->target = &player_state;
@@ -239,7 +239,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
                     if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > HALF_PI
                         && frame_counter % 15U == 0 && !(rand() & 1)) {
                         ai_state->step_index = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
-                        EntityAi_StartAction(entity, EarthElemental_PlayTurnAnim, unknown);
+                        EntityAi_StartAction(entity, EarthElemental_PlayTurnAnim, run_now);
                         return;
                     }
                     entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
@@ -255,7 +255,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
                     if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > HALF_PI
                         && frame_counter % 15U == 0 && !(rand() & 1)) {
                         ai_state->step_index = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
-                        EntityAi_StartAction(entity, EarthElemental_PlayTurnAnim, unknown);
+                        EntityAi_StartAction(entity, EarthElemental_PlayTurnAnim, run_now);
                         return;
                     }
                     // match: called like EntityAi_MoveCommand, with a mode the callee ignores
@@ -266,7 +266,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* An action (busy bit 0x2000): plays animation 12 or, with work byte unk7A below 1, animation 11 to

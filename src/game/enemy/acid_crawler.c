@@ -21,8 +21,8 @@
 
 static void AcidCrawler_Animate(Entity *entity);
 static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg);
-static void AcidCrawler_Think(Entity *entity, s32 unknown);
-static void AcidCrawler_ThinkCombat(Entity *entity, s32 unknown);
+static void AcidCrawler_Think(Entity *entity, s32 run_now);
+static void AcidCrawler_ThinkCombat(Entity *entity, s32 run_now);
 static void AcidCrawler_Move(Entity *entity);
 
 /* Set-up of a type 18 entity: clears its work area and installs the type's handlers. */
@@ -193,7 +193,7 @@ static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg) {
    launches shot EntityParams.type_param_1 from near the point Model_GetSkinnedBonePoint gives for 0, on two timers:
    work word unk68 (chance EntityParams.action_frames in 100 a frame, then a pause of unk436 frames) and
    work word unk6A (chance unk438, pause type_param_0). */
-static void AcidCrawler_Think(Entity *entity, s32 unknown) {
+static void AcidCrawler_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     char *part = Model_GetSkinnedBonePoint((char *)entity->model, 0);
     f32 target[4];
@@ -243,7 +243,7 @@ static void AcidCrawler_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
@@ -251,10 +251,10 @@ static void AcidCrawler_Think(Entity *entity, s32 unknown) {
         break;
     case 1:
     case 2:
-        AcidCrawler_ThinkCombat(entity, unknown);
+        AcidCrawler_ThinkCombat(entity, run_now);
         return;
     }
-    ((void (*)(void *, int))EntityAi_ThinkIdle)(entity, unknown); // match: called as void, $2 is reused at once
+    ((void (*)(void *, int))EntityAi_ThinkIdle)(entity, run_now); // match: called as void, $2 is reused at once
     ai_state->step_index = 1;
 }
 
@@ -263,7 +263,7 @@ static void AcidCrawler_Think(Entity *entity, s32 unknown) {
    finds the player in reach; each time flag bit 32 comes on it starts EntityAi_RangedAttack with
    record 0, 40 times in 100 (work byte unk7A); else it goes for the player with command 0x841, or
    0x241 / 0x141 while it is pushed. */
-static void AcidCrawler_ThinkCombat(Entity *entity, s32 unknown) {
+static void AcidCrawler_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -281,9 +281,9 @@ static void AcidCrawler_ThinkCombat(Entity *entity, s32 unknown) {
     if (entity->attack_delay_frames == 0 && EntityAi_CanAttack(entity)) {
         entity->target = NULL;
         if (EntityAi_PickAttack(entity)) {
-            EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+            EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
         } else {
-            EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+            EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
         }
         return;
     }
@@ -292,7 +292,7 @@ static void AcidCrawler_ThinkCombat(Entity *entity, s32 unknown) {
         if (ai_state->step_index == 1) {
             ai_state->step_index = 0;
             if (rand() % 100 < 40) {
-                EntityAi_StartAttack(entity, EntityAi_RangedAttack, unknown, 1, 0);
+                EntityAi_StartAttack(entity, EntityAi_RangedAttack, run_now, 1, 0);
                 return;
             }
         }
@@ -324,7 +324,7 @@ static void AcidCrawler_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ai_state->move_choice = 1;
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: turns as the command says, or towards the target with command bit 0x800

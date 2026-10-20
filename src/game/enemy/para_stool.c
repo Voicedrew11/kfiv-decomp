@@ -17,8 +17,8 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
-static void ParaStool_Think(Entity *entity, s32 unknown);
-static void ParaStool_ThinkCombat(Entity *entity, s32 unknown);
+static void ParaStool_Think(Entity *entity, s32 run_now);
+static void ParaStool_ThinkCombat(Entity *entity, s32 run_now);
 static void ParaStool_MeleeAttack0(Entity *entity);
 static s32 ParaStool_CheckPartHitInPlayerView(Entity *entity, EntityParamsUnk240 *record, s32 index, s32 frame, s32 current_frame, f32 angle);
 
@@ -68,7 +68,7 @@ void ParaStool_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with ParaStool_ThinkCombat for state 2. Counts down work
    word unk68, the pause before the next ParaStool_MeleeAttack0. */
-static void ParaStool_Think(Entity *entity, s32 unknown) {
+static void ParaStool_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -83,27 +83,27 @@ static void ParaStool_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
     case 0:
-        EntityAi_ThinkIdle(entity, unknown);
+        EntityAi_ThinkIdle(entity, run_now);
         return;
     case 1:
-        EntityAi_ThinkPursue(entity, unknown);
+        EntityAi_ThinkPursue(entity, run_now);
         return;
     case 2:
-        ParaStool_ThinkCombat(entity, unknown);
+        ParaStool_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but its one attack is
    ParaStool_MeleeAttack0, started only when the pause in work word unk68 is over (which it then
    sets to EntityParams.pitch_limit_deg); closing in never runs. */
-static void ParaStool_ThinkCombat(Entity *entity, s32 unknown) {
+static void ParaStool_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 range;
@@ -139,7 +139,7 @@ static void ParaStool_ThinkCombat(Entity *entity, s32 unknown) {
         case 0:
             if (ai_state->pause_timer == 0) {
                 ai_state->pause_timer = (u16)entity->params->pitch_limit_deg;
-                EntityAi_StartAction(entity, ParaStool_MeleeAttack0, unknown);
+                EntityAi_StartAction(entity, ParaStool_MeleeAttack0, run_now);
                 return;
             }
             ai_state->move_choice = -1;
@@ -170,7 +170,7 @@ static void ParaStool_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The melee attack with record 0 (busy bit 1): animation 20, as EntityAi_MeleeAttack, but only part

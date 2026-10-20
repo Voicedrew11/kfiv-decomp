@@ -20,8 +20,8 @@
 #include "entity/entity_ai.h"
 #include "player/player.h"
 
-static void Minion_Think(Entity *entity, s32 unknown);
-static void Minion_ThinkCombat(Entity *entity, s32 unknown);
+static void Minion_Think(Entity *entity, s32 run_now);
+static void Minion_ThinkCombat(Entity *entity, s32 run_now);
 static void Minion_Animate(Entity *entity);
 static void Minion_Guard(Entity *entity);
 static void Minion_MeleeAttack(Entity *entity);
@@ -87,7 +87,7 @@ void Minion_Init(Entity *entity) {
 /* The think handler: as EntityAi_Think, with Minion_ThinkCombat for state 2. Once
    Entity.hit_points is below half of EntityParams.hit_points it sets work byte unk79 to 1 and keeps animation
    18 on the second motion slot. */
-static void Minion_Think(Entity *entity, s32 unknown) {
+static void Minion_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -103,20 +103,20 @@ static void Minion_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                Minion_ThinkCombat(entity, unknown);
+                Minion_ThinkCombat(entity, run_now);
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -125,7 +125,7 @@ static void Minion_Think(Entity *entity, s32 unknown) {
 
 /* The think function of state 2: as EntityAi_ThinkCombat with the type's own guard, dodge and
    attacks; it closes in at the run. */
-static void Minion_ThinkCombat(Entity *entity, s32 unknown) {
+static void Minion_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 side;
@@ -156,9 +156,9 @@ static void Minion_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, Minion_RangedAttack, unknown);
+                EntityAi_StartAction(entity, Minion_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, Minion_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, Minion_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -185,7 +185,7 @@ static void Minion_ThinkCombat(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The animate handler: plays the two motion slots of the work area (unk80 and unk88) where

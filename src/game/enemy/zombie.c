@@ -16,8 +16,8 @@
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void Zombie_OnHit(Entity *entity);
-static void Zombie_Think(Entity *entity, s32 unknown);
-static void Zombie_ThinkCombat(Entity *entity, s32 unknown);
+static void Zombie_Think(Entity *entity, s32 run_now);
+static void Zombie_ThinkCombat(Entity *entity, s32 run_now);
 
 /* Set-up of a type 40 entity: clears its work area and installs the type's handlers. */
 void Zombie_Init(Entity *entity) {
@@ -81,7 +81,7 @@ static void Zombie_OnHit(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with Zombie_ThinkCombat for state 2; in states 0 and
    1 it puts work word unk68 back to EntityParams.action_frames. */
-static void Zombie_Think(Entity *entity, s32 unknown) {
+static void Zombie_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -91,19 +91,19 @@ static void Zombie_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
             return;
         }
         switch (entity->state) {
         case 1:
-            EntityAi_ThinkPursue(entity, unknown);
+            EntityAi_ThinkPursue(entity, run_now);
             break;
         case 2:
-            Zombie_ThinkCombat(entity, unknown);
+            Zombie_ThinkCombat(entity, run_now);
             return;
         case 0:
         default:
-            EntityAi_ThinkIdle(entity, unknown);
+            EntityAi_ThinkIdle(entity, run_now);
             break;
         }
         ai_state->pause_timer = entity->params->action_frames;
@@ -113,7 +113,7 @@ static void Zombie_Think(Entity *entity, s32 unknown) {
 /* The think function of state 2: as EntityAi_ThinkCombat, but work word unk68 counts down while it
    runs (an attack sets it to EntityParams.action_frames plus 0 to 29): while it is above 0 the entity
    closes in at a walk, afterwards at the run with command bit 0x400. */
-static void Zombie_ThinkCombat(Entity *entity, s32 unknown) {
+static void Zombie_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -141,9 +141,9 @@ static void Zombie_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             ai_state->pause_timer = entity->params->action_frames + rand() % 30;
             return;
@@ -199,5 +199,5 @@ static void Zombie_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }

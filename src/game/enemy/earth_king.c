@@ -16,8 +16,8 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
-static void EarthKing_Think(Entity *entity, s32 unknown);
-static void EarthKing_ThinkCombat(Entity *entity, s32 unknown);
+static void EarthKing_Think(Entity *entity, s32 run_now);
+static void EarthKing_ThinkCombat(Entity *entity, s32 run_now);
 static void EarthKing_MeleeAttack2(Entity *entity);
 static void EarthKing_RangedAttack0(Entity *entity);
 static void EarthKing_RangedAttack1(Entity *entity);
@@ -67,7 +67,7 @@ void EarthKing_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with EarthKing_ThinkCombat for states 1 and 2. */
-static void EarthKing_Think(Entity *entity, s32 unknown) {
+static void EarthKing_Think(Entity *entity, s32 run_now) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -77,7 +77,7 @@ static void EarthKing_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
@@ -85,16 +85,16 @@ static void EarthKing_Think(Entity *entity, s32 unknown) {
         break;
     case 1:
     case 2:
-        EarthKing_ThinkCombat(entity, unknown);
+        EarthKing_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* The think function of states 1 and 2: as EntityAi_ThinkCombat, but ranged record 0 is
    EarthKing_RangedAttack0, the other ranged records EarthKing_RangedAttack1 and melee record
    2 EarthKing_MeleeAttack2; closing in never runs. */
-static void EarthKing_ThinkCombat(Entity *entity, s32 unknown) {
+static void EarthKing_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -123,14 +123,14 @@ static void EarthKing_ThinkCombat(Entity *entity, s32 unknown) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
-                    EntityAi_StartAction(entity, EarthKing_RangedAttack0, unknown);
+                    EntityAi_StartAction(entity, EarthKing_RangedAttack0, run_now);
                 } else {
-                    EntityAi_StartAction(entity, EarthKing_RangedAttack1, unknown);
+                    EntityAi_StartAction(entity, EarthKing_RangedAttack1, run_now);
                 }
             } else if (ENTITY_FLAG_BITS(entity)->attack_index == 2) {
-                EntityAi_StartAction(entity, EarthKing_MeleeAttack2, unknown);
+                EntityAi_StartAction(entity, EarthKing_MeleeAttack2, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -171,7 +171,7 @@ static void EarthKing_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The melee attack with record 2 (EntityParams.melee_attack_third; busy bit 1): animation 22; the three parts

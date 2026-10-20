@@ -17,8 +17,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 static void Slasher_OnHit(Entity *entity);
-static void Slasher_Think(Entity *entity, s32 unknown);
-static void Slasher_ThinkStandStill(Entity *entity, s32 unknown);
+static void Slasher_Think(Entity *entity, s32 run_now);
+static void Slasher_ThinkStandStill(Entity *entity, s32 run_now);
 static void Slasher_WaitForPlayerNear(Entity *entity);
 static void Slasher_AlertSameKind(Entity *entity);
 
@@ -98,7 +98,7 @@ static void Slasher_OnHit(Entity *entity) {
 /* The think handler: as EntityAi_Think, but states 1 and 2 both have EntityAi_ThinkCombat (and
    clear work byte unk7A) and state 0 starts Slasher_WaitForPlayerNear. Every frame it starts effect
    EntityParams.type_param_0 at the points Model_GetSkinnedBonePoint gives for 30 and 31. */
-static void Slasher_Think(Entity *entity, s32 unknown) {
+static void Slasher_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     char *part;
 
@@ -109,17 +109,17 @@ static void Slasher_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 1:
             case 2:
-                EntityAi_ThinkCombat(entity, unknown);
+                EntityAi_ThinkCombat(entity, run_now);
                 ai_state->step_index = 0;
                 break;
             case 0:
             default:
-                EntityAi_StartAction(entity, Slasher_WaitForPlayerNear, unknown);
+                EntityAi_StartAction(entity, Slasher_WaitForPlayerNear, run_now);
                 break;
             }
         }
@@ -132,11 +132,11 @@ static void Slasher_Think(Entity *entity, s32 unknown) {
 
 /* A think function nothing refers to: gives no movement command, lets the head follow the target (flag 9) and
    starts the move action. */
-static void Slasher_ThinkStandStill(Entity *entity, s32 unknown) {
+static void Slasher_ThinkStandStill(Entity *entity, s32 run_now) {
     entity->move_command = 0;
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
-    EntityAi_StartAction(entity, entity->ai_state.move, unknown);
+    EntityAi_StartAction(entity, entity->ai_state.move, run_now);
 }
 
 /* An action (busy bit 0x1000) that the set-up function and state 0 of Slasher_Think start:

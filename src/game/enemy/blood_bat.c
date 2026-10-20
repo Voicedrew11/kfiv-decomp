@@ -19,10 +19,10 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 static void BloodBat_Animate(Entity *entity);
-static void BloodBat_Think(Entity *entity, s32 unknown);
-static int BloodBat_ThinkReturn(void *entity_arg, int unknown);
-static void BloodBat_ThinkWander(Entity *entity, s32 unknown);
-static int BloodBat_ThinkCombat(void *entity_arg, int unknown);
+static void BloodBat_Think(Entity *entity, s32 run_now);
+static int BloodBat_ThinkReturn(void *entity_arg, int run_now);
+static void BloodBat_ThinkWander(Entity *entity, s32 run_now);
+static int BloodBat_ThinkCombat(void *entity_arg, int run_now);
 static void BloodBat_Move(Entity *entity);
 static void BloodBat_Dormant(Entity *entity);
 
@@ -90,7 +90,7 @@ static void BloodBat_Animate(Entity *entity) {
 /* The think handler: as EntityAi_Think, with EntityAi_CheckFarFromSpawn3D where that one calls EntityAi_CheckFarFromSpawn,
    BloodBat_ThinkReturn while flag bit 53 is set, BloodBat_ThinkCombat for state 2 and
    BloodBat_ThinkWander for the other states. */
-static void BloodBat_Think(Entity *entity, s32 unknown) {
+static void BloodBat_Think(Entity *entity, s32 run_now) {
     u32 phase;
 
     phase = frame_counter % 10U;
@@ -103,7 +103,7 @@ static void BloodBat_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn3D(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        BloodBat_ThinkReturn(entity, unknown);
+        BloodBat_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
@@ -111,17 +111,17 @@ static void BloodBat_Think(Entity *entity, s32 unknown) {
     case 1:
         break;
     case 2:
-        BloodBat_ThinkCombat(entity, unknown);
+        BloodBat_ThinkCombat(entity, run_now);
         return;
     }
-    BloodBat_ThinkWander(entity, unknown);
+    BloodBat_ThinkWander(entity, run_now);
 }
 
 /* The think function while flag bit 53 is set: walks back to the spawn point, turning away from
    whatever is pushing the entity, as EntityAi_ThinkReturn; with flag bits 11 to 13 at 0, the
    command of EntityAi_MoveCommand3D, and, while it is pushed, command bit 0x20 or 0x10 by the y of the push.
    */
-static int BloodBat_ThinkReturn(void *entity_arg, int unknown) {
+static int BloodBat_ThinkReturn(void *entity_arg, int run_now) {
     Entity *entity = entity_arg;
     EntityAiState *ai_state = &entity->ai_state;
     f32 to_spawn[4];
@@ -177,14 +177,14 @@ static int BloodBat_ThinkReturn(void *entity_arg, int unknown) {
             entity->move_command = EntityAi_MoveCommand3D(entity, 0, 50.0f);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of every state but 2 (BloodBat_Think calls it): wanders. Each time the
    timer runs out it picks a point near the spawn point (EntityPoint_PickNearWithHeight) for 120 to 179 frames, takes
    the command of EntityAi_MoveCommand3D towards it (or of EntityAi_PushTurnCommand3D for the turn away from a push) and
    starts the move action. */
-static void BloodBat_ThinkWander(Entity *entity, s32 unknown) {
+static void BloodBat_ThinkWander(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[2];
     s32 turn;
@@ -205,7 +205,7 @@ static void BloodBat_ThinkWander(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand3D(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 2: guard, dodge and the choice among attacking, closing in and
@@ -213,7 +213,7 @@ static void BloodBat_ThinkWander(Entity *entity, s32 unknown) {
    Closing in, it goes forward turning to Entity.heading_to_player, with command bit 0x20 or 0x10 to bring its y
    to the player's less work float unk4C (EntityParams.yaw_limit_deg give or take unk434), and it chooses
    anew once the player is within the radius plus 130. */
-static int BloodBat_ThinkCombat(void *entity_arg, int unknown) {
+static int BloodBat_ThinkCombat(void *entity_arg, int run_now) {
     Entity *entity = entity_arg;
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
@@ -241,9 +241,9 @@ static int BloodBat_ThinkCombat(void *entity_arg, int unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -289,7 +289,7 @@ static int BloodBat_ThinkCombat(void *entity_arg, int unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: as EntityAi_Move, with the y part of the movement eased in work float unk48,

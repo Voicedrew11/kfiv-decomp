@@ -18,7 +18,7 @@
 
 static void Phagos_Animate(Entity *entity);
 static void Phagos_OnHit(Entity *entity);
-static void Phagos_Think(Entity *entity, s32 unknown);
+static void Phagos_Think(Entity *entity, s32 run_now);
 static void Phagos_RunAwayAndRemove(Entity *entity);
 
 /* Set-up of a type 14 entity: clears its work area and installs the type's handlers. */
@@ -83,15 +83,15 @@ static void Phagos_OnHit(Entity *entity) {
 
 /* The think handler: no states. While the entity is not busy it starts Phagos_RunAwayAndRemove; it
    tests for state 3, but both branches start the same action. */
-static void Phagos_Think(Entity *entity, s32 unknown) {
+static void Phagos_Think(Entity *entity, s32 run_now) {
     if (frame_counter % 10 == entity->spawn_index % 10) {
         EntityAi_SensePlayer(entity, 2);
     }
     if (entity->busy_flags == 0) {
         if (entity->state == 3) {
-            EntityAi_StartAction(entity, Phagos_RunAwayAndRemove, unknown);
+            EntityAi_StartAction(entity, Phagos_RunAwayAndRemove, run_now);
         } else {
-            EntityAi_StartAction(entity, Phagos_RunAwayAndRemove, unknown);
+            EntityAi_StartAction(entity, Phagos_RunAwayAndRemove, run_now);
         }
     }
 }

@@ -22,10 +22,10 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
-static void LavaBird_Think(Entity *entity, s32 unknown);
-static void LavaBird_ThinkCombat(Entity *entity, s32 unknown);
-static void LavaBird_ThinkPursue(Entity *entity, s32 unknown);
-static void LavaBird_ThinkIdle(Entity *entity, s32 unknown);
+static void LavaBird_Think(Entity *entity, s32 run_now);
+static void LavaBird_ThinkCombat(Entity *entity, s32 run_now);
+static void LavaBird_ThinkPursue(Entity *entity, s32 run_now);
+static void LavaBird_ThinkIdle(Entity *entity, s32 run_now);
 static void LavaBird_Move(Entity *entity);
 static void LavaBird_ApplyMoveCommand(Entity *entity);
 static s32 LavaBird_SteerToTargetCommand(Entity *entity, s32 mark_far, f32 range);
@@ -92,7 +92,7 @@ void LavaBird_Init(Entity *entity) {
    outside heavy-hit reactions and the death; every 60th frame it draws work float unk54 (0 to 9).
    After the state's function, every frame outside the death, it gives the command of LavaBird_SteerToTargetCommand
    (or the turn away from a push) and calls LavaBird_ApplyMoveCommand. */
-static void LavaBird_Think(Entity *entity, s32 unknown) {
+static void LavaBird_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 side;
@@ -115,20 +115,20 @@ static void LavaBird_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
-                LavaBird_ThinkIdle(entity, unknown);
+                LavaBird_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                LavaBird_ThinkPursue(entity, unknown);
+                LavaBird_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                LavaBird_ThinkCombat(entity, unknown);
+                LavaBird_ThinkCombat(entity, run_now);
                 break;
             default:
-                LavaBird_ThinkIdle(entity, unknown);
+                LavaBird_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -155,7 +155,7 @@ static void LavaBird_Think(Entity *entity, s32 unknown) {
    (EntityParams.far_distance times in 100), 2 while the player's y less its own is below
    EntityParams.near_distance, -2 while it is above unk434. Its only attack is LavaBird_RangedAttack,
    when EntityAi_PickAttack draws a ranged one. */
-static void LavaBird_ThinkCombat(Entity *entity, s32 unknown) {
+static void LavaBird_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 next_action = 0; // match: the unused initial value changes the instruction count that sizes a compiler hash table, and with it two registers
@@ -209,7 +209,7 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, LavaBird_RangedAttack, unknown);
+                EntityAi_StartAction(entity, LavaBird_RangedAttack, run_now);
             }
             return;
         case 1:
@@ -237,12 +237,12 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 1: as EntityAi_ThinkPursue, with flag bits 11 to 13 at 0 and the
    command of LavaBird_SteerToTargetCommand. */
-static void LavaBird_ThinkPursue(Entity *entity, s32 unknown) {
+static void LavaBird_ThinkPursue(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[2];
     s32 turn;
@@ -261,13 +261,13 @@ static void LavaBird_ThinkPursue(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = LavaBird_SteerToTargetCommand(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 0: as EntityAi_ThinkIdle, always with a point to go to, the head
    following, the command of LavaBird_SteerToTargetCommand, and the pitch command (work byte unk79) picked as in
    LavaBird_ThinkCombat. */
-static void LavaBird_ThinkIdle(Entity *entity, s32 unknown) {
+static void LavaBird_ThinkIdle(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 side;
@@ -319,7 +319,7 @@ static void LavaBird_ThinkIdle(Entity *entity, s32 unknown) {
         // match: called like EntityAi_MoveCommand, with a speed and a mode the callee ignores
         entity->move_command = LavaBird_SteerToTargetCommand(entity, 0, 0.0f);
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: keeps animation 3 on both motion slots, flag bits 11 to 13 at 0. LavaBird_ApplyMoveCommand

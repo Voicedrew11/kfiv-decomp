@@ -19,9 +19,9 @@
 #include "model/motion.h"
 
 static void Spider_Animate(Entity *entity);
-static void Spider_Think(Entity *entity, s32 unknown);
-static void Spider_ThinkWander(Entity *entity, s32 unknown);
-static void Spider_ThinkCombat(Entity *entity, s32 unknown);
+static void Spider_Think(Entity *entity, s32 run_now);
+static void Spider_ThinkWander(Entity *entity, s32 run_now);
+static void Spider_ThinkCombat(Entity *entity, s32 run_now);
 static void Spider_RangedAttack(Entity *entity);
 static void Spider_Dormant(Entity *entity);
 static void Spider_OnHit(Entity *entity);
@@ -103,7 +103,7 @@ static void Spider_Animate(Entity *entity) {
    if in place of the switch: Spider_ThinkCombat in state 2, Spider_ThinkWander in the other states.
    Before that, while work byte unk7A is set (Spider_DropToFloor sets it), it clears it and starts
    Spider_LevelOut once the player is within EntityParams.yaw_limit_deg. */
-static void Spider_Think(Entity *entity, s32 unknown) {
+static void Spider_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -120,11 +120,11 @@ static void Spider_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
     } else if (entity->state == 2) {
-        Spider_ThinkCombat(entity, unknown);
+        Spider_ThinkCombat(entity, run_now);
     } else {
-        Spider_ThinkWander(entity, unknown);
+        Spider_ThinkWander(entity, run_now);
     }
 }
 
@@ -132,7 +132,7 @@ static void Spider_Think(Entity *entity, s32 unknown) {
    timer runs out it picks a point near the spawn point (EntityPoint_PickNear; 59 times in 100) or no
    target, takes the command of EntityAi_MoveCommand towards it (or the turn away from a push,
    EntityAi_TurnFromPush) and starts the move action. */
-static void Spider_ThinkWander(Entity *entity, s32 unknown) {
+static void Spider_ThinkWander(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 turn;
@@ -160,14 +160,14 @@ static void Spider_ThinkWander(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 2 (called under `entity->state == 2`, not from a switch): as
    EntityAi_ThinkCombat with Spider_RangedAttack as the ranged attack; the head does not
    follow. It closes in on the player only while the player is within EntitySpawnInfo.wander_radius of the
    spawn point; otherwise it goes for a point near the spawn point. */
-static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
+static void Spider_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -198,9 +198,9 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, Spider_RangedAttack, unknown);
+                EntityAi_StartAction(entity, Spider_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -260,7 +260,7 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, the shots turned towards a point 30

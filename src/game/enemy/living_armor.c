@@ -21,8 +21,8 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
-static void LivingArmor_Think(Entity *entity, s32 unknown);
-static void LivingArmor_ThinkCombat(Entity *entity, s32 unknown);
+static void LivingArmor_Think(Entity *entity, s32 run_now);
+static void LivingArmor_ThinkCombat(Entity *entity, s32 run_now);
 static void LivingArmor_AimPart3AtPlayer(Entity *actor);
 static void LivingArmor_Animate(Entity *entity);
 static void LivingArmor_OnHit(Entity *entity);
@@ -78,7 +78,7 @@ void LivingArmor_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with LivingArmor_ThinkCombat for state 2. */
-static void LivingArmor_Think(Entity *entity, s32 unknown) {
+static void LivingArmor_Think(Entity *entity, s32 run_now) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -88,26 +88,26 @@ static void LivingArmor_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
     case 0:
-        EntityAi_ThinkIdle(entity, unknown);
+        EntityAi_ThinkIdle(entity, run_now);
         return;
     case 1:
-        EntityAi_ThinkPursue(entity, unknown);
+        EntityAi_ThinkPursue(entity, run_now);
         return;
     case 2:
-        LivingArmor_ThinkCombat(entity, unknown);
+        LivingArmor_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but melee record 0 has the type's own
    action, LivingArmor_MeleeAttack0, and the head does not follow the target (flag bit 9 clear). */
-static void LivingArmor_ThinkCombat(Entity *entity, s32 unknown) {
+static void LivingArmor_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -135,11 +135,11 @@ static void LivingArmor_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
-                EntityAi_StartAction(entity, LivingArmor_MeleeAttack0, unknown);
+                EntityAi_StartAction(entity, LivingArmor_MeleeAttack0, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -183,7 +183,7 @@ static void LivingArmor_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* Helper of LivingArmor_Animate: in animation 17 turns model part 3 to look at the player

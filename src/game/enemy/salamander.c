@@ -24,10 +24,10 @@ static void Salamander_ReactionHeavy(Entity *entity);
 static void Salamander_Death(Entity *entity);
 static void Salamander_MeleeAttack(Entity *entity);
 static void Salamander_RangedAttack(Entity *entity);
-static void Salamander_Think(Entity *entity, s32 unknown);
-static void Salamander_ThinkReturn(Entity *entity, s32 unknown);
-static void Salamander_ThinkWanderAndShoot(Entity *entity, s32 unknown);
-static void Salamander_ThinkCombat(Entity *entity, s32 unknown);
+static void Salamander_Think(Entity *entity, s32 run_now);
+static void Salamander_ThinkReturn(Entity *entity, s32 run_now);
+static void Salamander_ThinkWanderAndShoot(Entity *entity, s32 run_now);
+static void Salamander_ThinkCombat(Entity *entity, s32 run_now);
 static void Salamander_Move(Entity *entity);
 
 /* Set-up of a type 22 entity: clears its work area and installs the type's handlers. */
@@ -437,7 +437,7 @@ static void Salamander_RangedAttack(Entity *entity) {
    Salamander_ThinkReturn while flag bit 53 is set, Salamander_ThinkCombat for states 1 and 2,
    and Salamander_ThinkWanderAndShoot for state 0 and, as long as work byte unk7A is 0 (Salamander_OnHit sets it),
    for every state. Keeps animation 3 on the second motion slot except in the death action. */
-static void Salamander_Think(Entity *entity, s32 unknown) {
+static void Salamander_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (!(entity->busy_flags & ENTITY_BUSY_DEATH)) {
@@ -452,11 +452,11 @@ static void Salamander_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn3D(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        Salamander_ThinkReturn(entity, unknown);
+        Salamander_ThinkReturn(entity, run_now);
         return;
     }
     if (ai_state->step_index == 0) {
-        Salamander_ThinkWanderAndShoot(entity, unknown);
+        Salamander_ThinkWanderAndShoot(entity, run_now);
         return;
     }
     switch (entity->state) {
@@ -464,16 +464,16 @@ static void Salamander_Think(Entity *entity, s32 unknown) {
         break;
     case 1:
     case 2:
-        Salamander_ThinkCombat(entity, unknown);
+        Salamander_ThinkCombat(entity, run_now);
         return;
     }
-    Salamander_ThinkWanderAndShoot(entity, unknown);
+    Salamander_ThinkWanderAndShoot(entity, run_now);
 }
 
 /* The think function while flag bit 53 is set: walks back to the spawn point, turning away from
    whatever is pushing the entity, as EntityAi_ThinkReturn; with the command of EntityAi_MoveCommand3D and,
    while it is pushed, command bit 0x20 or 0x10 by the y of the push. */
-static void Salamander_ThinkReturn(Entity *entity, s32 unknown) {
+static void Salamander_ThinkReturn(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 to_spawn[4];
     f32 push[4];
@@ -534,7 +534,7 @@ static void Salamander_ThinkReturn(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand3D(entity, 0, 50.0f);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 0, and of every state until Salamander_OnHit sets work byte unk7A: starts
@@ -542,7 +542,7 @@ static void Salamander_ThinkReturn(Entity *entity, s32 unknown) {
    (EntityAi_IsPointInView with EntityParams.type_param_0 and type_param_1 degrees and type_param_2) and the pause in work word
    unk6A (EntityParams.far_distance) is over; else moves in three dimensions to a random point near the spawn point
    (EntityPoint_PickNearWithHeight), a new one every 240 to 359 frames. */
-static void Salamander_ThinkWanderAndShoot(Entity *entity, s32 unknown) {
+static void Salamander_ThinkWanderAndShoot(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 *point;
@@ -555,7 +555,7 @@ static void Salamander_ThinkWanderAndShoot(Entity *entity, s32 unknown) {
         ai_state->sub_timer <= 0) {
         EntityAi_PickRangedAttack(entity);
         // match: an int result keeps $2 busy after the call
-        EntityAi_StartAction(entity, Salamander_RangedAttack, unknown);
+        EntityAi_StartAction(entity, Salamander_RangedAttack, run_now);
         ai_state->sub_timer = entity->params->far_distance;
         return;
     }
@@ -575,7 +575,7 @@ static void Salamander_ThinkWanderAndShoot(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand3D(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of states 1 and 2: it has none of EntityAi_ThinkCombat's guard, dodge and draw
@@ -586,7 +586,7 @@ static void Salamander_ThinkWanderAndShoot(Entity *entity, s32 unknown) {
    draws. 2: goes for a point 800 from the player along the reverse of Entity.heading_to_player, at the spawn
    point's y, for EntityParams.near_distance frames (work word unk68) or until the player is unk434 away.
    The commands come from EntityAi_MoveCommand3D, or EntityAi_PushTurnCommand3D while it is pushed. */
-static void Salamander_ThinkCombat(Entity *entity, s32 unknown) {
+static void Salamander_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 turn;
@@ -619,9 +619,9 @@ static void Salamander_ThinkCombat(Entity *entity, s32 unknown) {
             if (EntityAi_IsPointInView(entity, point, DEG_TO_RAD(entity->params->type_param_0),
                               DEG_TO_RAD(entity->params->type_param_1), entity->params->type_param_2)) {
                 if (EntityAi_PickAttack(entity)) {
-                    EntityAi_StartAction(entity, Salamander_RangedAttack, unknown);
+                    EntityAi_StartAction(entity, Salamander_RangedAttack, run_now);
                 } else {
-                    EntityAi_StartAction(entity, Salamander_MeleeAttack, unknown);
+                    EntityAi_StartAction(entity, Salamander_MeleeAttack, run_now);
                 }
                 ai_state->pause_timer = entity->params->near_distance;
                 ai_state->move_choice++;
@@ -650,7 +650,7 @@ static void Salamander_ThinkCombat(Entity *entity, s32 unknown) {
     if (ai_state->pause_timer > 0) {
         ai_state->pause_timer--;
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: turns as the command says, rolls the model 20 degrees into the turn, and

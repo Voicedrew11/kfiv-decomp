@@ -23,7 +23,7 @@
 static KfVector climb_points[3]; /* 0x4FF390 the points GreaterDemon_Think climbs over (it indexes up to 5) */
 
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-static void GreaterDemon_Think(Entity *entity, s32 unknown);
+static void GreaterDemon_Think(Entity *entity, s32 run_now);
 static void GreaterDemon_Move(Entity *entity);
 static void GreaterDemon_OnHit(Entity *entity);
 static void GreaterDemon_ThinkCombat(Entity *, s32);
@@ -84,7 +84,7 @@ void GreaterDemon_Init(Entity *entity) {
     Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
-static void GreaterDemon_Think(Entity *entity, s32 unknown) {
+static void GreaterDemon_Think(Entity *entity, s32 run_now) {
     EntityAiStateKind168160 *ai_state = (EntityAiStateKind168160 *)&entity->ai_state;
     MapSlot *slot;
     KfVector *point;
@@ -127,27 +127,27 @@ static void GreaterDemon_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                GreaterDemon_ThinkCombat(entity, unknown);
+                GreaterDemon_ThinkCombat(entity, run_now);
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
     }
 }
 
-static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
+static void GreaterDemon_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiStateKind168160 *ai_state = (EntityAiStateKind168160 *)&entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -178,7 +178,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
         rand() % 100 < (s16)entity->params->action_frames && ABS(angle) < DEG_TO_RAD(60)) {
         turn_left = entity->heading_to_player - entity->model->rotation[1];
         if (ABS(turn_left) < DEG_TO_RAD(60)) {
-            EntityAi_StartAction(entity, GreaterDemon_PlayAnim6Or7BySide, unknown);
+            EntityAi_StartAction(entity, GreaterDemon_PlayAnim6Or7BySide, run_now);
             return;
         }
     }
@@ -194,15 +194,15 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (ai_state->sliding == 1) {
-                EntityAi_StartAction(entity, GreaterDemon_SlideToStop, unknown);
+                EntityAi_StartAction(entity, GreaterDemon_SlideToStop, run_now);
             } else if (EntityAi_PickAttack(entity)) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 2) {
-                    EntityAi_StartAction(entity, GreaterDemon_RangedAttack2, unknown);
+                    EntityAi_StartAction(entity, GreaterDemon_RangedAttack2, run_now);
                 } else {
-                    EntityAi_StartAction(entity, GreaterDemon_RangedAttack, unknown);
+                    EntityAi_StartAction(entity, GreaterDemon_RangedAttack, run_now);
                 }
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -210,7 +210,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 0xF0;
                 ai_state->move_choice = 0;
-                EntityAi_StartAction(entity, GreaterDemon_Rise, unknown);
+                EntityAi_StartAction(entity, GreaterDemon_Rise, run_now);
                 return;
             }
             entity->target = &player_state;
@@ -245,7 +245,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 0xF0;
                 ai_state->move_choice = 0;
-                EntityAi_StartAction(entity, GreaterDemon_Rise, unknown);
+                EntityAi_StartAction(entity, GreaterDemon_Rise, run_now);
                 return;
             }
             if (turn > 0) {
@@ -265,7 +265,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 static void GreaterDemon_Move(Entity *entity) {

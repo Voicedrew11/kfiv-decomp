@@ -15,13 +15,13 @@
 #include "entity/entity_math.h"
 
 
-static void SkeletonSoldier_Think(Entity *entity, s32 unknown);
+static void SkeletonSoldier_Think(Entity *entity, s32 run_now);
 static void SkeletonSoldier_Dormant(Entity *entity);
 static void SkeletonSoldier_PlayAnim17(Entity *entity);
-static void SkeletonSoldier_ThinkClearFlag25Away(Entity *entity, s32 unknown);
+static void SkeletonSoldier_ThinkClearFlag25Away(Entity *entity, s32 run_now);
 static void SkeletonSoldier_DormantAnim18Then19(Entity *entity);
-static void SkeletonSoldier_ThinkNoStates(Entity *entity, s32 unknown);
-static void SkeletonSoldier_ThinkDecideAttackOrWait(Entity *entity, s32 unknown);
+static void SkeletonSoldier_ThinkNoStates(Entity *entity, s32 run_now);
+static void SkeletonSoldier_ThinkDecideAttackOrWait(Entity *entity, s32 run_now);
 
 /* Set-up of a type 6 entity: clears its work area and installs the type's handlers. */
 void SkeletonSoldier_Init(Entity *entity) {
@@ -71,7 +71,7 @@ void SkeletonSoldier_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think; in state 2 with flag bit 32 set it first plays
    SkeletonSoldier_PlayAnim17 once (work word unk6C says whether it has; state 0 clears it). */
-static void SkeletonSoldier_Think(Entity *entity, s32 unknown) {
+static void SkeletonSoldier_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -81,26 +81,26 @@ static void SkeletonSoldier_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 ai_state->mode_timer = 0;
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
                 if (ENTITY_FLAG_BITS(entity)->player_in_reach && ai_state->mode_timer == 0) {
-                    EntityAi_StartAction(entity, SkeletonSoldier_PlayAnim17, unknown);
+                    EntityAi_StartAction(entity, SkeletonSoldier_PlayAnim17, run_now);
                     ai_state->mode_timer = 1;
                 } else {
-                    EntityAi_ThinkCombat(entity, unknown);
+                    EntityAi_ThinkCombat(entity, run_now);
                 }
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -227,7 +227,7 @@ static void SkeletonSoldier_PlayAnim17(Entity *entity) {
    SkeletonSoldier_Think; with unk40 3 it also clears flag bit 25 once the entity is more than 180 from
    its spawn point (SkeletonSoldier_DormantAnim18Then19 leaves the bit set in that mode). What flag bit
    25 does is not known; scripts read and set it (ScriptCmd_SetEntityFlags, ScriptCmd_GetEntityFlags). */
-static void SkeletonSoldier_ThinkClearFlag25Away(Entity *entity, s32 unknown) {
+static void SkeletonSoldier_ThinkClearFlag25Away(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -240,26 +240,26 @@ static void SkeletonSoldier_ThinkClearFlag25Away(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 ai_state->mode_timer = 0;
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
                 if (ENTITY_FLAG_BITS(entity)->player_in_reach && ai_state->mode_timer == 0) {
-                    EntityAi_StartAction(entity, SkeletonSoldier_PlayAnim17, unknown);
+                    EntityAi_StartAction(entity, SkeletonSoldier_PlayAnim17, run_now);
                     ai_state->mode_timer = 1;
                 } else {
-                    EntityAi_ThinkCombat(entity, unknown);
+                    EntityAi_ThinkCombat(entity, run_now);
                 }
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -342,7 +342,7 @@ static void SkeletonSoldier_DormantAnim18Then19(Entity *entity) {
 
 /* The think handler of mode 1 (EntitySpawnInfo.spawn_mode is 1): as EntityAi_Think without the states;
    while flag bit 53 is clear it calls SkeletonSoldier_ThinkDecideAttackOrWait. */
-static void SkeletonSoldier_ThinkNoStates(Entity *entity, s32 unknown) {
+static void SkeletonSoldier_ThinkNoStates(Entity *entity, s32 run_now) {
     u32 phase;
 
     phase = frame_counter % 10U;
@@ -357,16 +357,16 @@ static void SkeletonSoldier_ThinkNoStates(Entity *entity, s32 unknown) {
     }
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
-    SkeletonSoldier_ThinkDecideAttackOrWait(entity, unknown);
+    SkeletonSoldier_ThinkDecideAttackOrWait(entity, run_now);
 }
 
 /* Decides for SkeletonSoldier_ThinkNoStates: as EntityAi_ThinkCombat, but it never closes in: when
    EntityAi_PickCombatChoice does not choose the attack it waits 30 to 59 frames. The motion never moves the
    entity. */
-static void SkeletonSoldier_ThinkDecideAttackOrWait(Entity *entity, s32 unknown) {
+static void SkeletonSoldier_ThinkDecideAttackOrWait(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 side;
 
@@ -391,14 +391,14 @@ static void SkeletonSoldier_ThinkDecideAttackOrWait(Entity *entity, s32 unknown)
         EntityAi_LowerChoiceWeight(entity, side);
         if (entity->combat_choice == 0) {
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         }
         entity->action_timer = rand() % 30 + 30;
         ai_state->move_choice = -1;
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }

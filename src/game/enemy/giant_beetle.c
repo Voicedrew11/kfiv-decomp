@@ -18,9 +18,9 @@
 
 static void GiantBeetle_Animate(Entity *entity);
 static void GiantBeetle_OnHit(Entity *entity);
-static void GiantBeetle_Think(Entity *entity, s32 unknown);
-static void GiantBeetle_ThinkWander(Entity *entity, s32 unknown);
-static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown);
+static void GiantBeetle_Think(Entity *entity, s32 run_now);
+static void GiantBeetle_ThinkWander(Entity *entity, s32 run_now);
+static void GiantBeetle_ThinkCombat(Entity *entity, s32 run_now);
 static void GiantBeetle_TurnParts7And12(Entity *entity);
 static void GiantBeetle_TurnParts23To32(Entity *entity);
 static void GiantBeetle_MeleeAttack0(Entity *entity);
@@ -100,7 +100,7 @@ static void GiantBeetle_OnHit(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with GiantBeetle_ThinkCombat for state 2 and GiantBeetle_ThinkWander
    for the other states. */
-static void GiantBeetle_Think(Entity *entity, s32 unknown) {
+static void GiantBeetle_Think(Entity *entity, s32 run_now) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 0);
     }
@@ -110,7 +110,7 @@ static void GiantBeetle_Think(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
@@ -118,17 +118,17 @@ static void GiantBeetle_Think(Entity *entity, s32 unknown) {
     case 1:
         break;
     case 2:
-        GiantBeetle_ThinkCombat(entity, unknown);
+        GiantBeetle_ThinkCombat(entity, run_now);
         return;
     }
-    GiantBeetle_ThinkWander(entity, unknown);
+    GiantBeetle_ThinkWander(entity, run_now);
 }
 
 /* The think function of every state but 2 (GiantBeetle_Think calls it): wanders. Each time the
    timer runs out it picks a point near the spawn point (EntityPoint_PickNear; 79 times in 100, for 120 to
    179 frames) or no target (60 to 89 frames), takes the command of EntityAi_MoveCommand towards it (or the
    turn away from a push, EntityAi_TurnFromPush) and starts the move action. */
-static void GiantBeetle_ThinkWander(Entity *entity, s32 unknown) {
+static void GiantBeetle_ThinkWander(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 *point;
@@ -154,14 +154,14 @@ static void GiantBeetle_ThinkWander(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but attack index 0 has the type's own
    actions (GiantBeetle_ShotAttackShakingCamera for the ranged one, GiantBeetle_MeleeAttack0 for the melee one); closing
    in it takes the command of EntityAi_MoveCommand (range: the radius plus 101) with no turn away from a
    push, and it leaves flag bits 9 and 10 as they are. */
-static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown) {
+static void GiantBeetle_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 angle;
     s32 side;
@@ -187,14 +187,14 @@ static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
-                    EntityAi_StartAction(entity, GiantBeetle_ShotAttackShakingCamera, unknown);
+                    EntityAi_StartAction(entity, GiantBeetle_ShotAttackShakingCamera, run_now);
                 } else {
-                    EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                    EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
                 }
             } else if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
-                EntityAi_StartAction(entity, GiantBeetle_MeleeAttack0, unknown);
+                EntityAi_StartAction(entity, GiantBeetle_MeleeAttack0, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -228,7 +228,7 @@ static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 1.0f);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* Helper of GiantBeetle_Animate: eases work float unk48 towards 20 degrees on the side the command

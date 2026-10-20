@@ -18,12 +18,12 @@
 #include "player/player.h"
 
 static void GoldenStatue_OnHit(Entity *entity);
-static void GoldenStatue_ThinkWaitAtPost(Entity *entity, s32 unknown);
-static void GoldenStatue_WalkToPost(Entity *entity, s32 unknown);
-static void GoldenStatue_TurnAtPost(Entity *entity, s32 unknown);
-static void GoldenStatue_StandAtPost(Entity *entity, s32 unknown);
-static void GoldenStatue_ThinkNoStates(Entity *entity, s32 unknown);
-static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknown);
+static void GoldenStatue_ThinkWaitAtPost(Entity *entity, s32 run_now);
+static void GoldenStatue_WalkToPost(Entity *entity, s32 run_now);
+static void GoldenStatue_TurnAtPost(Entity *entity, s32 run_now);
+static void GoldenStatue_StandAtPost(Entity *entity, s32 run_now);
+static void GoldenStatue_ThinkNoStates(Entity *entity, s32 run_now);
+static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 run_now);
 static void GoldenStatue_Move(Entity *entity);
 static void GoldenStatue_AimPart15AbovePlayer(Entity *entity);
 static void GoldenStatue_Animate(Entity *entity);
@@ -99,7 +99,7 @@ static void GoldenStatue_OnHit(Entity *entity) {
    it puts GoldenStatue_ThinkNoStates in the think slot and calls it. Until then, while it is not busy,
    it calls GoldenStatue_WalkToPost, GoldenStatue_TurnAtPost or GoldenStatue_StandAtPost, picked by work
    bytes unk78 and unk79. */
-static void GoldenStatue_ThinkWaitAtPost(Entity *entity, s32 unknown) {
+static void GoldenStatue_ThinkWaitAtPost(Entity *entity, s32 run_now) {
     Entity *other;
     EntityAiState *ai_state = &entity->ai_state;
     u32 phase;
@@ -110,7 +110,7 @@ static void GoldenStatue_ThinkWaitAtPost(Entity *entity, s32 unknown) {
             void (*handler)(Entity *, s32) = GoldenStatue_ThinkNoStates;
 
             ai_state->think = handler;
-            handler(entity, unknown);
+            handler(entity, run_now);
             return;
         }
     }
@@ -120,12 +120,12 @@ static void GoldenStatue_ThinkWaitAtPost(Entity *entity, s32 unknown) {
     }
     if (entity->busy_flags == 0) {
         if (ai_state->move_choice == 0) {
-            GoldenStatue_WalkToPost(entity, unknown);
+            GoldenStatue_WalkToPost(entity, run_now);
         } else {
             if (ai_state->turn_in_place != 0) {
-                GoldenStatue_TurnAtPost(entity, unknown);
+                GoldenStatue_TurnAtPost(entity, run_now);
             } else {
-                GoldenStatue_StandAtPost(entity, unknown);
+                GoldenStatue_StandAtPost(entity, run_now);
             }
         }
     }
@@ -133,7 +133,7 @@ static void GoldenStatue_ThinkWaitAtPost(Entity *entity, s32 unknown) {
 
 /* Helper of GoldenStatue_ThinkWaitAtPost, called while work byte unk78 is 0: walks to the point (-7900,
    spawn y, 3050), sets unk78 within 50 of it, and starts the move action. */
-static void GoldenStatue_WalkToPost(Entity *entity, s32 unknown) {
+static void GoldenStatue_WalkToPost(Entity *entity, s32 run_now) {
     f32 point[4];
     f32 limit;
     EntityAiState *ai_state;
@@ -153,7 +153,7 @@ static void GoldenStatue_WalkToPost(Entity *entity, s32 unknown) {
     if (EntityMath_DistanceXZ(entity->model->position, point) < limit) {
         ai_state->move_choice = 1;
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* Helper of GoldenStatue_ThinkWaitAtPost, called while work bytes unk78 and unk79 are set: clears unk78
@@ -161,7 +161,7 @@ static void GoldenStatue_WalkToPost(Entity *entity, s32 unknown) {
    EntityAi_PickAttack picks when EntityAi_CanAttack says so and EntitySight_EntityInWay does not; else turns on the spot
    to the heading in work float unk48, clears unk79 once it is within the turn limit of it, and
    starts the move action. */
-static void GoldenStatue_TurnAtPost(Entity *entity, s32 unknown) {
+static void GoldenStatue_TurnAtPost(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 home[4];
     f32 angle;
@@ -193,13 +193,13 @@ static void GoldenStatue_TurnAtPost(Entity *entity, s32 unknown) {
     } else {
         ai_state->turn_in_place = 0;
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* Helper of GoldenStatue_ThinkWaitAtPost, called while work byte unk78 is set and unk79 is 0: attacks as
    GoldenStatue_TurnAtPost does; else, when Entity.heading_to_player is more than 30 degrees off its
    heading, keeps it in work float unk48 and sets unk79; starts the move action. */
-static void GoldenStatue_StandAtPost(Entity *entity, s32 unknown) {
+static void GoldenStatue_StandAtPost(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 angle;
 
@@ -216,13 +216,13 @@ static void GoldenStatue_StandAtPost(Entity *entity, s32 unknown) {
         ai_state->part_angle_x = entity->heading_to_player;
         ai_state->turn_in_place = 1;
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think handler of mode 2 (EntitySpawnInfo.spawn_mode is 2), which GoldenStatue_ThinkWaitAtPost also
    installs: as EntityAi_Think without the states; while flag bit 53 is clear it calls
    GoldenStatue_ThinkDecideHoldPostOrCloseIn. */
-static void GoldenStatue_ThinkNoStates(Entity *entity, s32 unknown) {
+static void GoldenStatue_ThinkNoStates(Entity *entity, s32 run_now) {
     u32 phase;
 
     phase = frame_counter % 10U;
@@ -237,10 +237,10 @@ static void GoldenStatue_ThinkNoStates(Entity *entity, s32 unknown) {
     }
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
-    GoldenStatue_ThinkDecideHoldPostOrCloseIn(entity, unknown);
+    GoldenStatue_ThinkDecideHoldPostOrCloseIn(entity, run_now);
 }
 
 /* Decides for GoldenStatue_ThinkNoStates: guards or dodges the player's swing; while flag bit 32 is
@@ -250,7 +250,7 @@ static void GoldenStatue_ThinkNoStates(Entity *entity, s32 unknown) {
    -8000, picked by the player's z, and from there turns to the player and starts the ranged attack
    only (work byte unk78 says it is at the post; on arriving it prints golden_statue_arrived_message, "tuitayo",
    Japanese for "arrived"); else it closes in on the player as EntityAi_ThinkCombat does. */
-static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknown) {
+static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 post[4];
     f32 direction[4];
@@ -273,14 +273,14 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
         if (ENTITY_FLAG_BITS(entity)->player_in_reach) {
             if (EntityAi_CanShoot(entity) && !EntitySight_EntityInWay(entity)) {
                 EntityAi_PickRangedAttack(entity);
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
                 return;
             }
         }
     } else if (ENTITY_FLAG_BITS(entity)->player_in_reach) {
         if (EntityAi_CanMelee(entity) && !EntitySight_EntityInWay(entity)) {
             EntityAi_PickMeleeAttack(entity);
-            EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+            EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             return;
         }
     }
@@ -316,7 +316,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
                 } else {
                     entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
                 }
-                EntityAi_StartAction(entity, ai_state->move, unknown);
+                EntityAi_StartAction(entity, ai_state->move, run_now);
                 return;
             }
         } else {
@@ -328,7 +328,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
             }
             if (ENTITY_FLAG_BITS(entity)->player_in_reach && EntityAi_CanShoot(entity) && !EntitySight_EntityInWay(entity)) {
                 EntityAi_PickRangedAttack(entity);
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
                 return;
             }
             if (ABS(angle) > DEG_TO_RAD(30)) {
@@ -337,7 +337,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
                 } else {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
                 }
-                EntityAi_StartAction(entity, ai_state->move, unknown);
+                EntityAi_StartAction(entity, ai_state->move, run_now);
                 return;
             }
         }
@@ -366,7 +366,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
             entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The move handler: turns as the command says and does not move the entity itself; picks animation

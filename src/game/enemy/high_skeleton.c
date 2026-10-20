@@ -16,7 +16,7 @@
 
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
-static void HighSkeleton_Think(Entity *entity, s32 unknown);
+static void HighSkeleton_Think(Entity *entity, s32 run_now);
 static void HighSkeleton_Dormant(Entity *entity);
 static void HighSkeleton_DormantScaleUp(Entity *entity);
 static void HighSkeleton_Death(Entity *entity);
@@ -67,7 +67,7 @@ void HighSkeleton_Init(Entity *entity) {
 /* The think handler: as EntityAi_Think. Before that, with EntitySpawnInfo.spawn_mode and variant set, it
    looks every Entity.spawn_index frames at the entity with spawn id `variant` and starts
    HighSkeleton_Death once that one has flag bits 2-3 at 2 or more or flag bit 1 clear. */
-static void HighSkeleton_Think(Entity *entity, s32 unknown) {
+static void HighSkeleton_Think(Entity *entity, s32 run_now) {
     Entity *other;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -86,20 +86,20 @@ static void HighSkeleton_Think(Entity *entity, s32 unknown) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                EntityAi_ThinkCombat(entity, unknown);
+                EntityAi_ThinkCombat(entity, run_now);
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }

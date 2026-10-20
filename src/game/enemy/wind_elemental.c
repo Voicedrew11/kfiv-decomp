@@ -19,8 +19,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
-static void WindElemental_Think(Entity *entity, s32 unknown);
-static void WindElemental_ThinkCombat(Entity *entity, s32 unknown);
+static void WindElemental_Think(Entity *entity, s32 run_now);
+static void WindElemental_ThinkCombat(Entity *entity, s32 run_now);
 static void WindElemental_PlayTurnAnim(Entity *entity);
 static void WindElemental_Dodge(Entity *entity);
 static void WindElemental_DodgeNoAttack(Entity *entity);
@@ -78,7 +78,7 @@ void WindElemental_Init(Entity *entity) {
    the spawn point (flag bit 53) gets command bits 0x440 added. Work byte unk7B is put to 30 while
    player_state.unk259 is set and counts down. While work word unk68 is 1 (WindElemental_AlertSameKind of
    another entity sets it) it only starts WindElemental_RunAtPlayer. */
-static void WindElemental_Think(Entity *entity, s32 unknown) {
+static void WindElemental_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state;
 
     ai_state = &entity->ai_state;
@@ -103,21 +103,21 @@ static void WindElemental_Think(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             // match: called as returning nothing, so $2 is free for the next statement
             // match: the result is not used, retail calls it as void
-            ((void (*)(void *, int))EntityAi_ThinkReturn)(entity, unknown);
+            ((void (*)(void *, int))EntityAi_ThinkReturn)(entity, run_now);
             entity->move_command |= (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST);
         } else {
             switch (entity->state) {
             case 0:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                WindElemental_ThinkCombat(entity, unknown);
+                WindElemental_ThinkCombat(entity, run_now);
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -129,7 +129,7 @@ static void WindElemental_Think(Entity *entity, s32 unknown) {
    in is at the run with command bit 0x400, or one time in five at a walk (work byte unk78 is 1);
    running, it starts WindElemental_PlayTurnAnim now and then when the player is more than 90 degrees
    off its heading. */
-static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
+static void WindElemental_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -165,9 +165,9 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -213,7 +213,7 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
                     if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > HALF_PI
                         && frame_counter % 15U == 0 && !(rand() & 1)) {
                         ai_state->step_index = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
-                        EntityAi_StartAction(entity, WindElemental_PlayTurnAnim, unknown);
+                        EntityAi_StartAction(entity, WindElemental_PlayTurnAnim, run_now);
                         return;
                     }
                     entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f) | MOVE_COMMAND_TURN_FAST;
@@ -225,7 +225,7 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* An action (busy bit 0x2000): plays animation 12 or, with work byte unk7A below 1, animation 11 to

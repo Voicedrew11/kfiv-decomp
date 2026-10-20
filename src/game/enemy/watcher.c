@@ -14,7 +14,7 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
-static void Watcher_Think(Entity *entity, s32 unknown);
+static void Watcher_Think(Entity *entity, s32 run_now);
 static void Watcher_Move(Entity *entity);
 static void Watcher_Death(Entity *entity);
 
@@ -63,7 +63,7 @@ void Watcher_Init(Entity *entity) {
    (and flag bit 63 is clear) it calls Attack_DrainPlayerMp with EntityParams.action_frames, sets work byte unk7A
    and flag bit 9 and plays animation 2, else clears them and plays animation 0. Calls EntityEvent_StartCueAlways
    with 1 when unk7A changes. */
-static void Watcher_Think(Entity *entity, s32 unknown) {
+static void Watcher_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     s8 previous;
 

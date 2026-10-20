@@ -19,8 +19,8 @@
 
 static void WiddaQueen_Animate(Entity *entity);
 static void WiddaQueen_TurnPart9ToPlayer(Entity *entity, s32 mode);
-static void WiddaQueen_Think(Entity *entity, s32 unknown);
-static void WiddaQueen_ThinkDecide(Entity *entity, s32 unknown);
+static void WiddaQueen_Think(Entity *entity, s32 run_now);
+static void WiddaQueen_ThinkDecide(Entity *entity, s32 run_now);
 static void WiddaQueen_MeleeAttack0(Entity *entity);
 static void WiddaQueen_MeleeAttack1(Entity *entity);
 static void WiddaQueen_RangedAttack0(Entity *entity);
@@ -139,7 +139,7 @@ static void WiddaQueen_TurnPart9ToPlayer(Entity *entity, s32 mode) {
 
 /* The think handler: no states; every tenth frame updates what the entity knows of the player, and
    while it is not busy calls WiddaQueen_ThinkDecide. */
-static void WiddaQueen_Think(Entity *entity, s32 unknown) {
+static void WiddaQueen_Think(Entity *entity, s32 run_now) {
     u32 phase;
 
     phase = frame_counter % 10U;
@@ -148,14 +148,14 @@ static void WiddaQueen_Think(Entity *entity, s32 unknown) {
     }
     if (entity->busy_flags == 0) {
         EntityAi_StepState(entity);
-        WiddaQueen_ThinkDecide(entity, unknown);
+        WiddaQueen_ThinkDecide(entity, run_now);
     }
 }
 
 /* Decides for WiddaQueen_Think: guards the player's swing; when an attack reaches
    (WiddaQueen_CanAttack) starts the one WiddaQueen_PickAttack draws; else starts the move
    action. */
-static void WiddaQueen_ThinkDecide(Entity *entity, s32 unknown) {
+static void WiddaQueen_ThinkDecide(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
@@ -170,20 +170,20 @@ static void WiddaQueen_ThinkDecide(Entity *entity, s32 unknown) {
     if (entity->attack_delay_frames == 0 && !(s32)(entity->flags >> 63) && WiddaQueen_CanAttack(entity)) {
         if (WiddaQueen_PickAttack(entity)) {
             if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
-                EntityAi_StartAction(entity, WiddaQueen_RangedAttack0, unknown);
+                EntityAi_StartAction(entity, WiddaQueen_RangedAttack0, run_now);
             } else {
-                EntityAi_StartAction(entity, WiddaQueen_RangedAttack1, unknown);
+                EntityAi_StartAction(entity, WiddaQueen_RangedAttack1, run_now);
             }
         } else {
             if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
-                EntityAi_StartAction(entity, WiddaQueen_MeleeAttack0, unknown);
+                EntityAi_StartAction(entity, WiddaQueen_MeleeAttack0, run_now);
             } else {
-                EntityAi_StartAction(entity, WiddaQueen_MeleeAttack1, unknown);
+                EntityAi_StartAction(entity, WiddaQueen_MeleeAttack1, run_now);
             }
         }
         return;
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The melee attack with record 0 (busy bit 1): animation 20, its hits checked along the heading of

@@ -19,8 +19,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
-static void WaterElemental_Think(Entity *entity, s32 unknown);
-static void WaterElemental_ThinkCombat(Entity *entity, s32 unknown);
+static void WaterElemental_Think(Entity *entity, s32 run_now);
+static void WaterElemental_ThinkCombat(Entity *entity, s32 run_now);
 static void WaterElemental_PlayTurnAnim(Entity *entity);
 static void WaterElemental_RecoverHealth(Entity *entity);
 static s32 WaterElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 max_angle);
@@ -79,7 +79,7 @@ void WaterElemental_Init(Entity *entity) {
    WaterElemental_RunAtPlayer. Once the pause in work word unk6C is over and Entity.hit_points is below
    EntityParams.near_distance percent of EntityParams.hit_points it starts WaterElemental_RecoverHealth with a
    chance of unk438 in 100. */
-static void WaterElemental_Think(Entity *entity, s32 unknown) {
+static void WaterElemental_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state;
 
     ai_state = &entity->ai_state;
@@ -110,22 +110,22 @@ static void WaterElemental_Think(Entity *entity, s32 unknown) {
             return;
         }
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            EntityAi_ThinkReturn(entity, unknown);
+            EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
             case 0:
                 ai_state->pause_timer = 0;
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             case 1:
                 ai_state->pause_timer = 0;
-                EntityAi_ThinkPursue(entity, unknown);
+                EntityAi_ThinkPursue(entity, run_now);
                 break;
             case 2:
-                WaterElemental_ThinkCombat(entity, unknown);
+                WaterElemental_ThinkCombat(entity, run_now);
                 break;
             default:
-                EntityAi_ThinkIdle(entity, unknown);
+                EntityAi_ThinkIdle(entity, run_now);
                 break;
             }
         }
@@ -137,7 +137,7 @@ static void WaterElemental_Think(Entity *entity, s32 unknown) {
    400 and less than 90 degrees off its heading. Closing in is at the run; it starts
    WaterElemental_PlayTurnAnim now and then when the player is more than 90 degrees off its heading.
    */
-static void WaterElemental_ThinkCombat(Entity *entity, s32 unknown) {
+static void WaterElemental_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
@@ -176,9 +176,9 @@ static void WaterElemental_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -218,14 +218,14 @@ static void WaterElemental_ThinkCombat(Entity *entity, s32 unknown) {
                 if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > HALF_PI
                     && frame_counter % 15U == 0 && !(rand() & 1)) {
                     ai_state->step_index = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
-                    EntityAi_StartAction(entity, WaterElemental_PlayTurnAnim, unknown);
+                    EntityAi_StartAction(entity, WaterElemental_PlayTurnAnim, run_now);
                     return;
                 }
                 entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
             }
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* An action (busy bit 0x2000): plays animation 12 or, with work byte unk7A below 1, animation 11 to

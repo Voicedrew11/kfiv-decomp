@@ -21,7 +21,7 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
-static void Larva_Think(Entity *entity, s32 unknown);
+static void Larva_Think(Entity *entity, s32 run_now);
 static void Larva_Dormant(Entity *entity);
 static void Larva_Death(Entity *entity);
 static void Larva_DormantHeldAtModelPoint(Entity *entity);
@@ -87,7 +87,7 @@ void Larva_Init(Entity *entity) {
    (Larva_DormantMoveAlongArc sets it to 600) it shrinks the model's scale (EntityModel.scale) from
    the one kept in work floats unk54 to unk5C towards half of it and lowers unk70 and unk74 of the
    entity's map record; at 0 it starts Larva_Death. */
-static void Larva_Think(Entity *entity, s32 unknown) {
+static void Larva_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     MapSlotUnk10 *record;
     f32 scale;
@@ -100,11 +100,11 @@ static void Larva_Think(Entity *entity, s32 unknown) {
         switch (entity->state) {
         case 1:
         case 2:
-            EntityAi_ThinkCombat(entity, unknown);
+            EntityAi_ThinkCombat(entity, run_now);
             break;
         case 0:
         default:
-            EntityAi_ThinkIdle(entity, unknown);
+            EntityAi_ThinkIdle(entity, run_now);
             break;
         }
     }

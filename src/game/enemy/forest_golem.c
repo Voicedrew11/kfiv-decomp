@@ -22,18 +22,18 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 static void ForestGolem_ThinkStayInPlace(Entity *entity, int invoke_now);
-static void ForestGolem_Think(Entity *entity, s32 unknown);
+static void ForestGolem_Think(Entity *entity, s32 run_now);
 static void ForestGolem_StartScriptAndRumble(Entity *entity);
 static void ForestGolem_Move(Entity *entity);
 static void ForestGolem_InitByVariant(Entity *entity);
-static void ForestGolem_ThinkByState(Entity *entity, s32 unknown);
-static void ForestGolem_ThinkCombat(Entity *entity, s32 unknown);
+static void ForestGolem_ThinkByState(Entity *entity, s32 run_now);
+static void ForestGolem_ThinkCombat(Entity *entity, s32 run_now);
 static void ForestGolem_Death(Entity *entity);
 static void ForestGolem_SignalMapObject(Entity *entity);
-static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown);
-static void ForestGolem_WalkToMapObjectPosX(Entity *entity, s32 unknown);
-static void ForestGolem_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown);
-static void ForestGolem_WalkToMapObjectNegX(Entity *entity, s32 unknown);
+static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 run_now);
+static void ForestGolem_WalkToMapObjectPosX(Entity *entity, s32 run_now);
+static void ForestGolem_ThinkUseMapObjectsNegX(Entity *entity, s32 run_now);
+static void ForestGolem_WalkToMapObjectNegX(Entity *entity, s32 run_now);
 
 /* Set-up of a type 77 entity: clears its work area and installs the type's handlers. */
 void ForestGolem_Init(Entity *entity) {
@@ -127,7 +127,7 @@ static void ForestGolem_ThinkStayInPlace(Entity *entity, int invoke_now) {
 /* The think handler (the set-up function installs it while that byte of map_script_flags is clear): while
    the entity is not busy it starts ForestGolem_StartScriptAndRumble once the byte is set, and the move
    action until then. */
-static void ForestGolem_Think(Entity *entity, s32 unknown) {
+static void ForestGolem_Think(Entity *entity, s32 run_now) {
     EntityAiStateKind1740A8 *ai_state = (EntityAiStateKind1740A8 *)&entity->ai_state;
 
     if (entity->busy_flags == 0) {
@@ -135,10 +135,10 @@ static void ForestGolem_Think(Entity *entity, s32 unknown) {
 
         index += entity->params->pitch_limit_deg * 64;
         if (((u8 *)map_script_flags)[index] != 0) {
-            EntityAi_StartAction(entity, ForestGolem_StartScriptAndRumble, unknown);
+            EntityAi_StartAction(entity, ForestGolem_StartScriptAndRumble, run_now);
             return;
         }
-        EntityAi_StartAction(entity, ai_state->move, unknown);
+        EntityAi_StartAction(entity, ai_state->move, run_now);
     }
 }
 
@@ -260,7 +260,7 @@ static void ForestGolem_InitByVariant(Entity *entity) {
 /* A think handler only ForestGolem_InitByVariant installs (for an EntitySpawnInfo.variant other than 1 and 2),
    a set-up function nothing refers to: as EntityAi_Think, with ForestGolem_ThinkCombat for state 2. The same
    as ExpeditionSoldier_Think. */
-static void ForestGolem_ThinkByState(Entity *entity, s32 unknown) {
+static void ForestGolem_ThinkByState(Entity *entity, s32 run_now) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -270,26 +270,26 @@ static void ForestGolem_ThinkByState(Entity *entity, s32 unknown) {
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
     case 0:
-        EntityAi_ThinkIdle(entity, unknown);
+        EntityAi_ThinkIdle(entity, run_now);
         return;
     case 1:
-        EntityAi_ThinkPursue(entity, unknown);
+        EntityAi_ThinkPursue(entity, run_now);
         return;
     case 2:
-        ForestGolem_ThinkCombat(entity, unknown);
+        ForestGolem_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* The think function of state 2 of the think handlers ForestGolem_InitByVariant installs: as
    ExpeditionSoldier_ThinkCombat without the EntityAi_ClearTurnInPlace test. */
-static void ForestGolem_ThinkCombat(Entity *entity, s32 unknown) {
+static void ForestGolem_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 range;
@@ -321,9 +321,9 @@ static void ForestGolem_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack(entity)) {
-                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
-                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
         case 1:
@@ -375,7 +375,7 @@ static void ForestGolem_ThinkCombat(Entity *entity, s32 unknown) {
             break;
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* A death action (busy bit 0x40) only ForestGolem_InitByVariant puts in the death slot, a set-up function
@@ -481,7 +481,7 @@ static void ForestGolem_SignalMapObject(Entity *entity) {
    first reads bit 17 of the two map objects EntitySpawnInfo.map_object_id and unk43 name into work bytes
    unk79 and unk7A, and while either is clear it calls ForestGolem_WalkToMapObjectPosX instead of
    stepping the states. The same as ExpeditionSoldier_ThinkUseMapObjectsPosX. */
-static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown) {
+static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     MapObject *map_object;
 
@@ -500,13 +500,13 @@ static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown) {
         ai_state->step_index = (map_object->state_flags >> 17) & 1;
     }
     if (!ai_state->turn_in_place || !ai_state->step_index) {
-        ForestGolem_WalkToMapObjectPosX(entity, unknown);
+        ForestGolem_WalkToMapObjectPosX(entity, run_now);
         return;
     }
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
@@ -514,17 +514,17 @@ static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown) {
         break;
     case 1:
     case 2:
-        ForestGolem_ThinkCombat(entity, unknown);
+        ForestGolem_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* Helper of ForestGolem_ThinkUseMapObjectsPosX, which calls it in place of the state functions: attacks when
    EntityAi_CanAttack says so; else walks to a fixed point (x 950) and from there to a point next to the
    map object whose bit is clear, turns to face it and starts ForestGolem_SignalMapObject for it;
    until then it starts the move action. */
-static void ForestGolem_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
+static void ForestGolem_WalkToMapObjectPosX(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 near_point[4];
     f32 far_point[4];
@@ -575,7 +575,7 @@ static void ForestGolem_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
             entity->target = ai_state->target_point;
             entity->move_command = EntityAi_TurnCommand(entity);
             if (entity->move_command == 0) {
-                EntityAi_StartAction(entity, ForestGolem_SignalMapObject, unknown);
+                EntityAi_StartAction(entity, ForestGolem_SignalMapObject, run_now);
                 return;
             }
         } else {
@@ -584,13 +584,13 @@ static void ForestGolem_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand(entity, 0, range * 0.5f);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* A think handler only ForestGolem_InitByVariant installs (for EntitySpawnInfo.variant 2), a set-up function
    nothing refers to: as ForestGolem_ThinkUseMapObjectsPosX, with ForestGolem_WalkToMapObjectNegX
    (the points at x -950 and -900). */
-static void ForestGolem_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown) {
+static void ForestGolem_ThinkUseMapObjectsNegX(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     MapObject *map_object;
 
@@ -609,13 +609,13 @@ static void ForestGolem_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown) {
         ai_state->step_index = (map_object->state_flags >> 17) & 1;
     }
     if (!ai_state->turn_in_place || !ai_state->step_index) {
-        ForestGolem_WalkToMapObjectNegX(entity, unknown);
+        ForestGolem_WalkToMapObjectNegX(entity, run_now);
         return;
     }
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-        EntityAi_ThinkReturn(entity, unknown);
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
     switch (entity->state) {
@@ -623,15 +623,15 @@ static void ForestGolem_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown) {
         break;
     case 1:
     case 2:
-        ForestGolem_ThinkCombat(entity, unknown);
+        ForestGolem_ThinkCombat(entity, run_now);
         return;
     }
-    EntityAi_ThinkIdle(entity, unknown);
+    EntityAi_ThinkIdle(entity, run_now);
 }
 
 /* Helper of ForestGolem_ThinkUseMapObjectsNegX: as ForestGolem_WalkToMapObjectPosX with its own points (x -950).
    */
-static void ForestGolem_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
+static void ForestGolem_WalkToMapObjectNegX(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 near_point[4];
     f32 far_point[4];
@@ -682,7 +682,7 @@ static void ForestGolem_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
             entity->target = ai_state->target_point;
             entity->move_command = EntityAi_TurnCommand(entity);
             if (entity->move_command == 0) {
-                EntityAi_StartAction(entity, ForestGolem_SignalMapObject, unknown);
+                EntityAi_StartAction(entity, ForestGolem_SignalMapObject, run_now);
                 return;
             }
         } else {
@@ -691,5 +691,5 @@ static void ForestGolem_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand(entity, 0, range * 0.5f);
         }
     }
-    EntityAi_StartAction(entity, ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
