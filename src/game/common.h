@@ -28,7 +28,9 @@ typedef u32 Uint128 __attribute__((mode(TI))); /* a 128-bit integer, moved with 
 #define HALF_PI 1.5707964f
 /* Degrees to radians; folds to the retail constant for whole-degree angles */
 #define DEG_TO_RAD(deg) ((deg) * (PI / 180.0f))
+#define RAD_TO_DEG 57.29578f /* 180 / PI, rounded; 180.0f / PI folds one bit off */
 #define FLT_MAX 3.4028235e38f
+#define FLT_EPSILON 1.1920929e-7f
 /* 1 / 2^31: scales rand() (0..0x7FFFFFFF) to 0..1 */
 #define RAND_SCALE (1.0f / 2147483648.0f)
 
