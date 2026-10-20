@@ -4,23 +4,21 @@
    and experience, with resistances and drops where two monsters share those. */
 #include "entity/entity.h"
 #include "common.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_events.h"
+#include <stdlib.h>
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
-void EntityAi_Move(Entity *);
-void EntityAi_Dormant(Entity *);
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);
-int rand(void);
-void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 float EntityMath_EaseAngleToward(float *, float, float);
 float EntityMath_DistanceXZ(void *, void *);
 int Motion_Start(void *, int, int, u32, int);
-void EntityEvent_OnDeath(Entity *);
 
 static void Crow_Animate(Entity *entity);
 static void Crow_Think(Entity *entity, int frame);

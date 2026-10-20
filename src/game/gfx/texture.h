@@ -110,4 +110,25 @@ void Texture_SendTexFlush(void);
 /* Walks a chunk table, uploading each texture when `upload` is set; returns the address after the last one. */
 char *Texture_UploadTable(char *base, int upload);
 
+/* gfx/texture_table.c */
+void TextureTable_QueueAll(TextureTableHeader *table);
+void TextureTable_QueueEnabled(TextureTableHeader *table_arg, s32 skip_mask);
+void TextureTable_QueueOne(TextureTableHeader *table, s32 index);
+
+/* data still in asm */
+extern char tm2_tbp_zero_message[];
+extern char tm2_header_label[];
+extern char tex0_tbp_format[];
+extern char tex0_tbw_format[];
+extern char tex0_psm_format[];
+extern char tex0_tcc_format[];
+extern char tex0_tfx_format[];
+extern char tex0_cbp_format[];
+extern char tex0_cpsm_format[];
+extern char tex0_csm_format[];
+extern char tex0_csa_format[];
+extern char tex0_cld_format[];
+extern char tex0_tw_format[];
+extern char tex0_th_format[];
+
 #endif

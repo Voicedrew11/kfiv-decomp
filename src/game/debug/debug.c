@@ -2,12 +2,14 @@
 #include "core/game.h"
 #include "input/pad.h"
 #include "ui/message.h"
+#include "core/display.h"
+#include "gfx/gs_draw.h"
+#include "gfx/packet.h"
+#include "input/input.h"
+#include <stdio.h>
 
 static PadReport *debug_pad; /* 0x447108 the controller report the editors read; nothing in the retail game sets it */
 
-int sprintf(char *, const char *, ...);
-extern char debug_cursor_mark[];
-extern char debug_cursor_blank[];
 static char debug_cursor_marks[0x68]; /* 0x5742E0 the strings the debug menus draw, four bytes apart */
 
 void Debug_StartMenuLoopInit(void);
@@ -15,24 +17,8 @@ void Debug_StartMenuLoopTop(void);
 void Debug_StartMenuBeforeRun(void);
 void Debug_StartMenuBetweenRuns(void);
 int Debug_RunStartMenu(void);
-void Packet_OnFrameStart(void);
-void Packet_OnFrameEnd(void);
-void Packet_SwapBuffers(void);
-void Packet_SendChain(void);
 void Packet_WaitForSend(void);
-void GsDraw_FillScreen(int, int, int, int, s64);
-void Input_Update(void);
-void Display_SwapBuffers(int);
-extern DebugStartMenuSpacer debug_start_menu_spacer;
-extern DebugStartMenuPrompt debug_start_menu_prompt;
-extern DebugStartMenuItems debug_start_menu_items;
 extern u16 pad_state[];
-extern s64 game_dbuff_clear_color[];
-extern s64 game_dbuff_context2_clear_color[];
-extern char debug_map_format[];
-extern char debug_ini_prompt[];
-extern char debug_ini_digit_format[];
-extern char debug_ini_line_end[];
 
 /* Wraps the cursor into 0..count-1 and writes ">>" for its line and "  " for the others into debug_cursor_marks.
    Nothing calls it. */

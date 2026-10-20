@@ -5,65 +5,45 @@
 #include "entity/entity.h"
 #include "common.h"
 #include "effect/effect.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_aim.h"
+#include "entity/entity_collision.h"
+#include "entity/entity_events.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/vu0.h"
+#include "model/motion.h"
+#include <stdlib.h>
 
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
-void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 frame_counter;
-extern f32 malice_no_floor_height_think[];
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
-int EntityAi_ThinkReturn(void *, int);
-int EntityAi_ThinkIdle(void *, int);
-void EntityAi_ThinkPursue(Entity *, s32);
-f32 EntityCollision_DistanceToPropFloor(void *, void *);
 extern PlayerData player_state;
-int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
 float EntityMath_DistanceXZ(void *, void *);
-void EntityPoint_PickNearFromDistance(f32 *, f32 *, f32, f32);
 void EntityAi_ClearTurnInPlace(Entity *);
 float EntityMath_AngleDifference(float, float);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
-void EntityAi_Dodge(Entity *);
-void EntityAi_Guard(Entity *);
-void EntityAi_MeleeAttack(Entity *);
-void EntityAi_RangedAttack(Entity *);
-int Motion_Start(void *, int, int, u32, int);
-extern f32 identity_matrix[16];
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0RotMatrixZ(float *, float *, float);
-void Vector_ApplyMatrix(void *, void *, void *);
-void Vector_Scale(float *, float *, float);
-extern f32 malice_no_floor_height_relocate[];
-void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 float EntityMath_AngleXZ(float *, char *);
 float EntityMath_WrapAngle(float);
 float EntityMath_HeadingTo(float *, float *);
 void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityAi_SetState(char *, u8);
-void EntityAi_ReactionRewind(Entity *);
-void EntityAi_ReactionLight(Entity *);
-void EntityAi_ReactionHeavy(Entity *);
-float atanf(float);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-int EntityShot_Launch(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *);
 void EntityAi_SetAttackDelay(Entity *, s32);
-void EntityEvent_OnDeath(Entity *);
 
 static void Malice_Think(Entity *entity, s32 unknown);
 static void Malice_ThinkCombat(Entity *entity, s32 unknown);

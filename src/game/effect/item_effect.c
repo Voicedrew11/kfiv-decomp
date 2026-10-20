@@ -6,56 +6,29 @@
 #include "player/player.h"
 #include "ui/splash.h"
 #include "ui/message.h"
+#include "core/file.h"
+#include "core/ini.h"
+#include "core/memory.h"
+#include "enemy/enemy.h"
+#include "gfx/draw_list.h"
+#include "gfx/packet.h"
+#include "math/vu0.h"
+#include "model/model_matrix.h"
+#include "model/motion.h"
+#include "save/save_state.h"
+#include <stdio.h>
 
 extern char map_draw_slot_blocks[];
-extern LevelRecord weapon_level_records[];
 extern GameStatus game_status;
-extern PlayerState player_state;
 extern EventRunner view_ray_status;
-extern ItemUseEffectDef item_effect_defs_by_kind[];
-extern char item_effect_small_model_path[];
-extern char item_effect_small_motion_path[];
-extern char item_effect_large_model_path[];
-extern char item_effect_large_motion_path[];
-extern char item_effect_texture_path_format[];
-extern u8 player_weapon_step[];
-extern int current_map_slot;
-extern int item_effect_area_size;
-extern char *item_effect_area;
-extern PlayerItemDef weapon_defs[];
 
-void *memset(void *, int, u32);
-int sprintf(char *, char *, ...);
-int File_Open(char *, int, int);
-int File_Close(int);
-int File_Read(int, void *, int);
-MotionData *ModelMotion_LoadFile(MotionFile *, ModelChannel **, ModelInstance *, int);
-void ModelMotion_Select(ModelInstance *, int);
-void ModelMotion_Step(void *);
-void DrawList_Add(ModelInstance *, s32, s32);
 void TextureTable_SetBasePointers(char *, int, int);
-void Model_MultiplyChildMatrices(ModelPart *);
-void Model_SetUpPosed(ModelInstance *, char **, char **);
-void Model_DrawPosedDepthByPart(ModelInstance *);
-void Model_SetPrimBits(ModelInstance *, s64, s64);
-void Model_SetTexture(ModelInstance *, u64, s64);
-void Model_SetAlphaBlend(ModelInstance *, s64);
 void Model_SetVertexColour(void *, int, int, int, int);
-int Player_KnowsItemMenuMagic(void);
-void ModelTexture_SendForModel(void *);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
 static void ItemEffect_DrawModel(ModelInstance *model);
 void ItemEffect_StepRequestGameStatus(void);
 void ItemEffect_StepWaitOverlay(void);
 void ItemEffect_StepPlayMotion(void);
 void ItemEffect_StepFadeOut(void);
-void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-void Vector_Copy(void *, void *);
-void Vector_Add(void *, void *, void *);
-void Vector_Scale(float *, float *, float);
 
 static int item_effect_active;              /* 0x447388 nonzero while an effect runs */
 static int item_effect_kind;                /* 0x44738C the item kind (0x46..0x52) */

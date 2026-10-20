@@ -4,39 +4,16 @@
 #include "collision/collision.h"
 #include "player/player.h"
 #include "math/vu0.h"
+#include "debug/debug.h"
+#include <libvu0.h>
+#include <math.h>
+#include "sound/sound_game.h"
+#include <stdlib.h>
 
 
-extern PlayerState player_state;
-extern f32 identity_matrix[16];
-extern Entity *active_entities_head;
-extern int floor_skim_spawn_count;
-
-int rand(void);
-double sin(double);
-double cos(double);
-double sqrt(double);
-void sceVu0AddVector(void *, void *, void *);
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0RotMatrixZ(float *, float *, float);
-void sceVu0ApplyMatrix(void *, void *, void *);
-char Sound_PlayTrackedKind(int index, int first, int second, int third, int fourth);
 void EffectHit_CheckAndEnd(EffectActor *effect, s8 *state);
-int EffectHit_CheckAndEndByFlag(EffectActor *effect, s8 *state);
-void EffectHit_End(EffectActor *effect, s8 *state);
 void EffectAngle_FromVector(float *angles, float *direction);
 int EffectHit_FindAimedEntity(EffectActor *effect, Vector4 *position, Vector4 *reference);
-Entity *EffectHit_FindNearestEntity(EffectActor *effect, Vector4 *position, Vector4 *unused_rotation);
-int Effect_IsEntityUntargetable(Entity *entity);
-int Effect_IsNearAnyEntity(float radius, void *point);
-float Effect_Distance(void *from, void *target);
-float Effect_DistanceXZ(float *origin, float *target);
-s16 Effect_FramesToImpact(float radius, void *effect, void *motion, void *hit_point);
-f32 Math_AbsFloat(f32 fparg0);
-float Vector_Dot3(void *left, void *right);
-int Attack_RunEffectHitCheck(void *effect_actor);
-int Collision_FindFloorBelow(f32 reach, void *point_arg);
-void Collision_CastRayAtMap(f32 scale, void *position_arg, void *direction);
 
 
 /* Start handler of the kinds that do nothing of their own (kind 6 and most unused kinds): does

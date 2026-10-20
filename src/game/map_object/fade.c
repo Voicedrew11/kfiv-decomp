@@ -1,20 +1,13 @@
 #include "map_object/map_object.h"
 #include "model/model.h"
+#include "core/file.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/camera.h"
+#include "math/vu0.h"
+#include "model/model_matrix.h"
 
-void Vector_Subtract(void *, void *, void *);
-float sqrtf(float);
-void *memset(void *, int, u32);
-void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void Model_MultiplyChildMatrices(ModelPart *);
-void sceVu0CopyMatrix(void *, void *);
-void Matrix_Multiply(void *, void *, void *);
-void Vector_ApplyMatrix(void *, void *, void *);
-float atan2f(float, float);
-void Vector_MultiplyComponents(float *, float *, float *);
 extern float player_state[];
-extern float camera_state[];
-extern f32 scale_matrices[4][4];
 
 /* Start handler of the kind that fades with the distance to the player: takes
    the two distances and the two alphas from its source and starts invisible. */

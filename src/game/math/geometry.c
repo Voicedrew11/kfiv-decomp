@@ -1,15 +1,10 @@
 /* Small vector and angle helpers: distances, heading and pitch between two points, stepping an angle, projecting
    a point to the screen, and an index of the largest of seven values. Nothing calls any of them. */
 #include "core/game.h"
-
-extern f32 negative_zero_angle_step_limit[];         /* -0.0f */
-extern f32 world_screen_matrix[16];          /* the world-to-screen matrix */
-
-float sqrtf(float);
-float atan2f(float, float);
-void Vector_Subtract(void *, void *, void *);
-void Vu0_LoadMatrix(void *);
-void Vu0_ProjectToScreen(int *, void *);
+#include <math.h>
+#include "math/angle.h"
+#include "math/camera.h"
+#include "math/vu0.h"
 
 /* Distance between two points. */
 static float Vector_Distance(void *origin, void *target) {

@@ -131,4 +131,7 @@ int EntityAi_StepSlotMotion(Entity *entity, EntityMotionSlot *slot, int channel,
    hands them to Vector_WeightedSum4 */
 void Vector_Hermite(void *result, void *point0, void *point1, void *tangent0, void *tangent1, f32 ratio);
 
+/* entity/entity_ai.c */
+void Entity_DrawPoolModels(void);
+
 #endif

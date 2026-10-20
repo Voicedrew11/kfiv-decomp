@@ -48,4 +48,7 @@ s32 EntitySight_WallInWay(Entity *entity);
 /* Gives the attack's ailment chances to the player when it is in the arc; TRUE if it was. */
 s32 EntityAim_AilPlayerInArc(void *target, f32 *point, f32 max_angle, f32 max_height, f32 max_distance, f32 heading);
 
+/* data still in asm */
+extern EntityRangeWeights near_point_range_weights;
+
 #endif

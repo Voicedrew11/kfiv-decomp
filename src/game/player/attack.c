@@ -6,6 +6,15 @@
 #include "player/magic_ladder.h"
 #include "map_object/map_object.h"
 #include "effect/effect.h"
+#include "core/file.h"
+#include "effect/shot.h"
+#include "enemy/enemy.h"
+#include <math.h>
+#include "math/vu0.h"
+#include "player/held_weapon.h"
+#include "save/save_state.h"
+#include "sound/sound_game.h"
+#include <stdlib.h>
 
 #define IS_PLAYER(owner) ((owner) == (Entity *)&player_state)
 #define HIT_STRENGTH_LIGHT_MAX_PERCENT 33.3334f
@@ -35,71 +44,21 @@ void Attack_HitPlayer(Unk1B1470Request *, Unk1B1470Extra *);
 void Attack_HitEntity(Unk1B1470Request *, Unk1B1470Extra *, Entity *, f32);
 void Attack_HitMapObject(Unk1B1470Request *, Unk1B1470Extra *, MapObject *);
 int Attack_HitMap(Unk1B1470Request *, Unk1B1470Extra *);
-void Collision_HitSphereObj(MapObject *, f32 *, f32);
 void Collision_SphereCylinder(void *, void *, f32, f32, f32);
-float sqrtf(float);
-void Vector_Scale(float *, float *, float);
-void Vector_Subtract(void *, void *, void *);
-void Vector_Copy(void *, void *);
-void Collision_CastSegmentAtMap(f32 *, f32 *);
-void Collision_HitRayObj(MapObject *, f32 *, f32 *, f32);
 void Collision_CylinderArc(void *, void *, f32, f32, f32, f32, f32, f32);
 void Collision_CylinderArcPitch(void *, void *, f32, f32, f32, f32, f32, f32, f32, f32, f32);
-void Vu0_LoadMatrix(void *);
-u32 Collision_GetFloorMaterial(int, u32, u32);
-void Attack_RollPlayerAilments(void *);
 void Attack_GetEffectiveStrengths(EntityParamsUnk240PartUnk00 *, Unk1B1470Request *, Unk1B1470Extra *);
 int Attack_StrengthDamageToPlayer(int, int, int);
 void Attack_WearArmorFromHit(int, Unk1B1470Request *);
-void Player_TakeDamage(int);
-void Player_KnockBackFromHit(void *, int);
-void Player_TiltViewFromHit(int);
-int rand(void);
-int printf(const char *, ...);
-float atan2f(float, float);
 int Attack_StrengthDamage(int, int, int, int);
 void Attack_RollEntityAilments(Entity *, EntityParamsUnk240PartUnk12 *);
-void Attack_WearWeapon(int, int);
-void Player_KnockBack(Vector4 *, f32);
-void Player_CountMagicUse(int);
-void Player_CountWeaponUse(int);
-void Player_BounceWeapon(void);
-void Player_BounceWeaponQuietly(void);
-s32 Sound_PlayCommon(s32);
-void Player_StrikeSolidObject(int with_sound);
-void Attack_WearWornItem(int idx, int amount);
-int File_Open(char *, int, int);
-int File_Read(int, void *, int);
-int File_Close(int);
-void *memset(void *, int, u32);
-s32 Attack_Run(Unk1B1470Request *, Unk1B1470Extra *);
 
 // match: declared without a size, so it is not addressed through $gp
 extern CollisionListPick2 map_hit_floor_strip_lists[];
 // match: declared without a size, so it is not addressed through $gp
 extern CollisionListPick2 map_hit_wall_strip_lists[];
-extern PlayerState player_state;
-extern Entity *active_entities_head;
-extern MapSlot map_slots[2];
-extern s32 map_object_counts[2];
-extern MapObject map_slot_objects[][0x200];
-extern PlayerArmPoints held_item_arm_points;
-extern PlayerArmPoints held_item_arm_points_prev;
-extern CollisionListPick4 map_hit_strip_lists;
-extern const VuVector4 y_axis_vector;
 extern GameStatus game_status;
-extern Entity entity_pool[][0x80];
-extern u32 frame_counter;
-extern Entity entity_pool_last;           /* the last entity of entity_pool */
-extern char last_boss_hits_format[];           /* "g_dmgLassBossCnt[%d]\n" */
-extern char hp_halved_format[];           /* "HP halved!! %d / 2 = %d" in Japanese */
-extern s32 dark_one_hits_left;              /* g_dmgLassBossCnt: weapon hits the last boss still takes */
-extern PlayerItemDef weapon_defs[];
 extern LevelDef weapon_name_defs[];
-extern LevelRecord weapon_level_records[];
-extern LevelRecord worn_item_level_records[];
-extern LevelDef worn_name_defs[];
-extern char magic_param_path[];
 
 int Attack_TestMapModel(ModelInstance *, void *, f32);
 int Attack_TestMapModelFloors(ModelInstance *, void *, f32);

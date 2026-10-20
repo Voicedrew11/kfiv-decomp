@@ -1,14 +1,9 @@
 #include "gfx/scroll_texture.h"
 #include "gfx/gs.h"
 #include "gfx/texture.h"
-
-void *memset(void *, int, u32);
-void GsDraw_DrawScrollingTexture(void *, void *);
-void GsDraw_ResetDrawTarget(void);
-void GsDraw_QueueTexFlush(void);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
+#include "core/file.h"
+#include "gfx/gs_draw.h"
+#include "gfx/packet.h"
 
 static ScrollTexture scroll_textures[4]; /* 0x474AC0 */
 static ScrollOffset scroll_offsets[4];   /* 0x474B60 */

@@ -3,6 +3,12 @@
    these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by hit points
    and experience, with resistances and drops where two monsters share those. */
 #include "entity/entity.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_events.h"
+#include <math.h>
+#include "math/vu0.h"
+#include "model/model.h"
+#include <stdlib.h>
 
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
@@ -10,24 +16,14 @@ void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(Entity *);
-void EntityAi_OnHit(Entity *);
-void EntityAi_Dormant(Entity *);
-void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 extern float player_state[];
 extern u8 master_fadin_killed[];
-int rand(void);
-float sqrtf(float);
-float atan2f(float, float);
-double atan2(double, double);
-char *Model_GetSkinnedBonePoint(char *, u32);
 float EntityMath_WrapAngle(float);
 float EntityMath_DistanceXZ(void *, void *);
 float EntityMath_AngleXZ(float *, char *);
 f32 EntityMath_Approach(f32, f32, f32);
-void Vector_Copy(void *, void *);
 int EntityAi_LaunchShot(void *, int, void *, void *);
-void EntityEvent_StartCue(Entity *, s32, s32, s32);
 int Motion_Start(void *, int, int, u32, int);
 
 static void Fadin_Think(Entity *entity, s32 unknown);

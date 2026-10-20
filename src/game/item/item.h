@@ -3,6 +3,12 @@
 #ifndef KF_ITEM_H
 #define KF_ITEM_H
 
+#include "common.h"
+#include "core/game.h"
+#include "entity/entity.h"
+#include "map/map.h"
+#include "model/model.h"
+
 /* Item and gold placement records store rotation, scale and radius in 1/16 units. */
 #define ITEM_RECORD_FIXED_SCALE     (1.0f / 16.0f)
 
@@ -89,5 +95,40 @@
 /* what PlayerState.weapon and PlayerState.equipment hold for an item */
 #define ITEM_WEAPON_INDEX(item)     ((item) - ITEM_WEAPON_FIRST)
 #define ITEM_WORN_INDEX(item)       ((item) - ITEM_WORN_FIRST)
+
+/* item/item_defs.c */
+extern ItemCommonDef item_common_defs[];
+
+/* item/map_item.c */
+void MapItem_UpdatePickup(void);
+void MapItem_Init(void);
+void MapItem_InitMap(int map);
+void MapItem_RollFixedItems(int map);
+void MapItem_UnloadMap(int map);
+void MapItem_MoveMap(int map, f32 *offset);
+int MapItem_PlaceFixedById(int map, int item_id);
+s32 MapItem_DropFromEnemy(Entity *entity);
+ItemNode *MapItem_PutOutForObject(int map, int item, void *position, void *rotation, void *scale, void *object);
+ItemNode *MapItem_FindForObject(int object);
+void MapItem_UpdateFalling(void);
+void MapItem_DrawAll(int with_picked);
+void MapItem_DrawPicked(int hidden);
+int MapItem_StartPickup(ItemNode *node);
+int MapItem_StartPickupById(int item_id, int may_put_back);
+
+/* data still in asm */
+extern const Vector4Arg enemy_drop_scale;
+extern MapItemDef *map_item_defs[2];
+extern s16 *map_item_model_kinds[2];
+extern u8 *map_item_group_thresholds[2];
+extern ItemNode *lying_items;  /* the items lying in the maps, a list */
+extern ItemNode *pickup_item;  /* the one being picked up */
+extern s32 map_fixed_item_counts[2];
+extern s32 pickup_no_put_back;
+extern f32 pickup_pose_scale;
+extern s32 pickup_step;
+extern f32 pickup_view_pitch;
+extern int pickup_move_frames;
+extern int pickup_frames_left;
 
 #endif

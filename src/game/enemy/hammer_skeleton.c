@@ -6,6 +6,10 @@
 #include "entity/entity.h"
 #include "map/map.h"
 #include "effect/effect.h"
+#include "core/game.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "script/script.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
@@ -14,18 +18,9 @@ void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(Entity *);
-void EntityAi_OnHit(Entity *);
-void EntityAi_Move(Entity *);
-void EntityAi_Dormant(Entity *);
-void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 extern float player_state[];
-extern EntitySpawnInfo *map_spawn_infos[2];
-extern MapSlot map_slots[];
-extern int current_map_slot;
 int Motion_Start(void *, int, int, u32, int);
-void Game_CountSpawnDeath(u32, int);
-int Script_Start(int, int);
 
 static void HammerSkeleton_Think(Entity *entity, s32 unknown);
 static void HammerSkeleton_Death(Entity *entity);

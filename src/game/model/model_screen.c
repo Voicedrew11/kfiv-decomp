@@ -1,6 +1,12 @@
 #include "model/model.h"
 #include "gfx/gs.h"
 #include <eeregs.h>
+#include <eekernel.h>
+#include "gfx/packet.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/camera.h"
+#include "math/vu0.h"
 
 /* which sides of the screen a point is beyond, the bits of CLIP_SIDES */
 #define SCREEN_SIDE_LEFT 1
@@ -49,25 +55,9 @@ typedef u32 u_long128 __attribute__((mode(TI)));
     (to).colour[1] = (from)->colour[1];                                                             \
     (to).colour[2] = (from)->colour[2];                                                             \
     (to).colour[3] = (from)->colour[3]
-void sceVu0MulMatrix(void *, void *, void *);
-void Vu0_LoadMatrix(void *);
-void Vu0_ProjectToScreen(int *, void *);
-void Vu0_ProjectToScreen3(int *, int *, int *, f32 *, f32 *, f32 *);
 void ModelScreen_QueueCutTriangle(u32 *, ModelPartVertexWords *, int, int, void *);
-u32 *Packet_Alloc(int);
-void Packet_AppendToChain(u32 *, u32 *);
 void ModelScreen_StepVertices(ModelPartVertexWords *, ModelPartVertexWords *, ModelPartVertexWords *, int);
-void Vector_Add(void *, void *, void *);
 void ModelScreen_StepFloatVertices(BlendVertex *, BlendVertex *, BlendVertex *, int);
-void Vector_Subtract(float *, float *, float *);
-void Vector_Scale(float *, float *, float);
-extern f32 world_screen_matrix[16];      /* world to screen */
-extern int cut_triangle_count;  /* triangles cut up this way */
-
-double sin(double);
-int FlushCache(int);
-extern int screen_uv_frame;         /* 0..59, stepped by ModelScreen_SetUvsFromScreen */
-extern int screen_uv_frame_copy;    /* the same value; nothing reads it */
 
 /* Looks for the triangles of a model that the GS could not draw as they are (a corner out of its
    range) but that are partly on the screen, and queues each cut up into smaller ones. */

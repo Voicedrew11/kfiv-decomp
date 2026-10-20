@@ -46,4 +46,11 @@ s32 Motion_BlendToPose(ModelInstance *model, f32 weight);
 /* Poses every part between the first keys of two motions. */
 s32 Motion_MixFirstKeys(ModelInstance *model, s32 table_a, s32 table_b, f32 ratio);
 
+/* model/model_motion.c */
+void ModelMotion_Step(void *model_arg);
+void ModelMotion_Select(ModelInstance *model, int index);
+MotionData *ModelMotion_LoadFile(MotionFile *file, ModelChannel **alloc, ModelInstance *model, int mode);
+int ModelMotion_BlendInto(ModelInstance *model, u8 index, u16 speed);
+u16 ModelMotion_GetLastFrame(char *model_arg);
+
 #endif

@@ -3,22 +3,14 @@
 #include "core/game.h"
 #include "ui/message.h"
 #include "map/map.h"
+#include "item/item.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/vu0.h"
 
-void MapObject_RebuildMatrices(MapObject *object);
-void Vector_ApplyMatrix(void *, void *, void *);
-void Vector_Copy(void *, void *);
-void Vector_Subtract(void *, void *, void *);
-float sqrtf(float);
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void Vector_Scale(float *, float *, float);
-void Vector_Add(void *, void *, void *);
 void Player_AddItem(int);
 extern GameStatus game_status;
-extern void *faced_object[];
 extern float player_state[];
-extern f32 identity_matrix[16];
-extern ItemCommonDef item_common_defs[];
 
 /* Step 0 of the pedestals (kind 0xD: the Bridge, Binding and Release Pedestals); the item sits on part 2.
    Empty: animation 4, step 1; with bit 17 set it holds its item: animation 5, step 4. */

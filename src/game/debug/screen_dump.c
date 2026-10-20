@@ -2,28 +2,20 @@
 #include "common.h"
 #include "gfx/packet.h"
 #include "debug/screen_dump.h"
+#include "core/file.h"
+#include "core/game.h"
+#include <eekernel.h>
+#include "gfx/texture.h"
+#include <sifdev.h>
+#include <stdio.h>
 
-void *memset(void *, int, u32);
-int FlushCache(int);
-int sceClose(int);
-int sceOpen(const char *, int);
-int sceWrite(int, const void *, int);
-int sceGsSyncPath(int, int);
 void sceGsSetDefStoreImage(void *, s16, s16, s16, s16, s16, s16, s16);
 void sceGsExecStoreImage(void *, void *);
-extern char clut_dump_path[];
-extern char vram_dump_path[];
-void Texture_SendTexFlush(void);
 extern int sceGsExecLoadImage(int *, int *);
 extern int sceGsSetDefLoadImage(int *, int, int, int, int, int, int, int);
 #define SCREEN_WIDTH 0x280
 #define SCREEN_HEIGHT 0x1C0
 #define SCREEN_BYTES (SCREEN_WIDTH * SCREEN_HEIGHT * 3)
-int sprintf(char *, const char *, ...);
-extern int context1_buffer_half;
-extern char screenshot_bmp_path_format[];
-extern char screenshot_raw_path_format[];
-extern char data_dump_path_format[];
 
 static void ScreenDump_Vram(int first_row, int last_row);
 static void ScreenDump_Raw(u8 *buffer);

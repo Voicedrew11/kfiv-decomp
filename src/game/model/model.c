@@ -3,6 +3,11 @@
 #include "gfx/gs.h"
 #include <eeregs.h>
 #include "math/vu0.h"
+#include "gfx/packet.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/angle.h"
+#include "math/camera.h"
 
 /* loads the matrix the children are multiplied by into vf1..vf4 */
 #define LOAD_PARENT_MATRIX(matrix)                                                                 \
@@ -64,11 +69,6 @@
         "sqc2 $vf25, 0x30(%0)\n"                                                                   \
         : "=r"(matrix)                                                                             \
         : "0"(matrix))
-// match: gcse numbers the registers of the three function addresses Model_SetUpSkinned stores by a hash of
-// where the compiler keeps their names, so it depends on the names and the order they first appear in. These
-// names, this early declaration and the asm label on Model_UpdateSkinnedBonePoints (the '*' it puts in front of
-// the name) give retail's order ($24, $16, $25). Revisit when any of the three functions is renamed.
-char *Model_GetSkinnedBonePoint(char *, u32);
 typedef u32 u_long128 __attribute__((mode(TI)));
 /* copies a 4x4 matrix through VU0 registers */
 #define COPY_MATRIX(to, from)                                                                      \
@@ -85,31 +85,12 @@ typedef u32 u_long128 __attribute__((mode(TI)));
 /* the largest float: a vertex's distance before it has been measured.
    match: written as a literal, the compiler keeps it in .sdata (largest_float_not_measured) */
 #define NOT_MEASURED FLT_MAX
-void Model_DrawSkinned(ModelInstance *);
-// match: the asm label is part of the register order, see Model_GetSkinnedBonePoint above
+// match: the asm label (gcse hashes the name) gives retail's registers for Model_SetUpSkinned's three function addresses
 void Model_UpdateSkinnedBonePoints(ModelInstance *) __asm__("Model_UpdateSkinnedBonePoints");
-float asinf(float);
-float atan2f(float, float);
-float Angle_Wrap(float);
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0RotMatrixZ(float *, float *, float);
-u32 *Packet_Alloc(int);
-void Packet_AppendToChain(u32 *, u32 *);
 int ModelMatrix_BuildDrawMatrices(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
-void Vector_Copy(void *, void *);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-void Model_DrawPosed(ModelInstance *);
 void Model_UpdateBonePoints(ModelInstance *);
 Vector4 *Model_GetBonePoint(ModelInstance *, s32);
 int ModelMatrix_BuildDrawMatrices(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
-void Matrix_Multiply(void *, void *, void *);
-float sqrtf(float);
-extern ModelLight linked_point_pool[];
-extern f32 identity_matrix[16];
-extern f32 world_screen_matrix[16];
 
 /* Multiply the matrices of a part's children by the part's own matrix. */
 void Model_MultiplyChildMatrices(ModelPart *part) {
@@ -288,10 +269,10 @@ void Model_DrawSkinned(ModelInstance *model) {
     light_out = packet;
     light_out_b = packet + 0x10;
     for (i = 0; i < model->hit_count; i++) {
-        *(u_long128 *)light_out = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk00;
-        *(u_long128 *)light_out_b = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk10;
+        *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
+        *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
         light_out_b += 4;
-        ((f32 *)light_out)[3] = linked_point_pool[model->hit_handles[i]].unk24;
+        ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
         light_out += 4;
     }
     packet += 0x20;
@@ -425,10 +406,10 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
     light_out = packet;
     light_out_b = packet + 0x10;
     for (i = 0; i < model->hit_count; i++) {
-        *(u_long128 *)light_out = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk00;
-        *(u_long128 *)light_out_b = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk10;
+        *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
+        *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
         light_out_b += 4;
-        ((f32 *)light_out)[3] = linked_point_pool[model->hit_handles[i]].unk24;
+        ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
         light_out += 4;
     }
     packet += 0x20;
@@ -885,10 +866,10 @@ void Model_DrawPosed(ModelInstance *model) {
         light_out = packet;
         light_out_b = packet + 0x10;
         for (i = 0; i < model->hit_count; i++) {
-            *(u_long128 *)light_out = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk00;
-            *(u_long128 *)light_out_b = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk10;
+            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
+            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
             light_out_b += 4;
-            ((f32 *)light_out)[3] = linked_point_pool[model->hit_handles[i]].unk24;
+            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
             light_out += 4;
         }
         packet += 0x20;
@@ -987,10 +968,10 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
         light_out = packet;
         light_out_b = packet + 0x10;
         for (i = 0; i < model->hit_count; i++) {
-            *(u_long128 *)light_out = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk00;
-            *(u_long128 *)light_out_b = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk10;
+            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
+            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
             light_out_b += 4;
-            ((f32 *)light_out)[3] = linked_point_pool[model->hit_handles[i]].unk24;
+            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
             light_out += 4;
         }
         packet += 0x20;
@@ -1090,10 +1071,10 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
         light_out = packet;
         light_out_b = packet + 0x10;
         for (i = 0; i < model->hit_count; i++) {
-            *(u_long128 *)light_out = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk00;
-            *(u_long128 *)light_out_b = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk10;
+            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
+            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
             light_out_b += 4;
-            ((f32 *)light_out)[3] = linked_point_pool[model->hit_handles[i]].unk24;
+            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
             light_out += 4;
         }
         packet += 0x20;
@@ -1203,10 +1184,10 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
         light_out = packet;
         light_out_b = packet + 0x10;
         for (i = 0; i < model->hit_count; i++) {
-            *(u_long128 *)light_out = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk00;
-            *(u_long128 *)light_out_b = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk10;
+            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
+            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
             light_out_b += 4;
-            ((f32 *)light_out)[3] = linked_point_pool[model->hit_handles[i]].unk24;
+            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
             light_out += 4;
         }
         Packet_AppendToChain(packet_start, Packet_Alloc(1)); /* the packet ends where the next one would start */

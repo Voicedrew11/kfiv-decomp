@@ -5,6 +5,8 @@
 #include <libdma.h>
 #include "gfx/gs.h"
 #include "gfx/packet.h"
+#include "core/file.h"
+#include "core/memory.h"
 
 /* sends a packet to VIF1 and waits for the transfer to end */
 #define SEND_TO_VIF1(packet)                    \
@@ -14,32 +16,11 @@
     while (*D1_CHCR & D_CHCR_STR) {             \
     }
 
-void *memset(void *, int, u32);
-int puts(char *);
 void FlushCache(int); // match: void, the return value is unused and int changes the code
 
-/* the game's own data and functions, outside this file */
-extern int packet_fill_index;       /* which of the two packet buffers is being filled */
-extern int packet_quadwords_used;   /* quadwords handed out */
-extern int packet_buffers_size;     /* bytes in both buffers together */
-extern int packet_area;              /* start of the packet area */
-extern char packet_overflow_message[];   /* a line of 70 '!', printed when a packet overruns the buffer */
-extern u32 *gs_register_list;       /* the register list being built, NULL: none */
-extern int gs_register_count;       /* registers in it */
 /* the VIF1 packets that upload the VU1 microprograms, by the VU1 address each one starts at (the MSCAL
    that runs it) */
-extern u32 vu1_packed_vertex_program[]; /* 0x000: triangles of packed vertices (ModelScreen_QueueCutTriangle) */
-extern u32 vu1_gif_kick_program[];      /* 0x276: passes a GIF packet on (Packet_EndGsRegisters) */
-extern u32 vu1_float_vertex_program[];  /* 0x280: triangles of float vertices (ModelScreen_QueueCutFloatTriangle) */
-extern u32 vu1_posed_model_program[];   /* 0x5A0: the pool blocks' posed models (Model_SetVu1Program) */
-extern u32 vu1_program_700[];      /* 0x700: no C code starts it */
 void Packet_UploadVu1Programs(void);
-void Packet_AppendToChain(u32 *, u32 *);
-void Packet_LayOutBuffers(int);
-u32 *Packet_Alloc(int);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
 
 static void *packet_chain_head[2];   /* 0x447018 first DMA tag of each buffer's chain */
 static void *packet_chain_tail[2]; /* 0x447020 last DMA tag of each buffer's chain */

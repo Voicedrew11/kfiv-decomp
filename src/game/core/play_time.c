@@ -1,4 +1,5 @@
 #include "core/game.h"
+#include "core/play_time.h"
 
 #define BCD2DEC(x) (((x) & 0xF) + ((x) >> 4) * 10)
 
@@ -10,13 +11,8 @@ int PlayTime_ClockMinutesBetween(ClockTime, ClockTime);
 int PlayTime_ToSeconds(ClockTime);
 int PlayTime_ToMinutes(ClockTime);
 int mktime(void *);
-int PlayTime_ClockSecondsSinceStart(void);
-int PlayTime_DayOfYear(ClockTime);
 int sceCdReadClock(ClockTime *);
 
-extern ClockTime play_clock_start;
-extern ClockTime play_time_base;
-extern ClockTime wall_clock_time;
 extern ClockTime current_play_time;
 
 /* Restart the play clock from a saved play time: keep it as the base and read the wall clock. */

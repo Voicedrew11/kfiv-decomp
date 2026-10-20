@@ -1,8 +1,5 @@
 #include "effect/shot.h"
-
-void *memset(void *, s32, u32);
-
-extern s32 dark_one_hits_left;
+#include "core/file.h"
 
 #define SHOT_RING_SLOTS 0x100
 #define SHOT_SLOT_SIZE 0x30

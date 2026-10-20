@@ -4,36 +4,28 @@
    and experience, with resistances and drops where two monsters share those. */
 #include "entity/entity.h"
 #include "common.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_events.h"
+#include "entity/entity_math.h"
+#include "math/vu0.h"
+#include <stdlib.h>
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
-void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(Entity *);
-void EntityAi_OnHit(Entity *);
-void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 frame_counter;
-void EntityAi_StepState(void *);
 void EntityAi_SensePlayer(void *, int);
-int rand(void);
-s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_CanMelee(Entity *);
-s32 EntityAi_PickMeleeAttack(Entity *);
-s32 EntityAi_PickCombatChoice(Entity *, s32);
-void EntityAi_LowerChoiceWeight(Entity *, s32);
 s32 EntityAi_CanShoot(Entity *);
-s32 EntityAi_PickRangedAttack(Entity *);
-void EntityAi_Guard(Entity *);
-void EntityAi_MeleeAttack(Entity *);
 int Motion_Start(void *, int, int, u32, int);
 void EntityAi_SetState(char *, u8);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-float EntityMath_WrapAngle(float);
-int EntityShot_Launch(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *);
 void EntityAi_SetAttackDelay(Entity *, s32);
 
 static void Reaper_Think(Entity *entity, s32 unknown);

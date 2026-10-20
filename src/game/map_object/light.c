@@ -1,7 +1,6 @@
 #include "model/model.h"
 #include "model/linked_point.h"
-
-extern f32 sine_table[];
+#include "math/angle.h"
 
 /* Start handler of the light kind: makes a light of the colour in its source at
    a point of the model, and for the flickering sorts (0, 1) rolls the two

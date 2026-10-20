@@ -454,6 +454,8 @@ typedef struct {
     char pad28[0x18];
 } __attribute__((aligned(16))) ModelLight;
 
+#define LINKED_POINT_LIGHTS ((ModelLight *)linked_point_pool)
+
 /* where a vertex lands on the screen, as Vu0_ProjectToScreen and Vu0_ProjectToScreen3 write it */
 typedef struct {
     s32 x;                          /* 0x00 12.4 fixed point; the screen is 0x6C00 to 0x9400 across */
@@ -953,5 +955,37 @@ typedef struct {
     u8 old_index;                   /* 0xD0 */
     s8 cur_index;                   /* 0xD1 */
 } ChannelActor;
+
+/* model/model.c */
+void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory);
+void Model_UpdateSkinnedBonePoints(ModelInstance *actor);
+// match: gcse hashes names into Model_SetUpSkinned's registers; these names and their order give retail's
+char *Model_GetSkinnedBonePoint(char *model, u32 index);
+void Model_DrawSkinned(ModelInstance *model);
+void Model_DrawPosed(ModelInstance *model);
+void Model_MultiplyChildMatrices(ModelPart *part);
+void Model_SetUvsFromScreen(void *model_arg);
+s64 *Model_SaveGsWordsAndUvs(ModelInstance *model, s64 *save);
+void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory);
+void Model_DrawPosedWithAlpha(ModelInstance *model);
+void Model_DrawPosedDepthByPart(ModelInstance *model);
+void Model_SetPrimBits(ModelInstance *model, s64 clear_mask, s64 set_value);
+void Model_SetTexture(ModelInstance *model, u64 unk40, s64 unk30);
+void Model_SetAlphaBlend(ModelInstance *model, s64 value);
+void Model_SetVu1Program(ModelInstance *model, s32 value);
+int Model_FadeVertexColoursNear(int model_arg, void *centre_arg, int *steps, int *targets, float radius);
+
+/* model/model_screen.c */
+void ModelScreen_CutClippedTriangles(ModelInstance *model);
+
+/* model/model_textures.c */
+void ModelTexture_ResetSlots(void);
+void ModelTexture_SendForModel(void *model_arg);
+
+/* data still in asm */
+extern int screen_uv_frame;  /* 0..59, stepped by ModelScreen_SetUvsFromScreen */
+extern int cut_triangle_count;  /* triangles cut up this way */
+extern int shared_texture_packet_sent[2];
+extern int screen_uv_frame_copy;  /* the same value; nothing reads it */
 
 #endif

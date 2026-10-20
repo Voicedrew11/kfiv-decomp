@@ -7,20 +7,21 @@
 #include "entity/entity.h"
 #include "entity/entity_world.h"
 #include "common.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include <math.h>
+#include "math/vu0.h"
+#include "model/model.h"
+#include "model/motion.h"
+#include <stdlib.h>
 
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-void Motion_SetPartSlots(EntityModel *, s32, s32, s32);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
-void Vector_Copy(void *, void *);
 extern s32 entity_type_handlers[][2];
 int EntityAi_StepSlotMotion(Entity *, EntityMotionSlot *, int, f32);
-s32 Motion_StepSlot(Entity *, EntityAiMotionSlotBits *, s32, s32);
 void EntityEvent_StartFrameEffects(Entity *, s32, s32, s32);
 void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_StepState(void *);
 s32 EntityAi_CanUseRanged(Entity *, s32);
@@ -29,18 +30,12 @@ int EntityAi_StartSlotMotion(void *, void *, int, int, int, int, int);
 extern PlayerData player_state;
 int EntityAi_LaunchShot(void *, int, void *, void *);
 void EntityEvent_OnDeath(Entity *);
-extern EntityFrameTable5 ancient_king_near_shot_frames;
-int rand(void);
 void EntityAi_SetAttackDelay(Entity *, s32);
 void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(Entity *);
-void EntityAi_OnHit(Entity *);
-void EntityAi_Move(Entity *);
 void EntityAi_CheckFarFromSpawn(char *);
 float EntityMath_DistanceXZ(void *, void *);
-int EntityAi_ThinkReturn(void *, int);
-int EntityAi_ThinkIdle(void *, int);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
@@ -51,14 +46,6 @@ float EntityMath_AngleDifference(float, float);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
-void EntityAi_Dodge(Entity *);
-void EntityAi_Guard(Entity *);
-void EntityAi_MeleeAttack(Entity *);
-void EntityAi_RangedAttack(Entity *);
-int Motion_Start(void *, int, int, u32, int);
-extern EntityFrameTable ancient_king_bone_shot_frames;
-float atan2f(float, float);
-char *Model_GetSkinnedBonePoint(char *, u32);
 float EntityMath_WrapAngle(float);
 void EntityEvent_Respawn(char *);
 

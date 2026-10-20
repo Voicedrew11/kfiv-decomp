@@ -3,6 +3,14 @@
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
 #include "entity/entity.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_aim.h"
+#include "entity/entity_collision.h"
+#include "entity/entity_events.h"
+#include "entity/entity_math.h"
+#include "math/vu0.h"
+#include <stdlib.h>
 
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
@@ -10,19 +18,12 @@ void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(Entity *);
-void EntityAi_OnHit(Entity *);
-void EntityAi_Dormant(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 frame_counter;
 // match: const, so that the store to unk48 can follow the load of it
 extern const f32 seafang_no_floor_height_think[];
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn3D(char *);
 void EntityAi_StepState(void *);
-f32 EntityCollision_DistanceToGround(f32 *);
-int EntityAi_ThinkReturn(void *, int);
-int rand(void);
-void EntityPoint_PickNearWithHeight(f32 *, f32, f32, void *, void *);
 int EntityAi_TurnFromPush(void *, void *);
 s32 EntityAi_MoveCommand3D(Entity *, s32, f32);
 extern float player_state[];
@@ -31,20 +32,12 @@ s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
-void Vector_Copy(void *, void *);
-void EntityAi_Dodge(Entity *);
-void EntityAi_Guard(Entity *);
-void EntityAi_MeleeAttack(Entity *);
-void EntityAi_RangedAttack(Entity *);
 // match: const, so that the store to unk48 can follow the load of it
 extern const f32 seafang_no_floor_height_lower[];
-void EntityPoint_PickNear(float, void *, void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
 int Motion_Start(void *, int, int, u32, int);
-float EntityMath_EaseAngleToward(float *, float, float);
 // match: const, so that the store to unk48 can follow the load of it
 extern const f32 seafang_no_floor_height_death[];
-void EntityEvent_OnDeath(Entity *);
 
 static void Seafang_Think(Entity *entity, s32 unknown);
 static void Seafang_ThinkIdle(Entity *entity, s32 unknown);

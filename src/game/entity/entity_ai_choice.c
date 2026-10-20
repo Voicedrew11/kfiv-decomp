@@ -4,18 +4,10 @@
 #include "entity/entity_ai_choice.h"
 #include "entity/entity_aim.h"
 #include "player/player.h"
-
-float sinf(float);
-float cosf(float);
-double acos(double);
-void Vector_Normalize(void *dst, void *src);
-void Vector_Cross(void *, void *, void *);
-extern u8 player_weapon_step[];
-extern EntityModel *held_item_model_ptr;
-int rand(void);
-extern PlayerState player_state;
-extern u32 frame_counter;
-float atan2f(float, float);
+#include "enemy/enemy.h"
+#include <math.h>
+#include "math/vu0.h"
+#include <stdlib.h>
 
 /* EntityMath_WrapAngle, which the game inlines here: wraps an angle to +-pi */
 static inline f32 wrap_angle(f32 angle) {

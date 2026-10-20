@@ -17,4 +17,7 @@ void Timer_Restart(void);
 /* Timer 0 ticks since the last restart. */
 int Timer_GetTicks(void);
 
+/* data still in asm */
+extern int timer_overflow_count;  /* timer 0 overflows since the last restart */
+
 #endif

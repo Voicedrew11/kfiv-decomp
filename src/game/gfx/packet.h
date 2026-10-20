@@ -313,4 +313,31 @@ int sceGsSetDefDrawEnv(GsDrawEnv *, s16, s16, s16, s16, s16);
 int sceGsSyncPath(int, int);
 #endif
 
+/* gfx/packet_buffer.c */
+void Packet_EndGsRegisters(void);
+void Packet_AppendToChain(u32 *packet, u32 *packet_end);
+void Packet_LayOutBuffers(int size_index);
+u32 *Packet_Alloc(int quadwords);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int reg, s64 value);
+void Packet_Init(void);
+void Packet_OnFrameStart(void);
+void Packet_OnFrameEnd(void);
+void Packet_SwapBuffers(void);
+void Packet_SendChain(void);
+void Packet_GetSpareArea(int *addr, int *size);
+
+/* data still in asm */
+extern u32 vu1_packed_vertex_program[];  /* 0x000: triangles of packed vertices (ModelScreen_QueueCutTriangle) */
+extern u32 vu1_gif_kick_program[];  /* 0x276: passes a GIF packet on (Packet_EndGsRegisters) */
+extern u32 vu1_float_vertex_program[];  /* 0x280: triangles of float vertices (ModelScreen_QueueCutFloatTriangle) */
+extern u32 vu1_posed_model_program[];  /* 0x5A0: the pool blocks' posed models (Model_SetVu1Program) */
+extern u32 vu1_program_700[];  /* 0x700: no C code starts it */
+extern char packet_overflow_message[];  /* a line of 70 '!', printed when a packet overruns the buffer */
+extern int packet_fill_index;  /* which of the two packet buffers is being filled */
+extern int packet_quadwords_used;  /* quadwords handed out */
+extern int packet_buffers_size;  /* bytes in both buffers together */
+extern u32 *gs_register_list;  /* the register list being built, NULL: none */
+extern int gs_register_count;  /* registers in it */
+
 #endif

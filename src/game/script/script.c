@@ -15,27 +15,13 @@
 #include "player/player.h"
 #include "sound/sound.h"
 #include "ui/splash.h"
+#include "core/file.h"
+#include "core/game.h"
+#include "math/camera.h"
+#include "save/save_state.h"
+#include "sound/sound_game.h"
 
-void *memset(void *, int, u32);
-void Sound_SetBgmVolume(int level);
-void Sound_SetBankVolumes(int level);
-void Player_Kill(void);
-int Game_GetSpawnDeathCount(int map, int entry);
-void Game_MoveRecollectionPage(u32 source_page, u32 dest_page);
-void Game_MarkMessageHeard(int flag);
-
-extern char script_error_flags[];
-extern u8 *script_game_var_blocks[];
-extern ScriptCommandHandler script_general_command_handlers[];
-extern ScriptCommandHandler script_world_command_handlers[];
-extern ScriptCommandHandler script_entity_command_handlers[];
-extern f32 camera_state_tail[];       /* camera_state from CameraState.screen_scale (0x48) on */
-extern u8 recollection_pages[50];
-extern u8 game_options[];
 extern SoundLoadQueue sound_load_queue;
-extern Entity entity_pool[][0x80];
-extern MapSlot map_slots[];
-extern PlayerState player_state;
 
 static ScriptThread *current_thread = NULL; /* 0x446FD0 the thread being stepped */
 static int command_count;                   /* 0x4473E4 commands in use, as Script_StepHeldCommands counts them */

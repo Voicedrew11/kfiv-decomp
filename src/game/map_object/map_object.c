@@ -9,55 +9,32 @@
 #include "player/player.h"
 #include "gfx/scroll_texture.h"
 #include "model/model.h"
+#include "core/file.h"
+#include "enemy/enemy.h"
+#include "gfx/draw_list.h"
+#include "gfx/gs_draw.h"
+#include "gfx/packet.h"
+#include <math.h>
+#include "math/angle.h"
+#include "math/vu0.h"
+#include "model/model_matrix.h"
+#include "model/motion.h"
+#include "script/script.h"
+#include "ui/map_viewer.h"
 
-void *memset(void *, int, u32);
-float sinf(float);
-float sqrtf(float);
-float atan2f(float, float);
-void Vector_Scale(float *, float *, float);
-void Vector_Subtract(void *, void *, void *);
-int Game_IsMapVisited(int);
-int Game_GetObjectActive(int, int);
-int Game_GetObjectState(int, int);
-int Game_GetObjectFlag(int, int, u32);
-int Game_GetTriggerItem(int, int);
-void Game_SetObjectActive(int, int, int);
-void Game_SetObjectState(int, int, int);
-void Game_SetObjectFlag(int, int, u32, int);
-void ModelMotion_Select(ModelInstance *, int);
-void ModelMotion_Step(void *);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-void GsDraw_EnableDepthTest(void);
-void ModelTexture_SendForModel(void *);
-void DrawList_Add(ModelInstance *, s32, s32);
-void Model_DrawPosedWithAlpha(ModelInstance *);
-MapRecordInfo *Map_FindRecordAtInSlot(CameraState *, f32, int);
-int Map_TestFlagBlockBit(int, int, int, int);
 void MapObject_DrawModel(ModelInstance *);
 void MapObject_DrawModelWithAlpha(ModelInstance *);
 void MapObject_DrawModelNoDepthWrite(ModelInstance *);
 void MapObject_UpdateNoBonePoints(ModelInstance *);
 void *MapObject_GetPositionAsPoint(void *, int);
 void MapObject_StopSound(MapObject *);
-float Angle_Wrap(float);
 int Sound_PlayCommonAt(float, int, void *);
 int Sound_PlayMapAtRange(u8, u8, float *, float);
 s32 Sound_StartTaggedAt(s8, u8, u8, f32, Vector4Arg *);
 int Sound_StopTagged(char);
-void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-int Script_Start(int, int);
-void Vector_Copy(void *, void *);
-void Vector_Add(void *, void *, void *);
 
 extern MapDrawState map_draw_state;
-extern int suspended_updates[3];
-extern MapSlot map_slots[];
-extern Vector4 map_object_glow_colors[4];
 extern u8 item_counts[];
-extern MapObject map_slot_objects[][0x200];
 extern void (*map_object_step_handlers[][16])(MapObject *);
 extern void (*map_object_end_hooks[])(MapTrigger *);
 extern int (*map_object_item_hooks[])(MapObject *, int);
@@ -65,8 +42,6 @@ extern void (*map_object_signal_hooks[])(MapObject *, int);
 extern void (*map_object_update_hooks[])(MapObject *);
 extern void (*map_object_offset_hooks[])(MapObject *, void *);
 extern void (*map_object_setup_hooks[])(MapObject *);
-extern PlayerState player_state;
-extern int current_map_slot;
 
 static s32 sway_frame = 0;                      /* 0x4467A0 counts 0 to 59 */
 static s32 next_sound_channel = 0;              /* 0x4467A4 0 to 31, the next of the channels 0x20 to 0x3F */
@@ -232,7 +207,7 @@ void MapObject_StartMap(int map) {
         if (Game_GetTriggerItem(tag, object->source->spawn_flags.bytes[2])) {
             flag = 1;
         }
-        object->map_record = (s32)Map_FindRecordAtInSlot((CameraState *)&object->model->position, 0.0f, MAP_OBJECT_BYTES(object)->map_slot & 1);
+        object->map_record = (s32)Map_FindRecordAtInSlot((f32 *)&object->model->position, 0.0f, MAP_OBJECT_BYTES(object)->map_slot & 1);
         if (in_use) {
             MapObject_Activate(object);
         } else {

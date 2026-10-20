@@ -4,6 +4,9 @@
 #include "entity/entity.h"
 #include "effect/effect.h"
 #include "math/vu0.h"
+#include "enemy/enemy.h"
+#include <math.h>
+#include "save/save_state.h"
 
 #define PLAYER_STEP_HEIGHT 16.666666f
 
@@ -22,29 +25,7 @@
         player_state.position.z = COLLISION_RESULT->point[2] + COLLISION_RESULT->normal[2] * push;   \
     }
 
-int Collision_TransformMeshPoints(void *);
-void Collision_DropOnTriangle(void *, void *, void *, void *);
-void Collision_DropOnTriangleWithin(void *, void *, void *, void *, f32);
-u32 Collision_GetFloorMaterial(int, u32, u32);
-u32 Collision_GetSurfaceEffect(u32, u32, int);
-void Map_MakeCurrent(int);
-float sqrtf(float);
 void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
-void Collision_PushOutOfObjects(f32 *, s32, f32, f32);
-s32 Collision_StandOnObjects(f32 *, s32, f32, f32);
-void Player_FlashDamage(void);
-
-extern PlayerState player_state;
-extern PlayerState player_previous;      /* the player as of the frame before */
-extern int current_map_slot;
-extern MapSlot map_slots[2];
-extern MapSlotMemory map_slot_memory[2];
-extern f32 player_no_floor_height[];
-extern f32 largest_float[];    /* the largest float; an array so that it is not read through $gp */
-extern Entity *active_entities_head;
-extern u32 frame_counter;
-extern u8 spell_levels[6][5];
-extern FxTableEntry fx_table[];
 
 /* Tests the player against the collision meshes of the records around him: what he touches, the walls that
    push him back, the water surface he is in and the floor he stands on. Returns TRUE when a floor was found. */

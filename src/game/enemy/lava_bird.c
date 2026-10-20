@@ -5,44 +5,36 @@
 #include "entity/entity.h"
 #include "common.h"
 #include "effect/shot.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_aim.h"
+#include "entity/entity_events.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/vu0.h"
+#include "model/model.h"
+#include "model/motion.h"
+#include <stdlib.h>
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
-void Motion_SetPartSlots(EntityModel *, s32, s32, s32);
-void Vector_Copy(void *, void *);
 extern s32 entity_type_handlers[][2];
-extern u32 frame_counter;
-int rand(void);
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
 int EntityAi_StartSlotMotion(void *, void *, int, int, int, int, int);
-int EntityAi_ThinkReturn(void *, int);
 int EntityAi_TurnFromPush(void *, void *);
 extern PlayerData player_state;
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
-void EntityPoint_PickNear(float, void *, void *, void *);
-extern f32 identity_matrix[16];
 float EntityMath_EaseAngleToward(float *, float, float);
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0RotMatrixZ(float *, float *, float);
-void Vector_ApplyMatrix(void *, void *, void *);
 float EntityMath_HeadingTo(float *, float *);
 float EntityMath_AngleDifference(float, float);
-void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 void EntityAi_SetState(char *, u8);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 void EntityAi_SetAttackDelay(Entity *entity, s32 base);
-float sqrtf(float);
-float atan2f(float, float);
-double atan2(double, double);
-char *Model_GetSkinnedBonePoint(char *, u32);
 float EntityMath_WrapAngle(float);
 float EntityMath_DistanceXZ(void *, void *);
 float EntityMath_AngleXZ(float *, char *);
@@ -50,11 +42,7 @@ f32 EntityMath_Approach(f32, f32, f32);
 int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
 void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
-void EntityEvent_OnDeath(Entity *);
 int EntityAi_StepSlotMotion(Entity *, EntityMotionSlot *, int, f32);
-s32 Motion_StepSlot(Entity *, EntityAiMotionSlotBits *, s32, s32);
-void EntityEvent_StartFrameEffects(Entity *, s32, s32, s32);
 int EntityAi_LookAtPoint(void *, int, int, int, int, float);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 

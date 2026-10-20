@@ -3,6 +3,8 @@
 #define KF_GAME_H
 
 #include "common.h"
+#include "gfx/gs.h"
+#include "model/model.h"
 
 /* game_status (cleared as 0x48 bytes by Map_ResetGameState). Other files still
    declare it as char[]/int[], so the extern stays in each file. */
@@ -611,5 +613,99 @@ typedef struct {
     char pad00[0x70];
     s16 *largest_search_values;     /* 0x70 Seven s16 values searched for the largest */
 } Unk20D008Owner;
+
+/* core/game.c */
+void Game_SetDefaultOptions(void);
+void Game_DrawWobblingScreen(int red, int green, int blue, int alpha, float blend);
+void Game_ResetProgress(void);
+void Game_NormalizeStartState(void);
+int Game_IsMapVisited(int flag);
+void Game_MarkMapVisited(int flag);
+int Game_GetSpawnDeathCount(int map, int entry);
+void Game_CountSpawnDeath(u32 map, int entry);
+void Game_SetObjectFlag(int map, int entry, u32 bit, int value);
+int Game_GetObjectFlag(int map, int entry, u32 bit);
+int Game_GetObjectActive(int map, int entry);
+void Game_SetObjectActive(int map, int entry, int value);
+int Game_GetObjectState(int map, int entry);
+void Game_SetObjectState(int map, int entry, int value);
+void Game_MarkMessageHeard(int flag);
+void Game_MoveRecollectionPage(u32 source_page, u32 dest_page);
+int Game_FindTriggerOfItem(int item, int *map_tag, int *trigger_id);
+int Game_GetTriggerItem(int map_tag, int trigger_id);
+int Game_ClearTriggerItem(int map_tag, int trigger_id);
+int Game_AddTriggerItem(int map_tag, int trigger_id, int item);
+void Game_WriteSaveImage(void);
+void Game_ReadSaveImage(void);
+int Game_CheckSaveImage(void);
+void Game_StartFadeIn(int red, int green, int blue, int frames);
+void Game_StepFade(void);
+void Game_DrawFade(void);
+void Game_ProjectHazeLayers(void);
+void Game_DrawHazeLayers(void);
+void Game_DrawDepthTestSprite(void);
+void Game_BlendScreenOffsetDown(void);
+void Game_BlendScreenOffsetUpDown(void);
+void Game_BlendPreviousFrame(int alpha);
+void Game_ShiftScreenByViewTurn(void);
+void Game_ApplyBrightness(int brightness);
+void Game_TintScreen(int red, int green, int blue);
+
+/* core/game_loop.c */
+void GameLoop_Run(int arg);
+void GameLoop_RunSoundLoads(void);
+void GameLoop_DrawFrame(int arg);
+void GameLoop_ResetSystems(int arg);
+void GameLoop_CancelMenuRequests(void);
+
+/* core/game_state.c */
+extern u8 player_can_walk[];
+extern u32 game_status_flags[];
+extern int suspended_updates[3];
+extern s32 save_area_name_id[];
+
+/* data still in asm */
+extern float view_ray_previous_direction[];
+extern float view_ray_length[];
+extern s64 game_dbuff_clear_color[];
+extern s64 game_dbuff_context2_clear_color[];
+extern const DefinitionByteSet initial_trade_stock_1;
+extern const DefinitionByteSet initial_trade_stock_2;
+extern const DefinitionByteSet initial_trade_stock_3;
+extern const DefinitionByteSet initial_trade_stock_4;
+extern const DefinitionByteSet initial_trade_stock_5;
+extern GsColor haze_sprite_color;
+extern LayerOffsets haze_layer_x_offsets;
+extern char z_value_format[];
+extern ScreenRect full_screen_rect;
+extern ScreenRect inset_screen_rect;
+extern int message_dim_alpha;
+extern int save_loaded;  /* nonzero: a saved game was loaded */
+extern s32 saved_map_tag;
+extern int depth_test_sprite_z;
+extern int wobble_grid_reset;
+extern u32 haze_layer_count;
+/* the pad bits of each control */
+extern u16 forward_button;  /* forward */
+extern u16 back_button;  /* back */
+extern u16 turn_right_button;  /* turn right */
+extern u16 turn_left_button;  /* turn left */
+extern u16 step_right_button;  /* step right */
+extern u16 step_left_button;  /* step left */
+extern u16 look_down_button;  /* look down */
+extern u16 look_up_button;  /* look up */
+extern u16 attack_button;
+extern u16 magic_button;
+extern u16 action_button;  /* run; pressed: use what is in front */
+extern u16 menu_button;
+extern u16 shortcut_button;
+extern u16 pause_button;
+extern s32 item_drop_counter;
+extern int game_clock_speed_flags;
+extern int context1_buffer_half;  /* the half of the first double buffer in use; each swap flips it */
+extern int fade_frames_left;
+extern int fade_frames;
+
+void Map_UpdateDrawState(void);
 
 #endif

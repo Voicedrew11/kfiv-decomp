@@ -1,6 +1,8 @@
 #include "gfx/texture.h"
 #include "gfx/gs.h"
 #include <eeregs.h>
+#include "gfx/gs_draw.h"
+#include "gfx/packet.h"
 
 /* a doubleword stored through a union with a char in it, which may alias anything: the table's
    count is read again after each store */
@@ -11,10 +13,6 @@ typedef union {
 
 /* a GS BITBLTBUF value with its destination base pointer (bits 32-45, in 64-word blocks) set to `base` */
 #define SET_DESTINATION_BASE(bitbltbuf, base)     ((bitbltbuf) = ((bitbltbuf) & ~((u64)GS_BITBLTBUF_DBP_MASK << 32)) | ((s64)((base) & GS_BITBLTBUF_DBP_MASK) << 32))
-
-u32 *Packet_Alloc(int);
-void Packet_AppendToChain(u32 *, u32 *);
-void GsDraw_QueueFlush(void);
 
 /* Queue every chunk of a texture table for sending. */
 void TextureTable_QueueAll(TextureTableHeader *table) {

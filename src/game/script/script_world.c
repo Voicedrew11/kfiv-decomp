@@ -13,21 +13,16 @@
 #include "model/model.h"
 #include "player/player.h"
 #include "effect/shot.h"
+#include "core/file.h"
+#include "enemy/enemy.h"
+#include "input/input.h"
+#include "item/item.h"
+#include "math/angle.h"
 
-void *memset(void *, int, u32);
 int Script_StoreFloatResult(ScriptArg *target, double value); // match: the definition takes a float, but retail converts the argument to double here (fptodp): there was no prototype in scope
-int MapItem_PlaceFixedById(int map, int item_id);
-int MapItem_StartPickupById(int item_id, int value);
 ItemNode *MapItem_GetFixedById(int item_id);
-s32 MapItem_DropFromEnemy(Entity *entity);
-int Angle_EaseToward(float target, float *angle, int frames);
-float Angle_Wrap(float angle);
 MapRecordBounds *Map_GetRecordById(int map, int prop_id);
-void Map_OffsetRecord(MapRecordBounds *record, f32 *offset);
 void Model_SetVertexColour(ModelInstance *model, int red, int green, int blue, int alpha);
-void Player_FlashDamage(void);
-int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
-void MapChange_StartToMap(int map_tag);
 int Sound_PlayCommonAt(float range, int sound, float *position);
 int Sound_PlayMapAtRange(u8 sound, u8 mode, float *position, float range);
 void Sound_StartTaggedAt(s8 sound_id, u8 voice, u8 mode, f32 volume, Vector4Arg position); // match: retail passes the position as a struct; the definition takes a pointer
@@ -36,20 +31,12 @@ s32 Sound_StartTaggedAlong(s8 sound_id, u8 voice, u8 mode, Vector4Arg *origin, V
 int Sound_PlayMapVolume(u8 sound, int volume);
 int Sound_StartTagged(s8 sound, u8 voice, int volume);
 void Sound_StopVoice(s8 slot);
-void Input_StartRumble(u8 strength, u8 duration, u8 delay);
 void Menu_AddKeyItem(u32, u32, int); // match: three arguments are passed; the definition takes the first alone
 
-extern int current_map_slot;
-extern int map_load_committed;
 extern GameStatus game_status;
-extern MapSlot map_slots[];
-extern PlayerState player_state;
 extern CameraState camera_state;
-extern MapLoadState map_load_state;
-extern MapLoadRequest map_load_request;
 extern MapDrawStateOverlays map_draw_state;
 extern u8 item_counts[];
-extern ItemCommonDef item_common_defs[];
 
 static s32 waiting_for_menu = 0;            /* 0x446FD4 ScriptCmd_OpenMenu is waiting for the menu */
 static s32 waiting_for_trade = 0;           /* 0x446FD8 ScriptCmd_OpenTrade is waiting */

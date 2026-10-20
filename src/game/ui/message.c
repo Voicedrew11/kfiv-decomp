@@ -5,6 +5,12 @@
 #include <eeregs.h>
 #include "core/memory.h"
 #include "gfx/texture.h"
+#include "core/display.h"
+#include "core/game.h"
+#include "core/timer.h"
+#include "gfx/gs_draw.h"
+#include "input/pad.h"
+#include <stdio.h>
 
 /* EE EABI varargs: the argument registers after the named ones are saved just below the stack arguments */
 typedef char *va_list;
@@ -17,18 +23,7 @@ typedef char *va_list;
 
 #define GLYPH_GIF_NREG (7 << 28) /* high word of the glyphs' GIF tag: seven registers each */
 
-int Timer_GetTicks(void);
-void TextureTable_QueueAll(TextureTableHeader *);
-void GsDraw_QueueTexFlush(void);
-u32 *Packet_Alloc(int);
-void Packet_AppendToChain(u32 *, u32 *);
 int Message_SplitDigits(int, u8 *);
-void *memset(void *, int, u32);
-int vsprintf(char *, const char *, char *);
-
-extern s32 menu_heap;
-extern u16 pad_pressed[];
-extern u16 action_button;
 
 static TextColor text_colours[10] = {     /* 0x420B40 */
     { 0x80, 0x80, 0x80, 0x80 }, { 0x00, 0x00, 0x00, 0x80 }, { 0x00, 0x00, 0x80, 0x80 }, { 0x00, 0x80, 0x00, 0x80 },

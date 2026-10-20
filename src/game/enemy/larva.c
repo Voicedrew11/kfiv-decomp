@@ -6,37 +6,28 @@
 #include "map/map.h"
 #include "effect/effect.h"
 #include "entity/entity_world.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_choice.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_events.h"
+#include "entity/entity_math.h"
+#include <math.h>
+#include "math/vu0.h"
+#include "model/model.h"
+#include <stdlib.h>
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-extern MapSlot map_slots[];
 extern s32 entity_type_handlers[][2];
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
-void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(Entity *);
-void EntityAi_OnHit(Entity *);
-void EntityAi_Move(Entity *);
-void EntityAi_Death(Entity *);
-extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
-void EntityAi_StepState(void *);
-int EntityAi_ThinkIdle(void *, int);
-void EntityAi_ThinkCombat(Entity *, s32);
-void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 int Motion_Start(void *, int, int, u32, int);
 void EntityAi_SetState(char *, u8);
-void EntityEvent_OnDeath(Entity *);
-char *Model_GetSkinnedBonePoint(char *, u32);
-int rand(void);
-float sinf(float);
-float cosf(float);
-float atan2f(float, float);
 s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
-void EntityMath_FacingVector(Vector4 *, float);
-void Vector_Scale(float *, float *, float);
 
 static void Larva_Think(Entity *entity, s32 unknown);
 static void Larva_Dormant(Entity *entity);

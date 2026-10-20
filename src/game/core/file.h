@@ -75,4 +75,14 @@ int sceCdSeek(int lsn);
 int sceCdSync(int mode);
 int sceCdGetError(void);
 
+/* core/file.c */
+void File_InitDrive(void);
+void File_LoadArchiveToc(void);
+void File_Lock(void);
+void File_Unlock(void);
+int File_IsLocked(void);
+int File_OpenUnflagged(char *name, int nowait, int pack);
+void File_CloseAll(void);
+int File_GetSize(int file);
+
 #endif

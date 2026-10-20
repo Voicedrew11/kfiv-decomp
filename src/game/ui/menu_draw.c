@@ -13,17 +13,17 @@
 #include "effect/effect.h"
 #include "input/pad.h"
 #include "gfx/gs.h"
+#include "core/display.h"
+#include "core/file.h"
+#include "core/play_time.h"
+#include "math/vu0.h"
+#include "save/save_state.h"
 
 void FlushCache(int); // match: an int result would keep $2 busy after the call (MenuModel_Draw, MenuModel_DrawTinted)
-void sceVu0TransMatrix(void *, void *, void *);
 int sceOpen(const char *, int);
 int sceLseek(int, int, int);
 int sceRead(int, void *, int);
 int sceClose(int);
-int File_Open(char *, int, int);
-int File_Close(int);
-int File_Read(int, void *, int);
-void Vector_WeightedSum4(void *, void *, void *, void *, void *, float *);
 
 /* The module's own variables are defined where the original has them: the initialised ones in front of the
    function that first uses them (retail keeps them in that order), the others here. */
@@ -32,76 +32,13 @@ static s32 heap_mark;               /* 0x447348 what MenuHeap_FreeToMark goes ba
 static s32 heap_top;                /* 0x44734C where the next block of the menus' heap comes from */
 static u32 long_text_packets[2][0x3700]; /* 0x5DDF00 the two packet buffers of the long text drawers */
 
-extern s32 menu_heap;              /* the base of the menus' heap */
-
-/* the menus' words and font */
-extern u64 *menu_font_page_tex0[];  /* where the TEX0 of each font page is kept */
-
 /* the numbers a menu sprite can stand for (MenuDraw_GetNumber) */
-extern PlayerState player_state;
-extern ClockTime wall_clock_time;
 extern ClockTime current_play_time;
-extern s32 menu_number_44;              /* numbers 44 to 54: set by the screen that shows them */
-extern s32 menu_number_45;
-extern s32 menu_number_46;
-extern s32 menu_number_47;
-extern s32 menu_number_48;
-extern s32 menu_number_49;
-extern s32 menu_number_50;
-extern s32 menu_number_51;
-extern s32 menu_number_52;
-extern s32 menu_number_53;
-extern s32 menu_number_54;
-extern s32 menu_number_70;              /* numbers 70 to 94, likewise */
-extern s32 menu_number_71;
-extern s32 menu_number_72;              /* number 72; the weapon MenuSprite_TintWeaponStat compares with */
-extern s32 menu_number_73;
-extern s32 menu_number_74;
-extern s32 menu_number_75;
-extern s32 menu_number_76;
-extern s32 menu_number_77;
-extern s32 menu_number_78;
-extern s32 menu_number_79;
-extern s32 menu_number_80;
-extern s32 menu_number_81;
-extern s32 menu_number_82;
-extern s32 menu_number_83;
-extern s32 menu_number_84;
-extern s32 menu_number_85;
-extern s32 menu_number_86;
-extern s32 menu_number_87;
-extern s32 menu_number_88;
-extern s32 menu_number_89;
-extern s32 menu_number_90;
-extern s32 menu_number_91;
-extern s32 menu_number_92;
-extern s32 menu_number_93;
-extern s32 menu_number_94;
-extern int menu_file_block_count;              /* how many */
-extern u16 menu_buttons;              /* this frame's buttons, as the menus read them (MenuPad_Update) */
 
 /* the models: 32 pool slots, each showing one part */
 extern void *pool_slot_free_list;   /* the head of the slots' free list */
 
 /* the loaded menu file */
-
-/* what the sprite handlers look at */
-extern LevelRecord weapon_level_records[];    /* the weapons' records */
-extern PlayerItemDef weapon_defs[];
-extern LevelRecord worn_item_level_records[];    /* the worn items' records */
-extern LevelRecordDef worn_defs[];
-extern FxTableEntry fx_table[];   /* the magic table */
-extern u8 game_options[];             /* the options block, a byte per setting */
-extern u8 music_volume[];
-extern u8 sfx_volume[];
-extern u8 game_option_third_bar[];
-extern s8 head_bob_option[];
-extern s8 rumble_option[];
-extern s8 menu_backdrop_option[];
-extern s8 hud_option[];
-extern f32 pulse_sprite_alpha;              /* the alpha of the pulsing sprite, 80 to 128 */
-extern s8 pulse_sprite_falling;               /* TRUE while that alpha falls */
-
 
 /* 0x428BD0 the matrix the menu model drawer multiplies the light by */
 f32 menu_model_light_colors[16] = {

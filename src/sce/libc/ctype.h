@@ -19,6 +19,7 @@
 #define _B 0200
 
 extern const char _ctype_[]; /* definition in sce/ (ctype/ctype_.c) */
+int toupper(int c); /* definition in sce/ */
 
 /* the table is read one byte in, so that EOF (-1) reads its leading zero; the
  * members and the game subscript it by the int value, and the GNU C toupper

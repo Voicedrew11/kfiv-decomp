@@ -8,24 +8,16 @@
 #include "entity/entity_world.h"
 #include "item/gold.h"
 #include "map/map.h"
+#include "core/game.h"
+#include "enemy/enemy.h"
+#include "item/item.h"
+#include <math.h>
+#include "math/vu0.h"
+#include "model/model.h"
+#include "script/script.h"
 
-float sqrtf(float);
-float atan2f(float, float);
-double atan2(double, double);
-char *Model_GetSkinnedBonePoint(char *, u32);
-void Vector_Copy(void *, void *);
-int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
-extern char *entity_params;
-extern PlayerState player_state;
 // match: Sound_PlayFalloff.c has not been given its real arguments yet
 void Sound_PlayFalloff(float, int, int, char, float, float);
-extern EntitySpawnInfo *map_spawn_infos[2];
-extern MapSlot map_slots[];
-extern int current_map_slot;
-s32 MapItem_DropFromEnemy(Entity *);
-void Player_AddExperience(s32);
-void Game_CountSpawnDeath(u32, int);
-int Script_Start(int, int);
 
 /* EntityMath_WrapAngle, which the game inlines here: wraps an angle to +-pi */
 static inline f32 wrap_angle(f32 angle) {

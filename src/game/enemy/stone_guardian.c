@@ -6,37 +6,31 @@
 #include "common.h"
 #include "map_object/map_object.h"
 #include "entity/entity_world.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "math/vu0.h"
 
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 s32 Motion_StepModel(ModelInstance *, s32, s32);
-void EntityAi_Think(Entity *, s32);
-void EntityAi_Move(Entity *);
-void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-void EntityAi_ReactionHeavy(Entity *);
 int Motion_Start(void *, int, int, u32, int);
 float EntityMath_AngleDifference(float, float);
 int EntityAi_AnimationFrameCount(void *, int);
 float EntityMath_EaseAngleToward(float *, float, float);
-extern u32 frame_counter;
 extern PlayerData player_state;
 void EntityAi_SensePlayer(void *, int);
 s32 EntityAi_CanAttack(Entity *);
 int EntityAi_PickAttack(char *);
 float EntityMath_DistanceXZ(void *, void *);
-void Vector_Copy(void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
-void EntityAi_MeleeAttack(Entity *);
-void EntityAi_RangedAttack(Entity *);
 float EntityMath_HeadingTo(float *, float *);
-extern EntityIdTable stone_guardian_spawn_ids;
 
 static void StoneGuardian_Animate(Entity *entity);
 static void StoneGuardian_OnHit(Entity *entity);

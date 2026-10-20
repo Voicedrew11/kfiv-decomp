@@ -3,19 +3,9 @@
 #include "gfx/gs.h"
 #include "gfx/packet.h"
 #include "gfx/texture.h"
-
-u32 *Packet_Alloc(int);
-void Packet_AppendToChain(u32 *, u32 *);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-void GsDraw_SetDrawTarget(s64, s64, s64);
-void GsDraw_QueueImageTransfer(int, int, int, int, int, int, int, int, int, int, int, int, int);
-void GsDraw_QueueFlatSprite(void *);
-void GsDraw_QueueFlush(void);
-void GsDraw_QueueTexturedSprite(void *);
-extern int context1_buffer_half;
-extern u32 frame_counter;
+#include "core/game.h"
+#include "enemy/enemy.h"
+#include "gfx/gs_draw.h"
 
 /* Queues a GS local-to-local image transfer (BITBLTBUF, TRXPOS, TRXREG, TRXDIR). */
 void GsDraw_QueueImageTransfer(int source_base, int source_format, int source_width, int source_x, int source_y, int width,

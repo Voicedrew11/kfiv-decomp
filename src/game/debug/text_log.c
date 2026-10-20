@@ -4,11 +4,9 @@
 #include <eeregs.h>
 #include <libdma.h>
 #include <libgraph.h>
-
-int FlushCache(int);
-int vsprintf(char *, const char *, char *);
-u32 strlen(char *);
-void *memcpy(void *, const void *, u32);
+#include <eekernel.h>
+#include <stdio.h>
+#include <string.h>
 
 char text_log_font_palette[0x40] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1052,9 +1050,6 @@ static TextLogPacket text_log_packet;                              /* 0x1E0F210 
 /* EE EABI varargs: the register save area a1..a7 is spilled to, as in libsdr.c */
 typedef char *va_list;
 #define va_start(ap, last) ((ap) = (char *)__builtin_next_arg(last) - 0x38)
-
-void TextLog_PutChar(char character, int pos_x, int pos_y, int pos_z);
-void TextLog_SendGsRegs(void);
 
 /* Loads the text log's font (text_log_font, 256 by 128 at 4 bits) and its 16-colour palette (text_log_font_palette) into
    GS memory at the given pages, then tells the GS to flush its texture cache. */

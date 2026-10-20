@@ -7,6 +7,10 @@
 #include "entity/entity_events.h"
 #include "model/motion.h"
 #include "entity/entity_math.h"
+#include "enemy/enemy.h"
+#include <libvu0.h>
+#include "math/vu0.h"
+#include <stdlib.h>
 
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void EntityAi_SetState(char *, u8);
@@ -15,28 +19,16 @@ void EntityAi_SetAttackDelay(Entity *, s32);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
-void Vector_Copy(void *, void *);
 void EntityAi_RaiseAttackWeight(Entity *);
 void EntityAi_RaiseRangedWeights(Entity *);
 void EntityAi_UpdateCollision(Entity *);
 void EntityAi_SetUpdate(char *, s32);
 extern s32 entity_type_handlers[][2];
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
-void Vector_Normalize(void *, void *);
-void Vector_Cross(void *, void *, void *);
-void Vector_Subtract(void *, void *, void *);
-int rand(void);
 extern PlayerData player_state;
 void EntityAi_ClearTurnInPlace(Entity *);
-extern f32 identity_matrix[16];
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0RotMatrixZ(float *, float *, float);
-void Vector_ApplyMatrix(void *, void *, void *);
-void Vector_Scale(float *, float *, float);
 float EntityAi_Accelerate(Entity *, float);
 
 /* An action that starts no motion of its own: it waits until the current motion has blended in and played to

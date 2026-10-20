@@ -2,14 +2,7 @@
 #include "core/game.h"
 #include "map/map.h"
 #include "gfx/packet.h"
-
-/* the viewers and the functions that find where the marker goes (ui/map_viewer.c) */
-void MapViewer_RunPictureMap();
-int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y);
-int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y);
-int MapViewer_LocateOnEarthFolksMap(int *map_x, int *map_y);
-int MapViewer_LocateOnWiddasMap(int *screen_x, int *screen_y);
-void MapViewer_RunKingsMap();
+#include "ui/map_viewer.h"
 
 /* 0x38D6B0 one entry per viewer, indexed by picked_viewer */
 ViewerEntry viewer_entries[5] = {

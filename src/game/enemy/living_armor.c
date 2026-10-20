@@ -5,43 +5,35 @@
 #include "entity/entity.h"
 #include "common.h"
 #include "effect/effect.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_aim.h"
+#include "entity/entity_events.h"
+#include "entity/entity_math.h"
+#include <math.h>
+#include "math/vu0.h"
+#include "model/model.h"
+#include <stdlib.h>
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 s32 Motion_StepModel(ModelInstance *, s32, s32);
-void Vector_Copy(void *, void *);
-void EntityAi_Move(Entity *);
-void EntityAi_Dormant(Entity *);
-void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
-int EntityAi_ThinkReturn(void *, int);
-int EntityAi_ThinkIdle(void *, int);
-void EntityAi_ThinkPursue(Entity *, s32);
 extern PlayerData player_state;
-int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
 void EntityAi_ClearTurnInPlace(Entity *);
-float EntityMath_AngleDifference(float, float);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
-void EntityAi_Dodge(Entity *);
-void EntityAi_Guard(Entity *);
-void EntityAi_MeleeAttack(Entity *);
-void EntityAi_RangedAttack(Entity *);
-extern Qword living_armor_look_limits;
-float EntityMath_WrapAngle(float);
-int Bone_TurnPartToLook(void *, int, int, int, void *, int, float);
 int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);
 void EntityAi_LowerWeightsAfterHit(char *);
@@ -49,12 +41,7 @@ void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 int Motion_Start(void *, int, int, u32, int);
 void EntityAi_SetAttackDelay(Entity *, s32);
-s32 EntitySight_PropInWay(Entity *);
-s32 EntitySight_ObjectInWay(Entity *);
-float sqrtf(float);
-float atan2f(float, float);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-char *Model_GetSkinnedBonePoint(char *, u32);
 s32 EntityAi_CheckMeleeHitAt(Entity *, void *, s32, s32, s32, f32);
 s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 

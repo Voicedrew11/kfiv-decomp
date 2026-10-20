@@ -14,4 +14,13 @@ void Entity_DrawAll(int list);
 Entity *Entity_GetBySpawnId(int entity_id);
 Entity *Entity_GetBySpawnIdForMap(int map_index, int entity_id);
 
+/* entity/entity_world.c */
+void Entity_UpdateInert(void);
+void Entity_InitInert(Entity *entity);
+void Entity_StartupHook(void);
+
+/* data still in asm */
+extern Vector4Arg entity_unit_scale;
+extern const f32 entity_no_hit_distance[];
+
 #endif

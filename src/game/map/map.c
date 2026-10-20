@@ -18,6 +18,22 @@
 #include "gfx/texture.h"
 #include "input/pad.h"
 #include <eeregs.h>
+#include "core/display.h"
+#include "core/file.h"
+#include "enemy/enemy.h"
+#include "gfx/draw_list.h"
+#include "gfx/gs_draw.h"
+#include "input/input.h"
+#include "item/item.h"
+#include <libvu0.h>
+#include "math/angle.h"
+#include "math/camera.h"
+#include "math/vu0.h"
+#include "model/model_matrix.h"
+#include "model/motion.h"
+#include "player/player_update.h"
+#include "script/script.h"
+#include "sound/sound_game.h"
 
 #define FOG_COLOR() \
     ((u64)map_draw_state.current_fog_color.red | ((u64)map_draw_state.current_fog_color.green << 8) | ((u64)map_draw_state.current_fog_color.blue << 16) | \
@@ -38,108 +54,17 @@
         best = node;                                                                               \
     }
 #define USABLE_IN_MAP(node) (AREA_NODE_MAP(node) == map && USABLE(node))
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-void GsDraw_QueueFlush(void);
-void GsDraw_QueueTexFlush(void);
-void GsDraw_ResetDrawTarget(void);
-void ModelScreen_CutClippedTriangles(ModelInstance *);
-void Wobble_DrawRippledModel(ModelInstance *, int, int, int, int);
-void Map_SetOffscreenTarget(void);
 void Map_QueueSlotPacket(int, int);
 int Map_ClassifyRecordOnScreen(MapDrawRecord *, ModelInstance *);
-void *memset(void *, int, u32);
 void Map_InsertRecordBySize(AreaNode *);
-void Model_SetUpPosed(ModelInstance *, char **, char **);
-void Model_SetUpSkinned(ModelInstance *, int *, int *);
-MotionData *ModelMotion_LoadFile(MotionFile *, ModelChannel **, ModelInstance *, int);
-u32 *Map_GetSlotPacket(int, int);
-void Model_SetPrimBits(ModelInstance *, s64, s64);
-void Model_SetAlphaBlend(ModelInstance *, s64);
-MapRecordInfo *Map_FindRecordAtInSlot(CameraState *, f32, int);
-void Wobble_BuildWaveUvs(ModelInstance *, u32 *);
-void Vector_Copy(void *, void *);
-char *Collision_RelocateMesh(char *, ModelInstance *, int);
-void Player_MoveByOffset(f32 *);
-void Interact_OffsetViewRay(f32 *);
-void Map_OffsetRecords(int, f32 *);
-void Map_OffsetRecord(MapRecordBounds *, f32 *);
-void Map_PlaceRecordModels(int);
-void MapItem_MoveMap(int, f32 *);
-void Script_Init(int);
-int Script_Start(int, int);
-void Player_StopFootstepSound(void);
-void Sound_StopAll(int);
-void Vector_Add(void *, void *, void *);
-void Matrix_Multiply(void *, void *, void *);
-void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void sceVu0CopyMatrix(void *, void *);
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0RotMatrixZ(float *, float *, float);
-void sceVu0TransMatrix(float *, float *, float *);
-void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, float, float, float);
-void sceVu0MulMatrix(void *, void *, void *);
-void Vector_Scale(float *, float *, float);
-void Vector_Subtract(void *, void *, void *);
-void GameLoop_RunSoundLoads(void);
-void Packet_OnFrameStart(void);
-void Packet_OnFrameEnd(void);
-void Packet_SwapBuffers(void);
-void Packet_SendChain(void);
 void Packet_WaitForSend(void);
-void GsDraw_QueueVu1Matrix(void *);
-void DrawList_Clear(void);
 void Map_DrawFreeCameraView(void);
-float Angle_Wrap(float);
-void Input_Update(void);
-void Display_SwapBuffers(int);
-void Vector_Normalize(void *, void *);
-void Game_BlendScreenOffsetDown(void);
-void GsDraw_QueueTexturedSprite(void *);
-void TextureTable_QueueAll(TextureTableHeader *);
-void Model_DrawPosed(ModelInstance *);
-void GsDraw_SetDrawTarget(s64, s64, s64);
-void GsDraw_FillScreen(int, int, int, int, s64);
-u32 *Packet_Alloc(int);
-void Packet_AppendToChain(u32 *, u32 *);
-void Vu0_LoadMatrix(void *);
-void Vu0_ProjectToScreen(int *, void *);
-int Map_TestFlagBlockBit(int, int, int, int);
-void Vu0_ProjectToScreen3(int *, int *, int *, f32 *, f32 *, f32 *);
-extern MapSlot map_slots[];
 extern MapDrawState map_draw_state;
-extern s64 game_dbuff_clear_color[];
-extern s64 game_dbuff_context2_clear_color[];
-extern MapDrawRecord *record_draw_lists[2];
-extern int current_map_slot;
-extern MapDrawRecord *late_record_draw_lists[2];
-extern MapObject map_slot_objects[][0x200];
-extern Entity entity_pool[][0x80];
-extern MapSlotMemory map_slot_memory[2];
-extern int map_object_placements[2];
-extern EntitySpawnInfo *map_spawn_infos[2];
-extern MapItemDef *map_item_defs[2];
-extern s16 *map_item_model_kinds[2];
-extern u8 *map_item_group_thresholds[2];
 extern MapProp *map_slot_props[2][0xFF];
-extern char map_object_defs[];
-extern s32 map_object_counts[2];
-extern MapLoadState map_load_state;
 extern SoundLoadQueue sound_load_queue;
-extern f32 identity_matrix[16];
-extern f32 world_screen_matrix[16];
-extern AreaNode *record_boxes;
-extern AreaNode *backdrop_record_boxes;
-extern f32 largest_float_record_best_distance[]; /* the largest float */
-extern f32 largest_float_record_slot_best_distance[]; /* the largest float */
 extern GameStatus game_status;
 extern u16 pad_state[];
-extern PlayerState player_state;
 extern MapLightBlock map_object_default_lights;
-extern TextureTableHeader *free_camera_texture_table;
-extern u8 player_floor_block[];
 
 /* Draws the map records of both map slots whose flag bit 0 is clear (the list Map_UpdateDrawState builds each
    frame), then each slot's map objects. mode 0 draws every record, the others only some; below 2 the
@@ -518,7 +443,7 @@ void Map_BuildModels(int map) {
         object->model = model;
         object->source = info;
         object->definition = (MapObjectUnk04 *)&map_object_defs[info->def_index * 0x80];
-        object->map_record = (s32)Map_FindRecordAtInSlot((CameraState *)info, 0.0f, map);
+        object->map_record = (s32)Map_FindRecordAtInSlot((f32 *)info, 0.0f, map);
         MAP_OBJECT_BITS(object)->map = (u8)map;
     }
     cursor = (int)header + header->object_model_offset;
@@ -815,8 +740,7 @@ AreaNode *Map_FindRecordAt(f32 *point, f32 margin) {
 }
 
 /* Map_FindRecordAt among the records of one map slot. */
-MapRecordInfo *Map_FindRecordAtInSlot(CameraState *position, f32 margin, int map) {
-    f32 *point = (f32 *)position;
+MapRecordInfo *Map_FindRecordAtInSlot(f32 *point, f32 margin, int map) {
     AreaNode *head = record_boxes;
     AreaNode *node;
     AreaNode *best;

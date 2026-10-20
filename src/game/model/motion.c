@@ -3,15 +3,9 @@
 #include "model/motion.h"
 #include "entity/entity_events.h"
 #include "libvu0.h"
-
-void Vector_Copy(void *, void *);
-void sceVu0MulVector(void *, void *, void *);
-void Vector_Subtract(void *, void *, void *);
-void Vector_Scale(float *, float *, float);
-float sinf(float);
-float cosf(float);
-extern f32 identity_matrix[16];
-void Vector_Hermite(void *, void *, void *, void *, void *, f32);
+#include "entity/entity_ai.h"
+#include <math.h>
+#include "math/vu0.h"
 
 /* dst = a * (1 - t) + b * t across the xyz lanes, on the VU0 (EntityMath_LerpVector inlined) */
 static inline void blend_vectors(Vector4 *dst, Vector4 *src_a, Vector4 *src_b, f32 ratio) {

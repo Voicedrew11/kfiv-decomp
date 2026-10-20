@@ -6,53 +6,34 @@
 #include "core/game.h"
 #include "input/pad.h"
 #include "gfx/gs.h"
+#include "debug/screen_dump.h"
+#include "gfx/draw_list.h"
+#include "gfx/gs_draw.h"
+#include "gfx/movie.h"
+#include "gfx/packet.h"
+#include <libdma.h>
+#include <libmc.h>
+#include <libvu0.h>
+#include "map/map.h"
+#include "math/vu0.h"
+#include <sifrpc.h>
+#include "sound/sound.h"
+#include "sound/sound_game.h"
 
-extern int opening_movie_skipped; /* set once START was pressed during the opening movie */
-extern char *map_file_area;        /* the memory area the movie player is given as its heap */
-extern int map_file_area_size;          /* the size it is given for that heap */
-extern int context1_buffer_half;          /* the half of the first double buffer in use; each swap flips it */
-extern int context2_buffer_half;          /* the same for the second */
-extern int display_spare_buffer_half;    /* zeroed beside context1_buffer_half; nothing else uses it */
-extern u32 game_status_flags[];
-extern s64 game_dbuff_clear_color[];
-extern s64 game_dbuff_context2_clear_color[];
-extern char opening_movie_path[];       /* "cdrom0:\DATA\KF4OP.PSS;1" */
-extern char ending_movie_path[];        /* "cdrom0:\DATA\KF4ED.PSS;1" */
-extern char staff_roll_movie_path[];    /* "cdrom0:\DATA\KF4STAFF.PSS;1" */
-extern f32 identity_matrix[16];
 extern f32 world_view_matrix[16];
 extern f32 world_view_spare_matrix[16];
 extern f32 projection_matrix[4][4];
-extern GsDoubleBuffer game_dbuff;           /* the game's frame buffers, drawn through GS context 1 */
-extern GsDoubleBuffer game_dbuff_context2;  /* the same frame buffers, drawn through GS context 2 */
-extern GsRegisterPair frame_dispfb_regs;    /* the DISPFB values of the two frames */
-extern GsRegisterPair frame_display_regs;   /* the DISPLAY values of the two frames */
 
-int Movie_Play(char *, u32, u32, int (*)(void), u32, s16, s16, s16);
-void Packet_SwapBuffers(void);
-void DrawList_Clear(void);
-void Packet_OnFrameStart(void);
-void GsDraw_ResetDrawTarget(void);
-void GsDraw_FillScreen(int, int, int, int, s64);
-void Packet_OnFrameEnd(void);
-void Packet_SendChain(void);
 void Packet_WaitForSend(void);
-void SoundDriver_ReleaseAll(void);
-void Sound_Init(void);
 int sceGsSyncV(int);
-void Vram_Clear(int, int);
 void sceDevVif0Reset(void);
 void sceDevVif1Reset(void);
 int sceDevVu0Pause();
 int sceDevVu0SetTBit();
-int sceDmaReset(int);
 int sceGsResetGraph(int, int, int, int);
 int sceGsResetPath();
-int sceMcInit();
 int sceSdRemoteInit();
-int sceSifInitIopHeap();
 void sceGsSetDefDBuff(void *, s16, s16, s16, s16, s16, s16);
-void sceVu0CopyMatrix(void *, void *);
 
 /* The opening movie's per-frame callback (given to Movie_Play by Movie_PlayOpening): polls the controller
    and returns TRUE, ending the movie, when START is pressed. */

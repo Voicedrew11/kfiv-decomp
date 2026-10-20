@@ -3,25 +3,6 @@
 #include "sound/sound.h"
 #include "sound/sound_game.h"
 
-/* the file name formats of the sound banks */
-extern char bgm_sq_format[];
-extern char bgm_hd_format[];
-extern char bgm_bd_format[];
-extern char se_com_hd_path[];
-extern char se_com_bd_path[];
-extern char sfx_com_hd_path[];
-extern char sfx_com_bd_path[];
-extern char map_bank_hd_path[];
-extern char map_bank_bd_path[];
-extern char sw_bank_hd_format[];
-extern char sw_bank_bd_format[];
-extern char mg_bank_hd_format[];
-extern char mg_bank_bd_format[];
-
-/* the two ways of starting a tracked sound (sound/sound_game.c) */
-int Sound_PlayTracked(int sound, int unused, float *position);
-int Sound_PlayTrackedAt(int sound, int unused, float *position);
-
 // match: sound/sound.h's SoundFileBuffer is 0xC bytes; retail's bank slot is 0x20
 typedef struct {
     SoundFileBuffer buffer;         /* 0x00 */

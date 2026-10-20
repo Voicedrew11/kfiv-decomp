@@ -3,31 +3,16 @@
 #include "model/model.h"
 #include "core/game.h"
 #include "ui/message.h"
+#include "item/item.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/vu0.h"
 
-int Game_GetTriggerItem(int, int);
 void MapObject_ShowMarkerStone(MapObject *, int);
-void MapObject_RebuildMatrices(MapObject *object);
-void Matrix_Multiply(void *, void *, void *);
-void Vector_ApplyMatrix(void *, void *, void *);
-void Vector_Copy(void *, void *);
-void sceVu0InversMatrix(void *, void *);
-void Vector_Subtract(void *, void *, void *);
-float sqrtf(float);
-void Vector_Scale(float *, float *, float);
-void Vector_Add(void *, void *, void *);
-int Game_ClearTriggerItem(int, int);
 void Player_AddItem(int);
-void MapObject_RebuildMarkerMatrices(MapObject *object);
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-int Game_AddTriggerItem(int, int, int);
-extern MapSlot map_slots[];
 extern GameStatus game_status;
-extern void *faced_object[];
 extern float player_state[];
 extern EventRunner view_ray_status;
-extern f32 identity_matrix[16];
-extern ItemCommonDef item_common_defs[];
 
 /* Step 0 of the Guide Stone markers (kind 0x13); the stone sits on part 2. One that starts holding a stone
    keeps it only while the map's flag block still records a stone for it (Game_GetTriggerItem), and its model shows

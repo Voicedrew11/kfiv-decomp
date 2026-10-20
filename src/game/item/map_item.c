@@ -8,6 +8,17 @@
 #include "ui/message.h"
 #include "input/pad.h"
 #include "map_object/map_object.h"
+#include "core/file.h"
+#include "enemy/enemy.h"
+#include "gfx/gs_draw.h"
+#include "gfx/packet.h"
+#include "item/item.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/angle.h"
+#include "math/vu0.h"
+#include "model/model_matrix.h"
+#include "player/player_update.h"
 
 /* Radians the held item turns each frame while the pickup is held. */
 #define PICKUP_HOLD_SPIN_PER_FRAME 0.08377580f
@@ -15,7 +26,6 @@
 void MapItem_ClearMap(int);
 s32 MapItem_Drop(s32, s32, s32, f32 *, f32, f32 *, f32 *, f32 *, u32);
 ItemModelSource *MapItem_FindModelSource(int, int);
-void Model_SetUpPosed(ModelInstance *, char **, char **);
 void Model_SetTextureBase(char *, int, int);
 void Model_SetVertexColour(void *, int, int, int, int);
 void TextureTable_SetBasePointers(char *, int, int);
@@ -32,77 +42,24 @@ void (*pickup_step_handlers[6])(void) = { MapItem_PickupAim, MapItem_PickupBring
 
 int MapItem_PlaceFixed(int, int);
 ItemNode *MapItem_Unlink(ItemNode *);
-void Vector_Add(void *, void *, void *);
 int MapItem_GetFixedIndex(int, int);
-void Vector_Copy(void *, void *);
 void MapItem_Link(ListNode *);
-int Collision_FindFloorBelow(f32, void *);
-float Angle_Wrap(float);
 int MapItem_UniqueNotCarried(int);
 int MapItem_UniqueNotInTradeStock(int);
 int MapItem_UniqueNotDropped(int);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-MapRecordInfo *Map_FindRecordAtInSlot(CameraState *, f32, int);
-void Vector_Scale(float *, float *, float);
-void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void ModelTexture_SendForModel(void *);
-void Model_DrawPosedDepthByPart(ModelInstance *);
-void GsDraw_ClearDepth(void);
-void sceVu0CopyMatrix(void *, void *);
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0RotMatrixZ(float *, float *, float);
-void sceVu0TransMatrix(float *, float *, float *);
-void GsDraw_QueueFlush(void);
-void Player_StopWalking(void);
-float sinf(float);
-float cosf(float);
-float atan2f(float, float);
-double sqrt(double);
-void Vector_Subtract(void *, void *, void *);
-int Angle_EaseToward(float, float *, int);
-int Player_CannotCarryItem(int);
-void Player_AddItem(int);
-void *memset(void *, int, u32);
 
 extern GameDefinition item_name_defs[380];
-extern s32 item_drop_counter;
-extern ItemNode *lying_items;            /* the items lying in the maps, a list */
-extern ItemNode *pickup_item;            /* the one being picked up */
-extern s32 pickup_no_put_back;
-extern f32 pickup_pose_scale;
-extern s32 pickup_step;
-extern MapSlot map_slots[];
 extern DroppedItemRecord dropped_item_records[0x80][16];
-extern MapItemDef *map_item_defs[2];
-extern s16 *map_item_model_kinds[2];
-extern s32 map_fixed_item_counts[2];
-extern u8 *map_item_group_thresholds[2];
-extern int current_map_slot;
 extern u8 map_item_pickup_counts[0x80][0x40];
-extern const Vector4Arg enemy_drop_scale;
-extern MapLoadState map_load_state;
-extern int suspended_updates[3];
 extern MapDrawState map_draw_state;
-extern f32 identity_matrix[16];
 extern GameStatus game_status;
-extern PlayerState player_state;
 extern EventRunner view_ray_status;
-extern f32 pickup_view_pitch;
-extern int pickup_move_frames;
-extern int pickup_frames_left;
-extern float player_rotation[];
-extern u16 pad_pressed[];
 extern u8 item_counts[];
 extern u8 trade_stock_1[];
 extern u8 trade_stock_2[];
 extern u8 trade_stock_3[];
 extern u8 trade_stock_4[];
 extern u8 trade_stock_5[];
-extern ItemCommonDef item_common_defs[];
 
 /* The per-map item blocks: nodes, models and the model data behind them, one set for each map. */
 static ItemModelSource item_model_sources[2][32];   /* 0x57E040 where the model and texture of each item kind lie */
@@ -590,7 +547,7 @@ void MapItem_DrawAll(int with_picked) {
     Packet_AddGsRegister(0x47, 0x5000D);
     Packet_EndGsRegisters();
     for (node = lying_items; node != NULL; node = node->next) {
-        node->map_record = Map_FindRecordAtInSlot((CameraState *)&node->model->position, 0.0f, node->flags & 1);
+        node->map_record = Map_FindRecordAtInSlot((f32 *)&node->model->position, 0.0f, node->flags & 1);
         if (node->map_record == NULL) {
             continue;
         }
@@ -632,7 +589,7 @@ void MapItem_DrawPicked(int hidden) {
     if (node == NULL || hidden != 0) {
         return;
     }
-    node->map_record = Map_FindRecordAtInSlot((CameraState *)&node->model->position, 0.0f, node->flags & 1);
+    node->map_record = Map_FindRecordAtInSlot((f32 *)&node->model->position, 0.0f, node->flags & 1);
     if (node->map_record == NULL) {
         return;
     }

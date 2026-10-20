@@ -90,4 +90,9 @@ int Title_RunGameOver(void);
 int Title_InitGameOver(void);
 int Title_UpdateGameOver(void);
 
+/* ui/title_menu.c */
+int TitleMenu_Run(void);
+int Menu_OwnsAnyItem(void);
+int Menu_KnowsCastableSpell(void);
+
 #endif

@@ -4,43 +4,32 @@
    hit points and experience, with resistances and drops where two monsters share those. */
 #include "entity/entity.h"
 #include "common.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_aim.h"
+#include "entity/entity_collision.h"
+#include "entity/entity_math.h"
+#include <libvu0.h>
+#include "math/vu0.h"
+#include <stdlib.h>
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 s32 Motion_StepModel(ModelInstance *, s32, s32);
-void EntityAi_OnHit(Entity *);
-void EntityAi_Dormant(Entity *);
-void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);
-extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn3D(char *);
 void EntityAi_StepState(void *);
-f32 EntityCollision_DistanceToGround(f32 *);
 int EntityAi_TurnFromPush(void *, void *);
 s32 EntityAi_MoveCommand3D(Entity *, s32, f32);
-void Vector_Normalize(void *, void *);
-void Vector_Cross(void *, void *, void *);
-void Vector_Subtract(void *, void *, void *);
-int rand(void);
-void EntityPoint_PickNearWithHeight(f32 *, f32, f32, void *, void *);
 int EntityAi_PushTurnCommand3D(Entity *, int);
 extern PlayerData player_state;
 s32 EntityAi_CanAttack(Entity *);
 int EntityAi_PickAttack(char *);
-float EntityMath_AngleDifference(float, float);
-void Vector_Copy(void *, void *);
-f32 EntityMath_Distance(f32 *, f32 *);
-extern f32 identity_matrix[16];
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0RotMatrixZ(float *, float *, float);
-void Vector_ApplyMatrix(void *, void *, void *);
-void Vector_Scale(float *, float *, float);
 float EntityAi_Accelerate(Entity *, float);
 int Motion_Start(void *, int, int, u32, int);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);

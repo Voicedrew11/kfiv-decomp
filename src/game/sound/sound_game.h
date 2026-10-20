@@ -30,6 +30,7 @@ char Sound_PlayTrackedKind(int index, int first, int second, int third, int four
 /* Starts a sound on the next tracked voice (0x64..0x7D) whose tracked_voices slot is free, from the mg bank
    (sound below 8) or the sfx_com bank, at the sound volume option; returns the voice, -1 if 11 tries find
    none */
+/* the two ways of starting a tracked sound (sound/sound_game.c) */
 int Sound_PlayTracked(int sound, int unused, float *position);
 /* As Sound_PlayTracked from the sfx_com bank, at a volume that falls off with the distance from the player
    (silent at 2500) and panned by the side the point lies on */
@@ -196,5 +197,42 @@ void Sound_UnmutePositional(void);
 void Sound_MutePositional(void);
 /* Frees the IOP copy of a voice's samples; returns 0 */
 int Sound_FreeSampleBuffer(int voice_index);
+
+/* data still in asm */
+extern char rev_para_path[];
+extern SoundScriptState map_reverb_cue_indices;
+extern int bgm_load_step;
+extern int bgm_load_can_yield;
+extern int bgm_fade_level;
+extern int entity_bank_load_step;
+extern int map_bank_load_step;
+extern u8 voice_range_cursors[8];
+extern int tagged_bend;
+extern int tagged_bend_high;
+extern int tagged_bend_low;
+extern char tagged_bend_falling;
+extern u8 map_reverb_slot;
+extern u8 bgm_reverb_slot;
+extern int heap_file_read_step;
+extern s32 map_bank_file_read_step;
+extern s32 sound_file_load_step;
+extern int map_bank_unread_flag;  /* cleared by Sound_MapBankFinishUnlessFirst; nothing reads it */
+extern int sound_unread_limit;  /* Sound_Init sets it to 0x40; nothing reads it */
+extern float sound_unread_scale;  /* Sound_Init sets it to 0.013; nothing reads it */
+extern int sound_unread_switch;  /* Sound_Init sets it to 1; nothing reads it */
+extern int heap_file_handle;
+extern s32 map_bank_file_handle;
+extern s8 map_reverb_set;
+extern char map_sounds_enabled;
+extern char reverb_change_pending;
+extern s8 map_reverb_volume;
+extern u8 loaded_bgm;
+extern u8 bgm_load_running;
+extern s8 positional_sounds_muted;
+extern u8 loading_bgm;
+extern int bgm_bd_size;
+extern int bgm_hd_size;
+extern int bgm_sq_size;
+extern int sound_heap_next;
 
 #endif

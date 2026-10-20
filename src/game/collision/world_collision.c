@@ -3,6 +3,12 @@
 #include "entity/entity.h"
 #include "player/player.h"
 #include "model/model.h"
+#include "core/file.h"
+#include "enemy/enemy.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/angle.h"
+#include "math/vu0.h"
 
 /* cos 20 degrees: a quad whose normal is within 20 degrees of vertical is a floor or a ceiling */
 #define QUAD_FLOOR_NORMAL_Y 0.93969f
@@ -60,13 +66,6 @@ typedef int (*CornerTest)(void *, f32, f32, void *, f32, f32);
 #define SAME_POINT(point, position) \
     ((point)[0] == (position).x && (point)[1] == (position).y && (point)[2] == (position).z)
 
-void Vector_Subtract(void *, void *, void *);
-int Collision_TransformMeshPoints(void *);
-void Collision_DropOnTriangle(void *, void *, void *, void *);
-u32 Collision_GetFloorMaterial(int, u32, u32);
-void Vector_Scale(float *, float *, float);
-void Vector_Copy(void *, void *);
-float sqrtf(float);
 void Collision_HitRayBoxObj(void *, f32 *, f32 *, float);
 void Collision_HitRayDoubleDoorObj(void *, f32 *, f32 *, float);
 s32 Collision_HitRayQuadObj(AnimObject *, f32 *, f32 *, f32);
@@ -82,9 +81,6 @@ void Collision_HitCapsuleDoubleDoorObj(MapObject *, f32 *, f32, f32);
 int Collision_HitCapsuleQuadObj(CollisionOwner *, f32 *, float, float);
 void Collision_HitCapsulePitfallObj(void);
 void Collision_HitCapsuleMeshObj(MapObject *, f32 *, f32, f32);
-float sinf(float);
-float cosf(float);
-float Angle_Wrap(float);
 void Collision_HitFanBoxObj(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
 void Collision_HitFanDoubleDoorObj(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
 void Collision_HitFanQuadObj(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
@@ -98,35 +94,13 @@ void Collision_PushOutOfMeshObj(MapObject *, f32 *, f32, f32);
 s32 Collision_StandOnQuadObj(CollisionOwner *, f32 *, f32);
 s32 Collision_StandOnPitfallObj(MapObject *, f32 *, f32);
 s32 Collision_StandOnMeshObj(CollisionOwner *, f32 *, f32);
-void Vu0_LoadMatrix(void *);
-int puts(char *);
 void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
-void sceVu0Normalize(float *, float *);
-void Vector_TriangleNormal(float *, float *, float *, float *);
-void Vector_Normalize(void *, void *);
-void Collision_DropOnTriangleWithin(void *, void *, void *, void *, f32);
 
-extern f32 negative_zero_along_limit[];
-extern const f32 negative_zero_drop_within_limit[];
-extern int current_map_slot;
-extern MapSlot map_slots[2];
-extern const f32 largest_float_floor_lowest_seed[];
-extern const f32 largest_float_water_lowest_seed[];
 extern s32 strip_list_indices[4];
-extern const f32 largest_float_ray_best_distance[];
-extern const f32 largest_float_ray_lists_best_distance[];
-extern ModelInstanceBlock *map_slot_record_models[];
-extern s32 segment_strip_lists[2];
-extern const f32 largest_float_segment_best_distance[];
 extern s32 map_objects_started[2];
 extern s32 map_object_counts[2];
 extern MapObject map_slot_objects[];
 extern MapObject map_slot1_objects[];
-extern PlayerState player_state;
-extern char hit_sphere_pitfall_message[];
-extern f32 largest_float_mesh_lowest_seed[];    /* the largest float; an array so that it is not read through $gp */
-extern f32 largest_float_quad_lowest_seed[];    /* the largest float; an array so that it is not read through $gp */
-extern f32 largest_float_strip_lowest_seed[];    /* the largest float; an array so that it is not read through $gp */
 extern f32 largest_float_tested_point_distance[]; // match: the largest float; declared without a size, it is not reached through $gp
 extern f32 largest_float_stand_farthest_start[]; // match: the largest float; declared without a size, it is not reached through $gp
 

@@ -35,6 +35,14 @@ float fmodf(float x, float y);     /* definition in sce/ */
 float sinf(float x);               /* definition in sce/ */
 float copysignf(float x, float y); /* definition in sce/ */
 int isnanf(float x);               /* definition in sce/ */
+float cosf(float x);               /* definition in sce/ */
+float sqrtf(float x);              /* definition in sce/ */
+double acos(double x);             /* definition in sce/ */
+double atan(double x);             /* definition in sce/ */
+double atan2(double y, double x);  /* definition in sce/ */
+double cos(double x);              /* definition in sce/ */
+double sin(double x);              /* definition in sce/ */
+double sqrt(double x);             /* definition in sce/ */
 
 /* newlib's math.h: the record the wrappers hand matherr */
 struct exception {

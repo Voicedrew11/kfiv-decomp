@@ -2,6 +2,7 @@
 #define KF_PAD_H
 
 #include "common.h"
+#include "core/game.h"
 
 /* PadSlot.features */
 #define PAD_FEATURE_MODE_SWITCH 0x01 /* can switch between digital and analog */
@@ -120,5 +121,9 @@ void Pad_RequestDigital(int port, int slot, int lock);
 int Pad_RequestAnalog(int port, int slot, int lock);
 int Pad_RequestPressure(int port, int slot);
 int Pad_GetMode(int port, int slot);
+
+/* input/pad_state.c */
+extern PadState pad_states[2];
+extern u16 pad_pressed[];
 
 #endif

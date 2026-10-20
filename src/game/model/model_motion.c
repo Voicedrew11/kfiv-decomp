@@ -1,13 +1,12 @@
 /* Model motions: loading them into a ModelChannel, playing a frame (Hermite between keys) and blending in. */
 #include "model/model.h"
+#include "core/file.h"
+#include "math/angle.h"
+#include "math/vu0.h"
+#include "model/motion.h"
 
-void *memset(void *, int, u32);
-MotionData *ModelMotion_Load(MotionData *, ModelInstance *, int);
 void ModelMotion_Hermite(void *, void *, void *, void *, void *, f32);
 void ModelMotion_StepBlend(ModelInstance *);
-float Angle_Wrap(float);
-void ModelMotion_Select(ModelInstance *, int);
-void Vector_WeightedSum4(void *, void *, void *, void *, void *, float *);
 
 /* Adds a motion to the model's channel and poses the parts on its first key; returns the end of the motion. */
 MotionData *ModelMotion_Load(MotionData *data, ModelInstance *model, int unused) {

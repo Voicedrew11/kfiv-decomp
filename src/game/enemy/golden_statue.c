@@ -5,36 +5,30 @@
 #include "entity/entity.h"
 #include "common.h"
 #include "entity/entity_world.h"
+#include "core/file.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_aim.h"
+#include <math.h>
+#include "math/vu0.h"
 
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 s32 Motion_StepModel(ModelInstance *, s32, s32);
-void Vector_Copy(void *, void *);
-void EntityAi_Think(Entity *, s32);
-void EntityAi_Dormant(Entity *);
-void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-extern void EntityAi_ReactionHeavy(Entity *);
-extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
 float EntityMath_DistanceXZ(void *, void *);
 s32 EntityAi_CanAttack(Entity *);
-s32 EntitySight_EntityInWay(Entity *);
 int EntityAi_PickAttack(char *);
 float EntityMath_AngleDifference(float, float);
-void EntityAi_MeleeAttack(Entity *);
-void EntityAi_RangedAttack(Entity *);
-int EntityAi_ThinkReturn(void *, int);
 void EntityAi_StepState(void *);
 void EntityAi_CheckFarFromSpawn(void *);
 extern PlayerData player_state;
-extern char golden_statue_arrived_message[];
-int printf(const char *, ...);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_CanShoot(Entity *);
@@ -44,11 +38,8 @@ s32 EntityAi_PickMeleeAttack(Entity *);
 void EntityAi_ClearTurnInPlace(Entity *);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
-void EntityAi_Dodge(Entity *);
-void EntityAi_Guard(Entity *);
 extern int entity_under_player[];
 int Motion_Start(void *, int, int, u32, int);
-double atan2(double, double);
 float EntityMath_WrapAngle(float);
 float EntityMath_EaseAngleToward(float *, float, float);
 int Motion_Step(void *, int);

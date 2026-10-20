@@ -15,4 +15,9 @@ int Gold_Drop(Vector4 *position, Vector4 *rotation, int map, int amount, int obj
                  int other_map);
 int Gold_DropFromEntity(Entity *entity);
 
+/* data still in asm */
+extern f32 gold_drop_unmeasured_distance[];
+extern MapActor *map_actors_in_use;
+extern s32 map_actor_drop_counts[2];
+
 #endif

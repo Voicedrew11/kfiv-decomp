@@ -10,4 +10,11 @@ void Vram_Clear(int first_row, int end_row);
    first, blue first) and writes that to the first unused numbered screenshot file on host0 */
 void ScreenDump_Bmp(u8 *buffer);
 
+/* data still in asm */
+extern char clut_dump_path[];
+extern char vram_dump_path[];
+extern char screenshot_bmp_path_format[];
+extern char screenshot_raw_path_format[];
+extern char data_dump_path_format[];
+
 #endif

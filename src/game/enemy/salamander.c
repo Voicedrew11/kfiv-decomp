@@ -4,18 +4,18 @@
    hit points and experience, with resistances and drops where two monsters share those. */
 #include "entity/entity.h"
 #include "common.h"
+#include "enemy/enemy.h"
+#include "entity/entity_aim.h"
+#include "entity/entity_events.h"
+#include "entity/entity_math.h"
+#include "math/vu0.h"
+#include "model/motion.h"
+#include <stdlib.h>
 
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
-void Vector_Copy(void *, void *);
-void Motion_SetPartSlots(EntityModel *, s32, s32, s32);
 extern s32 entity_type_handlers[][2];
 int EntityAi_StepSlotMotion(Entity *, EntityMotionSlot *, int, f32);
-s32 Motion_StepSlot(Entity *, EntityAiMotionSlotBits *, s32, s32);
-void EntityEvent_StartFrameEffects(Entity *, s32, s32, s32);
-void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
 int EntityAi_LookAtPoint(void *, int, int, int, int, float);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 void EntityAi_LowerWeightsAfterHit(char *);
@@ -23,31 +23,19 @@ int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityAi_SetState(char *, u8);
 int EntityAi_StartSlotMotion(void *, void *, int, int, int, int, int);
 void EntityAi_SetAttackDelay(Entity *, s32);
-float EntityMath_EaseAngleToward(float *, float, float);
-void EntityEvent_OnDeath(Entity *);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
-extern u32 frame_counter;
 int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn3D(char *);
 void EntityAi_StepState(void *);
 int EntityAi_TurnFromPush(void *, void *);
 s32 EntityAi_MoveCommand3D(Entity *, s32, f32);
-void Vector_Normalize(void *, void *);
-void Vector_Cross(void *, void *, void *);
-void Vector_Subtract(void *, void *, void *);
 extern float player_state[];
-int rand(void);
 s32 EntityAi_IsPointInView(Entity *, void *, f32, f32, f32);
 s32 EntityAi_PickRangedAttack(Entity *);
-void EntityPoint_PickNearWithHeight(f32 *, f32, f32, void *, void *);
 int EntityAi_PushTurnCommand3D(Entity *, int);
 int EntityAi_PickAttack(char *);
-float EntityMath_WrapAngle(float);
-void EntityMath_FacingVector(Vector4 *, float);
-void Vector_Scale(float *, float *, float);
-void Vector_Add(void *, void *, void *);
 
 static void Salamander_Animate(Entity *entity);
 static void Salamander_OnHit(Entity *entity);

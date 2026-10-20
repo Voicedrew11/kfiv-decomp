@@ -9,16 +9,21 @@
 #include "model/model.h"
 #include "entity/entity_ai.h"
 
-int rand(void);
-s32 EntitySight_PropInWay(Entity *entity);
-s32 EntitySight_ObjectInWay(Entity *entity);
 #include "gfx/gs.h"
+#include "core/file.h"
+#include "core/game.h"
+#include "enemy/enemy.h"
+#include "entity/entity_aim.h"
+#include "entity/entity_collision.h"
+#include "entity/entity_events.h"
+#include "gfx/gs_draw.h"
+#include "gfx/packet.h"
+#include <math.h>
+#include "math/camera.h"
+#include "math/vu0.h"
+#include "model/motion.h"
+#include <stdlib.h>
 
-extern float camera_state[];
-s32 EntityAim_AilPlayerInArc(void *target, f32 *point, f32 max_angle, f32 max_height, f32 max_distance, f32 heading);
-void *memset(void *, int, u32);
-void Vector_Copy(void *, void *);
-s32 Attack_Run(Unk1B1470Request *, Unk1B1470Extra *);
 /* EntityMath_WrapAngle, which the game inlines here: wraps an angle to +-pi */
 static inline f32 wrap_angle(f32 angle) {
     angle = angle - (f32)(s32)(angle / TWO_PI) * TWO_PI;
@@ -29,30 +34,14 @@ static inline f32 wrap_angle(f32 angle) {
     }
     return angle;
 }
-int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
-int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
-float sqrtf(float);
-float atan2f(float, float);
-char *Model_GetSkinnedBonePoint(char *, u32);
-s32 Bone_TurnPart(ModelPart *part, f32 *angles, s32 mode, f32 *goal, f32 *limits, f32 rate);
 /* match: the call leaves the sixth argument (rate, $f12) unset */
 #define TURN_PART_NO_RATE ((int (*)(void *, f32 *, int, f32 *, f32 *))Bone_TurnPart)
-int Bone_TurnPartToLook(void *model, int part_arg, int angles_arg, int mode, void *target, int limits_arg, float rate);
-extern PlayerState player_state;
 #define SPAWN_FLAGS(spawn_info) ((EntitySpawnFlags *)&(spawn_info)->spawn_flags)
-extern EntitySpawnInfo *map_spawn_infos[2];
-extern MapSlot map_slots[];
-int Game_GetSpawnDeathCount(int, int);
 // match: reading EntityParams word 0 whole; a bit-field in byte 3 would be an lbu
 typedef union {
     u32 word;
 } EntityParamsFirstWord;
 #define ENTITY_PARAMS_WORD(params) (((EntityParamsFirstWord *)(params))->word)
-void EntityCollision_PushApart(Entity *);
-void EntityCollision_WalkAgainstMap(Entity *);
-void EntityCollision_SphereAgainstMap(Entity *);
-void EntityCollision_WalkAgainstObjects(Entity *);
-void EntityCollision_SphereAgainstObjects(Entity *);
 extern u8 item_counts[ITEM_COUNT];
 /* Moves *level by delta, keeping it between 0x40 and max.
    match: max is a parameter so the 0xC0 cap stays in a register (slt/movn), as in EntityAi_RaiseAttackWeight */
@@ -67,17 +56,6 @@ static inline void adjust_level(u8 *level, s32 delta, s32 max) {
     }
     *level = value;
 }
-int Motion_SeekSlotKeys(ModelInstance *, int, int, int);
-s32 Motion_BlendSlotToPose(ModelInstance *model, s32 type, s32 table, s16 frame, f32 weight);
-void Vector_WeightedSum4(void *, void *, void *, void *, void *, float *);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-void GsDraw_QueueFlush(void);
-void GsDraw_SetScreenAlpha(int);
-void Matrix_Multiply(void *, void *, void *);
-extern Entity *active_entities_head;
-extern ModelInstance entity_models[];
 extern char fire_lord_model_matrix[];
 
 static s32 EntityAi_CheckMeleeAilment(Entity *entity, EntityParamsUnk240 *record, s32 index, s32 frame_min, s32 frame_max);

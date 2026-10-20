@@ -40,4 +40,7 @@ s32 Bone_TurnPart(ModelPart *part, f32 *angles, s32 mode, f32 *goal, f32 *limits
 /* Bone_TurnPart for a part that is to look at `target`. */
 int Bone_TurnPartToLook(void *model, int part, int angles, int mode, void *target, int limits, float rate);
 
+/* data still in asm */
+extern char *entity_params;
+
 #endif

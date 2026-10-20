@@ -5,6 +5,7 @@
 #include "core/load.h"
 #include "sound/sound.h"
 #include <eeregs.h>
+#include "core/file.h"
 
 /* EE EABI varargs: the register save area a1..a7 is spilled to, as in libsdr.c */
 typedef char *va_list;
@@ -15,7 +16,6 @@ static void SoundDriver_DisableOutput(void);
 void FlushCache(int); // match: void as in eekernel.h; an int result changes SoundDriver_Init's registers
 int sceSifBindRpc(int *, int, int);
 int sceSifCheckStatRpc(int *);
-int printf(const char *, ...);
 int sceSifCallRpc(int *, int, int, char *, int, int *, int, int, int);
 int sceSifSetDma(int *, int);
 int sceSifDmaStat(int);
@@ -23,22 +23,12 @@ static int SoundDriver_GetFileSize(const char *);
 static int SoundDriver_LoadIopFile(char *, void *);
 int sceSifAllocIopHeap(int);
 int sceSifFreeIopHeap(int);
-int puts(char *);
-char *strcpy(char *, const char *);
 int sceClose(int);
 int sceLseek(int, int, int);
 int sceOpen(const char *, int);
 /* SDK: loads an IOP heap file, returns below zero until the IOP is ready */
 int sceSifLoadIopHeap(char *name, void *addr);
-extern char rpc_timeout_message[];
-extern char voice_load_waiting_message[];
-extern int voice_load_step;
-extern int voice_load_failures;
 extern int (*const voice_load_steps[])(int *, int *);
-extern int sound_rpc_args[];
-extern char sample_buffer_freed_message[];
-extern int sequence_load_step;
-extern char sound_rpc_file_name[];
 
 
 /* SoundDriver_LoadVoiceStep keeps the position in the sample data here between calls */

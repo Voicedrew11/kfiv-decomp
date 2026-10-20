@@ -2,8 +2,6 @@
 #include "core/timer.h"
 #include <eeregs.h>
 
-extern int timer_overflow_count;    /* timer 0 overflows since the last restart */
-
 /* Timer 0 overflow handler: counts the overflow and acknowledges it. */
 void Timer_CountOverflow(void) {
     timer_overflow_count++;

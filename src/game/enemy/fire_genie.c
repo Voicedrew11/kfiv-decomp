@@ -5,49 +5,36 @@
 #include "entity/entity.h"
 #include "common.h"
 #include "entity/entity_world.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_aim.h"
+#include "entity/entity_math.h"
+#include <libvu0.h>
+#include "math/vu0.h"
+#include <stdlib.h>
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 s32 Motion_StepModel(ModelInstance *, s32, s32);
-void Vector_Copy(void *, void *);
-void EntityAi_Dormant(Entity *);
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-extern f32 identity_matrix[16];
-float EntityMath_AngleDifference(float, float);
-void sceVu0CopyMatrix(void *, void *);
-void sceVu0TransposeMatrix(void *, void *);
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0RotMatrixZ(float *, float *, float);
-s32 Bone_MultiplyPathTo(void *, void *, void *);
-void Bone_MatrixToAngles(void *, void *);
-void Matrix_Multiply(void *, void *, void *);
-float EntityMath_EaseAngleToward(float *, float, float);
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-void EntityAi_ReactionHeavy(Entity *);
-extern u32 frame_counter;
 void EntityAi_StepState(void *);
 void EntityAi_SensePlayer(void *, int);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
-void EntityAi_Guard(Entity *);
-void EntityAi_MeleeAttack(Entity *);
-void EntityAi_RangedAttack(Entity *);
 int Motion_Start(void *, int, int, u32, int);
 int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
 void EntityAi_SetAttackDelay(Entity *, s32);
 void EntityEvent_OnDeath(Entity *);
-float EntityMath_WrapAngle(float);
 // match: the definitions take the float last, but retail sets it up before the index
 int EntityAi_CanUseMeleeFacing(Entity *, f32, s32);
 int EntityAi_CanUseRangedFacing(Entity *, f32, s32); // match: as EntityAi_CanUseMeleeFacing
-int rand(void);
 void EntityAi_LowerAttackWeight(Entity *);
 void EntityEvent_Respawn(char *);
 

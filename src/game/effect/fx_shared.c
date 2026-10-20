@@ -4,10 +4,13 @@
 #include "common.h"
 #include "effect/effect.h"
 #include "entity/entity.h"
+#include "debug/debug.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/vu0.h"
+#include "player/player.h"
+#include <stdlib.h>
 
-void Vector_Copy(void *, void *);
-void sceVu0ScaleVectorXYZ(void *, void *, float);
-void sceVu0AddVector(void *, void *, void *);
 /* Wraps an angle into -pi..pi. */
 static inline f32 wrap_angle(f32 angle) {
     angle = angle - (float)(int)(angle / TWO_PI) * TWO_PI;
@@ -18,40 +21,9 @@ static inline f32 wrap_angle(f32 angle) {
     }
     return angle;
 }
-int Attack_RunEffectHitCheck(void *effect);
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0ApplyMatrix(float *, float *, float *);
-extern f32 identity_matrix[16];
-float sqrtf(float);
-float atan2f(float, float);
-int rand(void);
-double sin(double);
-double cos(double);
-void Vector_Normalize(void *dst, void *src);
-void Vector_Scale(void *, void *, float);
-void Vector_Add(void *, void *, void *);
-extern Entity *active_entities_head;
-int Effect_IsEntityUntargetable(Entity *entity);
-float Effect_Distance(void *, void *);
-f32 Math_AbsFloat(f32);
-void Vector_Subtract(void *, void *, void *);
 
-int EffectKeys_ApplySpin(EffectActor *effect);
-int EffectKeys_ApplyColour(EffectActor *effect);
-void EffectHit_CheckAndEnd(EffectActor *effect, void *state);
-int EffectHit_CheckAndEndByFlag(EffectActor *effect, s8 *state);
-void EffectHit_End(EffectActor *effect, s8 *state);
-int EffectHit_Check(EffectActor *effect);
-void EffectAngle_ToVector(float length, Vector4 *out, Vector4 *angles);
-void EffectAngle_FromVector(void *angles, void *direction);
-void EffectStart_PlaceModel(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectStart_TurnModel(EffectActor *effect, EffectSlot *spawn_slot);
 static int EffectKeys_FindStage(void *effect, int *frames);
 static void EffectKeys_Weights(f32 *result, f32 *eased, int value, int min, int max, int mode);
-void EffectSteer_Toward(Vector4 *velocity, Vector4 *direction, float speed, float turn);
-int EffectHit_FindAimedEntity(EffectActor *effect, Vector4 *position, Vector4 *reference);
-Entity *EffectHit_FindNearestEntity(EffectActor *effect, Vector4 *position, Vector4 *unused_rotation);
 
 /* Sets the model's scale from the definition's scale keys; returns the key reached, or -1 while it blends
    between two. */

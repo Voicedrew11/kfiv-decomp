@@ -38,6 +38,7 @@ int sceCdReadIOPm(int lsn, int sectors, void *buf, CdRMode *mode); /* definition
 int sceCdSearchFile(struct sceCdlFILE *fp, const char *name);      /* definition in sce/ */
 int sceCdStInit(int bufmax, int bankmax, void *buf);               /* definition in sce/ */
 int sceCdStRead(int sectors, void *buf, int mode, int *err);       /* definition in sce/ */
+int sceCdStSeek(int lsn);                                          /* definition in sce/ */
 int sceCdStStart(int lsn, CdRMode *mode);                          /* definition in sce/ */
 int sceCdStStat(void);                                             /* definition in sce/ */
 int sceCdStStop(void);                                             /* definition in sce/ */

@@ -8,49 +8,26 @@
 #include "core/memory.h"
 #include "player/player.h"
 #include "gfx/screen.h"
+#include <eekernel.h>
+#include "enemy/enemy.h"
+#include "entity/entity.h"
+#include "gfx/draw_list.h"
+#include "gfx/gs_draw.h"
+#include "gfx/packet.h"
+#include "gfx/texture.h"
+#include "map_object/map_object.h"
+#include "math/vu0.h"
+#include "model/model.h"
+#include "model/model_matrix.h"
+#include "sound/sound_game.h"
 
-void *memset(void *, int, u32);
-int printf(const char *, ...);
-int FlushCache(int);
-int sceGsSyncPath(int, int);
 void sceGsSetDefStoreImage(void *, s16, s16, s16, s16, s16, s16, s16);
 void sceGsExecStoreImage(void *, void *);
-char *Texture_UploadTable(char *base, int upload);
-void Texture_SendTexFlush(void);
-void Vector_Copy(void *dst, void *src);
-void Vector_Add(void *, void *, void *);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int reg, s64 value);
-void Packet_EndGsRegisters(void);
-void GsDraw_QueueFlush(void);
-void ModelTexture_SendForModel(void *model_arg);
-u32 *Packet_Alloc(int);
-void Packet_AppendToChain(u32 *, u32 *);
-void GsDraw_QueueTexFlush(void);
-int Map_IsPointInRecord(f32 *point, AreaNode *node, f32 margin);
-AreaNode *Map_FindRecordAt(f32 *point, f32 margin);
-void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void DrawList_Add(ModelInstance *, s32, s32);
-char Sound_PlayTrackedKind(int index, int first, int second, int third, int fourth);
-void Sound_StopTracked(s8 handle);
-void Model_SetUpPosed(ModelInstance *, char **, char **);
-int Wobble_ModelUsesTextures(ModelInstance *model, int first, int last);
-u32 *Map_GetSlotPacket(int, int);
 
 extern GameStatus game_status;
-extern MapSlot map_slots[2];
 extern char map_draw_slot_blocks[];
-extern MapObject map_slot_objects[][0x200];
-extern Entity entity_pool[][0x80];
-extern Entity entity_pool_last;           /* the last entity of entity_pool */
 extern void (*effect_draw_hooks[4][4])(ModelInstance *);
 extern void (*effect_kind_handlers[][2])();
-extern FxTableEntry fx_table[];
-extern PlayerState player_state;
-extern Vector4 origin_point;
-extern int current_map_slot;
-extern char *effect_area;
 
 static EffectSlot effect_slots[EFFECT_SLOT_COUNT] = { 0 }; /* 0x3F1750 the spawner ("SFXGEN") pool */
 EffectActor effect_pool[EFFECT_COUNT] = { 0 };              /* 0x3F3550 the effect ("SFX") pool */

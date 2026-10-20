@@ -2,22 +2,12 @@
 #include "map_object/map_object.h"
 #include "model/model.h"
 #include "ui/message.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/vu0.h"
+#include "model/model_matrix.h"
+#include "sound/sound_game.h"
 
-void Vector_Copy(void *, void *);
-void MapObject_UpdateOpeningDoor(MapObject *);
-void MapObject_ShowKeyUsed(int);
-int Sound_PlayMapAtRange(u8, u8, float *, float);
-void Vector_Subtract(void *, void *, void *);
-float sinf(float);
-float cosf(float);
-float sqrtf(float);
-void Vector_Add(void *, void *, void *);
-void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void Model_MultiplyChildMatrices(ModelPart *);
-void sceVu0CopyMatrix(void *, void *);
-extern void *faced_object[];
-extern u32 game_status_flags[];
 extern u8 item_counts[];
 extern float player_state[];
 

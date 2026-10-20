@@ -6,25 +6,18 @@
 #include "map_object/map_object.h"
 #include "player/player.h"
 #include "effect/item_effect.h"
+#include "enemy/enemy.h"
+#include "player/player_update.h"
+#include "script/script.h"
+#include "ui/map_viewer.h"
 
-int Script_IsRunning(int);
-int Script_Start(int, int);
 void Player_ApplyItem(int);
 void Player_ApplyPoisonWater(int);
-int MapChange_StartPassage(int);
-void MapViewer_OpenForItem(int);
-void Player_RecomputeStats(void);
-void Player_PickChargingMagic(void);
 int Player_LearnSpellInRow(int);
 
 extern u8 item_counts[];
-extern ItemCommonDef item_common_defs[];
 extern GameStatus game_status;
 extern EventRunner view_ray_status;
-extern PlayerState player_state;
-extern void *object_under_player[];
-extern int current_map_slot;
-extern u32 frame_counter;
 extern u8 spell_levels[6][5];
 
 /* TRUE when the player cannot take one more of the item ("Can't carry any more", MapItem_PickupHold): a one-of-a-kind

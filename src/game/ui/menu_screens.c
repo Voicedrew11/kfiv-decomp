@@ -23,70 +23,25 @@
 #include "gfx/screen.h"
 #include "save/save_card.h"
 #include "item/item.h"
+#include "core/display.h"
+#include "core/memory.h"
+#include "debug/screen_dump.h"
+#include <eekernel.h>
+#include "gfx/draw_env.h"
+#include "gfx/gs_draw.h"
+#include "input/input.h"
+#include <libvu0.h>
+#include "player/player_update.h"
+#include "sound/sound.h"
+#include "sound/sound_game.h"
+#include <stdio.h>
+#include "ui/title.h"
 
 extern LevelRecord weapon_level_records[70];
 extern LevelRecord worn_item_level_records[160];
 extern u8 spell_levels[6][5];
 extern u8 item_counts[380];
-extern FxTableEntry fx_table[];
-extern PlayerState player_state;
 extern LevelDef item_name_defs[380];
-extern ItemCommonDef item_common_defs[];
-extern MenuItem **equip_list_refs[11];
-extern MenuItem common_item_entries[150];
-extern MenuItem all_item_entries[380];
-extern MenuItem weapon_entries[70];
-extern MenuItem shield_entries[30];
-extern MenuItem helm_entries[25];
-extern MenuItem armor_entries[25];
-extern MenuItem gauntlet_entries[25];
-extern MenuItem boot_entries[25];
-extern MenuItem ring_entries[10];
-extern MenuItem bracelet_entries[10];
-extern MenuItem amulet_entries[10];
-extern MenuItem spell_entries[];
-extern MenuItem shortcut_entries[];
-extern MenuItem *item_list_cursor[4];
-extern MenuItem *item_list_top[4];
-extern MenuItem *item_list_page_mark[4];
-extern MenuItem *owned_list_first;
-extern MenuItem *owned_list_last_page;
-extern s32 owned_list_count;
-extern MenuItem *item_list_first;
-extern MenuItem *item_list_last_page;
-extern s32 item_list_count;
-extern s32 equip_group_shown;
-extern MenuItemList equipped_shortcut;
-extern MenuItemList equipped_weapon;
-extern MenuItemList equipped_shield;
-extern MenuItemList equipped_helm;
-extern MenuItemList equipped_armor;
-extern MenuItemList equipped_gauntlet;
-extern MenuItemList equipped_boot;
-extern MenuItemList equipped_ring;
-extern MenuItemList equipped_bracelet;
-extern MenuItemList equipped_amulet;
-extern MenuItemList equipped_spell;
-extern MenuItemList use_item_list;
-extern MenuItemList equip_weapon_list;
-extern MenuItemList equip_shield_list;
-extern MenuItemList equip_helm_list;
-extern MenuItemList equip_armor_list;
-extern MenuItemList equip_gauntlet_list;
-extern MenuItemList equip_boot_list;
-extern MenuItemList equip_ring_list;
-extern MenuItemList equip_bracelet_list;
-extern MenuItemList equip_amulet_list;
-extern MenuItemList equip_spell_list;
-extern MenuItemList equip_shortcut_list;
-extern MenuItem *castable_spell_first[4];
-extern MenuItemList *equip_list_shown[];
-extern MenuItem *owned_list_top[];
-extern MenuItem *owned_list_current[];
-extern MenuItem *owned_list_page_mark[];
-extern MenuItem *castable_spell_cursor[];
-extern MenuItem *castable_spell_top[];
-extern MenuItem *castable_spell_page_mark[];
 /* Appends node to the ring being built. */
 #define LINK_ITEM(node)                     \
     if (last != NULL) {                     \
@@ -119,137 +74,15 @@ extern MenuItem *castable_spell_page_mark[];
     (list).item = (start_list).item = &(nodes)[(worn) - (record_base)];
 /* Whether the spell is the one its slot of spell_levels holds (three spells to a slot, numbered from 1). */
 #define SPELL_IS_SET(spell) (spell_levels[((spell) - 1) / 15][(((spell) - 1) / 3) % 5] == ((spell) - 1) % 3 + 1)
-extern LinkNode *model_load_chain;
-extern LinkNode model_load_spare;
 /* the loads of the model shown and of the four the cursor brings on with up (0x10), down (0x40), left (0x80) and
    right (0x20): in a list a row and a page either way, on the equipment screen the next list and the next item */
-extern LinkNode model_load_shown;
-extern LinkNode model_load_up;
-extern LinkNode model_load_down;
-extern LinkNode model_load_left;
-extern LinkNode model_load_right;
-extern int model_read_file;
-int File_Open(char *, int, int);
-int File_OpenUnflagged(char *name, int nowait, int pack);
-int File_Read(int, void *, int);
-int File_Close(int file);
-int File_Sync(int file, int mode);
-int FlushCache(int);
 void PoolPartFile_Relocate(char *);
-extern int worn_model_loading;
-extern PoolPartSource *pool_part_sources[13];
 void PoolSlot_LoadGroup(PoolPartSource *, u32);
-extern ChunkPoolNode *free_load_buffers;
-extern ChunkPoolNode load_buffer_nodes[];
-int sprintf(char *, char *, ...);
-extern char model_name_shown[];
-extern char model_name_up[];
-extern char model_name_down[];
-extern char model_name_left[];
-extern char model_name_right[];
-extern char weapon_model_name[];
-extern char shield_model_name[];
-extern char armor_model_name[];
-extern char helm_model_name[];
-extern char gauntlet_model_name[];
-extern char boot_model_name[];
-extern char ring_model_name[];
-extern char bracelet_model_name[];
-extern char amulet_model_name[];
-extern LinkNode worn_model_loader;
-extern LinkNode weapon_model_load;
-extern LinkNode shield_model_load;
-extern LinkNode armor_model_load;
-extern LinkNode helm_model_load;
-extern LinkNode gauntlet_model_load;
-extern LinkNode boot_model_load;
-extern LinkNode ring_model_load;
-extern LinkNode bracelet_model_load;
-extern LinkNode amulet_model_load;
-extern LinkNode key_item_model_loads[12];
-extern s32 packet_area;
-extern ChunkUpload npc_package_load;
 int MenuArena_Init(int); // match: this file only matches with an int result
 void *MenuArena_Alloc(s32, s32);
 void *MenuHeap_Alloc(int);
 int MenuFile_Load(char *, void *);
-extern u32 main_part_count;
-extern u32 item_part_count;
-extern u32 magic_part_count;
-extern u32 equip_part_count;
-extern u32 equip_a_part_count;
-extern u32 equip_g_part_count;
-extern u32 equip_m_part_count;
-extern u32 item_sel_part_count;
-extern u32 status_part_count;
-extern u32 image_part_count;
-extern u32 recol_part_count;
-extern u32 system_part_count;
-extern u32 slot_part_count;
-extern u32 data_part_count;
-extern u32 option_part_count;
-extern u32 keylist_part_count;
-extern u32 keyconf_part_count;
-extern u32 preshop_part_count;
-extern u32 shop_part_count;
-extern u32 equip_g2_part_count;
-extern u32 equip_s_part_count;
-extern u32 recol_a_part_count;
-extern u32 recol_g_part_count;
-extern u32 recol_g2_part_count;
-extern u32 shop_g2_part_count;
-extern u32 shop_a_part_count;
-extern u32 shop_g_part_count;
-extern u32 pretune_part_count;
-extern u32 tune_part_count;
-extern u32 tune_s_part_count;
-extern u32 mc_part_count;
-extern u32 bright_part_count;
-extern u32 shop_mess_part_count;
-extern u32 tune_mess_part_count;
-extern u32 mc_mess_part_count;
-extern u32 equip_m2_part_count;
-extern SpritePacket *slot_parts;
-extern SpritePacket *data_parts;
-extern SpritePacket *preshop_parts;
-extern SpritePacket *shop_parts;
-extern SpritePacket *shop_g2_parts;
-extern SpritePacket *shop_a_parts;
-extern SpritePacket *shop_g_parts;
-extern SpritePacket *pretune_parts;
-extern SpritePacket *tune_parts;
-extern SpritePacket *tune_s_parts;
-extern SpritePacket *mc_parts;
-extern SpritePacket *bright_parts;
-extern SpritePacket *shop_mess_parts;
-extern SpritePacket *tune_mess_parts;
-extern SpritePacket *mc_mess_parts;
-extern SpritePacket *equip_m2_parts;
-extern SpritePacket *main_parts;
-extern SpritePacket *item_parts;
-extern SpritePacket *magic_parts;
-extern SpritePacket *equip_parts;
-extern SpritePacket *equip_a_parts;
-extern SpritePacket *equip_g_parts;
-extern SpritePacket *equip_m_parts;
-extern SpritePacket *item_sel_parts;
-extern SpritePacket *status_parts;
-extern SpritePacket *image_parts;
-extern SpritePacket *recol_parts;
-extern SpritePacket *system_parts;
-extern SpritePacket *option_parts;
-extern SpritePacket *keylist_parts;
-extern SpritePacket *keyconf_parts;
-extern SpritePacket *equip_g2_parts;
-extern SpritePacket *equip_s_parts;
-extern SpritePacket *recol_a_parts;
-extern SpritePacket *recol_g_parts;
-extern SpritePacket *recol_g2_parts;
-extern PlayerItemDef weapon_defs[];
-extern LevelRecordDef worn_defs[];
-extern GsDoubleBufferDc menu_frame_buffers;
 extern LoadedTexture menu_font_texture;
-extern MenuModelMotion *equip_weapon_motions[];
 int sceGsResetGraph(int, int, int, int);
 void sceGsSetDefDBuffDc(void *, s16, s16, s16, s16, s16, s16);
 void MenuHeap_Reset(void);
@@ -262,45 +95,16 @@ struct sceCdCLOCK;
 int sceCdReadClock(struct sceCdCLOCK *);
 int sceGsSyncV(int);
 int mktime(int *);
-void Vram_Clear(int, int);
-void Sound_MuteTracked(void);
-void Sound_UnmuteTracked(void);
-void Sound_UpdateTagged(void);
-void Sound_MuteTagged(void);
-void Sound_UnmuteTagged(void);
-void Sound_UnmutePositional(void);
-void Sound_MutePositional(void);
-void Input_Update(void);
-int SoundDriver_FlushCommands(void);
 s16 MenuPad_Update(void);
-extern GsDrawEnv game_dbuff_draw0;
-extern s32 menu_run_step;
-extern s8 menu_mode;
 extern u16 menu_buttons;
-extern int context1_buffer_half;
-extern int context2_buffer_half;
-extern s32 menu_even_field;
-extern s32 pad_mode_change_frames;
-extern int pad_mode;
-extern int pad_mode_before;
-extern MenuScreenState card_screen_state;
-extern ColorBytes menu_draw_color;
 extern f32 menu_view_screen_matrix[16];
 void MenuModel_DrawTinted(ChunkUpload *upload, s32 draw_param, RenderSlotArg slot_arg);
 // match: called with the node, a matrix and the colour, not as the definition has it (the colour is loaded unaligned)
 #define DRAW_NODE_MODEL(node, matrix, colour) ((void (*)(LinkNode *, f32 *, ColorBytes))MenuModel_DrawTinted)(node, matrix, colour)
-void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, float, float, float);
-extern u64 menu_first_draw_env[47];             /* the frame register of the first buffer ([0]) and of the second ([46]) */
 extern u8 game_options[0x10];  /* the options block */
-extern char menu_first_draw_env2[];
-extern char menu_second_draw_env[];           /* inside menu_frame_buffers: the second buffer's draw environments */
-extern char menu_second_draw_env2[];
-extern s32 menu_frame_ticks;
-extern u8 menu_l2_cycle_step;
 void Menu_DrawBrightness(s32);
 int Timer_GetTicks(void);
 int Timer_Restart(void); // match: an int result keeps $2 clear of the pad test after the call
-int sceGsSyncPath(int, int);
 void sceGsSetHalfOffset(void *, int, int, s16); // match: void, so the test after the call uses $2
 int sceGsSetHalfOffset2(void *, int, int, s16);
 int sceGsSwapDBuffDc(GsDoubleBufferDc *, int);
@@ -309,52 +113,17 @@ int sceGsSwapDBuffDc(GsDoubleBufferDc *, int);
 #define SET_TEST(value) ((void (*)(int, s64))MenuDraw_SetGsRegister)(GS_REG_TEST_1, value)
 
 extern ColorBytes backdrop_shade_color[]; // match: the initialiser of the local below ({ 0x10, 0x10, 0x10 }); an array so it is not reached through $gp
-int Menu_SetBlendMode(u8);
 void MenuSprite_DrawPlain(int owner, int index, int param);
-extern s32 menu_step;
-extern char menu_step_context[];
 extern u8 brightness_option[];
 extern LoadedBlockRef menu_file_blocks[];
-extern void *menu_screen_handler;
 extern float pulse_sprite_alpha;
 extern char pulse_sprite_falling;
-extern s8 pulse_value_falling;
-extern s8 system_screen_state;
-extern ColorBytes panel_text_color;
-extern ColorBytes model_draw_color;
 extern s32 menu_file_block_count;
-extern s32 menu_heap;
-extern u8 brightness_before;
-void Packet_OnFrameStart(void);
-void Packet_OnFrameEnd(void);
-void Packet_SwapBuffers(void);
-void Packet_SendChain(void);
 void Packet_WaitForSend(void);
-void GsDraw_QueueTexFlush(void);
-void TextureTable_QueueAll(TextureTableHeader *);
 void MenuTexture_Upload(TextureHeader *, LoadedBlockRef *);
-extern s8 main_menu_line;
-void Sound_LoadMgBank(int);
-void *memset(void *, int, u32);
-extern f32 screen_part_alphas[0x100];
-extern f32 panel_part_alphas[0x100];
-extern char equip_model_shown;
-extern s8 menu_input_enabled;
-extern s8 main_menu_state;               /* 0: fading in, 1: open, 2: fading out to the chosen screen, 3: fading out to leave */
-extern s8 recollection_cursor;
-s32 Sound_PlayMenu(s32);
-int Menu_OwnsAnyItem(void);
-int Menu_KnowsCastableSpell(void);
 void MenuSprite_Draw(int, int, int, int);
-extern u8 menu_blink_step;
 extern GameStatus game_status;
-extern f32 use_item_model_position[4];
-extern f32 use_item_model_angle;              /* the shown item model's turn about y */
-extern s32 use_item_frames;
 extern s32 menu_number_44;
-extern s8 use_item_state;               /* 0: fading in, 1: open, 2 to 4: waiting for the models, 5 to 7: fading out */
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0TransMatrix(float *, float *, float *);
 void MenuDraw_Bar(MenuCursorBar *);
 s32 MenuText_SetColor(ColorBytes bytes);
 s32 MenuText_DrawWrapped(u16 *, s32);
@@ -364,25 +133,12 @@ static inline f32 wrap_angle(f32 angle) {
     angle += PI;
     return angle - (f32)(s32)(angle / TWO_PI) * TWO_PI - PI;
 }
-extern f32 cast_spell_model_position[4];
 extern s32 menu_number_45;
-extern s8 cast_spell_state;               /* 0: fading in, 1: open, 2: waiting for the models, 3: fading out */
 int MenuText_SetGlyphSize(GsPackedWord);
 s32 MenuText_DrawLine(u16 *text, s32 limit);
-extern u8 player_weapon[];
-extern MenuItem **equipped_item_refs[11];
-extern LinkNode *equip_model_loads[];
-extern f32 equip_item_model_position[4];
-extern f32 equip_weapon_model_position[4];
 extern void (*pool_slot_drawers[])(PoolSlot *, ColorBytes);
 extern PoolSlot pool_slots[32];
-extern s32 equip_weapon_draw_index;
 extern u8 detail_panel_open; // match: a byte here; ui/trade.c reads and writes it as a word
-extern u8 equipped_list_open;
-extern s8 detail_panel_sound_pending;
-extern f32 equip_item_model_angle;
-extern f32 equip_weapon_model_angle;
-extern u32 equip_weapon_motion_frame;
 extern s32 menu_number_46;
 extern s32 menu_number_47;
 extern s32 menu_number_48;
@@ -396,14 +152,9 @@ extern s32 menu_number_70;
 extern s32 menu_number_71;
 extern s32 menu_number_72;
 extern s32 menu_number_74;
-extern MenuFreeNode equip_weapon_pool_node;
-extern s8 equip_state;
-extern s8 equip_panel_state;
 // match: equip_panel_state is the second byte of what the symbol list has as one two-byte object. It has to be a variable of
 // its own: a store to `equip_state[1]` is never put in a delay slot, and retail has it there.
 __asm__("equip_panel_state = equip_state + 1");
-void Player_RecomputeStats(void);
-int Menu_IsEquipSlotFilled(s32, u32);
 int Menu_IsEquipped(u32, s32, s32);
 s8 MenuDraw_GetWordStart(s32);
 void MenuDraw_Word(KindObject *);
@@ -450,19 +201,11 @@ s32 MenuDraw_SetGsRegister(int, s64);
         MenuSprite_Draw((int)&parts[i], parts[i].handler_index + 1000, variant, (int)panel_part_alphas[i]);         \
         SET_BLEND(0);                                                                                \
     }
-extern s8 key_items_state;               /* 0: fading in, 1: open, 2: fading out to Menu_UpdateKeyItems, 3: fading out to leave */
 extern s32 key_item_slots[12];
-extern s32 key_item_row;              /* the row of three the list starts at, 0 to 2 */
-extern s32 key_items_frames;
 #define LIST_PAGES 50
 #define LIST_ROWS 7
 extern u8 recollection_flags[LIST_PAGES][8];
 extern u8 recollection_pages[50];
-extern f32 recollection_model_position[4];
-extern s32 recollection_page;              /* the page shown, 0 to 49 */
-extern s32 recollection_page_before;              /* the page shown the frame before */
-extern s8 recollection_state;               /* 0: fading in, 1: open, 2: fading out */
-extern s8 recollection_top;               /* the counter at the top of the list */
 int sceCdBreak(void);
 s32 MenuText_DrawWrappedLong(u16 *, s32);
 s32 MenuText_DrawLineShortened(u16 *, s32);
@@ -470,21 +213,11 @@ s32 MenuText_DrawLineShortened(u16 *, s32);
 static inline s32 GetListTextOffset(s32 table, s32 number) {
     return ((s32 *)table)[number];
 }
-extern f32 recollection_page_model_position[4];
 /* The offset of text `number` in the text table, 0 when it has none. */
 static inline s32 GetPageTextOffset(s32 table, s32 number) {
     return ((s32 *)table)[number];
 }
-extern f32 visible_item_model_position[4];
-extern f32 visible_item_model_angle;              /* the turning model's angle */
 extern s32 menu_number_73;
-extern MenuItem *visible_bar_top;
-extern MenuItem *visible_bar_cursor;
-extern MenuItem *visible_names_top;
-extern MenuItem *visible_names_cursor;
-extern MenuItem *visible_text_item;
-extern s8 visible_item_state;               /* 0: fading in, 1: open, 2: waiting for the loads, 3: fading out */
-extern s8 visible_panel_state;               /* the detail panel's: 0: fading in, 1: open, 2: fading out */
 static inline s32 ScaleValue(s32 value, s32 percent, s32 divisor) {
     return value * percent / divisor;
 }
@@ -500,27 +233,9 @@ static inline s32 ScaleValue(s32 value, s32 percent, s32 divisor) {
         MenuSprite_Draw((int)&(packets)[i], (packets)[i].handler_index + 1000, (param), (int)panel_part_alphas[i]); \
         Menu_SetBlendMode(0);                                                        \
     }
-extern s32 system_menu_line;
-extern s32 quit_choice;
-extern u16 button_settings_copy[13];
-extern u16 forward_button;
-extern u16 back_button;
-extern u16 turn_right_button;
-extern u16 turn_left_button;
-extern u16 step_right_button;
-extern u16 step_left_button;
-extern u16 look_down_button;
-extern u16 look_up_button;
-extern u16 attack_button;
-extern u16 magic_button;
-extern u16 action_button;
-extern u16 menu_button;
-extern u16 shortcut_button;
 // match: both are called as void functions, so the result register is free at once
 #define PLAY_MENU_SOUND(sound) ((void (*)(s32))Sound_PlayMenu)(sound)
 #define SET_PART_MODE(mode) ((void (*)(u8))Menu_SetBlendMode)(mode)
-s32 SaveCard_Open(void);
-s32 SaveCard_StartCheck(s8);
 #define PAGE_ROWS 7
 /* Scrolls the window and the cursor up one row; FALSE once the window is at the top of the list. */
 static inline s32 ScrollItemListUp(void) {
@@ -550,20 +265,8 @@ static inline s32 ScrollAllItemsDown(void) {
     owned_list_current[0] = owned_list_top[0];
     return owned_list_top[0] != owned_list_first;
 }
-extern s8 card_slot_leave_steps;
-extern u8 card_save_mask;
-extern void *save_list_opener;
 s32 SaveCard_Update(void); // match: the result is used here
-s32 SaveCard_StartReadList(s32 card, char must_exist);
-void SaveCard_Close(void);
-s32 SaveCard_CheckBusy(void);
-s32 SaveCard_CheckSavesIntact(void);
-s32 SaveCard_GetSaveMask(void);
-void SaveCard_ClearLoadFailed(s32);
-s32 SaveCard_IsChecking(void);
-s8 SaveCard_IsPresent(s32);
 extern u8 save_image[];
-extern s8 save_list_leave_steps;
 extern s32 menu_number_75;
 extern s32 menu_number_76;
 extern s32 menu_number_77;
@@ -584,26 +287,6 @@ extern s32 menu_number_91;
 extern s32 menu_number_92;
 extern s32 menu_number_93;
 extern s32 menu_number_94;
-s32 SaveCard_Init(void);
-s32 SaveCard_StartLoad(s32, s32, s32 *, s32);
-s32 SaveCard_HasCard(s32);
-s8 SaveCard_GetSaveState(s32);
-s32 SaveCard_HasRoomFor(s32, s32, s32);
-void SaveCard_ResetCard(s32);
-s8 SaveCard_GetLoadFailed(s32);
-extern s32 sound_mode_before;              /* option 0 as it was before it was first toggled */
-extern s8 sound_mode_change;               /* 0: option 0 untouched, 1: toggled and not applied yet, 2 to 4: applied */
-extern s8 options_leave_steps;               /* counts the two steps of leaving when the screen is a start-up step */
-void Sound_SetBgmVolume(s32);
-void Sound_SyncBgmLevel(void);
-void SoundDriver_SetMono(void);
-void SoundDriver_SetStereo(void);
-extern s8 button_choices[12];
-extern s8 button_choices_shown[12];
-extern s8 buttons_leave_steps;
-extern s32 button_line;
-extern s32 button_prompt_choice;
-extern s8 button_prompt;
 /* Runs SET with the choice number that goes with a pad button bit. */
 #define FOR_PAD_BIT(bit, SET) \
     switch (bit) {            \
@@ -646,12 +329,6 @@ extern s8 button_prompt;
     }
 #define SET_CHOICE(n) button_choices_shown[i] = button_choices[i] = (n)
 #define SET_SHOWN(n) button_choices_shown[i] = (n)
-s32 SaveCard_StartRescan(void);
-s32 SaveCard_IsCheckDone(void);
-s8 SaveCard_IsFormatted(s32);
-int SaveCard_GetCardProblem(int);
-s32 SaveCard_GetSavesState(void);
-extern f32 brightness_slider;
 
 static void Menu_BuildItemRings(void);
 static void Menu_MoveLoadToSpare(void);
@@ -2142,13 +1819,6 @@ void Menu_Init(void) {
     MenuHeap_Mark();
 }
 
-extern char sunday_name[8];
-extern char monday_name[8];
-extern char tuesday_name[8];
-extern char wednesday_name[8];
-extern char thursday_name[8];
-extern char friday_name[8];
-extern char saturday_name[8];
 /* the seven weekday names (Sunday first, in Japanese); copied to a local and never read */
 static const MenuWeekdayNames weekday_names_table = { {
     sunday_name, monday_name, tuesday_name, wednesday_name, thursday_name, friday_name, saturday_name,
@@ -2302,7 +1972,6 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
     }
 }
 
-extern char equip_screen_name[8];
 /* the steps of a menu's start, run by Menu_RunStep until one gives 0; each is handed menu_step_context */
 static int (*const menu_steps[4])(char *context) = {
     Menu_Start,
@@ -3499,17 +3168,6 @@ static void Menu_UpdateCastSpell(s32 context) {
     }
 }
 
-extern char group_name_weapons[8];
-extern char group_name_magic[8];
-extern char group_name_shield[8];
-extern char group_name_helm[8];
-extern char group_name_armor[8];
-extern char group_name_gauntlet[8];
-extern char group_name_boot[8];
-extern char group_name_ring[8];
-extern char group_name_bracelet[8];
-extern char group_name_amulet[8];
-extern char group_name_item[8];
 /* per MenuItem.group, the LevelDef number its records start at, as the equipment screen has it */
 static const EquipGroupBases equip_group_bases = { { 150, 0, 220, 220, 220, 220, 220, 220, 220, 220, 0, 0 } };
 /* the names of the equipment groups ("weapons", "magic", "shield"...); copied to a local and never read */

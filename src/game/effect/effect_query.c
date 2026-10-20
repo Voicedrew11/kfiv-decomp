@@ -6,11 +6,6 @@
 #include "math/vu0.h"
 #include "collision/collision.h"
 
-float Effect_Distance(void *, void *);
-void Collision_CastRayAtMap(f32, void *, void *);
-
-extern Entity *active_entities_head;
-
 /* Nonzero if the entity cannot be targeted: not live, dying, or flagged out. */
 int Effect_IsEntityUntargetable(Entity *entity) {
     int excluded;

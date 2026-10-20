@@ -8,51 +8,22 @@
 #include "sound/sound.h"
 #include "core/memory.h"
 #include "gfx/screen.h"
+#include "enemy/enemy.h"
+#include "entity/entity.h"
+#include "entity/entity_events.h"
+#include "item/item.h"
+#include "player/player.h"
+#include "script/script.h"
+#include "sound/sound_game.h"
+#include <stdio.h>
 
 
-int File_GetSize(int);
-int sprintf(char *, char *, ...);
-void Map_ParseFile(int);
-void Map_BuildModels(int);
-int Sound_LoadMapBank(MapSlot *);
-void Map_PlaceRecordModels(int);
-void MapLoad_BeforeObjectInitHook(void);
-void MapItem_InitMap(int);
-void Entity_AddGroupToWaiting(int);
-void MapItem_RollFixedItems(int);
-void MapSetup_RunForMap(int);
-void Game_MarkMapVisited(int);
-void Script_Init(int);
-int Script_Start(int, int);
-extern char map_object_defs[];
 extern GameDefinition item_name_defs[380];
-extern u8 item_common_defs[];
-extern u8 weapon_defs[];
-extern char worn_defs[];
-extern char obj_prm_path[];
-extern char chr_prm_path[];
-extern char item_nam_prm_path[];
-extern char item_cmn_prm_path[];
-extern char item_wpn_prm_path[];
-extern char item_pct_prm_path[];
-extern char *entity_params;
 extern GameStatus game_status;
 extern CameraState camera_state;
 extern MapProp *map_slot_props[2][0xFF];
-extern int current_map_slot;
-extern MapDrawRecord *record_draw_lists[2];
-extern MapDrawRecord *late_record_draw_lists[2];
-extern AreaNode *record_boxes;
-extern AreaNode *backdrop_record_boxes;
-extern MapSlot map_slots[];
 extern MapDrawState map_draw_state;
 extern SoundLoadQueue sound_load_queue;
-extern MapSlotMemory map_slot_memory[2];
-extern char map_file_name_format[];
-extern u32 map_work_area_size;
-extern int map_file_area_size;
-extern char *map_file_area;
-extern char *map_work_area;
 
 /* Reads the six parameter files (param/obj.prm, chr.prm, item_nam.prm, item_cmn.prm, item_wpn.prm and
    item_pct.prm), then turns each item's weight from kilograms into pounds. */

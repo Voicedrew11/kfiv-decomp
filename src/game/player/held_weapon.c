@@ -6,51 +6,22 @@
 #include "player/player.h"
 #include "gfx/texture.h"
 #include "effect/effect.h"
+#include "core/file.h"
+#include "core/memory.h"
+#include "gfx/gs_draw.h"
+#include "gfx/packet.h"
+#include <libvu0.h>
+#include "math/vu0.h"
+#include "model/model_matrix.h"
+#include "model/motion.h"
+#include "sound/sound_game.h"
+#include <stdio.h>
+#include <string.h>
 
-void *memset(void *, int, u32);
-void *memcpy(void *, const void *, u32);
-int sprintf(char *, char *, ...);
-int File_Open(char *, int, int);
-int File_Read(int, void *, int);
-int File_Close(int);
-void Model_SetUpSkinned(ModelInstance *, int *, int *);
-void TextureTable_QueueAll(TextureTableHeader *);
-MotionData *ModelMotion_LoadFile(MotionFile *, ModelChannel **, ModelInstance *, int);
-void GsDraw_QueueTexFlush(void);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-u32 *Packet_Alloc(int);
-void Packet_AppendToChain(u32 *, u32 *);
-void Model_MultiplyChildMatrices(ModelPart *);
-void Sound_LoadSwBank(int);
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0TransMatrix(float *, float *, float *);
-void sceVu0MulMatrix(void *, void *, void *);
-void Vector_Copy(void *, void *);
-void Vector_CopyQuadword(void *, void *);
-void Vector_Add(void *, void *, void *);
-void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void Vu0_LoadMatrix(void *);
-void Vu0_ProjectToScreen(int *, void *);
-
-extern char *held_weapon_area;
-extern PlayerState player_state;
 extern GameDefinition weapon_name_defs[70];
-extern PlayerItemDef weapon_defs[];
-extern MapFogBlock current_fog_block;
 extern char file_load_buffer[0x80000];
-extern char arm_phong_texture_path[];
-extern char item_arm_path_format[];
-extern char default_held_item_path[];
-extern char default_arm_path[];
-extern MapLightBlockHalf current_light_block;
 extern CameraState camera_state;
-extern f32 identity_matrix[16];
 extern f32 world_screen_matrix[16];
-extern int loaded_arm_gauntlet;
-extern int loaded_held_weapon;
 
 /* What lights the held item's models, its trail, its position offsets and the points of its arm. */
 MapLightBlockHalf held_item_light_blocks[2] = { /* 0x4145E0 the second hand's block ends with 1.0 four times */

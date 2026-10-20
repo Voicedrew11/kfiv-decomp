@@ -3,31 +3,6 @@
 
 #define MEMORY_ARENA_SIZE 0x1600000
 
-/* the sizes of the areas, in bytes */
-extern int packet_area_size;        /* the packet buffers' area */
-extern int effect_area_size;        /* the effects' textures and models (effect/effect.c) */
-extern int entity_pool_area_size;   /* entity_pool_area */
-extern int held_weapon_area_size;   /* the arm and held item files (player/held_weapon.c) */
-extern u32 map_work_area_size;
-extern int map_file_area_size;
-extern int hud_area_size;           /* hud_area */
-extern int item_effect_area_size;
-extern int memory_unplaced_area_size;              /* set, but no area is placed with it */
-
-/* the areas, as Memory_PlaceAreas lays them out */
-extern MapSlotMemory map_slot_memory[2];
-extern MapSlotMemory *map_slot_area;  /* the two map slots' memory, the array above */
-extern char *map_file_area;
-extern char *map_work_area;
-extern int packet_area;              /* the packet area */
-extern char *effect_area;
-extern char *entity_pool_area;      /* the entity pool blocks and work areas (entity/entity_pool.c) */
-extern char *held_weapon_area;
-extern int trade_menu_arena;
-extern char *hud_area;              /* the HUD textures (ui/hud.c) */
-extern char *item_effect_area;
-extern char *sound_bank_area;
-
 static char memory_arena[MEMORY_ARENA_SIZE]; /* 0x5FAF80 every area lies in it */
 
 /* Clears the arena, sets the size of each area and lays them out. */

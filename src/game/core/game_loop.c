@@ -20,156 +20,52 @@
 #include "player/magic_ladder.h"
 #include "ui/menu_screens.h"
 #include "gfx/packet.h"
+#include "core/display.h"
+#include "core/file.h"
+#include "core/ini.h"
+#include "core/timer.h"
+#include "enemy/enemy.h"
+#include "entity/entity.h"
+#include "entity/entity_ai.h"
+#include "gfx/draw_list.h"
+#include "gfx/gs_draw.h"
+#include "gfx/screen.h"
+#include "input/input.h"
+#include "item/item.h"
+#include <libvu0.h>
+#include <math.h>
+#include "math/angle.h"
+#include "model/model.h"
+#include "save/save_state.h"
+#include "script/script.h"
+#include "sound/sound_game.h"
+#include <stdlib.h>
+#include "ui/map_viewer.h"
+#include "ui/trade.h"
 
-void Game_ResetProgress(void);
-void Player_ResetForNewGame(void);
-void Ini_Load(int);
-void Game_NormalizeStartState(void);
-void Player_RecomputeStats(void);
-void Map_ResetGameState(void);
-void Map_ClearSlots(void);
-void MapLoad_Reset(void);
-void MapViewer_Init(void);
-void MapObject_ClearAllMaps(void);
-void MapItem_Init(void);
-void Attack_LoadMagicTable(void);
-int Game_CheckSaveImage(void);
-void Game_ReadSaveImage(void);
-void Player_ResetGauges(void);
-void Sound_LoadMgBank(int);
-void Sound_ApplyStereoOption(void);
-void Map_LoadAtOnce(int);
 int PlayTime_Start(void);
 void PlayTime_Resume(PlayTime);
-void Game_StartFadeIn(int, int, int, int);
-void Packet_SwapBuffers(void);
-void Display_SwapBuffers(int);
-int Timer_GetTicks(void);
-void Timer_Restart(void);
-void Packet_SendChain(void);
-void DrawList_Clear(void);
-void Wobble_StepOscillators(void);
-void Input_Update(void);
-int Script_UpdateAll(void);
 void GameLoop_UpdateCameraShake(void);
-void Interact_FindTarget(void);
-void MapLoad_Update(void);
-void Map_UpdateDrawState(void);
-void Entity_UpdatePool(void);
-void MapItem_UpdateFalling(void);
-void Player_UseItem(void);
-void GameLoop_RunSoundLoads(void);
-void Sound_Update(void);
-void Game_StepFade(void);
 void GameLoop_UpdateCamera(void);
 void GameLoop_SetCameraMatrices(int, int);
-void GsDraw_QueueVu1Matrix(void *);
-void GameLoop_DrawFrame(int);
 void Packet_WaitForSend(void);
-void MapItem_UpdatePickup(void);
-void Map_RunFreeCamera(void);
 void GameLoop_OpenRequestedMenu(void);
-void MapChange_RunToEnd(void);
 void GameLoop_UpdatePause(void);
-void Input_StopRumble(void);
-void Sound_SetBgmVolume(int);
-void Sound_SetBankVolumes(int);
 int sceGsSyncV(int);
-int Sound_BgmLoadCanYield(void);
-void File_CloseAll(void);
-void Wobble_AdvanceSines(void);
-void Packet_OnFrameStart(void);
-void GsDraw_ResetDrawTarget(void);
-void ModelTexture_ResetSlots(void);
-void Map_DrawRecords(int);
-void MapItem_DrawAll(int);
-void Map_DrawLateRecords(int);
-void DrawList_Draw(u32, u32);
-void GsDraw_EnableDepthTest(void);
-void MapItem_DrawPicked(int);
-void Map_CoverScreenWithMapTint(void);
-void GsDraw_ClearDepth(void);
-void Entity_DrawPoolModels(void);
-void Map_SetOffscreenTarget(void);
-void GsDraw_ClearFrame(void);
-void GsDraw_QueueTexFlush(void);
-void GsDraw_CopyFrame(int);
-void Game_DrawWobblingScreen(int, int, int, int, float);
-void Player_DrawScreenFade(void);
-void Game_DrawHazeLayers(void);
-void Game_DrawDepthTestSprite(void);
-void Game_BlendScreenOffsetDown(void);
-void Game_BlendScreenOffsetUpDown(void);
-void Game_BlendPreviousFrame(int);
-void Game_ShiftScreenByViewTurn(void);
-void GsDraw_FillScreen(int, int, int, int, s64);
-void Game_TintScreen(int, int, int);
-void Game_DrawFade(void);
-void Game_ApplyBrightness(int);
-void Packet_OnFrameEnd(void);
-MapRecordInfo *Map_FindRecordAtInSlot(CameraState *, f32, int);
-int rand(void);
-float Angle_Wrap(float);
-void sceVu0CopyMatrix(void *, void *);
-void sceVu0RotMatrixZ(float *, float *, float);
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0ApplyMatrix(float *, int *, float *);
 void Vector_Copy(void *, void *);
 void Vector_Scale(float *, float *, float);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Add(void *, void *, void *);
-int Angle_Approach(float *, float, float);
-float atan2f(float, float);
-float sqrtf(float);
-void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, float, float, float);
-void sceVu0TransMatrix(float *, float *, float *);
-void sceVu0InversMatrix(void *, void *);
-void sceVu0MulMatrix(void *, void *, void *);
-void Sound_StopAll(int);
-int Sound_LoadMapBankStep(int, int);
-int Sound_LoadEntityBankStep(int, int, int);
-int Sound_LoadBgm(int, int);
-void MapLoad_RequestHold(void);
-int MapLoad_IsHeld(void);
-int File_IsLocked(void);
-void File_Unlock(void);
 void GameLoop_DrawFrameWithoutHud(void);
-void Trade_Run(s32);
-void Smith_Run(void);
-void SaveScreen_Run(void);
-void MapViewer_OpenForItem(int);
 void GameLoop_ShowGrabbedFrame(int);
 void GameLoop_RedrawFrame(void);
-void MapViewer_Run(void);
-void File_Lock(void);
-void MapLoad_Release(void);
 void GameLoop_ClearBothBuffers(void);
-void *memset(void *, int, u32);
-void Packet_BeginGsRegisters(void);
-void Packet_AddGsRegister(int, s64);
-void Packet_EndGsRegisters(void);
-void GsDraw_QueueTexturedSprite(void *);
 void PlayTime_Update(void);
-void Input_PauseRumble(void);
-void Input_ResumeRumble(void);
-extern PlayerState player_state;
-extern int save_loaded;          /* nonzero: a saved game was loaded */
-extern u8 game_options[0x10];
-extern PlayTime save_play_time[];   /* the play time in the loaded save (save_image + 8) */
 extern SoundLoadQueue sound_load_queue;
 extern GameStatus game_status;
-extern MapSlot map_slots[];
-extern MapLoadState map_load_state;
 extern u16 pad_state[];
 extern f32 world_screen_matrix[16];
-extern s64 game_dbuff_clear_color[];
-extern s64 game_dbuff_context2_clear_color[];
-extern u32 frame_counter;
-extern u8 guardians_room_water_purified[];
 extern MapDrawStateOverlays map_draw_state;
-extern int message_dim_alpha;
-extern int current_map_slot;
 extern f32 scale_matrices[4][4];
 extern f32 origin_point[4];
 extern CameraState camera_state;
@@ -178,13 +74,6 @@ extern f32 identity_matrix[16];      /* the unit matrix */
 extern f32 view_screen_matrix[16];      /* view to screen */
 extern f32 world_view_matrix[16];      /* world to view */
 extern f32 inverse_camera_rotation[16];      /* the camera's rotation, inverted */
-extern LevelRecord weapon_level_records[];
-extern PlayerState player_previous;
-extern ItemCommonDef item_common_defs[];
-extern PlayerItemDef weapon_defs[];
-extern int context1_buffer_half;
-extern int context2_buffer_half;
-extern u16 pause_button;
 extern PlayTime current_play_time;
 
 /* Resets every game system for a new session; a loaded save is then applied on top. */
@@ -546,7 +435,7 @@ void GameLoop_UpdateCameraShake(void) {
     f32 angle;
 
     if (game_status.camera_mode != 0) {
-        record = Map_FindRecordAtInSlot(&camera_state, 100.0f, current_map_slot);
+        record = Map_FindRecordAtInSlot(camera_state.position, 100.0f, current_map_slot);
         if (record != NULL) {
             player_state.map_index = (u32)((char *)record - map_slots[current_map_slot].records) >> 14; // match: the byte offset of 0x80-byte records shifted by 14; 7 would give the record number
             player_state.record_flag_block = record->flag_block_bit;

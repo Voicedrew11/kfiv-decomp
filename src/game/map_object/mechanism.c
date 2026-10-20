@@ -5,16 +5,11 @@
 #include "effect/shot.h"
 #include "model/model.h"
 #include "map_object/map_object.h"
-
-void Vector_Subtract(void *, void *, void *);
-float atan2f(float, float);
-float Angle_Wrap(float);
-float sqrtf(float);
-int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
-extern void *object_under_player[];
-extern u32 game_status_flags[];
-extern PlayerState player_state;
-extern u32 frame_counter;
+#include "core/game.h"
+#include "enemy/enemy.h"
+#include <math.h>
+#include "math/angle.h"
+#include "math/vu0.h"
 
 /* Step 0 of kind 0xE, a platform that sinks under the player: at rest, with its state cleared; step 1. */
 void MapObject_StartSinkingPlatform(MapTrigger *trigger) {

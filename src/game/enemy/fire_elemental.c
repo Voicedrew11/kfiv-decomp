@@ -4,25 +4,22 @@
    records by hit points and experience, with resistances and drops where two monsters share those. */
 #include "entity/entity.h"
 #include "common.h"
+#include "enemy/enemy.h"
+#include "entity/entity_ai_handlers.h"
+#include "entity/entity_events.h"
+#include "math/vu0.h"
+#include "model/motion.h"
+#include <stdlib.h>
 
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void Motion_ClearPartSlots(EntityModel *);
-s32 Motion_StepModel(ModelInstance *, s32, s32);
-void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(Entity *);
-void EntityAi_Dormant(Entity *);
-void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 frame_counter;
 extern PlayerData player_state;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
-int EntityAi_ThinkIdle(void *, int);
-void EntityAi_ThinkPursue(Entity *, s32);
-int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
@@ -32,30 +29,17 @@ void EntityAi_ClearTurnInPlace(Entity *);
 float EntityMath_AngleDifference(float, float);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
-void EntityAi_Dodge(Entity *);
-void EntityAi_Guard(Entity *);
-void EntityAi_MeleeAttack(Entity *);
-void EntityAi_RangedAttack(Entity *);
-int Motion_Start(void *, int, int, u32, int);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 float EntityMath_WrapAngle(float);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
 float EntityMath_AngleXZ(float *, char *);
 extern u8 player_weapon_step[];
-extern EntityModel *held_item_model_ptr;
-int EntityShot_Launch(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *);
 void EntityAi_SetAttackDelay(Entity *, s32);
 float EntityMath_DistanceXZ(float *a, float *b);
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
-void EntityAi_ReactionRewind(Entity *);
-void EntityAi_ReactionLight(Entity *);
-void EntityAi_ReactionHeavy(Entity *);
 float EntityMath_HeadingTo(float *, float *);
-void Vector_Normalize(void *, void *);
-void Vector_Cross(void *, void *, void *);
-void Vector_Subtract(void *, void *, void *);
 
 static void FireElemental_Think(Entity *entity, s32 unknown);
 static void FireElemental_ThinkCombat(Entity *entity, s32 unknown);

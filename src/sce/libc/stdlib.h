@@ -17,6 +17,7 @@ double atof(const char *ascii);                                          /* defi
 int atoi(void *str);                                                     /* definition in sce/ */
 void qsort(void *base, unsigned int n, unsigned int size, int (*cmp)()); /* definition in sce/ */
 int rand(void);                                                          /* definition in sce/ */
+void srand(int seed);                                                    /* definition in sce/ */
 double strtod(const char *s00, char **se);                               /* definition in sce/ */
 long strtol(const char *s, char **ptr, int base);                        /* definition in sce/ */
 extern int __mb_cur_max; /* definition in sce/ (locale.c) */

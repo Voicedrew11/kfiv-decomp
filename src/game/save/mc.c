@@ -2,14 +2,9 @@
    state machine once a frame. Every library call is retried up to three times before the request fails; the
    outcome is left in mc_state.status. */
 #include "save/mc.h"
-
-void *memset(void *, int, u32);
-void *memcpy(void *, const void *, u32);
-char *strcpy(char *, const char *);
-int sceOpen(const char *, int);
-int sceRead(int, void *, int);
-int sceLseek(int, int, int);
-int sceClose(int);
+#include "core/file.h"
+#include <sifdev.h>
+#include <string.h>
 
 /* The module's .bss: a work area and the file state, packed at four bytes. */
 #define MC_4BYTE __attribute__((section(".bss"), aligned(4)))

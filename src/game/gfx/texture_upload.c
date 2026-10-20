@@ -5,6 +5,9 @@
 #include "gfx/texture.h"
 #include <eeregs.h>
 #include <libgraph.h>
+#include "core/file.h"
+#include <eekernel.h>
+#include <string.h>
 
 #define TEX0_BITS(header) ((TextureTex0Bits *)&(header)->tex0)
 
@@ -24,11 +27,6 @@ extern char tex0_csa_format[];      /* "CSA[%u] " */
 extern char tex0_cld_format[];      /* "CLD[0x%x]
 " */
 static u32 texflush_packet[0xC];    /* 0x1DFAF80 where Texture_SendTexFlush builds its DMA packet */
-
-int puts(char *);
-int printf(const char *, ...);
-int FlushCache(int);
-void *memcpy(void *, const void *, u32);
 
 static void Texture_LoadTm2(TextureHeader *header);
 static void Texture_BuildPacket(char **texture, char **packet);
