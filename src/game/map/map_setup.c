@@ -262,12 +262,12 @@ void MapSetup_EarthFolksVillage(int map) {
     light[4].light1_direction_y = 0.0f;
     light[4].light1_direction_z = 0.0f;
     light[4].light1_direction_x = -1.57f;
-    light[4].light1_red = 0.50980395f;
-    light[4].light1_green = 0.13725491f;
+    light[4].light1_red = 130.0f / 255.0f;
+    light[4].light1_green = 35.0f / 255.0f;
     light[4].light1_blue = 0.0f;
-    light[4].ambient_red = 0.6666667f;
-    light[4].ambient_green = 0.38431373f;
-    light[4].ambient_blue = 0.27450982f;
+    light[4].ambient_red = 170.0f / 255.0f;
+    light[4].ambient_green = 98.0f / 255.0f;
+    light[4].ambient_blue = 70.0f / 255.0f;
 }
 
 /* Set-up of the Cavern of Lava (map 024): at story flag 0 a light grey fog in block 5, otherwise a thin black one,
@@ -289,8 +289,8 @@ void MapSetup_CavernOfLava(int map) {
         fog[5].fog_base_value = -318.75f;
         fog[5].fog_inverse_depth_scale = 1.1475e+06f;
         fog[5].fog_colour = 0;
-        lights[9].colors[3].x = 0.6627451f;
-        lights[9].colors[3].y = 0.3372549f;
+        lights[9].colors[3].x = 169.0f / 255.0f;
+        lights[9].colors[3].y = 86.0f / 255.0f;
         lights[9].directions[0][0] = 0.0f;
         lights[9].directions[1][0] = 0.0f;
         lights[9].directions[2][0] = 0.0f;
@@ -470,9 +470,9 @@ void MapSetup_KingsThroneAlcoves(int map) {
         fog[3].fog_base_value = -127.5f;
         fog[3].fog_inverse_depth_scale = 382500.0f;
         fog[3].fog_colour = 0;
-        light[1].ambient_red = 0.29803923f;
-        light[1].ambient_green = 0.29803923f;
-        light[1].ambient_blue = 0.30980393f;
+        light[1].ambient_red = 76.0f / 255.0f;
+        light[1].ambient_green = 76.0f / 255.0f;
+        light[1].ambient_blue = 79.0f / 255.0f;
     }
 }
 

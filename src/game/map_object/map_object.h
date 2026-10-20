@@ -38,4 +38,7 @@ void MapObject_PlayScriptedAnim(MapObject *object, int anim, int bit22);
 void MapObject_SetScriptedBit21(MapObject *object, int bit21);
 void MapObject_ClearMap(int map);
 
+/* Units a moved map object covers per frame (pedestal and socket moves). */
+#define MAP_OBJECT_MOVE_SPEED 6.6666665f
+
 #endif

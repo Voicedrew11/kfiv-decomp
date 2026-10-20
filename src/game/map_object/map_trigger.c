@@ -5,6 +5,9 @@
 #include "map/map.h"
 #include "item/item.h"
 
+/* Fade progress added each frame by the map object fade (MapObject_FadeInObject). */
+#define MAP_TRIGGER_FADE_STEP 6.6666f
+
 void MapObject_UpdateBreakingItemHolder(MapObject *);
 void MapObject_SetupItemHolder(MapObject *);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
@@ -237,7 +240,7 @@ void MapObject_FadeInObject(MapTrigger *trigger) {
     memset(steps, 0, 0x10);
     steps[3] = 8;
     if (shot->fade_progress < 100000.0f) {
-        shot->fade_progress += 6.6666f;
+        shot->fade_progress += MAP_TRIGGER_FADE_STEP;
     }
     if (Model_FadeVertexColoursNear((int)trigger->model, shot, steps, targets, shot->fade_progress) == 0) {
         trigger->type = 3;

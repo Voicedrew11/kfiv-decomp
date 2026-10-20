@@ -13,6 +13,18 @@
 #include "input/pad.h"
 #include "ui/message.h"
 
+/* Picture pixels per 1000 world units on each map picture of the viewer. */
+#define CARETAKERS_MAP_X_SCALE 24.615385f
+#define CARETAKERS_MAP_Z_SCALE 24.88889f
+#define ZASTARI_PICTURE0_X_SCALE 18.626263f
+#define ZASTARI_PICTURE0_Z_SCALE 18.666666f
+#define ZASTARI_PICTURE1_X_SCALE 11.243243f
+#define ZASTARI_PICTURE1_Z_SCALE 11.48718f
+#define ZASTARI_PICTURE2_X_SCALE 11.186992f
+#define EARTH_FOLKS_MAP_X_SCALE 22.857143f
+#define WIDDAS_MAP_X_SCALE 21.333334f
+#define WIDDAS_MAP_Z_SCALE 20.363636f
+
 int MapViewer_IsKingsMapUsable(int);
 void MapViewer_Reset(void);
 static void MapViewer_RestorePacketBuffers(void);
@@ -491,8 +503,8 @@ int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y) {
             case 0x5F:
             case 0x60:
             case 0x61:
-                *screen_x = (player_state.position.x - 0.0f) * 24.615385f / 1000.0f + 148.0f;
-                *screen_y = 273.0f - (player_state.position.z - 0.0f) * 24.88889f / 1000.0f;
+                *screen_x = (player_state.position.x - 0.0f) * CARETAKERS_MAP_X_SCALE / 1000.0f + 148.0f;
+                *screen_y = 273.0f - (player_state.position.z - 0.0f) * CARETAKERS_MAP_Z_SCALE / 1000.0f;
                 return TRUE;
             }
         } else {
@@ -502,8 +514,8 @@ int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y) {
                     return FALSE;
                 }
             case 0x60:
-                *screen_x = (player_state.position.x - 3600.0f) * 24.615385f / 1000.0f + 490.0f;
-                *screen_y = 143.0f - (player_state.position.z - 5200.0f) * 24.88889f / 1000.0f;
+                *screen_x = (player_state.position.x - 3600.0f) * CARETAKERS_MAP_X_SCALE / 1000.0f + 490.0f;
+                *screen_y = 143.0f - (player_state.position.z - 5200.0f) * CARETAKERS_MAP_Z_SCALE / 1000.0f;
                 return TRUE;
             case 0x61: // match: named although it does what the default does; it shapes the compare tree
             default:
@@ -523,63 +535,63 @@ int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y) {
         switch (map_slots[current_map_slot].tag) {
         case 0x70:
         case 0x71:
-            *screen_x = (player_state.position.x - 0.0f) * 18.626263f / 1000.0f + 321.0f;
-            *screen_y = 280.0f - (player_state.position.z - 0.0f) * 18.666666f / 1000.0f;
+            *screen_x = (player_state.position.x - 0.0f) * ZASTARI_PICTURE0_X_SCALE / 1000.0f + 321.0f;
+            *screen_y = 280.0f - (player_state.position.z - 0.0f) * ZASTARI_PICTURE0_Z_SCALE / 1000.0f;
             return TRUE;
         case 0x73:
-            *screen_x = (player_state.position.x - -10500.0f) * 18.626263f / 1000.0f + 321.0f;
-            *screen_y = 280.0f - (player_state.position.z - 500.0f) * 18.666666f / 1000.0f;
+            *screen_x = (player_state.position.x - -10500.0f) * ZASTARI_PICTURE0_X_SCALE / 1000.0f + 321.0f;
+            *screen_y = 280.0f - (player_state.position.z - 500.0f) * ZASTARI_PICTURE0_Z_SCALE / 1000.0f;
             return TRUE;
         case 0x74:
-            *screen_x = (player_state.position.x - -9700.0f) * 18.626263f / 1000.0f + 321.0f;
-            *screen_y = 280.0f - (player_state.position.z - -8900.0f) * 18.666666f / 1000.0f;
+            *screen_x = (player_state.position.x - -9700.0f) * ZASTARI_PICTURE0_X_SCALE / 1000.0f + 321.0f;
+            *screen_y = 280.0f - (player_state.position.z - -8900.0f) * ZASTARI_PICTURE0_Z_SCALE / 1000.0f;
             return TRUE;
         }
         break;
     case 1:
         switch (map_slots[current_map_slot].tag) {
         case 0x1F:
-            *screen_x = (player_state.position.x - 0.0f) * 11.243243f / 1000.0f + 348.0f;
-            *screen_y = 263.0f - (player_state.position.z - -12100.0f) * 11.48718f / 1000.0f;
+            *screen_x = (player_state.position.x - 0.0f) * ZASTARI_PICTURE1_X_SCALE / 1000.0f + 348.0f;
+            *screen_y = 263.0f - (player_state.position.z - -12100.0f) * ZASTARI_PICTURE1_Z_SCALE / 1000.0f;
             return TRUE;
         case 0x6B:
         case 0x6C:
         case 0x6D:
         case 0x6E:
         case 0x6F:
-            *screen_x = (player_state.position.x - 0.0f) * 11.243243f / 1000.0f + 348.0f;
-            *screen_y = 263.0f - (player_state.position.z - 0.0f) * 11.48718f / 1000.0f;
+            *screen_x = (player_state.position.x - 0.0f) * ZASTARI_PICTURE1_X_SCALE / 1000.0f + 348.0f;
+            *screen_y = 263.0f - (player_state.position.z - 0.0f) * ZASTARI_PICTURE1_Z_SCALE / 1000.0f;
             return TRUE;
         case 0x73:
-            *screen_x = (player_state.position.x - -10500.0f) * 11.243243f / 1000.0f + 348.0f;
-            *screen_y = 263.0f - (player_state.position.z - 500.0f) * 11.48718f / 1000.0f;
+            *screen_x = (player_state.position.x - -10500.0f) * ZASTARI_PICTURE1_X_SCALE / 1000.0f + 348.0f;
+            *screen_y = 263.0f - (player_state.position.z - 500.0f) * ZASTARI_PICTURE1_Z_SCALE / 1000.0f;
             return TRUE;
         }
         break;
     case 2:
         switch (map_slots[current_map_slot].tag) {
         case 0xF:
-            *screen_x = (player_state.position.x - 9300.0f) * 11.186992f / 1000.0f + 194.0f;
+            *screen_x = (player_state.position.x - 9300.0f) * ZASTARI_PICTURE2_X_SCALE / 1000.0f + 194.0f;
             *screen_y = 167.0f - (player_state.position.z - -4400.0f) * 11.2f / 1000.0f;
             return TRUE;
         case 0x10:
-            *screen_x = (player_state.position.x - 700.0f) * 11.186992f / 1000.0f + 335.0f;
+            *screen_x = (player_state.position.x - 700.0f) * ZASTARI_PICTURE2_X_SCALE / 1000.0f + 335.0f;
             *screen_y = 328.0f - (player_state.position.z - 1650.0f) * 11.2f / 1000.0f;
             return TRUE;
         case 0x64:
         case 0x69:
         case 0x6A:
-            *screen_x = (player_state.position.x - 0.0f) * 11.186992f / 1000.0f + 326.0f;
+            *screen_x = (player_state.position.x - 0.0f) * ZASTARI_PICTURE2_X_SCALE / 1000.0f + 326.0f;
             *screen_y = 168.0f - (player_state.position.z - 0.0f) * 11.2f / 1000.0f;
             return TRUE;
         case 0x65:
-            *screen_x = (player_state.position.x - 3800.0f) * 11.186992f / 1000.0f + 326.0f;
+            *screen_x = (player_state.position.x - 3800.0f) * ZASTARI_PICTURE2_X_SCALE / 1000.0f + 326.0f;
             *screen_y = 168.0f - (player_state.position.z - -7900.0f) * 11.2f / 1000.0f;
             return TRUE;
         case 0x66:
         case 0x67:
         case 0x68:
-            *screen_x = (player_state.position.x - -7050.0f) * 11.186992f / 1000.0f + 326.0f;
+            *screen_x = (player_state.position.x - -7050.0f) * ZASTARI_PICTURE2_X_SCALE / 1000.0f + 326.0f;
             *screen_y = 168.0f - (player_state.position.z - 0.0f) * 11.2f / 1000.0f;
             return TRUE;
         }
@@ -598,13 +610,13 @@ int MapViewer_LocateOnEarthFolksMap(int *map_x, int *map_y) {
     area = ((u8 *)entry)[1];
     if (area >= 0x11) {
         if (area < 0x14) {
-            *map_x = (player_state.position.x - 0.0f) * 22.857143f / 1000.0f + 360.0f;
+            *map_x = (player_state.position.x - 0.0f) * EARTH_FOLKS_MAP_X_SCALE / 1000.0f + 360.0f;
             *map_y = 206.0f - (player_state.position.z - 0.0f) * 22.4f / 1000.0f;
             return TRUE;
         }
         if (area < 0x1A) {
             if (area >= 0x18) {
-                *map_x = (player_state.position.x - 0.0f) * 22.857143f / 1000.0f + 205.0f;
+                *map_x = (player_state.position.x - 0.0f) * EARTH_FOLKS_MAP_X_SCALE / 1000.0f + 205.0f;
                 *map_y = 368.0f - (player_state.position.z - 0.0f) * 22.4f / 1000.0f;
                 return TRUE;
             }
@@ -618,12 +630,12 @@ int MapViewer_LocateOnEarthFolksMap(int *map_x, int *map_y) {
 int MapViewer_LocateOnWiddasMap(int *screen_x, int *screen_y) {
     switch (map_slots[current_map_slot].tag) {
     case 0x1A:
-        *screen_x = (player_state.position.x - -3200.0f) * 21.333334f / 1000.0f + 438.0f;
-        *screen_y = 214.0f - (player_state.position.z - -5600.0f) * 20.363636f / 1000.0f;
+        *screen_x = (player_state.position.x - -3200.0f) * WIDDAS_MAP_X_SCALE / 1000.0f + 438.0f;
+        *screen_y = 214.0f - (player_state.position.z - -5600.0f) * WIDDAS_MAP_Z_SCALE / 1000.0f;
         break;
     case 0x1B:
-        *screen_x = (player_state.position.x - -8800.0f) * 21.333334f / 1000.0f + 320.0f;
-        *screen_y = 82.0f - (player_state.position.z - 900.0f) * 20.363636f / 1000.0f;
+        *screen_x = (player_state.position.x - -8800.0f) * WIDDAS_MAP_X_SCALE / 1000.0f + 320.0f;
+        *screen_y = 82.0f - (player_state.position.z - 900.0f) * WIDDAS_MAP_Z_SCALE / 1000.0f;
         break;
     default:
         return FALSE;

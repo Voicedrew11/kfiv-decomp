@@ -73,7 +73,7 @@ void MapObject_UpdateEmptyPedestal(MapObject *object) {
         sceVu0RotMatrixY(matrix, identity_matrix, -object->model->rotation.y);
         Vector_ApplyMatrix(work, matrix, work);
         distance = sqrtf(work->step.x * work->step.x + work->step.y * work->step.y + work->step.z * work->step.z);
-        work->frames = distance / 6.6666665f;
+        work->frames = distance / MAP_OBJECT_MOVE_SPEED;
         Vector_Subtract(part->position, part->position, work);
         Vector_Scale(&work->step.x, &work->step.x, 1.0f / work->frames);
         game_status.update_hold_flags |= 1;
@@ -169,7 +169,7 @@ void MapObject_LiftPedestalItem(MapObject *object) {
     sceVu0RotMatrixX(matrix, identity_matrix, object->model->rotation.x);
     sceVu0RotMatrixY(matrix, identity_matrix, -object->model->rotation.y);
     Vector_ApplyMatrix(work, matrix, work);
-    frames = distance / 6.6666665f;
+    frames = distance / MAP_OBJECT_MOVE_SPEED;
     work->frames = frames;
     Vector_Scale(&work->step.x, &work->step.x, 1.0f / frames);
 }

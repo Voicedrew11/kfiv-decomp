@@ -3,6 +3,9 @@
 #ifndef KF_ITEM_H
 #define KF_ITEM_H
 
+/* Item and gold placement records store rotation, scale and radius in 1/16 units. */
+#define ITEM_RECORD_FIXED_SCALE     (1.0f / 16.0f)
+
 /* 0 to 149: things carried; param/item_cmn.prm has a row for each */
 #define ITEM_HERB                   6
 #define ITEM_HERBAL_LIQUID          7

@@ -1,4 +1,5 @@
 #include "item/gold.h"
+#include "item/item.h"
 #include "collision/collision.h"
 #include "core/game.h"
 #include "map_object/map_object.h"
@@ -134,7 +135,7 @@ void Gold_InitMap(int map) {
             position[0] = marks.marks[i].x;
             position[1] = marks.marks[i].y;
             position[2] = marks.marks[i].z;
-            rotation[1] = marks.marks[i].radius * 0.0625f;
+            rotation[1] = marks.marks[i].radius * ITEM_RECORD_FIXED_SCALE;
             Gold_Drop((Vector4 *)position, (Vector4 *)rotation, map, marks.marks[i].amount, marks.marks[i].object_id,
                          FALSE, FALSE);
         }

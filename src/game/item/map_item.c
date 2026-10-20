@@ -9,6 +9,9 @@
 #include "input/pad.h"
 #include "map_object/map_object.h"
 
+/* Radians the held item turns each frame while the pickup is held. */
+#define PICKUP_HOLD_SPIN_PER_FRAME 0.08377580f
+
 void MapItem_ClearMap(int);
 s32 MapItem_Drop(s32, s32, s32, f32 *, f32, f32 *, f32 *, f32 *, u32);
 ItemModelSource *MapItem_FindModelSource(int, int);
@@ -206,12 +209,12 @@ void MapItem_InitMap(int map) {
             position[0] = record->position[0];
             position[1] = record->position[1];
             position[2] = record->position[2];
-            rotation[0] = record->rotation[0] * 0.0625f;
-            rotation[1] = record->rotation[1] * 0.0625f;
-            rotation[2] = record->rotation[2] * 0.0625f;
-            scale[0] = record->scale[0] * 0.0625f;
-            scale[1] = record->scale[1] * 0.0625f;
-            scale[2] = record->scale[2] * 0.0625f;
+            rotation[0] = record->rotation[0] * ITEM_RECORD_FIXED_SCALE;
+            rotation[1] = record->rotation[1] * ITEM_RECORD_FIXED_SCALE;
+            rotation[2] = record->rotation[2] * ITEM_RECORD_FIXED_SCALE;
+            scale[0] = record->scale[0] * ITEM_RECORD_FIXED_SCALE;
+            scale[1] = record->scale[1] * ITEM_RECORD_FIXED_SCALE;
+            scale[2] = record->scale[2] * ITEM_RECORD_FIXED_SCALE;
             MapItem_Drop(map, record->item, record->priority, position, position[1], offset, rotation, scale,
                           record->order);
         }
@@ -754,7 +757,7 @@ void MapItem_PickupAim(void) {
         Vector_Scale(pickup_velocity, pickup_velocity, 5.0f);
         pickup_move_frames = distance / 5.0f;
     } else {
-        Vector_Scale(pickup_velocity, delta, 0.06666667f);
+        Vector_Scale(pickup_velocity, delta, (1.0f / 15.0f));
         pickup_move_frames = 15;
     }
     pickup_pose_scale = 1.0f;
@@ -786,13 +789,13 @@ void MapItem_PickupHold(void) {
     f32 delta[4];
 
     pickup_pose_scale = 0.0f;
-    pickup_item->model->rotation.y = Angle_Wrap(pickup_item->model->rotation.y + 0.08377580f);
+    pickup_item->model->rotation.y = Angle_Wrap(pickup_item->model->rotation.y + PICKUP_HOLD_SPIN_PER_FRAME);
     if (pad_pressed[0] & PAD_CROSS) {
         if (!Player_CannotCarryItem((s16)pickup_item->item)) {
             Vector_Copy(pickup_target_position, &player_state);
             pickup_target_position[1] -= 115.0f;
             Vector_Subtract(delta, pickup_target_position, &pickup_item->model->position);
-            Vector_Scale(pickup_velocity, delta, 0.06666667f);
+            Vector_Scale(pickup_velocity, delta, (1.0f / 15.0f));
             pickup_frames_left = 15;
             pickup_step++;
             return;
