@@ -11,6 +11,9 @@
 #include "math/angle.h"
 #include "math/vu0.h"
 
+/* MapObjectUnk04.kind values this file tests; the others are in map_object.h */
+#define MAP_OBJECT_KIND_PITFALL             18      /* a pit that opens under the player (mechanism.c) */
+
 /* cos 20 degrees: a quad whose normal is within 20 degrees of vertical is a floor or a ceiling */
 #define QUAD_FLOOR_NORMAL_Y 0.93969f
 
@@ -660,16 +663,16 @@ void Collision_CastSegmentAtMap(f32 *position, f32 *target) {
 void Collision_HitRayObj(MapObject *object, f32 *origin, f32 *direction, f32 reach) {
     COLLISION_RESULT->hit = 0;
     switch (object->definition->kind) {
-    case 1:
+    case MAP_OBJECT_KIND_DOOR:
         Collision_HitRayBoxObj(object, origin, direction, reach);
         break;
-    case 2:
+    case MAP_OBJECT_KIND_DOUBLE_DOOR:
         Collision_HitRayDoubleDoorObj(object, origin, direction, reach);
         break;
-    case 17:
+    case MAP_OBJECT_KIND_SIGNAL_DOOR:
         Collision_HitRayQuadObj((AnimObject *)object, origin, direction, reach);
         break;
-    case 18:
+    case MAP_OBJECT_KIND_PITFALL:
         Collision_HitRayPitfallObj(object, origin, direction, reach);
         break;
     default:
@@ -703,16 +706,16 @@ void Collision_HitSphereObj(MapObject *object, f32 *point, f32 reach) {
         return;
     }
     switch (object->definition->kind) {
-    case 1:
+    case MAP_OBJECT_KIND_DOOR:
         Collision_HitSphereBoxObj(object, point, reach);
         break;
-    case 2:
+    case MAP_OBJECT_KIND_DOUBLE_DOOR:
         Collision_HitSphereDoubleDoorObj(object, point, reach);
         break;
-    case 17:
+    case MAP_OBJECT_KIND_SIGNAL_DOOR:
         Collision_HitSphereQuadObj(object, point, reach);
         break;
-    case 18:
+    case MAP_OBJECT_KIND_PITFALL:
         Collision_HitSpherePitfallObj(object, point, reach);
         break;
     default:
@@ -742,16 +745,16 @@ void Collision_HitCapsuleObj(MapObject *object, f32 *point, f32 reach, f32 heigh
         return;
     }
     switch (object->definition->kind) {
-    case 1:
+    case MAP_OBJECT_KIND_DOOR:
         Collision_HitCapsuleBoxObj(object, point, reach, height);
         break;
-    case 2:
+    case MAP_OBJECT_KIND_DOUBLE_DOOR:
         Collision_HitCapsuleDoubleDoorObj(object, point, reach, height);
         break;
-    case 17:
+    case MAP_OBJECT_KIND_SIGNAL_DOOR:
         Collision_HitCapsuleQuadObj((CollisionOwner *)object, point, reach, height);
         break;
-    case 18:
+    case MAP_OBJECT_KIND_PITFALL:
         // match: the pitfall test is an empty function, but it is passed everything the others are
         ((MapObjectSweepTest)Collision_HitCapsulePitfallObj)(object, point, reach, height);
         break;
@@ -802,16 +805,16 @@ void Collision_HitFanObj(MapObject *object, Vector4 *origin, f32 radius, f32 pus
         return;
     }
     switch (object->definition->kind) {
-    case 1:
+    case MAP_OBJECT_KIND_DOOR:
         Collision_HitFanBoxObj(object, origin, radius, push, first_x, first_z, second_x, second_z);
         break;
-    case 2:
+    case MAP_OBJECT_KIND_DOUBLE_DOOR:
         Collision_HitFanDoubleDoorObj(object, origin, radius, push, first_x, first_z, second_x, second_z);
         break;
-    case 17:
+    case MAP_OBJECT_KIND_SIGNAL_DOOR:
         Collision_HitFanQuadObj(object, origin, radius, push, first_x, first_z, second_x, second_z);
         break;
-    case 18:
+    case MAP_OBJECT_KIND_PITFALL:
         // match: the pitfall test is an empty function, but it is passed everything the others are
         ((MapObjectFanTest)Collision_HitFanPitfallObj)(object, origin, radius, push, first_x, first_z, second_x, second_z);
         break;
@@ -882,16 +885,16 @@ void Collision_PushOutOfObjects(f32 *centre, s32 measure, f32 radius, f32 push) 
                 continue;
             }
             switch (object->definition->kind) {
-            case 1:
+            case MAP_OBJECT_KIND_DOOR:
                 Collision_PushOutOfBoxObj(object, centre, radius, push);
                 break;
-            case 2:
+            case MAP_OBJECT_KIND_DOUBLE_DOOR:
                 Collision_PushOutOfDoubleDoorObj(object, centre, radius, push);
                 break;
-            case 17:
+            case MAP_OBJECT_KIND_SIGNAL_DOOR:
                 Collision_PushOutOfQuadObj((CollisionOwner *)object, centre, radius, push);
                 break;
-            case 18:
+            case MAP_OBJECT_KIND_PITFALL:
                 // match: the pitfall test is an empty function, but it is passed everything the others are
                 ((MapObjectCircleTest)Collision_PushOutOfPitfallObj)(object, centre, radius, push);
                 break;
@@ -948,15 +951,15 @@ s32 Collision_StandOnObjects(f32 *centre, s32 measure, f32 radius, f32 push) {
                 continue;
             }
             switch (object->definition->kind) {
-            case 1:
-            case 2:
+            case MAP_OBJECT_KIND_DOOR:
+            case MAP_OBJECT_KIND_DOUBLE_DOOR:
                 break;
-            case 17:
+            case MAP_OBJECT_KIND_SIGNAL_DOOR:
                 if (Collision_StandOnQuadObj((CollisionOwner *)object, centre, radius)) {
                     NOTE_FOUND(object);
                 }
                 break;
-            case 18:
+            case MAP_OBJECT_KIND_PITFALL:
                 if (Collision_StandOnPitfallObj(object, centre, radius)) {
                     NOTE_FOUND(object);
                 }
