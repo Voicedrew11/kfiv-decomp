@@ -46,7 +46,7 @@ static void Script_WriteSharedVar(ScriptArg *source, u32 code, int offset);
 static void Script_WriteCurrentLocalVar(ScriptArg *source, u32 code, int offset);
 static void Script_WriteLocalVar(ScriptArg *source, ScriptThread *thread, u32 code, int offset);
 static u32 *Script_StartCommand(ScriptThread *thread, u32 *cursor);
-static int Script_HaltCursor(void);
+static u32 *Script_HaltCursor(u32 *cursor);
 static int Script_UnusedStub(void);
 
 /* Fills count words at dest with value. */
@@ -382,8 +382,7 @@ static int Script_Advance(ScriptThread *thread) {
             cursor = Script_EvalSet(thread, cursor);
             break;
         case SCRIPT_WORD_HALT:
-            // match: Script_HaltCursor is a stub that takes nothing and returns 0, so the cursor becomes NULL
-            cursor = (u32 *)((int (*)(u32 *))Script_HaltCursor)(cursor);
+            cursor = Script_HaltCursor(cursor);
             running = no_wait;
             started = TRUE;
             thread->commands[Script_FindFreeCommand(thread)].active = 4;
@@ -877,8 +876,8 @@ static u32 *Script_StartCommand(ScriptThread *thread, u32 *cursor) {
 }
 
 /* The handler of word 0x19D: returns 0, so the thread's cursor becomes NULL and it halts. */
-static int Script_HaltCursor(void) {
-    return 0;
+static u32 *Script_HaltCursor(u32 *cursor) {
+    return NULL;
 }
 
 /* Hands a command's answer back to the script: writes `value` to the variable the argument `target` names

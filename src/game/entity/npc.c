@@ -79,8 +79,7 @@ void Npc_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    // match: called as returning an int, which keeps $2 busy after the call
-    ((int (*)(EntityModel *, s32, s32))Motion_StepModel)(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
     ENTITY_FLAG_BITS(entity)->not_targetable = TRUE;
 }
 
@@ -609,8 +608,7 @@ void Npc_InitType81(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    // match: called as returning an int, which keeps $2 busy after the call
-    ((int (*)(EntityModel *, s32, s32))Motion_StepModel)(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
     ENTITY_FLAG_BITS(entity)->not_targetable = TRUE;
 }
 

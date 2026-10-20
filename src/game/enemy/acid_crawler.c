@@ -254,7 +254,7 @@ static void AcidCrawler_Think(Entity *entity, s32 run_now) {
         AcidCrawler_ThinkCombat(entity, run_now);
         return;
     }
-    ((void (*)(void *, int))EntityAi_ThinkIdle)(entity, run_now); // match: called as void, $2 is reused at once
+    EntityAi_ThinkIdle(entity, run_now);
     ai_state->step_index = 1;
 }
 

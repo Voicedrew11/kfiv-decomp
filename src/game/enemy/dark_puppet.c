@@ -246,7 +246,7 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 run_now) {
                 if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + PI))) {
                     ai_state->move_choice = rand() % 3 + 2;
                 } else {
-                    entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
+                    entity->move_command |= EntityAi_TurnCommand(entity);
                     entity->move_command |= MOVE_COMMAND_BACK;
                 }
                 break;
@@ -254,7 +254,7 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 run_now) {
                 if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] - HALF_PI))) {
                     ai_state->move_choice = 3;
                 } else {
-                    entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
+                    entity->move_command |= EntityAi_TurnCommand(entity);
                     entity->move_command |= MOVE_COMMAND_STEP_LEFT;
                     if ((f32)entity->params->far_distance < entity->distance_to_player) {
                         entity->move_command |= MOVE_COMMAND_FORWARD;
@@ -267,7 +267,7 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 run_now) {
                 if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + HALF_PI))) {
                     ai_state->move_choice = 2;
                 } else {
-                    entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
+                    entity->move_command |= EntityAi_TurnCommand(entity);
                     entity->move_command |= MOVE_COMMAND_STEP_RIGHT;
                     if ((f32)entity->params->far_distance < entity->distance_to_player) {
                         entity->move_command |= MOVE_COMMAND_FORWARD;

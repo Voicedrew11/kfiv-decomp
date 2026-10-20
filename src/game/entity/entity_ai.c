@@ -104,7 +104,7 @@ void EntityAi_SetState(Entity *entity, u8 state) {
 
 /* Installs the entity's per-frame update (Entity.update_func; the type table entity_type_handlers gives it) and puts
    action_step back to 0. */
-void EntityAi_SetUpdate(Entity *entity, s32 update) {
+void EntityAi_SetUpdate(Entity *entity, EntityHandler update) {
     entity->update_func = update;
     entity->action_step = 0;
 }
@@ -1894,7 +1894,7 @@ int EntityAi_StartSlotMotion(Entity *entity, EntityMotionSlotWord *slot, int cha
 
 /* Plays a motion slot a step on (Motion_BlendSlotToPose with weight) and returns its frames left, counted down by
    one. */
-int EntityAi_StepSlotMotion(Entity *entity, EntityMotionSlot *slot, int channel, f32 weight) {
+int EntityAi_StepSlotMotion(Entity *entity, EntityAiMotionSlotBits *slot, int channel, f32 weight) {
     u8 frames_left;
 
     Motion_BlendSlotToPose(ENTITY_MODEL(entity), channel, entity->params->motion_ids[slot->index], slot->frame, weight);

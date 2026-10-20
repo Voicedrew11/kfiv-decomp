@@ -45,7 +45,7 @@ void MapObject_ClearMap(int map);
 
 /* map_object/chest.c */
 void MapObject_UpdateOpenChest(MapObject *object);
-void MapObject_UpdateClosedChest(void *arg, int unused);
+void MapObject_UpdateClosedChest(MapObject *object);
 void MapObject_SetupItemHolder(MapObject *object);
 void MapObject_UpdateItemHolder(MapObject *object);
 void MapObject_UpdateBreakingItemHolder(MapObject *object);

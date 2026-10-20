@@ -607,7 +607,7 @@ void ModelScreen_SetUvsFromScreen(ModelInstance *model) {
         FlushCache(0);
         sceVu0MulMatrix(matrix, world_screen_matrix, part);
         Vu0_LoadMatrix(matrix);
-        ((void (*)(int))FlushCache)(0); // match: called as void, retail reuses $2 at once
+        FlushCache(0);
         count = part->data_count;
         next_data = (ModelPartData *)(int)part->data_addr;
         for (j = 0; j < count; j++) {

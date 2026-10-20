@@ -101,9 +101,7 @@ static void WindElemental_Think(Entity *entity, s32 run_now) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
-            // match: called as returning nothing, so $2 is free for the next statement
-            // match: the result is not used, retail calls it as void
-            ((void (*)(void *, int))EntityAi_ThinkReturn)(entity, run_now);
+            EntityAi_ThinkReturn(entity, run_now);
             entity->move_command |= (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST);
         } else {
             switch (entity->state) {

@@ -11,7 +11,7 @@
 void Npc_Init(Entity *entity);
 
 /* The think handler of type 15: turns to the player, watches it, turns back (states 4-6). */
-void Npc_Think(Entity *entity, s32 unknown);
+void Npc_Think(Entity *entity, s32 run_now);
 
 /* The set-up function of entity type 81: as Npc_Init, with Npc_ThinkType81 and Npc_OnHitType81. */
 void Npc_InitType81(Entity *entity);

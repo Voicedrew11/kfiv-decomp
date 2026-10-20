@@ -106,7 +106,7 @@ static void AncientKing_Animate(Entity *entity) {
     }
     if (slots->motion_slot_0.frames_left != 0) {
         // match: the caller passes a float the callee does not take
-        ENTITY_FLAG_BITS(entity)->motion_ended = ((int (*)(void *, void *, int, float))EntityAi_StepSlotMotion)(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, 1.0f / slots->motion_slot_0.frames_left);
+        ENTITY_FLAG_BITS(entity)->motion_ended = EntityAi_StepSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, 1.0f / slots->motion_slot_0.frames_left);
     } else {
         previous = slots->motion_slot_0.frame_fixed;
         Motion_StepSlot(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, ENTITY_FLAG_BITS(entity)->motion_step_mode);
@@ -117,7 +117,7 @@ static void AncientKing_Animate(Entity *entity) {
     }
     if (slots->motion_slot_1.frames_left != 0) {
         // match: the caller passes a float the callee does not take
-        ((int (*)(void *, void *, int, float))EntityAi_StepSlotMotion)(entity, &slots->motion_slot_1, 1, 1.0f / slots->motion_slot_1.frames_left);
+        EntityAi_StepSlotMotion(entity, &slots->motion_slot_1, 1, 1.0f / slots->motion_slot_1.frames_left);
     } else {
         previous = slots->motion_slot_1.frame_fixed;
         ENTITY_FLAG_BITS(entity)->motion_ended = Motion_StepSlot(entity, &slots->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->motion_step_mode);

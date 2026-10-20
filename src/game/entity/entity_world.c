@@ -50,7 +50,7 @@ void Entity_InitInert(Entity *entity) {
 }
 
 /* The per-frame update entity_type_handlers gives the types Entity_InitInert sets up: does nothing. */
-void Entity_UpdateInert(void) {
+void Entity_UpdateInert(Entity *entity) {
 }
 
 /* Empty. main calls it once among the set-up calls at start; what it was for is not known. */
@@ -206,7 +206,7 @@ void Entity_ResetToSpawn(Entity *entity) {
     entity->knockback_damping = ABS(entity->knockback_damping);
     entity->model->radius = (entity->collision_radius < entity->collision_height) ? entity->collision_height : entity->collision_radius;
     Motion_Start(entity, 0, 0, 0, 1);
-    ((void (*)(Entity *))entity_type_handlers[entity->params->entity_type][0])(entity);
+    entity_type_handlers[entity->params->entity_type][0](entity);
     Entity_RebuildModelMatrices(entity);
 }
 
@@ -341,7 +341,7 @@ void Entity_UpdateAll(void) {
         if (entity->update_func == 0) {
             continue;
         }
-        ((void (*)(Entity *))entity->update_func)(entity);
+        entity->update_func(entity);
         if (entity->knockback_speed > 0.0f) {
             entity->knockback_speed -= entity->knockback_damping * 4.0f / 10.0f;
         }
