@@ -3,6 +3,16 @@
 
 #include "common.h"
 
+/* glyph codes: below 0x800 a full-width glyph, then flags */
+#define GLYPH_HALF_WIDTH 0x800
+#define GLYPH_NUMBER 0x1000      /* the next argument, in digit glyphs padded with blanks; width in bits 8-11 */
+#define GLYPH_RAW_NUMBER 0x2000  /* the next argument, in raw digits padded with 0x4AF */
+#define GLYPH_COLOR 0x4000      /* colour in bits 8-11 */
+#define GLYPH_NEW_LINE -0x8000
+#define GLYPH_END -1
+#define GLYPH_FIELD_MASK 0xF00      /* the colour or the width of a control code, bits 8-11 */
+#define GLYPH_CONTROL_MASK 0xF000   /* set on every control code (number, raw number, colour, new line) */
+
 /* one of the six notices of the ring, the short messages Message_ShowNotice puts on screen */
 typedef struct MessageSlot {
     s16 *text;                      /* 0x00 glyph stream, ended by -1 */

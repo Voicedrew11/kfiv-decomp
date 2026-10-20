@@ -114,6 +114,11 @@ typedef struct {
     s32 selection;                  /* 0x04 the selected line or text number of the screen; cleared when a screen is left */
 } MenuScreenContext;
 
+/* the bits of one card slot's four in card_screen_state.card_problem_codes */
+#define CARD_SLOT_USABLE 0x1
+#define CARD_SLOT_FORMAT 0x2
+#define CARD_SLOT_PROBLEM 0x4
+
 /* card_screen_state: state of the menu screen Menu_UpdateCardSlot runs; Menu_OpenCardSlot resets it */
 typedef struct {
     s32 card_update_result;         /* 0x00 SaveCard_Update's result: negative marks a card failure */

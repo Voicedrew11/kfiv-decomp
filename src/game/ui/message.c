@@ -1,6 +1,8 @@
 #include "ui/message.h"
 #include "core/file.h"
 #include "gfx/gs.h"
+#include "gfx/packet.h"
+#include <eeregs.h>
 #include "core/memory.h"
 #include "gfx/texture.h"
 
@@ -12,14 +14,6 @@ typedef char *va_list;
 #define NOTICE_COUNT 6
 #define DEBUG_LOG_LINES 0x80
 #define DEBUG_LOG_LINE_SIZE 0x108
-
-/* glyph codes: below 0x800 a full-width glyph, then flags */
-#define GLYPH_HALF_WIDTH 0x800
-#define GLYPH_NUMBER 0x1000      /* the next argument, in digit glyphs padded with blanks; width in bits 8-11 */
-#define GLYPH_RAW_NUMBER 0x2000  /* the next argument, in raw digits padded with 0x4AF */
-#define GLYPH_COLOR 0x4000      /* colour in bits 8-11 */
-#define GLYPH_NEW_LINE -0x8000
-#define GLYPH_END -1
 
 #define GLYPH_GIF_NREG (7 << 28) /* high word of the glyphs' GIF tag: seven registers each */
 
@@ -206,7 +200,7 @@ static void Message_Draw(void) {
         }
         /* seven quadwords for each glyph after a header of 12 */
         words = packet = Packet_Alloc(glyph_count * 7 + 0xD);
-        *words++ = (glyph_count * 7 + 0xB) | 0x10000000;
+        *words++ = (glyph_count * 7 + 0xB) | DMA_TAG_ID_CNT;
         *words++ = 0;
         *words++ = 0;
         *words++ = 0;
@@ -251,7 +245,7 @@ static void Message_Draw(void) {
         }
         /* GIF tag: the glyphs, seven registers each (PRIM, a register write, then RGBAQ, ST, XYZF2, ST, XYZF2) */
         glyph_packet = (u32 *)(texture + 8);
-        *glyph_packet++ = glyph_count | 0x8000;
+        *glyph_packet++ = glyph_count | GIF_TAG_EOP;
         *glyph_packet++ = GLYPH_GIF_NREG;
         *glyph_packet++ = 0x42421E0;
         *glyph_packet++ = 0;
@@ -441,7 +435,7 @@ static int Message_Format(u16 *format, u16 *out, va_list args) {
     count = 0;
     while (*format != 0xFFFF) {
         if (*format & (GLYPH_NUMBER | GLYPH_RAW_NUMBER)) {
-            width = (*format & 0xF00) >> 8;
+            width = (*format & GLYPH_FIELD_MASK) >> 8;
             digit_count = Message_SplitDigits(va_arg(args, int), digits);
             if (*format & GLYPH_NUMBER) {
                 if (digit_count < width) {
@@ -468,7 +462,7 @@ static int Message_Format(u16 *format, u16 *out, va_list args) {
             }
         } else {
             *out = *format;
-            if (!(*out++ & 0xF000)) {
+            if (!(*out++ & GLYPH_CONTROL_MASK)) {
                 count++;
             }
         }
@@ -535,7 +529,7 @@ static void Message_DrawGlyphs(char kind, int font, int left, int top, s16 *text
             }
             pos_y += font_metrics[font].line_height;
         } else if (*text & GLYPH_COLOR) {
-            colour = (*text & 0xF00) >> 8;
+            colour = (*text & GLYPH_FIELD_MASK) >> 8;
         } else if (*text & GLYPH_HALF_WIDTH) {
             Message_DrawGlyph(pos_x, pos_y, *text - GLYPH_HALF_WIDTH, colour, glyph_alphas[drawn], 1, font);
             drawn++;
@@ -615,7 +609,7 @@ static void Message_DrawGlyph(int pos_x, int pos_y, int glyph, int colour, int a
 static s32 Message_GetGlyphWidth(u16 *glyph, s32 font) {
     u32 advance; // match: unsigned, so the halving is spelled out
 
-    if (!(*glyph & 0xF000)) {
+    if (!(*glyph & GLYPH_CONTROL_MASK)) {
         if (!(*glyph & GLYPH_HALF_WIDTH)) {
             return font_metrics[font].advance;
         }

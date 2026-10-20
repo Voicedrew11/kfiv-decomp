@@ -141,6 +141,10 @@ s32 SaveCard_HasRoomFor(s32 index, s32 count, s32 extra);
 /* Returns the free clusters of the card. */
 s32 SaveCard_GetFreeClusters(s32 index);
 
+/* the bits SaveCard_GetSaveMask sets: bit n when save n exists */
+#define SAVE_EXISTS_0 0x1
+#define SAVE_EXISTS_1 0x2
+
 /* Returns one bit per save that exists, or 0xFF when one of the three is damaged. */
 s32 SaveCard_GetSaveMask(void);
 

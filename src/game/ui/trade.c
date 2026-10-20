@@ -726,7 +726,7 @@ static s32 Trade_CopyFrameToTexture(s32 unused_step) {
     packet[0] = 0x8019;
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 26;
-    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
     *D2_CHCR = D_CHCR_STR;
     sceGsSyncPath(0, 0);
     trade_run_step++;
@@ -776,7 +776,7 @@ static s32 Trade_Start(HandlerContext *context) {
     packet[7] = 0;
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 2;
-    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
     *D2_CHCR = D_CHCR_STR;
     Trade_BuildItemRings(context->arg);
     Menu_InitLoadBuffers();
@@ -2927,7 +2927,7 @@ static s32 Smith_Start(HandlerContext *context) {
     packet[7] = 0;
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 2;
-    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
     *D2_CHCR = D_CHCR_STR;
     memset(screen_part_alphas, 0, 0x400);
     memset(panel_part_alphas, 0, 0x400);
@@ -3058,7 +3058,7 @@ static s32 Smith_CopyFrameToTexture(s32 unused_step) {
     packet[0] = 0x8019;
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 26;
-    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
     *D2_CHCR = D_CHCR_STR;
     sceGsSyncPath(0, 0);
     smith_run_step++;
@@ -5434,7 +5434,7 @@ static s32 SaveScreen_DrawBackground(int unused) {
     packet->gif_tag = 0x8019;
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 0x1A;
-    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
     *D2_CHCR = D_CHCR_STR;
     sceGsSyncPath(0, 0);
     menu_draw_color.red = menu_draw_color.green = menu_draw_color.blue = 0x80;
@@ -5489,7 +5489,7 @@ static int SaveScreen_Start(HandlerContext *context) {
     packet[7] = 0;
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 2;
-    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
     *D2_CHCR = D_CHCR_STR;
     Menu_InitLoadBuffers();
     // match: taking the handler first orders its lui before the save screen's
@@ -5881,9 +5881,9 @@ static void SaveScreen_UpdateCardSelect(void) {
                     pulse_value_falling = 0;
                     pulse_sprite_falling = 0;
                     card_flags = SaveCard_GetSaveMask();
-                    if (card_flags != 0 && (card_flags & 1)) {
+                    if (card_flags != 0 && (card_flags & SAVE_EXISTS_0)) {
                         save_line_write_slots[0] = 0;
-                        if (card_flags & 2) {
+                        if (card_flags & SAVE_EXISTS_1) {
                             save_line_write_slots[1] = 1;
                             save_line_write_slots[2] = 2;
                         } else {

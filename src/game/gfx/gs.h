@@ -43,6 +43,11 @@
 #define GS_FRAME_FBW_640    0xA0000 /* FRAME FBW field (bits 16-21) of the 640-pixel-wide frame */
 #define GS_DISPFB_FBW_MASK  0x7E00  /* DISPFB FBW field, bits 9-14 */
 #define SCREEN_XY_OUTSIDE_MASK 0xFFFF0000 /* x or y bits above the GS's 16-bit window: the point is outside it */
+#define GIF_TAG_FLG_IMAGE   0x800000000000000 /* GIF tag FLG (bits 58-59) at 2, image mode: the qwords after the tag are image data */
+#define GIF_TAG_PRIM_TME    0x80000 /* PRIM's TME bit in a GIF tag's second word (PRIM sits at bit 15): texture mapping */
+#define GIF_TAG_PRIM_ABE    0x200000 /* PRIM's ABE bit in a GIF tag's second word: alpha blending */
+#define GS_PSM_4BIT_PALETTE 0x4     /* PSM bit 2: the 4-bit palette formats (PSMT4 0x14, PSMT4HL 0x24, PSMT4HH 0x2C) */
+#define GS_TEX0_TFX_DECAL   0x800000000 /* TEX0 TFX (bits 35-36) at 1: the texture is decal-blended over what is under it */
 
 /* a color as four bytes, passed in an 8-byte argument (MenuText_SetColor stores it to text_ink, ui/menu_draw.c) */
 typedef struct {
