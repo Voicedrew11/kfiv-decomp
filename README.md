@@ -156,6 +156,8 @@ static page) and the table below; commit those with each batch of work.
 | plain pointer casts | 2172 | left |
 | placeholder parameters | 220 | left |
 | raw float constants | 7185 | left |
+| local declarations | 7103 | left |
+|   of them in a header | 3533 | left |
 <!-- progress:end -->
 
 ## Contributing

@@ -76,6 +76,8 @@
   "field_uses": 58539,
   "fn_ptr_casts": 164,
   "gotos": 14,
+  "local_declarations": 7103,
+  "local_declarations_in_headers": 3533,
   "long_comments": 1798,
   "match_comments": 941,
   "named_bit_ops": 3081,
