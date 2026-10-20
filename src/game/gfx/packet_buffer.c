@@ -132,7 +132,7 @@ void Packet_SendChain(void) {
             FlushCache(0);
             do {
             } while (*D1_CHCR & D_CHCR_STR);
-            *GS_CSR |= 2;
+            *GS_CSR |= GS_CSR_FINISH;
             FlushCache(0);
             *D1_QWC = 0;
             *D1_MADR = 0;
@@ -150,7 +150,7 @@ void Packet_WaitForSend(void) {
         } while (*D1_CHCR & D_CHCR_STR);
         sceGsSyncPath(0, 0);
         do {
-        } while ((*GS_CSR & 2) == 0);
+        } while ((*GS_CSR & GS_CSR_FINISH) == 0);
     }
 }
 
@@ -255,7 +255,7 @@ void Packet_EndGsRegisters(void) {
     if (gs_register_list != NULL) {
         packet = gs_register_list;
         i = 0;
-        *packet++ = (gs_register_count + 4) | 0x10000000;
+        *packet++ = (gs_register_count + 4) | DMA_TAG_ID_CNT;
         *packet++ = 0;
         *packet++ = 0;
         *packet++ = 0;
@@ -266,7 +266,7 @@ void Packet_EndGsRegisters(void) {
         count = gs_register_count / 16;
         blocks = count;
         count = gs_register_count - blocks * 16;
-        *(u64 *)packet = (u64)((blocks + 1) | 0x8000) | ((u64)count << 60);
+        *(u64 *)packet = (u64)((blocks + 1) | GIF_TAG_EOP) | ((u64)count << 60);
         packet += 2;
         *(u64 *)packet = 0;
         /* one "A+D" descriptor per register */

@@ -120,7 +120,7 @@ void GsDraw_ResetDrawTarget(void) {
     if (context1_buffer_half != 0) {
         frame_base = 0;
     }
-    GsDraw_SetDrawTarget((frame_base >> 5) | 0xA0000, 0x1BF0000027F0000L, 0x720000006C00L);
+    GsDraw_SetDrawTarget((frame_base >> 5) | GS_FRAME_FBW_640, 0x1BF0000027F0000L, 0x720000006C00L);
 }
 
 /* Queues a copy of the 640x448 frame being drawn to dest_base in GS memory. */
@@ -151,7 +151,7 @@ void GsDraw_QueueTexturedSprite(void *sprite_arg) {
     *packet++ = 0;
     *packet++ = 0;
     *packet++ = 0x6C09C000;
-    *(u64 *)packet = ((s64)(prim | 6) << 47) | 0x8000400000008001L;
+    *(u64 *)packet = ((s64)(prim | GS_PRIM_SPRITE) << 47) | 0x8000400000008001L;
     packet += 2;
     *(u64 *)packet = 0x513513EE;
     packet += 2;
@@ -204,9 +204,9 @@ void GsDraw_QueueFlatSprite(void *sprite_arg) {
     u32 *packet;
     s32 prim;
 
-    prim = sprite->prim & 0xFFFFFFE9;
+    prim = sprite->prim & GS_PRIM_FLAT_SPRITE_MASK;
     packet_start = packet = Packet_Alloc(9);
-    prim |= 6;
+    prim |= GS_PRIM_SPRITE;
     *packet++ = 0x10000007;
     *packet++ = 0;
     *packet++ = 0;
@@ -330,7 +330,7 @@ void GsDraw_SetScreenAlpha(int alpha) {
 
     strips_left = 9;
     Packet_BeginGsRegisters();
-    Packet_AddGsRegister(GS_REG_ALPHA_1, ((s64)alpha << 0x20) | 0x68);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, ((s64)alpha << 0x20) | GS_ALPHA_CS_FIX_CD);
     Packet_AddGsRegister(GS_REG_TEST_1, 0x31001);
     Packet_EndGsRegisters();
     sprite.prim = 0x46;

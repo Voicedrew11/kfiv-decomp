@@ -1,12 +1,12 @@
 /* Texture uploads: sending a texture (a TextureHeader and its image, as in a .tm2 chunk table) to GS memory
    directly (Texture_LoadTm2, "load_tm2()" in its message) or building DMA packets that do it, moving the base
    pointers of a table of them, and a TEXFLUSH. */
+#include "gfx/gs.h"
 #include "gfx/texture.h"
 #include <eeregs.h>
 #include <libgraph.h>
 
 #define TEX0_BITS(header) ((TextureTex0Bits *)&(header)->tex0)
-#define DMA_TAG_ID_END (7 << 28)    /* a DMA tag of id 7: end the chain after its data */
 
 extern char tm2_tbp_zero_message[]; /* "load_tm2() tbp:0 !!!!" */
 extern char tm2_header_label[];     /* "load_tm2()" */
@@ -208,7 +208,7 @@ static void Texture_BuildPacket(char **texture, char **packet) {
         total = quadwords + 6;
     }
     // match: one cursor stepped through casts gives the separate increments; the CLUT part below is indexed
-    *((u32 *)cursor)++ = (total + 1) | 0x70000000;
+    *((u32 *)cursor)++ = (total + 1) | DMA_TAG_ID_END;
     *((u32 *)cursor)++ = 0;
     *((u32 *)cursor)++ = 0;
     *((u32 *)cursor)++ = 0;
@@ -232,7 +232,7 @@ static void Texture_BuildPacket(char **texture, char **packet) {
     if (has_clut) {
         *((u64 *)cursor)++ = quadwords | (0x8000L << 44);
     } else {
-        *((u64 *)cursor)++ = (quadwords | 0x8000) | (0x8000L << 44);
+        *((u64 *)cursor)++ = (quadwords | GIF_TAG_EOP) | (0x8000L << 44);
     }
     *((u64 *)cursor)++ = 0;
     bytes = cursor;
@@ -253,7 +253,7 @@ static void Texture_BuildPacket(char **texture, char **packet) {
         tags[7] = 0x52;
         tags[8] = 0;
         tags[9] = 0x53;
-        tags[10] = (clut_quadwords | 0x8000) | (0x8000L << 44);
+        tags[10] = (clut_quadwords | GIF_TAG_EOP) | (0x8000L << 44);
         tags[11] = 0;
         bytes += 12 * sizeof(u64);
         clut_offset = header->image_size + sizeof(TextureHeader);   // match: its own variable, as above

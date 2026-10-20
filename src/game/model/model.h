@@ -344,6 +344,11 @@ typedef union {
 #define POSED_MODEL_FILE_ANY(file) (((ModelFileUnion *)(file))->posed)
 
 #define MODEL_FLAG_800  0x800
+#define MODEL_FLAG_UNLIT 0x400          /* ModelInstance.model_flags: the light matrix is cleared, so the model is not lit */
+#define MODEL_DRAW_FACE_CAMERA_X 0x100  /* ModelInstance.draw_flags: turned about x to face the camera */
+#define MODEL_DRAW_FACE_CAMERA_Y 0x200  /* ModelInstance.draw_flags: turned about y to face the camera */
+#define MODEL_DRAW_FACE_CAMERA   0x300  /* either of the two above */
+#define MODEL_DRAW_TURN_Z_ONLY   0x400  /* ModelInstance.draw_flags: turned about z alone */
 
 /* ModelInstance with the three part slots at 0x130 as the array Model_SetUpSkinned fills
    (ModelInstance.root_part is the first) */

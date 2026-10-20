@@ -1,6 +1,7 @@
 #include "model/model.h"
 #include "map/map.h"
 #include "gfx/gs.h"
+#include <eeregs.h>
 #include "math/vu0.h"
 
 /* loads the matrix the children are multiplied by into vf1..vf4 */
@@ -346,7 +347,7 @@ void Model_DrawSkinned(ModelInstance *model) {
         packet = Packet_Alloc(part->data_count);
         for (j = 0; j < part->data_count; j++) {
             word = *(u32 *)data;
-            *packet++ = (word & 0x8FFFFFFF) | 0x30000000;
+            *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
             *packet = (u32)data + 0x10;
             packet += 3;
             data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
@@ -498,7 +499,7 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
             packet = Packet_Alloc(part->data_count);
             for (j = 0; j < part->data_count; j++) {
                 word = *(u32 *)data;
-                *packet++ = (word & 0x8FFFFFFF) | 0x30000000;
+                *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
                 data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
@@ -920,7 +921,7 @@ void Model_DrawPosed(ModelInstance *model) {
             data = (ModelPartData *)(u32)part->data_addr;
             for (j = 0; j < part->data_count; j++) {
                 word = *(u32 *)data;
-                *packet++ = (word & 0x8FFFFFFF) | 0x30000000;
+                *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
                 data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
@@ -1024,7 +1025,7 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
             data = (ModelPartData *)(u32)part->data_addr;
             for (j = 0; j < part->data_count; j++) {
                 word = *(u32 *)data;
-                *packet++ = (word & 0x8FFFFFFF) | 0x30000000;
+                *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
                 data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
@@ -1137,7 +1138,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
             data = (ModelPartData *)(u32)part->data_addr;
             for (j = 0; j < part->data_count; j++) {
                 word = *(u32 *)data;
-                *packet++ = (word & 0x8FFFFFFF) | 0x30000000;
+                *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
                 data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
@@ -1234,7 +1235,7 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
                 Packet_AddGsRegister(0x15, *(s64 *)&data->texture_word);
                 Packet_AddGsRegister(0x07, data->tex0);
                 Packet_AddGsRegister(GS_REG_ALPHA_2,
-                              (s32)((GsAlphaReg *)&data->blend)->f.a_source | ((s32)((GsAlphaReg *)&data->blend)->f.b_source << 2) | 0x20 |
+                              (s32)((GsAlphaReg *)&data->blend)->f.a_source | ((s32)((GsAlphaReg *)&data->blend)->f.b_source << 2) | GS_ALPHA_C_FIX |
                                   ((s32)((GsAlphaReg *)&data->blend)->f.d_source << 6) | ((s64)(s16)model->fade_alpha << 32));
                 Packet_AddGsRegister(GS_REG_TEST_2, 0x5000D);
                 if ((s16)model->fade_alpha >= 0x80) {
@@ -1253,7 +1254,7 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
             data = (ModelPartData *)(u32)part->data_addr;
             for (j = 0; j < part->data_count; j++) {
                 word = *(u32 *)data;
-                *packet++ = (word & 0x8FFFFFFF) | 0x30000000;
+                *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
                 data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
@@ -1330,8 +1331,8 @@ void Model_SetPrimBits(ModelInstance *model, s64 clear_mask, s64 set_value) {
             base = record;
             length = *(u16 *)base;
             record += 0x70;
-            old_bits = ((int *)record)[1] & 0x03FF8000;
-            ((int *)record)[1] = (old_bits & ~clear_bits) | set_bits | (((int *)record)[1] & 0xFC007FFF);
+            old_bits = ((int *)record)[1] & GIF_TAG_PRIM_MASK;
+            ((int *)record)[1] = (old_bits & ~clear_bits) | set_bits | (((int *)record)[1] & ~GIF_TAG_PRIM_MASK);
             record = base + (length + 1) * 0x10;
         }
     }

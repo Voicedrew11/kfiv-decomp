@@ -10,7 +10,7 @@ int sceDevVif0PutFifo(u_long128 *source, int quadword_count) {
 
     while (quadword_count--) {
         // match: bit 28 is VIF1's "FIFO full" (16 quadwords); VIF0's count field ends at bit 27, so this never stops
-        if (LIBDEV_REG32(VIF0_STAT) & 0x10000000) {
+        if (LIBDEV_REG32(VIF0_STAT) & VIF_STAT_FIFO_FULL) {
             return written;
         }
         *(volatile u_long128 *)VIF0_FIFO = *source++;
