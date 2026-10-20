@@ -17,8 +17,14 @@ Source text (comments and strings stripped):
   bit operations  `& | ^` (and `&= |= ^=`) with a constant, plus `(x >> N) & 1`
                   tests; named when the constant is an UPPER_CASE name. Low-bit
                   masks (0xFF, 0xFFFF, ...) are truncation, not flags: skipped.
-  debt counts     function-pointer casts, `// match:` comments, gotos, and
-                  block comments over one line (AGENTS.md wants one line).
+  debt counts     function-pointer casts, `// match:` comments, gotos, block
+                  comments over one line (AGENTS.md wants one line), unkXX names
+                  in comments (mostly stale: the field has a name now), `case N:`
+                  labels and state/mode/kind fields set or compared to a number
+                  (enum candidates), casts to a plain pointer type (`(u8 *)`,
+                  `(char *)`, ...), parameters named `unknown`/`argN`, and float
+                  literals with four or more decimals (`0.5235988f`: derived
+                  constants such as angles in radians).
 
 Globals: data symbols of build/kfiv.elf not defined by an src/sce object;
 named once no longer splat's D_XXXXXXXX.
@@ -212,11 +218,23 @@ BIT_OP = r"(?<=[\w)\]])\s*(?<![&|])(?:[&|^]=?)(?![&|=])\s*~?\s*\(?\s*"
 RAW_BITS = re.compile(BIT_OP + r"(0x[0-9A-Fa-f]+|\d+)\b(?![.\w])")
 NAMED_BITS = re.compile(BIT_OP + r"(?!D_[0-9A-F]{8}\b)([A-Z][A-Z0-9_]*[A-Z0-9])\b(?!\s*\()")
 SHIFT_TEST = re.compile(r">>\s*\d+\s*\)\s*&\s*1\b")
+COMMENTS = re.compile(r"/\*.*?\*/|//[^\n]*", re.S)
+COMMENT_UNK = re.compile(r"\bunk[0-9A-Fa-f]{2,}(?:_\w+)?\b")
+RAW_CASE = re.compile(r"\bcase\s+-?(?:0x[0-9A-Fa-f]+|\d+)\s*(?::|\.\.\.)")
+STATE_FIELD = r"(?:->|\.)\s*\w*(?:state|mode|kind|step|choice|anim\w*|motion_\w*)\b"
+RAW_STATE = re.compile(STATE_FIELD + r"\s*(?:==|!=|=(?!=))\s*-?(?:0x[0-9A-Fa-f]+|\d+)\b(?![.\w])")
+PLAIN_TYPES = r"(?:const\s+)?(?:unsigned\s+|signed\s+)?(?:char|short|int|long|float|double|void|[us](?:8|16|32|64)|f32|f64|u_long128|u_char|u_short|u_int|u_long)"
+PTR_CAST = re.compile(r"\(\s*" + PLAIN_TYPES + r"\s*\*+\s*\)")
+FUNC_DEF = re.compile(r"^\w[\w\s\*]*\b\w+\s*\(([^;{}]*)\)\s*\{", re.M)
+PLACEHOLDER_PARAM = re.compile(r"\b(?:unknown\w*|arg_?\d+)\s*(?:\[[^\]]*\]\s*)*(?=,|$)")
+RAW_FLOAT = re.compile(r"(?<![\w.])\d+\.\d{4,}(?:[eE][-+]?\d+)?[fF]?\b")
 
 
 def source_measures(sources) -> dict:
     m = dict.fromkeys(("field_uses", "named_field_uses", "bit_ops", "named_bit_ops",
-                       "fn_ptr_casts", "match_comments", "gotos", "long_comments"), 0)
+                       "fn_ptr_casts", "match_comments", "gotos", "long_comments",
+                       "comment_unk_names", "raw_case_labels", "raw_state_values",
+                       "plain_pointer_casts", "placeholder_params", "raw_float_constants"), 0)
     for path in sources:
         raw = path.read_text(errors="replace")
         code = strip_code(raw)
@@ -234,6 +252,13 @@ def source_measures(sources) -> dict:
         m["match_comments"] += len(re.findall(r"//\s*match:", raw))
         m["gotos"] += len(re.findall(r"\bgoto\b", code))
         m["long_comments"] += sum(1 for c in re.findall(r"/\*.*?\*/", raw, re.S) if "\n" in c)
+        m["comment_unk_names"] += sum(len(COMMENT_UNK.findall(c)) for c in COMMENTS.findall(raw))
+        m["raw_case_labels"] += len(RAW_CASE.findall(code))
+        m["raw_state_values"] += len(RAW_STATE.findall(code))
+        m["plain_pointer_casts"] += len(PTR_CAST.findall(code))
+        m["placeholder_params"] += sum(len(PLACEHOLDER_PARAM.findall(p.replace("\n", " ").strip()))
+                                       for d in FUNC_DEF.findall(code) for p in d.split(","))
+        m["raw_float_constants"] += len(RAW_FLOAT.findall(code))
     return m
 
 
