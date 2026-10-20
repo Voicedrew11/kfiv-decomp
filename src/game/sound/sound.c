@@ -10,6 +10,9 @@
 #include <sifrpc.h>
 #include <sifdev.h>
 
+/* SoundDmaRequest.mode: the SIF DMA attribute word, none set */
+#define SOUND_DMA_ATTR_NONE 0
+
 /* EE EABI varargs: the register save area a1..a7 is spilled to, as in libsdr.c */
 typedef char *va_list;
 #define va_start(ap, last) ((ap) = (char *)__builtin_next_arg(last) - 0x38)
@@ -213,7 +216,7 @@ static int SoundDriver_StartUpload(int dest, int src, u32 size) {
     dma->src = sound_upload.src;
     dma->dest = iop_buffer;
     dma->size = sound_upload.padded_size;
-    dma->mode = 0;
+    dma->mode = SOUND_DMA_ATTR_NONE;
     FlushCache(0);
     dma_id = sceSifSetDma((struct sceSifDmaData *)dma, 1);
     sound_upload.dma_id = dma_id;
@@ -257,7 +260,7 @@ int SoundDriver_StepUpload(void) {
     dma->src = sound_upload.src;
     dma->dest = iop_buffer;
     dma->size = sound_upload.padded_size;
-    dma->mode = 0;
+    dma->mode = SOUND_DMA_ATTR_NONE;
     FlushCache(0);
     dma_id = sceSifSetDma((struct sceSifDmaData *)dma, 1);
     sound_upload.dma_id = dma_id;
@@ -699,7 +702,7 @@ int SoundDriver_LoadVoiceBuffered(int voice_id, int header_data, int header_size
             }
             sound_dma.src = sample_data;
             sound_dma.dest = heap;
-            sound_dma.mode = 0;
+            sound_dma.mode = SOUND_DMA_ATTR_NONE;
             SoundDriver_Remote(1, 0x80, voice->dma_channel, 1);
             i = sceSifSetDma((struct sceSifDmaData *)&sound_dma, 1); // match: the loop counter doubles as the DMA id
             if (i == 0) {
@@ -820,7 +823,7 @@ int SoundDriver_VoiceLoadSendPiece(SoundLoadArgs *args, SoundReloadRequest *requ
     heap_addr = request->heap_addr;
     sound_dma.src = (int)args->next_sample_data;
     sound_dma.dest = heap_addr;
-    sound_dma.mode = 0;
+    sound_dma.mode = SOUND_DMA_ATTR_NONE;
     if (SoundDriver_Remote(1, 0x80, request->voice->dma_channel, 0) == 0) {
         printf(voice_load_waiting_message);
         return 0;
@@ -970,7 +973,7 @@ int SoundDriver_LoadVoiceAt(int voice_index, int header_data, int header_size, i
             }
             sound_dma.src = sample_data;
             sound_dma.dest = heap;
-            sound_dma.mode = 0;
+            sound_dma.mode = SOUND_DMA_ATTR_NONE;
             SoundDriver_Remote(1, 0x80, voice->dma_channel, 1);
             i = sceSifSetDma((struct sceSifDmaData *)&sound_dma, 1); // match: the loop counter doubles as the DMA id
             if (i == 0) {
@@ -1958,7 +1961,7 @@ int SoundDriver_FlushCommands(void) {
     sound_command_dma.dest = sound_state->dma_src;
     sound_command_dma.src = dest;
     sound_command_dma.size = size;
-    sound_command_dma.mode = 0;
+    sound_command_dma.mode = SOUND_DMA_ATTR_NONE;
     transfer_id = sceSifSetDma((struct sceSifDmaData *)&sound_command_dma, 1);
     if (transfer_id == 0) {
         return -1;
