@@ -437,7 +437,7 @@ static void DarkBird_ApplyMoveCommand(Entity *entity) {
     entity->turn_delta_yaw += ai_state->turn_rate;
     if (ai_state->climb_command > 0) {
         if (ABS((f32)ai_state->climb_command) * -DEG_TO_RAD(10) < entity->model->rotation[0]) {
-            ai_state->pitch_speed -= 0.006981317f;
+            ai_state->pitch_speed -= DEG_TO_RAD(0.4f);
             if (ai_state->pitch_speed < -DEG_TO_RAD(1)) {
                 ai_state->pitch_speed = -DEG_TO_RAD(1);
             }
@@ -446,7 +446,7 @@ static void DarkBird_ApplyMoveCommand(Entity *entity) {
         }
     } else if (ai_state->climb_command < 0) {
         if (entity->model->rotation[0] < ABS((f32)ai_state->climb_command) * DEG_TO_RAD(10)) {
-            ai_state->pitch_speed += 0.006981317f;
+            ai_state->pitch_speed += DEG_TO_RAD(0.4f);
             if (DEG_TO_RAD(1) < ai_state->pitch_speed) {
                 ai_state->pitch_speed = DEG_TO_RAD(1);
             }
@@ -785,7 +785,7 @@ static void DarkBird_RangedAttack(Entity *entity) {
                     if (!(rand() & 1)) {
                         angles[1] = EntityMath_WrapAngle(entity->model->rotation[1] + PI + DEG_TO_RAD((f32)(rand() % 15)));
                     } else {
-                        angles[1] = EntityMath_WrapAngle(entity->model->rotation[1] + PI - (f32)(rand() % 15) * DEG_TO_RAD(1));
+                        angles[1] = EntityMath_WrapAngle(entity->model->rotation[1] + PI - DEG_TO_RAD((f32)(rand() % 15)));
                     }
                     angles[2] = 0.0f;
                     DarkBird_LaunchThreeShots(entity, record, elapsed, ai_state->motion_slot_0.frame, angles);

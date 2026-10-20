@@ -687,7 +687,7 @@ static void Minion_Dodge(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_DODGE;
     switch (entity->action_step) {
     case 0:
-        if (EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) * 57.29578f > 0.0f) {
+        if (EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) * RAD_TO_DEG > 0.0f) {
             EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, 6, 0, entity->params->motion_blend_frames >> 1, 1);
             if (ai_state->turn_in_place == 0) {
                 EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_1, 1, 6, 0, entity->params->motion_blend_frames >> 1, 1);

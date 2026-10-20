@@ -613,7 +613,7 @@ static void GreaterDemon_PlayAnim6Or7BySide(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
-        if (0.0f < EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) * 57.29578f) {
+        if (0.0f < EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) * RAD_TO_DEG) {
             Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 1);
         } else {
             Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 1);

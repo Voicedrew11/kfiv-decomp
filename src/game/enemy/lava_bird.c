@@ -403,7 +403,7 @@ static void LavaBird_ApplyMoveCommand(Entity *entity) {
     EntityMath_EaseAngleToward(&entity->model->rotation[2], roll, 60.0f);
     if (ai_state->turn_in_place > 0) {
         if (ABS((f32)ai_state->turn_in_place) * -DEG_TO_RAD(10) < entity->model->rotation[0]) {
-            ai_state->part_angle_y -= 0.006981317f;
+            ai_state->part_angle_y -= DEG_TO_RAD(0.4f);
             if (ai_state->part_angle_y < -DEG_TO_RAD(1)) {
                 ai_state->part_angle_y = -DEG_TO_RAD(1);
             }
@@ -412,7 +412,7 @@ static void LavaBird_ApplyMoveCommand(Entity *entity) {
         }
     } else if (ai_state->turn_in_place < 0) {
         if (entity->model->rotation[0] < ABS((f32)ai_state->turn_in_place) * DEG_TO_RAD(10)) {
-            ai_state->part_angle_y += 0.006981317f;
+            ai_state->part_angle_y += DEG_TO_RAD(0.4f);
             if (DEG_TO_RAD(1) < ai_state->part_angle_y) {
                 ai_state->part_angle_y = DEG_TO_RAD(1);
             }

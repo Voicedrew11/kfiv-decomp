@@ -6,6 +6,9 @@
 #include "map/map.h"
 #include "collision/collision.h"
 
+#define VERTICAL_FACE_NORMAL_Y_EPSILON 0.00001f
+#define EDGE_PERPENDICULAR_TO_FLAT_EPSILON 0.000001f
+
 extern PlayerData player_state;
 void Vector_Normalize(void *, void *);
 double sqrt(double);
@@ -788,7 +791,7 @@ void EntityCollision_CapsuleTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c
     distance = normal[0] * corner_b[0] + normal[1] * corner_b[1] + normal[2] * corner_b[2];
     distance += -normal[0] * centre[0] - normal[1] * centre[1] - normal[2] * centre[2];
     bottom = centre[1] - height;
-    if (-0.00001f < ratio && ratio < 0.00001f) {
+    if (-VERTICAL_FACE_NORMAL_Y_EPSILON < ratio && ratio < VERTICAL_FACE_NORMAL_Y_EPSILON) {
         if (radius < distance) {
             return;
         }
@@ -877,7 +880,7 @@ void EntityCollision_CapsuleTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c
         origin[3] = 1.0f;
         sceVu0Normalize(origin, origin);
         along = origin[0] * edge[0] + origin[2] * edge[2];
-        if (-0.000001f < along && along < 0.000001f) {
+        if (-EDGE_PERPENDICULAR_TO_FLAT_EPSILON < along && along < EDGE_PERPENDICULAR_TO_FLAT_EPSILON) {
             point[0] = end[0];
             point[1] = centre[1];
             point[2] = end[2];

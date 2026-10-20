@@ -7,6 +7,7 @@
 #include "common.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
+#define ALIGNED_ANGLE_EPSILON 0.0001f
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
@@ -161,7 +162,7 @@ static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg) {
         previous[3] = ai_state->neck_bend[5];
         previous[4] = ai_state->neck_bend[6];
         step = entity->params->turn_limit;
-        if (angle >= -0.0001f && angle <= 0.0001f) {
+        if (angle >= -ALIGNED_ANGLE_EPSILON && angle <= ALIGNED_ANGLE_EPSILON) {
             if (ai_state->neck_bend[2] != 0.0f) {
                 moved = EntityMath_StepToward(&ai_state->neck_bend[2], 0.0f, step);
                 moved = ABS(moved);

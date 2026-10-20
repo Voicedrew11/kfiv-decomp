@@ -337,7 +337,7 @@ static void Spider_RangedAttack(Entity *entity) {
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(direction, &player_state);
         direction[1] -= 30.0f;
-        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction, DEG_TO_RAD(45), 0.17453294f);
+        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction, DEG_TO_RAD(45), AIMED_SHOT_TURN_RATE);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {

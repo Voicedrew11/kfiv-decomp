@@ -419,13 +419,13 @@ static void DarkSoldier_PlayAnim6Or7BySide(Entity *entity) {
                 Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 1);
             }
         } else if (side < 0.0f) {
-            if ((f32)(rand() % 120) > side * 57.29578f + 60.0f) {
+            if ((f32)(rand() % 120) > side * RAD_TO_DEG + 60.0f) {
                 Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 1);
             } else {
                 Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 1);
             }
         } else {
-            if ((f32)(rand() % 120) > side * 57.29578f + 60.0f) {
+            if ((f32)(rand() % 120) > side * RAD_TO_DEG + 60.0f) {
                 Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 1);
             } else {
                 Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 1);

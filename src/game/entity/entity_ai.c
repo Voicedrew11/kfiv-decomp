@@ -1993,7 +1993,7 @@ void Entity_DrawPoolModels(void) {
         model->light_block = ENTITY_MODEL(entity)->light_block;
         model->fog_block = ENTITY_MODEL(entity)->fog_block;
         Packet_BeginGsRegisters();
-        Packet_AddGsRegister(GS_REG_ALPHA_2, ((s64)(s32)(ENTITY_MODEL(entity)->alpha * 32.0f * 0.0078125f) << 32) | 0x64);
+        Packet_AddGsRegister(GS_REG_ALPHA_2, ((s64)(s32)(ENTITY_MODEL(entity)->alpha * 32.0f * (1.0f / 128.0f)) << 32) | 0x64);
         Packet_EndGsRegisters();
         model->draw_parts(model);
         GsDraw_QueueFlush();

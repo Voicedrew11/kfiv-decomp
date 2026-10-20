@@ -2,6 +2,8 @@
 #include "common.h"
 #include "math/angle.h"
 
+#define STEP_ARRIVED_EPSILON (1.0f / 8388608.0f) /* 2^-23, one float ulp at 1.0 */
+
 void Vector_Subtract(float *dst, float *a, float *b);
 
 static int Step_TowardInt(int *value, int target, int step);
@@ -59,7 +61,7 @@ static int Step_Toward(f32 target, f32 step, f32 *value) {
     if (!(0.0f <= step)) {
         step = -step;
     }
-    if (target - 1.1920929e-7f < *value && *value < target + 1.1920929e-7f) {
+    if (target - STEP_ARRIVED_EPSILON < *value && *value < target + STEP_ARRIVED_EPSILON) {
         *value = target;
         return 1;
     }
