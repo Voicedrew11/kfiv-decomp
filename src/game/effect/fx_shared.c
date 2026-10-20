@@ -290,7 +290,7 @@ void EffectStart_TurnModel(EffectActor *effect, EffectSlot *spawn_slot) {
     if (!(EFFECT_DEF_FLAGS(effect->def) & EFFECT_DEF_FLAG_KEEP_PITCH)) {
         effect->model->rotation.x = 0.0f;
     }
-    if (EFFECT_DEF_FLAGS(effect->def) & EFFECT_DEF_FLAG_NO_ROLL) {
+    if (EFFECT_DEF_FLAGS(effect->def) & EFFECT_DEF_FLAG_RESET_ROLL) {
         effect->model->rotation.z = 0.0f;
     }
     effect->model->rotation.x += effect->def->rotation_base[0] + ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->rotation_spread[0];

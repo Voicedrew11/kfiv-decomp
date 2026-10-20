@@ -77,8 +77,8 @@ typedef struct {
 #define EFFECT_DEF_FLAG_KEEP_START  0x10000
 /* the effect keeps the pitch (rotation x) of its start rotation and pitches its random offset */
 #define EFFECT_DEF_FLAG_KEEP_PITCH  0x40000
-/* the model's z rotation (roll) starts at 0 */
-#define EFFECT_DEF_FLAG_NO_ROLL     0x800000
+/* the start rotation's z (roll) is dropped; the definition's own roll base and spread are still added */
+#define EFFECT_DEF_FLAG_RESET_ROLL  0x800000
 
 /* EffectActor+0x10, which the update functions keep a pointer to. Each kind of
    effect uses the bytes after the velocity its own way; the *Motion types below

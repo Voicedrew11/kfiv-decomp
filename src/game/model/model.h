@@ -343,7 +343,7 @@ typedef union {
 
 #define POSED_MODEL_FILE_ANY(file) (((ModelFileUnion *)(file))->posed)
 
-#define MODEL_FLAG_UNLIT 0x400          /* ModelInstance.model_flags: the light matrix is cleared, so the model is not lit */
+#define MODEL_FLAG_FLAT_COLOUR 0x400    /* ModelInstance.model_flags: no directional light, lit flat by its own colour times its alpha */
 #define MODEL_DRAW_FACE_CAMERA_X 0x100  /* ModelInstance.draw_flags: turned about x to face the camera */
 #define MODEL_DRAW_FACE_CAMERA_Y 0x200  /* ModelInstance.draw_flags: turned about y to face the camera */
 #define MODEL_DRAW_FACE_CAMERA   0x300  /* either of the two above */

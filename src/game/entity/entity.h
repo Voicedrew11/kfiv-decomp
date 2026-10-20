@@ -330,8 +330,8 @@ typedef struct {
     f32 hit_multiplier;             /* 0x08 a hit on this body counts this many times over (Attack_RunSphere) */
 } EntityBodyPoint;
 
-/* EntityParams.motion_ids entries 20-23 are the attack animations; EntityAi_* pass this plus the attack_index */
-#define ENTITY_ANIMATION_ATTACK_BASE 0x14
+/* EntityParams.motion_ids 20-23 are the attack motions (0x14 the first melee attack, 0x17 the ranged one): this plus the attack_index */
+#define ENTITY_MOTION_ATTACK_BASE 0x14
 
 /* what Entity.params points at: per-kind tuning values. EntityController below is a second
    view of the same block; the two are to be unified. */

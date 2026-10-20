@@ -307,7 +307,7 @@ static void Matrix_RotateVector(void *dst, void *src_matrix, void *src_vec) {
 }
 
 /* Makes the two matrices a model is drawn with: the first with its rows divided by the model's scale;
-   the second, for models flagged 0x400, emptied but for the model's colour times its alpha. */
+   the second, with MODEL_FLAG_FLAT_COLOUR, emptied but for the model's colour times its alpha. */
 void ModelMatrix_BuildDrawMatrices(ModelInstance *model, s32 normal_src, s32 light_src, void *normal_dest,
                                    void *light_dest) {
     f32 (*normal)[4] = normal_dest;
@@ -318,7 +318,7 @@ void ModelMatrix_BuildDrawMatrices(ModelInstance *model, s32 normal_src, s32 lig
     sceVu0DivVectorXYZ(normal[1], normal[1], model->scale_y);
     sceVu0DivVectorXYZ(normal[2], normal[2], model->scale_z);
     sceVu0CopyMatrix(light, (void *)light_src);
-    if (model->model_flags & MODEL_FLAG_UNLIT) {
+    if (model->model_flags & MODEL_FLAG_FLAT_COLOUR) {
         light[0][0] = 0.0f;
         light[0][1] = 0.0f;
         light[0][2] = 0.0f;

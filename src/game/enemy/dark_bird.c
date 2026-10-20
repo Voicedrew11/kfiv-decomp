@@ -664,8 +664,8 @@ static void DarkBird_MeleeAttack(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_0, 0, kind | ENTITY_ANIMATION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_1, 1, ((s32)(entity->flags >> 58) & 3) | ENTITY_ANIMATION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
+        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_0, 0, kind | ENTITY_MOTION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
+        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_1, 1, ((s32)(entity->flags >> 58) & 3) | ENTITY_MOTION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
