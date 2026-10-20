@@ -36,6 +36,7 @@
 #define GIF_TAG_EOP         0x8000  /* GIF tag bit 15: the last tag of the packet */
 #define GIF_TAG_PRIM_MASK   0x03FF8000 /* the PRIM field of a GIF tag: bits 47-57, bits 15-25 of its second word */
 #define GS_PRIM_TME         0x10    /* PRIM bit 4: texture mapping */
+#define GS_PRIM_CTXT_2      0x200   /* PRIM bit 9 (CTXT): the primitive draws with drawing context 2 */
 #define GS_PRIM_SPRITE      6       /* the PRIM type of a sprite (bits 0-2) */
 #define GS_PRIM_FLAT_SPRITE_MASK 0xFFFFFFE9 /* clears TME and the PRIM type bits of a sprite, which GS_PRIM_SPRITE sets again */
 #define GS_ALPHA_C_FIX      0x20    /* ALPHA field C set to FIX: the alpha is the FIX field, bits 32-39 */

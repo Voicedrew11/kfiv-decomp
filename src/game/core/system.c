@@ -171,7 +171,7 @@ void Display_Init(void) {
     game_dbuff_context2.draw0.scissor_addr = 0x41;
     game_dbuff_context2.draw0.test_addr = 0x48;
     game_dbuff_context2.clear0.test_a_addr = 0x48;
-    game_dbuff_context2.clear0.prim |= 0x200;
+    game_dbuff_context2.clear0.prim |= GS_PRIM_CTXT_2;
     game_dbuff_context2.clear0.test_b_addr = 0x48;
     game_dbuff_context2.draw1.frame_addr = 0x4D;
     game_dbuff_context2.draw1.zbuf_addr = 0x4F;
@@ -179,7 +179,7 @@ void Display_Init(void) {
     game_dbuff_context2.draw1.scissor_addr = 0x41;
     game_dbuff_context2.draw1.test_addr = 0x48;
     game_dbuff_context2.clear1.test_a_addr = 0x48;
-    game_dbuff_context2.clear1.prim |= 0x200;
+    game_dbuff_context2.clear1.prim |= GS_PRIM_CTXT_2;
     game_dbuff_context2.clear1.test_b_addr = 0x48;
     context2_buffer_half = 0;
     frame_dispfb_regs.first = *(u64 *)&game_dbuff.disp[0].dispfb;

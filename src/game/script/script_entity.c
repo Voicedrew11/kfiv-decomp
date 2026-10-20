@@ -681,16 +681,16 @@ void ScriptCmd_SetEntityFlags(ScriptSetFlagsCommand *command) {
     if (command->mask.value & 1) {
         ENTITY_FLAG_BITS(entity)->live = command->value.value & 1;
     }
-    if (command->mask.value & 2) {
-        ENTITY_FLAG_BITS(entity)->dying = (command->value.value & 2) ? 3 : 0;
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_DYING) {
+        ENTITY_FLAG_BITS(entity)->dying = (command->value.value & SCRIPT_ENTITY_FLAG_DYING) ? 3 : 0;
     }
-    if (command->mask.value & 0x4) {
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_OWN_THINK) {
         ENTITY_FLAG_BITS(entity)->own_think = command->value.value >> 2;
     }
-    if (command->mask.value & 0x8) {
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_HANDLER_RUNS) {
         ENTITY_FLAG_BITS(entity)->handler_runs = command->value.value >> 3;
     }
-    if (command->mask.value & 0x10) {
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_RESPAWNABLE) {
         ENTITY_FLAG_BITS(entity)->respawnable = command->value.value >> 4;
     }
     if (command->mask.value & 0x20) {
@@ -699,28 +699,28 @@ void ScriptCmd_SetEntityFlags(ScriptSetFlagsCommand *command) {
     if (command->mask.value & 0x40) {
         ENTITY_FLAG_BITS(entity)->bit22 = command->value.value >> 6;
     }
-    if (command->mask.value & 0x80) {
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_NO_WALL_COLLISION) {
         ENTITY_FLAG_BITS(entity)->no_wall_collision = command->value.value >> 7;
     }
-    if (command->mask.value & 0x100) {
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_NO_SECOND_WALL_COLLISION) {
         ENTITY_FLAG_BITS(entity)->no_second_wall_collision = command->value.value >> 8;
     }
-    if (command->mask.value & 0x200) {
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_NO_MAP_OBJECT_COLLISION) {
         ENTITY_FLAG_BITS(entity)->no_map_object_collision = command->value.value >> 9;
     }
-    if (command->mask.value & 0x400) {
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_NO_ENTITY_COLLISION) {
         ENTITY_FLAG_BITS(entity)->no_entity_collision = command->value.value >> 10;
     }
-    if (command->mask.value & 0x800) {
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_NO_PLAYER_COLLISION) {
         ENTITY_FLAG_BITS(entity)->no_player_collision = command->value.value >> 11;
     }
-    if (command->mask.value & 0x1000) {
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_NO_FLOOR_LIFT) {
         ENTITY_FLAG_BITS(entity)->no_floor_lift = command->value.value >> 12;
     }
-    if (command->mask.value & 0x2000) {
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_ANIMATES) {
         ENTITY_FLAG_BITS(entity)->animates = command->value.value >> 13;
     }
-    if (command->mask.value & 0x4000) {
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_LOOK_AT_TARGET) {
         ENTITY_FLAG_BITS(entity)->look_at_target = command->value.value >> 14;
     }
     if (command->mask.value & 0x8000) {
@@ -739,16 +739,16 @@ void ScriptCmd_GetEntityFlags(ScriptQueryCommand *command) {
     if (entity != NULL) {
         result = ENTITY_FLAG_BITS(entity)->live;
         if (ENTITY_FLAG_BITS(entity)->dying >= 2) {
-            result |= 2;
+            result |= SCRIPT_ENTITY_FLAG_DYING;
         }
         if (ENTITY_FLAG_BITS(entity)->own_think) {
-            result |= 0x4;
+            result |= SCRIPT_ENTITY_FLAG_OWN_THINK;
         }
         if (ENTITY_FLAG_BITS(entity)->handler_runs) {
-            result |= 0x8;
+            result |= SCRIPT_ENTITY_FLAG_HANDLER_RUNS;
         }
         if (ENTITY_FLAG_BITS(entity)->respawnable) {
-            result |= 0x10;
+            result |= SCRIPT_ENTITY_FLAG_RESPAWNABLE;
         }
         if (ENTITY_FLAG_BITS(entity)->bit18) {
             result |= 0x20;
@@ -757,28 +757,28 @@ void ScriptCmd_GetEntityFlags(ScriptQueryCommand *command) {
             result |= 0x40;
         }
         if (ENTITY_FLAG_BITS(entity)->no_wall_collision) {
-            result |= 0x80;
+            result |= SCRIPT_ENTITY_FLAG_NO_WALL_COLLISION;
         }
         if (ENTITY_FLAG_BITS(entity)->no_second_wall_collision) {
-            result |= 0x100;
+            result |= SCRIPT_ENTITY_FLAG_NO_SECOND_WALL_COLLISION;
         }
         if (ENTITY_FLAG_BITS(entity)->no_map_object_collision) {
-            result |= 0x200;
+            result |= SCRIPT_ENTITY_FLAG_NO_MAP_OBJECT_COLLISION;
         }
         if (ENTITY_FLAG_BITS(entity)->no_entity_collision) {
-            result |= 0x400;
+            result |= SCRIPT_ENTITY_FLAG_NO_ENTITY_COLLISION;
         }
         if (ENTITY_FLAG_BITS(entity)->no_player_collision) {
-            result |= 0x800;
+            result |= SCRIPT_ENTITY_FLAG_NO_PLAYER_COLLISION;
         }
         if (ENTITY_FLAG_BITS(entity)->no_floor_lift) {
-            result |= 0x1000;
+            result |= SCRIPT_ENTITY_FLAG_NO_FLOOR_LIFT;
         }
         if (ENTITY_FLAG_BITS(entity)->animates) {
-            result |= 0x2000;
+            result |= SCRIPT_ENTITY_FLAG_ANIMATES;
         }
         if (ENTITY_FLAG_BITS(entity)->look_at_target) {
-            result |= 0x4000;
+            result |= SCRIPT_ENTITY_FLAG_LOOK_AT_TARGET;
         }
         if (ENTITY_FLAG_BITS(entity)->bit29) {
             result |= 0x8000;

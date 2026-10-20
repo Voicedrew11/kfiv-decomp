@@ -4,6 +4,7 @@
    once a frame, streams, reverb settings. */
 #include "core/load.h"
 #include "sound/sound.h"
+#include <eeregs.h>
 
 /* EE EABI varargs: the register save area a1..a7 is spilled to, as in libsdr.c */
 typedef char *va_list;
@@ -190,10 +191,10 @@ int SoundDriver_Remote(int blocking, ...) {
     if (result < 0) {
         return result;
     }
-    if (command & 0x80000) {
+    if (command & SOUND_COMMAND_REPLY) {
         sceSifCallRpc(sound_rpc_client, command, no_wait, (char *)&sound_rpc_buffer, 0xA0, (int *)sound_rpc_buffer.args[0], 0xA0, 0,
                       sound_rpc_buffer.args[0]);
-    } else if (command & 0x40000) {
+    } else if (command & SOUND_COMMAND_SENDS_BUFFER) {
         sceSifCallRpc(sound_rpc_client, command, no_wait, (char *)sound_rpc_buffer.args[0], 0x40, (int *)&sound_rpc_buffer, 0x10, 0,
                       (int)sound_rpc_buffer.self);
         result = (int)sound_rpc_buffer.self;
@@ -1768,7 +1769,7 @@ int SoundDriver_NoteOn(u32 slot, int voice_index, char channel, char program, ch
     if (state->active == 0) {
         return -1;
     }
-    queue_size = (int *)(state->dma_dest | 0x20000000);
+    queue_size = (int *)(state->dma_dest | EE_UNCACHED_ALIAS);
     length = 0x19;
     if (program != -1) {
         length = 0x1B;
@@ -1778,7 +1779,7 @@ int SoundDriver_NoteOn(u32 slot, int voice_index, char channel, char program, ch
         return -2;
     }
     offset = queued + 4;
-    out = (u8 *)(((int)queue_size + offset) | 0x20000000);
+    out = (u8 *)(((int)queue_size + offset) | EE_UNCACHED_ALIAS);
     voice = &state->voices[voice_index];
     if (slot >= 0x7E) {
         return -1;
@@ -1840,13 +1841,13 @@ int SoundDriver_NoteOff(u32 key_index) {
     if (key_index >= 0x7E) {
         return -1;
     }
-    command_list = (int *)(sound_state->dma_dest | 0x20000000);
+    command_list = (int *)(sound_state->dma_dest | EE_UNCACHED_ALIAS);
     list_used = *command_list;
     if ((u32)(list_used + 0xA) >= 0x3FC) {
         return -2;
     }
     write_offset = list_used + 4;
-    write_ptr = (u8 *)(((int)command_list + write_offset) | 0x20000000);
+    write_ptr = (u8 *)(((int)command_list + write_offset) | EE_UNCACHED_ALIAS);
     key = (SoundKey *)sound_state->note_keys[key_index];
     *write_ptr++ = 0xFF;
     // match: byte 0x18 of the voice (low byte of driver_voice_id), read as a byte
@@ -1880,13 +1881,13 @@ int SoundDriver_SetNoteControl(int kind, u32 slot, int value) {
     if (slot >= 0x7E) {
         return -1;
     }
-    queue_size = (int *)(state->dma_dest | 0x20000000);
+    queue_size = (int *)(state->dma_dest | EE_UNCACHED_ALIAS);
     queued = *queue_size;
     if ((u32)(queued + 0xA) >= 0x3FC) {
         return -2;
     }
     offset = queued + 4;
-    out = (u8 *)(((int)queue_size + offset) | 0x20000000);
+    out = (u8 *)(((int)queue_size + offset) | EE_UNCACHED_ALIAS);
     key = (SoundKey *)state->note_keys[slot];
     voice = &state->voices[key->voice];
     *out++ = 0xFF;
@@ -1940,13 +1941,13 @@ int SoundDriver_ProgramChange(int voice_index, char first_value, char second_val
     if (sound_state->active == 0) {
         return -1;
     }
-    command_list = (int *)(sound_state->dma_dest | 0x20000000);
+    command_list = (int *)(sound_state->dma_dest | EE_UNCACHED_ALIAS);
     list_used = *command_list;
     if ((u32)(list_used + 5) >= 0x3FC) {
         return -2;
     }
     write_offset = list_used + 4;
-    write_ptr = (u8 *)(((int)command_list + write_offset) | 0x20000000);
+    write_ptr = (u8 *)(((int)command_list + write_offset) | EE_UNCACHED_ALIAS);
     *write_ptr++ = 0xFF;
     *write_ptr++ = (u8)sound_state->voices[voice_index].driver_voice_id;
     *write_ptr++ = 2;
@@ -1968,7 +1969,7 @@ int SoundDriver_FlushCommands(void) {
     if (sound_state->active == 0) {
         return -1;
     }
-    flag = (int *)(sound_state->dma_dest | 0x20000000);
+    flag = (int *)(sound_state->dma_dest | EE_UNCACHED_ALIAS);
     size = *flag + 4;
     while (size & 0xF) {
         size++;

@@ -263,7 +263,7 @@ void GameLoop_Run(int arg) {
                 pad_state[0] = 0;
             }
         }
-        if (!(game_status.update_hold_flags & 0x40) && player_state.death_timer == 0) {
+        if (!(game_status.update_hold_flags & UPDATE_HOLD_SCRIPTS) && player_state.death_timer == 0) {
             Script_UpdateAll();
         }
         Player_Update();

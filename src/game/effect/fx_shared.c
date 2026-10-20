@@ -247,7 +247,7 @@ void EffectStart_PlaceModel(EffectActor *effect, EffectSlot *spawn_slot) {
     f32 heading_sine;
     f32 heading_cosine;
 
-    if (EFFECT_DEF_FLAG_WORD(effect->def) & 0x10000) {
+    if (EFFECT_DEF_FLAG_WORD(effect->def) & EFFECT_DEF_FLAG_KEEP_START) {
         Vector_Copy(&effect->model->position, effect->def->offset_base);
         Vector_Copy(&origin, effect->start_position);
         pitch_sine = sin(-effect->start_rotation->x);
@@ -265,7 +265,7 @@ void EffectStart_PlaceModel(EffectActor *effect, EffectSlot *spawn_slot) {
     offset.x = effect->def->offset_base[0] + ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->offset_spread[0];
     offset.y = effect->def->offset_base[1] + ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->offset_spread[1];
     offset.z = effect->def->offset_base[2] + ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->offset_spread[2];
-    if (EFFECT_DEF_FLAG_WORD(effect->def) & 0x40000) {
+    if (EFFECT_DEF_FLAG_WORD(effect->def) & EFFECT_DEF_FLAG_KEEP_PITCH) {
         rotated.y = pitch_cosine * offset.y + pitch_sine * offset.z;
         rotated.z = -pitch_sine * offset.y + pitch_cosine * offset.z;
         offset.z = rotated.z;
@@ -282,15 +282,15 @@ void EffectStart_PlaceModel(EffectActor *effect, EffectSlot *spawn_slot) {
 /* Sets the model's rotation for a new effect: the start rotation or the slot's, plus the definition's
    base rotation with a random spread. */
 void EffectStart_TurnModel(EffectActor *effect, EffectSlot *spawn_slot) {
-    if (EFFECT_DEF_FLAGS(effect->def) & 0x10000) {
+    if (EFFECT_DEF_FLAGS(effect->def) & EFFECT_DEF_FLAG_KEEP_START) {
         Vector_Copy(&effect->model->rotation, effect->start_rotation);
     } else {
         Vector_Copy(&effect->model->rotation, &spawn_slot->rotation);
     }
-    if (!(EFFECT_DEF_FLAGS(effect->def) & 0x40000)) {
+    if (!(EFFECT_DEF_FLAGS(effect->def) & EFFECT_DEF_FLAG_KEEP_PITCH)) {
         effect->model->rotation.x = 0.0f;
     }
-    if (EFFECT_DEF_FLAGS(effect->def) & 0x800000) {
+    if (EFFECT_DEF_FLAGS(effect->def) & EFFECT_DEF_FLAG_NO_ROLL) {
         effect->model->rotation.z = 0.0f;
     }
     effect->model->rotation.x += effect->def->rotation_base[0] + ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->rotation_spread[0];

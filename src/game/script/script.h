@@ -516,6 +516,20 @@ typedef struct {
     ScriptArg result;               /* 0x24 */
 } ScriptDistance2DCommand;
 
+/* bits of ScriptSetFlagsCommand.mask and value: the entity flag each one sets (ENTITY_FLAG_BITS fields) */
+#define SCRIPT_ENTITY_FLAG_DYING                    0x2
+#define SCRIPT_ENTITY_FLAG_OWN_THINK                0x4
+#define SCRIPT_ENTITY_FLAG_HANDLER_RUNS             0x8
+#define SCRIPT_ENTITY_FLAG_RESPAWNABLE              0x10
+#define SCRIPT_ENTITY_FLAG_NO_WALL_COLLISION        0x80
+#define SCRIPT_ENTITY_FLAG_NO_SECOND_WALL_COLLISION 0x100
+#define SCRIPT_ENTITY_FLAG_NO_MAP_OBJECT_COLLISION  0x200
+#define SCRIPT_ENTITY_FLAG_NO_ENTITY_COLLISION      0x400
+#define SCRIPT_ENTITY_FLAG_NO_PLAYER_COLLISION      0x800
+#define SCRIPT_ENTITY_FLAG_NO_FLOOR_LIFT            0x1000
+#define SCRIPT_ENTITY_FLAG_ANIMATES                 0x2000
+#define SCRIPT_ENTITY_FLAG_LOOK_AT_TARGET           0x4000
+
 /* sets the entity's flags picked by `mask` from the bits of `value` (ScriptCmd_SetEntityFlags; the
    sixteen bits are the same ones ScriptCmd_GetEntityFlags reads back) */
 typedef struct {
