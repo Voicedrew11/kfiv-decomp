@@ -5,7 +5,7 @@
 int sceDevVif0GetStat(void) {
     u32 status = LIBDEV_REG32(VIF0_STAT);
 
-    if (!(status & 3)) {
+    if (!(status & VIF_STAT_VPS_MASK)) {
         return 0;
     }
     if (status & VIF_STAT_STOPPED_MASK) {

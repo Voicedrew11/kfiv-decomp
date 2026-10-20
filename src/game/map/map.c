@@ -17,6 +17,7 @@
 #include "gfx/packet.h"
 #include "gfx/texture.h"
 #include "input/pad.h"
+#include <eeregs.h>
 
 #define FOG_COLOR() \
     ((u64)map_draw_state.current_fog_color.red | ((u64)map_draw_state.current_fog_color.green << 8) | ((u64)map_draw_state.current_fog_color.blue << 16) | \
@@ -1135,7 +1136,7 @@ void Map_QueueSlotPacket(int slot, int index) {
     u32 *packet;
 
     packet_start = packet = Packet_Alloc(3);
-    *packet++ = *map_slot->packets.items[index] | 0x30000000;
+    *packet++ = *map_slot->packets.items[index] | DMA_TAG_ID_REF;
     *packet++ = (u32)map_slot->packets.items[index] + 0x10;
     *packet++ = 0;
     *packet++ = 0;
@@ -1149,7 +1150,7 @@ void Map_QueuePacket(int *packet) {
 
     if (packet != 0) {
         packet_start = cursor = Packet_Alloc(2);
-        *cursor++ = *packet | 0x30000000;
+        *cursor++ = *packet | DMA_TAG_ID_REF;
         *cursor++ = (u32)packet + 0x10;
         *cursor++ = 0;
         *cursor++ = 0;

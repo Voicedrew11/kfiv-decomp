@@ -24,6 +24,7 @@
 #define VIF1_FIFO   0x10005000
 
 /* VIFn_STAT fields the libdev status functions test. */
+#define VIF_STAT_VPS_MASK 0x3           /* bits 0-1, VPS: the VIF's pipeline state, 0 when idle */
 #define VIF_STAT_WAITING_MASK 0xC       /* bits 2-3: waiting for the VU */
 #define VIF_STAT_STOPPED_MASK 0x700     /* bits 8-10: stopped (VIF stop, forced break or interrupt) */
 #define VIF_STAT_ERROR_MASK 0x3000      /* bits 12-13: stalled on an error */

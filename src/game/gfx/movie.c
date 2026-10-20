@@ -337,7 +337,7 @@ static void Movie_Setup(char *path) {
     struct ThreadParam thread_param;
     int i;
 
-    *D_CTRL |= 3;
+    *D_CTRL |= D_CTRL_DMAE | D_CTRL_RELE;
     *D_STAT = 4;
     MovieReadBuf_Init(MOVIE_READ_BUFFER(&movie_thread));
     MovieVideo_Init(&movie_decoder, movie_thread.mpeg_work, 0x13B800, movie_thread.stream_data, movie_thread.stream_tags,
@@ -348,7 +348,7 @@ static void Movie_Setup(char *path) {
         MovieVideo_SetStream(&movie_decoder, 2, 0, (sceMpegCallback)Movie_AudioCallback,
                              MOVIE_READ_BUFFER(&movie_thread));
     }
-    MovieOut_Init(&movie_out_buffer, (MovieOutPicture *)(((u32)movie_thread.out_pictures & 0x0FFFFFFF) | EE_UNCACHED_ALIAS),
+    MovieOut_Init(&movie_out_buffer, (MovieOutPicture *)(((u32)movie_thread.out_pictures & EE_PHYSICAL_ADDRESS_MASK) | EE_UNCACHED_ALIAS),
                   movie_thread.out_tags, 5);
     for (i = 0; i < movie_out_buffer.size; i++) {
         MovieDisplay_BuildFieldPackets(&movie_thread.display, (u32)&movie_out_buffer.tag[i] + 0x40, (u32)&movie_out_buffer.data[i], 0);
@@ -426,8 +426,8 @@ static int Movie_VideoCallback(sceMpeg *mpeg, MovieStreamCallbackData *stream_da
     }
     second_src_size = stream_data->len - first_src_size;
     MovieVideo_BeginPut(&movie_decoder, &first_dest, &first_dest_size, &second_dest, &second_dest_size);
-    copied = Movie_CopyTwoAreas((u8 *)(((u32)first_dest & 0x0FFFFFFF) | EE_UNCACHED_ALIAS), first_dest_size,
-                                (u8 *)(((u32)second_dest & 0x0FFFFFFF) | EE_UNCACHED_ALIAS), second_dest_size, first_src,
+    copied = Movie_CopyTwoAreas((u8 *)(((u32)first_dest & EE_PHYSICAL_ADDRESS_MASK) | EE_UNCACHED_ALIAS), first_dest_size,
+                                (u8 *)(((u32)second_dest & EE_PHYSICAL_ADDRESS_MASK) | EE_UNCACHED_ALIAS), second_dest_size, first_src,
                                 first_src_size, second_src, second_src_size);
     if (copied > 0) {
         if (!MovieVideo_PutStamp(&movie_decoder, stream_data->pts, stream_data->dts, first_dest, copied)) {
@@ -849,7 +849,7 @@ static void MovieAudio_SetInputVolume(int volume) {
 
 /* Block index of a DMA address in the stream ring; the tag after the last block counts as 0 (getFIFOindex). */
 static int MovieStream_GetBlockIndex(MovieStreamBuffer *stream, u32 address) {
-    if (address == ((u32)(stream->block_count * sizeof(MovieDmaTag) + (u32)stream->tags + sizeof(MovieDmaTag)) & 0x0FFFFFFF)) {
+    if (address == ((u32)(stream->block_count * sizeof(MovieDmaTag) + (u32)stream->tags + sizeof(MovieDmaTag)) & EE_PHYSICAL_ADDRESS_MASK)) {
         return 0;
     }
     return (address - (u32)stream->data) / 0x800;
@@ -886,7 +886,7 @@ static int MovieStream_Init(MovieStreamBuffer *stream, u8 *data, MovieDmaTag *ta
     int i;
 
     stream->data = data;
-    stream->tags = (void *)(((u32)tags & 0x0FFFFFFF) | EE_UNCACHED_ALIAS);
+    stream->tags = (void *)(((u32)tags & EE_PHYSICAL_ADDRESS_MASK) | EE_UNCACHED_ALIAS);
     stream->block_count = block_count;
     stream->data_size = block_count * 0x800;
     stream->dma_start = 0;
@@ -910,10 +910,10 @@ static int MovieStream_Init(MovieStreamBuffer *stream, u8 *data, MovieDmaTag *ta
     for (i = 0; i < stream->block_count; i++) {
         Movie_SetDmaTag(&tags[i], (u32)(data + i * 0x800), 3, 0x80);
     }
-    Movie_SetDmaTag(&tags[i], (u32)tags & 0x0FFFFFFF, 2, 0);
+    Movie_SetDmaTag(&tags[i], (u32)tags & EE_PHYSICAL_ADDRESS_MASK, 2, 0);
     *D4_QWC = 0;
-    *D4_MADR = (u32)stream->data & 0x0FFFFFFF;
-    *D4_TADR = (u32)stream->tags & 0x0FFFFFFF;
+    *D4_MADR = (u32)stream->data & EE_PHYSICAL_ADDRESS_MASK;
+    *D4_TADR = (u32)stream->tags & EE_PHYSICAL_ADDRESS_MASK;
     Movie_SetD4Chcr(D_CHCR_DIR_FROM_MEMORY | D_CHCR_MOD_CHAIN);
     return TRUE;
 }
@@ -934,10 +934,10 @@ static int MovieStream_Reset(MovieStreamBuffer *stream) {
     for (i = 0; i < stream->block_count; i++) {
         Movie_SetDmaTag((MovieDmaTag *)stream->tags + i, (u32)(stream->data + i * 0x800), 3, 0x80);
     }
-    Movie_SetDmaTag((MovieDmaTag *)stream->tags + i, (u32)stream->tags & 0x0FFFFFFF, 2, 0);
+    Movie_SetDmaTag((MovieDmaTag *)stream->tags + i, (u32)stream->tags & EE_PHYSICAL_ADDRESS_MASK, 2, 0);
     *D4_QWC = 0;
-    *D4_MADR = (u32)stream->data & 0x0FFFFFFF;
-    *D4_TADR = (u32)stream->tags & 0x0FFFFFFF;
+    *D4_MADR = (u32)stream->data & EE_PHYSICAL_ADDRESS_MASK;
+    *D4_TADR = (u32)stream->tags & EE_PHYSICAL_ADDRESS_MASK;
     Movie_SetD4Chcr(D_CHCR_DIR_FROM_MEMORY | D_CHCR_MOD_CHAIN);
     return TRUE;
 }
@@ -1019,7 +1019,7 @@ static int MovieStream_AddDma(MovieStreamBuffer *stream) {
     stream->dma_count += read_count;
     if (stream->dma_count != 0) {
         if (is_new_data) {
-            d4_chcr = (d4_chcr & 0x0FFFFFFF) | EE_UNCACHED_ACCELERATED_ALIAS;
+            d4_chcr = (d4_chcr & ~D_CHCR_TAG_ID_BITS) | EE_UNCACHED_ACCELERATED_ALIAS;
         }
         Movie_SetD4Chcr(d4_chcr | D_CHCR_STR);
     }
@@ -1036,7 +1036,7 @@ static int MovieStream_StopDma(MovieStreamBuffer *stream) {
     stream->saved.d4_tadr = *D4_TADR;
     stream->saved.d4_qwc = *D4_QWC;
     stream->saved.d4_chcr = *D4_CHCR;
-    while (*IPU_CTRL & 0xF0) {
+    while (*IPU_CTRL & IPU_CTRL_OFC_MASK) {
     }
     Movie_SetD3Chcr(0);
     stream->saved.d3_madr = *D3_MADR;
@@ -1053,9 +1053,9 @@ static int MovieStream_StopDma(MovieStreamBuffer *stream) {
 
 /* Restarts the stream DMA and the IPU from the registers saved when they were stopped (viBufRestartDMA). */
 static int MovieStream_RestartDma(MovieStreamBuffer *stream) {
-    s32 bit_position = stream->saved.ipu_bp & 0x7F;
-    s32 fifo_pending = (stream->saved.ipu_bp >> 16) & 3;
-    s32 fifo_count = (stream->saved.ipu_bp >> 8) & 0xF;
+    s32 bit_position = stream->saved.ipu_bp & IPU_BP_BIT_POSITION_MASK;
+    s32 fifo_pending = (stream->saved.ipu_bp >> IPU_BP_FP_SHIFT) & IPU_BP_FP_MASK;
+    s32 fifo_count = (stream->saved.ipu_bp >> IPU_BP_IFC_SHIFT) & IPU_BP_IFC_MASK;
     u32 d4_madr_next = stream->saved.d4_madr - ((fifo_pending + fifo_count) << 4);
     u32 d4_qwc_next = stream->saved.d4_qwc + (fifo_pending + fifo_count);
     u32 d4_tadr_next = stream->saved.d4_tadr;
@@ -1068,12 +1068,12 @@ static int MovieStream_RestartDma(MovieStreamBuffer *stream) {
     if (d4_madr_next < (u32)stream->data) {
         d4_qwc_next = ((u32)stream->data - d4_madr_next) >> 4;
         d4_madr_next += stream->block_count << 11;
-        d4_tadr_next = (u32)stream->tags & 0x0FFFFFFF;
+        d4_tadr_next = (u32)stream->tags & EE_PHYSICAL_ADDRESS_MASK;
         tag_id = (stream->saved.d4_madr == (u32)stream->data ||
                   stream->saved.d4_madr == (u32)stream->data + (stream->block_count << 11))
                      ? 0
                      : 3;
-        d4_chcr_next = (stream->saved.d4_chcr & 0x0FFFFFFF) | (tag_id << 28) | D_CHCR_STR;
+        d4_chcr_next = (stream->saved.d4_chcr & ~D_CHCR_TAG_ID_BITS) | (tag_id << 28) | D_CHCR_STR;
         if (!IS_IN_REGION(0, stream->dma_start, stream->dma_count, stream->block_count)) {
             stream->dma_start = stream->block_count - 1;
             stream->dma_count++;
@@ -1083,12 +1083,12 @@ static int MovieStream_RestartDma(MovieStreamBuffer *stream) {
         index_next = MovieStream_GetBlockIndex(stream, d4_madr_next);
         if (index != index_next) {
             d4_qwc_next = ((u32)stream->data + (index << 11) - d4_madr_next) >> 4;
-            d4_tadr_next = ((index << 4) + (u32)stream->tags) & 0x0FFFFFFF;
+            d4_tadr_next = ((index << 4) + (u32)stream->tags) & EE_PHYSICAL_ADDRESS_MASK;
             tag_id = ((u32)stream->data + (stream->saved.d4_madr - (u32)stream->data) % (stream->block_count << 11) ==
                       (u32)stream->data + (((stream->dma_start + stream->dma_count) % stream->block_count) << 11))
                          ? 0
                          : 3;
-            d4_chcr_next = (stream->saved.d4_chcr & 0x0FFFFFFF) | (tag_id << 28) | D_CHCR_STR;
+            d4_chcr_next = (stream->saved.d4_chcr & ~D_CHCR_TAG_ID_BITS) | (tag_id << 28) | D_CHCR_STR;
             if (!IS_IN_REGION(index_next, stream->dma_start, stream->dma_count, stream->block_count)) {
                 stream->dma_start = index_next;
                 stream->dma_count++;
@@ -1250,9 +1250,9 @@ static int MovieStream_PutStamp(MovieStreamBuffer *stream, MovieTimeStamp *stamp
 static int MovieStream_GetStamp(MovieStreamBuffer *stream, MovieTimeStamp *stamp_out) {
     u32 d4_madr = *D4_MADR;
     u32 ipu_bp = *IPU_BP;
-    s32 bit_position = stream->saved.ipu_bp & 0x7F;
-    s32 fifo_pending = (ipu_bp >> 16) & 3;
-    s32 fifo_count = (ipu_bp >> 8) & 0xF;
+    s32 bit_position = stream->saved.ipu_bp & IPU_BP_BIT_POSITION_MASK;
+    s32 fifo_pending = (ipu_bp >> IPU_BP_FP_SHIFT) & IPU_BP_FP_MASK;
+    s32 fifo_count = (ipu_bp >> IPU_BP_IFC_SHIFT) & IPU_BP_IFC_MASK;
     u32 d4_madr_next = d4_madr - ((fifo_pending + fifo_count) << 4);
     s32 data_size = stream->block_count << 11;
     s32 is_end = FALSE;
@@ -1406,8 +1406,8 @@ static int MovieVideo_Flush(MovieVideoDecoder *decoder) {
     if (first_size + second_size < 4) {
         return 0;
     }
-    copied = MovieVideo_CopyTwoAreas((u8 *)(((u32)first & 0x0FFFFFFF) | EE_UNCACHED_ALIAS), first_size,
-                                     (u8 *)(((u32)second & 0x0FFFFFFF) | EE_UNCACHED_ALIAS), second_size, end_code.bytes, 4,
+    copied = MovieVideo_CopyTwoAreas((u8 *)(((u32)first & EE_PHYSICAL_ADDRESS_MASK) | EE_UNCACHED_ALIAS), first_size,
+                                     (u8 *)(((u32)second & EE_PHYSICAL_ADDRESS_MASK) | EE_UNCACHED_ALIAS), second_size, end_code.bytes, 4,
                                      NULL, 0);
     MovieVideo_EndPut(&movie_decoder, copied);
     MovieStream_Flush(&decoder->stream);
@@ -1616,10 +1616,10 @@ static void MovieDisplay_Init(MovieDisplay *display, s32 screen_x, s32 screen_y,
     display->screen_y = screen_y;
     sceGsResetGraph(0, 1, movie_thread.video_mode, 1);
     sceGsSetDefDispEnv((sceGsDispEnv *)display, 0, width, field_height, movie_thread.display_x, movie_thread.display_y);
-    display->dispfb = (display->dispfb & ~GS_DISPFB_FBW_MASK) | ((buffer_width & 0x3F) << 9);
+    display->dispfb = (display->dispfb & ~GS_DISPFB_FBW_MASK) | ((buffer_width & GS_FBW_MASK) << GS_DISPFB_FBW_SHIFT);
     FlushCache(0);
     sceGsPutDispEnv(display);
-    packet_start = (u32)movie_init_display_packet & 0x0FFFFFFF;
+    packet_start = (u32)movie_init_display_packet & EE_PHYSICAL_ADDRESS_MASK;
     packet = GsPacket_AddGifTag(packet_start | EE_UNCACHED_ALIAS, 0xE, 1, 0, 0, 0, 1, 6);
     packet = GsPacket_AddPrmodecont(packet, 1);
     packet = GsPacket_AddFrame(packet, display->frame_base[0], ROUND_UP(display->width, 64) / 64, 0, 0);
@@ -1648,7 +1648,7 @@ static void MovieDisplay_BuildFieldPackets(MovieDisplay *display, u32 packet_sta
     s32 field_height = display->height / 2;
     s32 rows = picture_height >> 4;
     s32 columns = picture_width >> 4;
-    s32 packet = (packet_start & 0x0FFFFFFF) | EE_UNCACHED_ALIAS;
+    s32 packet = (packet_start & EE_PHYSICAL_ADDRESS_MASK) | EE_UNCACHED_ALIAS;
     s32 field_pages = (field_height + 31) / 32;      /* a field's frame buffer, in rows of GS pages */
     s32 buffer_width = ROUND_UP(width, 64) / 64;
     s32 buffer_pixels = buffer_width * 64;
@@ -1686,7 +1686,7 @@ static void MovieDisplay_BuildFieldPackets(MovieDisplay *display, u32 packet_sta
                 packet = GsPacket_AddTrxpos(packet, 0, column << 4, row << 4);
                 packet = GsPacket_AddTrxdir(packet, 0);
                 packet = GsPacket_AddGifTag(packet, 0, 0, 2, 0, 0, 0, 0x40);
-                packet = GsPacket_AddDmaTag(packet, 0, picture & 0x0FFFFFFF, 0, 3, 0, 0x40);
+                packet = GsPacket_AddDmaTag(packet, 0, picture & EE_PHYSICAL_ADDRESS_MASK, 0, 3, 0, 0x40);
                 picture += 0x400;
             }
         }
@@ -1708,14 +1708,14 @@ static void MovieDisplay_ShowField(MovieDisplay *display, s32 second) {
     } else {
         frame_base = display->frame_base[0];
     }
-    display->dispfb = (display->dispfb & ~0x1FF) | (frame_base & 0x1FF);
+    display->dispfb = (display->dispfb & ~GS_DISPFB_FBP_MASK) | (frame_base & GS_DISPFB_FBP_MASK);
     sceGsPutDispEnv(display);
 }
 
 /* Fills both fields' frame buffers with one color. */
 static void MovieDisplay_Clear(MovieDisplay *display, u32 color) {
     s32 rect[4];
-    s32 packet_start = (u32)movie_clear_packet & 0x0FFFFFFF;
+    s32 packet_start = (u32)movie_clear_packet & EE_PHYSICAL_ADDRESS_MASK;
     s32 packet;
 
     rect[0] = 0;
@@ -1903,7 +1903,7 @@ static const char vblank_format[] = "GS_CSR=%s vbct=%d isvb%d\n";
 
 /* Starts the GIF DMA channel on a chain of packets. */
 static void Movie_SendGifChain(u32 chain) {
-    *D2_TADR = chain & 0x0FFFFFFF;
+    *D2_TADR = chain & EE_PHYSICAL_ADDRESS_MASK;
     *D2_QWC = 0;
     *D2_CHCR = D_CHCR_STR | D_CHCR_DIR_FROM_MEMORY | D_CHCR_MOD_CHAIN;
 }
