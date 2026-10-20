@@ -19,6 +19,12 @@
 #include "save/save_state.h"
 #include "player/player.h"
 
+/* ai_state->move_choice: walks straight at the player */
+#define FOREST_GOLEM_MOVE_CHOICE_WALK_IN 1
+
+/* EntitySpawnInfo.spawn_mode here is the spawn id of the entity it respawns: 0 is none */
+#define FOREST_GOLEM_NO_PARTNER_SPAWN_ID 0
+
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 static void ForestGolem_ThinkStayInPlace(Entity *entity, int invoke_now);
@@ -274,13 +280,13 @@ static void ForestGolem_ThinkByState(Entity *entity, s32 run_now) {
         return;
     }
     switch (entity->state) {
-    case 0:
+    case ENTITY_STATE_UNAWARE:
         EntityAi_ThinkIdle(entity, run_now);
         return;
-    case 1:
+    case ENTITY_STATE_SEARCHING:
         EntityAi_ThinkPursue(entity, run_now);
         return;
-    case 2:
+    case ENTITY_STATE_NOTICED:
         ForestGolem_ThinkCombat(entity, run_now);
         return;
     }
@@ -319,43 +325,43 @@ static void ForestGolem_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, next_action);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             if ((s16)entity->params->action_frames < entity->distance_to_player) { // match: read signed here
                 turn = EntityMath_AngleDifference(entity->heading_to_player, entity->model->rotation[1]);
                 turn = ABS(turn);
                 if (turn > DEG_TO_RAD(45)) {
                     entity->target = &player_state;
                     entity->action_timer = rand() % 30 + 60;
-                    ai_state->move_choice = 0;
+                    ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
                 } else {
-                    ai_state->move_choice = -1;
+                    ai_state->move_choice = MOVE_CHOICE_NONE;
                 }
             } else {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 120;
-                ai_state->move_choice = 1;
+                ai_state->move_choice = FOREST_GOLEM_MOVE_CHOICE_WALK_IN;
             }
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 60;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (entity->combat_choice == 1) {
+    if (entity->combat_choice == COMBAT_CHOICE_CLOSE_IN) {
         side = EntityAi_TurnFromPush(entity, direction);
         switch (ai_state->move_choice) {
-        case 0:
+        case MOVE_CHOICE_CLOSE_IN:
             if (side > 0) {
                 entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
             } else if (side < 0) {
@@ -364,7 +370,7 @@ static void ForestGolem_ThinkCombat(Entity *entity, s32 run_now) {
                 entity->move_command = EntityAi_TurnCommand(entity);
             }
             break;
-        case 1:
+        case FOREST_GOLEM_MOVE_CHOICE_WALK_IN:
             if (side > 0) {
                 entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
             } else if (side < 0) {
@@ -414,7 +420,7 @@ static void ForestGolem_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
             entity->action_timer = 20;
             EntityEvent_OnDeath(entity);
-            if (entity->spawn_info->spawn_mode != 0) {
+            if (entity->spawn_info->spawn_mode != FOREST_GOLEM_NO_PARTNER_SPAWN_ID) {
                 other = Entity_GetBySpawnId(entity->spawn_info->spawn_mode);
                 if (other != NULL && ENTITY_FLAG_BITS(other)->active_list) {
                     EntityEvent_Respawn(other);
@@ -510,10 +516,10 @@ static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 run_now) {
         return;
     }
     switch (entity->state) {
-    case 0:
+    case ENTITY_STATE_UNAWARE:
         break;
-    case 1:
-    case 2:
+    case ENTITY_STATE_SEARCHING:
+    case ENTITY_STATE_NOTICED:
         ForestGolem_ThinkCombat(entity, run_now);
         return;
     }
@@ -619,10 +625,10 @@ static void ForestGolem_ThinkUseMapObjectsNegX(Entity *entity, s32 run_now) {
         return;
     }
     switch (entity->state) {
-    case 0:
+    case ENTITY_STATE_UNAWARE:
         break;
-    case 1:
-    case 2:
+    case ENTITY_STATE_SEARCHING:
+    case ENTITY_STATE_NOTICED:
         ForestGolem_ThinkCombat(entity, run_now);
         return;
     }

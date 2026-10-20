@@ -113,15 +113,15 @@ static void WaterElemental_Think(Entity *entity, s32 run_now) {
             EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 ai_state->pause_timer = 0;
                 EntityAi_ThinkIdle(entity, run_now);
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 ai_state->pause_timer = 0;
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 WaterElemental_ThinkCombat(entity, run_now);
                 break;
             default:
@@ -174,28 +174,28 @@ static void WaterElemental_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, mode);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -427,12 +427,12 @@ static void WaterElemental_RunAtPlayer(Entity *entity) {
         ENTITY_FLAGS(entity) |= ENTITY_FLAG_LOOK_AT_TARGET;
         if (side == 0) {
             entity->prev_combat_choice = entity->combat_choice;
-            entity->combat_choice = 0;
-            if (entity->prev_combat_choice != 0) {
+            entity->combat_choice = COMBAT_CHOICE_ATTACK;
+            if (entity->prev_combat_choice != COMBAT_CHOICE_ATTACK) {
                 entity->choice_change_frame = frame_counter;
             }
             EntityAi_LowerChoiceWeight(entity, 0);
-            if (entity->combat_choice == 0) {
+            if (entity->combat_choice == COMBAT_CHOICE_ATTACK) {
                 ai_state->pause_timer = 2;
                 if (EntityAi_PickAttack(entity)) {
                     EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);

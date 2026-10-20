@@ -14,6 +14,12 @@
 #include "model/motion.h"
 #include "entity/entity_math.h"
 
+/* EntitySpawnInfo.spawn_mode: picks the think handler and the start animation */
+#define SKELETON_SOLDIER_SPAWN_MODE_NORMAL               0
+#define SKELETON_SOLDIER_SPAWN_MODE_NO_STATES            1
+#define SKELETON_SOLDIER_SPAWN_MODE_CLEARS_MAP_COLLISION 2
+#define SKELETON_SOLDIER_SPAWN_MODE_CLEARS_COLLISION_AWAY 3
+
 
 static void SkeletonSoldier_Think(Entity *entity, s32 run_now);
 static void SkeletonSoldier_Dormant(Entity *entity);
@@ -38,7 +44,7 @@ void SkeletonSoldier_Init(Entity *entity) {
     ai_state->move = EntityAi_Move;
     ai_state->dormant = SkeletonSoldier_Dormant;
     ai_state->death = EntityAi_Death;
-    if (entity->spawn_info->spawn_mode == 1) {
+    if (entity->spawn_info->spawn_mode == SKELETON_SOLDIER_SPAWN_MODE_NO_STATES) {
         ai_state->think = SkeletonSoldier_ThinkNoStates;
     } else if (entity->spawn_info->spawn_mode >= 2 && entity->spawn_info->spawn_mode <= 3) {
         ai_state->think = SkeletonSoldier_ThinkClearFlag25Away;
@@ -84,14 +90,14 @@ static void SkeletonSoldier_Think(Entity *entity, s32 run_now) {
             EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 EntityAi_ThinkIdle(entity, run_now);
                 ai_state->mode_timer = 0;
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 if (ENTITY_FLAG_BITS(entity)->player_in_reach && ai_state->mode_timer == 0) {
                     EntityAi_StartAction(entity, SkeletonSoldier_PlayAnim17, run_now);
                     ai_state->mode_timer = 1;
@@ -116,7 +122,7 @@ static void SkeletonSoldier_Dormant(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
-        if (entity->spawn_info->spawn_mode != 0) {
+        if (entity->spawn_info->spawn_mode != SKELETON_SOLDIER_SPAWN_MODE_NORMAL) {
             Motion_Start(entity, 0x12, 0, 0, 1);
         } else {
             Motion_Start(entity, 1, 0, 0, 1);
@@ -140,7 +146,7 @@ static void SkeletonSoldier_Dormant(Entity *entity) {
         break;
     case 1:
         if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
-            if (entity->spawn_info->spawn_mode != 0) {
+            if (entity->spawn_info->spawn_mode != SKELETON_SOLDIER_SPAWN_MODE_NORMAL) {
                 Motion_Start(entity, 0x13, 0, entity->params->motion_blend_frames, 0);
             } else {
                 Motion_Start(entity, 2, 0, entity->params->motion_blend_frames, 0);
@@ -233,7 +239,7 @@ static void SkeletonSoldier_ThinkClearFlag25Away(Entity *entity, s32 run_now) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (entity->spawn_info->spawn_mode == 3 && EntityMath_DistanceXZ(entity->model->position, &entity->spawn_info->spawn_x) > 180.0f) {
+    if (entity->spawn_info->spawn_mode == SKELETON_SOLDIER_SPAWN_MODE_CLEARS_COLLISION_AWAY && EntityMath_DistanceXZ(entity->model->position, &entity->spawn_info->spawn_x) > 180.0f) {
         ENTITY_FLAG_BITS(entity)->no_map_object_collision = 0;
     }
     if (entity->busy_flags == 0) {
@@ -243,14 +249,14 @@ static void SkeletonSoldier_ThinkClearFlag25Away(Entity *entity, s32 run_now) {
             EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 EntityAi_ThinkIdle(entity, run_now);
                 ai_state->mode_timer = 0;
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 if (ENTITY_FLAG_BITS(entity)->player_in_reach && ai_state->mode_timer == 0) {
                     EntityAi_StartAction(entity, SkeletonSoldier_PlayAnim17, run_now);
                     ai_state->mode_timer = 1;
@@ -319,7 +325,7 @@ static void SkeletonSoldier_DormantAnim18Then19(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit22 = 0;
             ENTITY_FLAG_BITS(entity)->no_wall_collision = 0;
             ENTITY_FLAG_BITS(entity)->no_second_wall_collision = 0;
-            if (entity->spawn_info->spawn_mode == 2) {
+            if (entity->spawn_info->spawn_mode == SKELETON_SOLDIER_SPAWN_MODE_CLEARS_MAP_COLLISION) {
                 ENTITY_FLAG_BITS(entity)->no_map_object_collision = 0;
             }
             ENTITY_FLAG_BITS(entity)->bit18 = 0;
@@ -389,7 +395,7 @@ static void SkeletonSoldier_ThinkDecideAttackOrWait(Entity *entity, s32 run_now)
             entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
-        if (entity->combat_choice == 0) {
+        if (entity->combat_choice == COMBAT_CHOICE_ATTACK) {
             if (EntityAi_PickAttack(entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, run_now);
             } else {
@@ -398,7 +404,7 @@ static void SkeletonSoldier_ThinkDecideAttackOrWait(Entity *entity, s32 run_now)
             return;
         }
         entity->action_timer = rand() % 30 + 30;
-        ai_state->move_choice = -1;
+        ai_state->move_choice = MOVE_CHOICE_NONE;
     }
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }

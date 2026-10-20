@@ -11,6 +11,9 @@
 #include "model/motion.h"
 #include "entity/entity_math.h"
 
+/* Entity.state: set once the player is near; Crow_MoveOffAndRemove flies it away */
+#define CROW_STATE_FLY_OFF 3
+
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 static void Crow_Animate(Entity *entity);
@@ -86,11 +89,11 @@ static void Crow_Think(Entity *entity, int frame) {
     }
     if (entity->distance_to_player < (float)ENTITY_CONTROLLER(entity)->pitch_limit_deg) {
         // match: retail reads the u8 state signed (lb)
-        if ((s8)entity->state != 3) {
-            entity->state = 3;
+        if ((s8)entity->state != CROW_STATE_FLY_OFF) {
+            entity->state = CROW_STATE_FLY_OFF;
         }
     }
-    if ((s8)entity->state == 3) {
+    if ((s8)entity->state == CROW_STATE_FLY_OFF) {
         Crow_MoveOffAndRemove(entity, frame);
         return;
     }

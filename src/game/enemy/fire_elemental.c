@@ -100,14 +100,14 @@ static void FireElemental_Think(Entity *entity, s32 run_now) {
             FireElemental_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 ai_state->step_index = 0;
                 EntityAi_ThinkIdle(entity, run_now);
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 if (ai_state->step_index == 0) {
                     EntityAi_StartAction(entity, FireElemental_StandAndAttack, run_now);
                 } else {
@@ -160,7 +160,7 @@ static void FireElemental_ThinkCombat(Entity *entity, s32 run_now) {
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
-        case 0:
+        case COMBAT_CHOICE_ATTACK:
             if (EntityAi_PickAttack(entity)) {
                 if (ENTITY_FLAG_BITS(entity)->attack_index == 1) {
                     EntityAi_StartAction(entity, FireElemental_RangedAttack1, run_now);
@@ -171,21 +171,21 @@ static void FireElemental_ThinkCombat(Entity *entity, s32 run_now) {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, run_now);
             }
             return;
-        case 1:
+        case COMBAT_CHOICE_CLOSE_IN:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 120;
-            ai_state->move_choice = 0;
+            ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             break;
-        case 2:
+        case COMBAT_CHOICE_WAIT:
             entity->action_timer = rand() % 30 + 30;
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         default:
-            ai_state->move_choice = -1;
+            ai_state->move_choice = MOVE_CHOICE_NONE;
             break;
         }
     }
-    if (ai_state->move_choice == 0) {
+    if (ai_state->move_choice == MOVE_CHOICE_CLOSE_IN) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -285,15 +285,15 @@ static void FireElemental_StandAndAttack(Entity *entity) {
             if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > DEG_TO_RAD(20)) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 30 + 30;
-                ai_state->move_choice = 0;
+                ai_state->move_choice = MOVE_CHOICE_CLOSE_IN;
             } else {
                 entity->action_timer = rand() % 30 + 30;
-                ai_state->move_choice = -1;
+                ai_state->move_choice = MOVE_CHOICE_NONE;
             }
         }
         turn = EntityAi_TurnFromPush(entity, direction);
         switch (ai_state->move_choice) {
-        case 0:
+        case MOVE_CHOICE_CLOSE_IN:
             Motion_Start(entity, 4, 0, entity->params->motion_blend_frames, 0);
             if (turn > 0) {
                 entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
@@ -322,7 +322,7 @@ static void FireElemental_StandAndAttack(Entity *entity) {
             entity->turn_delta_yaw += direction[0];
             ai_state->move_speed = 0.0f;
             break;
-        case -1:
+        case MOVE_CHOICE_NONE:
             Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
             ai_state->turn_rate = 0.0f;
             ai_state->move_speed = 0.0f;
@@ -604,12 +604,12 @@ static void FireElemental_BackAwayFromPlayer(Entity *entity) {
         ENTITY_FLAGS(entity) |= ENTITY_FLAG_LOOK_AT_TARGET;
         if (side == 0) {
             entity->prev_combat_choice = entity->combat_choice;
-            entity->combat_choice = 0;
-            if (entity->prev_combat_choice != 0) {
+            entity->combat_choice = COMBAT_CHOICE_ATTACK;
+            if (entity->prev_combat_choice != COMBAT_CHOICE_ATTACK) {
                 entity->choice_change_frame = frame_counter;
             }
             EntityAi_LowerChoiceWeight(entity, 0);
-            if (entity->combat_choice == 0) {
+            if (entity->combat_choice == COMBAT_CHOICE_ATTACK) {
                 ai_state->pause_timer = 2;
                 if (EntityAi_PickAttack(entity)) {
                     if (ENTITY_FLAG_BITS(entity)->attack_index == 1) {
