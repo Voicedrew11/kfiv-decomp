@@ -32,7 +32,7 @@ void Menu_StepModelLoad(LinkNode *node);
 int Menu_TakeLoadBuffer(LinkNode *node);
 
 /* Puts every load buffer back on the free list, keeping a load still in progress. */
-void Menu_ResetLoadBuffers(void);
+void Menu_ResetLoadBuffers(s32 unused);
 
 /* Allocates the load buffers, builds their free list and sets up the package load node. */
 void Menu_InitLoadBuffers(void);
@@ -48,7 +48,7 @@ void Menu_AddKeyItem(s32 key);
 s32 Menu_MoveItemListCursor(HandlerContext *context, s32 locked);
 
 /* If the item list has anything: names its five models and chains the five load nodes for them. */
-void Menu_ChainItemListModels(void);
+void Menu_ChainItemListModels(s32 unused);
 
 /* The five load nodes follow a list cursor one row on or back, or a page up or down. */
 void Menu_ShiftListModelsNext(s32 value);

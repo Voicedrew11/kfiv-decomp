@@ -11,11 +11,11 @@
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(void);
-void EntityAi_OnHit(char *);
+void EntityAi_Animate(Entity *);
+void EntityAi_OnHit(Entity *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 extern s32 entity_type_handlers[][2];
@@ -48,7 +48,7 @@ void EntityEvent_Respawn(char *);
 s32 EntityAi_CanAttack(Entity *);
 float EntityMath_DistanceXZ(void *, void *);
 
-static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity);
+static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity, s32 run_now);
 static void ExpeditionSoldier_Think(Entity *entity, s32 unknown);
 static void ExpeditionSoldier_ThinkCombat(Entity *entity, s32 unknown);
 static void ExpeditionSoldier_Death(Entity *entity);
@@ -76,32 +76,32 @@ void ExpeditionSoldier_Init(Entity *entity) {
     switch (entity->spawn_info->variant) {
     case 1:
     case 2:
-        ai_state->think = (void (*)(Entity *, s32))ExpeditionSoldier_ThinkHoldAnim18Or19;
+        ai_state->think = ExpeditionSoldier_ThinkHoldAnim18Or19;
         ai_state->animate = EntityAi_Animate;
         break;
     case 3:
         ai_state->think = ExpeditionSoldier_ThinkUseMapObjectsPosX;
         ai_state->animate = EntityAi_Animate;
-        ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
-        ai_state->move = (void (*)(void))EntityAi_Move;
-        ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-        ai_state->death = (void (*)(void))ExpeditionSoldier_Death;
+        ai_state->on_hit = EntityAi_OnHit;
+        ai_state->move = EntityAi_Move;
+        ai_state->dormant = EntityAi_Dormant;
+        ai_state->death = ExpeditionSoldier_Death;
         break;
     case 4:
         ai_state->think = ExpeditionSoldier_ThinkUseMapObjectsNegX;
         ai_state->animate = EntityAi_Animate;
-        ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
-        ai_state->move = (void (*)(void))EntityAi_Move;
-        ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-        ai_state->death = (void (*)(void))ExpeditionSoldier_Death;
+        ai_state->on_hit = EntityAi_OnHit;
+        ai_state->move = EntityAi_Move;
+        ai_state->dormant = EntityAi_Dormant;
+        ai_state->death = ExpeditionSoldier_Death;
         break;
     default:
         ai_state->think = ExpeditionSoldier_Think;
         ai_state->animate = EntityAi_Animate;
-        ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
-        ai_state->move = (void (*)(void))EntityAi_Move;
-        ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-        ai_state->death = (void (*)(void))ExpeditionSoldier_Death;
+        ai_state->on_hit = EntityAi_OnHit;
+        ai_state->move = EntityAi_Move;
+        ai_state->dormant = EntityAi_Dormant;
+        ai_state->death = ExpeditionSoldier_Death;
         break;
     }
     for (i = 4 - 1; i != -1; i--) {
@@ -113,9 +113,9 @@ void ExpeditionSoldier_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -124,14 +124,14 @@ void ExpeditionSoldier_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The think handler the set-up function installs for EntitySpawnInfo.variant 1 and 2 (it takes the
    entity only): holds animation 18 (variant 1) or 19 with flag bits 16, 18, 20 to 26 and 28 set and
    starts no action. The set-up function installs no other handler but EntityAi_Animate for these.
    */
-static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity) {
+static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity, s32 run_now) {
     if (entity->spawn_info->variant == 1) {
         Motion_Start(entity, 0x12, 0, 0, 0);
     } else {
@@ -279,7 +279,7 @@ static void ExpeditionSoldier_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The death action (busy bit 0x40): as EntityAi_Death; when the fade starts and
@@ -376,7 +376,7 @@ static void ExpeditionSoldier_SignalMapObject(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -437,8 +437,7 @@ static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
     f32 face_point[4];
     f32 reach;
 
-    // match: the shared prototype takes no argument; retail passes the entity
-    if (((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
+    if (EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -492,7 +491,7 @@ static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand(entity, 0, reach * 0.5f);
         }
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The think handler the set-up function installs for EntitySpawnInfo.variant 4: as
@@ -544,8 +543,7 @@ static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
     f32 face_point[4];
     f32 reach;
 
-    // match: the shared prototype takes no argument; retail passes the entity
-    if (((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
+    if (EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -599,5 +597,5 @@ static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand(entity, 0, reach * 0.5f);
         }
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }

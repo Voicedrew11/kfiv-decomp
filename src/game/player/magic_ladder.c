@@ -17,7 +17,7 @@ extern PlayerShot *channeled_shot;
 extern u32 frame_counter;
 /* 0x4145C8 the ladder's state handlers, one per LadderState (Ladder_DispatchPad picks one) */
 void (*ladder_state_handlers[6])(u16, u16) = {
-    (void (*)(u16, u16))Ladder_WalkToFoot, Ladder_WaitOnRung, Ladder_ClimbRungUp, Ladder_ClimbRungDown,
+    Ladder_WalkToFoot, Ladder_WaitOnRung, Ladder_ClimbRungUp, Ladder_ClimbRungDown,
 };
 extern u16 forward_button;
 extern u16 back_button;

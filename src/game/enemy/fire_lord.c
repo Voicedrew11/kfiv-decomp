@@ -11,7 +11,7 @@ int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now)
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
-void EntityAi_OnHit(char *);
+void EntityAi_OnHit(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern ModelInstanceBlock fire_lord_model[2];
@@ -87,11 +87,11 @@ void FireLord_Init(Entity *entity) {
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = FireLord_Think;
-    ai_state->animate = (void (*)(void))FireLord_Animate;
-    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
-    ai_state->move = (void (*)(void))FireLord_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->animate = FireLord_Animate;
+    ai_state->on_hit = EntityAi_OnHit;
+    ai_state->move = FireLord_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = EntityAi_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -101,9 +101,9 @@ void FireLord_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -202,7 +202,7 @@ static void FireLord_ThinkIdle(Entity *entity, s32 unknown) {
     entity->move_command = 0;
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-    EntityAi_StartAction(entity, (void (*)(Entity *))entity->ai_state.move, unknown);
+    EntityAi_StartAction(entity, entity->ai_state.move, unknown);
 }
 
 /* The think function of states 1 and 2: every 10 frames (work byte unk7D) sorts the distance to the
@@ -265,7 +265,7 @@ static void FireLord_ThinkCombatApproach(Entity *entity, int invoke_now) {
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
     entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f);
-    EntityAi_StartAction(entity, (void (*)(Entity *))sub->move, invoke_now);
+    EntityAi_StartAction(entity, sub->move, invoke_now);
 }
 
 /* Band 1 of FireLord_ThinkCombat: when EntityAi_CanShoot finds the player in reach of a ranged
@@ -283,7 +283,7 @@ static void FireLord_ThinkCombatShootOrApproach(Entity *entity, s32 unknown) {
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
     entity->target = &player_state;
     entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f);
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* Band 2 of FireLord_ThinkCombat: when the heading is within 20 degrees of Entity.heading_to_player, flips
@@ -302,7 +302,7 @@ static void FireLord_ThinkCombatSideAnimOrApproach(Entity *entity, s32 unknown) 
     }
     entity->target = &player_state;
     entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f);
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* Band 3 of FireLord_ThinkCombat (the player 100 to 500 away): as EntityAi_ThinkCombat, closing
@@ -386,7 +386,7 @@ static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* Band 4 of FireLord_ThinkCombat (the player nearer than 100): as
@@ -478,7 +478,7 @@ static void FireLord_ThinkCombatBackAway(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* An action (busy bit 0x1000) that FireLord_ThinkCombatSideAnimOrApproach starts: plays animation 6 or 7
@@ -512,7 +512,7 @@ static void FireLord_PlayAnim6Or7Alternately(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -633,7 +633,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -729,7 +729,7 @@ static void FireLord_MeleeAttack1(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -774,7 +774,7 @@ static void FireLord_PlayAnim6Or7ThenMelee0(Entity *entity) {
             } else if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;

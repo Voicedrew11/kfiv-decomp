@@ -465,7 +465,7 @@ static int Entity_TryActivate(Entity *entity) {
     ENTITY_MODEL(entity)->texture_packet_5 = (int)Map_GetSlotPacket(entity->group_id, 5);
     entity->sound_bank = slot->sound_bank;
     EntityPool_AddUser(entity->pool_slot_index);
-    ((void (*)(Entity *))Entity_ResetToSpawn)(entity); // match: declared without its argument elsewhere
+    Entity_ResetToSpawn(entity);
     return TRUE;
 }
 

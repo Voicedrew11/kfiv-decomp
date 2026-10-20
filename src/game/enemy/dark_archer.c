@@ -9,9 +9,9 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
+int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
@@ -36,7 +36,7 @@ void Matrix_Multiply(void *, void *, void *);
 float EntityMath_EaseAngleToward(float *, float, float);
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(char *, void (*)(void), int);
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
@@ -117,24 +117,24 @@ void DarkArcher_Init(Entity *entity) {
     EntityAi_SetUpdate((char *)entity, (s32)entity_type_handlers[entity->params->entity_type][1]);
     if (entity->spawn_info->spawn_mode != 0) {
         ai_state->think = DarkArcher_ThinkShootOrTurn;
-        ai_state->animate = (void (*)(void))DarkArcher_Animate;
-        ai_state->on_hit = (void (*)(void))DarkArcher_OnHit;
-        ai_state->dormant = (void (*)(void))DarkArcher_DormantFadeIn;
-        ai_state->move = (void (*)(void))DarkArcher_MoveTurnOnly;
-        ai_state->death = (void (*)(void))EntityAi_Death;
+        ai_state->animate = DarkArcher_Animate;
+        ai_state->on_hit = DarkArcher_OnHit;
+        ai_state->dormant = DarkArcher_DormantFadeIn;
+        ai_state->move = DarkArcher_MoveTurnOnly;
+        ai_state->death = EntityAi_Death;
         ENTITY_FLAG_BITS(entity)->bit18 = 1;
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
         ai_state->think = DarkArcher_Think;
-        ai_state->animate = (void (*)(void))DarkArcher_Animate;
-        ai_state->on_hit = (void (*)(void))DarkArcher_OnHit;
-        ai_state->death = (void (*)(void))EntityAi_Death;
-        ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-        ai_state->move = (void (*)(void))EntityAi_Move;
+        ai_state->animate = DarkArcher_Animate;
+        ai_state->on_hit = DarkArcher_OnHit;
+        ai_state->death = EntityAi_Death;
+        ai_state->dormant = EntityAi_Dormant;
+        ai_state->move = EntityAi_Move;
         if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+            EntityAi_StartAction(entity, ai_state->dormant, 1);
         } else {
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+            EntityAi_StartAction(entity, ai_state->move, 0);
         }
         entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
         entity->model->alpha = entity->model_alpha;
@@ -144,7 +144,7 @@ void DarkArcher_Init(Entity *entity) {
     }
     ai_state->pose_blend_weight = 0.5f;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The animate handler (installed in both modes): as EntityAi_Animate, and
@@ -253,12 +253,12 @@ static void DarkArcher_OnHit(Entity *entity) {
     hit_strength = (flags >> 36) & 3;
     if (hit_strength == 1) {
         if ((s32)(flags >> 19) & 1) {
-            EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionRewind, 0);
+            EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
-            EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionLight, 0);
+            EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);
         }
     } else if (hit_strength == 2) {
-        EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
+        EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
 }
@@ -286,7 +286,7 @@ static void DarkArcher_ThinkShootOrTurn(Entity *entity, s32 unknown) {
         } else {
             entity->target = &player_state;
             entity->move_command = EntityAi_TurnCommand(entity);
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, unknown);
         }
     }
     entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
@@ -358,7 +358,7 @@ static void DarkArcher_DormantFadeIn(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -532,7 +532,7 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, but it keeps flag bit 10 set and starts
@@ -593,7 +593,7 @@ static void DarkArcher_RangedAttack(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -665,7 +665,7 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;

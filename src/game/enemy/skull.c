@@ -12,7 +12,7 @@ void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 int rand(void);
-void EntityAi_OnHit(char *);
+void EntityAi_OnHit(Entity *);
 void EntityAi_Dormant(Entity *);
 extern s32 entity_type_handlers[][2];
 extern u32 frame_counter;
@@ -79,11 +79,11 @@ void Skull_Init(Entity *entity) {
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Skull_Think;
-    ai_state->animate = (void (*)(void))Skull_Animate;
-    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
-    ai_state->move = (void (*)(void))Skull_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))Skull_Death;
+    ai_state->animate = Skull_Animate;
+    ai_state->on_hit = EntityAi_OnHit;
+    ai_state->move = Skull_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = Skull_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -92,9 +92,9 @@ void Skull_Init(Entity *entity) {
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -287,7 +287,7 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The move handler: only picks the animation, 3 with command bit 1, else 0.
@@ -580,7 +580,7 @@ static void Skull_RangedAttack0(Entity *entity) {
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;

@@ -7,16 +7,16 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
+int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(void);
+void EntityAi_Animate(Entity *);
 void EntityAi_Dormant(Entity *);
 extern s32 entity_type_handlers[][2];
 void EntityAi_LowerWeightsAfterHit(char *);
-int EntityAi_SetReaction(char *, void (*)(void), int); // match: an int result keeps $2 busy after the call
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityAi_SetState(char *, u8);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
@@ -92,10 +92,10 @@ void DarkPuppet_Init(Entity *entity) {
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = DarkPuppet_Think;
     ai_state->animate = EntityAi_Animate;
-    ai_state->on_hit = (void (*)(void))DarkPuppet_OnHit;
-    ai_state->move = (void (*)(void))DarkPuppet_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))DarkPuppet_Death;
+    ai_state->on_hit = DarkPuppet_OnHit;
+    ai_state->move = DarkPuppet_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = DarkPuppet_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -105,9 +105,9 @@ void DarkPuppet_Init(Entity *entity) {
     entity->target = NULL;
     entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -116,7 +116,7 @@ void DarkPuppet_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The on_hit handler: as EntityAi_OnHit, but it leaves the target and flag bit 10 as they are. */
@@ -125,12 +125,12 @@ static void DarkPuppet_OnHit(Entity *entity) {
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     if (((s32)(entity->flags >> 36) & 3) == 1) {
         if ((s32)(entity->flags >> 19) & 1) {
-            EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionRewind, 0);
+            EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
-            EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionLight, 0);
+            EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);
         }
     } else if (((s32)(entity->flags >> 36) & 3) == 2) {
-        EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
+        EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
 }
@@ -328,7 +328,7 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The move handler: only picks the animation, 6 or 7 for command bits 4 and 8, 3 forward, 5
@@ -522,7 +522,7 @@ static void DarkPuppet_MeleeAttack(Entity *entity) {
                 ai_state->think(entity, 1);
                 return;
             }
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+            EntityAi_StartAction(entity, ai_state->move, 1);
             return;
         }
         break;
@@ -583,7 +583,7 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
             return;
         }
@@ -638,7 +638,7 @@ static void DarkPuppet_RangedAttack(Entity *entity) {
                 ai_state->think(entity, 1);
                 return;
             }
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+            EntityAi_StartAction(entity, ai_state->move, 1);
             return;
         }
         break;

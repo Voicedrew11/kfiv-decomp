@@ -14,7 +14,7 @@ void Vector_Copy(void *, void *);
 extern s32 entity_type_handlers[][2];
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 extern EntityGroupRecord entity_group_state[];
-int EntityAi_SetReaction(Entity *entity, void (*reaction)(void), int run_now);
+int EntityAi_SetReaction(Entity *entity, void (*reaction)(Entity *entity), int run_now);
 void EntityAi_SetState(char *, u8);
 extern PlayerData player_state;
 extern u8 map_script_flags[0x80][0x40];
@@ -69,11 +69,11 @@ void Npc_Init(Entity *entity) {
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Npc_Think;
-    ai_state->animate = (void (*)(void))Npc_Animate;
-    ai_state->on_hit = (void (*)(void))Npc_OnHit;
-    ai_state->move = (void (*)(void))Npc_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))Npc_Death;
+    ai_state->animate = Npc_Animate;
+    ai_state->on_hit = Npc_OnHit;
+    ai_state->move = Npc_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = Npc_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -85,9 +85,9 @@ void Npc_Init(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     }
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (part != NULL) {
         Vector_Copy(ai_state->look_part_angles, part->part_angles);
@@ -140,7 +140,7 @@ static void Npc_OnHit(Entity *entity) {
     entity->flags &= ~ENTITY_FLAG_400;
     entity->target = NULL;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
-    EntityAi_SetReaction(entity, (void (*)(void))Npc_ReactionHeavy, 0);
+    EntityAi_SetReaction(entity, Npc_ReactionHeavy, 0);
     entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].member_died = 1;
 }
 
@@ -184,7 +184,7 @@ void Npc_Think(Entity *entity, s32 unknown) {
    command (standing). */
 static void Npc_ThinkStand(Entity *entity, int unknown) {
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-    EntityAi_StartAction(entity, (void (*)(Entity *))entity->ai_state.move, unknown);
+    EntityAi_StartAction(entity, entity->ai_state.move, unknown);
 }
 
 /* The think function of state 4 when EntityParams.flags has no 0x80: picks the animation by where the player
@@ -209,7 +209,7 @@ static void Npc_ThinkReactToPlayer(Entity *entity, s32 run_now) {
     }
     entity->move_command = ai_state->pause_timer;
     EntityAi_SetState((char *)entity, 5);
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, run_now);
+    EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
 /* The think function of state 4 when EntityParams.flags has 0x80: turns to the player (Npc_TurnToPlayer) when
@@ -229,7 +229,7 @@ static void Npc_ThinkTurnToPlayer(Entity *entity, s32 run_now) {
         ai_state->pause_timer = MOVE_COMMAND_ANIMATION_26;
         entity->move_command = MOVE_COMMAND_ANIMATION_26;
         EntityAi_SetState((char *)entity, 5);
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, run_now);
+        EntityAi_StartAction(entity, ai_state->move, run_now);
     }
 }
 
@@ -241,7 +241,7 @@ static void Npc_ThinkWatchPlayer(Entity *entity, int unknown) {
 
     ENTITY_FLAGS(entity) |= 0x200;
     entity->move_command = timer;
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The think function of state 6 when EntityParams.flags has no 0x80: the head stops following the target,
@@ -252,7 +252,7 @@ static void Npc_ThinkStopWatching(Entity *entity, int unknown) {
     ai_state->pause_timer = 0;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
     EntityAi_SetState((char *)entity, 0);
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The think function of state 6 when EntityParams.flags has 0x80: turns back to the spawn heading
@@ -270,7 +270,7 @@ static void Npc_ThinkTurnBack(Entity *entity, s32 run_now) {
         ai_state->pause_timer = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
         EntityAi_SetState((char *)entity, 0);
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, run_now);
+        EntityAi_StartAction(entity, ai_state->move, run_now);
     }
 }
 
@@ -319,7 +319,7 @@ static void Npc_TurnToPlayer(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -370,7 +370,7 @@ static void Npc_TurnToSpawnHeading(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -429,7 +429,7 @@ static void Npc_ReactionHeavy(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -600,12 +600,12 @@ void Npc_InitType81(Entity *entity) {
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    ai_state->think = (void (*)(Entity *, s32))Npc_ThinkType81;
-    ai_state->animate = (void (*)(void))Npc_Animate;
-    ai_state->on_hit = (void (*)(void))Npc_OnHitType81;
-    ai_state->move = (void (*)(void))Npc_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))Npc_Death;
+    ai_state->think = Npc_ThinkType81;
+    ai_state->animate = Npc_Animate;
+    ai_state->on_hit = Npc_OnHitType81;
+    ai_state->move = Npc_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = Npc_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -617,9 +617,9 @@ void Npc_InitType81(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     }
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (part != NULL) {
         Vector_Copy(ai_state->look_part_angles, part->part_angles);
@@ -640,7 +640,7 @@ static void Npc_OnHitType81(Entity *entity) {
     entity->target = NULL;
     entity->flags &= ~ENTITY_FLAG_400;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
-    EntityAi_SetReaction(entity, (void (*)(void))Npc_ReactionHeavy, 0);
+    EntityAi_SetReaction(entity, Npc_ReactionHeavy, 0);
     entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].member_died = 1;
     if (((u64)entity->flags >> 38) & 3) {
         entity->flags |= ENTITY_FLAG_20000000;
@@ -672,5 +672,5 @@ static int Npc_ThinkType81Stand(void *entity_ptr, int unknown) {
     Entity *entity = entity_ptr;
 
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-    EntityAi_StartAction(entity, (void (*)(Entity *))entity->ai_state.move, unknown);
+    EntityAi_StartAction(entity, entity->ai_state.move, unknown);
 }

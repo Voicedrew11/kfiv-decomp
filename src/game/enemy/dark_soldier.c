@@ -7,12 +7,12 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
+int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(void);
+void EntityAi_Animate(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
@@ -60,7 +60,7 @@ static inline void move_along_arc(Entity *entity, EntityAiState *ai_state) {
 }
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(char *, void (*)(void), int);
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
@@ -97,10 +97,10 @@ void DarkSoldier_Init(Entity *entity) {
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = DarkSoldier_Think;
     ai_state->animate = EntityAi_Animate;
-    ai_state->on_hit = (void (*)(void))DarkSoldier_OnHit;
-    ai_state->move = (void (*)(void))DarkSoldier_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->on_hit = DarkSoldier_OnHit;
+    ai_state->move = DarkSoldier_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = EntityAi_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -110,9 +110,9 @@ void DarkSoldier_Init(Entity *entity) {
     entity->target = NULL;
     entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -121,7 +121,7 @@ void DarkSoldier_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with DarkSoldier_ThinkCombat for state 2; walking back to
@@ -145,6 +145,7 @@ static void DarkSoldier_Think(Entity *entity, s32 unknown) {
         EntityAi_StepState(entity);
         if ((s32)(entity->flags >> 53) & 1) {
             // match: called as returning nothing, so $2 is free for the next statement
+            // match: the result is not used, retail calls it as void
             ((void (*)(void *, int))EntityAi_ThinkReturn)(entity, unknown);
             entity->move_command |= (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST);
         } else {
@@ -283,7 +284,7 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The move handler: as EntityAi_Move, but it only turns the entity (twice as fast for command bits
@@ -394,7 +395,7 @@ static void DarkSoldier_MeleeAttack(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -450,7 +451,7 @@ static void DarkSoldier_PlayAnim6Or7BySide(Entity *entity) {
                 if ((s32)(entity->flags >> 5) & 1) {
                     entity->ai_state.think(entity, 1);
                 } else {
-                    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                    EntityAi_StartAction(entity, ai_state->move, 1);
                 }
             } else {
                 EntityAi_PickAttack((char *)entity);
@@ -570,7 +571,7 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
                 if (ENTITY_FLAG_BITS(entity)->bit5) {
                     ai_state->think(entity, 1);
                 } else {
-                    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                    EntityAi_StartAction(entity, ai_state->move, 1);
                 }
             } else {
                 EntityAi_PickAttack((char *)entity);
@@ -646,7 +647,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -663,12 +664,12 @@ static void DarkSoldier_OnHit(Entity *entity) {
     entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     if (((entity->flags >> 36) & 3) == 1) {
         if ((s32)((s64)(entity->flags << 13) >> 32) & 1) {
-            EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionRewind, 0);
+            EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
-            EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionLight, 0);
+            EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);
         }
     } else if (((entity->flags >> 36) & 3) == 2) {
-        EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
+        EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
 }

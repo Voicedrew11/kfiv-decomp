@@ -35,11 +35,11 @@ void DrawList_Add(ModelInstance *, s32, s32);
 void Model_DrawPosedWithAlpha(ModelInstance *);
 MapRecordInfo *Map_FindRecordAtInSlot(CameraState *, f32, int);
 int Map_TestFlagBlockBit(int, int, int, int);
-void MapObject_DrawModel(int *);
+void MapObject_DrawModel(ModelInstance *);
 void MapObject_DrawModelWithAlpha(ModelInstance *);
-void MapObject_DrawModelNoDepthWrite(void *);
-void MapObject_UpdateNoBonePoints(void);
-char *MapObject_GetPositionAsPoint(char *);
+void MapObject_DrawModelNoDepthWrite(ModelInstance *);
+void MapObject_UpdateNoBonePoints(ModelInstance *);
+void *MapObject_GetPositionAsPoint(void *, int);
 void MapObject_StopSound(MapObject *);
 float Angle_Wrap(float);
 int Sound_PlayCommonAt(float, int, void *);
@@ -59,11 +59,11 @@ extern Vector4 map_object_glow_colors[4];
 extern u8 item_counts[];
 extern MapObject map_slot_objects[][0x200];
 extern void (*map_object_step_handlers[][16])(MapObject *);
-extern void (*map_object_end_hooks[])(MapObject *);
+extern void (*map_object_end_hooks[])(MapTrigger *);
 extern int (*map_object_item_hooks[])(MapObject *, int);
 extern void (*map_object_signal_hooks[])(MapObject *, int);
 extern void (*map_object_update_hooks[])(MapObject *);
-extern void (*map_object_offset_hooks[])(MapObject *, f32 *);
+extern void (*map_object_offset_hooks[])(MapObject *, void *);
 extern void (*map_object_setup_hooks[])(MapObject *);
 extern PlayerState player_state;
 extern int current_map_slot;
@@ -105,8 +105,8 @@ void MapObject_InitMap(int map) {
     for (; i < count; i++, object++) {
         MAP_OBJECT_BYTES(object)->step = 0;
         if (object->definition->model_index == 0xFFFF) {
-            object->model->get_point = (void *(*)(void *, int))MapObject_GetPositionAsPoint;
-            object->model->update_bone_points = (void (*)(ModelInstance *))MapObject_UpdateNoBonePoints;
+            object->model->get_point = MapObject_GetPositionAsPoint;
+            object->model->update_bone_points = MapObject_UpdateNoBonePoints;
         }
         if (object->source->spawn_flags.bytes[2] != 0) {
             link_id = object->source->spawn_flags.bytes[2];
@@ -145,7 +145,7 @@ void MapObject_InitMap(int map) {
         map_object_update_hooks[object->definition->kind](object);
         switch (object->definition->bit8) {
             case 0:
-                object->model->draw = (void (*)(ModelInstance *))MapObject_DrawModel;
+                object->model->draw = MapObject_DrawModel;
                 object->model->draw_parts = Model_DrawPosedWithAlpha;
                 break;
             case 1:
@@ -156,10 +156,10 @@ void MapObject_InitMap(int map) {
                 break;
         }
         if (object->definition->kind == 5) {
-            object->model->draw = (void (*)(ModelInstance *))MapObject_DrawModelNoDepthWrite;
+            object->model->draw = MapObject_DrawModelNoDepthWrite;
         }
         if (object->source->def_index == 0x91) {
-            object->model->on_textures_sent = (void (*)(ModelInstance *))ScrollTexture_DrawAll;
+            object->model->on_textures_sent = ScrollTexture_DrawAll;
             ScrollTexture_Init();
         }
         MAP_OBJECT_BITS(object)->bit1 = FALSE;
@@ -657,7 +657,7 @@ void MapObject_Activate(MapObject *object) {
 void MapObject_Deactivate(MapObject *object) {
     if (object != NULL) {
         if (MAP_OBJECT_BITS(object)->step != 0) {
-            map_object_end_hooks[object->definition->kind](object);
+            map_object_end_hooks[object->definition->kind]((MapTrigger *)object);
         }
         MapObject_StopSound(object);
         Effect_FreeForOwner((Entity *)object); // match: shared prototype takes an Entity
@@ -853,7 +853,7 @@ void MapObject_ClearMap(int map) {
 }
 
 /* Draw hook of a map object model drawn with the GS state as it is: draws the model. */
-void MapObject_DrawModel(int *model) {
+void MapObject_DrawModel(ModelInstance *model) {
     ModelTexture_SendForModel(model);
 }
 
@@ -878,7 +878,7 @@ void MapObject_DrawModelWithAlpha(ModelInstance *model) {
 
 /* Draw hook of the distance-fading kind (5): sets the GS registers for alpha blending without Z-buffer
    writes, then draws the model. */
-void MapObject_DrawModelNoDepthWrite(void *model) {
+void MapObject_DrawModelNoDepthWrite(ModelInstance *model) {
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(0x4E, 0x10A000118);
     Packet_AddGsRegister(0x4F, 0x10A000118);
@@ -891,12 +891,12 @@ void MapObject_DrawModelNoDepthWrite(void *model) {
 }
 
 /* Does nothing: the point-update hook (ModelInstance.update_bone_points) of a map object model without points. */
-void MapObject_UpdateNoBonePoints(void) {
+void MapObject_UpdateNoBonePoints(ModelInstance *model) {
 }
 
 /* get_point hook of a map object model without points: returns the model's position, whatever the index. */
-char *MapObject_GetPositionAsPoint(char *model) {
-    return (char *)&((ModelInstance *)model)->position;
+void *MapObject_GetPositionAsPoint(void *model, int index) {
+    return &((ModelInstance *)model)->position;
 }
 
 /* Stops the sound a map object is playing, if any. */

@@ -8,16 +8,16 @@
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(void);
+void EntityAi_Animate(Entity *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(char *, void (*)(void), int);
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 extern void EntityAi_ReactionRewind(Entity *);
 int rand(void);
 void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
@@ -60,12 +60,12 @@ void LivingDead_Init(Entity *entity) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    ai_state->think = (void (*)(Entity *, s32))LivingDead_Think;
+    ai_state->think = LivingDead_Think;
     ai_state->animate = EntityAi_Animate;
-    ai_state->on_hit = (void (*)(void))LivingDead_OnHit;
-    ai_state->move = (void (*)(void))EntityAi_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->on_hit = LivingDead_OnHit;
+    ai_state->move = EntityAi_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = EntityAi_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -75,15 +75,15 @@ void LivingDead_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The on_hit handler: as EntityAi_OnHit with the type's own reactions to a light and a heavy hit.
@@ -100,12 +100,12 @@ static void LivingDead_OnHit(Entity *entity) {
     kind = (flags >> 36) & 3;
     if (kind == 1) {
         if ((int)(flags >> 19) & 1) {
-            EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionRewind, 0);
+            EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
-            EntityAi_SetReaction((char *)entity, (void (*)(void))LivingDead_ReactionLight, 0);
+            EntityAi_SetReaction(entity, LivingDead_ReactionLight, 0);
         }
     } else if (kind == 2) {
-        EntityAi_SetReaction((char *)entity, (void (*)(void))LivingDead_ReactionHeavy, 0);
+        EntityAi_SetReaction(entity, LivingDead_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
 }
@@ -141,7 +141,7 @@ static void LivingDead_ReactionLight(Entity *entity) {
         break;
     case 2:
         EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
-        EntityAi_SetReaction((char *)entity, NULL, 0);
+        EntityAi_SetReaction(entity, NULL, 0);
         entity->busy_flags = 0;
         entity->move_command = 0;
         entity->action_timer = 0;
@@ -152,7 +152,7 @@ static void LivingDead_ReactionLight(Entity *entity) {
         } else if (ENTITY_FLAG_BITS(entity)->bit5) {
             ai_state->think(entity, 1);
         } else {
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+            EntityAi_StartAction(entity, ai_state->move, 1);
         }
         break;
     }
@@ -192,7 +192,7 @@ static void LivingDead_ReactionHeavy(Entity *entity) {
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
-            EntityAi_SetReaction((char *)entity, NULL, 0);
+            EntityAi_SetReaction(entity, NULL, 0);
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
@@ -203,7 +203,7 @@ static void LivingDead_ReactionHeavy(Entity *entity) {
             } else if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -324,5 +324,5 @@ static void LivingDead_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }

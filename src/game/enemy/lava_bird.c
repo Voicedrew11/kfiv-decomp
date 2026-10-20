@@ -10,7 +10,7 @@
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void Motion_SetPartSlots(EntityModel *, s32, s32, s32);
 void Vector_Copy(void *, void *);
 extern s32 entity_type_handlers[][2];
@@ -49,7 +49,7 @@ float EntityMath_AngleXZ(float *, char *);
 f32 EntityMath_Approach(f32, f32, f32);
 int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
 void EntityAi_LowerWeightsAfterHit(char *);
-int EntityAi_SetReaction(char *entity, void (*callback)(void), int run);
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
 void EntityEvent_OnDeath(Entity *);
 int EntityAi_StepSlotMotion(Entity *, EntityMotionSlot *, int, f32);
@@ -91,11 +91,11 @@ void LavaBird_Init(Entity *entity) {
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = LavaBird_Think;
-    ai_state->animate = (void (*)(void))LavaBird_Animate;
-    ai_state->on_hit = (void (*)(void))LavaBird_OnHit;
-    ai_state->move = (void (*)(void))LavaBird_Move;
-    ai_state->death = (void (*)(void))LavaBird_Death;
-    ai_state->dormant = (void (*)(void))LavaBird_Dormant;
+    ai_state->animate = LavaBird_Animate;
+    ai_state->on_hit = LavaBird_OnHit;
+    ai_state->move = LavaBird_Move;
+    ai_state->death = LavaBird_Death;
+    ai_state->dormant = LavaBird_Dormant;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -105,9 +105,9 @@ void LavaBird_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -120,7 +120,7 @@ void LavaBird_Init(Entity *entity) {
     work->motion_slot_0.bit5 = TRUE;
     work->motion_slot_0.bit6 = TRUE;
     work->motion_slot_1.bit6 = TRUE;
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with the type's own functions for the three states. It
@@ -273,7 +273,7 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The think function of state 1: as EntityAi_ThinkPursue, with flag bits 11 to 13 at 0 and the
@@ -297,7 +297,7 @@ static void LavaBird_ThinkPursue(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = LavaBird_SteerToTargetCommand(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The think function of state 0: as EntityAi_ThinkIdle, always with a point to go to, the head
@@ -355,7 +355,7 @@ static void LavaBird_ThinkIdle(Entity *entity, s32 unknown) {
         // match: called like EntityAi_MoveCommand, with a speed and a mode the callee ignores
         entity->move_command = LavaBird_SteerToTargetCommand(entity, 0, 0.0f);
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The move handler: keeps animation 3 on both motion slots, flag bits 11 to 13 at 0. LavaBird_ApplyMoveCommand
@@ -574,7 +574,7 @@ static void LavaBird_Dormant(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         entity->move_command = MOVE_COMMAND_FORWARD;
@@ -634,7 +634,7 @@ static void LavaBird_RangedAttack(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -698,9 +698,9 @@ static void LavaBird_OnHit(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
     if (ENTITY_FLAG_BITS(entity)->bits36 == 1) {
-        EntityAi_SetReaction((char *)entity, (void (*)(void))LavaBird_ReactionLight, 0);
+        EntityAi_SetReaction(entity, LavaBird_ReactionLight, 0);
     } else if (ENTITY_FLAG_BITS(entity)->bits36 == 2) {
-        EntityAi_SetReaction((char *)entity, (void (*)(void))LavaBird_ReactionHeavy, 0);
+        EntityAi_SetReaction(entity, LavaBird_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
 }
@@ -731,14 +731,14 @@ static void LavaBird_ReactionLight(Entity *entity) {
         break;
     case 2:
         EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
-        EntityAi_SetReaction((char *)entity, NULL, 0);
+        EntityAi_SetReaction(entity, NULL, 0);
         entity->busy_flags = 0;
         entity->move_command = 0;
         entity->action_timer = 0;
         if (ENTITY_FLAG_BITS(entity)->bit5) {
             entity->ai_state.think(entity, 1);
         } else {
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+            EntityAi_StartAction(entity, ai_state->move, 1);
         }
         break;
     }
@@ -774,14 +774,14 @@ static void LavaBird_ReactionHeavy(Entity *entity) {
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
-            EntityAi_SetReaction((char *)entity, NULL, 0);
+            EntityAi_SetReaction(entity, NULL, 0);
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;

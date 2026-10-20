@@ -9,8 +9,8 @@
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
-void EntityAi_OnHit(char *);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
+void EntityAi_OnHit(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
@@ -71,12 +71,12 @@ void DragonFly_Init(Entity *entity) {
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    ai_state->think = (void (*)(Entity *, s32))DragonFly_Think;
-    ai_state->animate = (void (*)(void))DragonFly_Animate;
-    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
-    ai_state->move = (void (*)(void))DragonFly_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->think = DragonFly_Think;
+    ai_state->animate = DragonFly_Animate;
+    ai_state->on_hit = EntityAi_OnHit;
+    ai_state->move = DragonFly_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -85,16 +85,16 @@ void DragonFly_Init(Entity *entity) {
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate without the test of the EntityParams kind bits and
@@ -208,7 +208,7 @@ static void DragonFly_ThinkReturn(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand3D(entity, 1, 50.0f);
         }
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The think function of every state but 2 (DragonFly_Think calls it): wanders. Each time the
@@ -237,7 +237,7 @@ static void DragonFly_ThinkWander(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand3D(entity, 1, 50.0f);
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The think function of state 2: it has none of EntityAi_ThinkCombat's guard, dodge and draw among
@@ -257,7 +257,7 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
     s32 roll;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
-    if (ai_state->move_choice != 4 && entity->attack_delay_frames == 0 && ((int (*)(Entity *))EntityAi_CanAttack)(entity)) { // match: the entity is passed
+    if (ai_state->move_choice != 4 && entity->attack_delay_frames == 0 && EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, DragonFly_RangedAttack, unknown);
         } else {
@@ -330,7 +330,7 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
             Vector_Copy(target, &player_state);
             target[1] = ai_state->part_angle_y;
             // match: the shared prototype has no result; it returns the distance
-            if (((f32 (*)(f32 *, f32 *))EntityMath_Distance)(target, entity->model->position) <= 200.0f) {
+            if (EntityMath_Distance(target, entity->model->position) <= 200.0f) {
                 ai_state->move_choice = 0;
             }
             break;
@@ -372,8 +372,8 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
             break;
         }
     }
-    if (entity->handler != (void (*)(Entity *))ai_state->move) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    if (entity->handler != ai_state->move) {
+        EntityAi_StartAction(entity, ai_state->move, unknown);
     }
 }
 
@@ -537,7 +537,7 @@ static void DragonFly_MeleeAttack(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -587,7 +587,7 @@ static void DragonFly_RangedAttack(Entity *entity) {
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;

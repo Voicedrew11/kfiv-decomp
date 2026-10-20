@@ -11,7 +11,7 @@ int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(void);
+void EntityAi_Animate(Entity *);
 extern s32 entity_type_handlers[][2];
 extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
@@ -43,9 +43,9 @@ void Watcher_Init(Entity *entity) {
     ai_state->think = Watcher_Think;
     ai_state->animate = EntityAi_Animate;
     ai_state->on_hit = NULL;
-    ai_state->move = (void (*)(void))Watcher_Move;
+    ai_state->move = Watcher_Move;
     ai_state->dormant = NULL;
-    ai_state->death = (void (*)(void))Watcher_Death;
+    ai_state->death = Watcher_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -54,7 +54,7 @@ void Watcher_Init(Entity *entity) {
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+    EntityAi_StartAction(entity, ai_state->move, 0);
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }

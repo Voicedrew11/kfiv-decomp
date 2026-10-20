@@ -9,7 +9,7 @@
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void Vector_Copy(void *, void *);
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
@@ -20,7 +20,7 @@ float EntityMath_WrapAngle(float);
 void Sound_PlayFalloff(s32, s32, s32, f32, f32, f32);
 
 static void Bell_Animate(Entity *entity);
-static void Bell_Think(Entity *entity);
+static void Bell_Think(Entity *entity, s32 run_now);
 
 /* Set-up of a type 38 entity: clears its work area and installs the type's handlers. */
 void Bell_Init(Entity *entity) {
@@ -32,8 +32,8 @@ void Bell_Init(Entity *entity) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    ai_state->think = (void (*)(Entity *, s32))Bell_Think;
-    ai_state->animate = (void (*)(void))Bell_Animate;
+    ai_state->think = Bell_Think;
+    ai_state->animate = Bell_Animate;
     ai_state->on_hit = NULL;
     ai_state->move = NULL;
     ai_state->dormant = NULL;
@@ -50,9 +50,9 @@ void Bell_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit16 = 1;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -61,7 +61,7 @@ void Bell_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The animate handler: plays the motion a step on (Motion_Step) and sets flag bit 34 when it has
@@ -75,7 +75,7 @@ static void Bell_Animate(Entity *entity) {
    EntityParams.yaw_limit_deg, unk430 and unk42E, Entity.sound_bank, Entity.distance_to_player_3d and the angle of the entity
    off the player's facing, and sets the timer to EntityParams.action_frames; otherwise flag bit 29 is
    clear. It always clears flag bit 43. */
-static void Bell_Think(Entity *entity) {
+static void Bell_Think(Entity *entity, s32 run_now) {
     u64 flags;
     f32 angle;
 

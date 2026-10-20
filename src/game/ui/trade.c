@@ -412,12 +412,12 @@ s32 SaveCard_GetFreeClusters(s32);
 // match: this file hands Menu_SetBlendMode a signed byte
 #define SET_PART_MODE_OF(packet) ((void (*)(s8))Menu_SetBlendMode)((s8)(packet)->blend_mode)
 
-static s32 Trade_CopyFrameToTexture(void);
+static s32 Trade_CopyFrameToTexture(s32 unused_step);
 static int Trade_RunStep(int value);
 static s32 Trade_Start(HandlerContext *context);
 static int Trade_RunHandler(HandlerContext *context);
-static int Trade_CutModelChain(void);
-static void Trade_ChainModels(void);
+static int Trade_CutModelChain(HandlerContext *context);
+static void Trade_ChainModels(s32 unused_arg);
 static f32 Trade_PulseValue(s32 low, s32 high, f32 value);
 static void Trade_UpdateSelectScreen(HandlerContext *context);
 static void Trade_UpdateStockList(HandlerContext *context);
@@ -427,12 +427,12 @@ static void Trade_UpdateGiveAmount(HandlerContext *context);
 static void Trade_SetModelNames(void);
 static s32 Trade_MoveListCursor(HandlerContext *context);
 static void Smith_BuildItemRings(s32 mode);
-static s32 Smith_Start(void);
-static s32 Smith_CopyFrameToTexture(void);
+static s32 Smith_Start(HandlerContext *context);
+static s32 Smith_CopyFrameToTexture(s32 unused_step);
 static int Smith_RunStep(int value);
 static int Smith_RunHandler(HandlerContext *context);
-static int Smith_CutModelChain(void);
-static void Smith_ChainModels(void);
+static int Smith_CutModelChain(HandlerContext *context);
+static void Smith_ChainModels(s32 unused_arg);
 static void Smith_UpdateSelectScreen(HandlerContext *context);
 static void Smith_SetModelNames(void);
 static void Smith_UpdateUpgradeList(HandlerContext *context);
@@ -441,11 +441,11 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context);
 static void Smith_UpdateItemScreen(HandlerContext *context);
 static void Smith_UpdateCollectList(HandlerContext *context);
 static s32 Smith_MoveListCursor(HandlerContext *context);
-static s32 SaveScreen_DrawBackground(void);
+static s32 SaveScreen_DrawBackground(int unused);
 static int SaveScreen_RunStep(int value);
 static int SaveScreen_Start(HandlerContext *context);
-static int SaveScreen_RunHandler(void);
-static int SaveScreen_CutModelChain(void);
+static int SaveScreen_RunHandler(HandlerContext *context);
+static int SaveScreen_CutModelChain(HandlerContext *context);
 static void SaveScreen_UpdateCardSelect(void);
 static void SaveScreen_UpdateSaveList(void);
 
@@ -470,13 +470,13 @@ extern u8 trade_stock_5[];
 /* the functions of the trade screens: the two steps of Trade_Run's loop, the steps of the screen itself, and
    the handlers of its two lists */
 static int (*const trade_run_steps[2])(s32) IN_RODATA = {
-    (int (*)(s32))Trade_CopyFrameToTexture,
+    Trade_CopyFrameToTexture,
     Trade_RunStep,
 };
 static int (*const trade_steps[4])(HandlerContext *) IN_RODATA = {
     Trade_Start,
     Trade_RunHandler,
-    (int (*)(HandlerContext *))Trade_CutModelChain,
+    Trade_CutModelChain,
     NULL,
 };
 static void (*const trade_list_handlers[2])(HandlerContext *) IN_RODATA = {
@@ -615,7 +615,7 @@ void Trade_Run(s32 value) {
 }
 
 /* Copies the shown frame buffer into a work buffer and draws that back into both frame buffers, then steps the screen counter. */
-static s32 Trade_CopyFrameToTexture(void) {
+static s32 Trade_CopyFrameToTexture(s32 unused_step) {
     f32 unused[28]; // match: 0x70 bytes of locals nothing uses
     u32 texture_base; /* where the shown buffer is as a texture: 0x1180 when it is the second one */
     u32 *packet;
@@ -789,7 +789,7 @@ static s32 Trade_Start(HandlerContext *context) {
         item_list_first = owned_list_first;
         item_list_last_page = owned_list_last_page;
         item_list_count = owned_list_count;
-        ((void (*)(s32))Trade_ChainModels)(0); // match: the callee takes nothing
+        Trade_ChainModels(0);
         context->active_list = 0;
     }
     memset(screen_part_alphas, 0, 0x400);
@@ -814,7 +814,7 @@ static int Trade_RunHandler(HandlerContext *context) {
 }
 
 /* Cuts the chain after the first link node (and after the node it points at); with no chain, resets trade_step. */
-static int Trade_CutModelChain(void) {
+static int Trade_CutModelChain(HandlerContext *context) {
     LinkNode *node = model_load_chain;
     LinkNode *other;
 
@@ -831,7 +831,7 @@ static int Trade_CutModelChain(void) {
 }
 
 /* Rebuilds the five link nodes for the selected item and chains them, when there is one. */
-static void Trade_ChainModels(void) {
+static void Trade_ChainModels(s32 unused_arg) {
     if (trade_stock_list_cursor[0] != NULL) {
         Trade_SetModelNames();
         Menu_TakeLoadBuffer(&model_load_shown);
@@ -985,12 +985,12 @@ static void Trade_UpdateSelectScreen(HandlerContext *context) {
                     item_list_first = owned_list_first;
                     item_list_last_page = owned_list_last_page;
                     item_list_count = owned_list_count;
-                    ((void (*)(s32))Trade_ChainModels)(0); // match: the callee takes nothing
+                    Trade_ChainModels(0);
                 } else if (trade_screen_state == 3) {
                     item_list_first = handover_list_first;
                     item_list_last_page = handover_list_last_page;
                     item_list_count = handover_list_count;
-                    ((void (*)(s32))Menu_ChainItemListModels)(0); // match: the callee takes nothing
+                    Menu_ChainItemListModels(0);
                 } else {
                     trade_step++;
                 }
@@ -1407,11 +1407,11 @@ static void Trade_UpdateStockList(HandlerContext *context) {
                 } else if (trade_screen_state == 6) {
                     context->active_list = 0;
                     trade_handler = Trade_UpdateSelectScreen;
-                    ((void (*)(s32))Menu_ResetLoadBuffers)(0);
+                    Menu_ResetLoadBuffers(0);
                 } else if (trade_screen_state == 7) {
                     context->active_list = 0;
                     trade_step++;
-                    ((void (*)(s32))Menu_ResetLoadBuffers)(0);
+                    Menu_ResetLoadBuffers(0);
                 }
                 trade_screen_state = 0;
                 trade_panel_state = 0;
@@ -1828,7 +1828,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
                     if (context->arg != 4) {
                         player_state.gold -= menu_number_82;
                         trade_handler = Trade_UpdateSelectScreen;
-                        ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
+                        Menu_ResetLoadBuffers(0);
                     } else {
                         switch (item_name_defs[trade_stock_list_cursor[0]->item_number].upgrade_material_kind & 3) {
                         case 1:
@@ -1857,7 +1857,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
                         item_list_first = owned_list_first;
                         item_list_last_page = owned_list_last_page;
                         item_list_count = owned_list_count;
-                        ((void (*)(s32))Trade_ChainModels)(0); // match: the callee takes nothing
+                        Trade_ChainModels(0);
                         trade_screen_state = 0;
                         context->active_list = 0;
                     }
@@ -2222,7 +2222,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
                 } else if (trade_screen_state == 5) {
                     context->active_list = 1;
                     trade_handler = Trade_UpdateSelectScreen;
-                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
+                    Menu_ResetLoadBuffers(0);
                 }
                 trade_screen_state = 0;
                 trade_panel_state = 0;
@@ -2600,7 +2600,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
                     context->active_list = 1;
                     trade_handler = Trade_UpdateSelectScreen;
                     Trade_BuildItemRings(context->arg);
-                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
+                    Menu_ResetLoadBuffers(0);
                 } else if (trade_screen_state == 6) {
                     trade_handler = trade_list_handlers[1];
                 }
@@ -2841,13 +2841,13 @@ static void Smith_BuildItemRings(s32 mode) {
 
 /* the same for the smith's screens */
 static int (*const smith_run_steps[2])(s32) IN_RODATA = {
-    (int (*)(s32))Smith_CopyFrameToTexture,
+    Smith_CopyFrameToTexture,
     Smith_RunStep,
 };
 static int (*const smith_steps[4])(HandlerContext *) IN_RODATA = {
-    (int (*)(HandlerContext *))Smith_Start,
+    Smith_Start,
     Smith_RunHandler,
-    (int (*)(HandlerContext *))Smith_CutModelChain,
+    Smith_CutModelChain,
     NULL,
 };
 static void (*const smith_list_handlers[3])(HandlerContext *) IN_RODATA = {
@@ -2899,7 +2899,7 @@ void Smith_Run(void) {
 }
 
 /* Start-up step of the screen Smith_UpdateSelectScreen runs: loads its textures and blocks, clears the alpha tables and moves on. */
-static s32 Smith_Start(void) {
+static s32 Smith_Start(HandlerContext *context) {
     s32 i = 0;
     u32 *packet;
     LoadedBlockRef *block;
@@ -2947,7 +2947,7 @@ static s32 Smith_Start(void) {
 }
 
 /* Copies the shown frame buffer into a work buffer and draws that back into both frame buffers, then steps the screen counter. */
-static s32 Smith_CopyFrameToTexture(void) {
+static s32 Smith_CopyFrameToTexture(s32 unused_step) {
     f32 unused[28]; // match: 0x70 bytes of locals nothing uses
     u32 texture_base; /* where the shown buffer is as a texture: 0x1180 when it is the second one */
     u32 *packet;
@@ -3085,7 +3085,7 @@ static int Smith_RunHandler(HandlerContext *context) {
 }
 
 /* Cuts the chain after the first link node (and after the node it points at); with no chain, resets smith_step. */
-static int Smith_CutModelChain(void) {
+static int Smith_CutModelChain(HandlerContext *context) {
     LinkNode *node = model_load_chain;
     LinkNode *other;
 
@@ -3102,7 +3102,7 @@ static int Smith_CutModelChain(void) {
 }
 
 /* Rebuilds the five link nodes for the current smith_collect_list_cursor item and chains them (the Menu_ChainItemListModels of this list). */
-static void Smith_ChainModels(void) {
+static void Smith_ChainModels(s32 unused_arg) {
     if (smith_collect_list_cursor[0] != NULL) {
         Smith_SetModelNames();
         Menu_TakeLoadBuffer(&model_load_shown);
@@ -3111,22 +3111,22 @@ static void Smith_ChainModels(void) {
         Menu_TakeLoadBuffer(&model_load_left);
         Menu_TakeLoadBuffer(&model_load_right);
         model_load_shown.next = &model_load_up;
-        model_load_shown.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_shown.callback = Menu_StepModelLoad;
         model_load_shown.done = 0;
         model_load_up.next = &model_load_down;
-        model_load_up.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_up.callback = Menu_StepModelLoad;
         model_load_up.done = 0;
         model_load_up.stage = 0;
         model_load_down.next = &model_load_left;
-        model_load_down.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_down.callback = Menu_StepModelLoad;
         model_load_down.done = 0;
         model_load_down.stage = 0;
         model_load_left.next = &model_load_right;
-        model_load_left.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_left.callback = Menu_StepModelLoad;
         model_load_left.done = 0;
         model_load_left.stage = 0;
         model_load_right.next = NULL;
-        model_load_right.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_right.callback = Menu_StepModelLoad;
         model_load_right.done = 0;
         model_load_shown.stage = model_load_right.stage = 0;
         model_load_chain = &model_load_shown;
@@ -3276,20 +3276,20 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
                     smith_handler = smith_list_handlers[context->active_list];
                     item_list_last_page = handover_list_last_page;
                     item_list_count = handover_list_count;
-                    ((void (*)(s32))Menu_ChainItemListModels)(0); // match: the callee takes nothing
+                    Menu_ChainItemListModels(0);
                 } else if (smith_screen_state == 3) {
                     item_list_first = handover_list_first;
                     smith_handler = smith_list_handlers[context->active_list];
                     item_list_last_page = handover_list_last_page;
                     item_list_count = handover_list_count;
                     smith_confirm_shown = 0;
-                    ((void (*)(s32))Menu_ChainItemListModels)(0); // match: the callee takes nothing
+                    Menu_ChainItemListModels(0);
                 } else if (smith_screen_state == 4) {
                     item_list_first = owned_list_first;
                     smith_handler = smith_list_handlers[context->active_list];
                     item_list_last_page = owned_list_last_page;
                     item_list_count = owned_list_count;
-                    ((void (*)(s32))Smith_ChainModels)(0); // match: the callee takes nothing
+                    Smith_ChainModels(0);
                 } else if (smith_screen_state == 5) {
                     smith_step++;
                 }
@@ -3675,7 +3675,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
                 } else if (smith_screen_state == 5) {
                     context->active_list = 0;
                     smith_handler = Smith_UpdateSelectScreen;
-                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
+                    Menu_ResetLoadBuffers(0);
                 }
                 smith_screen_state = 0;
                 smith_panel_state = 0;
@@ -4045,9 +4045,9 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
                     }
                     context->active_list = 0;
                     smith_handler = Smith_UpdateSelectScreen;
-                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
+                    Menu_ResetLoadBuffers(0);
                 } else if (smith_screen_state == 5) {
-                    smith_handler = (void (*)(HandlerContext *))smith_list_handlers[0];
+                    smith_handler = smith_list_handlers[0];
                 }
                 smith_screen_state = 0;
                 smith_panel_state = 0;
@@ -4518,11 +4518,11 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                     smith_handler = Smith_UpdateSelectScreen;
                     item_counts[ITEM_EARTH_STONE]--;
                     context->active_list = 1;
-                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
+                    Menu_ResetLoadBuffers(0);
                 } else if (smith_screen_state == 8) {
                     context->active_list = 1;
                     smith_handler = Smith_UpdateSelectScreen;
-                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
+                    Menu_ResetLoadBuffers(0);
                 } else if (smith_screen_state == 9) {
                     smith_confirm_shown = 0;
                 }
@@ -5192,11 +5192,11 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
                     }
                     context->active_list = 2;
                     smith_handler = Smith_UpdateSelectScreen;
-                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
+                    Menu_ResetLoadBuffers(0);
                 } else if (smith_screen_state == 5) {
                     context->active_list = 2;
                     smith_handler = Smith_UpdateSelectScreen;
-                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
+                    Menu_ResetLoadBuffers(0);
                 }
                 smith_screen_state = 0;
                 smith_panel_state = 0;
@@ -5274,13 +5274,13 @@ static s32 Smith_MoveListCursor(HandlerContext *context) {
 
 /* the same for the save screen, which has no lists */
 static int (*const save_screen_run_steps[2])(int) IN_RODATA = {
-    (int (*)(int))SaveScreen_DrawBackground,
+    SaveScreen_DrawBackground,
     SaveScreen_RunStep,
 };
 static int (*const save_screen_steps[4])(HandlerContext *) IN_RODATA = {
     SaveScreen_Start,
-    (int (*)(HandlerContext *))SaveScreen_RunHandler,
-    (int (*)(HandlerContext *))SaveScreen_CutModelChain,
+    SaveScreen_RunHandler,
+    SaveScreen_CutModelChain,
     NULL,
 };
 
@@ -5326,7 +5326,7 @@ void SaveScreen_Run(void) {
 }
 
 /* Fills the GIF packet that draws the screen background and sends it over DMA channel 2. */
-static s32 SaveScreen_DrawBackground(void) {
+static s32 SaveScreen_DrawBackground(int unused) {
     char reserved[0x70]; /* unused, but retail reserves the 0x70 bytes */
     GsFillPacket *packet;
     u32 flag;
@@ -5521,13 +5521,13 @@ static int SaveScreen_Start(HandlerContext *context) {
 }
 
 /* Runs the handler in save_screen_handler. */
-static int SaveScreen_RunHandler(void) {
+static int SaveScreen_RunHandler(HandlerContext *context) {
     save_screen_handler();
     return 1;
 }
 
 /* Cuts the chain after the first link node (and after the node it points at); with no chain, resets save_screen_step. */
-static int SaveScreen_CutModelChain(void) {
+static int SaveScreen_CutModelChain(HandlerContext *context) {
     LinkNode *head;
     LinkNode *child;
 
@@ -5875,7 +5875,7 @@ static void SaveScreen_UpdateCardSelect(void) {
                 memset(screen_part_alphas, 0, 0x400);
                 if (system_screen_state == 2) {
                     save_screen_state.confirm_press_state = 0;
-                    save_screen_handler = (int (*)())SaveScreen_UpdateSaveList;
+                    save_screen_handler = SaveScreen_UpdateSaveList;
                     save_screen_state.free_clusters = 0;
                     save_screen_state.selected_save = 0;
                     pulse_value_falling = 0;
@@ -6355,7 +6355,7 @@ static void SaveScreen_UpdateSaveList(void) {
             if (screen_part_alphas[i] < 0.0f) {
                 memset(screen_part_alphas, 0, 0x400);
                 pulse_sprite_alpha = 128.0f;
-                save_screen_handler = (int (*)())SaveScreen_UpdateCardSelect;
+                save_screen_handler = SaveScreen_UpdateCardSelect;
                 pulse_sprite_falling = 0;
                 save_screen_state.selected_save = 1;
                 save_screen_state.confirm_choice = 1;

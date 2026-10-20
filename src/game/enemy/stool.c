@@ -9,9 +9,9 @@
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(void);
+void EntityAi_Animate(Entity *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
@@ -21,7 +21,7 @@ void EntityAi_RangedAttack(Entity *);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
-int EntityAi_SetReaction(char *, void (*)(void), int);
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 s32 EntityAi_CanAttack(Entity *);
 int EntityAi_PickAttack(char *);
 void EntityAi_MeleeAttack(Entity *);
@@ -45,10 +45,10 @@ void Stool_Init(Entity *entity) {
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Stool_Think;
     ai_state->animate = EntityAi_Animate;
-    ai_state->on_hit = (void (*)(void))Stool_OnHit;
-    ai_state->move = (void (*)(void))EntityAi_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->on_hit = Stool_OnHit;
+    ai_state->move = EntityAi_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -57,16 +57,16 @@ void Stool_Init(Entity *entity) {
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The on_hit handler: with flag bits 38-39 not 0 it starts EntityAi_RangedAttack with ranged record
@@ -84,13 +84,13 @@ static void Stool_OnHit(Entity *entity) {
     }
     if (((s32)(flags >> 36) & 3) == 1) {
         if ((s32)((s64)(flags << 13) >> 32) & 1) {
-            EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionRewind, 0);
+            EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
             return;
         }
-        EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionLight, 0);
+        EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);
         return;
     }
-    EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
+    EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
 }
 
 /* The think handler: no states and no look at the player. While the entity is not busy it starts
@@ -108,7 +108,7 @@ static void Stool_Think(Entity *entity, s32 unknown) {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             }
         } else {
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, unknown);
         }
     }
 }

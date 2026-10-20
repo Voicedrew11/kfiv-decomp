@@ -4,7 +4,7 @@
 #include "ui/message.h"
 #include "map/map.h"
 
-void MapObject_RebuildMatrices(char *);
+void MapObject_RebuildMatrices(MapObject *object);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Copy(void *, void *);
 void Vector_Subtract(void *, void *, void *);
@@ -61,7 +61,7 @@ void MapObject_UpdateEmptyPedestal(MapObject *object) {
         object->state_flags |= MAP_OBJECT_ON;
         MAP_OBJECT_BYTES(object)->step = 2;
         MapObject_StepAnim(object);
-        MapObject_RebuildMatrices((char *)object);
+        MapObject_RebuildMatrices(object);
         origin.w = 1.0f;
         origin.x = origin.y = origin.z = 0.0f;
         Vector_ApplyMatrix(&origin, part, &origin);
@@ -157,7 +157,7 @@ void MapObject_LiftPedestalItem(MapObject *object) {
         return;
     }
     MAP_OBJECT_BYTES(object)->step = 6;
-    MapObject_RebuildMatrices((char *)object);
+    MapObject_RebuildMatrices(object);
     origin.w = 1.0f;
     origin.x = origin.y = origin.z = 0.0f;
     Vector_ApplyMatrix(&origin, part, &origin);
@@ -192,7 +192,7 @@ void MapObject_MovePedestalItemOut(MapObject *object) {
 }
 
 /* Every-frame hook of the pedestals: MapObject_RebuildMatrices. */
-void MapObject_RebuildPedestalMatrices(char *object) {
+void MapObject_RebuildPedestalMatrices(MapObject *object) {
     MapObject_RebuildMatrices(object);
 }
 

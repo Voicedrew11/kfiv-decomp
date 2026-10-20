@@ -9,10 +9,10 @@
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(void);
+void EntityAi_Animate(Entity *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
@@ -46,7 +46,7 @@ float EntityMath_AngleXZ(float *, char *);
 float EntityMath_DistanceXZ(void *, void *);
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(char *, void (*)(void), int);
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
@@ -78,10 +78,10 @@ void WaterElemental_Init(Entity *entity) {
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = WaterElemental_Think;
     ai_state->animate = EntityAi_Animate;
-    ai_state->on_hit = (void (*)(void))WaterElemental_OnHit;
-    ai_state->move = (void (*)(void))EntityAi_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->on_hit = WaterElemental_OnHit;
+    ai_state->move = EntityAi_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = EntityAi_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -91,9 +91,9 @@ void WaterElemental_Init(Entity *entity) {
     entity->target = NULL;
     entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -102,7 +102,7 @@ void WaterElemental_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with WaterElemental_ThinkCombat for state 2. Work byte unk7B
@@ -259,7 +259,7 @@ static void WaterElemental_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* An action (busy bit 0x2000): plays animation 12 or, with work byte unk7A below 1, animation 11 to
@@ -292,7 +292,7 @@ static void WaterElemental_PlayTurnAnim(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -336,7 +336,7 @@ static void WaterElemental_RecoverHealth(Entity *entity) {
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -399,12 +399,12 @@ static void WaterElemental_OnHit(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
     if (ENTITY_FLAG_BITS(entity)->bits36 == 1) {
         if (ENTITY_FLAG_BITS(entity)->bit19) {
-            EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionRewind, 0);
+            EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
-            EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionLight, 0);
+            EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);
         }
     } else if (ENTITY_FLAG_BITS(entity)->bits36 == 2) {
-        EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
+        EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
     WaterElemental_AlertSameKind(entity);
@@ -454,7 +454,7 @@ static void WaterElemental_RunAtPlayer(Entity *entity) {
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         side = EntityAi_PickCombatChoice(entity, 0);
@@ -485,7 +485,7 @@ static void WaterElemental_RunAtPlayer(Entity *entity) {
         } else {
             entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
         }
-        ((void (*)(Entity *))ai_state->move)(entity);
+        (ai_state->move)(entity);
         break;
     }
 }

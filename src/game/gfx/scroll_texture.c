@@ -120,7 +120,7 @@ void ScrollTexture_Init(void) {
 }
 
 /* Scrolls and redraws the four textures, then restores the GS state (a map object's draw hook). */
-void ScrollTexture_DrawAll(void) {
+void ScrollTexture_DrawAll(ModelInstance *model) {
     ScrollTexture *texture = scroll_textures;
     ScrollOffset *offset = scroll_offsets;
 

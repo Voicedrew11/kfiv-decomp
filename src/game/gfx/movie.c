@@ -134,7 +134,7 @@ static int MovieVideo_PutStamp(MovieVideoDecoder *decoder, s64 pts, s64 dts, u8 
 static int MovieVideo_GetInputCount(MovieVideoDecoder *decoder);
 static int MovieVideo_Flush(MovieVideoDecoder *decoder);
 static int MovieVideo_IsFlushed(MovieVideoDecoder *decoder);
-static void MovieVideo_Main(MovieVideoDecoder *decoder);
+static void MovieVideo_Main(void *decoder_argument);
 static int MovieVideo_DecodeAll(MovieVideoDecoder *decoder);
 static int Movie_OnMpegError(sceMpeg *mpeg, void *callback_data, void *user_data);
 static int Movie_OnMpegNoData(sceMpeg *mpeg, void *callback_data, void *user_data);
@@ -187,7 +187,7 @@ static int GsPacket_AddTrxreg(int packet, u32 width, u32 height);
 static int GsPacket_AddTrxdir(int packet, u32 direction);
 static void Movie_SendGifChain(u32 chain);
 static int Movie_VblankHandler(int cause);
-static int Movie_GifDmaHandler(void);
+static int Movie_GifDmaHandler(int channel);
 static void Movie_StartDisplay(s32 field);
 static void Movie_StopDisplay(void);
 static s32 MovieFile_Open(MovieFile *file, char *path);
@@ -363,7 +363,7 @@ static void Movie_Setup(char *path) {
     thread_param.option = 0;
     movie_thread.idle_thread = CreateThread(&thread_param);
     StartThread(movie_thread.idle_thread, NULL);
-    thread_param.entry = (void (*)(void *))MovieVideo_Main;
+    thread_param.entry = MovieVideo_Main;
     thread_param.stack = movie_thread.decode_stack;
     thread_param.stackSize = 0x4000;
     thread_param.initPriority = 1;
@@ -376,7 +376,7 @@ static void Movie_Setup(char *path) {
     }
     movie_decoder.intc_handler = AddIntcHandler(2, Movie_VblankHandler, 0);
     EnableIntc(2);
-    movie_decoder.dmac_handler = AddDmacHandler(2, (int (*)(int))Movie_GifDmaHandler, 0);
+    movie_decoder.dmac_handler = AddDmacHandler(2, Movie_GifDmaHandler, 0);
     EnableDmac(2);
 }
 
@@ -1424,7 +1424,9 @@ static int MovieVideo_IsFlushed(MovieVideoDecoder *decoder) {
 
 /* The decode thread: empties the stream buffer and the picture ring, decodes the stream, waits for the last
    picture to be shown and marks the decoder ended (videoDecMain). */
-static void MovieVideo_Main(MovieVideoDecoder *decoder) {
+static void MovieVideo_Main(void *decoder_argument) {
+    MovieVideoDecoder *decoder = decoder_argument;
+
     MovieStream_Reset(&decoder->stream);
     MovieOut_Reset(&movie_out_buffer);
     MovieVideo_DecodeAll(decoder);
@@ -1941,7 +1943,7 @@ static int Movie_VblankHandler(int cause) {
 }
 
 /* GIF DMA end handler: once a picture has been shown on both fields, drops it from the ring. */
-static int Movie_GifDmaHandler(void) {
+static int Movie_GifDmaHandler(int channel) {
     if (movie_pictures_enabled != 0 && movie_picture_shown != 0) {
         MovieOut_DropOldest(&movie_out_buffer);
         movie_picture_shown = 0;

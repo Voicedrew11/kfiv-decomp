@@ -81,9 +81,9 @@ f32 weapon_tip_angles[4] = { 0.0f, 0.0f, 0.0f, 1.0f };                          
 void (*item_action_handlers[4])(u16, u16) = { Player_SwingWeapon, Player_SwingWeapon, Player_InvokeTargetHandler, 0 };
 /* 0x413F60 the held item's step handler, picked with PlayerState.item_action_step; three of them ignore the buttons */
 void (*item_step_handlers[8])(u16, u16) = {
-    (void (*)(u16, u16))Player_FireProjectile, (void (*)(u16, u16))Player_DrawBow,
-    (void (*)(u16, u16))Player_PlayEquipSound, (void (*)(u16, u16))Player_FinishWeaponMotion,
-    (void (*)(u16, u16))Player_HolsterWeapon, 0, 0, 0,
+    Player_FireProjectile, Player_DrawBow,
+    Player_PlayEquipSound, Player_FinishWeaponMotion,
+    Player_HolsterWeapon, 0, 0, 0,
 };
 
 void *memset(void *, int, u32);
@@ -995,13 +995,13 @@ void Player_DrawBow(u16 held, u16 pressed) {
     player_state.item_action_step += 3;
 }
 
-void Player_PlayEquipSound(void) {
+void Player_PlayEquipSound(u16 held, u16 pressed) {
     Sound_PlaySw(1);
     player_state.power_gauge = 0;
     player_state.item_action_step++;
 }
 
-void Player_FinishWeaponMotion(void) {
+void Player_FinishWeaponMotion(u16 held, u16 pressed) {
     if (MODEL_CHANNEL(WEAPON_MODEL)->blend_left != 0) {
         ModelMotion_Step(WEAPON_MODEL);
         if (MODEL_CHANNEL(WEAPON_MODEL)->blend_left == 0) {
@@ -1015,7 +1015,7 @@ void Player_FinishWeaponMotion(void) {
     }
 }
 
-void Player_HolsterWeapon(void) {
+void Player_HolsterWeapon(u16 held, u16 pressed) {
     ModelMotion_Step(WEAPON_MODEL);
     if (MODEL_CHANNEL(WEAPON_MODEL)->blend_left == 0) {
         Effect_FreePlayerWeaponKinds();

@@ -12,7 +12,7 @@ void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 void Motion_SetPartSlots(EntityModel *, s32, s32, s32);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void Vector_Copy(void *, void *);
 extern s32 entity_type_handlers[][2];
 int EntityAi_StepSlotMotion(Entity *, EntityMotionSlot *, int, f32);
@@ -34,8 +34,8 @@ int rand(void);
 void EntityAi_SetAttackDelay(Entity *, s32);
 void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(void);
-void EntityAi_OnHit(char *);
+void EntityAi_Animate(Entity *);
+void EntityAi_OnHit(Entity *);
 void EntityAi_Move(Entity *);
 void EntityAi_CheckFarFromSpawn(char *);
 float EntityMath_DistanceXZ(void *, void *);
@@ -96,9 +96,9 @@ void AncientKing_Init(Entity *entity) {
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = AncientKing_Think;
-    ai_state->animate = (void (*)(void))AncientKing_Animate;
-    ai_state->move = (void (*)(void))AncientKing_Move;
-    ai_state->death = (void (*)(void))AncientKing_Death;
+    ai_state->animate = AncientKing_Animate;
+    ai_state->move = AncientKing_Move;
+    ai_state->death = AncientKing_Death;
     ai_state->on_hit = NULL;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
@@ -109,7 +109,7 @@ void AncientKing_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit25 = TRUE;
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+    EntityAi_StartAction(entity, ai_state->move, 0);
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
@@ -121,7 +121,7 @@ void AncientKing_Init(Entity *entity) {
     ((EntityAiStateKind151D30 *)ai_state)->motion_slot_0.bit5 = 1;
     ((EntityAiStateKind151D30 *)ai_state)->motion_slot_0.bit6 = 1;
     ((EntityAiStateKind151D30 *)ai_state)->motion_slot_1.bit6 = 1;
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
     for (i = 0; i < 6; i++) {
         other = Entity_GetBySpawnId(i + 10);
         if (other != NULL) {
@@ -200,7 +200,7 @@ static void AncientKing_Think(Entity *entity, s32 unknown) {
         case 0:
         case 1:
         default:
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, unknown);
             break;
         }
     }
@@ -222,7 +222,7 @@ static void AncientKing_ThinkCombat(Entity *entity, s32 unknown) {
     } else if (entity->attack_delay_frames == 0 && EntityAi_CanUseRanged(entity, 0)) {
         EntityAi_StartAttack(entity, AncientKing_RangedAttack0, unknown, 1, 0);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+        EntityAi_StartAction(entity, ai_state->move, unknown);
     }
 }
 
@@ -344,7 +344,7 @@ static void AncientKing_RangedAttack0(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -388,7 +388,7 @@ static void AncientKing_RespawnOthers(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -419,9 +419,9 @@ static void AncientKing_SwitchHandlers(Entity *entity) {
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             ai_state->animate = EntityAi_Animate;
-            ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
-            ai_state->move = (void (*)(void))EntityAi_Move;
-            ai_state->death = (void (*)(void))AncientKing_DeathLaunchShot;
+            ai_state->on_hit = EntityAi_OnHit;
+            ai_state->move = EntityAi_Move;
+            ai_state->death = AncientKing_DeathLaunchShot;
             entity->ai_state.think = AncientKing_ThinkAfterSwitch;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
             entity->busy_flags = 0;
@@ -430,7 +430,7 @@ static void AncientKing_SwitchHandlers(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -559,7 +559,7 @@ static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The death action (busy bit 0x40) that AncientKing_SwitchHandlers installs: as EntityAi_Death; as
@@ -663,7 +663,7 @@ static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -722,7 +722,7 @@ static void AncientKing_RangedAttack1(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -766,7 +766,7 @@ static void AncientKing_RespawnOthersAfterSwitch(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;

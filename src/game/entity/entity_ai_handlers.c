@@ -10,7 +10,7 @@
 
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(Entity *entity, void (*reaction)(void), int run_now);
+int EntityAi_SetReaction(Entity *entity, void (*reaction)(Entity *entity), int run_now);
 void EntityAi_SetAttackDelay(Entity *, s32);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
@@ -59,7 +59,7 @@ void EntityAi_FinishMotion(Entity *entity, s32 unused) {
             if ((s32)(entity->flags >> 5) & 1) {
                 entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -96,7 +96,7 @@ void EntityAi_StandOnce(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -163,7 +163,7 @@ void EntityAi_Dormant(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -246,7 +246,7 @@ void EntityAi_ReactionLight(Entity *entity) {
         if (ENTITY_FLAG_BITS(entity)->bit5) {
             ai_state->think(entity, 1);
         } else {
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+            EntityAi_StartAction(entity, ai_state->move, 1);
         }
         break;
     }
@@ -292,7 +292,7 @@ void EntityAi_ReactionHeavy(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -385,7 +385,7 @@ void EntityAi_Dodge(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -429,7 +429,7 @@ void EntityAi_Guard(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -495,7 +495,7 @@ void EntityAi_MeleeAttack(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -550,7 +550,7 @@ void EntityAi_RangedAttack(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -573,10 +573,10 @@ void EntityAi_Update(Entity *entity) {
     if (!(entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_DORMANT))) {
         if (entity->hit_points == 0) {
             ai_state->reaction = NULL;
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->death, 0);
+            EntityAi_StartAction(entity, ai_state->death, 0);
         } else if (ENTITY_FLAG_BITS(entity)->bits36 != 0 && !ENTITY_FLAG_BITS(entity)->bit35) {
             if (ai_state->on_hit != NULL) {
-                ((void (*)(Entity *))ai_state->on_hit)(entity);
+                (ai_state->on_hit)(entity);
             }
         } else if (ENTITY_FLAG_BITS(entity)->bit5) {
             if (ai_state->think != NULL) {
@@ -588,7 +588,7 @@ void EntityAi_Update(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit42 = FALSE;
     if (ENTITY_FLAG_BITS(entity)->bit6) {
         if (ai_state->reaction != NULL) {
-            ((void (*)(Entity *))ai_state->reaction)(entity);
+            (ai_state->reaction)(entity);
         } else if (entity->handler != NULL) {
             entity->handler(entity);
         }
@@ -600,7 +600,7 @@ void EntityAi_Update(Entity *entity) {
         entity->attack_delay_frames--;
     }
     if (ai_state->animate != NULL) {
-        ((void (*)(Entity *))ai_state->animate)(entity);
+        (ai_state->animate)(entity);
     }
     if (entity->ailment_3_frames != 0 && !(entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY))) {
         entity->model->position[0] += entity->move_delta_x * 0.75f;
@@ -642,11 +642,11 @@ void EntityAi_InitDefaults(Entity *entity) {
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = EntityAi_Think;
-    ai_state->animate = (void (*)(void))EntityAi_Animate;
-    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
-    ai_state->move = (void (*)(void))EntityAi_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->animate = EntityAi_Animate;
+    ai_state->on_hit = EntityAi_OnHit;
+    ai_state->move = EntityAi_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -658,9 +658,9 @@ void EntityAi_InitDefaults(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     }
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -716,12 +716,12 @@ void EntityAi_OnHit(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
     if (ENTITY_FLAG_BITS(entity)->bits36 == 1) {
         if (ENTITY_FLAG_BITS(entity)->bit19) {
-            EntityAi_SetReaction(entity, (void (*)(void))EntityAi_ReactionRewind, 0);
+            EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
-            EntityAi_SetReaction(entity, (void (*)(void))EntityAi_ReactionLight, 0);
+            EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);
         }
     } else if (ENTITY_FLAG_BITS(entity)->bits36 == 2) {
-        EntityAi_SetReaction(entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
+        EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
 }
@@ -810,7 +810,7 @@ int EntityAi_ThinkReturn(void *entity_ptr, int unknown) {
             entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
         }
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The think function of state 0: every 120-180 frames picks a point near the spawn point to walk to
@@ -846,7 +846,7 @@ int EntityAi_ThinkIdle(void *entity_ptr, int unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The think function of state 1 (the player was noticed and is no longer): keeps walking to the
@@ -874,7 +874,7 @@ void EntityAi_ThinkPursue(Entity *entity, int extra) {
     } else {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))sub->move, extra);
+    EntityAi_StartAction(entity, sub->move, extra);
 }
 
 /* The think function of state 2 (the player is noticed): guards or dodges the player's swing, else
@@ -961,7 +961,7 @@ void EntityAi_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The default move action: turns and moves as the command bits in Entity.move_command say, at the entity's speed

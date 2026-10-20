@@ -10,8 +10,8 @@ int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(void);
-void EntityAi_OnHit(char *);
+void EntityAi_Animate(Entity *);
+void EntityAi_OnHit(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
@@ -48,9 +48,9 @@ void LavaFace_Init(Entity *entity) {
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = LavaFace_Think;
     ai_state->animate = EntityAi_Animate;
-    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->on_hit = EntityAi_OnHit;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = EntityAi_Death;
     ai_state->move = NULL;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
@@ -61,9 +61,9 @@ void LavaFace_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
@@ -115,5 +115,5 @@ static void LavaFace_Think(Entity *entity, s32 unknown) {
         entity->action_timer = entity->params->action_frames + rand() % 3;
     }
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }

@@ -16,7 +16,7 @@ void Model_SetUpPosed(ModelInstance *, char **, char **);
 void Model_SetTextureBase(char *, int, int);
 void Model_SetVertexColour(void *, int, int, int, int);
 void TextureTable_SetBasePointers(char *, int, int);
-void MapItem_PrepareDraw(void *);
+void MapItem_PrepareDraw(ModelInstance *model);
 
 void MapItem_PickupAim(void);
 void MapItem_PickupBringUp(void);
@@ -191,7 +191,7 @@ void MapItem_InitMap(int map) {
             Model_SetUpPosed(node->model, &model_data, &cursor);
             Model_SetTextureBase((char *)node->model, 0x3B40, 0x3EC0);
             Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
-            node->model->draw = (void (*)(ModelInstance *))MapItem_PrepareDraw;
+            node->model->draw = MapItem_PrepareDraw;
             node->model->texture_data = (int)source->texture;
             node->model->texture_slot = 2;
             TextureTable_SetBasePointers(source->texture, 0x3B40, 0x3EC0);
@@ -929,7 +929,7 @@ ItemNode *MapItem_Unlink(ItemNode *node) {
 }
 
 /* Sends the model's textures and sets GS register 0x47 for drawing it. */
-void MapItem_PrepareDraw(void *model) {
+void MapItem_PrepareDraw(ModelInstance *model) {
     ModelTexture_SendForModel(model);
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(0x47, 0x5000D);

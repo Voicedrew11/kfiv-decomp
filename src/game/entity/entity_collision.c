@@ -2339,8 +2339,7 @@ s32 EntityCollision_LineHits(Entity *target, f32 *from, PlayerData *destination)
 
     Vector_Subtract(direction, destination, from);
     Vector_Normalize(direction, direction);
-    // match: EntityMath_Distance returns the distance (other files declare it void)
-    Collision_HitRayObj((MapObject *)target, from, direction, ((f32 (*)(f32 *, void *))EntityMath_Distance)(from, destination));
+    Collision_HitRayObj((MapObject *)target, from, direction, EntityMath_Distance(from, (f32 *)destination));
     return COLLISION_RESULT->hit;
 }
 
@@ -2660,8 +2659,7 @@ int EntityCollision_PointNearSegment(float radius, int *start_arg, int end_arg, 
     }
     Vector_Scale(nearest, along, fraction);
     Vector_Add(nearest, nearest, start);
-    // match: EntityMath_Distance returns the distance; other files declare it void
-    if (((f32 (*)(f32 *, f32 *))EntityMath_Distance)(point, nearest) <= radius) {
+    if (EntityMath_Distance(point, nearest) <= radius) {
         return TRUE;
     }
     return FALSE;

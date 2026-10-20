@@ -10,7 +10,7 @@
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_Dormant(Entity *);
 extern s32 entity_type_handlers[][2];
@@ -30,7 +30,7 @@ void Matrix_Multiply(void *, void *, void *);
 float EntityMath_EaseAngleToward(float *, float, float);
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
-int EntityAi_SetReaction(char *, void (*)(void), int);
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityAi_ReactionHeavy(Entity *);
 extern u32 frame_counter;
 void EntityAi_StepState(void *);
@@ -83,11 +83,11 @@ void FireGenie_Init(Entity *entity) {
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = FireGenie_Think;
-    ai_state->animate = (void (*)(void))FireGenie_Animate;
-    ai_state->on_hit = (void (*)(void))FireGenie_OnHit;
-    ai_state->move = (void (*)(void))FireGenie_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))FireGenie_Death;
+    ai_state->animate = FireGenie_Animate;
+    ai_state->on_hit = FireGenie_OnHit;
+    ai_state->move = FireGenie_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = FireGenie_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -97,9 +97,9 @@ void FireGenie_Init(Entity *entity) {
     entity->target = NULL;
     entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -108,7 +108,7 @@ void FireGenie_Init(Entity *entity) {
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate, but the motion never moves the entity, and
@@ -215,7 +215,7 @@ static void FireGenie_OnHit(Entity *entity) {
     if (((flags >> 36) & 3) == 2) {
         ENTITY_UNK5C(entity)->as_s32 = 0;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
-        EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
+        EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
         if (ai_state->action_counter) {
             other = Entity_GetBySpawnId(ai_state->action_flags);
             if (other != NULL) {
@@ -269,7 +269,7 @@ static void FireGenie_ThinkDecide(Entity *entity, s32 unknown) {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             }
         } else {
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, unknown);
         }
     }
 }
@@ -313,7 +313,7 @@ static void FireGenie_RangedAttack0(Entity *entity) {
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -362,7 +362,7 @@ static void FireGenie_RespawnOther(Entity *entity) {
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;

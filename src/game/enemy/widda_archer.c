@@ -12,7 +12,7 @@ int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
-void EntityAi_OnHit(char *);
+void EntityAi_OnHit(Entity *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
@@ -81,11 +81,11 @@ void WiddaArcher_Init(Entity *entity) {
     } else {
         ai_state->think = WiddaArcher_Think;
     }
-    ai_state->animate = (void (*)(void))WiddaArcher_Animate;
-    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
-    ai_state->move = (void (*)(void))EntityAi_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->animate = WiddaArcher_Animate;
+    ai_state->on_hit = EntityAi_OnHit;
+    ai_state->move = EntityAi_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = EntityAi_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -95,9 +95,9 @@ void WiddaArcher_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -326,7 +326,7 @@ static void WiddaArcher_ThinkCombat(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_TurnCommand(entity);
         }
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, but its shots are aimed at a point 190
@@ -380,7 +380,7 @@ static void WiddaArcher_RangedAttack(Entity *entity) {
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -466,7 +466,7 @@ static void WiddaArcher_WalkToMapObject(Entity *entity, s32 unknown) {
         entity->target = ai_state->target_point;
         entity->move_command = EntityAi_MoveCommand(entity, 0, reach * 0.5f);
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* An action (busy bit 0x1000) that WiddaArcher_WalkToMapObject starts: plays animation 17 to its
@@ -503,7 +503,7 @@ static void WiddaArcher_StartMapObjectScript(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;

@@ -6,9 +6,9 @@
 #include "common.h"
 
 void EntityAi_SetUpdate(char *, s32);
-int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
+int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
-int Motion_StepModel(EntityModel *, s32, s32);
+s32 Motion_StepModel(ModelInstance *, s32, s32);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
@@ -16,7 +16,7 @@ extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);
 void EntityAi_LowerWeightsAfterHit(char *);
-int EntityAi_SetReaction(char *, void (*)(void), int);
+int EntityAi_SetReaction(Entity *, void (*)(Entity *), int);
 void EntityAi_SetState(char *, u8);
 void EntityAi_ReactionLight(Entity *);
 extern u32 frame_counter;
@@ -46,11 +46,11 @@ void Phagos_Init(Entity *entity) {
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = Phagos_Think;
-    ai_state->animate = (void (*)(void))Phagos_Animate;
-    ai_state->on_hit = (void (*)(void))Phagos_OnHit;
-    ai_state->move = (void (*)(void))EntityAi_Move;
-    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
-    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->animate = Phagos_Animate;
+    ai_state->on_hit = Phagos_OnHit;
+    ai_state->move = EntityAi_Move;
+    ai_state->dormant = EntityAi_Dormant;
+    ai_state->death = EntityAi_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -60,15 +60,15 @@ void Phagos_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    Motion_StepModel(entity->model, 0, 0);
+    Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate without the test of the EntityParams kind bits and
@@ -94,7 +94,7 @@ static void Phagos_Animate(Entity *entity) {
    entity in state 3; the target and flag bits 9 and 10 are left as they are. */
 static void Phagos_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
-    EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionLight, 0);
+    EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);
     EntityAi_SetState((char *)entity, 3);
 }
 

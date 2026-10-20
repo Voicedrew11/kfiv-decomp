@@ -501,21 +501,21 @@ typedef struct {
        action that has ended: the action it starts then runs at once. */
     void (*think)(struct Entity *entity, s32 run_now);
     /* 0x04 called every frame after the action: plays the motion on, sets flag bit 34 when it ends */
-    void (*animate)(void);
+    void (*animate)(struct Entity *entity);
     /* 0x08 called in a frame the entity was hit (flag bits 36-37 say how hard) unless flag bit 35
        is set: starts the reaction */
-    void (*on_hit)(void);
+    void (*on_hit)(struct Entity *entity);
     /* 0x0C while set, called every frame in place of Entity.handler (see EntityAi_SetReaction);
        Entity.reaction_step is its step. It clears itself when it is done. */
-    void (*reaction)(void);
+    void (*reaction)(struct Entity *entity);
     /* 0x10 the action the set-up function starts when the spawn has flag bit 58: wait for the
        player to come near, then get up */
-    void (*dormant)(void);
+    void (*dormant)(struct Entity *entity);
     /* 0x14 the action EntityAi_Update starts when Entity.hit_points is 0 */
-    void (*death)(void);
+    void (*death)(struct Entity *entity);
     /* 0x18 the action between the others: carries out the movement command in Entity.move_command.
        think ends by starting it; an action that has ended starts it when flag bit 5 is clear. */
-    void (*move)(void);
+    void (*move)(struct Entity *entity);
     f32 turn_rate;                  /* 0x1C turn speed built up towards EntityParams.turn_limit */
     f32 look_part_angles[4];        /* 0x20 the look part's angles, updated in place each frame */
     f32 target_point[4];            /* 0x30 (Entity+0x110) a point to walk to (Entity.target points here) */
@@ -556,7 +556,7 @@ typedef struct {
 typedef struct {
     void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
     char pad04[0x14];
-    void (*move)(void);             /* 0x18 */
+    void (*move)(struct Entity *entity);/* 0x18 */
     s32 turn_rate;                  /* 0x1C turn speed built towards EntityParams.turn_limit */
     char pad20[0x10];
     f32 target_point[4];            /* 0x30 a point to move towards */
@@ -579,7 +579,7 @@ typedef struct {
 typedef struct {
     void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
     char pad04[0x14];
-    void (*move)(void);             /* 0x18 */
+    void (*move)(struct Entity *entity);/* 0x18 */
     f32 turn_rate;                  /* 0x1C turn speed */
     char pad20[0x24];
     f32 side_speed;                 /* 0x44 speed sideways */
@@ -598,7 +598,7 @@ typedef struct {
 typedef struct {
     void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
     char pad04[0x14];
-    void (*move)(void);             /* 0x18 */
+    void (*move)(struct Entity *entity);/* 0x18 */
     s32 turn_rate;                  /* 0x1C turn rate of the move command, cleared when one starts */
     f32 unk20[4];                   /* 0x20 */
     f32 target_point[4];            /* 0x30 where the entity walks to (Entity.target points here) */
@@ -619,12 +619,12 @@ typedef struct {
    8-byte aligned: tests of neighbouring bytes are merged into one 64-bit load. */
 typedef struct {
     void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
-    void (*animate)(void);          /* 0x04 */
-    void (*on_hit)(void);           /* 0x08 */
+    void (*animate)(struct Entity *entity);/* 0x04 */
+    void (*on_hit)(struct Entity *entity);/* 0x08 */
     char pad0C[0x04];
-    void (*dormant)(void);          /* 0x10 */
-    void (*death)(void);            /* 0x14 */
-    void (*move)(void);             /* 0x18 */
+    void (*dormant)(struct Entity *entity);/* 0x10 */
+    void (*death)(struct Entity *entity);/* 0x14 */
+    void (*move)(struct Entity *entity);/* 0x18 */
     f32 turn_rate;                  /* 0x1C turn speed built towards EntityParams.turn_limit */
     f32 unk20[4];                   /* 0x20 */
     char pad30[0x10];
@@ -712,7 +712,7 @@ typedef struct {
 typedef struct {
     void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
     char pad04[0x14];
-    void (*move)(void);             /* 0x18 */
+    void (*move)(struct Entity *entity);/* 0x18 */
     f32 turn_rate;                  /* 0x1C turn speed used by EntityAi_TurnToHeading */
     char pad20[0x4A];
     s16 player_cast_timer;          /* 0x6A counts down; reloaded from EntityParams.action_frames */

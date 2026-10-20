@@ -12,8 +12,8 @@ void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(void);
-void EntityAi_OnHit(char *);
+void EntityAi_Animate(Entity *);
+void EntityAi_OnHit(Entity *);
 void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
@@ -58,15 +58,15 @@ void SkeletonSoldier_Init(Entity *entity) {
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->animate = EntityAi_Animate;
-    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
-    ai_state->move = (void (*)(void))EntityAi_Move;
-    ai_state->dormant = (void (*)(void))SkeletonSoldier_Dormant;
-    ai_state->death = (void (*)(void))EntityAi_Death;
+    ai_state->on_hit = EntityAi_OnHit;
+    ai_state->move = EntityAi_Move;
+    ai_state->dormant = SkeletonSoldier_Dormant;
+    ai_state->death = EntityAi_Death;
     if (entity->spawn_info->spawn_mode == 1) {
-        ai_state->think = (void (*)(Entity *, s32))SkeletonSoldier_ThinkNoStates;
+        ai_state->think = SkeletonSoldier_ThinkNoStates;
     } else if (entity->spawn_info->spawn_mode >= 2 && entity->spawn_info->spawn_mode <= 3) {
         ai_state->think = SkeletonSoldier_ThinkClearFlag25Away;
-        ai_state->dormant = (void (*)(void))SkeletonSoldier_DormantAnim18Then19;
+        ai_state->dormant = SkeletonSoldier_DormantAnim18Then19;
     } else {
         ai_state->think = SkeletonSoldier_Think;
     }
@@ -79,9 +79,9 @@ void SkeletonSoldier_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -202,7 +202,7 @@ static void SkeletonSoldier_Dormant(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -240,7 +240,7 @@ static void SkeletonSoldier_PlayAnim17(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -357,7 +357,7 @@ static void SkeletonSoldier_DormantAnim18Then19(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
@@ -424,5 +424,5 @@ static void SkeletonSoldier_ThinkDecideAttackOrWait(Entity *entity, s32 unknown)
         entity->action_timer = rand() % 30 + 30;
         ai_state->move_choice = -1;
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }

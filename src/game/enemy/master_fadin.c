@@ -10,7 +10,7 @@ int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
-void EntityAi_Animate(void);
+void EntityAi_Animate(Entity *);
 extern s32 entity_type_handlers[][2];
 void EntityEvent_Respawn(char *);
 int Motion_Start(void *, int, int, u32, int);
@@ -45,8 +45,8 @@ void MasterFadin_Init(Entity *entity) {
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ai_state->think = MasterFadin_Think;
     ai_state->animate = EntityAi_Animate;
-    ai_state->dormant = (void (*)(void))MasterFadin_Dormant;
-    ai_state->death = (void (*)(void))MasterFadin_Death;
+    ai_state->dormant = MasterFadin_Dormant;
+    ai_state->death = MasterFadin_Death;
     ai_state->on_hit = NULL;
     ai_state->move = NULL;
     for (i = 3; i != -1; i--) {
@@ -58,9 +58,9 @@ void MasterFadin_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit28 = 1;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
+        EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
+        EntityAi_StartAction(entity, ai_state->move, 0);
     }
     ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
@@ -85,8 +85,7 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
         leader = Entity_GetBySpawnId(entity->spawn_info->variant);
         if (leader != NULL) {
             if (ENTITY_FLAG_BITS(leader)->bits2 >= 2) {
-                // match: called as returning int; only then are the flags kept in $3 afterwards
-                ((int (*)(char *, void (*)(void), int))EntityAi_StartAction)((char *)entity, ai_state->death, 0);
+                EntityAi_StartAction(entity, ai_state->death, 0);
                 ENTITY_FLAG_BITS(entity)->bit7 = FALSE;
                 return;
             }
@@ -110,7 +109,7 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
             break;
         case 0:
         default:
-            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+            EntityAi_StartAction(entity, ai_state->move, unknown);
             break;
         }
     }
@@ -165,7 +164,7 @@ static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 unknown) {
         }
     }
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
-    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
+    EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
 /* The dormant action (busy bit 0x20): as EntityAi_Dormant with flag bits 11 to 13 at 0; flag bit 43
@@ -213,7 +212,7 @@ static void MasterFadin_Dormant(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
+                EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         break;
