@@ -75,7 +75,7 @@ void Reaper_Init(Entity *entity) {
     } else {
         EntityAi_StartAction(entity, ai_state->move, 0);
     }
-    ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
@@ -119,7 +119,7 @@ static void Reaper_ThinkCombat(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 side;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -128,7 +128,7 @@ static void Reaper_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_PickMeleeAttack(entity);
         EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
     } else {
-        ENTITY_FLAG_BITS(entity)->bit32 = TRUE;
+        ENTITY_FLAG_BITS(entity)->player_in_reach = TRUE;
         side = EntityAi_PickCombatChoice(entity, 0);
         if (entity->action_timer == 0) {
             entity->prev_combat_choice = entity->combat_choice;
@@ -167,24 +167,24 @@ static void Reaper_Dormant(Entity *entity) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
         }
         ai_state->turn_rate = 0;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
         break;
     case 1:
-        if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->bit43) {
+        if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
             EntityAi_SetState((char *)entity, 2);
-            ENTITY_FLAG_BITS(entity)->bits36 = 0;
+            ENTITY_FLAG_BITS(entity)->hit_strength = 0;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -208,16 +208,16 @@ static void Reaper_RangedAttack(Entity *entity) {
     case 0:
         Motion_Start(entity, attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
             s32 kind = 2;
 
             if (!(ENTITY_PARAMS_BITS(entity)->bit25 && !ENTITY_PARAMS_BITS(entity)->bit26)) {
                 kind = 1;
             }
-            ENTITY_FLAG_BITS(entity)->bits11 = kind;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = kind;
         }
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -242,12 +242,12 @@ static void Reaper_RangedAttack(Entity *entity) {
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
         }
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);

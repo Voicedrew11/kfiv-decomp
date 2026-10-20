@@ -132,7 +132,7 @@ static void WindElemental_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
-        if ((s32)(entity->flags >> 53) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             // match: called as returning nothing, so $2 is free for the next statement
             // match: the result is not used, retail calls it as void
             ((void (*)(void *, int))EntityAi_ThinkReturn)(entity, unknown);
@@ -222,7 +222,7 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (entity->combat_choice == 1) {
         EntityAi_ClearTurnInPlace(entity);
-        if ((s32)(entity->flags >> 31) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;
@@ -285,11 +285,11 @@ static void WindElemental_PlayTurnAnim(Entity *entity) {
         }
         break;
     case 2:
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -319,9 +319,9 @@ static void WindElemental_Dodge(Entity *entity) {
             Motion_Start(entity, 7, 0, 5, 1);
             break;
         }
-        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
+        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAGS(entity) &= ~0x200;
+        ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
         break;
     case 1:
@@ -330,14 +330,14 @@ static void WindElemental_Dodge(Entity *entity) {
         }
         break;
     case 2:
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             if (!(rand() & 1) && ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < 0.5235988f) {
                 ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~(3L << 58)) | (1L << 58);
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
-            } else if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            } else if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -367,9 +367,9 @@ static void WindElemental_DodgeNoAttack(Entity *entity) {
             Motion_Start(entity, 7, 0, 5, 1);
             break;
         }
-        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
+        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAGS(entity) &= ~0x200;
+        ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
         break;
     case 1:
@@ -378,11 +378,11 @@ static void WindElemental_DodgeNoAttack(Entity *entity) {
         }
         break;
     case 2:
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -426,7 +426,7 @@ static void WindElemental_AlertSameKind(Entity *entity) {
     Entity *other;
 
     for (other = active_entities_head; other != NULL; other = other->next) {
-        if (entity->params == other->params && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST) && ((s32)(other->flags >> 1) & 1)
+        if (entity->params == other->params && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST) && (ENTITY_FLAG_BITS(other)->live)
             && ((s32)(other->flags >> 2) & 3) == 0 && other != entity) {
             EntityAiState *ai_state = &other->ai_state;
 
@@ -445,14 +445,14 @@ static void WindElemental_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
     ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-    if (ENTITY_FLAG_BITS(entity)->bits36 == 1) {
+    ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
+    if (ENTITY_FLAG_BITS(entity)->hit_strength == 1) {
         if (ENTITY_FLAG_BITS(entity)->bit19) {
             EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
             EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);
         }
-    } else if (ENTITY_FLAG_BITS(entity)->bits36 == 2) {
+    } else if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
@@ -473,9 +473,9 @@ static void WindElemental_RunAtPlayer(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
-        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
+        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAGS(entity) &= ~0x200;
+        ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
         break;
     case 1:
@@ -496,19 +496,19 @@ static void WindElemental_RunAtPlayer(Entity *entity) {
             EntityAi_StartAction(entity, EntityAi_Dodge, 1);
             break;
         }
-        if ((s32)(ENTITY_FLAGS(entity) >> 53) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             ai_state->pause_timer = 2;
-            if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         side = EntityAi_PickCombatChoice(entity, 0);
-        ENTITY_FLAGS(entity) |= 0x200;
+        ENTITY_FLAGS(entity) |= ENTITY_FLAG_LOOK_AT_TARGET;
         if (side == 0) {
             entity->prev_combat_choice = entity->combat_choice;
             entity->combat_choice = 0;

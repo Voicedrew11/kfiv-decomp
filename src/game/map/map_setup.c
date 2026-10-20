@@ -523,8 +523,8 @@ void MapSetup_CentralTowerLevel3(int map_slot) {
         }
     }
     if (entity != NULL) {
-        ENTITY_FLAG_BITS(entity)->bit1 = 0;
-        ENTITY_FLAG_BITS(entity)->bit7 = 0;
+        ENTITY_FLAG_BITS(entity)->live = 0;
+        ENTITY_FLAG_BITS(entity)->respawnable = 0;
     }
 }
 

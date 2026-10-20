@@ -53,7 +53,7 @@ void Fadin_Init(Entity *entity) {
     for (i = 5; i != -1; i--) {
         entity->attack_weights[i] = 0x80;
     }
-    ENTITY_FLAG_BITS(entity)->bit28 = 1;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = 1;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);

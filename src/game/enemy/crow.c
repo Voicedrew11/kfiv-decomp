@@ -62,7 +62,7 @@ void Crow_Init(Entity *entity) {
     } else {
         EntityAi_StartAction(entity, ai_state->move, 0);
     }
-    ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
     ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
@@ -78,12 +78,12 @@ static void Crow_Animate(Entity *entity) {
 
     flags = entity->flags;
     ai_state = &entity->ai_state;
-    if (ENTITY_FLAG_BITS(entity)->bit14) {
+    if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
     }
 }
@@ -116,9 +116,9 @@ static void Crow_PickAction(Entity *entity, s32 unknown) {
     s32 roll;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     } else {
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
     if (entity->action_timer == 0) {
         roll = entity->params->yaw_limit_deg + (s16)entity->params->action_frames + entity->params->near_distance;
@@ -149,7 +149,7 @@ static void Crow_MoveOffAndRemove(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 turn;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     entity->move_command |= MOVE_COMMAND_FORWARD;
     if (ai_state->pause_timer < entity->params->type_param_0) {
         EntityEvent_StartEffectAtPoint((char **)entity, entity->params->far_distance, 0xFF, (int)entity->model->rotation);
@@ -166,7 +166,7 @@ static void Crow_MoveOffAndRemove(Entity *entity, s32 unknown) {
         entity->turn_delta_pitch += turn - entity->model->rotation[0];
     }
     if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) > 10000.0f) {
-        ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
+        ENTITY_FLAG_BITS(entity)->live = FALSE;
     }
     EntityAi_StartAction(entity, ai_state->move, unknown);
 }
@@ -178,7 +178,7 @@ static void Crow_Death(Entity *entity) {
 
     entity->busy_flags = ENTITY_BUSY_DEATH;
     // match: the whole step is written out in both arms (only the call is shared in retail)
-    if (!ENTITY_FLAG_BITS(entity)->bit44) {
+    if (!ENTITY_FLAG_BITS(entity)->on_floor) {
         turn = entity->model->rotation[0];
         EntityMath_EaseAngleToward(&turn, 1.5707964f, 3.0f);
         entity->turn_delta_pitch += turn - entity->model->rotation[0];
@@ -191,22 +191,22 @@ static void Crow_Death(Entity *entity) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
             s32 kind = 2;
 
             if (!(ENTITY_PARAMS_BITS(entity)->bit25 && !ENTITY_PARAMS_BITS(entity)->bit26)) {
                 kind = 1;
             }
-            ENTITY_FLAG_BITS(entity)->bits11 = kind;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = kind;
         }
-        ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bits2 = 1;
-        ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->dying = 1;
+        ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -214,10 +214,10 @@ static void Crow_Death(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
-            ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bits2 = 2;
-            ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
+            ENTITY_FLAG_BITS(entity)->dying = 2;
+            ENTITY_FLAG_BITS(entity)->no_respawn = TRUE;
             entity->action_timer = 20;
             EntityEvent_OnDeath(entity);
             entity->action_step++;
@@ -227,8 +227,8 @@ static void Crow_Death(Entity *entity) {
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits2 = 3;
-            ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
+            ENTITY_FLAG_BITS(entity)->dying = 3;
+            ENTITY_FLAG_BITS(entity)->live = FALSE;
         }
         break;
     }
@@ -243,7 +243,7 @@ static void Crow_PlayAnim20(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         entity->action_step++;
         break;
     case 1:
@@ -252,11 +252,11 @@ static void Crow_PlayAnim20(Entity *entity) {
         }
         break;
     case 2:
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -275,7 +275,7 @@ static void Crow_PlayAnim21(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x15, 0, entity->params->motion_blend_frames, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         entity->action_step++;
         break;
     case 1:
@@ -284,11 +284,11 @@ static void Crow_PlayAnim21(Entity *entity) {
         }
         break;
     case 2:
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);

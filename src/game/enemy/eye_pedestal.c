@@ -52,7 +52,7 @@ void EyePedestal_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     entity->target = NULL;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
@@ -77,13 +77,13 @@ static void EyePedestal_Animate(Entity *entity) {
 
     flags = entity->flags;
     ai_state = &entity->ai_state;
-    if (ENTITY_FLAG_BITS(entity)->bit14) {
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+    if (ENTITY_FLAG_BITS(entity)->animates) {
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
         params = entity->params;
         limits[0] = -params->pitch_limit_deg * 0.017453292f;
@@ -93,7 +93,7 @@ static void EyePedestal_Animate(Entity *entity) {
         point[0] = ai_state->part_angle_x;
         point[1] = ai_state->part_angle_y;
         point[2] = ai_state->part_angle_z;
-        look_at_target = (s32)(entity->flags >> 9) & 1;
+        look_at_target = ENTITY_FLAG_BITS(entity)->look_at_target;
         if (look_at_target) {
             EntityAi_LookAtPoint(entity, (s32)ai_state->look_part_angles, look_at_target, (s32)point, (s32)limits, (f32)(s16)params->action_frames);
         } else {
@@ -119,11 +119,11 @@ static void EyePedestal_Think(Entity *entity, s32 run_now) {
     }
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit16 = TRUE;
+    ENTITY_FLAG_BITS(entity)->not_targetable = TRUE;
     if (entity->spawn_info->spawn_mode != 0) {
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     } else {
-        ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     }
     if (ENTITY_FLAG_BITS(entity)->bit29) {
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);

@@ -85,7 +85,7 @@ void Sentinel_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
@@ -111,7 +111,7 @@ static void Sentinel_Think(Entity *entity, s32 unknown) {
     }
     EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
-    if (ENTITY_FLAG_BITS(entity)->bit53) {
+    if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
     }
@@ -139,9 +139,9 @@ static void Sentinel_ThinkCombat(Entity *entity, s32 unknown) {
     s32 turn;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     } else {
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
@@ -152,7 +152,7 @@ static void Sentinel_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     side = EntityAi_PickCombatChoice(entity, 0);
-    ENTITY_FLAG_BITS(entity)->bit9 = 1;
+    ENTITY_FLAG_BITS(entity)->look_at_target = 1;
     if (entity->distance_to_player < 500.0f) {
         if (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 2.443461f ||
             EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) < -2.443461f) {
@@ -191,7 +191,7 @@ static void Sentinel_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (ai_state->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit31) {
+        if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;
@@ -232,11 +232,11 @@ static void Sentinel_MeleeAttack1(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x15, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
-        ENTITY_FLAG_BITS(entity)->bit54 = 0;
-        ENTITY_FLAG_BITS(entity)->bit55 = 0;
-        ENTITY_FLAG_BITS(entity)->bit56 = 0;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
+        ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
+        ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -253,21 +253,21 @@ static void Sentinel_MeleeAttack1(Entity *entity) {
             ai_state->turn_rate = 0.0f;
         }
         frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
-        if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
+        if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
         }
-        if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
+        if (!ENTITY_FLAG_BITS(entity)->melee_1_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_1_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
         }
-        if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
+        if (!ENTITY_FLAG_BITS(entity)->melee_2_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_2_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
         }
         if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
@@ -284,11 +284,11 @@ static void Sentinel_PlayAnim12(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_1000;
-    ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+    ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0xC, 0, entity->params->motion_blend_frames, 0);
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         ai_state->turn_rate = 0.0f;
         entity->action_step++;
         break;
@@ -298,11 +298,11 @@ static void Sentinel_PlayAnim12(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -326,7 +326,7 @@ static void Sentinel_Animate(Entity *entity) {
 
     flags = entity->flags;
     ai_state = &entity->ai_state;
-    if (ENTITY_FLAG_BITS(entity)->bit14) {
+    if (ENTITY_FLAG_BITS(entity)->animates) {
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FIXED) {
             entity->flags = flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         }
@@ -341,11 +341,11 @@ static void Sentinel_Animate(Entity *entity) {
                     entity->model->level_tables->frame++;
                 }
             }
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, rate);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, rate);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
-        look_at_target = ENTITY_FLAG_BITS(entity)->bit9;
+        look_at_target = ENTITY_FLAG_BITS(entity)->look_at_target;
         limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
         limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
         limits[3] = entity->params->yaw_limit_deg * 0.017453292f;

@@ -111,7 +111,7 @@ void ExpeditionSoldier_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
@@ -160,7 +160,7 @@ static void ExpeditionSoldier_Think(Entity *entity, s32 unknown) {
     }
     EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
-    if (ENTITY_FLAG_BITS(entity)->bit53) {
+    if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
     }
@@ -188,7 +188,7 @@ static void ExpeditionSoldier_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -198,7 +198,7 @@ static void ExpeditionSoldier_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     side = EntityAi_PickCombatChoice(entity, 0);
-    ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
+    ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     if (entity->action_timer == 0 || side == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
@@ -242,7 +242,7 @@ static void ExpeditionSoldier_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (entity->combat_choice == 1) {
         EntityAi_ClearTurnInPlace(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit31) {
+        if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;
@@ -291,22 +291,22 @@ static void ExpeditionSoldier_Death(Entity *entity) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
             s32 kind = 2;
 
             if (!(ENTITY_PARAMS_BITS(entity)->bit25 && !ENTITY_PARAMS_BITS(entity)->bit26)) {
                 kind = 1;
             }
-            ENTITY_FLAG_BITS(entity)->bits11 = kind;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = kind;
         }
-        ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bits2 = 1;
-        ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->dying = 1;
+        ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -314,10 +314,10 @@ static void ExpeditionSoldier_Death(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
-            ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bits2 = 2;
-            ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
+            ENTITY_FLAG_BITS(entity)->dying = 2;
+            ENTITY_FLAG_BITS(entity)->no_respawn = TRUE;
             entity->action_timer = 20;
             EntityEvent_OnDeath(entity);
             if (entity->spawn_info->spawn_mode != 0) {
@@ -335,8 +335,8 @@ static void ExpeditionSoldier_Death(Entity *entity) {
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits2 = 3;
-            ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
+            ENTITY_FLAG_BITS(entity)->dying = 3;
+            ENTITY_FLAG_BITS(entity)->live = FALSE;
         }
         break;
     }
@@ -353,7 +353,7 @@ static void ExpeditionSoldier_SignalMapObject(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 0);
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         ai_state->turn_rate = 0;
         entity->action_step++;
         break;
@@ -369,11 +369,11 @@ static void ExpeditionSoldier_SignalMapObject(Entity *entity) {
                 MapObject_Signal(map_object, 1);
             }
         }
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -412,7 +412,7 @@ static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown
     }
     EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
-    if (ENTITY_FLAG_BITS(entity)->bit53) {
+    if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
     }
@@ -445,7 +445,7 @@ static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
         }
         return;
     }
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     reach = 100.0f;
     if (1200.0f < entity->model->position[0] || entity->model->position[0] < 800.0f) {
         ai_state->target_point[0] = 950.0f;
@@ -477,7 +477,7 @@ static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
             ai_state->map_object_to_operate_id = entity->spawn_info->second_map_object_id;
         }
         if (EntityMath_DistanceXZ(entity->model->position, stand_point) < reach) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
             Vector_Copy(ai_state->target_point, face_point);
             entity->target = ai_state->target_point;
             entity->move_command = EntityAi_TurnCommand(entity);
@@ -521,7 +521,7 @@ static void ExpeditionSoldier_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown
     }
     EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
-    if (ENTITY_FLAG_BITS(entity)->bit53) {
+    if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
     }
@@ -551,7 +551,7 @@ static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
         }
         return;
     }
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     reach = 100.0f;
     if (-800.0f < entity->model->position[0] || entity->model->position[0] < -1200.0f) {
         ai_state->target_point[0] = -950.0f;
@@ -583,7 +583,7 @@ static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
             ai_state->map_object_to_operate_id = entity->spawn_info->second_map_object_id;
         }
         if (EntityMath_DistanceXZ(entity->model->position, stand_point) < reach) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
             Vector_Copy(ai_state->target_point, face_point);
             entity->target = ai_state->target_point;
             entity->move_command = EntityAi_TurnCommand(entity);

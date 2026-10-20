@@ -1150,7 +1150,7 @@ static void Entity_AppendToActive(Entity *entity) {
         entity->prev = NULL;
         entity->next = NULL;
     }
-    ENTITY_FLAG_BITS(entity)->bit0 = 1;
+    ENTITY_FLAG_BITS(entity)->active_list = 1;
     active_entity_count++;
 }
 

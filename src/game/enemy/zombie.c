@@ -75,7 +75,7 @@ void Zombie_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
@@ -120,7 +120,7 @@ static void Zombie_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn((char *)entity);
         EntityAi_StepState(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit53) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
             return;
         }
@@ -150,7 +150,7 @@ static void Zombie_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -160,7 +160,7 @@ static void Zombie_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     side = EntityAi_PickCombatChoice(entity, 0);
-    ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
+    ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     if (entity->action_timer == 0 || side == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
@@ -196,7 +196,7 @@ static void Zombie_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (ai_state->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit31) {
+        if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;

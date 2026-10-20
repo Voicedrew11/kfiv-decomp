@@ -68,7 +68,7 @@ void Slasher_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
@@ -108,8 +108,8 @@ static void Slasher_OnHit(Entity *entity) {
     }
     EntityAi_SetState((char *)entity, 2);
     ai_state->step_index = 1;
-    ENTITY_FLAG_BITS(entity)->bit32 = 1;
-    ENTITY_FLAG_BITS(entity)->bit33 = 1;
+    ENTITY_FLAG_BITS(entity)->player_in_reach = 1;
+    ENTITY_FLAG_BITS(entity)->player_noticed = 1;
     Slasher_AlertSameKind(entity);
 }
 
@@ -126,7 +126,7 @@ static void Slasher_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn((char *)entity);
         EntityAi_StepState(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit53) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
             switch (entity->state) {
@@ -152,8 +152,8 @@ static void Slasher_Think(Entity *entity, s32 unknown) {
    starts the move action. */
 static void Slasher_ThinkStandStill(Entity *entity, s32 unknown) {
     entity->move_command = 0;
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     EntityAi_StartAction(entity, entity->ai_state.move, unknown);
 }
 
@@ -165,17 +165,17 @@ static void Slasher_WaitForPlayerNear(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+    ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     if (entity->distance_to_player < entity->params->near_distance || ai_state->step_index != 0) {
-        ENTITY_FLAG_BITS(entity)->bit32 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit33 = TRUE;
+        ENTITY_FLAG_BITS(entity)->player_in_reach = TRUE;
+        ENTITY_FLAG_BITS(entity)->player_noticed = TRUE;
         ai_state->step_index = 1;
         Slasher_AlertSameKind(entity);
         entity->busy_flags = 0;
         entity->move_command = 0;
         entity->action_timer = 0;
-        if (ENTITY_FLAG_BITS(entity)->bit5) {
+        if (ENTITY_FLAG_BITS(entity)->own_think) {
             ai_state->think(entity, 0);
         } else {
             EntityAi_StartAction(entity, ai_state->move, 0);

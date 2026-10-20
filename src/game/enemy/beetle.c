@@ -81,7 +81,7 @@ void Beetle_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
@@ -104,12 +104,12 @@ static void Beetle_Animate(Entity *entity) {
 
     flags = entity->flags;
     ai_state = &entity->ai_state;
-    if (ENTITY_FLAG_BITS(entity)->bit14) {
+    if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
         Beetle_TurnParts7And12(entity);
         Beetle_TurnParts23To32(entity);
@@ -128,7 +128,7 @@ static void Beetle_Think(Entity *entity, s32 unknown) {
     }
     EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
-    if (ENTITY_FLAG_BITS(entity)->bit53) {
+    if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
     }
@@ -158,7 +158,7 @@ static void Beetle_ThinkWander(Entity *entity, s32 unknown) {
     f32 direction[4];
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (entity->action_timer == 0) {
         if (rand() % 100 > 20) {
             EntityPoint_PickNear(entity->spawn_info->wander_radius, ai_state->target_point, entity->spawn_info, entity->model->position);
@@ -190,7 +190,7 @@ static void Beetle_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -231,7 +231,7 @@ static void Beetle_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (ai_state->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit31) {
+        if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;
@@ -339,8 +339,8 @@ static void Beetle_RangedAttack0(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
-        ENTITY_FLAGS(entity) &= ~0x200;
+        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
+        ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -370,12 +370,12 @@ static void Beetle_RangedAttack0(Entity *entity) {
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
         }
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);

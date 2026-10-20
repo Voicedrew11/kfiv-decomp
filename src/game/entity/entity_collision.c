@@ -41,7 +41,7 @@ extern ModelInstanceBlock *map_slot_record_models[];
     Collision_CapsuleTriangle(point[0].position, point[1].position, point[2].position, position,   \
                               entity->collision_radius, entity->collision_height);                 \
     if (COLLISION_RESULT->hit != 0) {                                                              \
-        ENTITY_FLAG_BITS(entity)->bit45 = TRUE;                                                    \
+        ENTITY_FLAG_BITS(entity)->wall_push = TRUE;                                                    \
         offset[0] = position[0] - COLLISION_RESULT->point[0];                                      \
         offset[1] = 0.0f;                                                                          \
         offset[2] = position[2] - COLLISION_RESULT->point[2];                                      \
@@ -127,7 +127,7 @@ void EntityCollision_PushApart(Entity *entity) {
 
     type_id = entity->spawn_info->type_id;
     if (!(type_id >= 0x14 && type_id <= 0x16) && (u16)type_id != 0x2D && (u16)type_id != 0x63 && (u16)type_id != 0x97
-        && ((s32)(entity->flags >> 1) & 1) && entity->hit_points != 0 && !(entity->flags & (ENTITY_FLAG_NOT_TARGETABLE | ENTITY_FLAG_NO_PLAYER_COLLISION))) {
+        && (ENTITY_FLAG_BITS(entity)->live) && entity->hit_points != 0 && !(entity->flags & (ENTITY_FLAG_NOT_TARGETABLE | ENTITY_FLAG_NO_PLAYER_COLLISION))) {
         if (ENTITY_PARAMS_IS_SPHERE(entity->params)) {
             EntityCollision_SphereCylinder(entity->model->position, player_state.position, entity->radius, 100.0f, 230.0f);
         } else {
@@ -137,9 +137,9 @@ void EntityCollision_PushApart(Entity *entity) {
             entity->model->position[0] = COLLISION_RESULT->point[0];
             entity->model->position[1] = COLLISION_RESULT->point[1];
             entity->model->position[2] = COLLISION_RESULT->point[2];
-            ENTITY_FLAG_BITS(entity)->bit49 = TRUE;
+            ENTITY_FLAG_BITS(entity)->player_push = TRUE;
             if (COLLISION_RESULT->hit == 2) {
-                ENTITY_FLAG_BITS(entity)->bit50 = TRUE;
+                ENTITY_FLAG_BITS(entity)->on_top = TRUE;
             }
         }
     }
@@ -147,9 +147,9 @@ void EntityCollision_PushApart(Entity *entity) {
     push[1] = 0.0f;
     push[2] = 0.0f;
     push[3] = 0.0f;
-    if (!((s32)(entity->flags >> 26) & 1)) {
+    if (!(ENTITY_FLAG_BITS(entity)->no_entity_collision)) {
         for (other = active_entities_head; other != NULL; other = other->next) {
-            if (!((s32)(other->flags >> 1) & 1)) {
+            if (!(ENTITY_FLAG_BITS(other)->live)) {
                 continue;
             }
             if (((s32)(other->flags >> 2) & 3) >= 2) {
@@ -182,9 +182,9 @@ void EntityCollision_PushApart(Entity *entity) {
                     push[0] += COLLISION_RESULT->normal[0];
                     push[1] += COLLISION_RESULT->normal[1];
                     push[2] += COLLISION_RESULT->normal[2];
-                    ENTITY_FLAG_BITS(entity)->bit48 = TRUE;
+                    ENTITY_FLAG_BITS(entity)->entity_push = TRUE;
                     if (COLLISION_RESULT->hit == 2) {
-                        ENTITY_FLAG_BITS(entity)->bit50 = TRUE;
+                        ENTITY_FLAG_BITS(entity)->on_top = TRUE;
                     }
                 }
             }
@@ -512,7 +512,7 @@ s32 EntityCollision_WalkAgainstMesh(Entity *entity, ModelInstance *model, f32 *p
         }
     }
 walls:
-    if (!((s32)(entity->flags >> 23) & 1)) {
+    if (!(ENTITY_FLAG_BITS(entity)->no_wall_collision)) {
         strip = mesh->wall_strips;
         i = mesh->wall_strip_count;
         while (--i != -1) {
@@ -525,7 +525,7 @@ walls:
             strip = (CollisionStrip *)(point + 2);
         }
     }
-    if (!((s32)(entity->flags >> 24) & 1)) {
+    if (!(ENTITY_FLAG_BITS(entity)->no_second_wall_collision)) {
         strip = mesh->second_wall_strips;
         i = mesh->second_wall_strip_count;
         while (--i != -1) {
@@ -581,7 +581,7 @@ walls:
                     && COLLISION_RESULT->point[1] <= *floor_y) {
                     hit_floor = TRUE;
                     *floor_y = COLLISION_RESULT->point[1];
-                    ENTITY_FLAG_BITS(entity)->bits60 = Collision_GetFloorMaterial(point->material_first, point->material_second, point->material_third);
+                    ENTITY_FLAG_BITS(entity)->floor_material = Collision_GetFloorMaterial(point->material_first, point->material_second, point->material_third);
                 }
                 point++;
             } while (--j != 0);
@@ -612,7 +612,7 @@ void EntityCollision_WalkAgainstMap(Entity *entity) {
     Vector_Copy(position, entity->model->position);
     normal_sum[0] = normal_sum[1] = normal_sum[2] = normal_sum[3] = 0.0f;
     position[1] -= 0.1f;
-    if (!((s32)(entity->flags >> 28) & 1)) {
+    if (!(ENTITY_FLAG_BITS(entity)->no_floor_lift)) {
         height += entity->floor_lift;
     }
     unused[0] = unused[1] = NULL;
@@ -666,22 +666,22 @@ void EntityCollision_WalkAgainstMap(Entity *entity) {
     entity->wall_push[0] = normal_sum[0];
     entity->wall_push[1] = normal_sum[1];
     entity->wall_push[2] = normal_sum[2];
-    if (ENTITY_FLAG_BITS(entity)->bit50) {
-        ENTITY_FLAG_BITS(entity)->bit44 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit51 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit52 = FALSE;
+    if (ENTITY_FLAG_BITS(entity)->on_top) {
+        ENTITY_FLAG_BITS(entity)->on_floor = FALSE;
+        ENTITY_FLAG_BITS(entity)->lift_up = FALSE;
+        ENTITY_FLAG_BITS(entity)->ledge_stop = FALSE;
         entity->floor_lift = 10.0f;
         entity->model->position[0] = position[0];
         entity->model->position[2] = position[2];
         return;
     }
-    if (ENTITY_FLAG_BITS(entity)->bit28) {
-        ENTITY_FLAG_BITS(entity)->bit44 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit51 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit52 = FALSE;
+    if (ENTITY_FLAG_BITS(entity)->no_floor_lift) {
+        ENTITY_FLAG_BITS(entity)->on_floor = FALSE;
+        ENTITY_FLAG_BITS(entity)->lift_up = FALSE;
+        ENTITY_FLAG_BITS(entity)->ledge_stop = FALSE;
         entity->floor_lift = 10.0f;
         if (hit_floor && floor_y <= entity->model->position[1]) {
-            ENTITY_FLAG_BITS(entity)->bit44 = TRUE;
+            ENTITY_FLAG_BITS(entity)->on_floor = TRUE;
             entity->model->position[1] = floor_y;
         }
         entity->model->position[0] = position[0];
@@ -689,32 +689,32 @@ void EntityCollision_WalkAgainstMap(Entity *entity) {
         return;
     }
     if (floor_y <= entity->model->position[1]) {
-        ENTITY_FLAG_BITS(entity)->bit44 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit51 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit52 = FALSE;
+        ENTITY_FLAG_BITS(entity)->on_floor = TRUE;
+        ENTITY_FLAG_BITS(entity)->lift_up = FALSE;
+        ENTITY_FLAG_BITS(entity)->ledge_stop = FALSE;
         EntityMath_EaseToward(&entity->model->position[1], floor_y, 5.0f);
         entity->model->position[0] = position[0];
         entity->model->position[2] = position[2];
         return;
     }
     if (floor_y <= height) {
-        ENTITY_FLAG_BITS(entity)->bit44 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit51 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit52 = FALSE;
+        ENTITY_FLAG_BITS(entity)->on_floor = TRUE;
+        ENTITY_FLAG_BITS(entity)->lift_up = FALSE;
+        ENTITY_FLAG_BITS(entity)->ledge_stop = FALSE;
         entity->model->position[1] = floor_y;
-    } else if (ENTITY_FLAG_BITS(entity)->bit44 && entity->params->ledge_behavior != 0 && !(0.0f < entity->knockback_speed)
+    } else if (ENTITY_FLAG_BITS(entity)->on_floor && entity->params->ledge_behavior != 0 && !(0.0f < entity->knockback_speed)
                && (entity->params->ledge_behavior != 1 || !(floor_y <= entity->model->position[1] + entity->collision_height))) {
-        ENTITY_FLAG_BITS(entity)->bit44 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit51 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit52 = TRUE;
+        ENTITY_FLAG_BITS(entity)->on_floor = TRUE;
+        ENTITY_FLAG_BITS(entity)->lift_up = FALSE;
+        ENTITY_FLAG_BITS(entity)->ledge_stop = TRUE;
         entity->model->position[0] = entity->prev_position[0];
         entity->model->position[1] = entity->prev_position[1];
         entity->model->position[2] = entity->prev_position[2];
         return;
     } else {
-        ENTITY_FLAG_BITS(entity)->bit44 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit51 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit52 = FALSE;
+        ENTITY_FLAG_BITS(entity)->on_floor = FALSE;
+        ENTITY_FLAG_BITS(entity)->lift_up = TRUE;
+        ENTITY_FLAG_BITS(entity)->ledge_stop = FALSE;
         entity->model->position[1] = height;
     }
     entity->model->position[0] = position[0];
@@ -957,7 +957,7 @@ s32 EntityCollision_SphereAgainstMesh(Entity *entity, ModelInstance *model, f32 
     hit_floor = FALSE;
     Collision_TransformMeshPoints(model);
     mesh = (CollisionMesh *)model->strips;
-    if (!((s32)(entity->flags >> 23) & 1)) {
+    if (!(ENTITY_FLAG_BITS(entity)->no_wall_collision)) {
         strip = mesh->wall_strips;
         i = mesh->wall_strip_count;
         while (--i != -1) {
@@ -978,7 +978,7 @@ s32 EntityCollision_SphereAgainstMesh(Entity *entity, ModelInstance *model, f32 
             strip = (CollisionStrip *)(point + 2);
         }
     }
-    if (!((s32)(entity->flags >> 24) & 1)) {
+    if (!(ENTITY_FLAG_BITS(entity)->no_second_wall_collision)) {
         strip = mesh->second_wall_strips;
         i = mesh->second_wall_strip_count;
         while (--i != -1) {
@@ -1062,7 +1062,7 @@ void EntityCollision_SphereAgainstMap(Entity *entity) {
     lift = 0.0f;
     Vector_Copy(position, entity->model->position);
     normal_sum[0] = normal_sum[1] = normal_sum[2] = normal_sum[3] = 0.0f;
-    if (!((s32)(entity->flags >> 28) & 1)) {
+    if (!(ENTITY_FLAG_BITS(entity)->no_floor_lift)) {
         entity->flags &= ~ENTITY_FLAG_LIFT_UP;
         position[1] += 0.1f;
         lift = entity->floor_lift;
@@ -1117,9 +1117,9 @@ void EntityCollision_SphereAgainstMap(Entity *entity) {
     entity->wall_push[0] = normal_sum[0];
     entity->wall_push[1] = normal_sum[1];
     entity->wall_push[2] = normal_sum[2];
-    if (ENTITY_FLAG_BITS(entity)->bit50) {
-        ENTITY_FLAG_BITS(entity)->bit44 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit51 = FALSE;
+    if (ENTITY_FLAG_BITS(entity)->on_top) {
+        ENTITY_FLAG_BITS(entity)->on_floor = FALSE;
+        ENTITY_FLAG_BITS(entity)->lift_up = FALSE;
         entity->model->position[0] = position[0];
         entity->model->position[2] = position[2];
         normal_sum[1] += -1.0f;
@@ -1130,7 +1130,7 @@ void EntityCollision_SphereAgainstMap(Entity *entity) {
         return;
     }
     if (hit_floor) {
-        ENTITY_FLAG_BITS(entity)->bit51 = FALSE;
+        ENTITY_FLAG_BITS(entity)->lift_up = FALSE;
         entity->model->position[1] = position[1];
         normal_sum[1] += -1.0f;
         sceVu0Normalize(normal_sum, normal_sum);
@@ -1138,7 +1138,7 @@ void EntityCollision_SphereAgainstMap(Entity *entity) {
         entity->wall_push[1] = normal_sum[1];
         entity->wall_push[2] = normal_sum[2];
     } else {
-        ENTITY_FLAG_BITS(entity)->bit44 = FALSE;
+        ENTITY_FLAG_BITS(entity)->on_floor = FALSE;
         entity->model->position[1] = position[1] + lift;
     }
     entity->model->position[0] = position[0];
@@ -1539,13 +1539,13 @@ void EntityCollision_WalkAgainstObjects(Entity *entity) {
             hit = COLLISION_RESULT->hit;
             if (hit & 1) {
                 Vector_Add(normal_sum, normal_sum, COLLISION_RESULT->normal);
-                ENTITY_FLAG_BITS(entity)->bit47 = TRUE;
-                ENTITY_FLAG_BITS(entity)->bit45 = TRUE;
+                ENTITY_FLAG_BITS(entity)->object_push = TRUE;
+                ENTITY_FLAG_BITS(entity)->wall_push = TRUE;
                 hit = COLLISION_RESULT->hit; // match: read again after the call, into the same register
             }
             if (hit & 2) {
-                ENTITY_FLAG_BITS(entity)->bit47 = TRUE;
-                ENTITY_FLAG_BITS(entity)->bit50 = TRUE;
+                ENTITY_FLAG_BITS(entity)->object_push = TRUE;
+                ENTITY_FLAG_BITS(entity)->on_top = TRUE;
             }
         }
     }
@@ -1619,12 +1619,12 @@ void EntityCollision_SphereAgainstObjects(Entity *entity) {
                 Vector_Add(normal_sum, normal_sum, offset);
                 Vector_Scale(offset, offset, entity->collision_radius);
                 Vector_Add(position, COLLISION_RESULT, offset);
-                ENTITY_FLAG_BITS(entity)->bit47 = TRUE;
-                ENTITY_FLAG_BITS(entity)->bit45 = TRUE;
+                ENTITY_FLAG_BITS(entity)->object_push = TRUE;
+                ENTITY_FLAG_BITS(entity)->wall_push = TRUE;
             } else if (hit == 2) {
                 Vector_Add(normal_sum, normal_sum, COLLISION_RESULT->normal);
-                ENTITY_FLAG_BITS(entity)->bit47 = TRUE;
-                ENTITY_FLAG_BITS(entity)->bit45 = TRUE;
+                ENTITY_FLAG_BITS(entity)->object_push = TRUE;
+                ENTITY_FLAG_BITS(entity)->wall_push = TRUE;
             }
         }
     }

@@ -88,7 +88,7 @@ void BloodBat_Init(Entity *entity) {
     } else {
         EntityAi_StartAction(entity, ai_state->move, 0);
     }
-    ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
     ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
@@ -104,15 +104,15 @@ static void BloodBat_Animate(Entity *entity) {
 
     flags = entity->flags;
     ai_state = &entity->ai_state;
-    if (ENTITY_FLAG_BITS(entity)->bit14) {
+    if (ENTITY_FLAG_BITS(entity)->animates) {
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FIXED) {
             entity->flags = flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         }
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
     }
 }
@@ -132,7 +132,7 @@ static void BloodBat_Think(Entity *entity, s32 unknown) {
     }
     EntityAi_CheckFarFromSpawn3D((char *)entity);
     EntityAi_StepState(entity);
-    if (ENTITY_FLAG_BITS(entity)->bit53) {
+    if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         BloodBat_ThinkReturn(entity, unknown);
         return;
     }
@@ -160,7 +160,7 @@ static int BloodBat_ThinkReturn(void *entity_arg, int unknown) {
     s32 turn;
 
     entity->action_timer = 0;
-    ENTITY_FLAG_BITS(entity)->bits11 = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn == 0) {
         entity->target = entity->spawn_info;
@@ -172,7 +172,7 @@ static int BloodBat_ThinkReturn(void *entity_arg, int unknown) {
             push[1] += entity->wall_push[1];
             push[2] += entity->wall_push[2];
         }
-        if ((s32)(entity->flags >> 48) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->entity_push) {
             push[0] += entity->entity_push[0];
             push[1] += entity->entity_push[1];
             push[2] += entity->entity_push[2];
@@ -221,7 +221,7 @@ static void BloodBat_ThinkWander(Entity *entity, s32 unknown) {
     f32 *point;
     EntitySpawnInfo *spawn_info;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     if (entity->action_timer == 0) {
         spawn_info = entity->spawn_info;
         point = entity->ai_state.target_point;
@@ -251,7 +251,7 @@ static int BloodBat_ThinkCombat(void *entity_arg, int unknown) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -351,7 +351,7 @@ static void BloodBat_Move(Entity *entity) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
-    if (ENTITY_FLAG_BITS(entity)->bits11 == 0) {
+    if (ENTITY_FLAG_BITS(entity)->motion_step_mode == 0) {
         vector = ENTITY_SCRATCH_VECTOR;
         vector[0] = vector[1] = vector[2] = vector[3] = 0.0f;
         if (entity->move_command & MOVE_COMMAND_FORWARD_BACK) {
@@ -433,26 +433,26 @@ static void BloodBat_Dormant(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit24 = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_second_wall_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
         entity->action_step++;
         break;
     case 1:
-        if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->bit43) {
+        if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
             EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit24 = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_second_wall_collision = FALSE;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bits36 = 0;
+            ENTITY_FLAG_BITS(entity)->hit_strength = 0;
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);

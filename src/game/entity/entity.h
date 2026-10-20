@@ -880,7 +880,7 @@ typedef struct Entity {
 #define ENTITY_FLAG_OWN_THINK                0x20                  /* EntityAi_Update runs the entity type's own think handler while set (set for every spawn) */
 #define ENTITY_FLAG_HANDLER_RUNS             0x40                  /* EntityAi_Update calls Entity.handler every frame while set */
 #define ENTITY_FLAG_RESPAWNABLE              0x80                  /* the spawn may come back: EntityAi_ShouldRespawn needs it, the spawn flags set it */
-#define ENTITY_FLAG_100                      0x100                 /* EntityEvent_Respawn sets it with the live bits, Entity_SetSpawnedFlags clears it */
+#define ENTITY_FLAG_RESPAWN_ROLL_DONE        0x100                 /* the respawn chance has been rolled: EntityEvent_Respawn sets it, Entity_SetSpawnedFlags clears it */
 #define ENTITY_FLAG_LOOK_AT_TARGET           0x200                 /* the head follows the target (EntityAi_LookAtPlayer's look_at_target) */
 #define ENTITY_FLAG_400                      0x400                 /* set with bit 9 before an attack is picked, cleared by the on_hit handlers */
 #define ENTITY_FLAG_MOTION_STEP_MODE_MASK    0x3800                /* the mode (0 to 2) Motion_Step and Motion_StepSlot are given */
@@ -945,63 +945,63 @@ typedef struct {
 /* Entity.flags as bit-fields. The game sets the flags through bit-fields:
    several changed in a row only match when written this way. */
 typedef struct {
-    u32 bit0 : 1;
-    u32 bit1 : 1;
-    u32 bits2 : 2;
-    u32 bit4 : 1;
-    u32 bit5 : 1;
-    u32 bit6 : 1;
-    u32 bit7 : 1;
+    u32 active_list : 1;
+    u32 live : 1;
+    u32 dying : 2;
+    u32 no_respawn : 1;
+    u32 own_think : 1;
+    u32 handler_runs : 1;
+    u32 respawnable : 1;
     u32 respawn_roll_done : 1;  /* set once the respawn chance has been rolled */
-    u32 bit9 : 1;
+    u32 look_at_target : 1;
     u32 bit10 : 1;
-    u32 bits11 : 3;
-    u32 bit14 : 1;
+    u32 motion_step_mode : 3;
+    u32 animates : 1;
     u32 bit15 : 1;
-    u32 bit16 : 1;
-    u32 bit17 : 1;
+    u32 not_targetable : 1;
+    u32 draw_afterimage : 1;
     u32 bit18 : 1;
     u32 bit19 : 1;
     u32 bit20 : 1;
     u32 bit21 : 1;
     u32 bit22 : 1;
-    u32 bit23 : 1;
-    u32 bit24 : 1;
-    u32 bit25 : 1;
-    u32 bit26 : 1;
-    u32 bit27 : 1;
-    u32 bit28 : 1;
+    u32 no_wall_collision : 1;
+    u32 no_second_wall_collision : 1;
+    u32 no_map_object_collision : 1;
+    u32 no_entity_collision : 1;
+    u32 no_player_collision : 1;
+    u32 no_floor_lift : 1;
     u32 bit29 : 1;
-    u32 bit30 : 1;
-    u32 bit31 : 1;
-    u32 bit32 : 1;
-    u32 bit33 : 1;
-    u32 bit34 : 1;
-    u32 bit35 : 1;
-    u32 bits36 : 2;
-    u32 bit38 : 1;
-    u32 bit39 : 1;
+    u32 map_record_inactive : 1;
+    u32 turn_in_place : 1;
+    u32 player_in_reach : 1;
+    u32 player_noticed : 1;
+    u32 motion_ended : 1;
+    u32 guarding : 1;
+    u32 hit_strength : 2;
+    u32 hit_source_weapon : 1;
+    u32 hit_source_magic : 1;
     u32 last_hit_knockback : 1;  /* the last hit on the entity was a knockback hit */
-    u32 bit41 : 1;
-    u32 bit42 : 1;
-    u32 bit43 : 1;
-    u32 bit44 : 1;
-    u32 bit45 : 1;
+    u32 raise_attack_weight : 1;
+    u32 raise_ranged_weight : 1;
+    u32 hit_by_player : 1;
+    u32 on_floor : 1;
+    u32 wall_push : 1;
     u32 bit46 : 1;
-    u32 bit47 : 1;
-    u32 bit48 : 1;
-    u32 bit49 : 1;
-    u32 bit50 : 1;
-    u32 bit51 : 1;
-    u32 bit52 : 1;
-    u32 bit53 : 1;
-    u32 bit54 : 1;
-    u32 bit55 : 1;
-    u32 bit56 : 1;
-    u64 bit57 : 1;
-    u32 bits58 : 2;
-    u32 bits60 : 3;
-    u64 pad63 : 1;
+    u32 object_push : 1;
+    u32 entity_push : 1;
+    u32 player_push : 1;
+    u32 on_top : 1;
+    u32 lift_up : 1;
+    u32 ledge_stop : 1;
+    u32 far_from_spawn : 1;
+    u32 melee_0_hit : 1;
+    u32 melee_1_hit : 1;
+    u32 melee_2_hit : 1;
+    u64 ranged_attack : 1;
+    u32 attack_index : 2;
+    u32 floor_material : 3;
+    u64 sight_blocked : 1;
 } EntityFlagBits;
 
 #define ENTITY_FLAG_BITS(entity) ((EntityFlagBits *)&(entity)->flags)

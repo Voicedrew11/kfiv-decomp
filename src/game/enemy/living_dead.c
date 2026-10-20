@@ -72,7 +72,7 @@ void LivingDead_Init(Entity *entity) {
     for (i = 5; i != -1; i--) {
         entity->attack_weights[i] = 0x80;
     }
-    ENTITY_FLAG_BITS(entity)->bit28 = 0;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
@@ -122,16 +122,16 @@ static void LivingDead_ReactionLight(Entity *entity) {
         EntityEvent_StartFrameCues(entity, 0xE, 0, 0);
         Motion_Start(entity, 0xE, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAG_BITS(entity)->bit14 = 1;
+        ENTITY_FLAG_BITS(entity)->animates = 1;
         ENTITY_FLAG_BITS(entity)->bit19 = 0;
-        ENTITY_FLAG_BITS(entity)->bit35 = 0;
+        ENTITY_FLAG_BITS(entity)->guarding = 0;
         ENTITY_FLAG_BITS(entity)->bit10 = 0;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->reaction_step++;
         break;
     case 1:
@@ -146,10 +146,10 @@ static void LivingDead_ReactionLight(Entity *entity) {
         entity->move_command = 0;
         entity->action_timer = 0;
         if (entity->spawn_info->spawn_mode == 0 && rand() % 100 < entity->params->near_distance) {
-            ENTITY_FLAG_BITS(entity)->bit57 = 1;
-            ENTITY_FLAG_BITS(entity)->bits58 = 0;
+            ENTITY_FLAG_BITS(entity)->ranged_attack = 1;
+            ENTITY_FLAG_BITS(entity)->attack_index = 0;
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
-        } else if (ENTITY_FLAG_BITS(entity)->bit5) {
+        } else if (ENTITY_FLAG_BITS(entity)->own_think) {
             ai_state->think(entity, 1);
         } else {
             EntityAi_StartAction(entity, ai_state->move, 1);
@@ -169,19 +169,19 @@ static void LivingDead_ReactionHeavy(Entity *entity) {
     case 0:
         Motion_Start(entity, 0xF, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAG_BITS(entity)->bit14 = 1;
+        ENTITY_FLAG_BITS(entity)->animates = 1;
         ENTITY_FLAG_BITS(entity)->bit19 = 0;
-        ENTITY_FLAG_BITS(entity)->bit35 = 0;
+        ENTITY_FLAG_BITS(entity)->guarding = 0;
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
-            ENTITY_FLAG_BITS(entity)->bit28 = 0;
+            ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
         }
         ENTITY_FLAG_BITS(entity)->bit10 = 0;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->reaction_step++;
         break;
     case 1:
@@ -190,17 +190,17 @@ static void LivingDead_ReactionHeavy(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
             EntityAi_SetReaction(entity, NULL, 0);
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             if (entity->spawn_info->spawn_mode == 0 && rand() % 100 < entity->params->near_distance) {
-                ENTITY_FLAG_BITS(entity)->bit57 = 1;
-                ENTITY_FLAG_BITS(entity)->bits58 = 0;
+                ENTITY_FLAG_BITS(entity)->ranged_attack = 1;
+                ENTITY_FLAG_BITS(entity)->attack_index = 0;
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
-            } else if (ENTITY_FLAG_BITS(entity)->bit5) {
+            } else if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -224,7 +224,7 @@ static void LivingDead_Think(Entity *entity, s32 unknown) {
     }
     EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
-    if (ENTITY_FLAG_BITS(entity)->bit53) {
+    if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
     }
@@ -250,7 +250,7 @@ static void LivingDead_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -262,8 +262,8 @@ static void LivingDead_ThinkCombat(Entity *entity, s32 unknown) {
     if (entity->spawn_info->spawn_mode == 0 && frame_counter % (u32)(ai_state->step_index + 0x78) == 0) {
         ai_state->step_index = rand() % 60;
         if (rand() % 100 < (s16)entity->params->action_frames) {
-            ENTITY_FLAG_BITS(entity)->bit57 = 1;
-            ENTITY_FLAG_BITS(entity)->bits58 = 0;
+            ENTITY_FLAG_BITS(entity)->ranged_attack = 1;
+            ENTITY_FLAG_BITS(entity)->attack_index = 0;
             EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             return;
         }
@@ -300,7 +300,7 @@ static void LivingDead_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (ai_state->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit31) {
+        if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;

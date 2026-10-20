@@ -73,7 +73,7 @@ void Mummy_Init(Entity *entity) {
     for (i = 5; i != -1; i--) {
         entity->attack_weights[i] = 0x80;
     }
-    ENTITY_FLAG_BITS(entity)->bit28 = 0;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
@@ -104,7 +104,7 @@ static void Mummy_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn((char *)entity);
         EntityAi_StepState(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit53) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
             switch (entity->state) {
@@ -138,9 +138,9 @@ static void Mummy_ThinkCombat(Entity *entity, s32 unknown) {
     s32 mode;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     } else {
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
@@ -151,7 +151,7 @@ static void Mummy_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     side = EntityAi_PickCombatChoice(entity, 0);
-    ENTITY_FLAG_BITS(entity)->bit9 = 1;
+    ENTITY_FLAG_BITS(entity)->look_at_target = 1;
     if (entity->action_timer == 0 || side == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
@@ -196,7 +196,7 @@ static void Mummy_ThinkCombat(Entity *entity, s32 unknown) {
     mode = entity->combat_choice;
     if (mode == 1) {
         EntityAi_ClearTurnInPlace(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit31) {
+        if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;
@@ -250,10 +250,10 @@ done:
 /* The on_hit handler: as EntityAi_OnHit, but only a heavy hit forgets the target and starts a
    reaction (EntityAi_ReactionHeavy). */
 static void Mummy_OnHit(Entity *entity) {
-    if (ENTITY_FLAG_BITS(entity)->bits36 == 2) {
+    if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_LowerWeightsAfterHit((char *)entity);
         ENTITY_FLAG_BITS(entity)->bit10 = 0;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->target = NULL;
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }

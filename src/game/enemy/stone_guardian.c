@@ -113,7 +113,7 @@ void StoneGuardian_Init(Entity *entity) {
         entity->model_alpha = 0;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
         ai_state->step_index = 1;
     } else {
@@ -127,7 +127,7 @@ void StoneGuardian_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     EntityAi_StartAction(entity, ai_state->move, 0);
     ai_state->pose_blend_weight = 0.5f;
     Motion_ClearPartSlots(entity->model);
@@ -145,12 +145,12 @@ static void StoneGuardian_Animate(Entity *entity) {
 
     flags = entity->flags;
     ai_state = &entity->ai_state;
-    if (ENTITY_FLAG_BITS(entity)->bit14) {
+    if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
     }
 }
@@ -234,8 +234,8 @@ static void StoneGuardian_TurnToSpawnHeading(Entity *entity) {
         } else {
             Motion_Start(entity, 0xB, 0, entity->params->motion_blend_frames, 1);
         }
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
-        ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -249,7 +249,7 @@ static void StoneGuardian_TurnToSpawnHeading(Entity *entity) {
         break;
     case 2:
         EntityMath_EaseAngleToward(&entity->model->rotation[1], entity->spawn_info->spawn_rotation_y, entity->action_timer);
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
@@ -386,7 +386,7 @@ static void StoneGuardian_Mode2WalkToPost(Entity *entity) {
     f32 facing;
     f32 angle;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (!(s32)(entity->flags >> 63) && EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
@@ -452,7 +452,7 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
     f32 angle;
     f32 range;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (!(s32)(entity->flags >> 63) && EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
@@ -561,7 +561,7 @@ static void StoneGuardian_Mode2ReturnToSpawn(Entity *entity) {
         (ai_state->move)(entity);
         return;
     }
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (!(s32)(entity->flags >> 63) && EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
@@ -668,7 +668,7 @@ static void StoneGuardian_Mode3WalkToPost(Entity *entity) {
     f32 angle;
     f32 range;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
@@ -707,7 +707,7 @@ static void StoneGuardian_Mode3ChaseInBounds(Entity *entity) {
     f32 angle;
     f32 range;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
@@ -775,7 +775,7 @@ static void StoneGuardian_Mode3ReturnToSpawn(Entity *entity) {
         (ai_state->move)(entity);
         return;
     }
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
@@ -881,7 +881,7 @@ static void StoneGuardian_Mode4WalkToPost(Entity *entity) {
     f32 angle;
     f32 range;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
@@ -919,7 +919,7 @@ static void StoneGuardian_Mode4ChaseInBounds(Entity *entity) {
     f32 angle;
     f32 range;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
@@ -985,7 +985,7 @@ static void StoneGuardian_Mode4ReturnToSpawn(Entity *entity) {
         (ai_state->move)(entity);
         return;
     }
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
@@ -1092,7 +1092,7 @@ static void StoneGuardian_Mode5WalkToPost(Entity *entity) {
     f32 angle;
     f32 range;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
@@ -1130,7 +1130,7 @@ static void StoneGuardian_Mode5ChaseInBounds(Entity *entity) {
     f32 angle;
     f32 range;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
@@ -1196,7 +1196,7 @@ static void StoneGuardian_Mode5ReturnToSpawn(Entity *entity) {
         (ai_state->move)(entity);
         return;
     }
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
@@ -1329,13 +1329,13 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 unknown) {
         }
         break;
     default:
-        ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
         ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit20 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit26 = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_entity_collision = FALSE;
         ENTITY_FLAG_BITS(entity)->bit21 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
         entity->model_alpha = 0x80;
         if (both_open) {
             ai_state->step_index = 4;
@@ -1353,19 +1353,19 @@ static void StoneGuardian_Mode6StayHidden(Entity *entity, s32 unknown) {
     EntityModel *model;
 
     model = entity->model;
-    ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
     ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     entity->model_alpha = 0;
     model->position[0] = -16200.0f;
     model->position[1] = 3030.0f;
     model->position[2] = 4900.0f;
     model->rotation[1] = 1.5707964f;
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     EntityAi_StartAction(entity, entity->ai_state.move, unknown);
 }
 
@@ -1375,19 +1375,19 @@ static void StoneGuardian_Mode6StayHidden(Entity *entity, s32 unknown) {
 static void StoneGuardian_Mode6WaitTurnHidden(Entity *entity, s32 unknown) {
     EntityModel *model = entity->model;
 
-    ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
     ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     entity->model_alpha = 0;
     model->position[0] = -16200.0f;
     model->position[1] = 3030.0f;
     model->position[2] = 4900.0f;
     model->rotation[1] = 1.5707964f;
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     EntityAi_StartAction(entity, entity->ai_state.move, unknown);
 }
 
@@ -1399,26 +1399,26 @@ static void StoneGuardian_Mode6LeaveHiding(Entity *entity, s32 unknown) {
     f32 angle;
     f32 range = 50.0f;
 
-    ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
     ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit20 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
     ENTITY_FLAG_BITS(entity)->bit21 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     entity->model_alpha = 0x80;
     ai_state->target_point[0] = -18050.0f;
     ai_state->target_point[1] = 3030.0f;
     ai_state->target_point[2] = 4900.0f;
     if (entity->model->position[1] > 3031.0f) {
         ai_state->step_index = 0;
-        ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit26 = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_entity_collision = FALSE;
     } else {
         point = ai_state->target_point;
         if (EntityMath_DistanceXZ(entity->model->position, point) < range) {
-            ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
             angle = EntityMath_AngleDifference(entity->model->rotation[1], 1.5707964f);
             if (ABS(angle) > 0.17453292f) {
                 if (angle >= 0.0f) {
@@ -1426,7 +1426,7 @@ static void StoneGuardian_Mode6LeaveHiding(Entity *entity, s32 unknown) {
                 } else {
                     entity->move_command = MOVE_COMMAND_TURN_LEFT;
                 }
-                ENTITY_FLAG_BITS(entity)->bits11 = 0;
+                ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
             } else {
                 EntityAi_StartAction(entity, StoneGuardian_PlayAnim9, unknown);
                 return;
@@ -1445,19 +1445,19 @@ static void StoneGuardian_Mode6LeaveHiding(Entity *entity, s32 unknown) {
 static void StoneGuardian_PlayAnim9(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
-    ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit20 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
     ENTITY_FLAG_BITS(entity)->bit21 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
     entity->model_alpha = 0x80;
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 9, 0, entity->params->motion_blend_frames, 0);
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -1465,17 +1465,17 @@ static void StoneGuardian_PlayAnim9(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ai_state->step_index = 0;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit26 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit17 = TRUE;
+            ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_entity_collision = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
+            ENTITY_FLAG_BITS(entity)->draw_afterimage = TRUE;
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -1491,15 +1491,15 @@ static void StoneGuardian_PlayAnim9(Entity *entity) {
    back: another one is at step 3, 6 or 7 (StoneGuardian_Mode6IsStepFree) or waits nearer
    (StoneGuardian_Mode6IsNearestWaiting). */
 static void StoneGuardian_Mode6WaitTurnShown(Entity *entity, s32 unknown) {
-    ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
     ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit20 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit26 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_entity_collision = FALSE;
     ENTITY_FLAG_BITS(entity)->bit21 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     entity->model_alpha = 0x80;
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     EntityAi_StartAction(entity, entity->ai_state.move, unknown);
 }
 
@@ -1511,14 +1511,14 @@ static void StoneGuardian_Mode6ReturnToHiding(Entity *entity, s32 unknown) {
     f32 angle;
     f32 range = 50.0f;
 
-    ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
     ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit20 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
     ENTITY_FLAG_BITS(entity)->bit21 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     entity->model_alpha = 0x80;
     ai_state->target_point[0] = -18450.0f;
     ai_state->target_point[1] = 3190.0f;
@@ -1535,7 +1535,7 @@ static void StoneGuardian_Mode6ReturnToHiding(Entity *entity, s32 unknown) {
                 } else {
                     entity->move_command = MOVE_COMMAND_TURN_LEFT;
                 }
-                ENTITY_FLAG_BITS(entity)->bits11 = 0;
+                ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
             } else {
                 EntityAi_StartAction(entity, StoneGuardian_PlayAnim8, unknown);
                 return;
@@ -1554,19 +1554,19 @@ static void StoneGuardian_Mode6ReturnToHiding(Entity *entity, s32 unknown) {
 static void StoneGuardian_PlayAnim8(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
-    ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit20 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
     ENTITY_FLAG_BITS(entity)->bit21 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
     entity->model_alpha = 0x80;
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames, 0);
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -1574,16 +1574,16 @@ static void StoneGuardian_PlayAnim8(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ai_state->step_index = 7;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit17 = TRUE;
+            ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
+            ENTITY_FLAG_BITS(entity)->draw_afterimage = TRUE;
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -1600,13 +1600,13 @@ static void StoneGuardian_Mode6WalkToHidePoint(Entity *entity, s32 unknown) {
     f32 *point = ai_state->target_point;
     f32 range = 50.0f;
 
-    ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
     ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit20 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
     ENTITY_FLAG_BITS(entity)->bit21 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     entity->model_alpha = 0x80;
     ai_state->target_point[0] = -16200.0f;
     ai_state->target_point[1] = 3030.0f;
@@ -1617,7 +1617,7 @@ static void StoneGuardian_Mode6WalkToHidePoint(Entity *entity, s32 unknown) {
         entity->target = point;
         entity->move_command = EntityAi_MoveCommand(entity, 0, range);
     }
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 

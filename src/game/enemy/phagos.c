@@ -57,7 +57,7 @@ void Phagos_Init(Entity *entity) {
     for (i = 5; i != -1; i--) {
         entity->attack_weights[i] = 0x80;
     }
-    ENTITY_FLAG_BITS(entity)->bit28 = 0;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
@@ -80,12 +80,12 @@ static void Phagos_Animate(Entity *entity) {
 
     flags = entity->flags;
     ai_state = &entity->ai_state;
-    if (ENTITY_FLAG_BITS(entity)->bit14) {
+    if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
     }
 }
@@ -130,14 +130,14 @@ static void Phagos_RunAwayAndRemove(Entity *entity) {
     case 0:
         Motion_Start(entity, 4, 0, entity->params->motion_blend_frames, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         }
         ai_state->part_angle_x = entity->heading_to_player + 1.5707964f + (f32)(rand() % 180) * 0.017453292f;
         ai_state->part_angle_x = EntityMath_WrapAngle(ai_state->part_angle_x);
-        ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
         entity->action_step++;
         break;
     case 1:
@@ -149,29 +149,29 @@ static void Phagos_RunAwayAndRemove(Entity *entity) {
         bounds[2] = entity->model->position[2] - entity->radius;
         bounds[3] = entity->model->position[2] + entity->radius;
         EntityMath_FacingVector((Vector4 *)direction, entity->model->rotation[1]);
-        if ((s32)(entity->flags >> 52) & 1) {
-            ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
+        if (ENTITY_FLAG_BITS(entity)->ledge_stop) {
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
             entity->action_timer = 20;
             EntityEvent_StartEffectAtPoint((char **)entity, entity->params->pitch_limit_deg, 0xFF, (int)entity->model->rotation);
             entity->action_step = 3;
         } else if (EntityCollision_RayHitsPropWall(entity->model->position, direction, entity->radius, bounds)) {
             Vector_Copy(ai_state->target_point, entity->model->position);
-            ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
+            ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
             EntityEvent_StartEffectAtPoint((char **)entity, entity->params->pitch_limit_deg, 0xFF, (int)entity->model->rotation);
             entity->action_step++;
         }
         break;
     case 2:
         if (EntityMath_DistanceXZ(entity->model->position, ai_state->target_point) > entity->radius * 4.0f) {
-            ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
+            ENTITY_FLAG_BITS(entity)->live = FALSE;
         }
         break;
     case 3:
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
-            ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
+            ENTITY_FLAG_BITS(entity)->live = FALSE;
         }
         break;
     }

@@ -82,7 +82,7 @@ void SkeletonArcher_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
@@ -108,12 +108,12 @@ static void SkeletonArcher_Animate(Entity *entity) {
     EntityAiState *ai_state;
 
     ai_state = &entity->ai_state;
-    if (ENTITY_FLAG_BITS(entity)->bit14) {
+    if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
         if ((entity->busy_flags & ENTITY_BUSY_ATTACK) && entity->animation_index == 0x17 && entity->model->level_tables->blend_left == 0) {
             SkeletonArcher_PitchPartToPlayer(entity);
@@ -163,7 +163,7 @@ static void SkeletonArcher_Think(Entity *entity, s32 unknown) {
     }
     EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
-    if (ENTITY_FLAG_BITS(entity)->bit53) {
+    if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
     }
@@ -191,7 +191,7 @@ static void SkeletonArcher_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -202,7 +202,7 @@ static void SkeletonArcher_ThinkCombat(Entity *entity, s32 unknown) {
     }
     side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
+    ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     if (entity->action_timer == 0 || side == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
@@ -214,7 +214,7 @@ static void SkeletonArcher_ThinkCombat(Entity *entity, s32 unknown) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
                 ENTITY_FLAG_BITS(entity)->bit10 = TRUE;
-                if (ENTITY_FLAG_BITS(entity)->bits58 == 0) {
+                if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
                     EntityAi_StartAction(entity, SkeletonArcher_RangedAttack0, unknown);
                 } else {
                     EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
@@ -261,11 +261,11 @@ static void SkeletonArcher_RangedAttack0(Entity *entity) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
         }
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -291,12 +291,12 @@ static void SkeletonArcher_RangedAttack0(Entity *entity) {
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
         }
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);

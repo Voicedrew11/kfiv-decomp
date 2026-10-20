@@ -124,7 +124,7 @@ static void DarkPuppet_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     if (((s32)(entity->flags >> 36) & 3) == 1) {
-        if ((s32)(entity->flags >> 19) & 1) {
+        if ((s32)(entity->flags >> 19) & ENTITY_FLAG_ACTIVE_LIST) {
             EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
             EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);
@@ -150,7 +150,7 @@ static void DarkPuppet_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit53) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
             switch (entity->state) {
@@ -174,7 +174,7 @@ static void DarkPuppet_Think(Entity *entity, s32 unknown) {
     } else {
         entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
     }
-    if ((s32)(entity->flags >> 28) & 1) {
+    if (ENTITY_FLAG_BITS(entity)->no_floor_lift) {
         height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
         if (height != dark_puppet_no_floor_height[0]) {
             if ((f32)entity->params->type_param_1 < height) {
@@ -207,7 +207,7 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -217,7 +217,7 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     side = EntityAi_PickCombatChoice(entity, 0);
-    ENTITY_FLAG_BITS(entity)->bit9 = 1;
+    ENTITY_FLAG_BITS(entity)->look_at_target = 1;
     if (entity->action_timer == 0 || side == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
@@ -228,7 +228,7 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
-                if (ENTITY_FLAG_BITS(entity)->bits58 == 0) {
+                if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
                     EntityAi_StartAction(entity, DarkPuppet_RangedAttack0, unknown);
                 } else {
                     EntityAi_StartAction(entity, DarkPuppet_RangedAttack, unknown);
@@ -263,7 +263,7 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (entity->combat_choice == 1) {
         EntityAi_ClearTurnInPlace(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit31) {
+        if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;
@@ -477,14 +477,14 @@ static void DarkPuppet_MeleeAttack(Entity *entity) {
     case 0:
         Motion_Start(entity, kind | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
         }
-        ENTITY_FLAG_BITS(entity)->bit54 = 0;
-        ENTITY_FLAG_BITS(entity)->bit55 = 0;
-        ENTITY_FLAG_BITS(entity)->bit56 = 0;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
+        ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
+        ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -499,26 +499,26 @@ static void DarkPuppet_MeleeAttack(Entity *entity) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
-        if (!((s32)(entity->flags >> 54) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, elapsed, entity->model->level_tables->frame);
+        if (!(ENTITY_FLAG_BITS(entity)->melee_0_hit)) {
+            ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHit(entity, unk240, 0, elapsed, entity->model->level_tables->frame);
         }
-        if (!((s32)(entity->flags >> 55) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, elapsed, entity->model->level_tables->frame);
+        if (!(ENTITY_FLAG_BITS(entity)->melee_1_hit)) {
+            ENTITY_FLAG_BITS(entity)->melee_1_hit = EntityAi_CheckMeleeHit(entity, unk240, 1, elapsed, entity->model->level_tables->frame);
         }
-        if (!((s32)(entity->flags >> 56) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->level_tables->frame);
+        if (!(ENTITY_FLAG_BITS(entity)->melee_2_hit)) {
+            ENTITY_FLAG_BITS(entity)->melee_2_hit = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->level_tables->frame);
         }
         if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
         }
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk240->attack_delay);
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
                 return;
             }
@@ -545,11 +545,11 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
         }
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -575,12 +575,12 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
         }
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->record.attack_delay);
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -604,11 +604,11 @@ static void DarkPuppet_RangedAttack(Entity *entity) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
         }
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -629,12 +629,12 @@ static void DarkPuppet_RangedAttack(Entity *entity) {
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
         }
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
                 return;
             }
@@ -673,18 +673,18 @@ static void DarkPuppet_Death(Entity *entity) {
     case 2:
         if ((s16)entity->params->action_frames < entity->model->level_tables->frame) {
             entity->action_timer = ai_state->pause_timer = EntityAi_AnimationFrameCount(entity, entity->animation_index) - entity->model->level_tables->frame;
-            ENTITY_FLAG_BITS(entity)->bits2 = 2;
-            ENTITY_FLAG_BITS(entity)->bit4 = 1;
+            ENTITY_FLAG_BITS(entity)->dying = 2;
+            ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             EntityEvent_OnDeath(entity);
             entity->action_step++;
         }
         break;
     case 3:
         entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / (f32)ai_state->pause_timer;
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
-            ENTITY_FLAG_BITS(entity)->bit14 = 0;
-            ENTITY_FLAG_BITS(entity)->bits2 = 3;
-            ENTITY_FLAG_BITS(entity)->bit1 = 0;
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
+            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->dying = 3;
+            ENTITY_FLAG_BITS(entity)->live = 0;
         }
         break;
     }

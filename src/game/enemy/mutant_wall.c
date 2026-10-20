@@ -81,7 +81,7 @@ void MutantWall_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
@@ -108,7 +108,7 @@ static void MutantWall_Think(Entity *entity, s32 unknown) {
     }
     EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
-    if (ENTITY_FLAG_BITS(entity)->bit53) {
+    if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
     }
@@ -137,9 +137,9 @@ static void MutantWall_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     } else {
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
     range = 300.0f;
     angle = 0.5235988f;
@@ -152,7 +152,7 @@ static void MutantWall_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     next_action = EntityAi_PickCombatChoice(entity, 1);
-    ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
+    ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     ai_state->turn_in_place = 1;
     if (entity->action_timer == 0 || next_action == 0) {
         entity->prev_combat_choice = entity->combat_choice;
@@ -212,22 +212,22 @@ static void MutantWall_ThinkCombat(Entity *entity, s32 unknown) {
    unk79 is 1 while it turns to the player and 2 afterwards. */
 static void MutantWall_MeleeAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ENTITY_FLAG_BITS(entity)->bits58];
+    EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ENTITY_FLAG_BITS(entity)->attack_index];
     s32 frame;
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
+        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->attack_index | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
-        ENTITY_FLAG_BITS(entity)->bit54 = 0;
-        ENTITY_FLAG_BITS(entity)->bit55 = 0;
-        ENTITY_FLAG_BITS(entity)->bit56 = 0;
-        ENTITY_FLAG_BITS(entity)->bit9 = 1;
+        ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
+        ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
+        ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 1;
         ai_state->turn_in_place = 1;
         entity->action_step++;
     case 1:
@@ -247,26 +247,26 @@ static void MutantWall_MeleeAttack(Entity *entity) {
             ai_state->turn_rate = 0.0f;
         }
         frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
-        if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->level_tables->frame);
+        if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->level_tables->frame);
         }
-        if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->level_tables->frame);
+        if (!ENTITY_FLAG_BITS(entity)->melee_1_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_1_hit = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->level_tables->frame);
         }
-        if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->level_tables->frame);
+        if (!ENTITY_FLAG_BITS(entity)->melee_2_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_2_hit = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->level_tables->frame);
         }
         if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk240->attack_delay);
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -288,11 +288,11 @@ static void MutantWall_RangedAttack(Entity *entity) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
         }
-        ENTITY_FLAG_BITS(entity)->bit9 = 1;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 1;
         ai_state->turn_in_place = 1;
         entity->action_step++;
     case 1:
@@ -318,12 +318,12 @@ static void MutantWall_RangedAttack(Entity *entity) {
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
         }
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -343,22 +343,22 @@ static void MutantWall_Animate(Entity *entity) {
 
     flags = entity->flags;
     ai_state = &entity->ai_state;
-    if (ENTITY_FLAG_BITS(entity)->bit14) {
+    if (ENTITY_FLAG_BITS(entity)->animates) {
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FIXED) {
             entity->flags = flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         }
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(entity->flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, (s32)(entity->flags >> 11) & 7);
         }
          MutantWall_TurnPart2ToPlayer(entity);
         limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
         limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
         limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
         limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
-        look_at_target = (s32)(entity->flags >> 9) & 1;
+        look_at_target = ENTITY_FLAG_BITS(entity)->look_at_target;
         if (look_at_target == 1) {
             EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, 1, limits, 12.0f);
         } else {

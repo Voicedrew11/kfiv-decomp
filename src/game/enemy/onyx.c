@@ -87,7 +87,7 @@ void Onyx_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
@@ -167,7 +167,7 @@ static void Onyx_Think(Entity *entity, s32 unknown) {
     }
     EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
-    if (ENTITY_FLAG_BITS(entity)->bit53) {
+    if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
     }
@@ -198,7 +198,7 @@ static void Onyx_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -208,7 +208,7 @@ static void Onyx_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     side = EntityAi_PickCombatChoice(entity, 0);
-    ENTITY_FLAG_BITS(entity)->bit9 = 1;
+    ENTITY_FLAG_BITS(entity)->look_at_target = 1;
     if (entity->action_timer == 0 || side == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
@@ -219,7 +219,7 @@ static void Onyx_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             ai_state->action_flags = Onyx_PickAttack(entity);
-            if (ai_state->action_flags == 0 && ENTITY_FLAG_BITS(entity)->bits58 == 0) {
+            if (ai_state->action_flags == 0 && ENTITY_FLAG_BITS(entity)->attack_index == 0) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 0x1E;
                 ai_state->move_choice = 0;
@@ -227,17 +227,17 @@ static void Onyx_ThinkCombat(Entity *entity, s32 unknown) {
                 return;
             }
             if (ai_state->action_flags != 0) {
-                if (ENTITY_FLAG_BITS(entity)->bits58 == ai_state->step_index) {
+                if (ENTITY_FLAG_BITS(entity)->attack_index == ai_state->step_index) {
                     EntityAi_StartAction(entity, Onyx_RangedAttack0, unknown);
                 } else {
-                    ai_state->step_index = ENTITY_FLAG_BITS(entity)->bits58;
+                    ai_state->step_index = ENTITY_FLAG_BITS(entity)->attack_index;
                     EntityAi_StartAction(entity, Onyx_SwitchAttack, unknown);
                 }
             } else {
-                if (ENTITY_FLAG_BITS(entity)->bits58 == ai_state->step_index) {
+                if (ENTITY_FLAG_BITS(entity)->attack_index == ai_state->step_index) {
                     EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
                 } else {
-                    ai_state->step_index = ENTITY_FLAG_BITS(entity)->bits58;
+                    ai_state->step_index = ENTITY_FLAG_BITS(entity)->attack_index;
                     EntityAi_StartAction(entity, Onyx_SwitchAttack, unknown);
                 }
             }
@@ -263,7 +263,7 @@ static void Onyx_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (entity->combat_choice == 1) {
         EntityAi_ClearTurnInPlace(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit31) {
+        if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;
@@ -312,8 +312,8 @@ static void Onyx_RangedAttack0(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
-        ENTITY_FLAGS(entity) &= ~0x200;
+        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
+        ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -325,7 +325,7 @@ static void Onyx_RangedAttack0(Entity *entity) {
         EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
         if (entity->model->level_tables->frame >= entity->params->near_distance
             && entity->model->level_tables->frame <= entity->params->far_distance) {
-            ENTITY_FLAGS(entity) |= 0x200;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_LOOK_AT_TARGET;
             if (frame_counter % 3U != 0) {
                 EntityAi_LaunchShots(entity, unk3D8, entity->params->near_distance, entity->params->far_distance);
             }
@@ -335,12 +335,12 @@ static void Onyx_RangedAttack0(Entity *entity) {
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
         }
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -366,8 +366,8 @@ static void Onyx_SwitchAttack(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
-        ENTITY_FLAGS(entity) &= ~0x200;
+        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
+        ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -375,7 +375,7 @@ static void Onyx_SwitchAttack(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             Motion_Start(entity, 0x12, 0, entity->params->motion_blend_frames >> 1, 1);
             for (part_index = 0; part_index < 25; part_index++) {
                 part = &((EntityModelPart80 *)entity->model->parts)[part_index + 8];
@@ -420,12 +420,12 @@ static void Onyx_SwitchAttack(Entity *entity) {
         }
         break;
     case 4:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             ai_state->reload_timer = entity->params->action_frames;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -479,14 +479,14 @@ static s32 Onyx_PickAttack(Entity *entity) {
         }
     }
     if (choice < 3) {
-        ENTITY_FLAG_BITS(entity)->bits58 = choice;
-        ENTITY_FLAG_BITS(entity)->bit57 = 0;
+        ENTITY_FLAG_BITS(entity)->attack_index = choice;
+        ENTITY_FLAG_BITS(entity)->ranged_attack = 0;
     } else {
-        ENTITY_FLAG_BITS(entity)->bits58 = choice - 3;
-        ENTITY_FLAG_BITS(entity)->bit57 = 1;
+        ENTITY_FLAG_BITS(entity)->attack_index = choice - 3;
+        ENTITY_FLAG_BITS(entity)->ranged_attack = 1;
     }
     EntityAi_LowerAttackWeight(entity);
-    return (s32)(entity->flags >> 57) & 1;
+    return (s32)(entity->flags >> 57) & ENTITY_FLAG_ACTIVE_LIST;
 }
 
 /* Helper of Onyx_ThinkCombat: the movement command to keep a distance from the player. The

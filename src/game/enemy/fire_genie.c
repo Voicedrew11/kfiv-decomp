@@ -123,14 +123,14 @@ static void FireGenie_Animate(Entity *entity) {
 
     flags = entity->flags;
     ai_state = &entity->ai_state;
-    if (ENTITY_FLAG_BITS(entity)->bit14) {
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+    if (ENTITY_FLAG_BITS(entity)->animates) {
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
             FireGenie_TurnPart3ToPlayer(entity, 0);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
             if (entity->model->level_tables->frame) {
                 FireGenie_TurnPart3ToPlayer(entity, 1);
             }
@@ -139,7 +139,7 @@ static void FireGenie_Animate(Entity *entity) {
         limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
         limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
         limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
-        look_at_target = (s32)(entity->flags >> 9) & 1;
+        look_at_target = ENTITY_FLAG_BITS(entity)->look_at_target;
         if (look_at_target) {
             EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, look_at_target, limits, 12.0f);
         } else {
@@ -285,7 +285,7 @@ static void FireGenie_RangedAttack0(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAGS(entity) &= ~0x200;
+        ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -295,7 +295,7 @@ static void FireGenie_RangedAttack0(Entity *entity) {
     case 2:
         if (entity->model->level_tables->frame >= (s16)entity->params->action_frames
             && entity->model->level_tables->frame <= entity->params->near_distance) {
-            ENTITY_FLAGS(entity) |= 0x200;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_LOOK_AT_TARGET;
             if (frame_counter % 3U != 0) {
                 EntityAi_LaunchShots(entity, unk3D8, (s16)entity->params->action_frames, entity->params->near_distance);
             }
@@ -305,12 +305,12 @@ static void FireGenie_RangedAttack0(Entity *entity) {
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
         }
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -331,8 +331,8 @@ static void FireGenie_RespawnOther(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 1);
-        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
-        ENTITY_FLAGS(entity) &= ~0x200;
+        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
+        ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -342,7 +342,7 @@ static void FireGenie_RespawnOther(Entity *entity) {
     case 2:
         if (entity->params->far_distance < entity->model->level_tables->frame) {
             FireGenie_RespawnOneOther(entity);
-            ENTITY_FLAGS(entity) |= 0x200;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_LOOK_AT_TARGET;
             ai_state->action_counter = 1;
             entity->action_step++;
         }
@@ -355,11 +355,11 @@ static void FireGenie_RespawnOther(Entity *entity) {
         }
         break;
     case 4:
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -379,11 +379,11 @@ static void FireGenie_Death(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        ENTITY_FLAGS(entity) &= ~0x3800;
-        ENTITY_FLAGS(entity) |= 0x4000;
+        ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+        ENTITY_FLAGS(entity) |= ENTITY_FLAG_ANIMATES;
         ENTITY_FLAGS(entity) |= 0x100000;
-        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0xC) | 4;
-        ENTITY_FLAGS(entity) &= ~0x200;
+        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_DYING_1;
+        ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         if (ai_state->action_counter != 0) {
             Entity *other = Entity_GetBySpawnId(ai_state->action_flags);
 
@@ -399,12 +399,12 @@ static void FireGenie_Death(Entity *entity) {
         }
         break;
     case 2:
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
-            ENTITY_FLAGS(entity) &= ~0x4000;
-            ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0xC) | 8;
-            ENTITY_FLAGS(entity) |= 0x10;
-            ENTITY_FLAGS(entity) |= 0x8000000;
-            ENTITY_FLAGS(entity) |= 0x4000000;
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
+            ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_ANIMATES;
+            ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_DYING_MASK) | 8;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_NO_RESPAWN;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_NO_PLAYER_COLLISION;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_NO_ENTITY_COLLISION;
             entity->action_timer = 20;
             EntityEvent_OnDeath(entity);
             entity->action_step++;
@@ -414,8 +414,8 @@ static void FireGenie_Death(Entity *entity) {
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
-            ENTITY_FLAGS(entity) |= 0xC;
-            ENTITY_FLAGS(entity) &= ~2;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_DYING_MASK;
+            ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LIVE;
         }
         break;
     }
@@ -494,14 +494,14 @@ static s32 FireGenie_PickAttack(Entity *entity) {
         }
     }
     if (choice < 3) {
-        ENTITY_FLAG_BITS(entity)->bits58 = choice;
-        ENTITY_FLAG_BITS(entity)->bit57 = 0;
+        ENTITY_FLAG_BITS(entity)->attack_index = choice;
+        ENTITY_FLAG_BITS(entity)->ranged_attack = 0;
     } else {
-        ENTITY_FLAG_BITS(entity)->bits58 = choice - 3;
-        ENTITY_FLAG_BITS(entity)->bit57 = 1;
+        ENTITY_FLAG_BITS(entity)->attack_index = choice - 3;
+        ENTITY_FLAG_BITS(entity)->ranged_attack = 1;
     }
     EntityAi_LowerAttackWeight(entity);
-    return (s32)(entity->flags >> 57) & 1;
+    return (s32)(entity->flags >> 57) & ENTITY_FLAG_ACTIVE_LIST;
 }
 
 /* Helper of FireGenie_ThinkDecide: counts the entities with spawn ids 10 to 9 plus

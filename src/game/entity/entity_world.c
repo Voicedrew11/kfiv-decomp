@@ -74,12 +74,12 @@ void Entity_InitInert(Entity *entity) {
     Motion_Start(entity, 0, 0, 0, 0);
     memset(&entity->ai_state, 0, ENTITY_WORK_AREA_SIZE);
     ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit24 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit25 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_second_wall_collision = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_map_object_collision = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
 }
 
@@ -118,13 +118,13 @@ void Entity_InitFromMapSpawns(int map) {
         entity->spawn_info = spawn_info;
         entity_by_spawn_id[map][SPAWN_FLAGS(spawn_info)->bytes[4]] = entity;
         if ((SPAWN_FLAGS(spawn_info)->word & (0xC000L << 45)) == (0x8000L << 45)) {
-            ENTITY_FLAG_BITS(entity)->bit7 = FALSE;
+            ENTITY_FLAG_BITS(entity)->respawnable = FALSE;
         } else {
-            ENTITY_FLAG_BITS(entity)->bit7 = TRUE;
+            ENTITY_FLAG_BITS(entity)->respawnable = TRUE;
         }
         entity->spawn_index = i;
-        ENTITY_FLAG_BITS(entity)->bit5 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit6 = TRUE;
+        ENTITY_FLAG_BITS(entity)->own_think = TRUE;
+        ENTITY_FLAG_BITS(entity)->handler_runs = TRUE;
         if (entity->spawn_info->wander_radius == 0) {
             entity->spawn_info->wander_radius = 1500;
         }
@@ -179,9 +179,9 @@ void Entity_ResetToSpawn(Entity *entity) {
 
     // match: read first; after the stores below, the scheduler would hold this load back behind them
     entity->hit_points = entity->params->hit_points;
-    ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bits2 = 0;
-    ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+    ENTITY_FLAG_BITS(entity)->live = FALSE;
+    ENTITY_FLAG_BITS(entity)->dying = 0;
+    ENTITY_FLAG_BITS(entity)->animates = TRUE;
     ENTITY_FLAG_BITS(entity)->bit15 = FALSE;
     ENTITY_FLAG_BITS(entity)->respawn_roll_done = FALSE;
     ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
@@ -189,16 +189,16 @@ void Entity_ResetToSpawn(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit20 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit21 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit24 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit25 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit26 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit30 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_second_wall_collision = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_map_object_collision = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_entity_collision = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
+    ENTITY_FLAG_BITS(entity)->map_record_inactive = FALSE;
+    ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit17 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit31 = FALSE;
+    ENTITY_FLAG_BITS(entity)->draw_afterimage = TRUE;
+    ENTITY_FLAG_BITS(entity)->turn_in_place = FALSE;
     entity->update_func = 0;
     entity->handler = NULL;
     entity->prev_handler = NULL;
@@ -261,7 +261,7 @@ void Entity_ClearMapSlot(int array_index) {
 }
 
 void Entity_SetSpawnedFlags(Entity *entity) {
-    entity->flags = (entity->flags | ENTITY_FLAG_DYING_MASK) & ~ENTITY_FLAG_100;
+    entity->flags = (entity->flags | ENTITY_FLAG_DYING_MASK) & ~ENTITY_FLAG_RESPAWN_ROLL_DONE;
 }
 
 /* Moves every entity of one of the two entity arrays by an offset. */
@@ -290,7 +290,7 @@ void Entity_UpdateAll(void) {
     }
     for (entity = active_entities_head; entity != NULL; entity = entity->next) {
         Model_UpdateSkinnedBonePoints(ENTITY_MODEL(entity));
-        if (ENTITY_FLAG_BITS(entity)->bits2 >= 3 || !ENTITY_FLAG_BITS(entity)->bit1) {
+        if (ENTITY_FLAG_BITS(entity)->dying >= 3 || !ENTITY_FLAG_BITS(entity)->live) {
             if (!EntityAi_ShouldRespawn(entity)) {
                 continue;
             }
@@ -303,7 +303,7 @@ void Entity_UpdateAll(void) {
             entity->stun_frames--;
             continue;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit16) {
+        if (ENTITY_FLAG_BITS(entity)->not_targetable) {
             entity->ailment_1_frames = 0;
             entity->ailment_2_frames = 0;
             ENTITY_FLAG_BITS(entity)->last_hit_knockback = FALSE;
@@ -315,13 +315,13 @@ void Entity_UpdateAll(void) {
         entity->heading_to_player = EntityMath_HeadingTo(entity->model->position, player_state.position);
         entity->move_delta_x = entity->move_delta_y = entity->move_delta_z = entity->turn_delta_pitch = entity->turn_delta_yaw = entity->turn_delta_roll = 0.0f;
         if (!Entity_IsMapRecordActive(entity)) {
-            if (!ENTITY_FLAG_BITS(entity)->bit30) {
+            if (!ENTITY_FLAG_BITS(entity)->map_record_inactive) {
                 ModelMatrix_Build(ENTITY_MODEL(entity), &ENTITY_MODEL(entity)->position, &ENTITY_MODEL(entity)->rotation, &ENTITY_MODEL(entity)->scale_x);
             }
-            ENTITY_FLAG_BITS(entity)->bit30 = TRUE;
+            ENTITY_FLAG_BITS(entity)->map_record_inactive = TRUE;
             continue;
         }
-        ENTITY_FLAG_BITS(entity)->bit30 = FALSE;
+        ENTITY_FLAG_BITS(entity)->map_record_inactive = FALSE;
         if (entity->hit_cooldown_frames != 0) {
             entity->hit_cooldown_frames--;
         }
@@ -344,7 +344,7 @@ void Entity_UpdateAll(void) {
             }
             entity->ailment_1_frames--;
         }
-        if (ENTITY_FLAG_BITS(entity)->bits36 != 0) {
+        if (ENTITY_FLAG_BITS(entity)->hit_strength != 0) {
             if (entity->params->hit_points < entity->last_hit_damage) {
                 entity->last_hit_damage = entity->params->hit_points;
             }
@@ -429,10 +429,10 @@ void Entity_DrawAll(int list) {
     for (map = 0; map < 2; map++) {
         for (block = 0; block < 5; block++) {
             for (entity = active_entities_head; entity != NULL; entity = entity->next) {
-                if (!ENTITY_FLAG_BITS(entity)->bit1) {
+                if (!ENTITY_FLAG_BITS(entity)->live) {
                     continue;
                 }
-                if (ENTITY_FLAG_BITS(entity)->bits2 >= 3) {
+                if (ENTITY_FLAG_BITS(entity)->dying >= 3) {
                     continue;
                 }
                 if (entity->group_id != map) {
@@ -444,7 +444,7 @@ void Entity_DrawAll(int list) {
                 if (entity->map_record == NULL) {
                     continue;
                 }
-                if (ENTITY_FLAG_BITS(entity)->bit30) {
+                if (ENTITY_FLAG_BITS(entity)->map_record_inactive) {
                     continue;
                 }
                 if (entity->hit_flash_frames != 0 && entity->stun_frames == 0) {
@@ -452,7 +452,7 @@ void Entity_DrawAll(int list) {
                     ENTITY_MODEL(entity)->colour_green = 64.0f;
                     ENTITY_MODEL(entity)->colour_blue = 64.0f;
                     ENTITY_MODEL(entity)->alpha = (f32)entity->model_alpha;
-                } else if (ENTITY_FLAG_BITS(entity)->bits2 < 2) {
+                } else if (ENTITY_FLAG_BITS(entity)->dying < 2) {
                     half = 20;
                     phase = frame_counter % period;
                     falling = period - phase;

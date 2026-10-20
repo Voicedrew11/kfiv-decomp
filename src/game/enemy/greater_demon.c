@@ -166,7 +166,7 @@ static void GreaterDemon_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
-        if ((s32)(entity->flags >> 53) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
             switch (entity->state) {
@@ -196,9 +196,9 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
     s32 turn;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     } else {
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
     if (GreaterDemon_ShouldGuard(entity, 200.0f, 1.0471976f)) {
         EntityAi_StartAction(entity, GreaterDemon_Guard, 1);
@@ -223,7 +223,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     side = EntityAi_PickCombatChoice(entity, 2);
-    ENTITY_FLAG_BITS(entity)->bit9 = 1;
+    ENTITY_FLAG_BITS(entity)->look_at_target = 1;
     if (entity->action_timer == 0 || side == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
@@ -269,7 +269,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
     if (entity->combat_choice == 1) {
         turn = EntityAi_TurnFromPush(entity, direction);
         EntityAi_ClearTurnInPlace(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit31) {
+        if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;
@@ -371,10 +371,10 @@ static void GreaterDemon_Rise(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
-        ENTITY_FLAG_BITS(entity)->bit28 = 1;
-        ENTITY_FLAG_BITS(entity)->bit17 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = 1;
+        ENTITY_FLAG_BITS(entity)->draw_afterimage = 0;
         ai_state->part_angle_x = 0;
         entity->action_step++;
     case 1:
@@ -384,7 +384,7 @@ static void GreaterDemon_Rise(Entity *entity) {
         EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         return;
     case 2:
-        if ((int)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
@@ -417,9 +417,9 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, 10, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         ai_state->reload_timer = 0;
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -432,7 +432,7 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < 0.34906584f) {
                 Motion_Start(entity, 0x12, 0, 1, 1);
                 entity->action_step++;
@@ -455,7 +455,7 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
         }
         break;
     case 4:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             Motion_Start(entity, 0x13, 0, 10, 1);
             entity->action_step++;
         }
@@ -474,18 +474,18 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
         }
         break;
     case 5:
-        if (ENTITY_FLAG_BITS(entity)->bit44 == 1 || ENTITY_FLAG_BITS(entity)->bit46 == 1
-            || ENTITY_FLAG_BITS(entity)->bit45 == 1 || ENTITY_FLAG_BITS(entity)->bit49 == 1
-            || ENTITY_FLAG_BITS(entity)->bit48 == 1) {
+        if (ENTITY_FLAG_BITS(entity)->on_floor == 1 || ENTITY_FLAG_BITS(entity)->bit46 == 1
+            || ENTITY_FLAG_BITS(entity)->wall_push == 1 || ENTITY_FLAG_BITS(entity)->player_push == 1
+            || ENTITY_FLAG_BITS(entity)->entity_push == 1) {
             char *unk350;
 
-            ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
-            ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+            ENTITY_FLAG_BITS(entity)->animates = TRUE;
+            ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
             entity->busy_flags = 0;
             unk350 = entity->params->melee_attack_third;
             entity->move_command = 0;
             entity->action_timer = 0;
-            flag = ENTITY_FLAG_BITS(entity)->bit49;
+            flag = ENTITY_FLAG_BITS(entity)->player_push;
             if (flag == 1) {
                 EntityAi_CheckMeleeHit(entity, unk350, 0, 0x1E, 0x1F);
                 ai_state->reload_timer = flag;
@@ -493,9 +493,9 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
             EntityAi_StartAction(entity, GreaterDemon_SlideToStop, 1);
             return;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->action_step++;
-            ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
         }
         entity->move_delta_x = -sinf(EntityMath_WrapAngle(entity->model->rotation[1])) * ai_state->move_speed;
         entity->move_delta_y = ai_state->part_angle_x;
@@ -510,18 +510,18 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
         }
         break;
     case 6:
-        if (ENTITY_FLAG_BITS(entity)->bit44 == 1 || ENTITY_FLAG_BITS(entity)->bit46 == 1
-            || ENTITY_FLAG_BITS(entity)->bit45 == 1 || ENTITY_FLAG_BITS(entity)->bit49 == 1
-            || ENTITY_FLAG_BITS(entity)->bit48 == 1) {
+        if (ENTITY_FLAG_BITS(entity)->on_floor == 1 || ENTITY_FLAG_BITS(entity)->bit46 == 1
+            || ENTITY_FLAG_BITS(entity)->wall_push == 1 || ENTITY_FLAG_BITS(entity)->player_push == 1
+            || ENTITY_FLAG_BITS(entity)->entity_push == 1) {
             char *unk350;
 
-            ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
-            ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+            ENTITY_FLAG_BITS(entity)->animates = TRUE;
+            ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
             entity->busy_flags = 0;
             unk350 = entity->params->melee_attack_third;
             entity->move_command = 0;
             entity->action_timer = 0;
-            flag = ENTITY_FLAG_BITS(entity)->bit49;
+            flag = ENTITY_FLAG_BITS(entity)->player_push;
             if (flag == 1) {
                 EntityAi_CheckMeleeHit(entity, unk350, 0, 0x1E, 0x1F);
                 ai_state->reload_timer = flag;
@@ -568,7 +568,7 @@ static void GreaterDemon_SlideToStop(Entity *entity) {
             entity->action_step++;
         }
         if (ai_state->reload_timer == 0) {
-            s32 flag = (s32)(entity->flags >> 49) & 1;
+            s32 flag = ENTITY_FLAG_BITS(entity)->player_push;
 
             if (flag == 1) {
                 EntityAi_CheckMeleeHit(entity, unk350, 0, 0x1E, 0x1F);
@@ -578,19 +578,19 @@ static void GreaterDemon_SlideToStop(Entity *entity) {
         break;
     case 2:
         if (ai_state->reload_timer == 0) {
-            s32 flag = (s32)(entity->flags >> 49) & 1;
+            s32 flag = ENTITY_FLAG_BITS(entity)->player_push;
 
             if (flag == 1) {
                 EntityAi_CheckMeleeHit(entity, unk350, 0, 0x1E, 0x1F);
                 ai_state->reload_timer = flag;
             }
         }
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             ai_state->sliding = 0;
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -631,11 +631,11 @@ static void GreaterDemon_PlayAnim6Or7BySide(Entity *entity) {
         break;
     case 2:
         EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -667,19 +667,19 @@ static void GreaterDemon_ReactionHeavy(Entity *entity) {
     case 0:
         Motion_Start(entity, 0xF, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
         }
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAG_BITS(entity)->bit14 = 1;
+        ENTITY_FLAG_BITS(entity)->animates = 1;
         ENTITY_FLAG_BITS(entity)->bit19 = 0;
-        ENTITY_FLAG_BITS(entity)->bit35 = 0;
+        ENTITY_FLAG_BITS(entity)->guarding = 0;
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
-            ENTITY_FLAG_BITS(entity)->bit28 = 0;
+            ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
         }
         ENTITY_FLAG_BITS(entity)->bit10 = 0;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->reaction_step++;
         ai_state->sliding = 0;
         break;
@@ -689,13 +689,13 @@ static void GreaterDemon_ReactionHeavy(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
             EntityAi_SetReaction(entity, NULL, 0);
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -713,12 +713,12 @@ static void GreaterDemon_Guard(Entity *entity) {
     case 0:
         Motion_Start(entity, 0xD, 0, 0xA, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
         }
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
         break;
     case 1:
@@ -730,18 +730,18 @@ static void GreaterDemon_Guard(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit43 && ENTITY_FLAG_BITS(entity)->bit39 && !ENTITY_FLAG_BITS(entity)->bit38) {
+        if (ENTITY_FLAG_BITS(entity)->hit_by_player && ENTITY_FLAG_BITS(entity)->hit_source_magic && !ENTITY_FLAG_BITS(entity)->hit_source_weapon) {
             entity->flags &= ~ENTITY_FLAG_HIT_BY_PLAYER;
             entity->action_timer = entity->params->guard_frames;
         }
         EntityEvent_StartEffectAtPoint((char **)entity, 0x32F, 0, (int)entity->model->rotation);
         if (entity->action_timer == 0) {
-            ENTITY_FLAG_BITS(entity)->bit35 = 0;
-            ENTITY_FLAG_BITS(entity)->bit14 = 1;
+            ENTITY_FLAG_BITS(entity)->guarding = 0;
+            ENTITY_FLAG_BITS(entity)->animates = 1;
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -789,12 +789,12 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
         }
         ai_state->climb_point_index = 0;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -855,12 +855,12 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
         }
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -937,12 +937,12 @@ static void GreaterDemon_RangedAttack(Entity *entity) {
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
         }
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);

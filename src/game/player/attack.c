@@ -190,10 +190,10 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     }
     if (request->target_mask & 2) {
         for (entity = active_entities_head; entity != NULL; entity = entity->next) {
-            if (!((s32)(entity->flags >> 1) & 1)) {
+            if (!(ENTITY_FLAG_BITS(entity)->live)) {
                 continue;
             }
-            if ((s32)(entity->flags >> 20) & 1) {
+            if ((s32)(entity->flags >> 20) & ENTITY_FLAG_ACTIVE_LIST) {
                 continue;
             }
             if (((s32)(entity->flags >> 2) & 3) >= 2) {
@@ -341,10 +341,10 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     }
     if (request->target_mask & 2) {
         for (entity = active_entities_head; entity != NULL; entity = entity->next) {
-            if (!((s32)(entity->flags >> 1) & 1)) {
+            if (!(ENTITY_FLAG_BITS(entity)->live)) {
                 continue;
             }
-            if ((s32)(entity->flags >> 20) & 1) {
+            if ((s32)(entity->flags >> 20) & ENTITY_FLAG_ACTIVE_LIST) {
                 continue;
             }
             if (((s32)(entity->flags >> 2) & 3) >= 2) {
@@ -919,10 +919,10 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
     if (extra->is_magic_shot == 1) {
         entity->stun_frames = request->stun_frames;
     }
-    if ((s32)(entity->flags >> 18) & 1) {
+    if ((s32)(entity->flags >> 18) & ENTITY_FLAG_ACTIVE_LIST) {
         return;
     }
-    if (!((s32)(entity->flags >> 1) & 1)) {
+    if (!(ENTITY_FLAG_BITS(entity)->live)) {
         return;
     }
     if (entity->hit_points == 0) {
@@ -933,7 +933,7 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
     }
 
     Attack_GetEffectiveStrengths(&attack, request, extra);
-    if (ENTITY_FLAG_BITS(entity)->bit35) {
+    if (ENTITY_FLAG_BITS(entity)->guarding) {
         physical_bonus = entity->params->guard_physical_bonus;
         magic_bonus = entity->params->guard_magic_bonus;
     } else {

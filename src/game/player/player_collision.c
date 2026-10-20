@@ -411,13 +411,13 @@ void Player_CollideWithEntities(int climb) {
         reach = player_state.fall_speed + 75.0f;
         if (!((s32)(player_state.status_bits >> 33) & 1)) {
             for (entity = active_entities_head; entity != NULL; entity = entity->next) {
-                if (!((s32)(entity->flags >> 1) & 1)) {
+                if (!(ENTITY_FLAG_BITS(entity)->live)) {
                     continue;
                 }
                 if (((s32)(entity->flags >> 2) & 3) >= 2) {
                     continue;
                 }
-                if ((s32)(entity->flags >> 27) & 1) {
+                if (ENTITY_FLAG_BITS(entity)->no_player_collision) {
                     continue;
                 }
                 switch (entity->spawn_info->type_id) {
@@ -477,13 +477,13 @@ void Player_CollideWithEntities(int climb) {
         }
     }
     for (entity = active_entities_head; entity != NULL; entity = entity->next) {
-        if (!((s32)(entity->flags >> 1) & 1)) {
+        if (!(ENTITY_FLAG_BITS(entity)->live)) {
             continue;
         }
         if (((s32)(entity->flags >> 2) & 3) >= 2) {
             continue;
         }
-        if ((s32)(entity->flags >> 27) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->no_player_collision) {
             continue;
         }
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FLY) {

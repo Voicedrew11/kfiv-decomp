@@ -44,10 +44,10 @@ void Bell_Init(Entity *entity) {
     for (i = 5; i != -1; i--) {
         entity->attack_weights[i] = 0x80;
     }
-    ENTITY_FLAG_BITS(entity)->bit28 = 1;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = 1;
     ENTITY_FLAG_BITS(entity)->bit18 = 1;
     ENTITY_FLAG_BITS(entity)->bit21 = 1;
-    ENTITY_FLAG_BITS(entity)->bit16 = 1;
+    ENTITY_FLAG_BITS(entity)->not_targetable = 1;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
@@ -67,7 +67,7 @@ void Bell_Init(Entity *entity) {
 /* The animate handler: plays the motion a step on (Motion_Step) and sets flag bit 34 when it has
    ended; no blend and no head turn. */
 static void Bell_Animate(Entity *entity) {
-    ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
+    ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
 }
 
 /* The think handler (it takes the entity only): no states and no actions. In a frame with flag bit

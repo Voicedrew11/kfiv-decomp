@@ -78,7 +78,7 @@ void ParaStool_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
@@ -110,7 +110,7 @@ static void ParaStool_Think(Entity *entity, s32 unknown) {
     }
     EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
-    if (ENTITY_FLAG_BITS(entity)->bit53) {
+    if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
     }
@@ -140,9 +140,9 @@ static void ParaStool_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     } else {
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
     range = 300.0f;
     angle = 0.5235988f;
@@ -155,7 +155,7 @@ static void ParaStool_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     next_action = EntityAi_PickCombatChoice(entity, 0);
-    ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
+    ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     if (entity->action_timer == 0 || next_action == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = next_action;
@@ -213,19 +213,19 @@ static void ParaStool_MeleeAttack0(Entity *entity) {
     case 0:
         Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
             s32 kind = 2;
 
             if (!(ENTITY_PARAMS_BITS(entity)->bit25 && !ENTITY_PARAMS_BITS(entity)->bit26)) {
                 kind = 1;
             }
-            ENTITY_FLAG_BITS(entity)->bits11 = kind;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = kind;
         }
-        ENTITY_FLAG_BITS(entity)->bit54 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit55 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit56 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->melee_0_hit = FALSE;
+        ENTITY_FLAG_BITS(entity)->melee_1_hit = FALSE;
+        ENTITY_FLAG_BITS(entity)->melee_2_hit = FALSE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -242,20 +242,20 @@ static void ParaStool_MeleeAttack0(Entity *entity) {
             ai_state->turn_rate = 0.0f;
         }
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
-        if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = ParaStool_CheckPartHitInPlayerView(entity, unk240, 0, elapsed, entity->model->level_tables->frame, 0.0f);
+        if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_0_hit = ParaStool_CheckPartHitInPlayerView(entity, unk240, 0, elapsed, entity->model->level_tables->frame, 0.0f);
         }
         if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
         }
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk240->attack_delay);
-            if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);

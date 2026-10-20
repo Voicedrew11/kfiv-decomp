@@ -88,7 +88,7 @@ void Spider_Init(Entity *entity) {
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         ai_state->think = Spider_Think;
         ai_state->animate = Spider_Animate;
@@ -123,16 +123,16 @@ static void Spider_Animate(Entity *entity) {
 
     flags = entity->flags;
     ai_state = &entity->ai_state;
-    if (ENTITY_FLAG_BITS(entity)->bit14) {
+    if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
     }
     if (ai_state->step_index != 0) {
-        if (ENTITY_FLAG_BITS(entity)->bit53) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             entity->turn_delta_yaw = -entity->turn_delta_yaw;
         }
     }
@@ -158,7 +158,7 @@ static void Spider_Think(Entity *entity, s32 unknown) {
     }
     EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
-    if (ENTITY_FLAG_BITS(entity)->bit53) {
+    if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
     } else if (entity->state == 2) {
         Spider_ThinkCombat(entity, unknown);
@@ -177,9 +177,9 @@ static void Spider_ThinkWander(Entity *entity, s32 unknown) {
     s32 turn;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     } else {
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
     if (entity->action_timer == 0) {
         if (rand() % 100 > 40) {
@@ -214,9 +214,9 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
     s32 turn;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     } else {
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
@@ -265,7 +265,7 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (entity->combat_choice == 1) {
         EntityAi_ClearTurnInPlace(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit31) {
+        if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;
@@ -318,11 +318,11 @@ static void Spider_RangedAttack(Entity *entity) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_BITS(entity)->bit25 && !ENTITY_PARAMS_BITS(entity)->bit26) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_BITS(entity)->bit25 && !ENTITY_PARAMS_BITS(entity)->bit26) ? 2 : 1;
         }
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -347,12 +347,12 @@ static void Spider_RangedAttack(Entity *entity) {
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
         }
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -372,25 +372,25 @@ static void Spider_Dormant(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 3, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit24 = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_second_wall_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
         entity->action_step++;
         break;
     case 1:
         if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) >= (f32)entity->params->pitch_limit_deg) {
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit24 = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_second_wall_collision = FALSE;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -423,19 +423,19 @@ static void Spider_Death(Entity *entity) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_BITS(entity)->bit25 && !ENTITY_PARAMS_BITS(entity)->bit26) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_BITS(entity)->bit25 && !ENTITY_PARAMS_BITS(entity)->bit26) ? 2 : 1;
         }
-        ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bits2 = 1;
-        ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
+        ENTITY_FLAG_BITS(entity)->dying = 1;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
         ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit24 = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_second_wall_collision = FALSE;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -443,12 +443,12 @@ static void Spider_Death(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
-            ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bits2 = 2;
-            ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
-            ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
-            ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
+            ENTITY_FLAG_BITS(entity)->dying = 2;
+            ENTITY_FLAG_BITS(entity)->no_respawn = TRUE;
+            ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
+            ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
             entity->action_timer = 20;
             EntityEvent_OnDeath(entity);
             entity->action_step++;
@@ -458,8 +458,8 @@ static void Spider_Death(Entity *entity) {
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits2 = 3;
-            ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
+            ENTITY_FLAG_BITS(entity)->dying = 3;
+            ENTITY_FLAG_BITS(entity)->live = FALSE;
         }
         break;
     }
@@ -475,12 +475,12 @@ static void Spider_DropToFloor(Entity *entity) {
     f32 matrix[16];
     s32 hit;
 
-    ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
     ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit24 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_second_wall_collision = TRUE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
     direction[0] = 0.0f;
     direction[1] = 1.0f;
     direction[2] = 0.0f;
@@ -493,19 +493,19 @@ static void Spider_DropToFloor(Entity *entity) {
     hit = EntityCollision_RayProps(entity->model->position, direction, landing, 200.0f);
     if (hit == 1) {
         Vector_Copy(entity->model->position, landing);
-        ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
         ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit24 = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_second_wall_collision = FALSE;
         ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
         ai_state->step_index = 0;
         ai_state->on_hit = EntityAi_OnHit;
         ai_state->death = EntityAi_Death;
         entity->busy_flags = 0;
         entity->move_command = 0;
         entity->action_timer = 0;
-        if (ENTITY_FLAG_BITS(entity)->bit5) {
+        if (ENTITY_FLAG_BITS(entity)->own_think) {
             ai_state->think(entity, 1);
         } else {
             EntityAi_StartAction(entity, ai_state->move, 1);
@@ -515,7 +515,7 @@ static void Spider_DropToFloor(Entity *entity) {
         ai_state->part_angle_x = landing[0];
         ai_state->part_angle_y = landing[1];
         ai_state->part_angle_z = landing[2];
-        ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
         ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
         ai_state->step_index = 1;
         ai_state->on_hit = Spider_OnHit;
@@ -523,7 +523,7 @@ static void Spider_DropToFloor(Entity *entity) {
         entity->busy_flags = 0;
         entity->move_command = 0;
         entity->action_timer = 0;
-        if (ENTITY_FLAG_BITS(entity)->bit5) {
+        if (ENTITY_FLAG_BITS(entity)->own_think) {
             ai_state->think(entity, 1);
         } else {
             EntityAi_StartAction(entity, ai_state->move, 1);
@@ -541,13 +541,13 @@ static void Spider_LevelOut(Entity *entity) {
     f32 pitch_left;
     f32 roll_left;
 
-    ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
     ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit24 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_second_wall_collision = FALSE;
+    ENTITY_FLAG_BITS(entity)->animates = FALSE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     entity->busy_flags = ENTITY_BUSY_2000;
     pitch_left = EntityMath_EaseAngleToward(&entity->model->rotation[0], 0.0f, 6.0f);
     roll_left = EntityMath_EaseAngleToward(&entity->model->rotation[2], 0.0f, 6.0f);
@@ -560,7 +560,7 @@ static void Spider_LevelOut(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+            ENTITY_FLAG_BITS(entity)->animates = TRUE;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
             ai_state->on_hit = EntityAi_OnHit;
             ai_state->death = EntityAi_Death;

@@ -87,7 +87,7 @@ void ExpeditionArcher_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
@@ -119,10 +119,10 @@ static void ExpeditionArcher_Animate(Entity *entity) {
     if ((s32)((s64)(flags << 18) >> 32) & 1) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
             flags = entity->flags;
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, (s32)(flags >> 11) & 7);
             flags = entity->flags;
         }
     }
@@ -185,7 +185,7 @@ static void ExpeditionArcher_Think(Entity *entity, s32 unknown) {
     }
     EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
-    if (ENTITY_FLAG_BITS(entity)->bit53) {
+    if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
     }
@@ -213,7 +213,7 @@ static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -224,7 +224,7 @@ static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown) {
     }
     side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
+    ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     if (entity->action_timer == 0 || side == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
@@ -235,7 +235,7 @@ static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
-                if (ENTITY_FLAG_BITS(entity)->bits58 == 1) {
+                if (ENTITY_FLAG_BITS(entity)->attack_index == 1) {
                     EntityAi_StartAction(entity, ExpeditionArcher_RangedAttack1, unknown);
                 } else {
                     EntityAi_StartAction(entity, ExpeditionArcher_RangedAttack, unknown);
@@ -260,7 +260,7 @@ static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (ai_state->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit31) {
+        if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;
@@ -302,16 +302,16 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
     case 0:
         Motion_Start(entity, attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
             s32 kind = 2;
 
             if (!(ENTITY_PARAMS_BITS(entity)->bit25 && !ENTITY_PARAMS_BITS(entity)->bit26)) {
                 kind = 1;
             }
-            ENTITY_FLAG_BITS(entity)->bits11 = kind;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = kind;
         }
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -337,12 +337,12 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
         }
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -359,7 +359,7 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
    player's position, within 10 degrees (EntityShot_LaunchAimed). */
 static void ExpeditionArcher_RangedAttack1(Entity *entity) {
     EntityAiStateKind1740A8 *ai_state = (EntityAiStateKind1740A8 *)&entity->ai_state;
-    EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, ENTITY_FLAG_BITS(entity)->bits58);
+    EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, ENTITY_FLAG_BITS(entity)->attack_index);
     f32 target[4];
     f32 angle;
     s32 elapsed;
@@ -367,13 +367,13 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->bits58 + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
+        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
         }
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
         break;
     case 1:
@@ -397,7 +397,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
     case 3:
         EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
         ENTITY_FLAG_BITS(entity)->bit10 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
+        ENTITY_FLAG_BITS(entity)->animates = FALSE;
         EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
         angle = EntityMath_AngleDifference(ai_state->point_y, entity->heading_to_player);
         if (entity->action_timer == 0 || entity->distance_to_player < 200.0f || ABS(angle) <= 0.010471975f) {
@@ -405,17 +405,17 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
         }
         break;
     case 4:
-        ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(target, player_state.position);
         target[1] -= 170.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, 0.17453294f, 0.17453294f);
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -435,22 +435,22 @@ static void ExpeditionArcher_Death(Entity *entity) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
             s32 kind = 2;
 
             if (!(ENTITY_PARAMS_BITS(entity)->bit25 && !ENTITY_PARAMS_BITS(entity)->bit26)) {
                 kind = 1;
             }
-            ENTITY_FLAG_BITS(entity)->bits11 = kind;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = kind;
         }
-        ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bits2 = 1;
-        ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->dying = 1;
+        ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -458,10 +458,10 @@ static void ExpeditionArcher_Death(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
-            ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bits2 = 2;
-            ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
+            ENTITY_FLAG_BITS(entity)->dying = 2;
+            ENTITY_FLAG_BITS(entity)->no_respawn = TRUE;
             entity->action_timer = 20;
             EntityEvent_OnDeath(entity);
             if (entity->spawn_info->spawn_mode != 0) {
@@ -479,8 +479,8 @@ static void ExpeditionArcher_Death(Entity *entity) {
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits2 = 3;
-            ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
+            ENTITY_FLAG_BITS(entity)->dying = 3;
+            ENTITY_FLAG_BITS(entity)->live = FALSE;
         }
         break;
     }

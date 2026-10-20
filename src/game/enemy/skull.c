@@ -120,16 +120,16 @@ static void Skull_Think(Entity *entity, s32 unknown) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags & ENTITY_BUSY_DEATH) {
-        ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
         ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
     } else {
-        ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
     }
     if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn((char *)entity);
         EntityAi_StepState(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit53) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
             switch (entity->state) {
@@ -151,7 +151,7 @@ static void Skull_Think(Entity *entity, s32 unknown) {
     if (ai_state->sub_timer > 0) {
         ai_state->sub_timer--;
     }
-    if (ENTITY_FLAG_BITS(entity)->bit28 && !(entity->busy_flags & ENTITY_BUSY_ATTACK)) {
+    if (ENTITY_FLAG_BITS(entity)->no_floor_lift && !(entity->busy_flags & ENTITY_BUSY_ATTACK)) {
         if (ai_state->sub_timer <= 0) {
             if (entity->model->position[1] < player_state.position[1] - 300.0f) {
                 ai_state->step_index = 1;
@@ -250,7 +250,7 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (entity->combat_choice == 1) {
         EntityAi_ClearTurnInPlace(entity);
-        if ((s32)(entity->flags >> 31) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;
@@ -323,10 +323,10 @@ static void Skull_Death(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
-            ENTITY_FLAG_BITS(entity)->bit14 = 0;
-            ENTITY_FLAG_BITS(entity)->bits2 = 2;
-            ENTITY_FLAG_BITS(entity)->bit4 = 1;
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
+            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->dying = 2;
+            ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             entity->action_timer = 20;
             EntityEvent_OnDeath(entity);
             entity->action_step++;
@@ -508,15 +508,15 @@ static void Skull_Animate(Entity *entity) {
 
     flags = entity->flags;
     ai_state = &entity->ai_state;
-    if (ENTITY_FLAG_BITS(entity)->bit14) {
+    if (ENTITY_FLAG_BITS(entity)->animates) {
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FIXED) {
             entity->flags = flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         }
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
         if (entity->busy_flags == 0 && entity->model->level_tables->blend_left == 0) {
             Skull_SwingPart3(entity);
@@ -546,8 +546,8 @@ static void Skull_RangedAttack0(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
-        ENTITY_FLAGS(entity) &= ~0x200;
+        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
+        ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -572,12 +572,12 @@ static void Skull_RangedAttack0(Entity *entity) {
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
         }
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);

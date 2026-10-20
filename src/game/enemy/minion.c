@@ -98,7 +98,7 @@ void Minion_Init(Entity *entity) {
     for (i = 5; i != -1; i--) {
         entity->attack_weights[i] = 0x80;
     }
-    ENTITY_FLAG_BITS(entity)->bit28 = 0;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
@@ -143,7 +143,7 @@ static void Minion_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn((char *)entity);
         EntityAi_StepState(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit53) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
             switch (entity->state) {
@@ -173,9 +173,9 @@ static void Minion_ThinkCombat(Entity *entity, s32 unknown) {
     s32 turn;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     } else {
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, Minion_Guard, 1);
@@ -186,7 +186,7 @@ static void Minion_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     side = EntityAi_PickCombatChoice(entity, 0);
-    ENTITY_FLAG_BITS(entity)->bit9 = 1;
+    ENTITY_FLAG_BITS(entity)->look_at_target = 1;
     if (entity->action_timer == 0 || side == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
@@ -239,7 +239,7 @@ static void Minion_Animate(Entity *entity) {
     s32 previous;
     f32 rate;
 
-    if (!ENTITY_FLAG_BITS(entity)->bit14) {
+    if (!ENTITY_FLAG_BITS(entity)->animates) {
         return;
     }
     if (slots->motion_slot_0.frames_left != 0) {
@@ -249,10 +249,10 @@ static void Minion_Animate(Entity *entity) {
             rate = 1.0f / slots->motion_slot_0.frames_left;
         }
         // match: the caller passes a float the callee does not take
-        ENTITY_FLAG_BITS(entity)->bit34 = ((int (*)(void *, void *, int, float))EntityAi_StepSlotMotion)(entity, &slots->motion_slot_0, 0, rate);
+        ENTITY_FLAG_BITS(entity)->motion_ended = ((int (*)(void *, void *, int, float))EntityAi_StepSlotMotion)(entity, &slots->motion_slot_0, 0, rate);
     } else {
         previous = slots->motion_slot_0.frame_fixed;
-        ENTITY_FLAG_BITS(entity)->bit34 = Motion_StepSlot(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, ENTITY_FLAG_BITS(entity)->bits11);
+        ENTITY_FLAG_BITS(entity)->motion_ended = Motion_StepSlot(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         if (slots->motion_slot_0.index != 3) {
             EntityEvent_StartFrameEffects(entity, slots->motion_slot_0.index, previous, slots->motion_slot_0.frame_fixed);
             EntityEvent_StartFrameCues(entity, slots->motion_slot_0.index, previous, slots->motion_slot_0.frame_fixed);
@@ -279,7 +279,7 @@ static void Minion_Animate(Entity *entity) {
         }
         if (ai_state->turn_in_place != 2) {
             previous = slots->motion_slot_1.frame_fixed;
-            ai_state->step_index = Motion_StepSlot(entity, &slots->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->bits11);
+            ai_state->step_index = Motion_StepSlot(entity, &slots->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->motion_step_mode);
             if (slots->motion_slot_1.index == 3) {
                 EntityEvent_StartFrameEffects(entity, slots->motion_slot_1.index, previous, slots->motion_slot_1.frame_fixed);
                 EntityEvent_StartFrameCues(entity, slots->motion_slot_1.index, previous, slots->motion_slot_1.frame_fixed);
@@ -290,10 +290,10 @@ static void Minion_Animate(Entity *entity) {
     limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
     limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
     limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
-    if (ENTITY_FLAG_BITS(entity)->bit9 && entity->target != NULL) {
-        EntityAi_LookAtPoint(entity, (int)ai_state->look_part_angles, ENTITY_FLAG_BITS(entity)->bit9, (int)entity->target, (int)limits, 12.0f);
+    if (ENTITY_FLAG_BITS(entity)->look_at_target && entity->target != NULL) {
+        EntityAi_LookAtPoint(entity, (int)ai_state->look_part_angles, ENTITY_FLAG_BITS(entity)->look_at_target, (int)entity->target, (int)limits, 12.0f);
     } else {
-        EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, ENTITY_FLAG_BITS(entity)->bit9, NULL, 8.0f);
+        EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, ENTITY_FLAG_BITS(entity)->look_at_target, NULL, 8.0f);
     }
 }
 
@@ -309,30 +309,30 @@ static void Minion_Guard(Entity *entity) {
             EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_1, 1, 0xD, 0, 0xA, 1);
         }
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
         break;
     case 1:
         if (((EntityAiStateKind151D30 *)ai_state)->motion_slot_0.frames_left == 0) {
             entity->action_timer = entity->params->guard_frames;
-            ENTITY_FLAG_BITS(entity)->bit35 = 1;
-            ENTITY_FLAG_BITS(entity)->bit14 = 0;
+            ENTITY_FLAG_BITS(entity)->guarding = 1;
+            ENTITY_FLAG_BITS(entity)->animates = 0;
             entity->action_step++;
         }
         break;
     case 2:
         if (entity->action_timer == 0) {
-            ENTITY_FLAG_BITS(entity)->bit35 = 0;
-            ENTITY_FLAG_BITS(entity)->bit14 = 1;
+            ENTITY_FLAG_BITS(entity)->guarding = 0;
+            ENTITY_FLAG_BITS(entity)->animates = 1;
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 entity->ai_state.think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -346,25 +346,25 @@ static void Minion_Guard(Entity *entity) {
 static void Minion_MeleeAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityAiStateKind151D30 *slots = (EntityAiStateKind151D30 *)ai_state;
-    EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ENTITY_FLAG_BITS(entity)->bits58];
+    EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ENTITY_FLAG_BITS(entity)->attack_index];
     s32 frame;
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
+        EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, ENTITY_FLAG_BITS(entity)->attack_index | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
         if (ai_state->turn_in_place == 0) {
-            EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
+            EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->attack_index | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
         }
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
-        ENTITY_FLAG_BITS(entity)->bit54 = 0;
-        ENTITY_FLAG_BITS(entity)->bit55 = 0;
-        ENTITY_FLAG_BITS(entity)->bit56 = 0;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
+        ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
+        ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
     case 1:
         if (slots->motion_slot_0.frames_left == 0) {
@@ -381,26 +381,26 @@ static void Minion_MeleeAttack(Entity *entity) {
             ai_state->turn_rate = 0.0f;
         }
         frame = (slots->motion_slot_0.frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
-        if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, slots->motion_slot_0.frame);
+        if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, slots->motion_slot_0.frame);
         }
-        if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, slots->motion_slot_0.frame);
+        if (!ENTITY_FLAG_BITS(entity)->melee_1_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_1_hit = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, slots->motion_slot_0.frame);
         }
-        if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, slots->motion_slot_0.frame);
+        if (!ENTITY_FLAG_BITS(entity)->melee_2_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_2_hit = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, slots->motion_slot_0.frame);
         }
         if (slots->motion_slot_0.frame > 0 && unk240->hit_end_frame >= slots->motion_slot_0.frame) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk240->attack_delay);
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -415,21 +415,21 @@ static void Minion_MeleeAttack(Entity *entity) {
 static void Minion_RangedAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityAiStateKind151D30 *slots = (EntityAiStateKind151D30 *)ai_state;
-    EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, ENTITY_FLAG_BITS(entity)->bits58);
+    EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, ENTITY_FLAG_BITS(entity)->attack_index);
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, ENTITY_FLAG_BITS(entity)->bits58 + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
+        EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, ENTITY_FLAG_BITS(entity)->attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         if (ai_state->turn_in_place == 0) {
-            EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->bits58 + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
+            EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         }
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
     case 1:
         if (slots->motion_slot_0.frames_left == 0) {
@@ -451,12 +451,12 @@ static void Minion_RangedAttack(Entity *entity) {
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -523,10 +523,10 @@ static void Minion_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
     ENTITY_FLAG_BITS(entity)->bit10 = 0;
-    ENTITY_FLAG_BITS(entity)->bit9 = 0;
-    if (ENTITY_FLAG_BITS(entity)->bits36 == 1) {
+    ENTITY_FLAG_BITS(entity)->look_at_target = 0;
+    if (ENTITY_FLAG_BITS(entity)->hit_strength == 1) {
         EntityAi_SetReaction(entity, Minion_ReactionLight, 0);
-    } else if (ENTITY_FLAG_BITS(entity)->bits36 == 2) {
+    } else if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_SetReaction(entity, Minion_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
@@ -545,16 +545,16 @@ static void Minion_ReactionLight(Entity *entity) {
             EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_1, 1, 0xE, 0, 5, 1);
         }
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAG_BITS(entity)->bit14 = 1;
+        ENTITY_FLAG_BITS(entity)->animates = 1;
         ENTITY_FLAG_BITS(entity)->bit19 = 0;
-        ENTITY_FLAG_BITS(entity)->bit35 = 0;
+        ENTITY_FLAG_BITS(entity)->guarding = 0;
         ENTITY_FLAG_BITS(entity)->bit10 = 0;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->reaction_step++;
         break;
     case 1:
@@ -568,7 +568,7 @@ static void Minion_ReactionLight(Entity *entity) {
         entity->busy_flags = 0;
         entity->move_command = 0;
         entity->action_timer = 0;
-        if (ENTITY_FLAG_BITS(entity)->bit5) {
+        if (ENTITY_FLAG_BITS(entity)->own_think) {
             entity->ai_state.think(entity, 1);
         } else {
             EntityAi_StartAction(entity, ai_state->move, 1);
@@ -589,19 +589,19 @@ static void Minion_ReactionHeavy(Entity *entity) {
             EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_1, 1, 0xF, 0, 5, 1);
         }
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAG_BITS(entity)->bit14 = 1;
+        ENTITY_FLAG_BITS(entity)->animates = 1;
         ENTITY_FLAG_BITS(entity)->bit19 = 0;
-        ENTITY_FLAG_BITS(entity)->bit35 = 0;
+        ENTITY_FLAG_BITS(entity)->guarding = 0;
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
-            ENTITY_FLAG_BITS(entity)->bit28 = 0;
+            ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
         }
         ENTITY_FLAG_BITS(entity)->bit10 = 0;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->reaction_step++;
         break;
     case 1:
@@ -610,13 +610,13 @@ static void Minion_ReactionHeavy(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
             EntityAi_SetReaction(entity, NULL, 0);
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 entity->ai_state.think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -638,20 +638,20 @@ static void Minion_Death(Entity *entity) {
             EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_1, 1, 0x10, 0, 5, 1);
         }
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FLY) {
             entity->collision_radius = 20.0f;
         }
-        ENTITY_FLAG_BITS(entity)->bit14 = 1;
+        ENTITY_FLAG_BITS(entity)->animates = 1;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
-        ENTITY_FLAG_BITS(entity)->bits2 = 1;
-        ENTITY_FLAG_BITS(entity)->bit27 = 1;
-        ENTITY_FLAG_BITS(entity)->bit26 = 1;
-        ENTITY_FLAG_BITS(entity)->bit28 = 0;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->dying = 1;
+        ENTITY_FLAG_BITS(entity)->no_player_collision = 1;
+        ENTITY_FLAG_BITS(entity)->no_entity_collision = 1;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
     case 1:
         if (((EntityAiStateKind151D30 *)ai_state)->motion_slot_0.frames_left == 0) {
@@ -659,11 +659,11 @@ static void Minion_Death(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->action_timer = 20;
-            ENTITY_FLAG_BITS(entity)->bit14 = 0;
-            ENTITY_FLAG_BITS(entity)->bits2 = 2;
-            ENTITY_FLAG_BITS(entity)->bit4 = 1;
+            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->dying = 2;
+            ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             EntityEvent_OnDeath(entity);
             entity->action_step++;
         }
@@ -672,8 +672,8 @@ static void Minion_Death(Entity *entity) {
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits2 = 3;
-            ENTITY_FLAG_BITS(entity)->bit1 = 0;
+            ENTITY_FLAG_BITS(entity)->dying = 3;
+            ENTITY_FLAG_BITS(entity)->live = 0;
         }
         break;
     }
@@ -698,8 +698,8 @@ static void Minion_Dodge(Entity *entity) {
                 EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_1, 1, 7, 0, entity->params->motion_blend_frames >> 1, 1);
             }
         }
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
     case 1:
         if (((EntityAiStateKind151D30 *)ai_state)->motion_slot_0.frames_left == 0) {
@@ -708,11 +708,11 @@ static void Minion_Dodge(Entity *entity) {
         EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 entity->ai_state.think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);

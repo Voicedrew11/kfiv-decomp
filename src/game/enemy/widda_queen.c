@@ -80,7 +80,7 @@ void WiddaQueen_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
@@ -105,16 +105,16 @@ static void WiddaQueen_Animate(Entity *entity) {
     EntityAiState *ai_state;
 
     ai_state = &entity->ai_state;
-    if (ENTITY_FLAG_BITS(entity)->bit14) {
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+    if (ENTITY_FLAG_BITS(entity)->animates) {
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->motion_step_mode);
         }
         WiddaQueen_TurnPart9ToPlayer(entity, ai_state->step_index);
-        look_at_target = ENTITY_FLAG_BITS(entity)->bit9;
+        look_at_target = ENTITY_FLAG_BITS(entity)->look_at_target;
         limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
         limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
         limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
@@ -180,7 +180,7 @@ static void WiddaQueen_Think(Entity *entity, s32 unknown) {
 static void WiddaQueen_ThinkDecide(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_ShouldGuard(entity, 300.0f, 3.1415927f)) {
         // match: called as returning int; only then is the 2 below loaded into $3
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
@@ -188,16 +188,16 @@ static void WiddaQueen_ThinkDecide(Entity *entity, s32 unknown) {
         return;
     }
     ai_state->step_index = 1;
-    ENTITY_FLAG_BITS(entity)->bit9 = 1;
+    ENTITY_FLAG_BITS(entity)->look_at_target = 1;
     if (entity->attack_delay_frames == 0 && !(s32)(entity->flags >> 63) && WiddaQueen_CanAttack(entity)) {
         if (WiddaQueen_PickAttack(entity)) {
-            if (ENTITY_FLAG_BITS(entity)->bits58 == 0) {
+            if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
                 EntityAi_StartAction(entity, WiddaQueen_RangedAttack0, unknown);
             } else {
                 EntityAi_StartAction(entity, WiddaQueen_RangedAttack1, unknown);
             }
         } else {
-            if (ENTITY_FLAG_BITS(entity)->bits58 == 0) {
+            if (ENTITY_FLAG_BITS(entity)->attack_index == 0) {
                 EntityAi_StartAction(entity, WiddaQueen_MeleeAttack0, unknown);
             } else {
                 EntityAi_StartAction(entity, WiddaQueen_MeleeAttack1, unknown);
@@ -219,11 +219,11 @@ static void WiddaQueen_MeleeAttack0(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
-        ENTITY_FLAG_BITS(entity)->bit54 = 0;
-        ENTITY_FLAG_BITS(entity)->bit55 = 0;
-        ENTITY_FLAG_BITS(entity)->bit56 = 0;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
+        ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
+        ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -240,26 +240,26 @@ static void WiddaQueen_MeleeAttack0(Entity *entity) {
             ai_state->step_index = 2;
         }
         frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
-        if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + ai_state->part_angle_x));
+        if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + ai_state->part_angle_x));
         }
-        if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + ai_state->part_angle_x));
+        if (!ENTITY_FLAG_BITS(entity)->melee_1_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_1_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + ai_state->part_angle_x));
         }
-        if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + ai_state->part_angle_x));
+        if (!ENTITY_FLAG_BITS(entity)->melee_2_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_2_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + ai_state->part_angle_x));
         }
         if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk240->attack_delay);
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -280,12 +280,12 @@ static void WiddaQueen_MeleeAttack1(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x15, 10, (s16)entity->params->action_frames, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         ai_state->step_index = 0;
-        ENTITY_FLAG_BITS(entity)->bit54 = 0;
-        ENTITY_FLAG_BITS(entity)->bit55 = 0;
-        ENTITY_FLAG_BITS(entity)->bit56 = 0;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
+        ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
+        ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -294,10 +294,10 @@ static void WiddaQueen_MeleeAttack1(Entity *entity) {
         break;
     case 2:
         frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
-        if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->frame, entity->model->rotation[1] - 0.7853982f);
-            if (!ENTITY_FLAG_BITS(entity)->bit54) {
-                ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, entity->model->rotation[1] + 0.7853982f);
+        if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->frame, entity->model->rotation[1] - 0.7853982f);
+            if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
+                ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, entity->model->rotation[1] + 0.7853982f);
             }
         }
         if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
@@ -310,7 +310,7 @@ static void WiddaQueen_MeleeAttack1(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk240->attack_delay);
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -362,12 +362,12 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
         }
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -414,12 +414,12 @@ static void WiddaQueen_RangedAttack1(Entity *entity) {
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
         }
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -502,14 +502,14 @@ static s32 WiddaQueen_PickAttack(Entity *entity) {
         }
     }
     if (choice < 3) {
-        ENTITY_FLAG_BITS(entity)->bits58 = choice;
-        ENTITY_FLAG_BITS(entity)->bit57 = 0;
+        ENTITY_FLAG_BITS(entity)->attack_index = choice;
+        ENTITY_FLAG_BITS(entity)->ranged_attack = 0;
     } else {
-        ENTITY_FLAG_BITS(entity)->bits58 = choice - 3;
-        ENTITY_FLAG_BITS(entity)->bit57 = 1;
+        ENTITY_FLAG_BITS(entity)->attack_index = choice - 3;
+        ENTITY_FLAG_BITS(entity)->ranged_attack = 1;
     }
     EntityAi_LowerAttackWeight(entity);
-    return (s32)(entity->flags >> 57) & 1;
+    return (s32)(entity->flags >> 57) & ENTITY_FLAG_ACTIVE_LIST;
 }
 
 /* The death action (busy bit 0x40): animation 16, the fade over 20 frames and the removal, as
@@ -532,12 +532,12 @@ static void WiddaQueen_Death(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
-            ENTITY_FLAG_BITS(entity)->bit14 = 0;
-            ENTITY_FLAG_BITS(entity)->bits2 = 2;
-            ENTITY_FLAG_BITS(entity)->bit4 = 1;
-            ENTITY_FLAG_BITS(entity)->bit27 = 1;
-            ENTITY_FLAG_BITS(entity)->bit26 = 1;
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
+            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->dying = 2;
+            ENTITY_FLAG_BITS(entity)->no_respawn = 1;
+            ENTITY_FLAG_BITS(entity)->no_player_collision = 1;
+            ENTITY_FLAG_BITS(entity)->no_entity_collision = 1;
             entity->action_timer = 20;
             EntityEvent_OnDeath(entity);
             entity->action_step++;

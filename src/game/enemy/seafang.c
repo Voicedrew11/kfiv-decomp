@@ -81,7 +81,7 @@ void Seafang_Init(Entity *entity) {
     for (i = 5; i != -1; i--) {
         entity->attack_weights[i] = 0x80;
     }
-    ENTITY_FLAG_BITS(entity)->bit28 = 1;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = 1;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
@@ -115,7 +115,7 @@ static void Seafang_Think(Entity *entity, s32 unknown) {
                 return;
             }
         }
-        if (ENTITY_FLAG_BITS(entity)->bit53) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
             switch (entity->state) {
@@ -139,7 +139,7 @@ static void Seafang_ThinkIdle(Entity *entity, s32 unknown) {
     f32 direction[4];
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (entity->action_timer == 0) {
         if (rand() % 100 > 20) {
             EntityPoint_PickNearWithHeight(ai_state->target_point, entity->spawn_info->wander_radius, entity->spawn_info->wander_height_range, entity->spawn_info, entity->model->position);
@@ -169,7 +169,7 @@ static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -179,7 +179,7 @@ static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     side = EntityAi_PickCombatChoice(entity, 0);
-    ENTITY_FLAG_BITS(entity)->bit9 = 1;
+    ENTITY_FLAG_BITS(entity)->look_at_target = 1;
     if (entity->action_timer == 0 || side == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
@@ -192,8 +192,8 @@ static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
             if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
-                ENTITY_FLAG_BITS(entity)->bit57 = 0;
-                ENTITY_FLAG_BITS(entity)->bits58 = 0;
+                ENTITY_FLAG_BITS(entity)->ranged_attack = 0;
+                ENTITY_FLAG_BITS(entity)->attack_index = 0;
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             }
             return;
@@ -251,7 +251,7 @@ static void Seafang_ThinkLowerGradually(Entity *entity, s32 unknown) {
                 return;
             }
         }
-        if (ENTITY_FLAG_BITS(entity)->bit53) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
             switch (entity->state) {
@@ -278,7 +278,7 @@ static void Seafang_ThinkWander(Entity *entity, s32 unknown) {
     f32 direction[4];
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (entity->action_timer == 0) {
         if (rand() % 100 > 20) {
             EntityPoint_PickNear(entity->spawn_info->wander_radius, ai_state->target_point, entity->spawn_info, entity->model->position);
@@ -310,7 +310,7 @@ static void Seafang_ThinkCombatRunAtPlayer(Entity *entity, s32 unknown) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -320,7 +320,7 @@ static void Seafang_ThinkCombatRunAtPlayer(Entity *entity, s32 unknown) {
         return;
     }
     side = EntityAi_PickCombatChoice(entity, 0);
-    ENTITY_FLAG_BITS(entity)->bit9 = 1;
+    ENTITY_FLAG_BITS(entity)->look_at_target = 1;
     if (entity->action_timer == 0 || side == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
@@ -334,8 +334,8 @@ static void Seafang_ThinkCombatRunAtPlayer(Entity *entity, s32 unknown) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 if (ai_state->part_angle_x < -80.0f) {
-                    ENTITY_FLAG_BITS(entity)->bit57 = 0;
-                    ENTITY_FLAG_BITS(entity)->bits58 = 0;
+                    ENTITY_FLAG_BITS(entity)->ranged_attack = 0;
+                    ENTITY_FLAG_BITS(entity)->attack_index = 0;
                 }
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             }
@@ -452,10 +452,10 @@ static void Seafang_Death(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
-            ENTITY_FLAG_BITS(entity)->bit14 = 0;
-            ENTITY_FLAG_BITS(entity)->bits2 = 2;
-            ENTITY_FLAG_BITS(entity)->bit4 = 1;
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
+            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->dying = 2;
+            ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             entity->action_timer = 20;
             EntityEvent_OnDeath(entity);
             entity->action_step++;
@@ -483,16 +483,16 @@ static void Seafang_DeathWithoutDrop(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FLY) {
             entity->collision_radius = 20.0f;
         }
-        ENTITY_FLAG_BITS(entity)->bit14 = 1;
+        ENTITY_FLAG_BITS(entity)->animates = 1;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
-        ENTITY_FLAG_BITS(entity)->bits2 = 1;
-        ENTITY_FLAG_BITS(entity)->bit27 = 1;
-        ENTITY_FLAG_BITS(entity)->bit26 = 1;
-        ENTITY_FLAG_BITS(entity)->bit28 = 0;
+        ENTITY_FLAG_BITS(entity)->dying = 1;
+        ENTITY_FLAG_BITS(entity)->no_player_collision = 1;
+        ENTITY_FLAG_BITS(entity)->no_entity_collision = 1;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -500,11 +500,11 @@ static void Seafang_DeathWithoutDrop(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->action_timer = 20;
-            ENTITY_FLAG_BITS(entity)->bit14 = 0;
-            ENTITY_FLAG_BITS(entity)->bits2 = 2;
-            ENTITY_FLAG_BITS(entity)->bit4 = 1;
+            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->dying = 2;
+            ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             entity->action_step++;
         }
         break;
@@ -512,8 +512,8 @@ static void Seafang_DeathWithoutDrop(Entity *entity) {
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits2 = 3;
-            ENTITY_FLAG_BITS(entity)->bit1 = 0;
+            ENTITY_FLAG_BITS(entity)->dying = 3;
+            ENTITY_FLAG_BITS(entity)->live = 0;
         }
         break;
     }

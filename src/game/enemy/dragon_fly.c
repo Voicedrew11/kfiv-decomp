@@ -89,7 +89,7 @@ void DragonFly_Init(Entity *entity) {
     } else {
         EntityAi_StartAction(entity, ai_state->move, 0);
     }
-    ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
     ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
@@ -106,12 +106,12 @@ static void DragonFly_Animate(Entity *entity) {
 
     flags = entity->flags;
     ai_state = &entity->ai_state;
-    if (ENTITY_FLAG_BITS(entity)->bit14) {
+    if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
     }
 }
@@ -135,7 +135,7 @@ static void DragonFly_Think(Entity *entity, s32 unknown) {
     if (floor_distance < entity->collision_radius) {
         entity->model->position[1] -= entity->collision_radius - floor_distance;
     }
-    if (ENTITY_FLAG_BITS(entity)->bit53) {
+    if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         DragonFly_ThinkReturn(entity, unknown);
         return;
     }
@@ -161,7 +161,7 @@ static void DragonFly_ThinkReturn(Entity *entity, s32 unknown) {
     s32 turn;
 
     entity->action_timer = 0;
-    ENTITY_FLAG_BITS(entity)->bits11 = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn == 0) {
         entity->target = entity->spawn_info;
@@ -173,7 +173,7 @@ static void DragonFly_ThinkReturn(Entity *entity, s32 unknown) {
             push[1] += entity->wall_push[1];
             push[2] += entity->wall_push[2];
         }
-        if ((s32)(entity->flags >> 48) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->entity_push) {
             push[0] += entity->entity_push[0];
             push[1] += entity->entity_push[1];
             push[2] += entity->entity_push[2];
@@ -220,7 +220,7 @@ static void DragonFly_ThinkWander(Entity *entity, s32 unknown) {
     f32 direction[4];
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     if (entity->action_timer == 0) {
         if (rand() % 100 > 20) {
             EntityPoint_PickNearWithHeight(ai_state->target_point, entity->spawn_info->wander_radius, entity->spawn_info->wander_height_range, entity->spawn_info, entity->model->position);
@@ -256,7 +256,7 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
     s32 turn;
     s32 roll;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 0;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     if (ai_state->move_choice != 4 && entity->attack_delay_frames == 0 && EntityAi_CanAttack(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, DragonFly_RangedAttack, unknown);
@@ -488,17 +488,17 @@ static void DragonFly_Move(Entity *entity) {
    flag bit 9 as it is. */
 static void DragonFly_MeleeAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ENTITY_FLAG_BITS(entity)->bits58];
+    EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ENTITY_FLAG_BITS(entity)->attack_index];
     s32 frame;
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
-        ENTITY_FLAG_BITS(entity)->bit54 = 0;
-        ENTITY_FLAG_BITS(entity)->bit55 = 0;
-        ENTITY_FLAG_BITS(entity)->bit56 = 0;
+        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->attack_index | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
+        ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
+        ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -515,26 +515,26 @@ static void DragonFly_MeleeAttack(Entity *entity) {
             ai_state->turn_rate = 0.0f;
         }
         frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
-        if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->level_tables->frame);
+        if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->level_tables->frame);
         }
-        if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->level_tables->frame);
+        if (!ENTITY_FLAG_BITS(entity)->melee_1_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_1_hit = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->level_tables->frame);
         }
-        if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->level_tables->frame);
+        if (!ENTITY_FLAG_BITS(entity)->melee_2_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_2_hit = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->level_tables->frame);
         }
         if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk240->attack_delay);
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -555,7 +555,7 @@ static void DragonFly_RangedAttack(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAGS(entity) &= ~0x3800;
+        ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -579,12 +579,12 @@ static void DragonFly_RangedAttack(Entity *entity) {
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
         }
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
