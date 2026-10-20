@@ -287,7 +287,7 @@ int Collision_FindFloorBelow(f32 reach, void *point_arg) {
                 if (record->model->strips == NULL) {
                     continue;
                 }
-                if (record->record_flags & 0x40000000) {
+                if (record->record_flags & MAP_RECORD_HIDDEN) {
                     continue;
                 }
                 if (point[0] < record->lowest[0] || record->highest[0] < point[0] || point[2] < record->lowest[2] ||
@@ -360,7 +360,7 @@ int Collision_FindWaterBelow(f32 reach, void *point_arg) {
                 if (record->model->strips == NULL) {
                     continue;
                 }
-                if (record->record_flags & 0x40000000) {
+                if (record->record_flags & MAP_RECORD_HIDDEN) {
                     continue;
                 }
                 if (point[0] < record->lowest[0] || record->highest[0] < point[0] || point[2] < record->lowest[2] ||
@@ -440,7 +440,7 @@ void Collision_CastRayAtMap(f32 scale, void *position_arg, void *direction) {
                 if (record->model->strips == NULL) {
                     continue;
                 }
-                if (record->record_flags & 0x40000000) {
+                if (record->record_flags & MAP_RECORD_HIDDEN) {
                     continue;
                 }
                 Vector_Copy(lowest, record->lowest);
@@ -541,7 +541,7 @@ void Collision_CastRayAtMapLists(f32 scale, void *position_arg, void *direction,
                 if (record->model->strips == NULL) {
                     continue;
                 }
-                if (record->record_flags & 0x40000000) {
+                if (record->record_flags & MAP_RECORD_HIDDEN) {
                     continue;
                 }
                 Vector_Copy(lowest, record->lowest);
@@ -650,7 +650,7 @@ void Collision_CastSegmentAtMap(f32 *position, f32 *target) {
                 if (model->model.strips == NULL) {
                     continue;
                 }
-                if (record->record_flags & 0x40000000) {
+                if (record->record_flags & MAP_RECORD_HIDDEN) {
                     continue;
                 }
                 Vector_Copy(lowest, record->lowest);
@@ -1355,7 +1355,7 @@ s32 Collision_HitRayQuadObj(AnimObject *object, f32 *param1, f32 *param2, f32 pa
     f32 *point3;
     s32 result;
 
-    result = ANIM_OBJECT_FLAGS(object) & 0x10000;
+    result = ANIM_OBJECT_FLAGS(object) & OBJECT_FLAG_QUAD_HIT;
     if (result) {
         point0 = object->model->get_point(object->model, 0);
         point1 = object->model->get_point(object->model, 1);
@@ -1448,7 +1448,7 @@ void Collision_HitSphereMeshObj(CollisionOwner *owner, f32 *point, float factor)
     StripVertex *vertex;
     int i, j;
 
-    if (owner->flags & 0x10000) {
+    if (owner->flags & OBJECT_FLAG_QUAD_HIT) {
         list = owner->model->strips;
         if (list != NULL && list->total_vertex_count >= 4U) {
             Collision_TransformMeshPoints(owner->model);
@@ -1968,7 +1968,7 @@ int Collision_HitCapsuleQuadObj(CollisionOwner *owner, f32 *point, float first_v
     f32 *point_a, *point_b, *point_c, *point_d;
     int result;
 
-    if (owner->flags & 0x10000) {
+    if (owner->flags & OBJECT_FLAG_QUAD_HIT) {
         point_a = owner->model->get_point(owner->model, 0);
         point_b = owner->model->get_point(owner->model, 1);
         point_c = owner->model->get_point(owner->model, 2);
@@ -2657,7 +2657,7 @@ void Collision_PushOutOfQuadObj(CollisionOwner *owner, f32 *position, f32 radius
     f32 *point3;
     f32 height;
 
-    if (owner->flags & 0x10000) {
+    if (owner->flags & OBJECT_FLAG_QUAD_HIT) {
         point0 = (f32 *)owner->model->get_point(owner->model, 0);
         point1 = (f32 *)owner->model->get_point(owner->model, 1);
         point3 = (f32 *)owner->model->get_point(owner->model, 3);
@@ -2698,7 +2698,7 @@ s32 Collision_StandOnMeshObj(CollisionOwner *owner, f32 *position, f32 radius) {
     s32 j;
     f32 lowest;
 
-    if (owner->flags & 0x10000) {
+    if (owner->flags & OBJECT_FLAG_QUAD_HIT) {
         mesh = (CollisionMesh *)owner->model->strips;
         if (mesh == NULL) {
             return FALSE;
@@ -2743,7 +2743,7 @@ s32 Collision_StandOnQuadObj(CollisionOwner *owner, f32 *position, f32 radius) {
     f32 *point3;
     f32 lowest;
 
-    if (owner->flags & 0x10000) {
+    if (owner->flags & OBJECT_FLAG_QUAD_HIT) {
         point0 = (f32 *)owner->model->get_point(owner->model, 0);
         point1 = (f32 *)owner->model->get_point(owner->model, 1);
         point2 = (f32 *)owner->model->get_point(owner->model, 2);

@@ -562,7 +562,7 @@ static int Entity_IsMapRecordActive(Entity *entity) {
     if (!found) {
         return TRUE;
     }
-    if (record->record_flags & MAP_RECORD_FLAG_INACTIVE) {
+    if (record->record_flags & MAP_RECORD_HIDDEN) {
         return FALSE;
     }
     if (index == current_map_slot) {
@@ -615,7 +615,7 @@ static MapRecordBounds *Entity_FindMapRecordUnder(Entity *entity) {
         if (slots[map]->loaded != 0) {
             record = (MapRecordBounds *)slots[map]->records;
             for (i = 0; i < ((MapSlotUnk08 *)slots[map]->header)->record_count; i++, record++) {
-                if (record->record_flags & MAP_RECORD_FLAG_INACTIVE) {
+                if (record->record_flags & MAP_RECORD_HIDDEN) {
                     continue;
                 }
                 if (record->collision_mesh_index == 0xFFFF) {
@@ -654,7 +654,7 @@ static MapRecordBounds *Entity_FindMapRecordUnder(Entity *entity) {
         if (slots[map]->loaded != 0) {
             record = (MapRecordBounds *)slots[map]->records;
             for (i = 0; i < ((MapSlotUnk08 *)slots[map]->header)->record_count; i++, record++) {
-                if (record->record_flags & MAP_RECORD_FLAG_INACTIVE) {
+                if (record->record_flags & MAP_RECORD_HIDDEN) {
                     continue;
                 }
                 if (entity->model->position[0] < record->box_lowest[0] - reach) {

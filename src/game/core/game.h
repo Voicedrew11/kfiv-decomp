@@ -18,7 +18,7 @@ typedef struct {
     char pad08[0x18];
     int item_to_use;                /* 0x20 the item to use (Player_UseItem), with bit6 */
     u32 bit0 : 1;                   /* 0x24 */
-    u32 bit1 : 1;                   /* set while MapObject_UpdateClosedChest runs an event */
+    u32 bit1 : 1;                   /* the player is using the object they face (faced_object): the use button (Player_Update) */
     u32 bit2 : 1;
     u32 bit3 : 1;
     u32 bit4 : 1;
@@ -68,6 +68,15 @@ typedef struct {
 /* GameStatus.update_hold_flags bits: 0x40 holds the scripts (Script_UpdateAll), 0x400 updates only the effect owned by effect_owner */
 #define UPDATE_HOLD_SCRIPTS            0x40
 #define UPDATE_HOLD_EFFECT_OWNER_ONLY  0x400
+/* game_status_flags, the flag word of GameStatus (0x24), as bit-fields */
+typedef struct {
+    u32 pad0 : 1;
+    u32 using_faced_object : 1;     /* the player is using the object they face (faced_object): the use button (Player_Update) */
+} GameStatusFlagBits;
+
+#define GAME_STATUS_FLAG_BITS(flags) ((GameStatusFlagBits *)(flags))
+
+#define UPDATE_HOLD_MAP_OBJECTS 0x8        /* holds back MapObject_UpdateAll, the map objects' update */
 
 /* current_play_time: the play time as PlayTime_ComputeCurrent splits it (byte 1 seconds, 2 minutes, 3 and 5 hours), passed by value */
 typedef struct {

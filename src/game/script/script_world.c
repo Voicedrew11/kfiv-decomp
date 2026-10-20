@@ -881,9 +881,9 @@ void ScriptCmd_SetPropSolid(ScriptCallCommand *command) {
     prop = Map_GetRecordById(current_map_slot, command->target_id.value);
     if (prop != NULL) {
         if (command->first.value != 0) {
-            prop->record_flags &= ~MAP_RECORD_FLAG_INACTIVE;
+            prop->record_flags &= ~MAP_RECORD_HIDDEN;
         } else {
-            prop->record_flags |= MAP_RECORD_FLAG_INACTIVE;
+            prop->record_flags |= MAP_RECORD_HIDDEN;
         }
     }
     command->active = 0;

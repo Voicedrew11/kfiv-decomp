@@ -17,7 +17,7 @@ void MapObject_StartToggle(MapObject *object) {
 
 /* Step 1 of kind 7: used by the player, it flips its on bit (bit 17) and goes to step 2. */
 void MapObject_UpdateIdleToggle(MapObject *object) {
-    if ((game_status_flags[0] >> 1) & 1) {
+    if (GAME_STATUS_FLAG_BITS(game_status_flags)->using_faced_object) {
         if (faced_object[0] == object) {
             MAP_OBJECT_BYTES(object)->step = 2;
             object->state_flags = (object->state_flags & ~MAP_OBJECT_ON) | ((((s32)object->state_flags >> 17) ^ 1) & 1) << 17;
@@ -61,7 +61,7 @@ void MapObject_StartSwitch(MapObject *object) {
 void MapObject_UpdateOffSwitch(MapObject *switch_object) {
     MapObject *object;
 
-    if (((game_status_flags[0] >> 1) & 1) && (object = faced_object[0]) == switch_object) {
+    if (GAME_STATUS_FLAG_BITS(game_status_flags)->using_faced_object && (object = faced_object[0]) == switch_object) {
         MAP_OBJECT_BYTES(object)->step = 2;
         object->state_flags |= MAP_OBJECT_ON;
     }
@@ -81,7 +81,7 @@ void MapObject_UpdateSwitchTurningOn(MapObject *object) {
 void MapObject_UpdateOnSwitch(MapObject *switch_object) {
     MapObject *object;
 
-    if (((game_status_flags[0] >> 1) & 1) && (object = faced_object[0]) == switch_object) {
+    if (GAME_STATUS_FLAG_BITS(game_status_flags)->using_faced_object && (object = faced_object[0]) == switch_object) {
         MAP_OBJECT_BYTES(object)->step = 4;
         object->state_flags &= ~MAP_OBJECT_ON;
     }

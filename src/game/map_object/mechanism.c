@@ -89,7 +89,7 @@ void MapObject_UpdateLadder(MapObject *object) {
     f32 turn;
     f32 half_angle;
 
-    if (!((game_status_flags[0] >> 1) & 1)) {
+    if (!GAME_STATUS_FLAG_BITS(game_status_flags)->using_faced_object) {
         return;
     }
     if ((s32)(player_state.status_bits >> 36) & 1) {

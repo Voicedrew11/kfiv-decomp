@@ -1120,7 +1120,18 @@ typedef struct {
     f32 highest[4];                 /* 0x70 highest x, y, z it covers */
 } MapRecord;
 
-#define MAP_RECORD_FLAG_FRAME_EFFECTS 0x4000000 /* EntityEvent_StartFrameEffects does its work while set */
+/* MapRecord.record_flags high word (0x3C), as MapRecordBounds, MapDrawRecord and AreaNode read it */
+#define MAP_RECORD_HIDDEN            0x40000000  /* hidden: not collided with, not found by the box lookups (hide_record) */
+#define MAP_RECORD_BACKDROP          0x80000000  /* linked into backdrop_record_boxes, not record_boxes (Map_InsertRecordBySize) */
+#define MAP_RECORD_NOT_IN_BOX_LISTS  0x02000000  /* left out of the record box lists (Map_InsertRecordBySize) */
+#define MAP_RECORD_SCREEN_EXEMPT     0x40        /* skips the on-screen test (Map_ClassifyRecordOnScreen) */
+#define MAP_RECORD_CURRENT_BLOCKS    0x10        /* drawn with the current light and fog blocks, not its map's own */
+#define MAP_RECORD_Z_WRITE           0x80        /* z writes on while it is drawn (Map_DrawLateRecords) */
+#define MAP_RECORD_WAVE_UVS          0x100       /* its UVs are built as waves (Map_BuildRecords) */
+#define MAP_RECORD_RIPPLED           0x200       /* drawn rippled (Wobble_DrawRippledModel) */
+#define MAP_RECORD_FRAME_EFFECTS     0x4000000   /* EntityEvent_StartFrameEffects does its work while set */
+/* the map slot a MapRecord belongs to: bit 27 of record_flags (MapRecordBits.map) */
+#define MAP_RECORD_MAP(record) ((u8)((record)->record_flags >> 27) & 1)
 
 /* one of the 0x80-byte records MapSlot.light_blocks (map/map.h) points at, indexed by byte 3 of
    EntitySpawnInfo.spawn_flags */

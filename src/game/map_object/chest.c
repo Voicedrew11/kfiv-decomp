@@ -17,10 +17,10 @@ void MapObject_UpdateClosedChest(void *, int);
 void MapObject_SetupItemHolder(MapObject *);
 extern void (*map_object_update_hooks[])(MapObject *);
 extern Qword object_item_scale;
-extern u32 game_status_flags[];
 extern void *faced_object[];
 extern u8 item_counts[];
 extern GameStatus game_status;
+extern u32 game_status_flags[];
 extern EventRunner view_ray_status;
 
 /* Step 1 of the bones and gravestones (kind 3): used by the player, one that still holds its item spawns it
@@ -33,7 +33,7 @@ void MapObject_UpdateItemHolder(MapObject *object) {
     if (object->work[0] > 0) {
         object->work[0]--;
     }
-    if (((game_status_flags[0] >> 1) & 1) && faced_object[0] == object) {
+    if (GAME_STATUS_FLAG_BITS(game_status_flags)->using_faced_object && faced_object[0] == object) {
         if (object->source->kind_param_0 != 0 && !(object->state_flags & MAP_OBJECT_EMPTIED)) {
             object->model->update_bone_points(object->model);
             MapItem_StartPickup((ModelNode *)MapItem_PutOutForObject(
@@ -123,7 +123,7 @@ void MapObject_UpdateClosedChest(void *arg, int unused) {
     if (work[1] > 0) {
         work[1]--;
     }
-    if (((game_status_flags[0] >> 1) & 1) && faced_object[0] == object) {
+    if (GAME_STATUS_FLAG_BITS(game_status_flags)->using_faced_object && faced_object[0] == object) {
         source = object->source;
         key = ((MapObjectUnk08Words *)source)->kind_param_1;
         if (key != 0) {
@@ -191,7 +191,7 @@ void MapObject_UpdateOpenChest(MapObject *object) {
     if (work[1] > 0) {
         work[1]--;
     }
-    if (((game_status_flags[0] >> 1) & 1) && faced_object[0] == object) {
+    if (GAME_STATUS_FLAG_BITS(game_status_flags)->using_faced_object && faced_object[0] == object) {
         if (!(object->state_flags & MAP_OBJECT_EMPTIED) &&
             ((source = MAP_OBJECT_WORDS(object))->kind_param_0 != 0 || source->kind_param_2 != 0)) {
             pickup = MapItem_FindForObject((int)object);

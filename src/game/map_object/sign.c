@@ -1,3 +1,4 @@
+#include "core/game.h"
 #include "model/model.h"
 #include "ui/splash.h"
 #include "ui/message.h"
@@ -24,7 +25,7 @@ void MapObject_StartExaminable(MapObject *object) {
 void MapObject_UpdateExaminable(MapObject *object) {
     MapObject *used;
 
-    if (((game_status_flags[0] >> 1) & 1) && (used = faced_object[0]) == object) {
+    if (GAME_STATUS_FLAG_BITS(game_status_flags)->using_faced_object && (used = faced_object[0]) == object) {
         if (used->work[0] != 0) {
             MAP_OBJECT_BYTES(used)->step = 2;
         } else {

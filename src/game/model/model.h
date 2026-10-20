@@ -611,6 +611,7 @@ typedef struct {
 /* MapObjectUnk04's first word whole, where retail tests a bit of it with a mask (Player_Move) */
 #define MAP_OBJECT_DEF_FLAGS(def) (*(u32 *)(def))
 #define MAP_OBJECT_DEF_CARRIES 0x8000   /* bit15 */
+#define MAP_OBJECT_DEF_FADE_ON_BREAK 0x20000 /* definition_flags: fades out over its breaking animation (MapObject_UpdateBreaking) */
 
 /* MapObjectUnk04.kind read as the byte it is, where retail compares it that way (Collision_PushOutOfMeshObj) */
 #define MAP_OBJECT_DEF_KIND(def) (*(u8 *)(def))
@@ -636,6 +637,9 @@ typedef struct {
 
 /* the 32-bit flags at AnimObject+0x10 */
 #define ANIM_OBJECT_FLAGS(object) (*(u32 *)&(object)->anim_flags)
+
+/* the same word of AnimObject and CollisionOwner: the object is hit as a quad of model points 0 to 3 */
+#define OBJECT_FLAG_QUAD_HIT 0x10000
 
 /* the objects of a map, looked up by MapObject_GetById(map, id) */
 typedef struct {
@@ -671,8 +675,13 @@ typedef struct {
 #define MAP_OBJECT_SCRIPTED         0x100000  /* bit 20: a script drives it (MapObject_SetScripted) */
 #define MAP_OBJECT_FLAG_400000      0x400000  /* bit 22: set from a script; the motion-done script commands treat it as never done */
 
-/* the first word of the definition, whole (bit 11 0x800, bit 12 0x1000) */
+/* the first word of the definition, whole */
 #define MAP_OBJECT_DEF_WORD(object) (*(u32 *)(object)->definition)
+#define MAP_OBJECT_DEF_SKINNED      0x100   /* drawn as a skinned model (from the skinned object models) */
+#define MAP_OBJECT_DEF_HAS_MOTION   0x200   /* has a motion (its motion_index) */
+#define MAP_OBJECT_DEF_GLOW         0x4000  /* lit by the glow lights while the glow item is worn */
+#define MAP_OBJECT_DEF_BREAKABLE    0x800   /* MapObject_Break can break it */
+#define MAP_OBJECT_DEF_BREAK_ANIM   0x1000  /* it has a breaking animation */
 
 /* MapObject.work as most kinds use it */
 typedef struct {

@@ -1,3 +1,4 @@
+#include "core/game.h"
 #include "map_object/map_object.h"
 #include "model/model.h"
 #include "ui/message.h"
@@ -65,7 +66,7 @@ void MapObject_UpdateClosedDoor(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (faced_object[0] == object && ((game_status_flags[0] >> 1) & 1)) {
+    if (faced_object[0] == object && GAME_STATUS_FLAG_BITS(game_status_flags)->using_faced_object) {
         item = object->source->kind_param_0;
         if (item != 0 && !(object->state_flags & MAP_OBJECT_EMPTIED)) {
             if (item_counts[item] != 0) {
