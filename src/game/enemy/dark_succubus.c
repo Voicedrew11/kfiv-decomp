@@ -333,7 +333,7 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 run_now) {
         if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + PI))) {
             ai_state->move_choice = rand() % 3 + 2;
         } else {
-            entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
+            entity->move_command |= EntityAi_TurnCommand(entity);
             entity->move_command |= MOVE_COMMAND_BACK;
         }
         break;
@@ -341,7 +341,7 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 run_now) {
         if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] - HALF_PI))) {
             ai_state->move_choice = 3;
         } else {
-            entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
+            entity->move_command |= EntityAi_TurnCommand(entity);
             entity->move_command |= MOVE_COMMAND_STEP_LEFT;
             if (entity->distance_to_player > ai_state->keep_max_distance) {
                 entity->move_command |= MOVE_COMMAND_FORWARD;
@@ -354,7 +354,7 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 run_now) {
         if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + HALF_PI))) {
             ai_state->move_choice = 2;
         } else {
-            entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
+            entity->move_command |= EntityAi_TurnCommand(entity);
             entity->move_command |= MOVE_COMMAND_STEP_RIGHT;
             if (entity->distance_to_player > ai_state->keep_max_distance) {
                 entity->move_command |= MOVE_COMMAND_FORWARD;
@@ -458,7 +458,7 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 run_now) {
         if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + PI))) {
             ai_state->move_choice = rand() % 3 + 2;
         } else {
-            entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
+            entity->move_command |= EntityAi_TurnCommand(entity);
             entity->move_command |= MOVE_COMMAND_BACK;
         }
         break;
@@ -466,7 +466,7 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 run_now) {
         if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] - HALF_PI))) {
             ai_state->move_choice = 3;
         } else {
-            entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
+            entity->move_command |= EntityAi_TurnCommand(entity);
             entity->move_command |= MOVE_COMMAND_STEP_LEFT;
             if (entity->distance_to_player > ai_state->keep_max_distance) {
                 entity->move_command |= MOVE_COMMAND_FORWARD;
@@ -479,7 +479,7 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 run_now) {
         if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + HALF_PI))) {
             ai_state->move_choice = 2;
         } else {
-            entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
+            entity->move_command |= EntityAi_TurnCommand(entity);
             entity->move_command |= MOVE_COMMAND_STEP_RIGHT;
             if (entity->distance_to_player > ai_state->keep_max_distance) {
                 entity->move_command |= MOVE_COMMAND_FORWARD;
@@ -593,7 +593,7 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 run_no
         if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + PI))) {
             ai_state->move_choice = rand() % 3 + 2;
         } else {
-            entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
+            entity->move_command |= EntityAi_TurnCommand(entity);
             entity->move_command |= MOVE_COMMAND_BACK;
         }
         break;
@@ -601,7 +601,7 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 run_no
         if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] - HALF_PI))) {
             ai_state->move_choice = 3;
         } else {
-            entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
+            entity->move_command |= EntityAi_TurnCommand(entity);
             entity->move_command |= MOVE_COMMAND_STEP_LEFT;
             if (entity->distance_to_player > ai_state->keep_max_distance) {
                 entity->move_command |= MOVE_COMMAND_FORWARD;
@@ -614,7 +614,7 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 run_no
         if (EntityAi_IsPushedFromFront(entity, EntityMath_WrapAngle(entity->model->rotation[1] + HALF_PI))) {
             ai_state->move_choice = 2;
         } else {
-            entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
+            entity->move_command |= EntityAi_TurnCommand(entity);
             entity->move_command |= MOVE_COMMAND_STEP_RIGHT;
             if (entity->distance_to_player > ai_state->keep_max_distance) {
                 entity->move_command |= MOVE_COMMAND_FORWARD;
@@ -1043,7 +1043,7 @@ static void DarkSuccubus_MoveAlongArc(Entity *entity) {
         ai_state->heading_speed = EntityMath_Approach(ai_state->heading_speed, entity->params->max_speed, entity->params->speed_step_per_frame);
         ai_state->pitch_speed = EntityMath_Approach(ai_state->pitch_speed, 20.0f, 2.0f);
         if (ai_state->pitch_speed > 0.0f) {
-            entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
+            entity->move_command |= EntityAi_TurnCommand(entity);
             entity->move_command |= MOVE_COMMAND_TURN_FAST;
         }
         if (entity->flags & (ENTITY_FLAG_ON_FLOOR | ENTITY_FLAG_ON_TOP)) {

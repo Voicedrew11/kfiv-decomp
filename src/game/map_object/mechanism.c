@@ -151,8 +151,7 @@ void MapObject_UpdateShooter(MapObject *object) {
     shot->player_power = 0;
     shot->is_magic_shot = 1;
     shot->player_magic = 0;
-    // match: the id is passed as 16 bits
-    ((void (*)(u16, void *, void *, void *, void *))Attack_LaunchMagicEffect)(MAP_OBJECT_WORDS(object)->kind_param_0, shot, point, &aim, object);
+    Attack_LaunchMagicEffect(MAP_OBJECT_WORDS(object)->kind_param_0, shot, point, &aim, object);
 }
 
 /* Signal hook of kind 0x10: turns its shooting on or off (bit 17). */

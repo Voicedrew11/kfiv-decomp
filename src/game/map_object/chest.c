@@ -93,8 +93,7 @@ void MapObject_StartChest(MapObject *object) {
 /* Update handler of a closed chest (kind 4): used by the player, it opens (when it needs a key the player
    must hold it, else its name or "Locked" is shown) and hands out its item, or drops the gold of its third
    word. */
-void MapObject_UpdateClosedChest(void *arg, int unused) {
-    MapObject *object = arg;
+void MapObject_UpdateClosedChest(MapObject *object) {
     Vector4 position;
     Vector4 turn;
     Qword unk_value;
@@ -211,7 +210,7 @@ void MapObject_OpenChestOnSignal(GameEvent *event, int mode) {
         bit = game_status.using_faced_object;
         game_status.using_faced_object = 1;
         view_ray_status.current = event;
-        MapObject_UpdateClosedChest(event, mode);
+        MapObject_UpdateClosedChest((MapObject *)event);
         view_ray_status.current = saved;
         game_status.using_faced_object = bit;
     }

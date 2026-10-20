@@ -237,11 +237,11 @@ static void Menu_ShiftEquipModelsNextList(int value, void *unused_data);
 static void Menu_ShiftEquipModelsPrevList(int arg, void *unused_data);
 static void Menu_ShiftEquipModelsPrevItem(int unused, void *unused_data);
 static void Menu_ShiftEquipModelsNextItem(int unused, void *unused_data);
-static void Menu_OpenModelFile(ChunkUpload *upload);
-static void Menu_WaitModelRead(ChunkUpload *upload);
-static void Menu_FinishModelLoad(ChunkUpload *upload);
+static void Menu_OpenModelFile(LinkNode *node);
+static void Menu_WaitModelRead(LinkNode *node);
+static void Menu_FinishModelLoad(LinkNode *node);
 static void Menu_OpenWornModelFile(LinkNode *node);
-static void Menu_WaitWornModelRead(ChunkUpload *upload);
+static void Menu_WaitWornModelRead(LinkNode *node);
 static void Menu_FinishWornModelLoad(LinkNode *node);
 static void Menu_StepWornModelLoad(LinkNode *node);
 static void Menu_OpenPackageFile(ChunkUpload *upload);
@@ -783,57 +783,57 @@ static void Menu_ShiftEquipModelsNextItem(int unused, void *unused_data) {
 }
 
 /* Stage 0 of a menu model's load: opens the node's file (a stand-in model when there is none) and starts reading it. */
-static void Menu_OpenModelFile(ChunkUpload *upload) {
+static void Menu_OpenModelFile(LinkNode *node) {
     s32 file_handle;
 
-    file_handle = File_OpenUnflagged(upload->name, 1, 1);
-    upload->file_handle = file_handle;
+    file_handle = File_OpenUnflagged(node->name, 1, 1);
+    node->file_handle = file_handle;
     if (file_handle < 0) {
-        upload->file_handle = File_Open("menu/select2/i0000.mod", 1, 1);
+        node->file_handle = File_Open("menu/select2/i0000.mod", 1, 1);
     }
-    File_Read(upload->file_handle, upload->pool_node->buffer, 0x25800);
-    model_read_file = upload->file_handle;
-    upload->stage++;
+    File_Read(node->file_handle, ((ChunkPoolNode *)node->pool_node)->buffer, 0x25800);
+    model_read_file = node->file_handle;
+    node->stage++;
 }
 
 /* Stage 1 of a menu model's load: when the read has finished closes the file and goes on; on error starts over. */
-static void Menu_WaitModelRead(ChunkUpload *upload) {
+static void Menu_WaitModelRead(LinkNode *node) {
     s32 status;
 
-    status = File_Sync(upload->file_handle, 1);
+    status = File_Sync(node->file_handle, 1);
     if (status == 0) {
-        File_Close(upload->file_handle);
+        File_Close(node->file_handle);
         model_read_file = -1;
-        upload->stage++;
+        node->stage++;
     } else if (status < 0) {
-        File_Close(upload->file_handle);
-        upload->done = upload->stage = 0;
+        File_Close(node->file_handle);
+        node->done = node->stage = 0;
         model_read_file = -1;
     }
 }
 
 /* Stage 2 of a menu model's load: hands the model part of the file over and marks the node done. */
-static void Menu_FinishModelLoad(ChunkUpload *upload) {
+static void Menu_FinishModelLoad(LinkNode *node) {
     LinkFile *file;
 
-    file = upload->pool_node->buffer;
+    file = ((ChunkPoolNode *)node->pool_node)->buffer;
     PoolPartFile_Relocate((PoolPartFile *)((char *)file + file->first_offset));
     FlushCache(0);
-    upload->done = 1;
-    upload->stage = 0;
-    upload->file_handle = -1;
+    node->done = 1;
+    node->stage = 0;
+    node->file_handle = -1;
 }
 
 /* the stages of a menu model's load: open, wait for the read, hand the model over */
-static const ChunkUploadStages model_load_stages = { {
-    (void (*)(void *))Menu_OpenModelFile,
-    (void (*)(void *))Menu_WaitModelRead,
-    (void (*)(void *))Menu_FinishModelLoad,
+static const LinkNodeStages model_load_stages = { {
+    Menu_OpenModelFile,
+    Menu_WaitModelRead,
+    Menu_FinishModelLoad,
 } };
 
 /* The callback of a menu model's load node: runs the stage the node is at, until it is done. */
 void Menu_StepModelLoad(LinkNode *node) {
-    ChunkUploadStages stages = model_load_stages;
+    LinkNodeStages stages = model_load_stages;
 
     if (node->done == 0) {
         stages.stage[node->stage](node);
@@ -867,17 +867,17 @@ static void Menu_OpenWornModelFile(LinkNode *node) {
 }
 
 /* Stage 1 of an equipment model's load: as Stage 1 of a menu model's, and an error also frees the screen's input. */
-static void Menu_WaitWornModelRead(ChunkUpload *upload) {
+static void Menu_WaitWornModelRead(LinkNode *node) {
     s32 status;
 
-    status = File_Sync(upload->file_handle, 1);
+    status = File_Sync(node->file_handle, 1);
     if (status == 0) {
-        File_Close(upload->file_handle);
+        File_Close(node->file_handle);
         model_read_file = -1;
-        upload->stage++;
+        node->stage++;
     } else if (status < 0) {
-        File_Close(upload->file_handle);
-        upload->done = upload->stage = 0;
+        File_Close(node->file_handle);
+        node->done = node->stage = 0;
         model_read_file = -1;
         worn_model_loading = 0;
     }
@@ -925,15 +925,15 @@ static void Menu_FinishWornModelLoad(LinkNode *node) {
 }
 
 /* the stages of an equipment model's load: open, wait for the read, give the model to its slot */
-static const ChunkUploadStages stream_load_stages = { {
-    (void (*)(void *))Menu_OpenWornModelFile,
-    (void (*)(void *))Menu_WaitWornModelRead,
-    (void (*)(void *))Menu_FinishWornModelLoad,
+static const LinkNodeStages stream_load_stages = { {
+    Menu_OpenWornModelFile,
+    Menu_WaitWornModelRead,
+    Menu_FinishWornModelLoad,
 } };
 
 /* The callback of the node that loads the worn models (worn_model_loader): runs the stage it is at, until all are loaded. */
 static void Menu_StepWornModelLoad(LinkNode *node) {
-    ChunkUploadStages handlers = stream_load_stages;
+    LinkNodeStages handlers = stream_load_stages;
 
     if (node->done == 0) {
         handlers.stage[node->stage](node);
@@ -994,9 +994,9 @@ static void Menu_FinishPackageLoad(ChunkUpload *upload) {
 
 /* the stages of a package's load: open, wait for the read, hand every chunk over */
 static const ChunkUploadStages package_load_stages = { {
-    (void (*)(void *))Menu_OpenPackageFile,
-    (void (*)(void *))Menu_WaitPackageRead,
-    (void (*)(void *))Menu_FinishPackageLoad,
+    Menu_OpenPackageFile,
+    Menu_WaitPackageRead,
+    Menu_FinishPackageLoad,
 } };
 
 /* The callback of the package load node npc_package_load: runs the stage it is at, until it is done. */

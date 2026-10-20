@@ -29,7 +29,7 @@ void EntityAi_ShakeCamera(int float_value, int int_value);
 void EntityAi_SetState(Entity *entity, u8 state);
 /* Installs the entity's per-frame update (Entity.update_func; the type table entity_type_handlers gives it) and puts
    action_step back to 0 */
-void EntityAi_SetUpdate(Entity *entity, s32 update);
+void EntityAi_SetUpdate(Entity *entity, EntityHandler update);
 /* Switches the entity's handler, keeping the old one as prev_handler; optionally runs the new one now */
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 /* Switches the entity to handler (keeping the old one), sets flag bit 57 and bits 58-59, optionally runs it */
@@ -126,7 +126,7 @@ void Motion_SetPartSlot(ModelInstance *model, int index, u8 value);
    is 0 */
 int EntityAi_StartSlotMotion(Entity *entity, EntityMotionSlotWord *slot, int channel, int animation, int frame, int frames, int force);
 /* Plays a motion slot a step on (Motion_BlendSlotToPose with weight) and returns its frames left, counted down by one */
-int EntityAi_StepSlotMotion(Entity *entity, EntityMotionSlot *slot, int channel, f32 weight);
+int EntityAi_StepSlotMotion(Entity *entity, EntityAiMotionSlotBits *slot, int channel, f32 weight);
 /* Cubic Hermite interpolation: weights the two points and two tangents by the Hermite basis at ratio and
    hands them to Vector_WeightedSum4 */
 void Vector_Hermite(void *result, void *point0, void *point1, void *tangent0, void *tangent1, f32 ratio);

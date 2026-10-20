@@ -53,19 +53,19 @@ void EntityAi_Animate(Entity *entity);
 void EntityAi_OnHit(Entity *entity);
 
 /* The default think handler: every tenth frame updates what the entity knows of the player (EntityAi_SensePlayer). */
-void EntityAi_Think(Entity *entity, s32 unknown);
+void EntityAi_Think(Entity *entity, s32 run_now);
 
 /* The think function while flag bit 53 is set: walks back to the spawn point. */
-int EntityAi_ThinkReturn(void *entity_ptr, int unknown);
+void EntityAi_ThinkReturn(void *entity_ptr, int run_now);
 
 /* The think function of state 0: wanders near the spawn point. */
-int EntityAi_ThinkIdle(void *entity_ptr, int unknown);
+void EntityAi_ThinkIdle(void *entity_ptr, int run_now);
 
 /* The think function of state 1 (the player was noticed and is no longer): keeps walking to the player. */
 void EntityAi_ThinkPursue(Entity *entity, int extra);
 
 /* The think function of state 2: guards, dodges, attacks, closes in or waits. */
-void EntityAi_ThinkCombat(Entity *entity, s32 unknown);
+void EntityAi_ThinkCombat(Entity *entity, s32 run_now);
 
 /* The default move action: carries out the command in Entity.move_command and picks the animation. */
 void EntityAi_Move(Entity *entity);

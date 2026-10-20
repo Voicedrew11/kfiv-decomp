@@ -66,10 +66,10 @@ typedef struct ChunkUpload {
     char name[0x28];                /* 0x28 */
 } ChunkUpload;
 
-/* the three stage handlers of a ChunkUpload (model_load_stages, stream_load_stages, package_load_stages in
-   ui/menu_screens.c), copied to the stack before the call */
+/* the three stage handlers of a package ChunkUpload (package_load_stages in ui/menu_screens.c), copied to the
+   stack before the call */
 typedef struct {
-    void (*stage[3])(void *upload);
+    void (*stage[3])(ChunkUpload *upload);
 } ChunkUploadStages;
 
 /* IopLoadContext.buffer */

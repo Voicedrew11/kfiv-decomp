@@ -32,6 +32,11 @@ typedef struct {
     u8 value[12];
 } LinkSlotValues;
 
+/* the three stage handlers of a load node (model, worn-model loads in ui/menu_screens.c), copied to the stack before the call */
+typedef struct {
+    void (*stage[3])(LinkNode *node);
+} LinkNodeStages;
+
 int Menu_TakeLoadBuffer(LinkNode *node);
 
 #endif

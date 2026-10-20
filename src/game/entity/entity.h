@@ -57,6 +57,8 @@ typedef union {
 
 struct Entity;
 
+typedef void (*EntityHandler)(struct Entity *entity);
+
 /* what EntityModel.level_tables points at: the ModelChannel (model/model.h) seen from Entity code */
 typedef struct {
     char pad00[0x81];
@@ -814,7 +816,7 @@ typedef struct Entity {
     f32 body_radius;                /* 0x44 EntityParams.unk04 scaled */
     f32 floor_lift;                 /* 0x48 how far above the floor it is kept (see EntityCollision_SphereAgainstMap) */
     f32 knockback_speed;            /* 0x4C speed the knockback pushes the entity along at */
-    s32 update_func;                /* 0x50 the type's per-frame update (entity_type_handlers) */
+    EntityHandler update_func;      /* 0x50 the type's per-frame update (entity_type_handlers) */
     void (*handler)(struct Entity *entity); /* 0x54 the current action; EntityAi_Update calls it every frame while flag bit 6 is set and no reaction is */
     void (*prev_handler)(struct Entity *entity); /* 0x58 the action before the last EntityAi_StartAction */
     void *target;                   /* 0x5C */
@@ -1323,7 +1325,7 @@ extern Entity *active_entities_tail;  /* list C tail */
 extern int screen_textured_entity_type;  /* type of the last entity given the screen-textured draw, -1: none */
 
 /* entity/entity_types.c */
-extern s32 entity_type_handlers[][2];
+extern EntityHandler entity_type_handlers[][2];
 extern ModelMatrix fire_lord_model_matrix;
 
 #endif
