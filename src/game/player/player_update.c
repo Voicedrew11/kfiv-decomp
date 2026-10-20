@@ -255,12 +255,12 @@ void Player_Update(void) {
     pressed = pad_state[1];
     player_previous = player_state;
 
-    PLAYER_STATUS(&player_state)->bit35 = FALSE;
+    PLAYER_STATUS(&player_state)->running = FALSE;
     player_state.ground_effect_kind = 6;
     player_state.ground_kills = 0;
     player_state.ground_effect_active = 0;
     if (game_status.player_control != 0 && !(game_status.update_hold_flags & 1)) {
-        PLAYER_STATUS(&player_state)->bit38 = FALSE;
+        PLAYER_STATUS(&player_state)->in_water = FALSE;
         PLAYER_STATUS(&player_state)->bit39 = FALSE;
         player_state.water_surface_y = player_no_water_surface_y[0];
         PLAYER_STATUS(&player_state)->bit34 = TRUE;
@@ -332,26 +332,26 @@ void Player_Update(void) {
     if ((action_button & held) &&
         (((forward_button | back_button) & held) || ((step_left_button & held) && !(step_right_button & held)) ||
          (!(step_left_button & held) && (step_right_button & held)))) {
-        PLAYER_STATUS(&player_state)->bit35 = TRUE;
+        PLAYER_STATUS(&player_state)->running = TRUE;
         if (game_status.player_run_disabled != 0) {
-            PLAYER_STATUS(&player_state)->bit35 = FALSE;
+            PLAYER_STATUS(&player_state)->running = FALSE;
         } else if (player_state.weight > player_state.max_weight) {
-            PLAYER_STATUS(&player_state)->bit35 = FALSE;
+            PLAYER_STATUS(&player_state)->running = FALSE;
         } else if (item_def->action_handler_index == 2 && player_state.item_action_step != 0) {
-            PLAYER_STATUS(&player_state)->bit35 = FALSE;
+            PLAYER_STATUS(&player_state)->running = FALSE;
         } else if ((u16)player_state.timed_flags[4] != 0) {
-            PLAYER_STATUS(&player_state)->bit35 = FALSE;
+            PLAYER_STATUS(&player_state)->running = FALSE;
         } else if (player_state.movement_halved != 0) {
-            PLAYER_STATUS(&player_state)->bit35 = FALSE;
+            PLAYER_STATUS(&player_state)->running = FALSE;
         } else if (player_state.landing_slow_timer != 0) {
-            PLAYER_STATUS(&player_state)->bit35 = FALSE;
+            PLAYER_STATUS(&player_state)->running = FALSE;
         // match: unk3E is tested again with the rest of the set
         } else if (player_state.equipment[EQUIP_SHIELD] == ITEM_WORN_INDEX(ITEM_ANCIENT_SHIELD) &&
                    !PLAYER_WEARS_ANCIENT_SET(&player_state)) {
-            PLAYER_STATUS(&player_state)->bit35 = FALSE;
+            PLAYER_STATUS(&player_state)->running = FALSE;
         }
     } else {
-        PLAYER_STATUS(&player_state)->bit35 = FALSE;
+        PLAYER_STATUS(&player_state)->running = FALSE;
     }
     if ((menu_button & pressed) && !(action_button & pressed)) {
         game_status.bit2 = TRUE;

@@ -322,7 +322,7 @@ void WeaponTrail_Update(void) {
         Vu0_ProjectToScreen((int *)&point, blade_base);
         point.z = (s32)point.z >> 4;
         if (point.z > 0xFFFF0 || ((point.x | point.y) & 0xFFFF0000)) {
-            point.flags |= 0x8000;
+            point.flags |= MODEL_SCREEN_POINT_FLAG_OFF_SCREEN;
         } else {
             point.flags = 0;
         }
@@ -330,7 +330,7 @@ void WeaponTrail_Update(void) {
         Vu0_ProjectToScreen((int *)&point, blade_tip);
         point.z = (s32)point.z >> 4;
         if (point.z > 0xFFFF0 || ((point.x | point.y) & 0xFFFF0000)) {
-            point.flags |= 0x8000;
+            point.flags |= MODEL_SCREEN_POINT_FLAG_OFF_SCREEN;
         } else {
             point.flags = 0;
         }

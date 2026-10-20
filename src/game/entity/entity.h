@@ -166,6 +166,14 @@ typedef struct {
     EntityParamsUnk240Part hit_parts[3]; /* 0x10 the three hit parts of the attack: window, arc, power, ailments */
 } EntityParamsUnk240;
 
+/* Unk1B1470Request.target_mask bits: what a hit may touch (Attack_RunSphere and the swing checks) */
+#define HIT_TARGET_PLAYER           0x1    /* the player */
+#define HIT_TARGET_ENTITY           0x2    /* entities */
+#define HIT_TARGET_MAP_OBJECT       0x4    /* map objects */
+#define HIT_TARGET_MAP_FLOOR        0x8    /* map floors (Attack_TestMapModelFloors) */
+#define HIT_TARGET_MAP_WALL         0x10   /* map walls (Attack_TestMapModelWalls) */
+#define HIT_TARGET_SKIP_OWNER       0x80   /* not the request's owner */
+
 /* the two blocks ParaStool_CheckPartHitInPlayerView fills for Attack_Run */
 typedef struct {
     f32 position[4];                /* 0x00 */

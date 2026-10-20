@@ -158,7 +158,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                 if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
                     continue;
                 }
-                if ((request->target_mask & 0x80) && request->owner == (Entity *)object) {
+                if ((request->target_mask & HIT_TARGET_SKIP_OWNER) && request->owner == (Entity *)object) {
                     continue;
                 }
                 Collision_HitSphereObj(object, request->position, request->radius);
@@ -179,8 +179,8 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             }
         }
     }
-    if (request->target_mask & 1) {
-        if (!((request->target_mask & 0x80) && IS_PLAYER(request->owner))) {
+    if (request->target_mask & HIT_TARGET_PLAYER) {
+        if (!((request->target_mask & HIT_TARGET_SKIP_OWNER) && IS_PLAYER(request->owner))) {
             Collision_SphereCylinder(&player_state, request, 50.0f, 230.0f, request->radius);
             if (COLLISION_RESULT->hit != 0) {
                 Attack_HitPlayer(request, extra);
@@ -199,7 +199,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             if (((s32)(entity->flags >> 2) & 3) >= 2) {
                 continue;
             }
-            if ((request->target_mask & 0x80) && request->owner == entity) {
+            if ((request->target_mask & HIT_TARGET_SKIP_OWNER) && request->owner == entity) {
                 continue;
             }
             if (!(entity->params->flags & ENTITY_PARAMS_FLAG_HIT_BODY_POINTS)) {
@@ -241,7 +241,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
         kind = 1;
     } else {
         kind = -1;
-        if (request->target_mask & 0x10) {
+        if (request->target_mask & HIT_TARGET_MAP_WALL) {
             kind = 2;
         }
     }
@@ -256,7 +256,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                 if (record->model_index == 0xFFFF) {
                     continue;
                 }
-                if (record->record_flags & 0x40000000) {
+                if (record->record_flags & MAP_RECORD_HIDDEN) {
                     continue;
                 }
                 reach = request->radius;
@@ -329,8 +329,8 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     s32 count;
     s32 item;
 
-    if (request->target_mask & 1) {
-        if (!((request->target_mask & 0x80) && IS_PLAYER(request->owner))) {
+    if (request->target_mask & HIT_TARGET_PLAYER) {
+        if (!((request->target_mask & HIT_TARGET_SKIP_OWNER) && IS_PLAYER(request->owner))) {
             Collision_CylinderArc(&player_state, request, 50.0f, 230.0f, request->radius, request->height, request->half_angle,
                           request->facing);
             if (COLLISION_RESULT->hit != 0) {
@@ -350,7 +350,7 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             if (((s32)(entity->flags >> 2) & 3) >= 2) {
                 continue;
             }
-            if ((request->target_mask & 0x80) && request->owner == entity) {
+            if ((request->target_mask & HIT_TARGET_SKIP_OWNER) && request->owner == entity) {
                 continue;
             }
             if (!(entity->params->flags & ENTITY_PARAMS_FLAG_HIT_BODY_POINTS)) {
@@ -1141,7 +1141,7 @@ void Attack_HitMapObject(Unk1B1470Request *request, Unk1B1470Extra *extra, MapOb
         return;
     }
     by_weapon = extra->is_magic_shot == 0;
-    if (!(MAP_OBJECT_DEF_WORD(object) & 0x800)) {
+    if (!(MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_BREAKABLE)) {
         if (extra->is_magic_shot != 0) {
             return;
         }
@@ -1507,8 +1507,8 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
     request.owner = effect->owner_entity;
     request.cleared_on_effect_check = 0;
     request.target_mask = 0;
-    if (check->target_mask & 1) {
-        request.target_mask = 1;
+    if (check->target_mask & HIT_TARGET_PLAYER) {
+        request.target_mask = HIT_TARGET_PLAYER;
     }
     if (check->target_mask & 2) {
         request.target_mask |= 2;
@@ -1519,14 +1519,14 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
     if (check->target_mask & 8) {
         request.target_mask |= 8;
     }
-    if (check->target_mask & 0x10) {
-        request.target_mask |= 0x10;
+    if (check->target_mask & HIT_TARGET_MAP_WALL) {
+        request.target_mask |= HIT_TARGET_MAP_WALL;
     }
     if (check->target_mask & 0x20) {
         request.target_mask |= 0x20;
     }
-    if (check->target_mask & 0x80) {
-        request.target_mask |= 0x80;
+    if (check->target_mask & HIT_TARGET_SKIP_OWNER) {
+        request.target_mask |= HIT_TARGET_SKIP_OWNER;
     }
     shot = effect->owner;
     if (shot->attack_request == 0) {

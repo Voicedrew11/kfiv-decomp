@@ -142,7 +142,7 @@ void Interact_FindTarget(void) {
             if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
                 continue;
             }
-            if (!(object->state_flags & 4)) {
+            if (!(object->state_flags & MAP_OBJECT_IN_VIEW_PREVIOUS)) {
                 continue;
             }
             reach = object->interact_radius + 200.0f < 2000.0f ? 2000.0f : object->interact_radius + 200.0f;

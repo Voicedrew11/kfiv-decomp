@@ -107,7 +107,7 @@ int Player_CollideWithMap(void) {
                 if (record->collision_mesh_index == 0xFFFF) {
                     continue;
                 }
-                if (record->record_flags & 0x40000000) {
+                if (record->record_flags & MAP_RECORD_HIDDEN) {
                     continue;
                 }
                 if (player_state.position.x < record->lowest[0] - 100.0f
@@ -286,7 +286,7 @@ void Player_PushOutOfWalls(void) {
                 if (record->collision_mesh_index == 0xFFFF) {
                     continue;
                 }
-                if (record->record_flags & 0x40000000) {
+                if (record->record_flags & MAP_RECORD_HIDDEN) {
                     continue;
                 }
                 if (player_state.position.x < record->lowest[0] - 100.0f
@@ -351,7 +351,7 @@ void Player_FindFloorMaterial(void) {
                 if (record->collision_mesh_index == 0xFFFF) {
                     continue;
                 }
-                if (record->record_flags & 0x40000000) {
+                if (record->record_flags & MAP_RECORD_HIDDEN) {
                     continue;
                 }
                 if (player_state.position.x < record->lowest[0] - 100.0f

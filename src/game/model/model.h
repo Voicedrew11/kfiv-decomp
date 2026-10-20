@@ -451,6 +451,8 @@ typedef struct {
     s32 flags;                      /* 0x0C flag bits, 0x8000 on some points */
 } ModelScreenPoint;
 
+#define MODEL_SCREEN_POINT_FLAG_OFF_SCREEN 0x8000  /* the point is off the screen (held weapon trail) */
+
 /* a 4x4 matrix (ModelInstance.model_matrix, ModelPart.matrix) as retail copies it whole: by doublewords */
 typedef struct {
     f32 rows[4][4];
@@ -667,6 +669,7 @@ typedef struct {
 
 /* the bits of MapObject.state_flags, the word MAP_OBJECT_BITS views */
 #define MAP_OBJECT_IN_VIEW          0x2       /* bit 1: in view this frame (MapObject_DrawAll and Interact_FindTarget test it) */
+#define MAP_OBJECT_IN_VIEW_PREVIOUS 0x4       /* bit 2: in view the frame before */
 #define MAP_OBJECT_IN_VIEW_MASK     0x6       /* bits 1-2: in view this frame or the frame before (the appear and disappear effects) */
 #define MAP_OBJECT_STEP_AND_ON_MASK 0x2FF00   /* bits 8-15 and 17: the kind's state machine step plus the on bit */
 #define MAP_OBJECT_IN_USE           0x10000   /* bit 16: in use (MapObject_Activate sets it, MapObject_Deactivate clears it) */
