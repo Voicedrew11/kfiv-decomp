@@ -23,6 +23,14 @@
 /* EntitySpawnInfo.spawn_mode: the spawn that weights its ranged attack 2 (GreaterDemon_SetRanged2Weight) */
 #define GREATER_DEMON_SPAWN_MODE_RANGED2 1
 
+/* GreaterDemon_DescendAtPlayer: Entity.action_step (steps 0 to 2 are the shared ones) */
+#define GREATER_DEMON_DESCEND_STEP_BLEND_IN 3       /* waits for the lunge motion to blend in */
+#define GREATER_DEMON_DESCEND_STEP_LUNGE    4       /* plays the lunge, then starts the dive and moves on */
+#define GREATER_DEMON_DESCEND_STEP_DIVE     5       /* dives along the heading until it hits or the dive ends */
+#define GREATER_DEMON_DESCEND_STEP_CARRY_ON 6       /* carries on until it hits something, then slides to a stop */
+/* GreaterDemon_Guard: Entity.action_step */
+#define GREATER_DEMON_GUARD_STEP_HOLD       2       /* holds the guard for action_timer; a magic hit renews it */
+
 static KfVector climb_points[3]; /* 0x4FF390 the points GreaterDemon_Think climbs over (it indexes up to 5) */
 
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
@@ -410,12 +418,12 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
             }
         }
         break;
-    case 3:
+    case GREATER_DEMON_DESCEND_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 4:
+    case GREATER_DEMON_DESCEND_STEP_LUNGE:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             Motion_Start(entity, 0x13, 0, 10, 1);
             entity->action_step++;
@@ -434,7 +442,7 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
             }
         }
         break;
-    case 5:
+    case GREATER_DEMON_DESCEND_STEP_DIVE:
         if (ENTITY_FLAG_BITS(entity)->on_floor == 1 || ENTITY_FLAG_BITS(entity)->bit46 == 1
             || ENTITY_FLAG_BITS(entity)->wall_push == 1 || ENTITY_FLAG_BITS(entity)->player_push == 1
             || ENTITY_FLAG_BITS(entity)->entity_push == 1) {
@@ -470,7 +478,7 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
             ai_state->part_angle_x = 3.0f;
         }
         break;
-    case 6:
+    case GREATER_DEMON_DESCEND_STEP_CARRY_ON:
         if (ENTITY_FLAG_BITS(entity)->on_floor == 1 || ENTITY_FLAG_BITS(entity)->bit46 == 1
             || ENTITY_FLAG_BITS(entity)->wall_push == 1 || ENTITY_FLAG_BITS(entity)->player_push == 1
             || ENTITY_FLAG_BITS(entity)->entity_push == 1) {
@@ -537,7 +545,7 @@ static void GreaterDemon_SlideToStop(Entity *entity) {
             }
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ai_state->reload_timer == 0) {
             s32 flag = ENTITY_FLAG_BITS(entity)->player_push;
 
@@ -590,7 +598,7 @@ static void GreaterDemon_PlayAnim6Or7BySide(Entity *entity) {
         }
         EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
@@ -688,7 +696,7 @@ static void GreaterDemon_Guard(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case GREATER_DEMON_GUARD_STEP_HOLD:
         if (ENTITY_FLAG_BITS(entity)->hit_by_player && ENTITY_FLAG_BITS(entity)->hit_source_magic && !ENTITY_FLAG_BITS(entity)->hit_source_weapon) {
             entity->flags &= ~ENTITY_FLAG_HIT_BY_PLAYER;
             entity->action_timer = entity->params->guard_frames;
@@ -775,7 +783,7 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
             ai_state->climb_point_index++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         ai_state->turn_rate = 0.0f;
         EntityAi_LaunchShots(entity, unk3D8, (entity->model->level_tables->frame_fixed - params->motion_speeds[entity->animation_index]) >> 8,
                       entity->model->level_tables->frame);
