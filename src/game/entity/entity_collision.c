@@ -504,6 +504,7 @@ s32 EntityCollision_WalkAgainstMesh(Entity *entity, ModelInstance *model, f32 *p
                 if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] <= entity->model->position[1]
                     && entity->model->position[1] - entity->collision_height <= COLLISION_RESULT->point[1]) {
                     EntityCollision_ApplySurfaceEffect(entity, point->material_first, point->material_second, point->material_third);
+                    // match: the wall pass has to start right after the hazard loop nest, not after the flag test
                     goto walls;
                 }
                 point++;

@@ -267,13 +267,12 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;
-                if (ai_state->turn_in_place == 0) {
-                    goto done;
-                }
             }
-            entity->move_command = EntityAi_TurnCommand(entity);
-            if (entity->move_command == 0) {
-                ai_state->turn_in_place = 0;
+            if (ai_state->turn_in_place != 0) {
+                entity->move_command = EntityAi_TurnCommand(entity);
+                if (entity->move_command == 0) {
+                    ai_state->turn_in_place = 0;
+                }
             }
         } else {
             switch (ai_state->move_choice) {
@@ -327,7 +326,6 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
     }
-done:
     EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 

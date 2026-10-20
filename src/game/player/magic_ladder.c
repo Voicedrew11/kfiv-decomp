@@ -369,10 +369,12 @@ void Player_HoldMagic(int magic_id) {
         }
         if (entry->item_menu_magic == 0) {
             if ((s32)(player_state.status_bits >> 39) & 1) {
-                goto stop;
+                channeled_magic_active = 0;
+                return;
             }
             if ((s32)(player_state.status_bits >> 38) & 1) {
                 if (player_state.position.y - entry->effect_depth_below > player_state.water_surface_y) {
+                    // match: the water check keeps its block order only with this goto
                     goto stop;
                 }
             }
@@ -386,7 +388,8 @@ void Player_HoldMagic(int magic_id) {
             channeled_magic_warmup_frames--;
         } else {
             if (player_state.mp_now <= 0) {
-                goto stop;
+                channeled_magic_active = 0;
+                return;
             }
             if (frame_counter % 3 == 0) {
                 player_state.mp_now--;

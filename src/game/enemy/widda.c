@@ -275,30 +275,33 @@ static void Widda_ThinkCombat(Entity *entity, s32 unknown) {
                 ai_state->step_index = 0;
                 return;
             }
-            if (!(ABS(angle) >= 1.5707964f)) {
-                goto skip;
+            if (ABS(angle) >= 1.5707964f) {
+                entity->prev_combat_choice = entity->combat_choice;
+                entity->target = &player_state;
+                entity->action_timer = 300;
+                ai_state->move_choice = entity->combat_choice = 1;
+                ai_state->step_index = 0;
             }
+        } else {
+            entity->prev_combat_choice = entity->combat_choice;
+            entity->target = &player_state;
+            entity->action_timer = 300;
+            ai_state->move_choice = entity->combat_choice = 1;
+            ai_state->step_index = 0;
         }
-        entity->prev_combat_choice = entity->combat_choice;
-        entity->target = &player_state;
-        entity->action_timer = 300;
-        ai_state->move_choice = entity->combat_choice = 1;
-        ai_state->step_index = 0;
     }
-skip:
     if (entity->combat_choice == 1) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;
-                if (ai_state->turn_in_place == 0) {
-                    goto done;
-                }
             }
-            entity->move_command = EntityAi_TurnCommand(entity);
-            if (entity->move_command == 0) {
-                ai_state->turn_in_place = 0;
+            if (ai_state->turn_in_place != 0) {
+                entity->move_command = EntityAi_TurnCommand(entity);
+                if (entity->move_command == 0) {
+                    ai_state->turn_in_place = 0;
+                }
             }
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
@@ -329,7 +332,6 @@ skip:
             }
         }
     }
-done:
     EntityAi_StartAction(entity, ai_state->move, unknown);
 }
 
