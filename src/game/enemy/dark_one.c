@@ -114,11 +114,11 @@ static void DarkOne_Think(Entity *entity, s32 run_now) {
     if (entity->busy_flags == 0) {
         EntityAi_StepState(entity);
         switch (entity->state) {
-        case 1:
-        case 2:
+        case ENTITY_STATE_SEARCHING:
+        case ENTITY_STATE_NOTICED:
             EntityAi_ThinkCombat(entity, run_now);
             break;
-        case 0:
+        case ENTITY_STATE_UNAWARE:
         default:
             EntityAi_ThinkIdle(entity, run_now);
             break;
