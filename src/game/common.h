@@ -31,6 +31,7 @@ typedef u32 Uint128 __attribute__((mode(TI))); /* a 128-bit integer, moved with 
 #define RAD_TO_DEG 57.29578f /* 180 / PI, rounded; 180.0f / PI folds one bit off */
 #define FLT_MAX 3.4028235e38f
 #define FLT_EPSILON 1.1920929e-7f
+#define KILOGRAMS_TO_POUNDS 2.2046 /* a double */
 /* 1 / 2^31: scales rand() (0..0x7FFFFFFF) to 0..1 */
 #define RAND_SCALE (1.0f / 2147483648.0f)
 

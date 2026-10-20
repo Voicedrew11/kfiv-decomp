@@ -9,8 +9,6 @@
 #include "core/memory.h"
 #include "gfx/screen.h"
 
-/* Pounds per kilogram, for the item weight table. */
-#define ITEM_KILOGRAMS_TO_POUNDS 2.2046
 
 int File_GetSize(int);
 int sprintf(char *, char *, ...);
@@ -84,7 +82,7 @@ void Map_LoadParamFiles(void) {
     definition = item_name_defs;
     for (i = 379; i >= 0; i--) {
         if (definition->weight_tenths_of_kilogram != 0) {
-            definition->weight_tenths_of_pound = (f32)definition->weight_tenths_of_kilogram * ITEM_KILOGRAMS_TO_POUNDS;
+            definition->weight_tenths_of_pound = (f32)definition->weight_tenths_of_kilogram * KILOGRAMS_TO_POUNDS;
         } else {
             definition->weight_tenths_of_pound = 0;
         }

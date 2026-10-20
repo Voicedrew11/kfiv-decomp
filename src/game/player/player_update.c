@@ -25,7 +25,6 @@ extern struct PlayerWeaponModel *held_item_model_ptr;
 #define WEAPON_MODEL ((ModelInstance *)held_item_model_ptr)
 #define FALL_DAMAGE_MIN_SPEED 66.666664f
 #define SCREEN_TINT_STEP_PER_FRAME (1.0f / 128.0f)
-#define KILOGRAMS_TO_POUNDS 2.2046
 
 extern PlayerState player_state;
 extern PlayerState player_previous;      /* the player as of the frame before */

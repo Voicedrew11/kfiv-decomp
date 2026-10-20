@@ -10,8 +10,6 @@
 #include "model/linked_point.h"
 #include "collision/collision.h"
 
-#define RAND_16BIT_SCALE (1.0f / 32768.0f)
-#define PI_APPROX 3.1415f /* pi as retail writes it (not PI: the bits differ) */
 
 extern PlayerState player_state;
 extern float identity_matrix[16];
