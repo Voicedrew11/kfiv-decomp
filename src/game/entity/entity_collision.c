@@ -1512,7 +1512,7 @@ void EntityCollision_WalkAgainstObjects(Entity *entity) {
             case MAP_OBJECT_KIND_DOUBLE_DOOR:
                 EntityCollision_PushOutOfBoxPair((CollisionOwner *)object, position, entity->collision_height, entity->collision_radius);
                 break;
-            case 0x11:
+            case MAP_OBJECT_KIND_SIGNAL_DOOR:
                 EntityCollision_PushOutOfQuad((CollisionOwner *)object, position, entity->collision_height, entity->collision_radius);
                 break;
             default:
@@ -1585,10 +1585,10 @@ void EntityCollision_SphereAgainstObjects(Entity *entity) {
             case MAP_OBJECT_KIND_DOUBLE_DOOR:
                 EntityCollision_SphereBoxPair((CollisionOwner *)object, position, entity->collision_radius);
                 break;
-            case 0x11:
+            case MAP_OBJECT_KIND_SIGNAL_DOOR:
                 EntityCollision_SphereQuad((CollisionOwner *)object, position, entity->collision_radius);
                 break;
-            case 0x12:
+            case MAP_OBJECT_KIND_PITFALL:
                 EntityCollision_SphereQuads((CollisionOwner *)object, position, entity->collision_radius);
                 break;
             default:

@@ -76,17 +76,17 @@
 #define MENU_NUMBER_MAX_WEIGHT          67
 
 /* SpritePacket.slot of the option and volume sprites (MenuSprite_SizeToLevel, MenuSprite_ShowIfOptionChosen) */
-#define MENU_SLOT_MUSIC_VOLUME          0    /* MenuSprite_SizeToLevel: the bars */
-#define MENU_SLOT_SFX_VOLUME            1
-#define MENU_SLOT_THIRD_BAR             2
-#define MENU_SLOT_MONO                  0    /* MenuSprite_ShowIfOptionChosen: game_options[0] is 0 for mono */
-#define MENU_SLOT_STEREO                1
-#define MENU_SLOT_HEAD_BOB_OFF          2    /* head_bob_option 0 (not yet confirmed from the menu text) */
-#define MENU_SLOT_HEAD_BOB_ON           3
-#define MENU_SLOT_RUMBLE_OFF            4    /* rumble_option 0 */
-#define MENU_SLOT_RUMBLE_ON             5
-#define MENU_SLOT_HUD_OFF               6    /* hud_option 0 */
-#define MENU_SLOT_HUD_ON                7
+#define MENU_BAR_SLOT_MUSIC_VOLUME      0    /* MenuSprite_SizeToLevel: the option bars (game_option_third_bar is the third) */
+#define MENU_BAR_SLOT_SFX_VOLUME        1
+#define MENU_BAR_SLOT_THIRD_OPTION      2
+#define MENU_OPTION_SLOT_MONO           0    /* MenuSprite_ShowIfOptionChosen: game_options[0] is 0 for mono */
+#define MENU_OPTION_SLOT_STEREO         1
+#define MENU_OPTION_SLOT_HEAD_BOB_OFF   2    /* head_bob_option 0 */
+#define MENU_OPTION_SLOT_HEAD_BOB_ON    3
+#define MENU_OPTION_SLOT_RUMBLE_OFF     4    /* rumble_option 0 */
+#define MENU_OPTION_SLOT_RUMBLE_ON      5
+#define MENU_OPTION_SLOT_HUD_OFF        6    /* hud_option 0 */
+#define MENU_OPTION_SLOT_HUD_ON         7
 
 /* The module's own variables are defined where the original has them: the initialised ones in front of the
    function that first uses them (retail keeps them in that order), the others here. */
@@ -3887,26 +3887,26 @@ static SpritePacket *MenuSprite_ShowIfOptionChosen(SpritePacket *packet) {
     static SpritePacket copy; /* 0x5DD940 */
     copy = *packet;
     switch (packet->slot) {
-    case MENU_SLOT_MONO:
-    case MENU_SLOT_STEREO:
+    case MENU_OPTION_SLOT_MONO:
+    case MENU_OPTION_SLOT_STEREO:
         if (packet->slot == game_options[0]) {
             return packet; // match: the packet itself, not the copy just made
         }
         break;
-    case MENU_SLOT_HEAD_BOB_OFF:
-    case MENU_SLOT_HEAD_BOB_ON:
+    case MENU_OPTION_SLOT_HEAD_BOB_OFF:
+    case MENU_OPTION_SLOT_HEAD_BOB_ON:
         if (packet->slot - 2 == head_bob_option[0]) {
             return packet;
         }
         break;
-    case MENU_SLOT_RUMBLE_OFF:
-    case MENU_SLOT_RUMBLE_ON:
+    case MENU_OPTION_SLOT_RUMBLE_OFF:
+    case MENU_OPTION_SLOT_RUMBLE_ON:
         if (packet->slot - 4 == rumble_option[0]) {
             return packet;
         }
         break;
-    case MENU_SLOT_HUD_OFF:
-    case MENU_SLOT_HUD_ON:
+    case MENU_OPTION_SLOT_HUD_OFF:
+    case MENU_OPTION_SLOT_HUD_ON:
         if (packet->slot - 6 == hud_option[0]) {
             return packet;
         }
@@ -3945,13 +3945,13 @@ static SpritePacket *MenuSprite_SizeToLevel(SpritePacket *packet) {
 
     copy = *packet;
     switch (packet->slot) {
-    case MENU_SLOT_MUSIC_VOLUME:
+    case MENU_BAR_SLOT_MUSIC_VOLUME:
         level = music_volume[0];
         break;
-    case MENU_SLOT_SFX_VOLUME:
+    case MENU_BAR_SLOT_SFX_VOLUME:
         level = sfx_volume[0];
         break;
-    case MENU_SLOT_THIRD_BAR:
+    case MENU_BAR_SLOT_THIRD_OPTION:
         level = game_option_third_bar[0];
         break;
     default:

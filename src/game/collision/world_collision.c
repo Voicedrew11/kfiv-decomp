@@ -11,9 +11,6 @@
 #include "math/angle.h"
 #include "math/vu0.h"
 
-/* MapObjectUnk04.kind values this file tests; the others are in map_object.h */
-#define MAP_OBJECT_KIND_PITFALL             18      /* a pit that opens under the player (mechanism.c) */
-
 /* cos 20 degrees: a quad whose normal is within 20 degrees of vertical is a floor or a ceiling */
 #define QUAD_FLOOR_NORMAL_Y 0.93969f
 

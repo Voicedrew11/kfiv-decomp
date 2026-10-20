@@ -19,6 +19,7 @@
 #define MAP_OBJECT_KIND_MOVING_DOOR         6       /* a door that moves with its second part */
 #define MAP_OBJECT_KIND_LIGHT               9       /* a light at a point of the model */
 #define MAP_OBJECT_KIND_SIGNAL_DOOR         0x11    /* a door between the shooter and pitfall kinds, handled as kind 1 */
+#define MAP_OBJECT_KIND_PITFALL             0x12    /* a pit that opens under the player (mechanism.c) */
 
 /* MapObjectBytes.step and anim values every kind shares; each kind's own steps are named in its file */
 #define MAP_OBJECT_STEP_NOT_STARTED         0       /* the kind's state machine is not started */
