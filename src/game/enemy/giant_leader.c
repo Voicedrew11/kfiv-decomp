@@ -26,7 +26,7 @@
 #define GIANT_LEADER_TARGET_THIRD             1       /* map object 0xA2 */
 #define GIANT_LEADER_TARGET_FIRST             2       /* map object 0xA0 */
 #define GIANT_LEADER_TARGET_SECOND            3       /* map object 0xA1 */
-/* GiantLeader_BreakMapObject: Entity.action_step, past step 2 */
+/* GiantLeader_BreakMapObject: Entity.action_step (steps 1 and 2 are ACTION_STEP_BLEND_IN and ACTION_STEP_PLAY) */
 #define GIANT_LEADER_BREAK_STEP_WALK_BLEND_IN 3       /* waits for the walk's blend-in to end */
 #define GIANT_LEADER_BREAK_STEP_WALK_TO_POINT 4       /* walks to target_point, then ends the action */
 
