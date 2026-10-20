@@ -3317,7 +3317,7 @@ static void Menu_UpdateEquip(void) {
     }
     if (detail_panel_open != 0) {
         switch (CURRENT_ITEM->group) {
-        case 0:
+        case MENU_ITEM_GROUP_WEAPON:
             menu_number_44 = (weapon_level_records[index].gained_values[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[0]) * weapon_level_records[index].level / 100;
             menu_number_45 = (weapon_level_records[index].gained_values[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[1]) * weapon_level_records[index].level / 100;
             menu_number_46 = (weapon_level_records[index].gained_values[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[2]) * weapon_level_records[index].level / 100;
@@ -3347,7 +3347,7 @@ static void Menu_UpdateEquip(void) {
             parts = equip_a_parts;
             count = equip_a_part_count;
             break;
-        case 1:
+        case MENU_ITEM_GROUP_SPELL:
             if (fx_table[CURRENT_ITEM->item_number].item_menu_magic == 0) {
                 magic = &fx_table[index];
                 menu_number_44 = magic->hit_checks[0].strengths.element_strengths[0];
@@ -3392,7 +3392,7 @@ static void Menu_UpdateEquip(void) {
                 count = equip_m2_part_count;
             }
             break;
-        case 11:
+        case MENU_ITEM_GROUP_ITEM:
             if (equip_panel_state == 1) {
                 RESET_ALPHAS(equip_s_parts, equip_s_part_count);
             }
@@ -3412,11 +3412,11 @@ static void Menu_UpdateEquip(void) {
             parts = equip_s_parts;
             count = equip_s_part_count;
             break;
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
+        case MENU_ITEM_GROUP_SHIELD:
+        case MENU_ITEM_GROUP_HELM:
+        case MENU_ITEM_GROUP_ARMOR:
+        case MENU_ITEM_GROUP_GAUNTLET:
+        case MENU_ITEM_GROUP_BOOT:
             menu_number_44 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
             menu_number_45 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
             menu_number_46 = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
@@ -3445,9 +3445,9 @@ static void Menu_UpdateEquip(void) {
             parts = equip_g_parts;
             count = equip_g_part_count;
             break;
-        case 7:
-        case 8:
-        case 9:
+        case MENU_ITEM_GROUP_RING:
+        case MENU_ITEM_GROUP_BRACELET:
+        case MENU_ITEM_GROUP_AMULET:
             menu_number_44 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
             menu_number_45 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
             menu_number_46 = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
@@ -3627,10 +3627,10 @@ pool_slots[15].part = NULL;
             if (EQUIP_LIST->group == 10) {
                 if (CURRENT_ITEM->item_number != 0) {
                     switch (CURRENT_ITEM->group) {
-                    case 11:
+                    case MENU_ITEM_GROUP_ITEM:
                         player_state.shortcut_type = 1;
                         break;
-                    case 1:
+                    case MENU_ITEM_GROUP_SPELL:
                         player_state.shortcut_type = 2;
                         break;
                     default:
@@ -4589,16 +4589,16 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     if (detail_panel_open != 0) {
         // match: groups 1 and 10 have no case, so packets and count stay unset for the fade below
         switch (owned_list_current[0]->group) {
-        case 11:
-        case 12:
+        case MENU_ITEM_GROUP_ITEM:
+        case MENU_ITEM_GROUP_STOCK_ITEM:
             packets = recol_g_parts;
             count = recol_g_part_count;
             break;
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
+        case MENU_ITEM_GROUP_SHIELD:
+        case MENU_ITEM_GROUP_HELM:
+        case MENU_ITEM_GROUP_ARMOR:
+        case MENU_ITEM_GROUP_GAUNTLET:
+        case MENU_ITEM_GROUP_BOOT:
             menu_number_45 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
             menu_number_46 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
             menu_number_47 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
@@ -4618,9 +4618,9 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             packets = recol_g_parts;
             count = recol_g_part_count;
             break;
-        case 7:
-        case 8:
-        case 9:
+        case MENU_ITEM_GROUP_RING:
+        case MENU_ITEM_GROUP_BRACELET:
+        case MENU_ITEM_GROUP_AMULET:
             menu_number_45 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
             menu_number_46 = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
             menu_number_47 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
@@ -4638,7 +4638,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             packets = recol_g2_parts;
             count = recol_g2_part_count;
             break;
-        case 0:
+        case MENU_ITEM_GROUP_WEAPON:
             menu_number_45 = ScaleValue(weapon_level_records[record].gained_values[0] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[0], weapon_level_records[record].level, 100);
             menu_number_46 = ScaleValue(weapon_level_records[record].gained_values[1] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[1], weapon_level_records[record].level, 100);
             menu_number_47 = ScaleValue(weapon_level_records[record].gained_values[2] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[2], weapon_level_records[record].level, 100);

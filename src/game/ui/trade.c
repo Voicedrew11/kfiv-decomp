@@ -963,16 +963,16 @@ static void Trade_UpdateStockList(HandlerContext *context) {
     if (trade_panel_shown != 0) {
         // match: groups 1 and 10 have no case, so packets and count are read unset by the fade below
         switch (trade_stock_list_cursor[0]->group) {
-        case 11:
-        case 12:
+        case MENU_ITEM_GROUP_ITEM:
+        case MENU_ITEM_GROUP_STOCK_ITEM:
             packets = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
+        case MENU_ITEM_GROUP_SHIELD:
+        case MENU_ITEM_GROUP_HELM:
+        case MENU_ITEM_GROUP_ARMOR:
+        case MENU_ITEM_GROUP_GAUNTLET:
+        case MENU_ITEM_GROUP_BOOT:
             if (trade_stock_list_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }
@@ -997,9 +997,9 @@ static void Trade_UpdateStockList(HandlerContext *context) {
             packets = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 7:
-        case 8:
-        case 9:
+        case MENU_ITEM_GROUP_RING:
+        case MENU_ITEM_GROUP_BRACELET:
+        case MENU_ITEM_GROUP_AMULET:
             if (trade_stock_list_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }
@@ -1022,7 +1022,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
             packets = shop_g2_parts;
             count = shop_g2_part_count;
             break;
-        case 0:
+        case MENU_ITEM_GROUP_WEAPON:
             if (trade_stock_list_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }
@@ -1313,16 +1313,16 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
     if (trade_panel_shown != 0) {
         // match: groups 1 and 10 have no case, so packets and count stay unset for the fade below
         switch (trade_stock_list_cursor[0]->group) {
-        case 11:
-        case 12:
+        case MENU_ITEM_GROUP_ITEM:
+        case MENU_ITEM_GROUP_STOCK_ITEM:
             packets = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
+        case MENU_ITEM_GROUP_SHIELD:
+        case MENU_ITEM_GROUP_HELM:
+        case MENU_ITEM_GROUP_ARMOR:
+        case MENU_ITEM_GROUP_GAUNTLET:
+        case MENU_ITEM_GROUP_BOOT:
             if (trade_take_amount_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }
@@ -1347,9 +1347,9 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             packets = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 7:
-        case 8:
-        case 9:
+        case MENU_ITEM_GROUP_RING:
+        case MENU_ITEM_GROUP_BRACELET:
+        case MENU_ITEM_GROUP_AMULET:
             if (trade_take_amount_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }
@@ -1372,7 +1372,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             packets = shop_g2_parts;
             count = shop_g2_part_count;
             break;
-        case 0:
+        case MENU_ITEM_GROUP_WEAPON:
             if (trade_take_amount_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }
@@ -1790,16 +1790,16 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
     if (trade_panel_shown != 0) {
         // match: groups 1 and 10 have no case, so packets and count stay unset for the fade below
         switch (item_list_cursor[0]->group) {
-        case 11:
-        case 12:
+        case MENU_ITEM_GROUP_ITEM:
+        case MENU_ITEM_GROUP_STOCK_ITEM:
             packets = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
+        case MENU_ITEM_GROUP_SHIELD:
+        case MENU_ITEM_GROUP_HELM:
+        case MENU_ITEM_GROUP_ARMOR:
+        case MENU_ITEM_GROUP_GAUNTLET:
+        case MENU_ITEM_GROUP_BOOT:
             if (details_opened != 0) {
                 Sound_PlayMenu(1);
             }
@@ -1823,9 +1823,9 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             packets = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 7:
-        case 8:
-        case 9:
+        case MENU_ITEM_GROUP_RING:
+        case MENU_ITEM_GROUP_BRACELET:
+        case MENU_ITEM_GROUP_AMULET:
             if (details_opened != 0) {
                 Sound_PlayMenu(1);
             }
@@ -1847,7 +1847,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             packets = shop_g2_parts;
             count = shop_g2_part_count;
             break;
-        case 0:
+        case MENU_ITEM_GROUP_WEAPON:
             if (details_opened != 0) {
                 Sound_PlayMenu(1);
             }
@@ -2102,16 +2102,16 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
     if (trade_panel_shown != 0) {
         // match: groups 1 and 10 have no case, so packets and count stay unset for the fade below
         switch (item_list_cursor[0]->group) {
-        case 11:
-        case 12:
+        case MENU_ITEM_GROUP_ITEM:
+        case MENU_ITEM_GROUP_STOCK_ITEM:
             packets = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
+        case MENU_ITEM_GROUP_SHIELD:
+        case MENU_ITEM_GROUP_HELM:
+        case MENU_ITEM_GROUP_ARMOR:
+        case MENU_ITEM_GROUP_GAUNTLET:
+        case MENU_ITEM_GROUP_BOOT:
             if (info_pressed != 0) {
                 Sound_PlayMenu(1);
             }
@@ -2135,9 +2135,9 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             packets = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 7:
-        case 8:
-        case 9:
+        case MENU_ITEM_GROUP_RING:
+        case MENU_ITEM_GROUP_BRACELET:
+        case MENU_ITEM_GROUP_AMULET:
             if (info_pressed != 0) {
                 Sound_PlayMenu(1);
             }
@@ -2159,7 +2159,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             packets = shop_g2_parts;
             count = shop_g2_part_count;
             break;
-        case 0:
+        case MENU_ITEM_GROUP_WEAPON:
             if (info_pressed != 0) {
                 Sound_PlayMenu(1);
             }
@@ -3215,16 +3215,16 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
     }
     if (detail_panel_open_word != 0) {
         switch (item_list_cursor[0]->group) { // match: groups 1 and 10 have no case, so parts and count stay unset for the fade below
-        case 11:
-        case 12:
+        case MENU_ITEM_GROUP_ITEM:
+        case MENU_ITEM_GROUP_STOCK_ITEM:
             parts = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
+        case MENU_ITEM_GROUP_SHIELD:
+        case MENU_ITEM_GROUP_HELM:
+        case MENU_ITEM_GROUP_ARMOR:
+        case MENU_ITEM_GROUP_GAUNTLET:
+        case MENU_ITEM_GROUP_BOOT:
             if (smith_upgrade_list_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }
@@ -3256,9 +3256,9 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             parts = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 7:
-        case 8:
-        case 9:
+        case MENU_ITEM_GROUP_RING:
+        case MENU_ITEM_GROUP_BRACELET:
+        case MENU_ITEM_GROUP_AMULET:
             if (smith_upgrade_list_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }
@@ -3288,7 +3288,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             parts = shop_g2_parts;
             count = shop_g2_part_count;
             break;
-        case 0:
+        case MENU_ITEM_GROUP_WEAPON:
             if (smith_upgrade_list_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }
@@ -3530,16 +3530,16 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
     }
     if (detail_panel_open_word != 0) {
         switch (item_list_cursor[0]->group) { // match: groups 1 and 10 have no case, so parts and count stay unset for the fade below
-        case 11:
-        case 12:
+        case MENU_ITEM_GROUP_ITEM:
+        case MENU_ITEM_GROUP_STOCK_ITEM:
             parts = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
+        case MENU_ITEM_GROUP_SHIELD:
+        case MENU_ITEM_GROUP_HELM:
+        case MENU_ITEM_GROUP_ARMOR:
+        case MENU_ITEM_GROUP_GAUNTLET:
+        case MENU_ITEM_GROUP_BOOT:
             if (smith_upgrade_confirm_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }
@@ -3571,9 +3571,9 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             parts = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 7:
-        case 8:
-        case 9:
+        case MENU_ITEM_GROUP_RING:
+        case MENU_ITEM_GROUP_BRACELET:
+        case MENU_ITEM_GROUP_AMULET:
             if (smith_upgrade_confirm_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }
@@ -3604,7 +3604,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             parts = shop_g2_parts;
             count = shop_g2_part_count;
             break;
-        case 0:
+        case MENU_ITEM_GROUP_WEAPON:
             if (smith_upgrade_confirm_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }
@@ -3966,16 +3966,16 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
     }
     if (detail_panel_open_word != 0) {
         switch (item_list_cursor[0]->group) { // match: groups 1 and 10 have no case, so parts and count stay unset for the fade below
-        case 11:
-        case 12:
+        case MENU_ITEM_GROUP_ITEM:
+        case MENU_ITEM_GROUP_STOCK_ITEM:
             parts = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
+        case MENU_ITEM_GROUP_SHIELD:
+        case MENU_ITEM_GROUP_HELM:
+        case MENU_ITEM_GROUP_ARMOR:
+        case MENU_ITEM_GROUP_GAUNTLET:
+        case MENU_ITEM_GROUP_BOOT:
             if (smith_confirm_list_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }
@@ -4007,9 +4007,9 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             parts = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 7:
-        case 8:
-        case 9:
+        case MENU_ITEM_GROUP_RING:
+        case MENU_ITEM_GROUP_BRACELET:
+        case MENU_ITEM_GROUP_AMULET:
             if (smith_confirm_list_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }
@@ -4039,7 +4039,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             parts = shop_g2_parts;
             count = shop_g2_part_count;
             break;
-        case 0:
+        case MENU_ITEM_GROUP_WEAPON:
             if (smith_confirm_list_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }
@@ -4407,16 +4407,16 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
     }
     if (detail_panel_open_word != 0) {
         switch (item_list_cursor[0]->group) { // match: groups 1 and 10 have no case, so parts and count stay unset for the fade below
-        case 11:
-        case 12:
+        case MENU_ITEM_GROUP_ITEM:
+        case MENU_ITEM_GROUP_STOCK_ITEM:
             parts = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
+        case MENU_ITEM_GROUP_SHIELD:
+        case MENU_ITEM_GROUP_HELM:
+        case MENU_ITEM_GROUP_ARMOR:
+        case MENU_ITEM_GROUP_GAUNTLET:
+        case MENU_ITEM_GROUP_BOOT:
             if (play_sound) {
                 Sound_PlayMenu(1);
             }
@@ -4441,9 +4441,9 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             parts = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 7:
-        case 8:
-        case 9:
+        case MENU_ITEM_GROUP_RING:
+        case MENU_ITEM_GROUP_BRACELET:
+        case MENU_ITEM_GROUP_AMULET:
             if (play_sound) {
                 Sound_PlayMenu(1);
             }
@@ -4466,7 +4466,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             parts = shop_g2_parts;
             count = shop_g2_part_count;
             break;
-        case 0:
+        case MENU_ITEM_GROUP_WEAPON:
             if (play_sound) {
                 Sound_PlayMenu(1);
             }
@@ -4732,16 +4732,16 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
     }
     if (detail_panel_open_word != 0) {
         switch (smith_collect_list_cursor[0]->group) { // match: groups 1 and 10 have no case, so parts and count stay unset for the fade below
-        case 11:
-        case 12:
+        case MENU_ITEM_GROUP_ITEM:
+        case MENU_ITEM_GROUP_STOCK_ITEM:
             parts = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
+        case MENU_ITEM_GROUP_SHIELD:
+        case MENU_ITEM_GROUP_HELM:
+        case MENU_ITEM_GROUP_ARMOR:
+        case MENU_ITEM_GROUP_GAUNTLET:
+        case MENU_ITEM_GROUP_BOOT:
             if (smith_collect_list_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }
@@ -4773,9 +4773,9 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             parts = shop_g_parts;
             count = shop_g_part_count;
             break;
-        case 7:
-        case 8:
-        case 9:
+        case MENU_ITEM_GROUP_RING:
+        case MENU_ITEM_GROUP_BRACELET:
+        case MENU_ITEM_GROUP_AMULET:
             if (smith_collect_list_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }
@@ -4805,7 +4805,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             parts = shop_g2_parts;
             count = shop_g2_part_count;
             break;
-        case 0:
+        case MENU_ITEM_GROUP_WEAPON:
             if (smith_collect_list_panel_sound_pending != 0) {
                 Sound_PlayMenu(1);
             }

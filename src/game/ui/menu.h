@@ -35,6 +35,21 @@ typedef struct MenuItem {
     s8 group;                       /* 0x0E which run of LevelDefs it is in (0: 150 on, 1: the first 150, 2 to 9: 220 on), 0 to 12 */
 } MenuItem;
 
+/* MenuItem.group and MenuItemList.group: what kind of item it is (Menu_Init) */
+#define MENU_ITEM_GROUP_WEAPON      0
+#define MENU_ITEM_GROUP_SPELL       1       /* an fx_table entry */
+#define MENU_ITEM_GROUP_SHIELD      2
+#define MENU_ITEM_GROUP_HELM        3
+#define MENU_ITEM_GROUP_ARMOR       4
+#define MENU_ITEM_GROUP_GAUNTLET    5
+#define MENU_ITEM_GROUP_BOOT        6
+#define MENU_ITEM_GROUP_RING        7
+#define MENU_ITEM_GROUP_BRACELET    8
+#define MENU_ITEM_GROUP_AMULET      9
+#define MENU_ITEM_GROUP_SHORTCUT    10      /* the equipped shortcut list */
+#define MENU_ITEM_GROUP_ITEM        11      /* a common item, in the use and shortcut lists */
+#define MENU_ITEM_GROUP_STOCK_ITEM  12      /* a common item in all_item_entries, the shop and smith lists */
+
 /* a node of the list equip_list_shown[0] points into: each one has its own ring of items */
 typedef struct MenuCategory {
     MenuItem *item;                 /* 0x00 the item the cursor is on */
