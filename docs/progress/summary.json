@@ -88,7 +88,7 @@
   "placeholder_params": 220,
   "plain_pointer_casts": 2172,
   "raw_case_labels": 2525,
-  "raw_float_constants": 7185,
+  "raw_float_constants": 21,
   "raw_state_values": 1397,
   "recovered_structs": 587,
   "total_fields": 3135,
