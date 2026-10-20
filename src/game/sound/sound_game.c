@@ -12,6 +12,22 @@
 #define SOUND_KIND_POINT    1
 #define SOUND_KIND_SEGMENT  2
 #define SOUND_KIND_CUE      0x63
+
+/* SoundChannel.mode and Sound_PlayMapAtRange's mode: the falloff curve; 0 to 2 bend the sound, 6 to 8 do not */
+#define SOUND_FALLOFF_LINEAR         0
+#define SOUND_FALLOFF_STEEP          1
+#define SOUND_FALLOFF_ROUND          2
+#define SOUND_FALLOFF_LINEAR_STEADY  6
+#define SOUND_FALLOFF_STEEP_STEADY   7
+#define SOUND_FALLOFF_ROUND_STEADY   8
+
+/* heap_file_read_step: the states of Sound_ReadHeapFileStep */
+#define SOUND_HEAP_FILE_READ_STEP_READ  0   /* opens the file and starts reading it into the heap */
+#define SOUND_HEAP_FILE_READ_STEP_SYNC  1   /* waits for the read, then closes the file and frees the voice */
+
+/* map_bank_file_read_step: the states of Sound_ReadMapBankFileStep */
+#define SOUND_MAP_BANK_FILE_READ_STEP_READ  0   /* opens the bank file and starts reading it */
+#define SOUND_MAP_BANK_FILE_READ_STEP_SYNC  1   /* waits for the read, then closes the file */
 #include "player/player.h"
 #include "model/model.h"
 #include "core/file.h"
@@ -617,18 +633,18 @@ int Sound_PlayMapAtRange(u8 sound, u8 mode, float *position, float range) {
     }
     distance = Sound_Delta(diff, position, &player_state.position.x);
     switch (mode) {
-    case 0:
-    case 6:
+    case SOUND_FALLOFF_LINEAR:
+    case SOUND_FALLOFF_LINEAR_STEADY:
         volume = (range - distance) * 64.0f * (1.0f / range);
         break;
-    case 1:
-    case 7:
+    case SOUND_FALLOFF_STEEP:
+    case SOUND_FALLOFF_STEEP_STEADY:
         level = range * range;
         level -= (range - distance) * (range - distance);
         volume = (int)((1.0 - sqrt(level) / range) * 64.0) * 1.5f;
         break;
-    case 2:
-    case 8:
+    case SOUND_FALLOFF_ROUND:
+    case SOUND_FALLOFF_ROUND_STEADY:
         level = range * range;
         level -= distance * distance;
         volume = sqrt(level) / range * 64.0;
@@ -816,18 +832,18 @@ void Sound_UpdateTagged(void) {
             } else {
                 if (positional_sounds_muted == 0) {
                     switch ((u8) sound_channels[i].mode) {
-                    case 0:
-                    case 6:
+                    case SOUND_FALLOFF_LINEAR:
+                    case SOUND_FALLOFF_LINEAR_STEADY:
                         volume = (sound_channels[i].volume - distance) * 64.0f * (1.0f / sound_channels[i].volume);
                         break;
-                    case 1:
-                    case 7:
+                    case SOUND_FALLOFF_STEEP:
+                    case SOUND_FALLOFF_STEEP_STEADY:
                         level = sound_channels[i].volume - distance;
                         level = sound_channels[i].volume * sound_channels[i].volume - level * level;
                         volume = (int)((1.0 - sqrt(level) / sound_channels[i].volume) * 64.0) * 1.5f;
                         break;
-                    case 2:
-                    case 8:
+                    case SOUND_FALLOFF_ROUND:
+                    case SOUND_FALLOFF_ROUND_STEADY:
                         level = sound_channels[i].volume * sound_channels[i].volume - distance * distance;
                         volume = sqrt(level) / sound_channels[i].volume * 64.0;
                         break;
@@ -908,12 +924,12 @@ static int Sound_TaggedNearestPoint(s32 index, Vector4 *nearest) {
     f32 along;
 
     switch (sound_channels[index].kind) {
-    case 1:
+    case SOUND_KIND_POINT:
         nearest->x = sound_channels[index].origin.x;
         nearest->y = sound_channels[index].origin.y;
         nearest->z = sound_channels[index].origin.z;
         break;
-    case 2:
+    case SOUND_KIND_SEGMENT:
         start = sound_channels[index].origin;
         // match: retail adds the 0x10 to the table base before the index
         end = (&sound_channels[0].target)[index * 4];
@@ -1349,7 +1365,7 @@ static int Sound_ReadHeapFileStep(LoadJob *job, int index) {
 
     if (SoundDriver_StepUpload() != 0) {
         switch (heap_file_read_step) {
-        case 0:
+        case SOUND_HEAP_FILE_READ_STEP_READ:
             heap_start = ((u32)&sound_heap_base >> 6) << 6;
             sound_heap_next = heap_start;
             *job->buffers = heap_start;
@@ -1360,7 +1376,7 @@ static int Sound_ReadHeapFileStep(LoadJob *job, int index) {
             File_Read(file, (void *)*job->buffers, -1);
             heap_file_read_step += 1;
             break;
-        case 1:
+        case SOUND_HEAP_FILE_READ_STEP_SYNC:
             if (File_Sync(heap_file_handle, 1) == 0) {
                 File_Close(heap_file_handle);
                 heap_file_read_step = 0;
@@ -1380,7 +1396,7 @@ s32 Sound_ReadMapBankFileStep(LoadRequest *request) {
 
     if (SoundDriver_StepUpload() != 0) {
         switch (map_bank_file_read_step) {
-        case 0:
+        case SOUND_MAP_BANK_FILE_READ_STEP_READ:
             buffer = sound_heap_next;
             request->target->buffer = (void *)buffer;
             sound_heap_next = (((buffer + 0x2003F) >> 6) << 6);
@@ -1389,7 +1405,7 @@ s32 Sound_ReadMapBankFileStep(LoadRequest *request) {
             File_Read(map_bank_file_handle, request->target->buffer, -1);
             map_bank_file_read_step += 1;
             break;
-        case 1:
+        case SOUND_MAP_BANK_FILE_READ_STEP_SYNC:
             if (File_Sync(map_bank_file_handle, 1) == 0) {
                 File_Close(map_bank_file_handle);
                 map_bank_file_read_step = 0;
