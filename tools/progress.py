@@ -53,6 +53,8 @@ READABILITY_ROWS = [
     ("plain pointer casts", "plain_pointer_casts", None),
     ("placeholder parameters", "placeholder_params", None),
     ("raw float constants", "raw_float_constants", None),
+    ("local declarations", "local_declarations", None),
+    ("  of them in a header", "local_declarations_in_headers", None),
 ]
 AUTO_NAME = re.compile(r"(func|sub|D)_[0-9A-Fa-f]{8}$")
 

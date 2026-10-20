@@ -24,7 +24,10 @@ Source text (comments and strings stripped):
                   (enum candidates), casts to a plain pointer type (`(u8 *)`,
                   `(char *)`, ...), parameters named `unknown`/`argN`, and float
                   literals with four or more decimals (`0.5235988f`: derived
-                  constants such as angles in radians).
+                  constants such as angles in radians). Local declarations:
+                  top-level `extern`s and non-static prototypes in a .c file,
+                  which belong in the module headers; those for a symbol some
+                  header already declares are counted apart too.
 
 Globals: data symbols of build/kfiv.elf not defined by an src/sce object;
 named once no longer splat's D_XXXXXXXX.
@@ -227,6 +230,41 @@ PLAIN_TYPES = r"(?:const\s+)?(?:unsigned\s+|signed\s+)?(?:char|short|int|long|fl
 PTR_CAST = re.compile(r"\(\s*" + PLAIN_TYPES + r"\s*\*+\s*\)")
 FUNC_DEF = re.compile(r"^\w[\w\s\*]*\b\w+\s*\(([^;{}]*)\)\s*\{", re.M)
 PLACEHOLDER_PARAM = re.compile(r"\b(?:unknown\w*|arg_?\d+)\s*(?:\[[^\]]*\]\s*)*(?=,|$)")
+PROTOTYPE = re.compile(r"^[A-Za-z_][\w\s\*]*?\b(\w+)\s*\(")
+EXTERN = re.compile(r"^extern\b[^(\[]*?\b(\w+)\s*(?:\[[^\]]*\]\s*)*$|^extern\b.*?\(\s*\*\s*(\w+)\s*\)")
+
+
+def top_level_statements(code: str):
+    """Statements at file scope that end in `;`, preprocessor lines left out."""
+    code = re.sub(r"^\s*#.*$", "", code, flags=re.M)
+    depth, start = 0, 0
+    for i, ch in enumerate(code):
+        if ch in "{(":
+            depth += 1
+        elif ch in "})":
+            depth -= 1
+            if depth == 0 and ch == "}":
+                start = i + 1
+        elif ch == ";" and depth == 0:
+            yield " ".join(code[start:i].split())
+            start = i + 1
+
+
+def local_declarations(code: str) -> list:
+    """Names declared by top-level externs and non-static prototypes."""
+    names = []
+    for st in top_level_statements(code):
+        if st.startswith(("static", "typedef")) or "=" in st:
+            continue
+        if st.startswith("extern"):
+            m = EXTERN.match(st)
+            if m:
+                names.append(m.group(1) or m.group(2))
+        elif (m := PROTOTYPE.match(st)) and not re.match(r"^(?:struct|union|enum)\s+\w+\s*$", st):
+            names.append(m.group(1))
+    return names
+
+
 RAW_FLOAT = re.compile(r"(?<![\w.])\d+\.\d{4,}(?:[eE][-+]?\d+)?[fF]?\b")
 
 
@@ -234,7 +272,11 @@ def source_measures(sources) -> dict:
     m = dict.fromkeys(("field_uses", "named_field_uses", "bit_ops", "named_bit_ops",
                        "fn_ptr_casts", "match_comments", "gotos", "long_comments",
                        "comment_unk_names", "raw_case_labels", "raw_state_values",
-                       "plain_pointer_casts", "placeholder_params", "raw_float_constants"), 0)
+                       "plain_pointer_casts", "placeholder_params", "raw_float_constants",
+                       "local_declarations", "local_declarations_in_headers"), 0)
+    header_names = set()
+    for h in [*GAME.rglob("*.h"), *(ROOT / "include").rglob("*.h"), *(ROOT / "src" / "sce").rglob("*.h")]:
+        header_names |= set(local_declarations(strip_code(h.read_text(errors="replace"))))
     for path in sources:
         raw = path.read_text(errors="replace")
         code = strip_code(raw)
@@ -259,6 +301,9 @@ def source_measures(sources) -> dict:
         m["placeholder_params"] += sum(len(PLACEHOLDER_PARAM.findall(p.replace("\n", " ").strip()))
                                        for d in FUNC_DEF.findall(code) for p in d.split(","))
         m["raw_float_constants"] += len(RAW_FLOAT.findall(code))
+        local = local_declarations(code)
+        m["local_declarations"] += len(local)
+        m["local_declarations_in_headers"] += sum(1 for n in local if n in header_names)
     return m
 
 
