@@ -207,7 +207,7 @@ void Gold_Update(void) {
             break;
         }
         actor->body->fade_enabled = actor->body->fade_alpha < 0x80;
-        if (actor->flags & 2) {
+        if (actor->flags & MAP_ACTOR_FLAG_IN_REACH) {
             Vector_Subtract(delta, &actor->body->position, &player_state);
             distance = delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2];
             if (distance < nearest_distance) {

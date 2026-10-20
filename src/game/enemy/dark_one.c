@@ -64,7 +64,7 @@ void DarkOne_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
@@ -78,9 +78,9 @@ void DarkOne_Init(Entity *entity) {
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
-    ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit16 = TRUE;
+    ENTITY_FLAG_BITS(entity)->not_targetable = TRUE;
     ai_state->step_index = dark_one_hits_left;
 }
 
@@ -106,9 +106,9 @@ static void DarkOne_Think(Entity *entity, s32 unknown) {
             break;
         }
     }
-    if (ENTITY_FLAG_BITS(entity)->bit43) {
+    if (ENTITY_FLAG_BITS(entity)->hit_by_player) {
         EntityEvent_StartEffectAtPoint((char **)entity, 0x13D, 0xFF, (int)entity->model->rotation);
-        ENTITY_FLAG_BITS(entity)->bit43 = FALSE;
+        ENTITY_FLAG_BITS(entity)->hit_by_player = FALSE;
         if (dark_one_hits_left <= 0) {
             entity->hit_flash_frames = 6;
             EntityAi_StartAction(entity, DarkOne_Death, unknown);
@@ -162,23 +162,23 @@ static void DarkOne_DeathByOtherWeapon(Entity *entity) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
             s32 kind = 2;
 
             if (!(ENTITY_PARAMS_BITS(entity)->bit25 && !ENTITY_PARAMS_BITS(entity)->bit26)) {
                 kind = 1;
             }
-            ENTITY_FLAG_BITS(entity)->bits11 = kind;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = kind;
         }
         if (!ENTITY_PARAMS_BITS(entity)->bit25 && ENTITY_PARAMS_BITS(entity)->bit26) {
             entity->collision_radius = 20.0f;
         }
-        ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bits2 = 1;
-        ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->dying = 1;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         EntityEvent_OnDeath(entity);
         entity->action_step++;
     case 1:
@@ -187,13 +187,13 @@ static void DarkOne_DeathByOtherWeapon(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
-            ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bits2 = 2;
-            ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
+            ENTITY_FLAG_BITS(entity)->dying = 2;
+            ENTITY_FLAG_BITS(entity)->no_respawn = TRUE;
             entity->action_timer = 20;
-            ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
-            ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
+            ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
+            ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
             entity->action_step++;
         }
         break;
@@ -207,12 +207,12 @@ static void DarkOne_DeathByMoonlightSword(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0, 0, 5, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
-        ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bits2 = 1;
-        ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->dying = 1;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         EntityEvent_OnDeath(entity);
         entity->action_step++;
     case 1:
@@ -221,13 +221,13 @@ static void DarkOne_DeathByMoonlightSword(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
-            ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bits2 = 2;
-            ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
+            ENTITY_FLAG_BITS(entity)->dying = 2;
+            ENTITY_FLAG_BITS(entity)->no_respawn = TRUE;
             entity->action_timer = 20;
-            ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
-            ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
+            ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
+            ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
             entity->action_step++;
         }
         break;

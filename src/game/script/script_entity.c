@@ -411,7 +411,7 @@ void ScriptCmd_WalkEntityTo(ScriptWalkToCommand *command) {
             if (command->run.value != 0) {
                 entity->move_command |= MOVE_COMMAND_RUN;
             }
-            ENTITY_FLAG_BITS(entity)->bits11 = command->mode.value;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = command->mode.value;
             return;
         }
     }
@@ -450,7 +450,7 @@ void ScriptCmd_WalkEntityToFlat(ScriptWalkToFlatCommand *command) {
             if (command->run.value != 0) {
                 entity->move_command |= MOVE_COMMAND_RUN;
             }
-            ENTITY_FLAG_BITS(entity)->bits11 = command->mode.value;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = command->mode.value;
             return;
         }
     }
@@ -513,15 +513,15 @@ void ScriptCmd_SetEntitiesFlag5(ScriptFlagCommand *command) {
     i = map_spawn_counts[current_map_slot];
     while (--i != -1) {
         if (command->kind.value == 1) {
-            if (!ENTITY_FLAG_BITS(entity)->bit16) {
-                ENTITY_FLAG_BITS(entity)->bit5 = command->value.value;
+            if (!ENTITY_FLAG_BITS(entity)->not_targetable) {
+                ENTITY_FLAG_BITS(entity)->own_think = command->value.value;
             }
         } else if (command->kind.value == 2) {
-            if (ENTITY_FLAG_BITS(entity)->bit16) {
-                ENTITY_FLAG_BITS(entity)->bit5 = command->value.value;
+            if (ENTITY_FLAG_BITS(entity)->not_targetable) {
+                ENTITY_FLAG_BITS(entity)->own_think = command->value.value;
             }
         } else {
-            ENTITY_FLAG_BITS(entity)->bit5 = command->value.value;
+            ENTITY_FLAG_BITS(entity)->own_think = command->value.value;
         }
         entity++;
     }
@@ -679,19 +679,19 @@ void ScriptCmd_SetEntityFlags(ScriptSetFlagsCommand *command) {
         return;
     }
     if (command->mask.value & 1) {
-        ENTITY_FLAG_BITS(entity)->bit1 = command->value.value & 1;
+        ENTITY_FLAG_BITS(entity)->live = command->value.value & 1;
     }
-    if (command->mask.value & 2) {
-        ENTITY_FLAG_BITS(entity)->bits2 = (command->value.value & 2) ? 3 : 0;
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_DYING) {
+        ENTITY_FLAG_BITS(entity)->dying = (command->value.value & SCRIPT_ENTITY_FLAG_DYING) ? 3 : 0;
     }
-    if (command->mask.value & 0x4) {
-        ENTITY_FLAG_BITS(entity)->bit5 = command->value.value >> 2;
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_OWN_THINK) {
+        ENTITY_FLAG_BITS(entity)->own_think = command->value.value >> 2;
     }
-    if (command->mask.value & 0x8) {
-        ENTITY_FLAG_BITS(entity)->bit6 = command->value.value >> 3;
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_HANDLER_RUNS) {
+        ENTITY_FLAG_BITS(entity)->handler_runs = command->value.value >> 3;
     }
-    if (command->mask.value & 0x10) {
-        ENTITY_FLAG_BITS(entity)->bit7 = command->value.value >> 4;
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_RESPAWNABLE) {
+        ENTITY_FLAG_BITS(entity)->respawnable = command->value.value >> 4;
     }
     if (command->mask.value & 0x20) {
         ENTITY_FLAG_BITS(entity)->bit18 = command->value.value >> 5;
@@ -699,29 +699,29 @@ void ScriptCmd_SetEntityFlags(ScriptSetFlagsCommand *command) {
     if (command->mask.value & 0x40) {
         ENTITY_FLAG_BITS(entity)->bit22 = command->value.value >> 6;
     }
-    if (command->mask.value & 0x80) {
-        ENTITY_FLAG_BITS(entity)->bit23 = command->value.value >> 7;
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_NO_WALL_COLLISION) {
+        ENTITY_FLAG_BITS(entity)->no_wall_collision = command->value.value >> 7;
     }
-    if (command->mask.value & 0x100) {
-        ENTITY_FLAG_BITS(entity)->bit24 = command->value.value >> 8;
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_NO_SECOND_WALL_COLLISION) {
+        ENTITY_FLAG_BITS(entity)->no_second_wall_collision = command->value.value >> 8;
     }
-    if (command->mask.value & 0x200) {
-        ENTITY_FLAG_BITS(entity)->bit25 = command->value.value >> 9;
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_NO_MAP_OBJECT_COLLISION) {
+        ENTITY_FLAG_BITS(entity)->no_map_object_collision = command->value.value >> 9;
     }
-    if (command->mask.value & 0x400) {
-        ENTITY_FLAG_BITS(entity)->bit26 = command->value.value >> 10;
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_NO_ENTITY_COLLISION) {
+        ENTITY_FLAG_BITS(entity)->no_entity_collision = command->value.value >> 10;
     }
-    if (command->mask.value & 0x800) {
-        ENTITY_FLAG_BITS(entity)->bit27 = command->value.value >> 11;
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_NO_PLAYER_COLLISION) {
+        ENTITY_FLAG_BITS(entity)->no_player_collision = command->value.value >> 11;
     }
-    if (command->mask.value & 0x1000) {
-        ENTITY_FLAG_BITS(entity)->bit28 = command->value.value >> 12;
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_NO_FLOOR_LIFT) {
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = command->value.value >> 12;
     }
-    if (command->mask.value & 0x2000) {
-        ENTITY_FLAG_BITS(entity)->bit14 = command->value.value >> 13;
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_ANIMATES) {
+        ENTITY_FLAG_BITS(entity)->animates = command->value.value >> 13;
     }
-    if (command->mask.value & 0x4000) {
-        ENTITY_FLAG_BITS(entity)->bit9 = command->value.value >> 14;
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_LOOK_AT_TARGET) {
+        ENTITY_FLAG_BITS(entity)->look_at_target = command->value.value >> 14;
     }
     if (command->mask.value & 0x8000) {
         ENTITY_FLAG_BITS(entity)->bit29 = command->value.value >> 15;
@@ -737,18 +737,18 @@ void ScriptCmd_GetEntityFlags(ScriptQueryCommand *command) {
 
     entity = Entity_GetBySpawnId(command->input.value);
     if (entity != NULL) {
-        result = ENTITY_FLAG_BITS(entity)->bit1;
-        if (ENTITY_FLAG_BITS(entity)->bits2 >= 2) {
-            result |= 2;
+        result = ENTITY_FLAG_BITS(entity)->live;
+        if (ENTITY_FLAG_BITS(entity)->dying >= 2) {
+            result |= SCRIPT_ENTITY_FLAG_DYING;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit5) {
-            result |= 0x4;
+        if (ENTITY_FLAG_BITS(entity)->own_think) {
+            result |= SCRIPT_ENTITY_FLAG_OWN_THINK;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit6) {
-            result |= 0x8;
+        if (ENTITY_FLAG_BITS(entity)->handler_runs) {
+            result |= SCRIPT_ENTITY_FLAG_HANDLER_RUNS;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit7) {
-            result |= 0x10;
+        if (ENTITY_FLAG_BITS(entity)->respawnable) {
+            result |= SCRIPT_ENTITY_FLAG_RESPAWNABLE;
         }
         if (ENTITY_FLAG_BITS(entity)->bit18) {
             result |= 0x20;
@@ -756,29 +756,29 @@ void ScriptCmd_GetEntityFlags(ScriptQueryCommand *command) {
         if (ENTITY_FLAG_BITS(entity)->bit22) {
             result |= 0x40;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit23) {
-            result |= 0x80;
+        if (ENTITY_FLAG_BITS(entity)->no_wall_collision) {
+            result |= SCRIPT_ENTITY_FLAG_NO_WALL_COLLISION;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit24) {
-            result |= 0x100;
+        if (ENTITY_FLAG_BITS(entity)->no_second_wall_collision) {
+            result |= SCRIPT_ENTITY_FLAG_NO_SECOND_WALL_COLLISION;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit25) {
-            result |= 0x200;
+        if (ENTITY_FLAG_BITS(entity)->no_map_object_collision) {
+            result |= SCRIPT_ENTITY_FLAG_NO_MAP_OBJECT_COLLISION;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit26) {
-            result |= 0x400;
+        if (ENTITY_FLAG_BITS(entity)->no_entity_collision) {
+            result |= SCRIPT_ENTITY_FLAG_NO_ENTITY_COLLISION;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit27) {
-            result |= 0x800;
+        if (ENTITY_FLAG_BITS(entity)->no_player_collision) {
+            result |= SCRIPT_ENTITY_FLAG_NO_PLAYER_COLLISION;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit28) {
-            result |= 0x1000;
+        if (ENTITY_FLAG_BITS(entity)->no_floor_lift) {
+            result |= SCRIPT_ENTITY_FLAG_NO_FLOOR_LIFT;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit14) {
-            result |= 0x2000;
+        if (ENTITY_FLAG_BITS(entity)->animates) {
+            result |= SCRIPT_ENTITY_FLAG_ANIMATES;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit9) {
-            result |= 0x4000;
+        if (ENTITY_FLAG_BITS(entity)->look_at_target) {
+            result |= SCRIPT_ENTITY_FLAG_LOOK_AT_TARGET;
         }
         if (ENTITY_FLAG_BITS(entity)->bit29) {
             result |= 0x8000;

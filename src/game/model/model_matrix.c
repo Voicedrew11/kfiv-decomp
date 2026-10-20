@@ -66,7 +66,7 @@ static void ModelMatrix_BuildPartRotation(ModelInstance *model, ModelPart *part,
 static void ModelMatrix_BuildFromModel(ModelInstance *model) {
     f32 *matrix;
 
-    if (!(model->draw_flags & 0x300)) {
+    if (!(model->draw_flags & MODEL_DRAW_FACE_CAMERA)) {
         matrix = (f32 *)model->model_matrix;
         sceVu0RotMatrixX(matrix, identity_matrix, ModelMatrix_WrapAngle(model->rotation.x));
         sceVu0RotMatrixY(matrix, matrix, ModelMatrix_WrapAngle(model->rotation.y));
@@ -175,18 +175,18 @@ void ModelMatrix_Build(ModelInstance *model, Vector4 *position, Vector4 *rotatio
     f32 angle;
     f32 *scratch = SCRATCH_MATRIX;
 
-    if (model->draw_flags & 0x300) {
+    if (model->draw_flags & MODEL_DRAW_FACE_CAMERA) {
         sceVu0SubVector(to_camera, camera_state.position, position);
         sceVu0CopyMatrix(SCRATCH_MATRIX, scale_matrices);
         scratch[0] *= scale[0];
         scratch[5] *= scale[1];
         scratch[10] *= scale[2];
         sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(model->rotation.z));
-        if (model->draw_flags & 0x100) {
+        if (model->draw_flags & MODEL_DRAW_FACE_CAMERA_X) {
             sceVu0RotMatrixX(SCRATCH_MATRIX, SCRATCH_MATRIX,
                              atan2f(to_camera[1], sqrtf(to_camera[0] * to_camera[0] + to_camera[2] * to_camera[2])));
         }
-        if (model->draw_flags & 0x200) {
+        if (model->draw_flags & MODEL_DRAW_FACE_CAMERA_Y) {
             angle = -atan2f(to_camera[2], to_camera[0]) - 1.5707964f;
             if (angle < -3.1415927f) {
                 angle += 6.2831855f;
@@ -194,7 +194,7 @@ void ModelMatrix_Build(ModelInstance *model, Vector4 *position, Vector4 *rotatio
             sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, angle);
         }
         sceVu0TransMatrix((f32 *)model->model_matrix, SCRATCH_MATRIX, &model->position.x);
-    } else if (model->draw_flags & 0x400) {
+    } else if (model->draw_flags & MODEL_DRAW_TURN_Z_ONLY) {
         sceVu0CopyMatrix(SCRATCH_MATRIX, scale_matrices);
         scratch[0] *= scale[0];
         scratch[5] *= scale[1];
@@ -307,7 +307,7 @@ static void Matrix_RotateVector(void *dst, void *src_matrix, void *src_vec) {
 }
 
 /* Makes the two matrices a model is drawn with: the first with its rows divided by the model's scale;
-   the second, for models flagged 0x400, emptied but for the model's colour times its alpha. */
+   the second, with MODEL_FLAG_FLAT_COLOUR, emptied but for the model's colour times its alpha. */
 void ModelMatrix_BuildDrawMatrices(ModelInstance *model, s32 normal_src, s32 light_src, void *normal_dest,
                                    void *light_dest) {
     f32 (*normal)[4] = normal_dest;
@@ -318,7 +318,7 @@ void ModelMatrix_BuildDrawMatrices(ModelInstance *model, s32 normal_src, s32 lig
     sceVu0DivVectorXYZ(normal[1], normal[1], model->scale_y);
     sceVu0DivVectorXYZ(normal[2], normal[2], model->scale_z);
     sceVu0CopyMatrix(light, (void *)light_src);
-    if (model->model_flags & 0x400) {
+    if (model->model_flags & MODEL_FLAG_FLAT_COLOUR) {
         light[0][0] = 0.0f;
         light[0][1] = 0.0f;
         light[0][2] = 0.0f;

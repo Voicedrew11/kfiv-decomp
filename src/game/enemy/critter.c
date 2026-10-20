@@ -75,7 +75,7 @@ void Critter_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
@@ -98,36 +98,36 @@ static void Critter_Dormant(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 2, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit24 = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_second_wall_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
+        ENTITY_FLAG_BITS(entity)->animates = FALSE;
         entity->action_step++;
         break;
     case 1:
-        if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->bit43) {
-            ENTITY_FLAG_BITS(entity)->bits36 = 0;
-            ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+        if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
+            ENTITY_FLAG_BITS(entity)->hit_strength = 0;
+            ENTITY_FLAG_BITS(entity)->animates = TRUE;
             entity->action_step++;
         }
         break;
     case 2:
         ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit24 = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_second_wall_collision = FALSE;
         ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
-            ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
+            ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
             EntityAi_SetState((char *)entity, 2);
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -145,14 +145,14 @@ static void Critter_Think(Entity *entity, s32 unknown) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (EntityCollision_DistanceToGround(entity->model->position) != critter_no_ground_height[0]) {
-        ENTITY_FLAG_BITS(entity)->bits60 = 5;
+        ENTITY_FLAG_BITS(entity)->floor_material = 5;
     }
     if (entity->busy_flags != 0) {
         return;
     }
     EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
-    if (ENTITY_FLAG_BITS(entity)->bit53) {
+    if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
     }
@@ -180,7 +180,7 @@ static void Critter_ThinkIdle(Entity *entity, s32 unknown) {
     s32 turn;
 
     if (ai_state->step_index == 0) {
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN);
         turn = EntityAi_TurnFromPush(entity, direction);
         if (turn != 0 && ai_state->action_flags <= 0) {
@@ -200,7 +200,7 @@ static void Critter_ThinkIdle(Entity *entity, s32 unknown) {
             ai_state->action_counter = EntityAi_CheckMeleeHit(entity, &entity->params->melee_attacks[1], 0, 1, 1);
         }
     } else {
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         angle = EntityMath_AngleDifference(entity->model->rotation[1], ai_state->part_angle_x);
         if (ABS(angle) > entity->params->turn_limit) {
             if (angle >= 0.0f) {
@@ -226,7 +226,7 @@ static void Critter_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
     s32 turn;
 
-    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
@@ -267,7 +267,7 @@ static void Critter_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (ai_state->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit31) {
+        if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;

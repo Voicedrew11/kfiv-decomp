@@ -154,23 +154,23 @@ static void Larva_Dormant(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, entity->params->motion_blend_frames, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
         ENTITY_FLAG_BITS(entity)->bit22 = 1;
-        ENTITY_FLAG_BITS(entity)->bit23 = 1;
-        ENTITY_FLAG_BITS(entity)->bit24 = 1;
+        ENTITY_FLAG_BITS(entity)->no_wall_collision = 1;
+        ENTITY_FLAG_BITS(entity)->no_second_wall_collision = 1;
         ENTITY_FLAG_BITS(entity)->bit18 = 1;
-        ENTITY_FLAG_BITS(entity)->bit28 = 1;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = 1;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
         break;
     case 1:
-        if (entity->distance_to_player < (f32)entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->bit43) {
+        if (entity->distance_to_player < (f32)entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
             Motion_Start(entity, 2, 0, entity->params->motion_blend_frames, 0);
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
-            ENTITY_FLAG_BITS(entity)->bits36 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->hit_strength = 0;
             entity->action_step++;
         }
         break;
@@ -180,21 +180,21 @@ static void Larva_Dormant(Entity *entity) {
         }
         break;
     case 3:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
             ENTITY_FLAG_BITS(entity)->bit20 = 0;
             ENTITY_FLAG_BITS(entity)->bit22 = 0;
-            ENTITY_FLAG_BITS(entity)->bit23 = 0;
-            ENTITY_FLAG_BITS(entity)->bit24 = 0;
+            ENTITY_FLAG_BITS(entity)->no_wall_collision = 0;
+            ENTITY_FLAG_BITS(entity)->no_second_wall_collision = 0;
             ENTITY_FLAG_BITS(entity)->bit18 = 0;
             if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
-                ENTITY_FLAG_BITS(entity)->bit28 = 0;
+                ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
             }
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -228,13 +228,13 @@ static void Larva_Death(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             if (entity->params->respawn_effect_id != 0 && entity->params->respawn_effect_id != 0xFFFF) {
                 Effect_FreeForOwner(entity);
             }
-            ENTITY_FLAG_BITS(entity)->bit14 = 0;
-            ENTITY_FLAG_BITS(entity)->bits2 = 2;
-            ENTITY_FLAG_BITS(entity)->bit4 = 1;
+            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->dying = 2;
+            ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             entity->action_timer = 20;
             EntityEvent_OnDeath(entity);
             entity->action_step++;
@@ -318,14 +318,14 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
         half = 0.5f;
         Motion_Start(entity, 0x12, 0, entity->params->motion_blend_frames, 1);
         degree = 0.017453292f;
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
         ENTITY_FLAG_BITS(entity)->bit18 = 1;
-        ENTITY_FLAG_BITS(entity)->bit28 = 1;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = 1;
         ENTITY_FLAG_BITS(entity)->bit22 = 0;
-        ENTITY_FLAG_BITS(entity)->bit23 = 0;
-        ENTITY_FLAG_BITS(entity)->bit24 = 0;
+        ENTITY_FLAG_BITS(entity)->no_wall_collision = 0;
+        ENTITY_FLAG_BITS(entity)->no_second_wall_collision = 0;
         ai_state->pitch_speed = entity->model->scale[0];
         ai_state->heading_speed = entity->model->scale[1];
         ai_state->keep_min_distance = entity->model->scale[2];
@@ -372,8 +372,8 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
         if (ai_state->action_counter == 0) {
             ai_state->action_counter = EntityAi_CheckMeleeHit(entity, entity->params->melee_attacks, 0, 1, 2);
         }
-        if ((s32)(entity->flags >> 44) & 1) {
-            ENTITY_FLAG_BITS(entity)->bit27 = 0;
+        if (ENTITY_FLAG_BITS(entity)->on_floor) {
+            ENTITY_FLAG_BITS(entity)->no_player_collision = 0;
             entity->model->rotation[0] = 0.0f;
             ai_state->sub_timer = 600;
             entity->model->scale[0] = ai_state->pitch_speed;
@@ -416,11 +416,11 @@ static void Larva_DeathFallAndFade(Entity *entity) {
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 1);
         ENTITY_FLAG_BITS(entity)->bit22 = 0;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
-        ENTITY_FLAG_BITS(entity)->bit27 = 1;
-        ENTITY_FLAG_BITS(entity)->bit26 = 1;
-        ENTITY_FLAG_BITS(entity)->bits2 = 1;
-        ENTITY_FLAG_BITS(entity)->bits2 = 2;
-        ENTITY_FLAG_BITS(entity)->bit4 = 1;
+        ENTITY_FLAG_BITS(entity)->no_player_collision = 1;
+        ENTITY_FLAG_BITS(entity)->no_entity_collision = 1;
+        ENTITY_FLAG_BITS(entity)->dying = 1;
+        ENTITY_FLAG_BITS(entity)->dying = 2;
+        ENTITY_FLAG_BITS(entity)->no_respawn = 1;
         entity->action_timer = 20;
         ai_state->pause_timer = 0;
         entity->action_step++;
@@ -435,8 +435,8 @@ static void Larva_DeathFallAndFade(Entity *entity) {
             if (entity->params->respawn_effect_id != 0 && entity->params->respawn_effect_id != 0xFFFF) {
                 Effect_FreeForOwner(entity);
             }
-            ENTITY_FLAG_BITS(entity)->bits2 = 3;
-            ENTITY_FLAG_BITS(entity)->bit1 = 0;
+            ENTITY_FLAG_BITS(entity)->dying = 3;
+            ENTITY_FLAG_BITS(entity)->live = 0;
         }
         break;
     }

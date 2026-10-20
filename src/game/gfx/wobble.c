@@ -2,6 +2,8 @@
 #include "model/model.h"
 #include "gfx/packet.h"
 #include "gfx/screen.h"
+#include "gfx/gs.h"
+#include <eeregs.h>
 
 double sin(double);
 void *memset(void *, int, u32);
@@ -137,10 +139,10 @@ void Wobble_DrawRippledModel(ModelInstance *model, int unk1, int unk2, int unk3,
                 next = (ModelPartData *)next->vertices; // match: the cursor steps on; data keeps the block's start
                 vertex = (ModelPartVertex *)next;
                 packet = Packet_Alloc(vertex_count * 2 + 3);
-                *packet = (vertex_count * 2 + 2) | 0x10000000;
+                *packet = (vertex_count * 2 + 2) | DMA_TAG_ID_CNT;
                 packet += 7;
                 *packet++ = (vertex_count * 2) | 0x51000001;
-                tag_low = (u64)vertex_count | 0x8000 | ((u64)2 << 60);
+                tag_low = (u64)vertex_count | GIF_TAG_EOP | ((u64)2 << 60);
                 tag_high = (prim << 47) | ((u64)1 << 46);
                 *(u64 *)packet = tag_low | tag_high;
                 packet += 2;
@@ -166,12 +168,12 @@ void Wobble_DrawRippledModel(ModelInstance *model, int unk1, int unk2, int unk3,
                     Vu0_ProjectToScreen3(screens[0], screens[1], screens[2], points[0], points[1], points[2]);
                     screen = screens[0];
                     for (corner = 0; corner < 3; corner++) {
-                        if ((u32)out->z > 0xFFFF0 || ((out->x | out->y) & 0xFFFF0000)) {
+                        if ((u32)out->z > 0xFFFF0 || ((out->x | out->y) & SCREEN_XY_OUTSIDE_MASK)) {
                             flags |= 1;
-                            out->flags |= 0x8000;
+                            out->flags |= PACKET_VERTEX_OUT_OF_RANGE;
                         }
                         if (flags != 0) {
-                            out->flags |= 0x8000;
+                            out->flags |= PACKET_VERTEX_OUT_OF_RANGE;
                         }
                         flags = (flags << 1) & 7;
                         out->flags |= vertex->flags;
@@ -191,12 +193,12 @@ void Wobble_DrawRippledModel(ModelInstance *model, int unk1, int unk2, int unk3,
                     out->z >>= 4;
                     WOBBLE(points[0], vertex[0]);
                     Vu0_ProjectToScreen(screens[0], points[0]);
-                    if ((u32)out->z > 0xFFFF0 || ((out->x | out->y) & 0xFFFF0000)) {
+                    if ((u32)out->z > 0xFFFF0 || ((out->x | out->y) & SCREEN_XY_OUTSIDE_MASK)) {
                         flags |= 1;
-                        out->flags |= 0x8000;
+                        out->flags |= PACKET_VERTEX_OUT_OF_RANGE;
                     }
                     if (flags != 0) {
-                        out->flags |= 0x8000;
+                        out->flags |= PACKET_VERTEX_OUT_OF_RANGE;
                     }
                     flags = (flags << 1) & 7;
                     out->flags |= vertex->flags;

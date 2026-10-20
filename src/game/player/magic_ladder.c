@@ -432,9 +432,9 @@ void Ladder_Start(ObjectReference *object, int from_far_end) {
     Vector_Copy(&ladder_top_point, (void *)object->model->get_point(object->model, 1));
     Vector_Copy(&ladder_bottom_point, (void *)object->model->get_point(object->model, 0));
     Vector_Subtract(&ladder_span, &ladder_top_point, &ladder_bottom_point);
-    PLAYER_STATUS_BITS(&player_state)->bit36 = TRUE;
+    PLAYER_STATUS_BITS(&player_state)->on_ladder = TRUE;
     PLAYER_STATUS_BITS(&player_state)->bit34 = FALSE;
-    PLAYER_STATUS_BITS(&player_state)->bit33 = FALSE;
+    PLAYER_STATUS_BITS(&player_state)->step_up_pending = FALSE;
     player_state.fall_speed = 0.0f;
     player_state.strafe_speed = 0.0f;
     player_state.walk_speed = 0.0f;

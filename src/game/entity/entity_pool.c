@@ -449,7 +449,7 @@ static int Entity_TryActivate(Entity *entity) {
     model->after_draw = NULL;
     if (entity->spawn_info->type_id == 0x47) {
         model->model_flags |= 0x200;
-        model->draw_flags |= MODEL_FLAG_800;
+        model->draw_flags |= MODEL_DRAW_OWN_TEXTURE;
         model->draw = Entity_PrepareScreenTexturedDraw;
         model->after_draw = Entity_AfterDrawEmpty;
         screen_textured_entity_type = entity->spawn_info->type_id;
@@ -993,11 +993,11 @@ void Entity_PrepareAdditiveDraw(ModelInstance *model) {
     ModelTexture_SendForModel(model);
 }
 
-/* Before a type 0x47 model is drawn: with MODEL_FLAG_800 it copies the frame into a 256x256 texture at 0x3540
+/* Before a type 0x47 model is drawn: with MODEL_DRAW_OWN_TEXTURE it copies the frame into a 256x256 texture at 0x3540
    and maps it onto the model by screen position, otherwise it puts the model's own textures and texture
    coordinates back; then sets the GS registers by the model's alpha. */
 static void Entity_PrepareScreenTexturedDraw(ModelInstance *model) {
-    if (model->draw_flags & MODEL_FLAG_800) {
+    if (model->draw_flags & MODEL_DRAW_OWN_TEXTURE) {
         Model_SetBlockGsWords(model, 0x220013540L, 0x60, -1, -1);
         Model_SetUvsFromScreen(model);
         GsDraw_CopyFrameToTexture(0x3540, 0, 0x100, 0x100);
@@ -1013,7 +1013,7 @@ static void Entity_PrepareScreenTexturedDraw(ModelInstance *model) {
         Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118L);
         Packet_AddGsRegister(GS_REG_ZBUF_2, 0xA000118L);
         Packet_AddGsRegister(GS_REG_TEST_1, 0x5000DL);
-        if (model->draw_flags & MODEL_FLAG_800) {
+        if (model->draw_flags & MODEL_DRAW_OWN_TEXTURE) {
             Packet_AddGsRegister(GS_REG_TEST_2, 0x30001L);
         } else {
             Packet_AddGsRegister(GS_REG_TEST_2, 0x5000DL);
@@ -1150,7 +1150,7 @@ static void Entity_AppendToActive(Entity *entity) {
         entity->prev = NULL;
         entity->next = NULL;
     }
-    ENTITY_FLAG_BITS(entity)->bit0 = 1;
+    ENTITY_FLAG_BITS(entity)->active_list = 1;
     active_entity_count++;
 }
 

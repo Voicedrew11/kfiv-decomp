@@ -1,21 +1,28 @@
 #include "model/model.h"
+#include "gfx/gs.h"
+#include <eeregs.h>
 
-/* which sides of the screen a point is beyond */
+/* which sides of the screen a point is beyond, the bits of CLIP_SIDES */
+#define SCREEN_SIDE_LEFT 1
+#define SCREEN_SIDE_RIGHT 2
+#define SCREEN_SIDE_TOP 4
+#define SCREEN_SIDE_BOTTOM 8
+
 #define CLIP_SIDES(point, sides)                                                                   \
     if ((point)->x < 0x6C00) {                                                                   \
-        (sides) |= 1;                                                                              \
+        (sides) |= SCREEN_SIDE_LEFT;                                                                              \
     }                                                                                              \
     if ((point)->x > 0x9400) {                                                                   \
-        (sides) |= 2;                                                                              \
+        (sides) |= SCREEN_SIDE_RIGHT;                                                                              \
     }                                                                                              \
     if ((point)->y < 0x7200) {                                                                   \
-        (sides) |= 4;                                                                              \
+        (sides) |= SCREEN_SIDE_TOP;                                                                              \
     }                                                                                              \
     if ((point)->y > 0x8E00) {                                                                   \
-        (sides) |= 8;                                                                              \
+        (sides) |= SCREEN_SIDE_BOTTOM;                                                                              \
     }
 /* whether a point is too deep or outside the range the GS can draw */
-#define OUT_OF_RANGE(point) ((point)->z > 0xFFFF0 || (((point)->x | (point)->y) & 0xFFFF0000))
+#define OUT_OF_RANGE(point) ((point)->z > 0xFFFF0 || (((point)->x | (point)->y) & SCREEN_XY_OUTSIDE_MASK))
 typedef u32 u_long128 __attribute__((mode(TI)));
 /* copies a quadword and steps both pointers past it */
 #define COPY_QWORD(to, from)                                                                       \
@@ -211,7 +218,7 @@ void ModelScreen_QueueCutTriangle(u32 *data, ModelPartVertexWords *vertex, int f
             : : "r"(matrix), "r"(packet));
         packet += 0x10;
     }
-    *packet = (size - 2) | 0x10000000;
+    *packet = (size - 2) | DMA_TAG_ID_CNT;
     packet += 4;
     data += 4;
     if (setup) {
@@ -447,7 +454,7 @@ void ModelScreen_QueueCutFloatTriangle(u32 *data, ModelPartVertexWords *vertex, 
         *(f32 *)packet++ = 0.0f;
         *(f32 *)packet++ = 128.0f;
     }
-    *packet = (size - 2) | 0x10000000;
+    *packet = (size - 2) | DMA_TAG_ID_CNT;
     packet += 4;
     data += 4;
     if (setup) {

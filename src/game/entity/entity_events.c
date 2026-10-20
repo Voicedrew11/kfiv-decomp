@@ -227,7 +227,7 @@ void EntityEvent_StartFrameEffects(Entity *entity, s32 animation, s32 frame_from
     if (entity->map_record == NULL) {
         return;
     }
-    if (!(((MapRecord *)entity->map_record)->record_flags & 0x4000000)) {
+    if (!(((MapRecord *)entity->map_record)->record_flags & MAP_RECORD_FRAME_EFFECTS)) {
         return;
     }
     for (i = 0; i < count; i++, record++) {
@@ -331,7 +331,7 @@ void EntityEvent_Respawn(Entity *entity) {
     char *bone;
 
     Entity_ResetToSpawn(entity);
-    entity->flags = ((entity->flags | ENTITY_FLAG_LIVE) & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_100;
+    entity->flags = ((entity->flags | ENTITY_FLAG_LIVE) & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_RESPAWN_ROLL_DONE;
     Effect_FreeForOwner(entity);
     if (entity->params->respawn_effect_id != 0) {
         if (entity->params->respawn_effect_id != 0xFFFF) {

@@ -38,7 +38,7 @@ void MapObject_StartSavePoint(MapObject *object) {
 void MapObject_UpdateSavePoint(MapObject *object) {
     MapObject *used;
 
-    if (game_status.bit1 && (used = faced_object[0]) == object) {
+    if (game_status.using_faced_object && (used = faced_object[0]) == object) {
         game_status.save_requested = TRUE;
         game_status.save_area = MAP_OBJECT_WORDS(used)->kind_param_0;
     }
@@ -58,7 +58,7 @@ void MapObject_UpdateContainer(MapObject *object) {
     if (object->work[0] > 0) {
         object->work[0]--;
     }
-    if (((game_status_flags[0] >> 1) & 1) && faced_object[0] == object) {
+    if (GAME_STATUS_FLAG_BITS(game_status_flags)->using_faced_object && faced_object[0] == object) {
         if (object->work[0] > 0) {
             return;
         }
@@ -98,7 +98,7 @@ void MapObject_StartPivotSwitch(MapObject *object) {
 void MapObject_UpdatePivotSwitchOff(MapObject *object) {
     MapObject *used = faced_object[0];
 
-    if (used == object && ((game_status_flags[0] >> 1) & 1)) {
+    if (used == object && GAME_STATUS_FLAG_BITS(game_status_flags)->using_faced_object) {
         used->state_flags |= MAP_OBJECT_ON;
         MAP_OBJECT_BYTES(used)->step = 2;
     }
@@ -118,7 +118,7 @@ void MapObject_TurnPivotSwitchOn(MapObject *object) {
 void MapObject_UpdatePivotSwitchOn(MapObject *object) {
     MapObject *used = faced_object[0];
 
-    if (used == object && ((game_status_flags[0] >> 1) & 1)) {
+    if (used == object && GAME_STATUS_FLAG_BITS(game_status_flags)->using_faced_object) {
         used->state_flags &= ~MAP_OBJECT_ON;
         MAP_OBJECT_BYTES(used)->step = 4;
     }

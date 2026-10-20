@@ -337,6 +337,11 @@ typedef struct {
     char pad2C[0x04];
 } MapLoadState;
 
+/* MapLoadState.flags.raw bits: the background load is held off at a safe step; a hold has been asked for */
+#define MAP_LOAD_HELD           0x2
+#define MAP_LOAD_HOLD_REQUESTED 0x4
+#define MAP_LOAD_HOLD_MASK      (MAP_LOAD_HELD | MAP_LOAD_HOLD_REQUESTED)
+
 /* map_slot_memory[2]: the memory each map slot is loaded into */
 typedef struct {
     char pad00[0x14];
@@ -489,6 +494,7 @@ typedef struct {
 } MapActorBits;
 
 #define MAP_ACTOR_BITS(actor) ((MapActorBits *)&(actor)->flags)
+#define MAP_ACTOR_FLAG_IN_REACH 0x2  /* the nearest one, close enough to pick up */
 #define MAP_ACTOR_COUNT 16
 
 /* map_object_marks[MapSlot.tag][16]: where a map object is marked (0xA bytes) */

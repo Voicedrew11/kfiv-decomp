@@ -165,13 +165,13 @@ void EntityAi_StepState(Entity *entity) {
     entity->prev_state = next;
     switch ((char)next) {
     case 0:
-        if (((int)((u64)entity->flags >> 33) & 1)) {
+        if (((int)((u64)entity->flags >> 33) & ENTITY_FLAG_ACTIVE_LIST)) {
             next = 2;
             entity->state = 2;
         }
         break;
     case 1:
-        if (((int)((u64)entity->flags >> 33) & 1)) {
+        if (((int)((u64)entity->flags >> 33) & ENTITY_FLAG_ACTIVE_LIST)) {
             next = 2;
             entity->state = 2;
         } else if (entity->timer == 0) {
@@ -181,7 +181,7 @@ void EntityAi_StepState(Entity *entity) {
         entity->timer--;
         break;
     case 2:
-        if (!(((int)((u64)entity->flags >> 33) & 1))) {
+        if (!(((int)((u64)entity->flags >> 33) & ENTITY_FLAG_ACTIVE_LIST))) {
             entity->state = 1;
             next = 1;
             entity->timer = ENTITY_CONTROLLER(entity)->state_timer_reload;
@@ -224,7 +224,7 @@ int EntityAi_TurnFromPush(void *entity_arg, void *heading_out) {
         push[0] += entity->wall_push[0];
         push[2] += entity->wall_push[2];
     }
-    if ((s32)(entity->flags >> 48) & 1) {
+    if (ENTITY_FLAG_BITS(entity)->entity_push) {
         push[0] += entity->entity_push[0];
         push[2] += entity->entity_push[2];
     }
@@ -264,7 +264,7 @@ s32 EntityAi_IsPushedFromFront(Entity *entity, f32 heading) {
         push[0] += entity->wall_push[0];
         push[2] += entity->wall_push[2];
     }
-    if ((s32)(entity->flags >> 48) & 1) {
+    if (ENTITY_FLAG_BITS(entity)->entity_push) {
         push[0] += entity->entity_push[0];
         push[2] += entity->entity_push[2];
     }
@@ -450,14 +450,14 @@ s32 EntityAi_PickAttack(Entity *entity) {
         }
     }
     if (choice < 3) {
-        ENTITY_FLAG_BITS(entity)->bits58 = choice;
-        ENTITY_FLAG_BITS(entity)->bit57 = FALSE;
+        ENTITY_FLAG_BITS(entity)->attack_index = choice;
+        ENTITY_FLAG_BITS(entity)->ranged_attack = FALSE;
     } else {
-        ENTITY_FLAG_BITS(entity)->bits58 = choice - 3;
-        ENTITY_FLAG_BITS(entity)->bit57 = TRUE;
+        ENTITY_FLAG_BITS(entity)->attack_index = choice - 3;
+        ENTITY_FLAG_BITS(entity)->ranged_attack = TRUE;
     }
     EntityAi_LowerAttackWeight(entity);
-    return (s32)(entity->flags >> 57) & 1;
+    return (s32)(entity->flags >> 57) & ENTITY_FLAG_ACTIVE_LIST;
 }
 
 /* Picks which of the three melee attacks (EntityParams.melee_attacks) to use: a weighted draw among those the player
@@ -536,10 +536,10 @@ s32 EntityAi_PickMeleeAttack(Entity *entity) {
             break;
         }
     }
-    ENTITY_FLAG_BITS(entity)->bits58 = choice;
-    ENTITY_FLAG_BITS(entity)->bit57 = FALSE;
+    ENTITY_FLAG_BITS(entity)->attack_index = choice;
+    ENTITY_FLAG_BITS(entity)->ranged_attack = FALSE;
     EntityAi_LowerAttackWeight(entity);
-    return ENTITY_FLAG_BITS(entity)->bits58;
+    return ENTITY_FLAG_BITS(entity)->attack_index;
 }
 
 /* Picks which of the three ranged attacks (EntityParams.ranged_attacks) to use: a weighted draw among those the
@@ -616,10 +616,10 @@ s32 EntityAi_PickRangedAttack(Entity *entity) {
             break;
         }
     }
-    ENTITY_FLAG_BITS(entity)->bits58 = choice;
-    ENTITY_FLAG_BITS(entity)->bit57 = TRUE;
+    ENTITY_FLAG_BITS(entity)->attack_index = choice;
+    ENTITY_FLAG_BITS(entity)->ranged_attack = TRUE;
     EntityAi_LowerAttackWeight(entity);
-    return ENTITY_FLAG_BITS(entity)->bits58;
+    return ENTITY_FLAG_BITS(entity)->attack_index;
 }
 
 /* Picks the next of the four combat choices (Entity.combat_choice; 0 attack, 1 close in, 2 wait) by their chances
@@ -712,7 +712,7 @@ void EntityAi_LowerWeightsAfterHit(Entity *entity) {
         }
         if (entity->combat_choice == 0) {
             first = 3;
-            if ((entity->flags >> 57) & 1) {
+            if ((entity->flags >> 57) & ENTITY_FLAG_ACTIVE_LIST) {
                 first = 0;
             }
             for (i = 0, weights = entity->attack_weights; i < 6; i++) {
@@ -734,9 +734,9 @@ void EntityAi_LowerAttackWeight(Entity *entity) {
     u8 *level;
 
     if (high_bits & 1) {
-        index = flags->bits58 + 3;
+        index = flags->attack_index + 3;
     } else {
-        index = flags->bits58;
+        index = flags->attack_index;
     }
     level = entity->attack_weights;
     level += index;
@@ -844,7 +844,7 @@ s32 EntityAi_MoveCommand3D(Entity *entity, s32 mark_far, f32 range) {
     if (range < distance[0]) {
         result |= 1;
         if (mark_far != 0) {
-            result = (result | 0x40) & 0xFFFF;
+            result = (result | MOVE_COMMAND_RUN) & 0xFFFF;
         }
     }
     return result;
@@ -896,7 +896,7 @@ s32 EntityAi_MoveCommand(Entity *entity, s32 mark_far, f32 range) {
     if (range < distance[0]) {
         result |= 1;
         if (mark_far != 0) {
-            result = (result | 0x40) & 0xFFFF;
+            result = (result | MOVE_COMMAND_RUN) & 0xFFFF;
         }
     }
     return result;
@@ -953,7 +953,7 @@ s32 EntityAi_TurnOrMoveCommand(Entity *entity, s32 far_flag, f32 reach) {
         if (reach < distance) {
             result |= 1;
             if (far_flag != 0) {
-                result |= 0x40;
+                result |= MOVE_COMMAND_RUN;
             }
         }
     }
@@ -972,7 +972,7 @@ int EntityAi_PushTurnCommand3D(Entity *entity, int turn) {
         push[1] += entity->wall_push[1];
         push[2] += entity->wall_push[2];
     }
-    if ((s32)(entity->flags >> 48) & 1) {
+    if (ENTITY_FLAG_BITS(entity)->entity_push) {
         push[0] += entity->entity_push[0];
         push[1] += entity->entity_push[1];
         push[2] += entity->entity_push[2];

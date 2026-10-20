@@ -91,7 +91,7 @@ void EarthElemental_Init(Entity *entity) {
     for (i = 5; i != -1; i--) {
         entity->attack_weights[i] = 0x80;
     }
-    ENTITY_FLAG_BITS(entity)->bit28 = 0;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
@@ -142,7 +142,7 @@ static void EarthElemental_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
-        if ((s32)(entity->flags >> 53) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             // match: called as returning nothing, so $2 is free for the next statement
             // match: the result is not used, retail calls it as void
             ((void (*)(void *, int))EntityAi_ThinkReturn)(entity, unknown);
@@ -248,7 +248,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
         && ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < 0.5235988f
         && entity->distance_to_player < 1000.0f) {
         ai_state->sub_timer = 0;
-        ENTITY_FLAG_BITS(entity)->bits58 = 0;
+        ENTITY_FLAG_BITS(entity)->attack_index = 0;
         EntityAi_StartAction(entity, EarthElemental_RangedAttack0, 1);
         return;
     }
@@ -257,7 +257,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (entity->combat_choice == 1) {
         EntityAi_ClearTurnInPlace(entity);
-        if ((s32)(entity->flags >> 31) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;
@@ -335,11 +335,11 @@ static void EarthElemental_PlayTurnAnim(Entity *entity) {
         }
         break;
     case 2:
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -474,7 +474,7 @@ static s32 EarthElemental_BackwardsCommand(Entity *entity, s32 unused, f32 reach
         }
     }
     if (reach < EntityMath_DistanceXZ(entity->model->position, entity->target)) {
-        command |= 2;
+        command |= MOVE_COMMAND_BACK;
     }
     return command;
 }
@@ -486,7 +486,7 @@ static void EarthElemental_AlertSameKind(Entity *entity) {
     Entity *other;
 
     for (other = active_entities_head; other != NULL; other = other->next) {
-        if (entity->params == other->params && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST) && ((s32)(other->flags >> 1) & 1)
+        if (entity->params == other->params && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST) && (ENTITY_FLAG_BITS(other)->live)
             && ((s32)(other->flags >> 2) & 3) == 0 && other != entity) {
             EntityAiState *ai_state = &other->ai_state;
 
@@ -504,15 +504,15 @@ static void EarthElemental_AlertSameKind(Entity *entity) {
 static void EarthElemental_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
-    ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-    if (ENTITY_FLAG_BITS(entity)->bits36 == 1) {
-        if (ENTITY_FLAG_BITS(entity)->bit19) {
+    ENTITY_FLAG_BITS(entity)->attacking = FALSE;
+    ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
+    if (ENTITY_FLAG_BITS(entity)->hit_strength == 1) {
+        if (ENTITY_FLAG_BITS(entity)->attack_window) {
             EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
             EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);
         }
-    } else if (ENTITY_FLAG_BITS(entity)->bits36 == 2) {
+    } else if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
@@ -535,9 +535,9 @@ static void EarthElemental_BackAwayOrRunAtPlayer(Entity *entity) {
     entity->busy_flags |= (ENTITY_BUSY_1000 | ENTITY_BUSY_2000);
     switch (entity->action_step) {
     case 0:
-        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
+        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAGS(entity) &= ~0x200;
+        ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
         break;
     case 1:
@@ -558,19 +558,19 @@ static void EarthElemental_BackAwayOrRunAtPlayer(Entity *entity) {
             EntityAi_StartAction(entity, EntityAi_Dodge, 1);
             break;
         }
-        if ((s32)(ENTITY_FLAGS(entity) >> 53) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             ai_state->pause_timer = 2;
-            if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
         side = EntityAi_PickCombatChoice(entity, 0);
-        ENTITY_FLAGS(entity) |= 0x200;
+        ENTITY_FLAGS(entity) |= ENTITY_FLAG_LOOK_AT_TARGET;
         if (side == 0) {
             entity->prev_combat_choice = entity->combat_choice;
             entity->combat_choice = 0;
@@ -626,8 +626,8 @@ static void EarthElemental_RangedAttack0(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
-        ENTITY_FLAGS(entity) &= ~0x200;
+        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
+        ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -648,16 +648,16 @@ static void EarthElemental_RangedAttack0(Entity *entity) {
         direction[1] = EntityMath_WrapAngle(direction[1] - 3.1415927f);
         EntityShot_Launch(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAGS(entity) |= 0x80000;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            ENTITY_FLAGS(entity) &= ~0x80000;
+            ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);

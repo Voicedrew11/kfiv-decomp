@@ -8,13 +8,13 @@ int sceDevVif0GetStat(void) {
     if (!(status & 3)) {
         return 0;
     }
-    if (status & 0x700) {
+    if (status & VIF_STAT_STOPPED_MASK) {
         return 1;
     }
-    if (status & 0xC) {
+    if (status & VIF_STAT_WAITING_MASK) {
         return 2;
     }
-    if (status & 0x3000) {
+    if (status & VIF_STAT_ERROR_MASK) {
         return 3;
     }
     return 4;

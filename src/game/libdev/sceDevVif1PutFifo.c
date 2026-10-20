@@ -9,7 +9,7 @@ int sceDevVif1PutFifo(u_long128 *source, int quadword_count) {
     int written = 0;
 
     while (quadword_count--) {
-        if (LIBDEV_REG32(VIF1_STAT) & 0x10000000) {
+        if (LIBDEV_REG32(VIF1_STAT) & VIF_STAT_FIFO_FULL) {
             return written;
         }
         *(volatile u_long128 *)VIF1_FIFO = *source++;

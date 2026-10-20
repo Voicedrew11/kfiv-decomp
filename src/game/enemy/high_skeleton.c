@@ -61,7 +61,7 @@ void HighSkeleton_Init(Entity *entity) {
     for (i = 5; i != -1; i--) {
         entity->attack_weights[i] = 0x80;
     }
-    ENTITY_FLAG_BITS(entity)->bit28 = 0;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
@@ -90,7 +90,7 @@ static void HighSkeleton_Think(Entity *entity, s32 unknown) {
     if (entity->spawn_info->spawn_mode != 0 && entity->spawn_info->variant != 0) {
         other = Entity_GetBySpawnId(entity->spawn_info->variant);
         if (other != NULL && frame_counter % entity->spawn_index == 0) {
-            if (ENTITY_FLAG_BITS(other)->bits2 >= 2 || !ENTITY_FLAG_BITS(other)->bit1) {
+            if (ENTITY_FLAG_BITS(other)->dying >= 2 || !ENTITY_FLAG_BITS(other)->live) {
                 EntityAi_StartAction(entity, HighSkeleton_Death, 1);
                 return;
             }
@@ -99,7 +99,7 @@ static void HighSkeleton_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn((char *)entity);
         EntityAi_StepState(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit53) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
             switch (entity->state) {
@@ -130,31 +130,31 @@ static void HighSkeleton_Dormant(Entity *entity) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit22 = 1;
-        ENTITY_FLAG_BITS(entity)->bit23 = 1;
-        ENTITY_FLAG_BITS(entity)->bit24 = 1;
-        ENTITY_FLAG_BITS(entity)->bit25 = 1;
+        ENTITY_FLAG_BITS(entity)->no_wall_collision = 1;
+        ENTITY_FLAG_BITS(entity)->no_second_wall_collision = 1;
+        ENTITY_FLAG_BITS(entity)->no_map_object_collision = 1;
         ENTITY_FLAG_BITS(entity)->bit18 = 1;
-        ENTITY_FLAG_BITS(entity)->bit28 = 1;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = 1;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
         break;
     case 1:
-        if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->bit43) {
+        if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
             Motion_Start(entity, 2, 0, entity->params->motion_blend_frames, 0);
             if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-                ENTITY_FLAG_BITS(entity)->bits11 = 0;
+                ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
             } else {
-                ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
+                ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
             }
-            ENTITY_FLAG_BITS(entity)->bits36 = 0;
+            ENTITY_FLAG_BITS(entity)->hit_strength = 0;
             entity->action_step++;
         }
         break;
@@ -164,22 +164,22 @@ static void HighSkeleton_Dormant(Entity *entity) {
         }
         break;
     case 3:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
             ENTITY_FLAG_BITS(entity)->bit20 = 0;
             ENTITY_FLAG_BITS(entity)->bit22 = 0;
-            ENTITY_FLAG_BITS(entity)->bit23 = 0;
-            ENTITY_FLAG_BITS(entity)->bit24 = 0;
-            ENTITY_FLAG_BITS(entity)->bit25 = 0;
+            ENTITY_FLAG_BITS(entity)->no_wall_collision = 0;
+            ENTITY_FLAG_BITS(entity)->no_second_wall_collision = 0;
+            ENTITY_FLAG_BITS(entity)->no_map_object_collision = 0;
             ENTITY_FLAG_BITS(entity)->bit18 = 0;
             if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
-                ENTITY_FLAG_BITS(entity)->bit28 = 0;
+                ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
             }
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 entity->ai_state.think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -201,7 +201,7 @@ static void HighSkeleton_DormantScaleUp(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         entity->action_timer = (u16)entity->params->near_distance;
         ai_state->part_angle_x = entity->model->scale[0];
         ai_state->part_angle_y = entity->model->scale[1];
@@ -212,7 +212,7 @@ static void HighSkeleton_DormantScaleUp(Entity *entity) {
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
         ENTITY_FLAG_BITS(entity)->bit18 = 1;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
         break;
     case 1:
@@ -235,7 +235,7 @@ static void HighSkeleton_DormantScaleUp(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 entity->ai_state.think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -253,14 +253,14 @@ static void HighSkeleton_Death(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
-        ENTITY_FLAG_BITS(entity)->bit14 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->animates = 1;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
-        ENTITY_FLAG_BITS(entity)->bits2 = 1;
-        ENTITY_FLAG_BITS(entity)->bit27 = 1;
-        ENTITY_FLAG_BITS(entity)->bit26 = 1;
-        ENTITY_FLAG_BITS(entity)->bit28 = 0;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->dying = 1;
+        ENTITY_FLAG_BITS(entity)->no_player_collision = 1;
+        ENTITY_FLAG_BITS(entity)->no_entity_collision = 1;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         if (entity->params->respawn_effect_id != 0 && entity->params->respawn_effect_id != 0xFFFF) {
             Effect_FreeForOwner(entity);
         }
@@ -271,11 +271,11 @@ static void HighSkeleton_Death(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->action_timer = 20;
-            ENTITY_FLAG_BITS(entity)->bit14 = 0;
-            ENTITY_FLAG_BITS(entity)->bits2 = 2;
-            ENTITY_FLAG_BITS(entity)->bit4 = 1;
+            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->dying = 2;
+            ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             entity->action_step++;
         }
         break;
@@ -283,8 +283,8 @@ static void HighSkeleton_Death(Entity *entity) {
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits2 = 3;
-            ENTITY_FLAG_BITS(entity)->bit1 = 0;
+            ENTITY_FLAG_BITS(entity)->dying = 3;
+            ENTITY_FLAG_BITS(entity)->live = 0;
         }
         break;
     }

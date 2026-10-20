@@ -1,4 +1,6 @@
 #include "gfx/texture.h"
+#include "gfx/gs.h"
+#include <eeregs.h>
 
 /* a doubleword stored through a union with a char in it, which may alias anything: the table's
    count is read again after each store */
@@ -26,7 +28,7 @@ void TextureTable_QueueAll(TextureTableHeader *table) {
     packet_start = packet = Packet_Alloc(table->entry_count + 1);
     for (i = 0; i < table->entry_count; i++) {
         chunk = (u32 *)((char *)table + entries[i].offset);
-        *packet++ = (*chunk & 0x8FFFFFFF) | 0x30000000;
+        *packet++ = (*chunk & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
         *packet++ = (u32)(chunk + 4);
         *packet++ = 0;
         *packet++ = 0;
@@ -52,7 +54,7 @@ void TextureTable_QueueEnabled(TextureTableHeader *table_arg, s32 skip_mask) {
                 packet_start = packet;
             }
             chunk = (u32 *)((char *)table + entries[i].offset);
-            *packet++ = (*chunk & 0x8FFFFFFF) | 0x30000000;
+            *packet++ = (*chunk & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
             *packet++ = (u32)(chunk + 4);
             *packet++ = 0;
             *packet++ = 0;
@@ -74,7 +76,7 @@ void TextureTable_QueueOne(TextureTableHeader *table, s32 index) {
         GsDraw_QueueFlush();
         packet_start = packet = Packet_Alloc(2);
         chunk = (u32 *)((char *)table + entries[index].offset);
-        *packet++ = (*chunk & 0x8FFFFFFF) | 0x30000000;
+        *packet++ = (*chunk & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
         *packet++ = (u32)(chunk + 4);
         *packet++ = 0;
         *packet++ = 0;

@@ -158,21 +158,21 @@ static void DarkArcher_Animate(Entity *entity) {
 
     flags = entity->flags;
     ai_state = &entity->ai_state;
-    if (ENTITY_FLAG_BITS(entity)->bit14) {
+    if (ENTITY_FLAG_BITS(entity)->animates) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->motion_ended = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
-        DarkArcher_PitchPart2ToPlayer(entity, (s32)((s64)(entity->flags << 22) >> 32) & 1);
+        DarkArcher_PitchPart2ToPlayer(entity, (s32)((s64)(entity->flags << 22) >> 32) & ENTITY_FLAG_ACTIVE_LIST);
         params = entity->params;
         limits[0] = -params->pitch_limit_deg * 0.017453292f;
         limits[1] = params->pitch_limit_deg * 0.017453292f;
         limits[3] = params->yaw_limit_deg * 0.017453292f;
         limits[2] = -params->yaw_limit_deg * 0.017453292f;
-        if ((s32)(entity->flags >> 9) & 1) {
-            EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, (s32)(entity->flags >> 9) & 1, limits, 12.0f);
+        if (ENTITY_FLAG_BITS(entity)->look_at_target) {
+            EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, ENTITY_FLAG_BITS(entity)->look_at_target, limits, 12.0f);
         } else {
             EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, -1, NULL, 8.0f);
         }
@@ -246,13 +246,13 @@ static void DarkArcher_OnHit(Entity *entity) {
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    entity->flags &= ~ENTITY_FLAG_400;
+    entity->flags &= ~ENTITY_FLAG_ATTACKING;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     flags = entity->flags;
     hit_strength = (flags >> 36) & 3;
     if (hit_strength == 1) {
-        if ((s32)(flags >> 19) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->attack_window) {
             EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
             EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);
@@ -274,7 +274,7 @@ static void DarkArcher_ThinkShootOrTurn(Entity *entity, s32 unknown) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    entity->flags &= ~ENTITY_FLAG_400;
+    entity->flags &= ~ENTITY_FLAG_ATTACKING;
     if (entity->busy_flags == 0) {
         u64 flags = entity->flags | ENTITY_FLAG_LOOK_AT_TARGET;
         u32 busy;
@@ -355,7 +355,7 @@ static void DarkArcher_DormantFadeIn(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -385,11 +385,11 @@ static void DarkArcher_DeathWithoutReward(Entity *entity) {
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
-            ENTITY_FLAG_BITS(entity)->bit14 = 0;
-            ENTITY_FLAG_BITS(entity)->bits2 = 2;
-            ENTITY_FLAG_BITS(entity)->bit4 = 1;
-            ENTITY_FLAG_BITS(entity)->bit27 = 1;
-            ENTITY_FLAG_BITS(entity)->bit26 = 1;
+            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->dying = 2;
+            ENTITY_FLAG_BITS(entity)->no_respawn = 1;
+            ENTITY_FLAG_BITS(entity)->no_player_collision = 1;
+            ENTITY_FLAG_BITS(entity)->no_entity_collision = 1;
             entity->action_timer = 20;
             Game_CountSpawnDeath(map_slots[entity->group_id].tag, entity->spawn_info - map_spawn_infos[entity->group_id]);
             Effect_FreeForOwner(entity);
@@ -418,7 +418,7 @@ static void DarkArcher_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
-        if ((s32)(entity->flags >> 53) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
             switch (entity->state) {
@@ -456,9 +456,9 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
     s32 turn;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     } else {
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
@@ -469,8 +469,8 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     side = EntityAi_PickCombatChoice(entity, 0);
-    ENTITY_FLAG_BITS(entity)->bit10 = 0;
-    ENTITY_FLAG_BITS(entity)->bit9 = 1;
+    ENTITY_FLAG_BITS(entity)->attacking = 0;
+    ENTITY_FLAG_BITS(entity)->look_at_target = 1;
     if (entity->action_timer == 0 || side == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
@@ -481,7 +481,7 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
-                ENTITY_FLAG_BITS(entity)->bit10 = 1;
+                ENTITY_FLAG_BITS(entity)->attacking = 1;
                 EntityAi_StartAction(entity, DarkArcher_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
@@ -508,7 +508,7 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (ai_state->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit31) {
+        if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;
@@ -548,11 +548,11 @@ static void DarkArcher_RangedAttack(Entity *entity) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
         }
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -568,7 +568,7 @@ static void DarkArcher_RangedAttack(Entity *entity) {
         } else {
             ai_state->turn_rate = 0.0f;
         }
-        ENTITY_FLAG_BITS(entity)->bit10 = 1;
+        ENTITY_FLAG_BITS(entity)->attacking = 1;
         if (((s32)(entity->flags >> 58) & 3) == 0) {
             if (entity->model->level_tables->frame >= 0x15 && entity->model->level_tables->frame < 0x20) {
                 EntityAi_SpawnBoneEffect(entity, 0x379, 8);
@@ -581,16 +581,16 @@ static void DarkArcher_RangedAttack(Entity *entity) {
         EntityAi_LaunchShots(entity, unk3D8, (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8,
                       entity->model->level_tables->frame);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
-            entity->flags |= ENTITY_FLAG_80000;
+            entity->flags |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            entity->flags &= ~ENTITY_FLAG_80000;
+            entity->flags &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -613,9 +613,9 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
     s32 run = FALSE;
 
     entity->busy_flags |= ENTITY_BUSY_1000;
-    ENTITY_FLAG_BITS(entity)->bits11 = 0;
-    ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+    ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+    ENTITY_FLAG_BITS(entity)->attacking = FALSE;
+    ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
     switch (entity->action_step) {
     case 0:
@@ -641,7 +641,7 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
         Motion_Start(entity, 4, 0, 0, 0);
         ai_state->keep_min_distance = EntityMath_Approach(ai_state->keep_min_distance, entity->params->max_speed, entity->params->speed_step_per_frame);
         ai_state->heading_speed = EntityMath_Approach(ai_state->heading_speed, -entity->params->type_param_1, -entity->params->type_param_0);
-        ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
         if (height == dark_archer_no_floor_height[0] || height >= entity->params->type_param_2) {
             entity->action_step++;
         }
@@ -653,16 +653,16 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
             Motion_Start(entity, 9, 0, 0, 1);
             ai_state->heading_speed = 0.0f;
             ai_state->keep_min_distance = 0.0f;
-            ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
             entity->action_step++;
         }
         break;
     case 5:
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if ((s32)(entity->flags >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);

@@ -385,7 +385,7 @@ static inline void send_packet(u32 *packet, s32 size) {
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
     *D2_QWC = size;
-    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
     *D2_CHCR = D_CHCR_STR | D_CHCR_DIR_FROM_MEMORY | D_CHCR_MOD_CHAIN;
 }
 
@@ -617,7 +617,7 @@ void MenuDraw_Sprite(KindObject *object) {
         packet[25] = rect->first.depth;
         while (*D2_CHCR & D_CHCR_STR);
         *D2_QWC = 7;
-        *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+        *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
         *D2_CHCR = D_CHCR_STR;
     }
 }
@@ -662,7 +662,7 @@ void MenuDraw_Word(KindObject *object) {
     step.f.lo16 = ((s32)second.f.lo16 - (s32)first.f.lo16) / count;
     step.f.mid16 = ((s32)second.f.mid16 - (s32)first.f.mid16) / count; // match: worked out, never used
     cursor = packet;
-    *cursor++ = count | 0x8000;
+    *cursor++ = count | GIF_TAG_EOP;
     *cursor++ = 0xC4000000;
     *cursor++ = 0x25252106;
     *cursor++ = 0xFFFFF525;
@@ -697,7 +697,7 @@ void MenuDraw_Word(KindObject *object) {
     while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = count * 6 + 1;
-    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
     *D2_CHCR = D_CHCR_STR;
 }
 
@@ -734,7 +734,7 @@ void MenuDraw_Bar(MenuCursorBar *bar) {
         packet[15] = rect->first.depth;
         while (*D2_CHCR & D_CHCR_STR);
         *D2_QWC = 4;
-        *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+        *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
         *D2_CHCR = D_CHCR_STR;
     }
 }
@@ -1014,7 +1014,7 @@ int MenuDraw_Number(KindObject *object) { // match: returns int, though no path 
     step.f.lo16 = ((s32)second.f.lo16 - (s32)first.f.lo16) / count;
     step.f.mid16 = ((s32)second.f.mid16 - (s32)first.f.mid16) / count; // match: worked out, never used
     cursor = packet;
-    *cursor++ = count | 0x8000;
+    *cursor++ = count | GIF_TAG_EOP;
     *cursor++ = 0xC4000000;
     *cursor++ = 0x25252106;
     *cursor++ = 0xFFFFF525;
@@ -1052,7 +1052,7 @@ int MenuDraw_Number(KindObject *object) { // match: returns int, though no path 
     while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = count * 6 + 1;
-    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
     *D2_CHCR = D_CHCR_STR;
 }
 
@@ -1082,14 +1082,14 @@ static void MenuDraw_TextAt(u16 *text, GsPackedWord origin) {
     bottom.f.mid16 = origin.f.mid16 + (u8)origin.f.hi8 * 16;
     bottom.f.mid24 = origin.f.mid24;
     cursor = packet;
-    *cursor++ = glyph_count | 0x8000; // match: never set; the real count is stored after the loop
+    *cursor++ = glyph_count | GIF_TAG_EOP; // match: never set; the real count is stored after the loop
     *cursor++ = 0xC4000000;
     *cursor++ = 0x25252106;
     *cursor++ = 0xFFFFF525;
     index = 0;
     count = 0;
     while (text[index] != 0xFFFF && !(text[index] & 0x8000)) {
-        if (text[index] & 0x800) {
+        if (text[index] & GLYPH_HALF_WIDTH) {
             glyph = text[index]; // match: read again into a 16-bit local
             code = glyph & 0x7FF; // match: two statements
             code += 0x47E;
@@ -1135,11 +1135,11 @@ static void MenuDraw_TextAt(u16 *text, GsPackedWord origin) {
         index++;
         count++;
     }
-    *packet = count | 0x8000;
+    *packet = count | GIF_TAG_EOP;
     while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = count * 6 + 1;
-    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
     *D2_CHCR = D_CHCR_STR;
 }
 
@@ -1172,14 +1172,14 @@ static void MenuDraw_TextRightAligned(u16 *text, GsPackedWord origin) {
     top.f.mid24 = origin.f.mid24;
     bottom.f.mid16 = origin.f.mid16 + (u8)origin.f.hi8 * 16;
     bottom.f.mid24 = origin.f.mid24;
-    *cursor++ = glyph_count | 0x8000; // match: never set; the real count is stored after the loop
+    *cursor++ = glyph_count | GIF_TAG_EOP; // match: never set; the real count is stored after the loop
     *cursor++ = 0xC4000000;
     *cursor++ = 0x25252106;
     *cursor++ = 0xFFFFF525;
     index = 0;
     count = 0;
     while (text[index] != 0xFFFF && !(text[index] & 0x8000)) {
-        if (text[index] & 0x800) {
+        if (text[index] & GLYPH_HALF_WIDTH) {
             glyph = text[index]; // match: read again into a 16-bit local
             code = glyph & 0x7FF; // match: two statements
             code += 0x47E;
@@ -1225,11 +1225,11 @@ static void MenuDraw_TextRightAligned(u16 *text, GsPackedWord origin) {
         index++;
         count++;
     }
-    *packet = count | 0x8000;
+    *packet = count | GIF_TAG_EOP;
     while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = count * 6 + 1;
-    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
     *D2_CHCR = D_CHCR_STR;
 }
 
@@ -1329,7 +1329,7 @@ s32 MenuText_DrawWrapped(u16 *text, s32 limit) {
     packet[2] = 0xF5252106;
     packet[3] = 0xFFFFFFFF;
     for (i = 0, count = 0, column = 0; text[i] != 0xFFFF; i++, count++) {
-        if (text[i] & 0x4000) {
+        if (text[i] & GLYPH_COLOR) {
             /* a colour change, not a glyph */
             count--;
             color_index = text[i];
@@ -1363,7 +1363,7 @@ s32 MenuText_DrawWrapped(u16 *text, s32 limit) {
             continue;
         }
         column = next_column;
-        if (text[i] & 0x800) {
+        if (text[i] & GLYPH_HALF_WIDTH) {
             /* a half-width glyph */
             glyph = text[i]; // match: three statements on the one variable, not one expression
             glyph &= 0x7FF;
@@ -1401,12 +1401,12 @@ s32 MenuText_DrawWrapped(u16 *text, s32 limit) {
         *cursor++ = 0;
         *cursor++ = 0;
     }
-    packet[0] = count | 0x8000;
+    packet[0] = count | GIF_TAG_EOP;
     text_pen.pos_y = bottom_right.pos_y;
     while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = (cursor - packet) / 4;
-    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
     *D2_CHCR = D_CHCR_STR;
     return count;
 }
@@ -1452,7 +1452,7 @@ s32 MenuText_DrawWrappedLong(u16 *text, s32 limit) {
     packet[2] = 0xF5252106;
     packet[3] = 0xFFFFFFFF;
     for (i = 0, count = 0, column = 0; text[i] != 0xFFFF; i++, count++) {
-        if (text[i] & 0x4000) {
+        if (text[i] & GLYPH_COLOR) {
             /* a colour change, not a glyph */
             count--;
             color_index = text[i];
@@ -1489,7 +1489,7 @@ s32 MenuText_DrawWrappedLong(u16 *text, s32 limit) {
             continue;
         }
         column = next_column;
-        if (text[i] & 0x800) {
+        if (text[i] & GLYPH_HALF_WIDTH) {
             /* a half-width glyph */
             glyph = text[i]; // match: three statements on the one variable, not one expression
             glyph &= 0x7FF;
@@ -1527,7 +1527,7 @@ s32 MenuText_DrawWrappedLong(u16 *text, s32 limit) {
         *cursor++ = 0;
         *cursor++ = 0;
     }
-    packet[0] = count | 0x8000;
+    packet[0] = count | GIF_TAG_EOP;
     text_pen.pos_y = bottom_right.pos_y;
     FlushCache(0);
     while (*D2_CHCR & D_CHCR_STR) {
@@ -1576,7 +1576,7 @@ s32 MenuText_DrawLine(u16 *text, s32 limit) {
     packet[2] = 0xF5252106;
     packet[3] = 0xFFFFFFFF;
     for (i = 0, count = 0, column = 0; text[i] != 0xFFFF; i++, count++) {
-        if (text[i] & 0x4000) {
+        if (text[i] & GLYPH_COLOR) {
             count--;
             palette = Message_GetColor(text_color(text[i]));
             color[0] = palette[0];
@@ -1593,7 +1593,7 @@ s32 MenuText_DrawLine(u16 *text, s32 limit) {
             break;
         }
         column = next_column;
-        if (text[i] & 0x800) {
+        if (text[i] & GLYPH_HALF_WIDTH) {
             glyph = text[i]; // match: read again as an int, then two statements
             glyph = (glyph & 0x7FF) + 0x47E;
             glyph_column = glyph % 50;
@@ -1628,12 +1628,12 @@ s32 MenuText_DrawLine(u16 *text, s32 limit) {
         *cursor++ = 0;
         *cursor++ = 0;
     }
-    packet[0] = count | 0x8000;
+    packet[0] = count | GIF_TAG_EOP;
     text_pen.pos_y = bottom_right.pos_y;
     while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = (cursor - packet) / 4;
-    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
     *D2_CHCR = D_CHCR_STR;
     return count;
 }
@@ -1678,7 +1678,7 @@ s32 MenuText_DrawLineShortened(u16 *text, s32 limit) {
     packet[2] = 0xF5252106;
     packet[3] = 0xFFFFFFFF;
     for (i = 0, count = 0, column = 0; text[i] != 0xFFFF; i++, count++) {
-        if (text[i] & 0x4000) {
+        if (text[i] & GLYPH_COLOR) {
             count--;
             palette = Message_GetColor(text_color(text[i]));
             color[0] = palette[0];
@@ -1701,7 +1701,7 @@ s32 MenuText_DrawLineShortened(u16 *text, s32 limit) {
             break;
         }
         column = next_column;
-        if ((text[i] & 0x800) || text[i] == 0x8000) {
+        if ((text[i] & GLYPH_HALF_WIDTH) || text[i] == 0x8000) {
             if (word_breaks < 3) {
                 if (text[i] & 0x8000) {
                     glyph = 0;
@@ -1746,12 +1746,12 @@ s32 MenuText_DrawLineShortened(u16 *text, s32 limit) {
         *cursor++ = 0;
         *cursor++ = 0;
     }
-    packet[0] = count | 0x8000;
+    packet[0] = count | GIF_TAG_EOP;
     text_pen.pos_y = bottom_right.pos_y;
     while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = (cursor - packet) / 4;
-    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
     *D2_CHCR = D_CHCR_STR;
     return count;
 }
@@ -1803,7 +1803,7 @@ s32 MenuText_DrawLineCentered(u16 *text, s32 limit) {
     *cursor++ = 0xF5252106;
     *cursor++ = 0xFFFFFFFF;
     for (i = 0, count = 0, column = 0; text[i] != 0xFFFF; i++, count++) {
-        if (text[i] & 0x4000) {
+        if (text[i] & GLYPH_COLOR) {
             count--;
             palette = Message_GetColor(text_color(text[i]));
             color[0] = palette[0];
@@ -1820,7 +1820,7 @@ s32 MenuText_DrawLineCentered(u16 *text, s32 limit) {
             break;
         }
         column = next_column;
-        if (text[i] & 0x800) {
+        if (text[i] & GLYPH_HALF_WIDTH) {
             glyph = text[i]; // match: read again as an int, then two statements
             glyph = (glyph & 0x7FF) + 0x47E;
             glyph_column = glyph % 50;
@@ -1855,12 +1855,12 @@ s32 MenuText_DrawLineCentered(u16 *text, s32 limit) {
         *cursor++ = 0;
         *cursor++ = 0;
     }
-    packet[0] = count | 0x8000;
+    packet[0] = count | GIF_TAG_EOP;
     text_pen.pos_y = bottom_right.pos_y;
     while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = (cursor - packet) / 4;
-    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
     *D2_CHCR = D_CHCR_STR;
     return count;
 }
@@ -1905,7 +1905,7 @@ static s32 MenuText_DrawWordWrapped(u16 *text, s32 limit) {
     packet[2] = 0xF5252106;
     packet[3] = 0xFFFFFFFF;
     for (i = 0, count = 0, column = 0; text[i] != 0xFFFF; i++, count++) {
-        if (text[i] & 0x4000) {
+        if (text[i] & GLYPH_COLOR) {
             count--;
             palette = Message_GetColor(text_color(text[i]));
             color[0] = palette[0];
@@ -1941,7 +1941,7 @@ static s32 MenuText_DrawWordWrapped(u16 *text, s32 limit) {
             continue;
         }
         column = next_column;
-        if (text[i] & 0x800) {
+        if (text[i] & GLYPH_HALF_WIDTH) {
             glyph = text[i]; // match: read again as an int, then two statements
             glyph = (glyph & 0x7FF) + 0x47E;
             glyph_column = glyph % 50;
@@ -1976,12 +1976,12 @@ static s32 MenuText_DrawWordWrapped(u16 *text, s32 limit) {
         *cursor++ = 0;
         *cursor++ = 0;
     }
-    packet[0] = count | 0x8000;
+    packet[0] = count | GIF_TAG_EOP;
     text_pen.pos_y = bottom_right.pos_y;
     while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = (cursor - packet) / 4;
-    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
+    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
     *D2_CHCR = D_CHCR_STR;
     return count;
 }
@@ -2029,7 +2029,7 @@ s32 MenuText_DrawWordWrappedLong(u16 *text, s32 limit) {
     packet[2] = 0xF5252106;
     packet[3] = 0xFFFFFFFF;
     for (i = 0, count = 0, column = 0; text[i] != 0xFFFF; i++, count++) {
-        if (text[i] & 0x4000) {
+        if (text[i] & GLYPH_COLOR) {
             /* a colour change, not a glyph */
             count--;
             color_index = text[i];
@@ -2067,7 +2067,7 @@ s32 MenuText_DrawWordWrappedLong(u16 *text, s32 limit) {
             continue;
         }
         column = next_column;
-        if (text[i] & 0x800) {
+        if (text[i] & GLYPH_HALF_WIDTH) {
             /* a half-width glyph */
             glyph = text[i]; // match: three statements on the one variable, not one expression
             glyph &= 0x7FF;
@@ -2116,7 +2116,7 @@ s32 MenuText_DrawWordWrappedLong(u16 *text, s32 limit) {
         *cursor++ = 0;
         *cursor++ = 0;
     }
-    packet[0] = count | 0x8000;
+    packet[0] = count | GIF_TAG_EOP;
     text_pen.pos_y = bottom_right.pos_y;
     FlushCache(0);
     while (*D2_CHCR & D_CHCR_STR) {
@@ -2319,7 +2319,7 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
         *scratch->cursor++ = 0;
         *scratch->cursor++ = 0x48;
         *scratch->cursor++ = 0;
-        scratch->prim_tag[0] = scratch->strip_at->point_count | 0x8000;
+        scratch->prim_tag[0] = scratch->strip_at->point_count | GIF_TAG_EOP;
         scratch->prim_tag[1] = 0x31004000;
         scratch->prim_tag[1] |= (scratch->strip_at->prim & 0x7FF) << 15;
         *scratch->cursor++ = scratch->prim_tag[0];
@@ -2354,7 +2354,7 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
             ((PoolPartMaterialBits *)scratch->strip_start)->cld = 4; // match: as above
             scratch->registers[0] = 0;
             scratch->registers[1] = 0;
-            scratch->registers[4] = scratch->strip_at->second_tex0 | 0x800000000;
+            scratch->registers[4] = scratch->strip_at->second_tex0 | GS_TEX0_TFX_DECAL;
             scratch->registers[5] = 7;
             scratch->registers[2] = 0x60;
             scratch->registers[3] = 0x15;
@@ -2372,11 +2372,11 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
             *scratch->cursor++ = 0;
             *scratch->cursor++ = 0x48;
             *scratch->cursor++ = 0;
-            scratch->prim_tag[0] = scratch->strip_at->point_count | 0x8000;
+            scratch->prim_tag[0] = scratch->strip_at->point_count | GIF_TAG_EOP;
             scratch->prim_tag[1] = 0x31004000;
             scratch->prim_tag[1] |= (scratch->strip_at->prim & 0x7FF) << 15;
-            scratch->prim_tag[1] |= 0x200000;
-            scratch->prim_tag[1] |= 0x80000;
+            scratch->prim_tag[1] |= GIF_TAG_PRIM_ABE;
+            scratch->prim_tag[1] |= GIF_TAG_PRIM_TME;
             *scratch->cursor++ = scratch->prim_tag[0];
             *scratch->cursor++ = scratch->prim_tag[1];
             *scratch->cursor++ = scratch->prim_tag[2];
@@ -2546,7 +2546,7 @@ void PoolPart_Draw(PoolPart *part, s32 parent) {
         *scratch->cursor++ = 0;
         *scratch->cursor++ = 0x48;
         *scratch->cursor++ = 0;
-        scratch->prim_tag[0] = scratch->strip_at->point_count | 0x8000;
+        scratch->prim_tag[0] = scratch->strip_at->point_count | GIF_TAG_EOP;
         scratch->prim_tag[1] = 0x31004000; // match: two statements, or the constant is not kept in a register across the loop
         scratch->prim_tag[1] |= (scratch->strip_at->prim & 0x7FF) << 15;
         *scratch->cursor++ = scratch->prim_tag[0];
@@ -2845,7 +2845,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
         *scratch->cursor++ = 0;
         *scratch->cursor++ = 0x47;
         *scratch->cursor++ = 0;
-        scratch->prim_tag[0] = scratch->strip_at->point_count | 0x8000;
+        scratch->prim_tag[0] = scratch->strip_at->point_count | GIF_TAG_EOP;
         scratch->prim_tag[1] = 0x30004000;
         scratch->prim_tag[1] |= (scratch->strip_at->prim & 0x7FF) << 15;
         *scratch->cursor++ = scratch->prim_tag[0];
@@ -2877,7 +2877,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
             ((PoolPartMaterialBits *)scratch->strip_start)->cld = 4;
             scratch->registers[1] = 0x3F;
             scratch->registers[0] = 0;
-            scratch->registers[4] = scratch->strip_at->second_tex0 | 0x800000000;
+            scratch->registers[4] = scratch->strip_at->second_tex0 | GS_TEX0_TFX_DECAL;
             scratch->registers[5] = 6;
             scratch->registers[2] = 0x60;
             scratch->registers[3] = 0x15;
@@ -2886,7 +2886,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
             scratch->cursor += 0x10;
             *((u64 *)scratch->cursor)++ = 4;
             *((u64 *)scratch->cursor)++ = 0x1C;
-            *((u64 *)scratch->cursor)++ = scratch->strip_at->second_tex0 | 0x800000000;
+            *((u64 *)scratch->cursor)++ = scratch->strip_at->second_tex0 | GS_TEX0_TFX_DECAL;
             *((u64 *)scratch->cursor)++ = 0x16;
             *((u64 *)scratch->cursor)++ = 9;
             *scratch->cursor++ = 0x42;
@@ -2895,11 +2895,11 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
             *scratch->cursor++ = 0;
             *scratch->cursor++ = 0x47;
             *scratch->cursor++ = 0;
-            scratch->prim_tag[0] = scratch->strip_at->point_count | 0x8000;
+            scratch->prim_tag[0] = scratch->strip_at->point_count | GIF_TAG_EOP;
             scratch->prim_tag[1] = 0x30004000;
             scratch->prim_tag[1] |= (scratch->strip_at->prim & 0x7FF) << 15;
-            scratch->prim_tag[1] |= 0x200000;
-            scratch->prim_tag[1] |= 0x80000;
+            scratch->prim_tag[1] |= GIF_TAG_PRIM_ABE;
+            scratch->prim_tag[1] |= GIF_TAG_PRIM_TME;
             *scratch->cursor++ = scratch->prim_tag[0];
             *scratch->cursor++ = scratch->prim_tag[1];
             *scratch->cursor++ = scratch->prim_tag[2];
@@ -3375,8 +3375,8 @@ void MenuTexture_Upload(TextureHeader *header, LoadedBlockRef *block) {
     if ((pixel_format >> 4) == 0 || (pixel_format >> 4) == 3) {
         return;
     }
-    clut_width = (pixel_format & 4) ? 8 : 16;
-    clut_height = (pixel_format & 4) ? 2 : 16;
+    clut_width = (pixel_format & GS_PSM_4BIT_PALETTE) ? 8 : 16;
+    clut_height = (pixel_format & GS_PSM_4BIT_PALETTE) ? 2 : 16;
     sceGsSetDefLoadImage(&clut_load, HEADER_TEX0(header)->cbp, 1, HEADER_TEX0(header)->cpsm, 0, 0, clut_width, clut_height);
     FlushCache(0);
     sceGsExecLoadImage(&clut_load, (char *)header + (header->image_size + sizeof(TextureHeader)));
@@ -3428,8 +3428,8 @@ static void MenuTexture_UploadInStrips(TextureHeader *header) {
     if ((pixel_format >> 4) == 0 || (pixel_format >> 4) == 3) {
         return;
     }
-    clut_width = (pixel_format & 4) ? 8 : 16;
-    clut_height = (pixel_format & 4) ? 2 : 16;
+    clut_width = (pixel_format & GS_PSM_4BIT_PALETTE) ? 8 : 16;
+    clut_height = (pixel_format & GS_PSM_4BIT_PALETTE) ? 2 : 16;
     sceGsSetDefLoadImage(&load_image, HEADER_TEX0(header)->cbp, 1, HEADER_TEX0(header)->cpsm, 0, 0, clut_width, clut_height);
     FlushCache(0);
     sceGsExecLoadImage(&load_image, (char *)header + (header->image_size + sizeof(TextureHeader)));
@@ -3511,11 +3511,11 @@ void MenuTexture_UploadTwoCluts(TextureHeader *header, u64 *tex0_out, u64 *trail
         return;
     }
     clut_width = 16;
-    if (pixel_format & 4) {
+    if (pixel_format & GS_PSM_4BIT_PALETTE) {
         clut_width = 8;
     }
     clut_height = 16;
-    if (pixel_format & 4) {
+    if (pixel_format & GS_PSM_4BIT_PALETTE) {
         clut_height = 2;
     }
     sceGsSetDefLoadImage(&load_image, HEADER_TEX0(header)->cbp, 1, HEADER_TEX0(header)->cpsm, 0, 0, clut_width, clut_height);
@@ -3549,8 +3549,8 @@ void MenuTexture_GetRegisters(TextureHeader *tex, u64 *tex0_out, u64 *trailer_ou
     if ((psm >> 4) == 0 || (psm >> 4) == 3) {
         return;
     }
-    clut_w = (psm & 4) ? 8 : 16;
-    clut_h = (psm & 4) ? 2 : 16;
+    clut_w = (psm & GS_PSM_4BIT_PALETTE) ? 8 : 16;
+    clut_h = (psm & GS_PSM_4BIT_PALETTE) ? 2 : 16;
     trailer = (u64 *)((char *)tex + (clut_w * clut_h) * 4 + (tex->image_size + 0x20));
     if (trailer_out != NULL) {
         *trailer_out = *trailer;

@@ -54,7 +54,7 @@ void LivingStatue_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
     } else {
@@ -74,12 +74,12 @@ void LivingStatue_Init(Entity *entity) {
    with flag bits 16, 18, 21 to 25 and 28 set and starts no action. */
 static void LivingStatue_ThinkHoldAnim1(Entity *entity, s32 run_now) {
     ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit24 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit25 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_second_wall_collision = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_map_object_collision = TRUE;
     ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit16 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
+    ENTITY_FLAG_BITS(entity)->not_targetable = TRUE;
     Motion_Start(entity, 1, 0, 0, 0);
 }

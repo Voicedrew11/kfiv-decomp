@@ -21,7 +21,7 @@
 #define FOG_COLOR() \
     ((u64)map_draw_state.current_fog_color.red | ((u64)map_draw_state.current_fog_color.green << 8) | ((u64)map_draw_state.current_fog_color.blue << 16) | \
      ((u64)0x80 << 24))
-#define USABLE(node) (!((node)->flags & 0x40000000))
+#define USABLE(node) (!((node)->flags & MAP_RECORD_HIDDEN))
 #define IN_X(node) ((node)->left - margin <= point[0] && point[0] <= (node)->right + margin)
 #define IN_Y(node) ((node)->lowest_y - margin <= point[1] && point[1] <= (node)->highest_y + margin)
 #define IN_Z(node) ((node)->top - margin <= point[2] && point[2] <= (node)->bottom + margin)
@@ -36,7 +36,7 @@
         best_distance = distance;                                                                  \
         best = node;                                                                               \
     }
-#define USABLE_IN_MAP(node) (((u8)(AREA_NODE_WORD(node) >> 27) & 1) == map && USABLE(node))
+#define USABLE_IN_MAP(node) (AREA_NODE_MAP(node) == map && USABLE(node))
 void Packet_BeginGsRegisters(void);
 void Packet_AddGsRegister(int, s64);
 void Packet_EndGsRegisters(void);
@@ -189,7 +189,7 @@ void Map_DrawRecords(int mode) {
                 if ((flags & 2) && mode != 0) {
                     continue;
                 }
-                if ((flags & 0x200) && mode != 0) {
+                if ((flags & MAP_RECORD_RIPPLED) && mode != 0) {
                     continue;
                 }
                 if (!(flags & 0x20) && mode != 0) {
@@ -198,7 +198,7 @@ void Map_DrawRecords(int mode) {
                 if (active >= 2 && flags < 0 && map != current_map_slot) {
                     continue;
                 }
-                if (flags & 0x10) {
+                if (flags & MAP_RECORD_CURRENT_BLOCKS) {
                     record->model->light_block = (s32)&map_draw_state.current_light_block;
                     record->model->fog_block = &map_draw_state.current_fog_block;
                 } else {
@@ -206,7 +206,7 @@ void Map_DrawRecords(int mode) {
                     record->model->fog_block = &map_draw_state.fog_blocks[map][record->fog_block_index];
                 }
                 LinkedPoint_FindHitsForMapDraw(record, record->model);
-                if (record->flags & 0x200) {
+                if (record->flags & MAP_RECORD_RIPPLED) {
                     header = slot->header;
                     Wobble_DrawRippledModel(record->model, header->screen_tint_red, header->screen_tint_green, header->screen_tint_blue, header->screen_tint_alpha);
                 }
@@ -266,7 +266,7 @@ void Map_DrawLateRecords(int mode) {
                 if ((flags & 2) && mode != 0) {
                     continue;
                 }
-                if ((flags & 0x200) && mode != 0) {
+                if ((flags & MAP_RECORD_RIPPLED) && mode != 0) {
                     continue;
                 }
                 if (!(flags & 0x20) && mode != 0) {
@@ -276,13 +276,13 @@ void Map_DrawLateRecords(int mode) {
                     continue;
                 }
                 old_z_mask = z_mask;
-                z_mask = !((flags >> 7) & 1);
+                z_mask = !(flags & MAP_RECORD_Z_WRITE);
                 if (z_mask != old_z_mask) {
                     Packet_BeginGsRegisters();
                     Packet_AddGsRegister(GS_REG_ZBUF_1, ((s64)z_mask << 32) | 0xA000118);
                     Packet_EndGsRegisters();
                 }
-                if (record->flags & 0x10) {
+                if (record->flags & MAP_RECORD_CURRENT_BLOCKS) {
                     record->model->light_block = (s32)&map_draw_state.current_light_block;
                     record->model->fog_block = &map_draw_state.current_fog_block;
                 } else {
@@ -290,7 +290,7 @@ void Map_DrawLateRecords(int mode) {
                     record->model->fog_block = &map_draw_state.fog_blocks[map][record->fog_block_index];
                 }
                 LinkedPoint_FindHitsForMapDraw(record, record->model);
-                if (record->flags & 0x200) {
+                if (record->flags & MAP_RECORD_RIPPLED) {
                     header = slot->header;
                     Wobble_DrawRippledModel(record->model, header->screen_tint_red, header->screen_tint_green, header->screen_tint_blue, header->screen_tint_alpha);
                 }
@@ -461,7 +461,7 @@ void Map_BuildModels(int map) {
                 cursor += *(int *)cursor;
             }
             Model_SetUpPosed(model, (char **)&cursor, &work);
-            if (record->record_flags & 0x100) {
+            if (record->record_flags & MAP_RECORD_WAVE_UVS) {
                 Vector_Copy(&model->position, record);
                 model->position.w = 1.0f;
                 ((void (*)(ModelInstance *, u32 *, int))Wobble_BuildWaveUvs)(model, (u32 *)&work, 0); // match: a third argument the callee does not take
@@ -524,7 +524,7 @@ void Map_BuildModels(int map) {
     for (i = 0; i < header->plain_object_model_count; i++) {
         object = map_slot_objects[map];
         for (j = 0; j < header->object_count; j++, object++) {
-            if (object->definition->model_index != 0xFFFF && !(MAP_OBJECT_DEF_WORD(object) & 0x100) && object->source->model_index == i) {
+            if (object->definition->model_index != 0xFFFF && !(MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_SKINNED) && object->source->model_index == i) {
                 next = cursor; // match: retail bug, only set when an object uses this model (see cursor = next)
                 Model_SetUpPosed(object->model, (char **)&next, &work);
                 object->model->texture_slot = 1;
@@ -540,7 +540,7 @@ void Map_BuildModels(int map) {
     for (i = 0; i < header->skinned_object_model_count; i++) {
         object = map_slot_objects[map];
         for (j = 0; j < header->object_count; j++, object++) {
-            if (object->definition->model_index != 0xFFFF && (MAP_OBJECT_DEF_WORD(object) & 0x100) && object->source->model_index == i) {
+            if (object->definition->model_index != 0xFFFF && (MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_SKINNED) && object->source->model_index == i) {
                 next = cursor; // match: retail bug, as in the loop above
                 Model_SetUpSkinned(object->model, &next, (int *)&work);
                 object->model->texture_slot = 1;
@@ -572,7 +572,7 @@ void Map_BuildModels(int map) {
     for (i = 0; i < header->object_motion_count; i++) {
         object = map_slot_objects[map];
         for (j = 0; j < header->object_count; j++, object++) {
-            if (object->definition->model_index != 0xFFFF && (MAP_OBJECT_DEF_WORD(object) & 0x200) && object->source->motion_index == i) {
+            if (object->definition->model_index != 0xFFFF && (MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_HAS_MOTION) && object->source->motion_index == i) {
                 next = ((int (*)(int, int *, ModelInstance *, int))ModelMotion_LoadFile)(cursor, (int *)&work, object->model, 1); // match: the callee returns where the motion ends
             }
         }
@@ -712,8 +712,8 @@ void Map_InsertRecordBySize(AreaNode *node) {
     AreaNode *cur;
     f32 area;
 
-    if (!(node->flags & 0x02000000)) {
-        head = (node->flags & 0x80000000) ? &backdrop_record_boxes : &record_boxes;
+    if (!(node->flags & MAP_RECORD_NOT_IN_BOX_LISTS)) {
+        head = (node->flags & MAP_RECORD_BACKDROP) ? &backdrop_record_boxes : &record_boxes;
         area = (node->right - node->left) * (node->bottom - node->top);
         prev = NULL;
         cur = *head;
@@ -738,7 +738,7 @@ void Map_UnlinkSlotRecords(int map) {
     prev = NULL;
     node = record_boxes;
     while (node != NULL) {
-        if (((u8)(AREA_NODE_WORD(node) >> 27) & 1) == map) {
+        if (AREA_NODE_MAP(node) == map) {
             if (prev != NULL) {
                 prev->next = node->next;
             } else {
@@ -756,7 +756,7 @@ void Map_UnlinkSlotRecords(int map) {
     prev = NULL;
     node = backdrop_record_boxes;
     while (node != NULL) {
-        if (((u8)(AREA_NODE_WORD(node) >> 27) & 1) == map) {
+        if (AREA_NODE_MAP(node) == map) {
             if (prev != NULL) {
                 prev->next = node->next;
             } else {
@@ -859,7 +859,7 @@ int Map_IsPointInRecord(f32 *point, AreaNode *node, f32 margin) {
 
     if (node != NULL) {
         inside = FALSE;
-        if (!(node->flags & 0x40000000) && node->left - margin <= point[0] && point[0] <= node->right + margin &&
+        if (!(node->flags & MAP_RECORD_HIDDEN) && node->left - margin <= point[0] && point[0] <= node->right + margin &&
             node->lowest_y - margin <= point[1] && point[1] <= node->highest_y + margin &&
             node->top - margin <= point[2] && point[2] <= node->bottom + margin) {
             inside = TRUE;
@@ -1011,8 +1011,8 @@ void Map_DrawFreeCameraView(void) {
         record = (MapDrawRecord *)slot->records;
         if (slot->loaded != 0) {
             for (i = 0; i < ((MapSlotUnk08 *)slot->header)->record_count; i++, record++) {
-                if (!(record->flags & 0x80000000)) {
-                    if (record->flags & 0x10) {
+                if (!(record->flags & MAP_RECORD_BACKDROP)) {
+                    if (record->flags & MAP_RECORD_CURRENT_BLOCKS) {
                         record->model->light_block = (s32)&map_draw_state.current_light_block;
                         record->model->fog_block = &map_draw_state.current_fog_block;
                     } else {
@@ -1204,13 +1204,13 @@ int Map_ClassifyRecordOnScreen(MapDrawRecord *draw_record, ModelInstance *model)
     if (!MAP_DRAW_FLAG_BITS(&map_draw_state)->bit46) {
         return 1;
     }
-    if (bounds->record_flags & 0x40) {
+    if (bounds->record_flags & MAP_RECORD_SCREEN_EXEMPT) {
         return 1;
     }
     if (bounds->model_index == 0xFFFF) {
         return 1;
     }
-    if (Map_TestFlagBlockBit(current_map_slot, player_floor_block[0], (u8)(record->record_flags >> 27) & 1, (u8)record->record_flags) == 0) {
+    if (Map_TestFlagBlockBit(current_map_slot, player_floor_block[0], MAP_RECORD_MAP(record), (u8)record->record_flags) == 0) {
         return 1;
     }
     sceVu0MulMatrix(matrix, world_screen_matrix, identity_matrix);

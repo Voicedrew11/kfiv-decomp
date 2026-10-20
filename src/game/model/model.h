@@ -190,7 +190,7 @@ typedef struct {
     char pad30[0x10];
 } ModelWideVertex;
 
-/* a block of a part's data in the models drawn with their own texture (MODEL_FLAG_800):
+/* a block of a part's data in the models drawn with their own texture (MODEL_DRAW_OWN_TEXTURE):
    0xB0 bytes of GS setup, then 0x40-byte vertices */
 typedef struct {
     u16 length;                     /* 0x00 in 16-byte units, not counting the first */
@@ -343,7 +343,12 @@ typedef union {
 
 #define POSED_MODEL_FILE_ANY(file) (((ModelFileUnion *)(file))->posed)
 
-#define MODEL_FLAG_800  0x800
+#define MODEL_FLAG_FLAT_COLOUR 0x400    /* ModelInstance.model_flags: no directional light, lit flat by its own colour times its alpha */
+#define MODEL_DRAW_FACE_CAMERA_X 0x100  /* ModelInstance.draw_flags: turned about x to face the camera */
+#define MODEL_DRAW_FACE_CAMERA_Y 0x200  /* ModelInstance.draw_flags: turned about y to face the camera */
+#define MODEL_DRAW_FACE_CAMERA   0x300  /* either of the two above */
+#define MODEL_DRAW_OWN_TEXTURE   0x800  /* ModelInstance.draw_flags: drawn with its own texture, the frame copied into it first */
+#define MODEL_DRAW_TURN_Z_ONLY   0x400  /* ModelInstance.draw_flags: turned about z alone */
 
 /* ModelInstance with the three part slots at 0x130 as the array Model_SetUpSkinned fills
    (ModelInstance.root_part is the first) */
@@ -377,7 +382,7 @@ typedef struct ModelInstance {
     ModelPart *parts;               /* 0xF8 */
     ModelPartLevels **level_tables; /* 0xFC */
     u16 model_flags;                /* 0x100 bits: 1 motion on, 0x200 draw-list, 0x400 unlit, 0x800 record sent */
-    u16 draw_flags;                 /* 0x102 MODEL_FLAG_800: drawn with its own texture */
+    u16 draw_flags;                 /* 0x102 MODEL_DRAW_OWN_TEXTURE: drawn with its own texture */
     int effect_record_hint;         /* 0x104 int passed to Effect_FindModelRecord, unread */
     char pad108[0x08];
     ModelStripList *strips;         /* 0x110 also read as a CollisionMesh (collision/collision.h), NULL: none */
@@ -445,6 +450,8 @@ typedef struct {
     u32 z;                          /* 0x08 */
     s32 flags;                      /* 0x0C flag bits, 0x8000 on some points */
 } ModelScreenPoint;
+
+#define MODEL_SCREEN_POINT_FLAG_OFF_SCREEN 0x8000  /* the point is off the screen (held weapon trail) */
 
 /* a 4x4 matrix (ModelInstance.model_matrix, ModelPart.matrix) as retail copies it whole: by doublewords */
 typedef struct {
@@ -606,6 +613,7 @@ typedef struct {
 /* MapObjectUnk04's first word whole, where retail tests a bit of it with a mask (Player_Move) */
 #define MAP_OBJECT_DEF_FLAGS(def) (*(u32 *)(def))
 #define MAP_OBJECT_DEF_CARRIES 0x8000   /* bit15 */
+#define MAP_OBJECT_DEF_FADE_ON_BREAK 0x20000 /* definition_flags: fades out over its breaking animation (MapObject_UpdateBreaking) */
 
 /* MapObjectUnk04.kind read as the byte it is, where retail compares it that way (Collision_PushOutOfMeshObj) */
 #define MAP_OBJECT_DEF_KIND(def) (*(u8 *)(def))
@@ -631,6 +639,9 @@ typedef struct {
 
 /* the 32-bit flags at AnimObject+0x10 */
 #define ANIM_OBJECT_FLAGS(object) (*(u32 *)&(object)->anim_flags)
+
+/* the same word of AnimObject and CollisionOwner: the object is hit as a quad of model points 0 to 3 */
+#define OBJECT_FLAG_QUAD_HIT 0x10000
 
 /* the objects of a map, looked up by MapObject_GetById(map, id) */
 typedef struct {
@@ -658,6 +669,7 @@ typedef struct {
 
 /* the bits of MapObject.state_flags, the word MAP_OBJECT_BITS views */
 #define MAP_OBJECT_IN_VIEW          0x2       /* bit 1: in view this frame (MapObject_DrawAll and Interact_FindTarget test it) */
+#define MAP_OBJECT_IN_VIEW_PREVIOUS 0x4       /* bit 2: in view the frame before */
 #define MAP_OBJECT_IN_VIEW_MASK     0x6       /* bits 1-2: in view this frame or the frame before (the appear and disappear effects) */
 #define MAP_OBJECT_STEP_AND_ON_MASK 0x2FF00   /* bits 8-15 and 17: the kind's state machine step plus the on bit */
 #define MAP_OBJECT_IN_USE           0x10000   /* bit 16: in use (MapObject_Activate sets it, MapObject_Deactivate clears it) */
@@ -666,8 +678,13 @@ typedef struct {
 #define MAP_OBJECT_SCRIPTED         0x100000  /* bit 20: a script drives it (MapObject_SetScripted) */
 #define MAP_OBJECT_FLAG_400000      0x400000  /* bit 22: set from a script; the motion-done script commands treat it as never done */
 
-/* the first word of the definition, whole (bit 11 0x800, bit 12 0x1000) */
+/* the first word of the definition, whole */
 #define MAP_OBJECT_DEF_WORD(object) (*(u32 *)(object)->definition)
+#define MAP_OBJECT_DEF_SKINNED      0x100   /* drawn as a skinned model (from the skinned object models) */
+#define MAP_OBJECT_DEF_HAS_MOTION   0x200   /* has a motion (its motion_index) */
+#define MAP_OBJECT_DEF_GLOW         0x4000  /* lit by the glow lights while the glow item is worn */
+#define MAP_OBJECT_DEF_BREAKABLE    0x800   /* MapObject_Break can break it */
+#define MAP_OBJECT_DEF_BREAK_ANIM   0x1000  /* it has a breaking animation */
 
 /* MapObject.work as most kinds use it */
 typedef struct {

@@ -122,6 +122,8 @@ typedef struct {
     s32 flags;                      /* 0x1C 0x8000: this vertex draws nothing */
 } PacketStVertex;
 
+#define PACKET_VERTEX_OUT_OF_RANGE 0x8000 /* PacketStVertex.flags: the vertex is outside the GS window and draws nothing */
+
 /* the GS registers a draw environment sets, each followed by its register address (SDK sceGsDrawEnv1) */
 typedef struct {
     s64 frame;                      /* 0x00 */

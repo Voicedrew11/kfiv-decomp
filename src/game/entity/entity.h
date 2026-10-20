@@ -166,6 +166,14 @@ typedef struct {
     EntityParamsUnk240Part hit_parts[3]; /* 0x10 the three hit parts of the attack: window, arc, power, ailments */
 } EntityParamsUnk240;
 
+/* Unk1B1470Request.target_mask bits: what a hit may touch (Attack_RunSphere and the swing checks) */
+#define HIT_TARGET_PLAYER           0x1    /* the player */
+#define HIT_TARGET_ENTITY           0x2    /* entities */
+#define HIT_TARGET_MAP_OBJECT       0x4    /* map objects */
+#define HIT_TARGET_MAP_FLOOR        0x8    /* map floors (Attack_TestMapModelFloors) */
+#define HIT_TARGET_MAP_WALL         0x10   /* map walls (Attack_TestMapModelWalls) */
+#define HIT_TARGET_SKIP_OWNER       0x80   /* not the request's owner */
+
 /* the two blocks ParaStool_CheckPartHitInPlayerView fills for Attack_Run */
 typedef struct {
     f32 position[4];                /* 0x00 */
@@ -321,6 +329,9 @@ typedef struct {
     u16 height;                     /* 0x06 its height, before the model's y scale */
     f32 hit_multiplier;             /* 0x08 a hit on this body counts this many times over (Attack_RunSphere) */
 } EntityBodyPoint;
+
+/* EntityParams.motion_ids 20-23 are the attack motions (0x14 the first melee attack, 0x17 the ranged one): this plus the attack_index */
+#define ENTITY_MOTION_ATTACK_BASE 0x14
 
 /* what Entity.params points at: per-kind tuning values. EntityController below is a second
    view of the same block; the two are to be unified. */
@@ -876,13 +887,14 @@ typedef struct Entity {
 #define ENTITY_FLAG_LIVE                     0x2                   /* alive: attacks, pushes and Effect_IsEntityUntargetable skip an entity without it */
 #define ENTITY_FLAG_DYING_MASK               0xC                   /* 0 alive; 1 when a death action starts, 2 as it fades, 3 once it is off the world */
 #define ENTITY_FLAG_DYING_1                  0x4                   /* that field at 1, which the start of a death action sets */
+#define ENTITY_FLAG_DYING_2                  0x8                   /* that field at 2, as it fades */
 #define ENTITY_FLAG_NO_RESPAWN               0x10                  /* EntityAi_ShouldRespawn returns FALSE while set; Entity_ClearFlag10InSlot clears it */
 #define ENTITY_FLAG_OWN_THINK                0x20                  /* EntityAi_Update runs the entity type's own think handler while set (set for every spawn) */
 #define ENTITY_FLAG_HANDLER_RUNS             0x40                  /* EntityAi_Update calls Entity.handler every frame while set */
 #define ENTITY_FLAG_RESPAWNABLE              0x80                  /* the spawn may come back: EntityAi_ShouldRespawn needs it, the spawn flags set it */
-#define ENTITY_FLAG_100                      0x100                 /* EntityEvent_Respawn sets it with the live bits, Entity_SetSpawnedFlags clears it */
+#define ENTITY_FLAG_RESPAWN_ROLL_DONE        0x100                 /* the respawn chance has been rolled: EntityEvent_Respawn sets it, Entity_SetSpawnedFlags clears it */
 #define ENTITY_FLAG_LOOK_AT_TARGET           0x200                 /* the head follows the target (EntityAi_LookAtPlayer's look_at_target) */
-#define ENTITY_FLAG_400                      0x400                 /* set with bit 9 before an attack is picked, cleared by the on_hit handlers */
+#define ENTITY_FLAG_ATTACKING                0x400                 /* an attack is under way: the attack starts set it, the on_hit handlers clear it */
 #define ENTITY_FLAG_MOTION_STEP_MODE_MASK    0x3800                /* the mode (0 to 2) Motion_Step and Motion_StepSlot are given */
 #define ENTITY_FLAG_MOTION_STEP_MODE_1       0x800                 /* that mode at 1, which the start of every action sets */
 #define ENTITY_FLAG_ANIMATES                 0x4000                /* the animate handler blends or steps the motion while set */
@@ -890,7 +902,7 @@ typedef struct Entity {
 #define ENTITY_FLAG_NOT_TARGETABLE           0x10000               /* Effect_IsEntityUntargetable calls it flagged out: an entity holding an animation has it */
 #define ENTITY_FLAG_DRAW_AFTERIMAGE          0x20000               /* Entity_DrawAll draws the pool block's model again for the entities that have it */
 #define ENTITY_FLAG_40000                    0x40000               /* set and cleared by script commands 257 and 258, and by the unseen actions */
-#define ENTITY_FLAG_80000                    0x80000               /* set once the ranged attack is past its launch frame; a light hit reads it to rewind */
+#define ENTITY_FLAG_ATTACK_WINDOW            0x80000               /* the attack is in its hit window (frame up to its end frame); a light hit then rewinds it */
 #define ENTITY_FLAG_100000                   0x100000              /* an attack skips an entity with it set (the target loop of the attack requests) */
 #define ENTITY_FLAG_200000                   0x200000              /* Effect_IsEntityUntargetable excludes it; set with bits 18 and 20 while unseen */
 #define ENTITY_FLAG_400000                   0x400000              /* set when EntityParams.flags bit 0 is clear */
@@ -945,63 +957,63 @@ typedef struct {
 /* Entity.flags as bit-fields. The game sets the flags through bit-fields:
    several changed in a row only match when written this way. */
 typedef struct {
-    u32 bit0 : 1;
-    u32 bit1 : 1;
-    u32 bits2 : 2;
-    u32 bit4 : 1;
-    u32 bit5 : 1;
-    u32 bit6 : 1;
-    u32 bit7 : 1;
+    u32 active_list : 1;
+    u32 live : 1;
+    u32 dying : 2;
+    u32 no_respawn : 1;
+    u32 own_think : 1;
+    u32 handler_runs : 1;
+    u32 respawnable : 1;
     u32 respawn_roll_done : 1;  /* set once the respawn chance has been rolled */
-    u32 bit9 : 1;
-    u32 bit10 : 1;
-    u32 bits11 : 3;
-    u32 bit14 : 1;
+    u32 look_at_target : 1;
+    u32 attacking : 1;              /* an attack is under way (ENTITY_FLAG_ATTACKING) */
+    u32 motion_step_mode : 3;
+    u32 animates : 1;
     u32 bit15 : 1;
-    u32 bit16 : 1;
-    u32 bit17 : 1;
+    u32 not_targetable : 1;
+    u32 draw_afterimage : 1;
     u32 bit18 : 1;
-    u32 bit19 : 1;
+    u32 attack_window : 1;  /* the attack is in its hit window (ENTITY_FLAG_ATTACK_WINDOW) */
     u32 bit20 : 1;
     u32 bit21 : 1;
     u32 bit22 : 1;
-    u32 bit23 : 1;
-    u32 bit24 : 1;
-    u32 bit25 : 1;
-    u32 bit26 : 1;
-    u32 bit27 : 1;
-    u32 bit28 : 1;
+    u32 no_wall_collision : 1;
+    u32 no_second_wall_collision : 1;
+    u32 no_map_object_collision : 1;
+    u32 no_entity_collision : 1;
+    u32 no_player_collision : 1;
+    u32 no_floor_lift : 1;
     u32 bit29 : 1;
-    u32 bit30 : 1;
-    u32 bit31 : 1;
-    u32 bit32 : 1;
-    u32 bit33 : 1;
-    u32 bit34 : 1;
-    u32 bit35 : 1;
-    u32 bits36 : 2;
-    u32 bit38 : 1;
-    u32 bit39 : 1;
+    u32 map_record_inactive : 1;
+    u32 turn_in_place : 1;
+    u32 player_in_reach : 1;
+    u32 player_noticed : 1;
+    u32 motion_ended : 1;
+    u32 guarding : 1;
+    u32 hit_strength : 2;
+    u32 hit_source_weapon : 1;
+    u32 hit_source_magic : 1;
     u32 last_hit_knockback : 1;  /* the last hit on the entity was a knockback hit */
-    u32 bit41 : 1;
-    u32 bit42 : 1;
-    u32 bit43 : 1;
-    u32 bit44 : 1;
-    u32 bit45 : 1;
+    u32 raise_attack_weight : 1;
+    u32 raise_ranged_weight : 1;
+    u32 hit_by_player : 1;
+    u32 on_floor : 1;
+    u32 wall_push : 1;
     u32 bit46 : 1;
-    u32 bit47 : 1;
-    u32 bit48 : 1;
-    u32 bit49 : 1;
-    u32 bit50 : 1;
-    u32 bit51 : 1;
-    u32 bit52 : 1;
-    u32 bit53 : 1;
-    u32 bit54 : 1;
-    u32 bit55 : 1;
-    u32 bit56 : 1;
-    u64 bit57 : 1;
-    u32 bits58 : 2;
-    u32 bits60 : 3;
-    u64 pad63 : 1;
+    u32 object_push : 1;
+    u32 entity_push : 1;
+    u32 player_push : 1;
+    u32 on_top : 1;
+    u32 lift_up : 1;
+    u32 ledge_stop : 1;
+    u32 far_from_spawn : 1;
+    u32 melee_0_hit : 1;
+    u32 melee_1_hit : 1;
+    u32 melee_2_hit : 1;
+    u64 ranged_attack : 1;
+    u32 attack_index : 2;
+    u32 floor_material : 3;
+    u64 sight_blocked : 1;
 } EntityFlagBits;
 
 #define ENTITY_FLAG_BITS(entity) ((EntityFlagBits *)&(entity)->flags)
@@ -1115,6 +1127,19 @@ typedef struct {
     f32 lowest[4];                  /* 0x60 lowest x, y, z it covers */
     f32 highest[4];                 /* 0x70 highest x, y, z it covers */
 } MapRecord;
+
+/* MapRecord.record_flags high word (0x3C), as MapRecordBounds, MapDrawRecord and AreaNode read it */
+#define MAP_RECORD_HIDDEN            0x40000000  /* hidden: not collided with, not found by the box lookups (hide_record) */
+#define MAP_RECORD_BACKDROP          0x80000000  /* linked into backdrop_record_boxes, not record_boxes (Map_InsertRecordBySize) */
+#define MAP_RECORD_NOT_IN_BOX_LISTS  0x02000000  /* left out of the record box lists (Map_InsertRecordBySize) */
+#define MAP_RECORD_SCREEN_EXEMPT     0x40        /* skips the on-screen test (Map_ClassifyRecordOnScreen) */
+#define MAP_RECORD_CURRENT_BLOCKS    0x10        /* drawn with the current light and fog blocks, not its map's own */
+#define MAP_RECORD_Z_WRITE           0x80        /* z writes on while it is drawn (Map_DrawLateRecords) */
+#define MAP_RECORD_WAVE_UVS          0x100       /* its UVs are built as waves (Map_BuildRecords) */
+#define MAP_RECORD_RIPPLED           0x200       /* drawn rippled (Wobble_DrawRippledModel) */
+#define MAP_RECORD_FRAME_EFFECTS     0x4000000   /* EntityEvent_StartFrameEffects does its work while set */
+/* the map slot a MapRecord belongs to: bit 27 of record_flags (MapRecordBits.map) */
+#define MAP_RECORD_MAP(record) ((u8)((record)->record_flags >> 27) & 1)
 
 /* one of the 0x80-byte records MapSlot.light_blocks (map/map.h) points at, indexed by byte 3 of
    EntitySpawnInfo.spawn_flags */

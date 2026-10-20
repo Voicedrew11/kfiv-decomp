@@ -74,5 +74,7 @@ typedef struct {
 } AreaNodeWords;
 
 #define AREA_NODE_WORD(node) (((AreaNodeWords *)(node))->flags_doubleword)
+/* the map slot an AreaNode's record belongs to: bit 27 of its doubleword (MAP_RECORD_MAP) */
+#define AREA_NODE_MAP(node) ((u8)(AREA_NODE_WORD(node) >> 27) & 1)
 
 #endif

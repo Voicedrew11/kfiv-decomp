@@ -110,7 +110,7 @@ void MapLoad_Update(void) {
             map_load_state.file_handle = -1;
         }
     }
-    if ((map_load_state.flags.raw & 6) == 4) {
+    if ((map_load_state.flags.raw & MAP_LOAD_HOLD_MASK) == MAP_LOAD_HOLD_REQUESTED) {
         if (map_load_state.step == 0 || map_load_state.step == 3 || map_load_state.step == 5) {
             map_load_state.flags.f.bit1 = TRUE;
             map_load_state.flags.f.bit2 = FALSE;
@@ -346,8 +346,8 @@ void MapLoad_ActivateMap(void) {
 
 /* Asks the background load to stop at its next safe step (MapLoad_Update holds it there). */
 void MapLoad_RequestHold(void) {
-    if (!(map_load_state.flags.raw & 6)) {
-        map_load_state.flags.raw |= 4;
+    if (!(map_load_state.flags.raw & MAP_LOAD_HOLD_MASK)) {
+        map_load_state.flags.raw |= MAP_LOAD_HOLD_REQUESTED;
     }
 }
 

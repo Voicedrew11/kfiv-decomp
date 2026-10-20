@@ -73,7 +73,7 @@ void MapObject_UpdateBreaking(MapObject *object) {
     MapObject *other;
 
     if (MODEL_CHANNEL(object->model) != NULL && MODEL_CHANNEL(object->model)->frame != 0) {
-        if (object->definition->definition_flags & 0x20000) {
+        if (object->definition->definition_flags & MAP_OBJECT_DEF_FADE_ON_BREAK) {
             total = ModelMotion_GetLastFrame((char *)object->model);
             if (total != 0) {
                 alpha = ((total - MODEL_CHANNEL(object->model)->frame) << 7) / total;
@@ -89,7 +89,7 @@ void MapObject_UpdateBreaking(MapObject *object) {
         }
         MapObject_StepAnim(object);
     } else {
-        if (!(object->definition->definition_flags & 0x20000)) {
+        if (!(object->definition->definition_flags & MAP_OBJECT_DEF_FADE_ON_BREAK)) {
             other = MapObject_GetById(MAP_OBJECT_BYTES(object)->map_slot & 1, object->source->spawn_flags.bytes[3]);
             if (other != NULL) {
                 MapObject_Activate(other);

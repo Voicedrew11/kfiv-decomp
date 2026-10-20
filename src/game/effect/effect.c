@@ -304,18 +304,18 @@ int Effect_StartSpawner(int effect_id, void *position, void *rotation, void *own
     slot->owner_effect = NULL;
     slot->start_position = NULL;
     slot->start_rotation = NULL;
-    placement = EFFECT_DEF_FLAG_WORD(def) & 0x600000;
-    if (placement == 0 || placement == 0x600000) {
+    placement = EFFECT_DEF_FLAG_WORD(def) & EFFECT_DEF_PLACEMENT_MASK;
+    if (placement == 0 || placement == EFFECT_DEF_PLACEMENT_MASK) {
         Vector_Copy(&slot->position, position);
         Vector_Copy(&slot->rotation, rotation);
-        if (EFFECT_DEF_FLAGS(def) & 0x10000) {
+        if (EFFECT_DEF_FLAGS(def) & EFFECT_DEF_FLAG_KEEP_START) {
             slot->start_position = position;
             slot->start_rotation = rotation;
         }
     } else {
         Vector_Copy(&slot->position, &origin_point);
         Vector_Copy(&slot->rotation, &origin_point);
-        if (EFFECT_DEF_FLAGS(def) & 0x10000) {
+        if (EFFECT_DEF_FLAGS(def) & EFFECT_DEF_FLAG_KEEP_START) {
             slot->start_rotation = slot->start_position = &origin_point;
         }
     }
@@ -351,7 +351,7 @@ void Effect_UpdateAll(void) {
     int i;
     int key;
 
-    if (game_status.update_hold_flags & 0x400) {
+    if (game_status.update_hold_flags & UPDATE_HOLD_EFFECT_OWNER_ONLY) {
         only_owner = game_status.effect_owner;
     }
     if (effect_slot_count > 0) {
@@ -435,9 +435,9 @@ void Effect_DrawAll(int pass) {
         if (!(effect->flags & EFFECT_FLAG_LIVE)) {
             continue;
         }
-        placement = EFFECT_DEF_FLAGS(effect->def) & 0x600000;
+        placement = EFFECT_DEF_FLAGS(effect->def) & EFFECT_DEF_PLACEMENT_MASK;
         model = effect->model;
-        if (placement == 0 || placement == 0x600000) {
+        if (placement == 0 || placement == EFFECT_DEF_PLACEMENT_MASK) {
             // match: the margin is set up before the node, so the call passes it first
             if (((int (*)(f32 *, f32, AreaNode *))Map_IsPointInRecord)((f32 *)&model->position, 0.0f, (AreaNode *)effect->map_record) == 0) {
                 effect->map_record = (char *)Map_FindRecordAt((f32 *)&effect->model->position, 0.0f);
@@ -565,8 +565,8 @@ static void Effect_RunSpawner(EffectSlot *slot) {
         if (EFFECT_FLAG_PARTS(effect)->sound_track > 0) {
             effect_sound_count++;
         }
-        placement = EFFECT_DEF_FLAGS(effect->def) & 0x600000;
-        if (placement == 0 || placement == 0x600000) {
+        placement = EFFECT_DEF_FLAGS(effect->def) & EFFECT_DEF_PLACEMENT_MASK;
+        if (placement == 0 || placement == EFFECT_DEF_PLACEMENT_MASK) {
             effect->map_record = (char *)Map_FindRecordAt((f32 *)&effect->model->position, 0.0f);
         }
         def = EFFECT_SLOT_VIEW(slot)->def;
@@ -692,7 +692,7 @@ static void Effect_SetupModel(int index) {
     Memory_ClearWords(model, sizeof(ModelInstance) / 4);
     def = effect->def;
     if (EFFECT_DEF_FLAGS(def) & 0x20000) {
-        if ((EFFECT_DEF_FLAGS(def) & 0x600000) == 0 || (EFFECT_DEF_FLAGS(def) & 0x600000) == 0x600000) {
+        if ((EFFECT_DEF_FLAGS(def) & EFFECT_DEF_PLACEMENT_MASK) == 0 || (EFFECT_DEF_FLAGS(def) & EFFECT_DEF_PLACEMENT_MASK) == EFFECT_DEF_PLACEMENT_MASK) {
             model->draw_flags |= 0x300;
         } else {
             model->draw_flags |= 0x400;
@@ -768,7 +768,7 @@ void Effect_OffsetAll(void *offset) {
     if (effect_slot_count > 0) {
         for (i = 0; i < EFFECT_SLOT_COUNT; i++, slot++) {
             if (slot->flags & EFFECT_SLOT_LIVE) {
-                if (!(EFFECT_DEF_FLAGS(EFFECT_SLOT_VIEW(slot)->def) & 0x600000)) {
+                if (!(EFFECT_DEF_FLAGS(EFFECT_SLOT_VIEW(slot)->def) & EFFECT_DEF_PLACEMENT_MASK)) {
                     Vector_Add(&slot->position, &slot->position, offset);
                 }
             }
@@ -777,7 +777,7 @@ void Effect_OffsetAll(void *offset) {
     if (effect_count > 0) {
         for (i = 0; i < EFFECT_COUNT; i++, effect++) {
             if (effect->flags & EFFECT_FLAG_LIVE) {
-                if (!(EFFECT_DEF_FLAGS(effect->def) & 0x600000)) {
+                if (!(EFFECT_DEF_FLAGS(effect->def) & EFFECT_DEF_PLACEMENT_MASK)) {
                     Vector_Add(&effect->model->position, &effect->model->position, offset);
                     Vector_Add(&effect->saved_position, &effect->saved_position, offset);
                 }

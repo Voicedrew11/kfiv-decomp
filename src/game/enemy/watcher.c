@@ -53,7 +53,7 @@ void Watcher_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
     EntityAi_StartAction(entity, ai_state->move, 0);
     if (unk138 != NULL) {
         Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
@@ -82,11 +82,11 @@ static void Watcher_Think(Entity *entity, s32 unknown) {
         if (!(s32)(entity->flags >> 63) && EntityAi_CanUseRanged(entity, 0)) {
             Attack_DrainPlayerMp((s16)entity->params->action_frames);
             ai_state->step_index = 1;
-            ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
+            ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
             Motion_Start(entity, 2, 0, entity->params->motion_blend_frames, 0);
         } else {
             ai_state->step_index = 0;
-            ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+            ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
             Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
         }
         if (previous != ai_state->step_index) {
@@ -121,15 +121,15 @@ static void Watcher_Death(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         EntityEvent_StartCueAlways(entity, 2, 0);
-        ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bits2 = 1;
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bits2 = 2;
-        ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
+        ENTITY_FLAG_BITS(entity)->dying = 1;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
+        ENTITY_FLAG_BITS(entity)->animates = FALSE;
+        ENTITY_FLAG_BITS(entity)->dying = 2;
+        ENTITY_FLAG_BITS(entity)->no_respawn = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
         entity->action_timer = 0x14;
         EntityEvent_OnDeath(entity);
         entity->action_step++;
@@ -138,8 +138,8 @@ static void Watcher_Death(Entity *entity) {
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits2 = 3;
-            ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
+            ENTITY_FLAG_BITS(entity)->dying = 3;
+            ENTITY_FLAG_BITS(entity)->live = FALSE;
         }
         break;
     }

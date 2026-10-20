@@ -774,9 +774,9 @@ void Game_ReadSaveImage(void) {
         flags = ((GameDefinitionFlags *)item_name_defs)[i].flags;
         if (((flags >> 18) & 3) < 2) {
             if (flag_bits & 1) {
-                ((GameDefinitionFlags *)item_name_defs)[i].flags = (flags & 0xFFF3FFFF) | 0x40000;
+                ((GameDefinitionFlags *)item_name_defs)[i].flags = (flags & ~GAME_DEFINITION_STATE_MASK) | 0x40000;
             } else {
-                ((GameDefinitionFlags *)item_name_defs)[i].flags = flags & 0xFFF3FFFF;
+                ((GameDefinitionFlags *)item_name_defs)[i].flags = flags & ~GAME_DEFINITION_STATE_MASK;
             }
         }
     }
@@ -1544,7 +1544,7 @@ void Game_ShiftScreenByFocusTurn(void) {
     focus_distance = view_ray_status[18] > 1000.0f ? 1000.0f : view_ray_status[18];
     nearest_distance_squared = focus_distance * focus_distance;
     for (entity = active_entities_head; entity != NULL; entity = entity->next) {
-        if (((int)(entity->flags >> 1) & 1) == 0) continue;
+        if ((ENTITY_FLAG_BITS(entity)->live) == 0) continue;
         if (focus_distance < entity->distance_to_player) continue;
         Vector_Copy(offset_to_entity, entity->model->position);
         offset_to_entity[1] -= entity->height * 0.5f;

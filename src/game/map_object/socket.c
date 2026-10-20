@@ -50,7 +50,7 @@ void MapObject_UpdateEmptyPedestal(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (game_status.bit1 && faced_object[0] == object) {
+    if (game_status.using_faced_object && faced_object[0] == object) {
         if (work->timer > 0) {
             return;
         }
@@ -122,7 +122,7 @@ void MapObject_UpdateFilledPedestal(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (game_status.bit1 && faced_object[0] == object) {
+    if (game_status.using_faced_object && faced_object[0] == object) {
         if (item_def->type == 5) {
             if (work->timer > 0) {
                 return;

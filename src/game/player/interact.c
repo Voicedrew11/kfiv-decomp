@@ -142,7 +142,7 @@ void Interact_FindTarget(void) {
             if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
                 continue;
             }
-            if (!(object->state_flags & 4)) {
+            if (!(object->state_flags & MAP_OBJECT_IN_VIEW_PREVIOUS)) {
                 continue;
             }
             reach = object->interact_radius + 200.0f < 2000.0f ? 2000.0f : object->interact_radius + 200.0f;
@@ -253,7 +253,7 @@ void Interact_FindTarget(void) {
         view_ray_status.view_distance = 2000.0f;
     }
     if (player_state.death_timer == 0) {
-        can_act = game_status.bit1;
+        can_act = game_status.using_faced_object;
         pickup = view_ray_status.facing_item;
         if (pickup != NULL && can_act) {
             if (pickup->def != NULL && pickup->def->pickup_script != 0) {
@@ -274,7 +274,7 @@ void Interact_FindTarget(void) {
                         Script_Start(((Entity *)view_ray_status.facing_entity)->spawn_info->talk_script_id, 0);
                     }
                 }
-                game_status.bit1 = FALSE;
+                game_status.using_faced_object = FALSE;
             }
         } else {
             used = view_ray_status.current;
@@ -284,7 +284,7 @@ void Interact_FindTarget(void) {
                         Script_Start(((MapObject *)view_ray_status.current)->source->use_script, 0);
                     }
                 }
-                game_status.bit1 = FALSE;
+                game_status.using_faced_object = FALSE;
             }
         }
     }

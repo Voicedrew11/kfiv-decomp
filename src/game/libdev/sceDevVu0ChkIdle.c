@@ -6,10 +6,10 @@ int sceDevVu0ChkIdle(void) {
     u32 status;
 
     LIBDEV_CFC2(status, vi29);
-    if ((status & 0xF) == 1) {
+    if ((status & VU_STAT_VU0_MASK) == VU_STAT_VU0_RUNNING) {
         return TRUE;
     }
-    if ((status & 0xF00) == 0x100) {
+    if ((status & VU_STAT_VU1_MASK) == VU_STAT_VU1_RUNNING) {
         return TRUE;
     }
     return FALSE;

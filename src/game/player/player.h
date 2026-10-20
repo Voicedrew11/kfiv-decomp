@@ -239,12 +239,12 @@ typedef struct {
 /* PlayerState.status_bits as the bit-fields the game sets */
 typedef struct {
     u64 pad0 : 33;
-    u64 bit33 : 1;
+    u64 step_up_pending : 1;        /* a step up too high to take at once is being taken (PlayerState.step_remainder) */
     u64 bit34 : 1;                  /* set: Ladder_Start does nothing */
-    u64 bit35 : 1;                  /* running: the run button is held while moving (Player_Update) */
-    u64 bit36 : 1;                  /* on an object set up by Ladder_Start (a ladder, it seems) */
+    u64 running : 1;                /* the run button is held while moving (Player_Update) */
+    u64 on_ladder : 1;              /* on an object set up by Ladder_Start (a ladder, it seems) */
     u64 pad37 : 1;
-    u64 bit38 : 1;                  /* cleared at the start of every played frame, with bit39 */
+    u64 in_water : 1;               /* a water surface is under the player: the stride is slower (Player_Update) */
     u64 bit39 : 1;
     u64 pad40 : 24;
 } PlayerStatusBits;
@@ -255,12 +255,12 @@ typedef struct {
     char pad000[0x1C8];
     s32 step_sounded;               /* 0x1C8 set once the footstep of the current stride (PlayerState.stride_phase) has sounded */
     u64 pad32 : 1;                  /* 0x1CC the bits of PlayerStatusBits */
-    u64 bit33 : 1;
+    u64 step_up_pending : 1;
     u64 bit34 : 1;
-    u64 bit35 : 1;
-    u64 bit36 : 1;
+    u64 running : 1;
+    u64 on_ladder : 1;
     u64 pad37 : 1;
-    u64 bit38 : 1;
+    u64 in_water : 1;
     u64 bit39 : 1;
     u64 pad40 : 24;
 } PlayerStatusView;

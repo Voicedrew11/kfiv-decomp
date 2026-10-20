@@ -22,7 +22,7 @@ static void GameClock_Tick(void) {
     GameClock *clock;
 
     if (game_clock_control.clock_stopped == 0) {
-        if (game_clock_control.flags & 0x200) {
+        if (game_clock_control.flags & CLOCK_CONTROL_FLAG_QUARTER_RATE) {
             if (game_clock_control.tick_held == 0 && (frame_counter & 3) == 0) {
                 clock = &game_clock;
                 clock->ticks += 1;
@@ -32,7 +32,7 @@ static void GameClock_Tick(void) {
             clock->ticks += 1;
         }
     }
-    if (game_clock_speed_flags & 0x400) {
+    if (game_clock_speed_flags & CLOCK_SPEED_FLAG_FAST_FORWARD) {
         clock = &game_clock;
         clock->ticks += 0x3B;
     }

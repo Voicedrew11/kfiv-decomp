@@ -210,6 +210,6 @@ static void Gif_SendFromScratchpad(s32 src_addr, s32 qword_count) {
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
     *D2_QWC = qword_count;
-    *D2_MADR = (src_addr & 0x7FFFFFFF) | 0x80000000;
+    *D2_MADR = (src_addr & 0x7FFFFFFF) | D_MADR_SPR;
     *D2_CHCR = D_CHCR_STR | D_CHCR_DIR_FROM_MEMORY | D_CHCR_MOD_CHAIN;
 }

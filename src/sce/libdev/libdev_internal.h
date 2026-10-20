@@ -23,6 +23,18 @@
 #define VIF1_ERR    0x10003C20
 #define VIF1_FIFO   0x10005000
 
+/* VIFn_STAT fields the libdev status functions test. */
+#define VIF_STAT_WAITING_MASK 0xC       /* bits 2-3: waiting for the VU */
+#define VIF_STAT_STOPPED_MASK 0x700     /* bits 8-10: stopped (VIF stop, forced break or interrupt) */
+#define VIF_STAT_ERROR_MASK 0x3000      /* bits 12-13: stalled on an error */
+#define VIF_STAT_FIFO_FULL 0x10000000   /* bit 28: the FIFO count's top bit, 16 quadwords queued */
+#define VIF_STAT_FIFO_COUNT_MASK 0x1F000000 /* bits 24-28: quadwords waiting in the FIFO */
+/* VPU_STAT: the running state of each VU (bit 0 of its nibble). */
+#define VU_STAT_VU0_MASK 0xF
+#define VU_STAT_VU0_RUNNING 0x1
+#define VU_STAT_VU1_MASK 0xF00
+#define VU_STAT_VU1_RUNNING 0x100
+
 /* The other VIF registers: VIFn_REG(VIF0_STAT, VIF_CYCLE) and so on. */
 #define VIF_MARK    0x030
 #define VIF_CYCLE   0x040

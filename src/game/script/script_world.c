@@ -881,9 +881,9 @@ void ScriptCmd_SetPropSolid(ScriptCallCommand *command) {
     prop = Map_GetRecordById(current_map_slot, command->target_id.value);
     if (prop != NULL) {
         if (command->first.value != 0) {
-            prop->record_flags &= ~0x40000000;
+            prop->record_flags &= ~MAP_RECORD_HIDDEN;
         } else {
-            prop->record_flags |= 0x40000000;
+            prop->record_flags |= MAP_RECORD_HIDDEN;
         }
     }
     command->active = 0;
@@ -1266,7 +1266,7 @@ void ScriptCmd_ExitMainLoop(ScriptValueCommand *command) {
 void ScriptCmd_HoldFrameOnStart(ScriptValueCommand *command) {
     if (command->value.value != 0) {
         if (!game_status.bit12) {
-            GAME_STATUS_FLAG_WORD(&game_status) = (GAME_STATUS_FLAG_WORD(&game_status) | 0x1000) & ~0x2000;
+            GAME_STATUS_FLAG_WORD(&game_status) = (GAME_STATUS_FLAG_WORD(&game_status) | GAME_STATUS_FLAG_HOLD_ARMED) & ~GAME_STATUS_FLAG_HOLDING;
         }
     } else {
         game_status.bit12 = FALSE;

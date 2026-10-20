@@ -145,8 +145,8 @@ int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now)
 
 /* Switches the entity to handler (keeping the old one), sets flag bit 57 and bits 58-59, optionally runs it. */
 int EntityAi_StartAttack(Entity *entity, void (*handler)(Entity *entity), int run, int bit57, int bits58) {
-    ENTITY_FLAG_BITS(entity)->bit57 = bit57;
-    ENTITY_FLAG_BITS(entity)->bits58 = bits58;
+    ENTITY_FLAG_BITS(entity)->ranged_attack = bit57;
+    ENTITY_FLAG_BITS(entity)->attack_index = bits58;
     entity->action_step = 0;
     entity->prev_handler = entity->handler;
     entity->handler = handler;
@@ -415,10 +415,10 @@ s32 EntityAi_ShouldRespawn(Entity *entity) {
     EntitySpawnInfo *spawn_info;
     s32 death_count;
 
-    if (!ENTITY_FLAG_BITS(entity)->bit7) {
+    if (!ENTITY_FLAG_BITS(entity)->respawnable) {
         return FALSE;
     }
-    if (ENTITY_FLAG_BITS(entity)->bit4 && (entity->spawn_info->spawn_flags & (0x8000L << 46))) {
+    if (ENTITY_FLAG_BITS(entity)->no_respawn && (entity->spawn_info->spawn_flags & (0x8000L << 46))) {
         return FALSE;
     }
     death_count = Game_GetSpawnDeathCount(map_slots[entity->group_id].tag, entity->spawn_info - map_spawn_infos[entity->group_id]);
@@ -486,9 +486,9 @@ static void EntityAi_SensePlayerInArc(Entity *actor) {
     turn_abs = 0.0f <= turn ? turn : -turn;
     upper = actor->model->position[1] - (actor->height + half_height) * 0.5f;
     lower = actor->model->position[1] - (actor->height - half_height) * 0.5f;
-    ENTITY_FLAG_BITS(actor)->bit32 = 0;
+    ENTITY_FLAG_BITS(actor)->player_in_reach = 0;
     if (actor->distance_to_player < actor->radius + 100.0f + reach && turn_abs < arc && upper <= player_state.position.y && player_state.position.y - 230.0f <= lower) {
-        ENTITY_FLAG_BITS(actor)->bit32 = 1;
+        ENTITY_FLAG_BITS(actor)->player_in_reach = 1;
     }
 }
 
@@ -553,9 +553,9 @@ void EntityAi_SensePlayer(Entity *actor, s32 mode) {
     turn_abs = 0.0f <= turn ? turn : -turn;
     upper = actor->model->position[1] - (actor->height + half_height) * 0.5f;
     lower = actor->model->position[1] - (actor->height - half_height) * 0.5f;
-    ENTITY_FLAG_BITS(actor)->bit32 = 0;
+    ENTITY_FLAG_BITS(actor)->player_in_reach = 0;
     if (actor->distance_to_player < actor->radius + 100.0f + reach && turn_abs < arc && upper <= player_state.position.y && player_state.position.y - 230.0f <= lower) {
-        ENTITY_FLAG_BITS(actor)->bit32 = 1;
+        ENTITY_FLAG_BITS(actor)->player_in_reach = 1;
     }
     near_reach = ctrl->attack_range;
     if (actor->ailment_2_frames != 0 || (player_state.intimidate_timer > 0 && actor->distance_to_player_3d < player_state.intimidate_range)) {
@@ -1658,7 +1658,7 @@ void EntityAi_UpdateCollision(Entity *entity) {
 
     EntityCollision_PushApart(entity);
 
-    if (!((s32)(ENTITY_FLAG_WORD(entity->flags) >> 25) & 1)) {
+    if (!((s32)(ENTITY_FLAG_WORD(entity->flags) >> 25) & ENTITY_FLAG_ACTIVE_LIST)) {
         if (ENTITY_PARAMS_WORD(entity->params) & 0x1000000) {
             EntityCollision_SphereAgainstObjects(entity);
         } else {
@@ -1671,7 +1671,7 @@ void EntityAi_UpdateCollision(Entity *entity) {
         EntityCollision_SphereAgainstMap(entity);
     }
 
-    if ((u32)(ENTITY_FLAG_WORD(entity->flags) >> 51) & 1) {
+    if ((u32)(ENTITY_FLAG_WORD(entity->flags) >> 51) & ENTITY_FLAG_ACTIVE_LIST) {
         entity->floor_lift += 2.0f;
         if (40.0f < entity->floor_lift) {
             entity->floor_lift = 40.0f;
@@ -1847,7 +1847,7 @@ void EntityAi_RaiseAttackWeight(Entity *entity) {
     s32 value;
     s32 limit = 0xC0; // match: the 0xC0 cap stays in a register, as in EntityAi_LowerWeightsAfterHit
 
-    level += ENTITY_FLAG_BITS(entity)->bits58;
+    level += ENTITY_FLAG_BITS(entity)->attack_index;
     value = *level + 5;
     if (value < 0x40) {
         value = 0x40;
@@ -1907,7 +1907,7 @@ int EntityAi_StartSlotMotion(Entity *entity, EntityMotionSlotWord *slot, int cha
     } else {
         slot->frames_left = frames;
     }
-    if (*(int *)slot & 0x20) {
+    if (*(int *)slot & ENTITY_MOTION_SLOT_MOVES_ENTITY) {
         ModelPart *root = ENTITY_MODEL(entity)->root_part;
 
         root->position[0] = root->position[1] = root->position[2] = 0.0f;
@@ -1958,13 +1958,13 @@ void Entity_DrawPoolModels(void) {
     Packet_EndGsRegisters();
     GsDraw_QueueFlush();
     for (entity = active_entities_head; entity != NULL; entity = entity->next) {
-        if (!ENTITY_FLAG_BITS(entity)->bit1 || entity->map_record == NULL || (f32)entity->params->body_radius <= 0.0f) {
+        if (!ENTITY_FLAG_BITS(entity)->live || entity->map_record == NULL || (f32)entity->params->body_radius <= 0.0f) {
             continue;
         }
-        if (!ENTITY_FLAG_BITS(entity)->bit17) {
+        if (!ENTITY_FLAG_BITS(entity)->draw_afterimage) {
             continue;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit30) {
+        if (ENTITY_FLAG_BITS(entity)->map_record_inactive) {
             continue;
         }
         model = &entity_models[entity->pool_slot_index];

@@ -9,7 +9,7 @@ int sceDevVif1GetFifo(u_long128 *destination, int quadword_count) {
     int read_count = 0;
 
     while (quadword_count--) {
-        if (!(LIBDEV_REG32(VIF1_STAT) & 0x1F000000)) {
+        if (!(LIBDEV_REG32(VIF1_STAT) & VIF_STAT_FIFO_COUNT_MASK)) {
             return read_count;
         }
         *destination++ = *(volatile u_long128 *)VIF1_FIFO;

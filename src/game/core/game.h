@@ -18,7 +18,7 @@ typedef struct {
     char pad08[0x18];
     int item_to_use;                /* 0x20 the item to use (Player_UseItem), with bit6 */
     u32 bit0 : 1;                   /* 0x24 */
-    u32 bit1 : 1;                   /* set while MapObject_UpdateClosedChest runs an event */
+    u32 using_faced_object : 1;     /* the player is using the object they face (faced_object): the use button (Player_Update) */
     u32 bit2 : 1;
     u32 bit3 : 1;
     u32 bit4 : 1;
@@ -60,6 +60,23 @@ typedef struct {
 } GameStatusFlagWord;
 
 #define GAME_STATUS_FLAG_WORD(status) (((GameStatusFlagWord *)(status))->flags)
+
+/* GameStatus bit 12: the main loop holds its frame at the next START press (ScriptCmd_HoldFrameOnStart) */
+#define GAME_STATUS_FLAG_HOLD_ARMED 0x1000
+/* GameStatus bit 13: set by the main loop when START is pressed while held; it then skips drawing and input */
+#define GAME_STATUS_FLAG_HOLDING    0x2000
+/* GameStatus.update_hold_flags bits: 0x40 holds the scripts (Script_UpdateAll), 0x400 updates only the effect owned by effect_owner */
+#define UPDATE_HOLD_SCRIPTS            0x40
+#define UPDATE_HOLD_EFFECT_OWNER_ONLY  0x400
+/* game_status_flags, the flag word of GameStatus (0x24), as bit-fields */
+typedef struct {
+    u32 pad0 : 1;
+    u32 using_faced_object : 1;     /* the player is using the object they face (faced_object): the use button (Player_Update) */
+} GameStatusFlagBits;
+
+#define GAME_STATUS_FLAG_BITS(flags) ((GameStatusFlagBits *)(flags))
+
+#define UPDATE_HOLD_MAP_OBJECTS 0x8        /* holds back MapObject_UpdateAll, the map objects' update */
 
 /* current_play_time: the play time as PlayTime_ComputeCurrent splits it (byte 1 seconds, 2 minutes, 3 and 5 hours), passed by value */
 typedef struct {
@@ -178,6 +195,11 @@ typedef struct {
     int flags;                      /* 0x288 0x200: tick every fourth frame */
 } ClockControl;
 
+/* ClockControl.flags: the clock ticks only every fourth frame */
+#define CLOCK_CONTROL_FLAG_QUARTER_RATE 0x200
+/* game_clock_speed_flags: the clock advances 60 ticks a frame (fast forward) */
+#define CLOCK_SPEED_FLAG_FAST_FORWARD   0x400
+
 /* one corner of a character's sprite as TextLog_PutChar queues it: UV, RGBAQ and XYZ2 for the GS */
 typedef struct {
     int tex_u;                      /* 0x00 in 1/16 texel */
@@ -253,6 +275,9 @@ typedef struct {
     u32 flags;                      /* 0x30 bits 18 and 19 are a state; below 2 it is saved as one bit */
     char pad34[0x0C];
 } GameDefinitionFlags;
+
+/* GameDefinitionFlags bits 18 and 19: the item's state (below 2, it is saved as one bit) */
+#define GAME_DEFINITION_STATE_MASK 0xC0000
 
 /* item_counts and the five tables after it: one byte per GameDefinition */
 typedef struct {

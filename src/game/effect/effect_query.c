@@ -15,10 +15,10 @@ extern Entity *active_entities_head;
 int Effect_IsEntityUntargetable(Entity *entity) {
     int excluded;
 
-    if (!ENTITY_FLAG_BITS(entity)->bit1 || ENTITY_FLAG_BITS(entity)->bits2 > 0) {
+    if (!ENTITY_FLAG_BITS(entity)->live || ENTITY_FLAG_BITS(entity)->dying > 0) {
         return TRUE;
     }
-    if (ENTITY_FLAG_BITS(entity)->bit16 == 1) {
+    if (ENTITY_FLAG_BITS(entity)->not_targetable == 1) {
         return TRUE;
     }
     excluded = FALSE;
@@ -34,7 +34,7 @@ int Effect_IsNearAnyEntity(float radius, void *point) {
     Entity *entity;
 
     for (entity = active_entities_head; entity != NULL; entity = entity->next) {
-        if (((int)(entity->flags >> 1) & 1) == 0) continue;
+        if ((ENTITY_FLAG_BITS(entity)->live) == 0) continue;
         if (((int)(entity->flags >> 2) & 3) > 0) continue;
         Vector_Copy(position, &ENTITY_MODEL(entity)->position);
         position[1] -= entity->height * 0.5f;

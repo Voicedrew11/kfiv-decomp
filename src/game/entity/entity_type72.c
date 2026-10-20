@@ -31,8 +31,8 @@ void EntityType72_Init(Entity *entity) {
     ai_state->death = NULL;
     ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-    ENTITY_FLAG_BITS(entity)->bit16 = TRUE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
+    ENTITY_FLAG_BITS(entity)->not_targetable = TRUE;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_StepModel(entity->model, 0, 0);

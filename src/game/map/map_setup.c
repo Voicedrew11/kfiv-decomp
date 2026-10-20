@@ -205,13 +205,13 @@ void MapSetup_Forge019(int map) {
 
 static inline void hide_found_record(MapRecordBounds *record) {
     if (record != NULL) {
-        record->record_flags |= 0x40000000;
+        record->record_flags |= MAP_RECORD_HIDDEN;
     }
 }
 
 static inline void show_found_record(MapRecordBounds *record) {
     if (record != NULL) {
-        record->record_flags &= ~0x40000000;
+        record->record_flags &= ~MAP_RECORD_HIDDEN;
     }
 }
 
@@ -317,7 +317,7 @@ static inline void hide_record(int map, int record_id) {
     MapRecordBounds *record = Map_GetRecordById(map, record_id);
 
     if (record != NULL) {
-        record->record_flags |= 0x40000000;
+        record->record_flags |= MAP_RECORD_HIDDEN;
     }
 }
 
@@ -325,7 +325,7 @@ static inline void show_record(int map, int record_id) {
     MapRecordBounds *record = Map_GetRecordById(map, record_id);
 
     if (record != NULL) {
-        record->record_flags &= ~0x40000000;
+        record->record_flags &= ~MAP_RECORD_HIDDEN;
     }
 }
 
@@ -523,8 +523,8 @@ void MapSetup_CentralTowerLevel3(int map_slot) {
         }
     }
     if (entity != NULL) {
-        ENTITY_FLAG_BITS(entity)->bit1 = 0;
-        ENTITY_FLAG_BITS(entity)->bit7 = 0;
+        ENTITY_FLAG_BITS(entity)->live = 0;
+        ENTITY_FLAG_BITS(entity)->respawnable = 0;
     }
 }
 

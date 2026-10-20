@@ -72,7 +72,7 @@ void Snake_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         if (entity->spawn_info->spawn_mode == 0) {
             ai_state->dormant = Snake_DormantHoldAnim2;
@@ -107,45 +107,45 @@ static void Snake_DormantHoldAnim2(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 2, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit24 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit25 = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_second_wall_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_map_object_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
         break;
     case 1:
-        ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
-        if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->bits36 != 0) {
+        ENTITY_FLAG_BITS(entity)->animates = FALSE;
+        if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_strength != 0) {
             map_object = MapObject_GetById(entity->group_id, entity->spawn_info->variant);
             if (map_object != NULL) {
                 if (!(map_object->state_flags & MAP_OBJECT_IN_USE) || MAP_OBJECT_BITS(map_object)->step == 0xF) {
                     Motion_Start(entity, 0x11, 0, 0, 1);
                 }
             }
-            ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+            ENTITY_FLAG_BITS(entity)->animates = TRUE;
             entity->action_step++;
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetState((char *)entity, 2);
-            ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit24 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit25 = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_second_wall_collision = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_map_object_collision = FALSE;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -169,40 +169,40 @@ static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 8, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit24 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit25 = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_second_wall_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_map_object_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
         break;
     case 1:
         if (entity->spawn_info->variant != 0 &&
             map_script_flags[entity->spawn_info->second_map_object_id + entity->spawn_info->map_object_id * 64] != 0) {
-            ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bits2 = 3;
+            ENTITY_FLAG_BITS(entity)->live = FALSE;
+            ENTITY_FLAG_BITS(entity)->dying = 3;
             break;
         }
-        ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
+        ENTITY_FLAG_BITS(entity)->animates = FALSE;
         if (entity->distance_to_player < entity->spawn_info->wake_distance) {
-            ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+            ENTITY_FLAG_BITS(entity)->animates = TRUE;
             entity->action_step++;
         }
         break;
     case 2:
         if (entity->model->level_tables->frame > 30) {
-            ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
             entity->action_step++;
         }
         break;
     case 3:
         distance = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
-        if (ENTITY_FLAG_BITS(entity)->bit44 || distance < 100.0f) {
-            ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+        if (ENTITY_FLAG_BITS(entity)->on_floor || distance < 100.0f) {
+            ENTITY_FLAG_BITS(entity)->animates = TRUE;
             entity->action_step++;
             break;
         }
@@ -214,18 +214,18 @@ static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
         entity->move_delta_z += direction[2];
         break;
     case 4:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetState((char *)entity, 2);
-            ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit24 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit25 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_second_wall_collision = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_map_object_collision = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -245,37 +245,37 @@ static void Snake_Dormant(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 3, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit24 = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_second_wall_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
         break;
     case 1:
-        ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
+        ENTITY_FLAG_BITS(entity)->animates = FALSE;
         if (entity->distance_to_player < (f32)entity->spawn_info->wake_distance) {
-            ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+            ENTITY_FLAG_BITS(entity)->animates = TRUE;
             entity->action_step++;
         }
         break;
     case 2:
         if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) >= (f32)entity->params->type_param_0) {
             EntityAi_SetState((char *)entity, 2);
-            ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit24 = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_second_wall_collision = FALSE;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -307,7 +307,7 @@ static void Snake_Think(Entity *entity, s32 unknown) {
             EntityAi_CheckFarFromSpawn((char *)entity);
         }
         EntityAi_StepState(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit53) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
             switch (entity->state) {
@@ -337,14 +337,14 @@ static void Snake_Death(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
-        ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bits2 = 1;
-        ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->dying = 1;
+        ENTITY_FLAG_BITS(entity)->no_player_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -352,10 +352,10 @@ static void Snake_Death(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
-            ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bits2 = 2;
-            ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
+            ENTITY_FLAG_BITS(entity)->dying = 2;
+            ENTITY_FLAG_BITS(entity)->no_respawn = TRUE;
             entity->action_timer = 20;
             Game_CountSpawnDeath(map_slots[entity->group_id].tag, entity->spawn_info - map_spawn_infos[entity->group_id]);
             Effect_FreeForOwner(entity);
@@ -369,8 +369,8 @@ static void Snake_Death(Entity *entity) {
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits2 = 3;
-            ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
+            ENTITY_FLAG_BITS(entity)->dying = 3;
+            ENTITY_FLAG_BITS(entity)->live = FALSE;
         }
         break;
     }

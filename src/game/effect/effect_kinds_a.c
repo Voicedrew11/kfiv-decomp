@@ -346,7 +346,7 @@ void EffectTrailHoming_Update(EffectActor *actor) {
         }
         EffectSteer_Toward(&motion->velocity, &delta, actor->def->speed, motion->turn_rate);
         EffectAngle_FromVector(&actor->model->rotation.x, &motion->velocity.x);
-        if (ENTITY_FLAG_BITS((Entity *)actor->target_entity)->bits2 > 0) {
+        if (ENTITY_FLAG_BITS((Entity *)actor->target_entity)->dying > 0) {
             actor->target_entity = (int)EffectHit_FindNearestEntity(actor, &actor->model->position, &actor->model->rotation);
         }
     }
@@ -2096,7 +2096,7 @@ void EffectAimedChase_Update(EffectActor *actor) {
     EffectKeys_ApplySpin(actor);
     EffectKeys_ApplyColour(actor);
     if (actor->target_entity != 0) {
-        if (ENTITY_FLAG_BITS((Entity *)actor->target_entity)->bits2 == 0) {
+        if (ENTITY_FLAG_BITS((Entity *)actor->target_entity)->dying == 0) {
             Vector_Subtract(delta, ((Entity *)actor->target_entity)->model->position, &actor->model->position);
             if (Vector_Dot3(delta, motion) > 0.0f) {
                 motion->turn += actor->def->ground_height;

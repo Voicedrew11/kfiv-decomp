@@ -71,6 +71,15 @@ typedef struct {
 /* the same word read through a union, which keeps the read behind any earlier store (EffectStart_PlaceModel) */
 #define EFFECT_DEF_FLAG_WORD(def) (((EntityFlagWord *)&(def)->max_frames)->word)
 
+/* EffectDef flag bits: placement 0 or both set puts the effect at its spawn point, one set at the origin */
+#define EFFECT_DEF_PLACEMENT_MASK   0x600000
+/* the effect takes the start position and rotation the spawner kept (EffectSlot.start_position) */
+#define EFFECT_DEF_FLAG_KEEP_START  0x10000
+/* the effect keeps the pitch (rotation x) of its start rotation and pitches its random offset */
+#define EFFECT_DEF_FLAG_KEEP_PITCH  0x40000
+/* the start rotation's z (roll) is dropped; the definition's own roll base and spread are still added */
+#define EFFECT_DEF_FLAG_RESET_ROLL  0x800000
+
 /* EffectActor+0x10, which the update functions keep a pointer to. Each kind of
    effect uses the bytes after the velocity its own way; the *Motion types below
    are those views, reached by a cast (a union changes gcc's scheduling). */

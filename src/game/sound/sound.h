@@ -7,6 +7,10 @@
 #include "common.h"
 #include "model/model.h"
 
+/* SoundDriver_Remote command bits: the reply is taken into a buffer; a buffer is sent with the command */
+#define SOUND_COMMAND_REPLY        0x80000
+#define SOUND_COMMAND_SENDS_BUFFER 0x40000
+
 /* one of the 16 voices, SoundState.voices[n]: a header (two copies on the IOP) and its sample data
    (an IOP copy at iop_heap, sent on to sound memory at unk0C) */
 typedef struct {

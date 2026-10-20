@@ -55,7 +55,7 @@ void MasterFadin_Init(Entity *entity) {
     for (i = 5; i != -1; i--) {
         entity->attack_weights[i] = 0x80;
     }
-    ENTITY_FLAG_BITS(entity)->bit28 = 1;
+    ENTITY_FLAG_BITS(entity)->no_floor_lift = 1;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, ai_state->dormant, 1);
@@ -84,9 +84,9 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
     if (entity->spawn_info->spawn_mode == 2) {
         leader = Entity_GetBySpawnId(entity->spawn_info->variant);
         if (leader != NULL) {
-            if (ENTITY_FLAG_BITS(leader)->bits2 >= 2) {
+            if (ENTITY_FLAG_BITS(leader)->dying >= 2) {
                 EntityAi_StartAction(entity, ai_state->death, 0);
-                ENTITY_FLAG_BITS(entity)->bit7 = FALSE;
+                ENTITY_FLAG_BITS(entity)->respawnable = FALSE;
                 return;
             }
             entity->state = leader->state;
@@ -95,7 +95,7 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
     if (entity->spawn_info->spawn_mode == 1) {
         for (other = active_entities_head; other != NULL; other = other->next) {
             if (other->params == entity->params && other != entity && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST)) {
-                if (!ENTITY_FLAG_BITS(other)->bit1 || ENTITY_FLAG_BITS(other)->bits2 >= 3) {
+                if (!ENTITY_FLAG_BITS(other)->live || ENTITY_FLAG_BITS(other)->dying >= 3) {
                     EntityEvent_Respawn((char *)other);
                 }
             }
@@ -176,21 +176,21 @@ static void MasterFadin_Dormant(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit24 = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
+        ENTITY_FLAG_BITS(entity)->no_second_wall_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
         break;
     case 1:
         if (entity->distance_to_player < entity->spawn_info->wake_distance) {
             Motion_Start(entity, 2, 0, entity->params->motion_blend_frames, 0);
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
-            ENTITY_FLAG_BITS(entity)->bits36 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
+            ENTITY_FLAG_BITS(entity)->hit_strength = 0;
             entity->action_step++;
         }
         break;
@@ -200,16 +200,16 @@ static void MasterFadin_Dormant(Entity *entity) {
         }
         break;
     case 3:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ENTITY_FLAG_BITS(entity)->bit21 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-            ENTITY_FLAG_BITS(entity)->bit24 = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
+            ENTITY_FLAG_BITS(entity)->no_second_wall_collision = FALSE;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -241,10 +241,10 @@ static void MasterFadin_Death(Entity *entity) {
         }
         break;
     case 2:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
-            ENTITY_FLAG_BITS(entity)->bit14 = 0;
-            ENTITY_FLAG_BITS(entity)->bits2 = 2;
-            ENTITY_FLAG_BITS(entity)->bit4 = 1;
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
+            ENTITY_FLAG_BITS(entity)->animates = 0;
+            ENTITY_FLAG_BITS(entity)->dying = 2;
+            ENTITY_FLAG_BITS(entity)->no_respawn = 1;
             entity->action_timer = 20;
             if (entity->spawn_info->spawn_mode != 2) {
                 EntityEvent_OnDeath(entity);

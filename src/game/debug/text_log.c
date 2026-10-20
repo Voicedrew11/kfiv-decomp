@@ -1,5 +1,6 @@
 #include "debug/text_log.h"
 #include "core/game.h"
+#include "gfx/gs.h"
 #include <eeregs.h>
 #include <libdma.h>
 #include <libgraph.h>
@@ -1075,7 +1076,7 @@ void TextLog_LoadFont(int font_base, int palette_base) {
     sceGsExecLoadImage(&image, text_log_font_palette);
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
-    packet = (u32 *)((u32)font_flush_packet | 0x20000000);
+    packet = (u32 *)((u32)font_flush_packet | EE_UNCACHED_ALIAS);
     *packet++ = 0x8001;
     *packet++ = 0x10004000;
     *packet++ = 0xE;
@@ -1151,7 +1152,7 @@ void TextLog_PutChar(char character, int pos_x, int pos_y, int pos_z) {
 void TextLog_SendGsRegs(void) {
     int *packet;
 
-    packet = (int *)((u32)gs_regs_packet | 0x20000000);
+    packet = (int *)((u32)gs_regs_packet | EE_UNCACHED_ALIAS);
     *packet++ = 0x8005;
     *packet++ = 0x10004000;
     *packet++ = 0xE;
@@ -1244,7 +1245,7 @@ void TextLog_Flush(void) {
     }
     if (vertex_count != 0) {
         TextLog_SendGsRegs();
-        packet->tag[0] = vertex_count | 0x8000;
+        packet->tag[0] = vertex_count | GIF_TAG_EOP;
         packet->tag[1] = 0x30AB4000;
         packet->tag[2] = 0x413;
         packet->tag[3] = 0;

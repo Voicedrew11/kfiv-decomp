@@ -70,7 +70,7 @@ void MapObject_UpdateEmptyMarker(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (game_status.bit1 && faced_object[0] == object) {
+    if (game_status.using_faced_object && faced_object[0] == object) {
         if (work->timer > 0) {
             return;
         }
@@ -143,7 +143,7 @@ void MapObject_UpdateFilledMarker(MapObject *object) {
     if (work->timer > 0) {
         work->timer = timer - 1;
     }
-    if (game_status.bit1 && view_ray_status.current == object) {
+    if (game_status.using_faced_object && view_ray_status.current == object) {
         MAP_OBJECT_BYTES(object)->step = 5;
         // match: two leftover arguments are passed
         item = ((int (*)(int, int, void *, int))Game_GetTriggerItem)(tag, object->source->spawn_flags.bytes[2], work, timer);

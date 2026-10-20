@@ -143,7 +143,7 @@ static void DarkSoldier_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
-        if ((s32)(entity->flags >> 53) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->far_from_spawn) {
             // match: called as returning nothing, so $2 is free for the next statement
             // match: the result is not used, retail calls it as void
             ((void (*)(void *, int))EntityAi_ThinkReturn)(entity, unknown);
@@ -184,9 +184,9 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
     s32 turn;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
     } else {
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
@@ -212,7 +212,7 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     side = EntityAi_PickCombatChoice(entity, 0);
-    ENTITY_FLAG_BITS(entity)->bit9 = 1;
+    ENTITY_FLAG_BITS(entity)->look_at_target = 1;
     if (entity->action_timer == 0 || side == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
@@ -259,7 +259,7 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (ai_state->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
-        if (ENTITY_FLAG_BITS(entity)->bit31) {
+        if (ENTITY_FLAG_BITS(entity)->turn_in_place) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ai_state->turn_in_place == 0) {
                 ai_state->turn_in_place = ABS(angle) > 0.5235988f;
@@ -341,22 +341,22 @@ static void DarkSoldier_Move(Entity *entity) {
    DarkSoldier_MoveAlongArc start it after calling EntityAi_PickAttack. */
 static void DarkSoldier_MeleeAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ENTITY_FLAG_BITS(entity)->bits58];
+    EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ENTITY_FLAG_BITS(entity)->attack_index];
     s32 frame;
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
+        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->attack_index | ENTITY_MOTION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-            ENTITY_FLAG_BITS(entity)->bits11 = 0;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->motion_step_mode = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
-        ENTITY_FLAG_BITS(entity)->bit54 = 0;
-        ENTITY_FLAG_BITS(entity)->bit55 = 0;
-        ENTITY_FLAG_BITS(entity)->bit56 = 0;
-        ENTITY_FLAG_BITS(entity)->bit9 = 0;
+        ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
+        ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
+        ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
+        ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -373,26 +373,26 @@ static void DarkSoldier_MeleeAttack(Entity *entity) {
             ai_state->turn_rate = 0.0f;
         }
         frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
-        if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->level_tables->frame);
+        if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->level_tables->frame);
         }
-        if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->level_tables->frame);
+        if (!ENTITY_FLAG_BITS(entity)->melee_1_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_1_hit = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->level_tables->frame);
         }
-        if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->level_tables->frame);
+        if (!ENTITY_FLAG_BITS(entity)->melee_2_hit) {
+            ENTITY_FLAG_BITS(entity)->melee_2_hit = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->level_tables->frame);
         }
         if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAG_BITS(entity)->bit19 = 1;
+            ENTITY_FLAG_BITS(entity)->attack_window = 1;
         } else {
-            ENTITY_FLAG_BITS(entity)->bit19 = 0;
+            ENTITY_FLAG_BITS(entity)->attack_window = 0;
         }
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk240->attack_delay);
-            if (ENTITY_FLAG_BITS(entity)->bit5) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -443,12 +443,12 @@ static void DarkSoldier_PlayAnim6Or7BySide(Entity *entity) {
         EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         break;
     case 2:
-        if ((s32)(entity->flags >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             if (ai_state->action_flags == 0) {
-                if ((s32)(entity->flags >> 5) & 1) {
+                if (ENTITY_FLAG_BITS(entity)->own_think) {
                     entity->ai_state.think(entity, 1);
                 } else {
                     EntityAi_StartAction(entity, ai_state->move, 1);
@@ -476,10 +476,10 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames >> 1, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = 1;
-        ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit17 = FALSE;
+        ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
+        ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
+        ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
+        ENTITY_FLAG_BITS(entity)->draw_afterimage = FALSE;
         entity->action_step++;
     case 1:
         EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
@@ -495,7 +495,7 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
         if (entity->model->level_tables->frame >= 10) {
             move_along_arc(entity, ai_state);
         }
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             Motion_Start(entity, 0x11, 0, 1, 1);
             entity->action_step += 2;
         }
@@ -504,7 +504,7 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
         move_along_arc(entity, ai_state);
         if (ai_state->part_angle_x < 10.0f) {
             if (ABS(entity->heading_to_player - entity->model->rotation[1]) > 1.5707964f) {
-                ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
+                ENTITY_FLAG_BITS(entity)->animates = TRUE;
                 entity->action_step++;
             } else {
                 Motion_Start(entity, 9, 0, 5, 1);
@@ -513,11 +513,11 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
         }
         break;
     case 5:
-        if (ENTITY_FLAG_BITS(entity)->bit44 == 1 || ENTITY_FLAG_BITS(entity)->bit49 == 1
-            || ENTITY_FLAG_BITS(entity)->bit48 == 1 || ENTITY_FLAG_BITS(entity)->bit50 == 1) {
+        if (ENTITY_FLAG_BITS(entity)->on_floor == 1 || ENTITY_FLAG_BITS(entity)->player_push == 1
+            || ENTITY_FLAG_BITS(entity)->entity_push == 1 || ENTITY_FLAG_BITS(entity)->on_top == 1) {
             Motion_Start(entity, 9, 0, 1, 1);
-            ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
-            ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+            ENTITY_FLAG_BITS(entity)->animates = TRUE;
+            ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
             entity->action_step = 8;
             entity->move_delta_y = 0.0f;
             entity->move_delta_z = 0.0f;
@@ -525,16 +525,16 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
             break;
         }
         move_along_arc(entity, ai_state);
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             Motion_Start(entity, 9, 0, 1, 1);
             entity->action_step = 7;
         }
         break;
     case 6:
-        if (ENTITY_FLAG_BITS(entity)->bit44 == 1 || ENTITY_FLAG_BITS(entity)->bit49 == 1
-            || ENTITY_FLAG_BITS(entity)->bit48 == 1 || ENTITY_FLAG_BITS(entity)->bit50 == 1) {
-            ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
-            ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+        if (ENTITY_FLAG_BITS(entity)->on_floor == 1 || ENTITY_FLAG_BITS(entity)->player_push == 1
+            || ENTITY_FLAG_BITS(entity)->entity_push == 1 || ENTITY_FLAG_BITS(entity)->on_top == 1) {
+            ENTITY_FLAG_BITS(entity)->animates = TRUE;
+            ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
             entity->action_step = 8;
             entity->move_delta_y = 0.0f;
             entity->move_delta_z = 0.0f;
@@ -544,15 +544,15 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
     case 3:
         move_along_arc(entity, ai_state);
         if (entity->model->level_tables->blend_left == 0) {
-            ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
+            ENTITY_FLAG_BITS(entity)->animates = FALSE;
             entity->action_step++;
         }
         break;
     case 7:
-        if (ENTITY_FLAG_BITS(entity)->bit44 == 1 || ENTITY_FLAG_BITS(entity)->bit49 == 1
-            || ENTITY_FLAG_BITS(entity)->bit48 == 1 || ENTITY_FLAG_BITS(entity)->bit50 == 1) {
-            ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
-            ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+        if (ENTITY_FLAG_BITS(entity)->on_floor == 1 || ENTITY_FLAG_BITS(entity)->player_push == 1
+            || ENTITY_FLAG_BITS(entity)->entity_push == 1 || ENTITY_FLAG_BITS(entity)->on_top == 1) {
+            ENTITY_FLAG_BITS(entity)->animates = TRUE;
+            ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
             entity->action_step++;
             entity->move_delta_y = 0.0f;
             entity->move_delta_z = 0.0f;
@@ -562,13 +562,13 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
         move_along_arc(entity, ai_state);
         break;
     case 8:
-        if (ENTITY_FLAG_BITS(entity)->bit34) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            ENTITY_FLAG_BITS(entity)->bit17 = TRUE;
+            ENTITY_FLAG_BITS(entity)->draw_afterimage = TRUE;
             if (ai_state->action_flags == 0) {
-                if (ENTITY_FLAG_BITS(entity)->bit5) {
+                if (ENTITY_FLAG_BITS(entity)->own_think) {
                     ai_state->think(entity, 1);
                 } else {
                     EntityAi_StartAction(entity, ai_state->move, 1);
@@ -598,8 +598,8 @@ static void DarkSoldier_Dodge(Entity *entity) {
         } else {
             Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 1);
         }
-        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
-        ENTITY_FLAGS(entity) &= ~0x200;
+        ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
+        ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -613,7 +613,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
             entity->move_delta_y = -ai_state->part_angle_x;
             ai_state->part_angle_x -= entity->params->type_param_2 * 0.1f;
         }
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             Motion_Start(entity, 9, 0, entity->params->motion_blend_frames >> 1, 1);
             entity->action_step++;
         }
@@ -622,29 +622,29 @@ static void DarkSoldier_Dodge(Entity *entity) {
         entity->move_delta_y = -ai_state->part_angle_x;
         ai_state->part_angle_x -= entity->params->type_param_2 * 0.1f;
         if (entity->model->level_tables->blend_left == 0) {
-            ENTITY_FLAGS(entity) &= ~0x4000;
+            ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_ANIMATES;
             entity->action_step++;
         }
         break;
     case 4:
         entity->move_delta_y = -ai_state->part_angle_x;
         ai_state->part_angle_x -= entity->params->type_param_2 * 0.1f;
-        landed = (s32)(ENTITY_FLAGS(entity) >> 44) & 1;
+        landed = ENTITY_FLAG_BITS(entity)->on_floor;
         if (landed == 1) {
             entity->move_delta_x = 0.0f;
             entity->move_delta_y = 0.0f;
             entity->move_delta_z = 0.0f;
-            ENTITY_FLAGS(entity) |= 0x4000;
-            ENTITY_FLAGS(entity) &= ~0x10000000;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_ANIMATES;
+            ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
             entity->action_step++;
         }
         break;
     case 5:
-        if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
+            if (ENTITY_FLAG_BITS(entity)->own_think) {
                 ai_state->think(entity, 1);
             } else {
                 EntityAi_StartAction(entity, ai_state->move, 1);
@@ -658,12 +658,12 @@ static void DarkSoldier_Dodge(Entity *entity) {
    bit 28. */
 static void DarkSoldier_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
-    entity->flags &= ~ENTITY_FLAG_400;
+    entity->flags &= ~ENTITY_FLAG_ATTACKING;
     ENTITY_UNK5C(entity)->as_s32 = 0;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     if (((entity->flags >> 36) & 3) == 1) {
-        if ((s32)((s64)(entity->flags << 13) >> 32) & 1) {
+        if ((s32)((s64)(entity->flags << 13) >> 32) & ENTITY_FLAG_ACTIVE_LIST) {
             EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
             EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);

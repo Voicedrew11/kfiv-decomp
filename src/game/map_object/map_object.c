@@ -171,7 +171,7 @@ void MapObject_InitMap(int map) {
             if (MAP_OBJECT_DEF_WORD(object) & 0x400) {
                 continue;
             }
-            if (MAP_OBJECT_DEF_WORD(object) & 0x100) {
+            if (MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_SKINNED) {
                 continue;
             }
             if (object->source->model_index != i) {
@@ -187,7 +187,7 @@ void MapObject_InitMap(int map) {
             if (MAP_OBJECT_DEF_WORD(object) & 0x400) {
                 continue;
             }
-            if (!(MAP_OBJECT_DEF_WORD(object) & 0x100)) {
+            if (!(MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_SKINNED)) {
                 continue;
             }
             if (object->source->model_index != i) {
@@ -338,7 +338,7 @@ void MapObject_UpdateAll(void) {
     f32 delta_y;
     f32 delta_z;
 
-    if (suspended_updates[0] & 8) {
+    if (suspended_updates[0] & UPDATE_HOLD_MAP_OBJECTS) {
         return;
     }
     period = 60; // match: the divisor is a variable
@@ -438,7 +438,7 @@ void MapObject_Signal(MapObject *object, int signal) {
 
 /* the flags of the map record an object stands in, and which of the two maps that record is of */
 #define RECORD_FLAGS(object) (((MapDrawRecord *)(object)->map_record)->flags)
-#define RECORD_MAP(object) ((u8)(((MapRecord *)(object)->map_record)->record_flags >> 27) & 1)
+#define RECORD_MAP(object) MAP_RECORD_MAP((MapRecord *)(object)->map_record)
 
 /* Draws the map objects of both maps (or of one, when only_one is set): first
    the jointed ones, then the plain ones. While the player wears item 0x9D the
@@ -533,10 +533,10 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
                     continue;
                 }
             }
-            if ((MAP_OBJECT_DEF_WORD(object) & 0x4000) && glow_item_worn != 0) {
+            if ((MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_GLOW) && glow_item_worn != 0) {
                 if ((s8)object->source->spawn_flags.bytes[5] != -1) {
                     object->model->light_block = (s32)&glow_lights[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[5]];
-                } else if (RECORD_FLAGS(object) & 0x10) {
+                } else if (RECORD_FLAGS(object) & MAP_RECORD_CURRENT_BLOCKS) {
                     object->model->light_block = (s32)&glow_lights_shared;
                 } else {
                     object->model->light_block = (s32)&glow_lights[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->light_block_index];
@@ -544,7 +544,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             } else {
                 if ((s8)object->source->spawn_flags.bytes[5] != -1) {
                     object->model->light_block = (s32)&map_draw_state.light_blocks[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[5]];
-                } else if (RECORD_FLAGS(object) & 0x10) {
+                } else if (RECORD_FLAGS(object) & MAP_RECORD_CURRENT_BLOCKS) {
                     object->model->light_block = (s32)&map_draw_state.current_light_block;
                 } else {
                     object->model->light_block = (s32)&map_draw_state.light_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->light_block_index];
@@ -552,7 +552,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             }
             if ((s8)object->source->spawn_flags.bytes[4] != -1) {
                 object->model->fog_block = &map_draw_state.fog_blocks[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[4]];
-            } else if (RECORD_FLAGS(object) & 0x10) {
+            } else if (RECORD_FLAGS(object) & MAP_RECORD_CURRENT_BLOCKS) {
                 object->model->fog_block = &map_draw_state.current_fog_block;
             } else {
                 object->model->fog_block = &map_draw_state.fog_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->fog_block_index];
@@ -592,10 +592,10 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
                     continue;
                 }
             }
-            if ((MAP_OBJECT_DEF_WORD(object) & 0x4000) && glow_item_worn != 0) {
+            if ((MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_GLOW) && glow_item_worn != 0) {
                 if ((s8)object->source->spawn_flags.bytes[5] != -1) {
                     object->model->light_block = (s32)&glow_lights[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[5]];
-                } else if (RECORD_FLAGS(object) & 0x10) {
+                } else if (RECORD_FLAGS(object) & MAP_RECORD_CURRENT_BLOCKS) {
                     object->model->light_block = (s32)&glow_lights_shared;
                 } else {
                     object->model->light_block = (s32)&glow_lights[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->light_block_index];
@@ -603,14 +603,14 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             } else {
                 if ((s8)object->source->spawn_flags.bytes[5] != -1) {
                     object->model->light_block = (s32)&map_draw_state.light_blocks[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[5]];
-                } else if (RECORD_FLAGS(object) & 0x10) {
+                } else if (RECORD_FLAGS(object) & MAP_RECORD_CURRENT_BLOCKS) {
                     object->model->light_block = (s32)&map_draw_state.current_light_block;
                 } else {
                     object->model->light_block = (s32)&map_draw_state.light_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->light_block_index];
                 }
             }
             if ((s8)object->source->spawn_flags.bytes[4] == -1) {
-                if (RECORD_FLAGS(object) & 0x10) {
+                if (RECORD_FLAGS(object) & MAP_RECORD_CURRENT_BLOCKS) {
                     object->model->fog_block = &map_draw_state.current_fog_block;
                 } else {
                     object->model->fog_block = &map_draw_state.fog_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->fog_block_index];
@@ -682,7 +682,7 @@ MapObject *MapObject_GetById(int map, int object_id) {
 void MapObject_Break(MapObject *object) {
     MapObject *other;
 
-    if (!(MAP_OBJECT_DEF_WORD(object) & 0x800)) {
+    if (!(MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_BREAKABLE)) {
         return;
     }
     if (MAP_OBJECT_BYTES(object)->step == 0) {
@@ -693,7 +693,7 @@ void MapObject_Break(MapObject *object) {
     }
     object->state_flags &= ~MAP_OBJECT_SCRIPTED;
     MAP_OBJECT_BYTES(object)->step = 0xF;
-    if (MAP_OBJECT_DEF_WORD(object) & 0x1000) {
+    if (MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_BREAK_ANIM) {
         MapObject_StartAnim(object, 1);
     }
     Effect_StartSpawner(object->definition->break_effect, &object->model->position, &object->model->rotation, &map_slots[MAP_OBJECT_BYTES(object)->map_slot & 1]);

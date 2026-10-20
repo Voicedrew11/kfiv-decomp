@@ -2,6 +2,8 @@
 #include "core/file.h"
 #include "core/game.h"
 #include "gfx/gs.h"
+#include "gfx/packet.h"
+#include <eeregs.h>
 
 void *memset(void *, int, u32);
 void *memcpy(void *, const void *, u32);
@@ -245,7 +247,7 @@ void Splash_Draw(void) {
         Packet_EndGsRegisters();
 
         packet = cursor = Packet_Alloc(2);
-        *cursor++ = *splash_image_packet | 0x30000000;
+        *cursor++ = *splash_image_packet | DMA_TAG_ID_REF;
         *cursor++ = (u32)(splash_image_packet + 4);
         *cursor++ = 0;
         *cursor++ = 0;
@@ -355,7 +357,7 @@ static void Splash_BuildImagePacket(int tbp, int cbp) {
 
     /* the image: a DMA tag, then the same layout as SplashLoadPacket, written word by word */
     cursor = splash_image_packet;
-    *cursor++ = (total + 1) | 0x10000000;
+    *cursor++ = (total + 1) | DMA_TAG_ID_CNT;
     *cursor++ = 0;
     *cursor++ = 0;
     *cursor++ = 0;
@@ -384,9 +386,9 @@ static void Splash_BuildImagePacket(int tbp, int cbp) {
     *cursor++ = 0x53;
     *cursor++ = 0;
     if (has_palette) {
-        *((u64 *)cursor)++ = qwords | 0x800000000000000;
+        *((u64 *)cursor)++ = qwords | GIF_TAG_FLG_IMAGE;
     } else {
-        *((u64 *)cursor)++ = (qwords | 0x8000) | 0x800000000000000;
+        *((u64 *)cursor)++ = (qwords | GIF_TAG_EOP) | GIF_TAG_FLG_IMAGE;
     }
     *cursor++ = 0;
     *cursor++ = 0;
@@ -418,7 +420,7 @@ static void Splash_BuildImagePacket(int tbp, int cbp) {
         packet->trxdir = 0;
         packet->trxdir_reg[0] = 0x53;
         packet->trxdir_reg[1] = 0;
-        packet->image_tag = (palette_qwords | 0x8000) | 0x800000000000000;
+        packet->image_tag = (palette_qwords | GIF_TAG_EOP) | GIF_TAG_FLG_IMAGE;
         packet->image_tag_high[0] = 0;
         packet->image_tag_high[1] = 0;
         output += sizeof(SplashLoadPacket);

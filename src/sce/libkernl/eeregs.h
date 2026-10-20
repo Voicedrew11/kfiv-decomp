@@ -103,6 +103,17 @@
 #define D_CHCR_MOD_CHAIN 0x4       /* bits2-3: MOD, DMAtag chain */
 #define D_CHCR_TTE 0x40            /* bit6: TTE, transfer the DMAtag too */
 #define D_CHCR_STR 0x100           /* bit8: STR, start; set while the transfer runs */
+#define D_MADR_SPR 0x80000000      /* MADR bit 31: the address is in the scratchpad */
+
+/* DMAtag words: the id in bits 28-30, the address below it. */
+#define DMA_TAG_ID_MASK 0x70000000 /* the id field */
+#define DMA_TAG_ID_CNT 0x10000000  /* id 1: the data follows the tag */
+#define DMA_TAG_ID_REF 0x30000000  /* id 3: the data is at the tag's address */
+#define DMA_TAG_ID_END 0x70000000  /* id 7: the data ends the chain */
+
+/* the top bits of an address pick its alias: uncached, and uncached accelerated */
+#define EE_UNCACHED_ALIAS 0x20000000
+#define EE_UNCACHED_ACCELERATED_ALIAS 0x30000000
 
 /* DMA controller. */
 #define D_CTRL ((volatile int *)0x1000E000)
@@ -114,6 +125,7 @@
 #define D_STADR ((volatile int *)0x1000E060)   /* derived name */
 #define D_ENABLER ((volatile int *)0x1000F520) /* derived name */
 #define D_ENABLEW ((volatile int *)0x1000F590) /* derived name */
+#define D_ENABLE_HOLD 0x10000 /* D_ENABLER/W bit 16: holds the DMA controller while a channel's CHCR is written */
 
 /* Interrupt controller. */ /* derived name */
 #define INTC_STAT ((volatile int *)0x1000F000)
@@ -129,5 +141,7 @@
 #define GS_BGCOLOR ((volatile long *)0x120000E0)
 #define GS_CSR ((volatile unsigned long *)0x12001000)
 #define GS_BUSDIR ((volatile unsigned long *)0x12001040)
+#define GS_CSR_FINISH 0x2       /* bit1: FINISH, the GS finished a drawing; written 1 to clear */
+#define GS_CSR_FIELD 0x2000     /* bit13: FIELD, the field the GS is on */
 
 #endif /* SCE_LIBKERNL_EEREGS_H */
