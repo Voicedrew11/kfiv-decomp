@@ -9,6 +9,12 @@
 #include "core/file.h"
 #include "core/memory.h"
 
+/* Packet_LayOutBuffers' size_index: the size of the packet buffers (0x280000, 0x180000, 0x100000, 0x80000 bytes) */
+#define PACKET_SIZE_LARGEST                 0
+#define PACKET_SIZE_LARGE                   1
+#define PACKET_SIZE_MEDIUM                  2
+#define PACKET_SIZE_SMALL                   3
+
 /* sends a packet to VIF1 and waits for the transfer to end */
 #define SEND_TO_VIF1(packet)                    \
     channel = sceDmaGetChan(1);                 \
@@ -145,16 +151,16 @@ void Packet_LayOutBuffers(int size_index) {
     packet_chain_tail[1] = NULL;
     packet_chain_tail[0] = NULL;
     switch (size_index) {
-    case 0:
+    case PACKET_SIZE_LARGEST:
         packet_buffers_size = 0x280000;
         break;
-    case 1:
+    case PACKET_SIZE_LARGE:
         packet_buffers_size = 0x180000;
         break;
-    case 2:
+    case PACKET_SIZE_MEDIUM:
         packet_buffers_size = 0x100000;
         break;
-    case 3:
+    case PACKET_SIZE_SMALL:
         packet_buffers_size = 0x80000;
         break;
     }
