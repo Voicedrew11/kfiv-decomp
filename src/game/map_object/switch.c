@@ -105,19 +105,19 @@ void MapObject_SetSwitchOn(MapObject *object, int turn_on) {
 
     if ((object->state_flags & MAP_OBJECT_STEP_AND_ON_MASK) == 0x100 && turn_on != 0) {
         saved = view_ray_status.current;
-        bit = game_status.bit1;
-        game_status.bit1 = 1;
+        bit = game_status.using_faced_object;
+        game_status.using_faced_object = 1;
         view_ray_status.current = object;
         MapObject_UpdateOffSwitch(object);
         view_ray_status.current = saved;
-        game_status.bit1 = bit;
+        game_status.using_faced_object = bit;
     } else if ((object->state_flags & MAP_OBJECT_STEP_AND_ON_MASK) == 0x20300 && turn_on == 0) {
         saved = view_ray_status.current;
-        bit = game_status.bit1;
-        game_status.bit1 = 1;
+        bit = game_status.using_faced_object;
+        game_status.using_faced_object = 1;
         view_ray_status.current = object;
         MapObject_UpdateOnSwitch(object);
         view_ray_status.current = saved;
-        game_status.bit1 = bit;
+        game_status.using_faced_object = bit;
     }
 }

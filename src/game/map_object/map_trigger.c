@@ -38,7 +38,7 @@ void MapObject_StartSavePoint(MapObject *object) {
 void MapObject_UpdateSavePoint(MapObject *object) {
     MapObject *used;
 
-    if (game_status.bit1 && (used = faced_object[0]) == object) {
+    if (game_status.using_faced_object && (used = faced_object[0]) == object) {
         game_status.save_requested = TRUE;
         game_status.save_area = MAP_OBJECT_WORDS(used)->kind_param_0;
     }

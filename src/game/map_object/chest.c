@@ -221,12 +221,12 @@ void MapObject_OpenChestOnSignal(GameEvent *event, int mode) {
 
     if ((event->flags & MAP_OBJECT_STEP_AND_ON_MASK) == 0x100 && mode != 0) {
         saved = view_ray_status.current;
-        bit = game_status.bit1;
-        game_status.bit1 = 1;
+        bit = game_status.using_faced_object;
+        game_status.using_faced_object = 1;
         view_ray_status.current = event;
         MapObject_UpdateClosedChest(event, mode);
         view_ray_status.current = saved;
-        game_status.bit1 = bit;
+        game_status.using_faced_object = bit;
     }
 }
 

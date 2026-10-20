@@ -320,11 +320,11 @@ void Player_Update(void) {
             }
         }
     }
-    game_status.bit1 = FALSE;
+    game_status.using_faced_object = FALSE;
     if (action_button & pressed) {
-        game_status.bit1 = TRUE;
+        game_status.using_faced_object = TRUE;
         if (game_status.bit6 || player_state.death_timer != 0) {
-            game_status.bit1 = FALSE;
+            game_status.using_faced_object = FALSE;
         }
     }
 
