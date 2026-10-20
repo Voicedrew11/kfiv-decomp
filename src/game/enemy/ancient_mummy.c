@@ -18,6 +18,11 @@
 /* Entity.ai_state.move_choice 1: backs away from the player */
 #define ANCIENT_MUMMY_MOVE_CHOICE_BACK 1
 
+/* AncientMummy_FadeBackIn: Entity.action_step (step 0 is the shared start) */
+#define ANCIENT_MUMMY_FADE_BACK_STEP_TURN    1      /* waits near_distance frames, then turns to the player */
+#define ANCIENT_MUMMY_FADE_BACK_STEP_FADE_IN 2      /* scales and fades the model back in, then waits */
+#define ANCIENT_MUMMY_FADE_BACK_STEP_END     3      /* lets the motion end, then goes to state 2 and thinks */
+
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void AncientMummy_Think(Entity *entity, s32 run_now);
@@ -344,13 +349,13 @@ static void AncientMummy_FadeBackIn(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         entity->action_step++;
         break;
-    case 1:
+    case ANCIENT_MUMMY_FADE_BACK_STEP_TURN:
         if (entity->params->near_distance < ai_state->sub_timer++) {
             entity->model->rotation[1] = EntityMath_HeadingTo(entity->model->position, &player_state.position.x);
             entity->action_step++;
         }
         break;
-    case 2:
+    case ANCIENT_MUMMY_FADE_BACK_STEP_FADE_IN:
         ai_state->mode_timer--;
         if (ai_state->mode_timer < 0) {
             ENTITY_FLAG_BITS(entity)->bit20 = 0;
@@ -372,7 +377,7 @@ static void AncientMummy_FadeBackIn(Entity *entity) {
             entity->model_alpha = 0x80;
         }
         break;
-    case 3:
+    case ANCIENT_MUMMY_FADE_BACK_STEP_END:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetState(entity, 2);
             entity->busy_flags = 0;
