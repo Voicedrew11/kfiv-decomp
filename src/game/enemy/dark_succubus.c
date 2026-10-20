@@ -19,6 +19,13 @@
 #include "player/player.h"
 #include "save/save_state.h"
 
+/* Entity.action_step values past the shared ones */
+#define DARK_SUCCUBUS_REACTION_STEP_END         2   /* ends the light reaction and thinks again */
+#define DARK_SUCCUBUS_ARC_STEP_RISE             1   /* flies up along the arc until it is high enough */
+#define DARK_SUCCUBUS_ARC_STEP_DIVE             2   /* dives along the arc until it lands on the floor */
+#define DARK_SUCCUBUS_ARC_STEP_LAND             3   /* plays the landing motion, then ends the action */
+#define DARK_SUCCUBUS_FADE_OUT_STEP_FADE        2   /* fades the model out as the motion plays, then ends */
+
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 /* EntityAiState.move_choice 1 to 4 (0 is MOVE_CHOICE_CLOSE_IN) */
@@ -794,7 +801,7 @@ static void DarkSuccubus_ReactionLight(Entity *entity) {
             entity->reaction_step++;
         }
         break;
-    case 2:
+    case DARK_SUCCUBUS_REACTION_STEP_END:
         EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
         EntityAi_SetReaction(entity, NULL, 0);
         entity->busy_flags = 0;
@@ -1040,7 +1047,7 @@ static void DarkSuccubus_MoveAlongArc(Entity *entity) {
         ai_state->part_angle_y = 0.0f;
         ai_state->turn_rate = 0.0f;
         entity->action_step++;
-    case 1:
+    case DARK_SUCCUBUS_ARC_STEP_RISE:
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames, 0);
         ai_state->heading_speed = EntityMath_Approach(ai_state->heading_speed, entity->params->max_speed, entity->params->speed_step_per_frame);
         ai_state->pitch_speed = EntityMath_Approach(ai_state->pitch_speed, -20.0f, 2.0f);
@@ -1048,7 +1055,7 @@ static void DarkSuccubus_MoveAlongArc(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case DARK_SUCCUBUS_ARC_STEP_DIVE:
         Motion_Start(entity, 4, 0, entity->params->motion_blend_frames, 0);
         ai_state->heading_speed = EntityMath_Approach(ai_state->heading_speed, entity->params->max_speed, entity->params->speed_step_per_frame);
         ai_state->pitch_speed = EntityMath_Approach(ai_state->pitch_speed, 20.0f, 2.0f);
@@ -1062,7 +1069,7 @@ static void DarkSuccubus_MoveAlongArc(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DARK_SUCCUBUS_ARC_STEP_LAND:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
@@ -1218,7 +1225,7 @@ static void DarkSuccubus_FadeOut(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case DARK_SUCCUBUS_FADE_OUT_STEP_FADE:
         if (entity->params->near_distance >= entity->model->level_tables->frame) {
             EntityAi_AnimationFrameCount(entity, 0x11);
             entity->model_alpha = ((entity->params->near_distance - entity->model->level_tables->frame) << 7) / entity->params->near_distance;

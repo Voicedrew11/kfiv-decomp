@@ -18,6 +18,11 @@
 #include "entity/entity_ai_choice.h"
 #include "player/player.h"
 
+/* Entity.action_step values past the shared ones */
+#define DARK_KNIGHT_HOLD_GUARD_STEP_END         2   /* holds the guard pose until its timer runs out, then ends */
+#define DARK_KNIGHT_MELEE_STEP_BLEND_IN         3   /* waits for the attack motion to blend in */
+#define DARK_KNIGHT_MELEE_STEP_SWING            4   /* turns to the player and checks the blade's hits, ends with the motion */
+
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 static void DarkKnight_OnHit(Entity *entity);
@@ -384,7 +389,7 @@ static void DarkKnight_HoldGuardPose(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case DARK_KNIGHT_HOLD_GUARD_STEP_END:
         if (entity->action_timer == 0) {
             ENTITY_FLAGS(entity) |= ENTITY_FLAG_ANIMATES;
             entity->busy_flags = 0;
@@ -431,13 +436,13 @@ static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->guarding = 1;
         entity->action_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         ai_state->pose_blend_weight = 0.5f;
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             if (ai_state->step_index == 0) {
                 Motion_Start(entity, 0x14, 0xE, 0, 1);
@@ -447,7 +452,7 @@ static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DARK_KNIGHT_MELEE_STEP_BLEND_IN:
         ai_state->pose_blend_weight = 0.5f;
         if (entity->model->level_tables->blend_left == 0) {
             ENTITY_FLAG_BITS(entity)->guarding = 0;
@@ -457,7 +462,7 @@ static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
-    case 4:
+    case DARK_KNIGHT_MELEE_STEP_SWING:
         if (unk240->hit_start_frame >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
