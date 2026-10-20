@@ -83,7 +83,7 @@ static void Stool_OnHit(Entity *entity) {
         return;
     }
     if (((s32)(flags >> 36) & 3) == 1) {
-        if ((s32)((s64)(flags << 13) >> 32) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->attack_window) {
             EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
             return;
         }

@@ -844,7 +844,7 @@ s32 EntityAi_MoveCommand3D(Entity *entity, s32 mark_far, f32 range) {
     if (range < distance[0]) {
         result |= 1;
         if (mark_far != 0) {
-            result = (result | 0x40) & 0xFFFF;
+            result = (result | MOVE_COMMAND_RUN) & 0xFFFF;
         }
     }
     return result;
@@ -896,7 +896,7 @@ s32 EntityAi_MoveCommand(Entity *entity, s32 mark_far, f32 range) {
     if (range < distance[0]) {
         result |= 1;
         if (mark_far != 0) {
-            result = (result | 0x40) & 0xFFFF;
+            result = (result | MOVE_COMMAND_RUN) & 0xFFFF;
         }
     }
     return result;
@@ -953,7 +953,7 @@ s32 EntityAi_TurnOrMoveCommand(Entity *entity, s32 far_flag, f32 reach) {
         if (reach < distance) {
             result |= 1;
             if (far_flag != 0) {
-                result |= 0x40;
+                result |= MOVE_COMMAND_RUN;
             }
         }
     }

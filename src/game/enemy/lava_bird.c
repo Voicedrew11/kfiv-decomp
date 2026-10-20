@@ -284,7 +284,7 @@ static void LavaBird_ThinkPursue(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
-    ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
+    ENTITY_FLAG_BITS(entity)->attacking = FALSE;
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     if (entity->action_timer == 0) {
         entity->target = &player_state;
@@ -528,7 +528,7 @@ static void LavaBird_Dormant(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->no_wall_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->no_second_wall_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
+        ENTITY_FLAG_BITS(entity)->attacking = FALSE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
         break;
@@ -622,9 +622,9 @@ static void LavaBird_RangedAttack(Entity *entity) {
             LavaBird_LaunchBothShots(entity, unk3D8, frame, current_frame, player_state.position, 0.7853982f, 0.7853982f);
         }
         if (slots->motion_slot_0.frame > 0 && unk3D8->attack_end_frame >= slots->motion_slot_0.frame) {
-            ENTITY_FLAG_BITS(entity)->bit19 = 1;
+            ENTITY_FLAG_BITS(entity)->attack_window = 1;
         } else {
-            ENTITY_FLAG_BITS(entity)->bit19 = 0;
+            ENTITY_FLAG_BITS(entity)->attack_window = 0;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
@@ -695,7 +695,7 @@ static s32 LavaBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
 static void LavaBird_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
-    ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
+    ENTITY_FLAG_BITS(entity)->attacking = FALSE;
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     if (ENTITY_FLAG_BITS(entity)->hit_strength == 1) {
         EntityAi_SetReaction(entity, LavaBird_ReactionLight, 0);
@@ -718,9 +718,9 @@ static void LavaBird_ReactionLight(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         ai_state->turn_rate = 0;
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit19 = FALSE;
+        ENTITY_FLAG_BITS(entity)->attack_window = FALSE;
         ENTITY_FLAG_BITS(entity)->guarding = FALSE;
-        ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
+        ENTITY_FLAG_BITS(entity)->attacking = FALSE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->reaction_step++;
         break;
@@ -757,12 +757,12 @@ static void LavaBird_ReactionHeavy(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         ai_state->turn_rate = 0;
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit19 = FALSE;
+        ENTITY_FLAG_BITS(entity)->attack_window = FALSE;
         ENTITY_FLAG_BITS(entity)->guarding = FALSE;
         if (!ENTITY_PARAMS_BITS(entity)->bit25 && !ENTITY_PARAMS_BITS(entity)->bit26) {
             ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
         }
-        ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
+        ENTITY_FLAG_BITS(entity)->attacking = FALSE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->reaction_step++;
         break;

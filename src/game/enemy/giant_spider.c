@@ -377,9 +377,9 @@ static void GiantSpider_RangedAttack(Entity *entity) {
         direction[1] -= 160.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction, 0.2617994f, 0.2617994f);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
-            entity->flags |= ENTITY_FLAG_80000;
+            entity->flags |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            entity->flags &= ~ENTITY_FLAG_80000;
+            entity->flags &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;

@@ -304,7 +304,7 @@ static void LivingArmor_ReactionHeavy(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit19 = FALSE;
+        ENTITY_FLAG_BITS(entity)->attack_window = FALSE;
         ENTITY_FLAG_BITS(entity)->guarding = FALSE;
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
             ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
@@ -346,7 +346,7 @@ static void LivingArmor_WaitToStrike(Entity *entity) {
     if (ai_state->pause_timer-- <= 0 && entity->action_step == 0) {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit19 = FALSE;
+        ENTITY_FLAG_BITS(entity)->attack_window = FALSE;
         ENTITY_FLAG_BITS(entity)->guarding = FALSE;
         EntityAi_StartAction(entity, LivingArmor_Dormant, 1);
     }
@@ -431,9 +431,9 @@ static void LivingArmor_MeleeAttack1(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->melee_2_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->heading_to_player));
         }
         if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAG_BITS(entity)->bit19 = 1;
+            ENTITY_FLAG_BITS(entity)->attack_window = 1;
         } else {
-            ENTITY_FLAG_BITS(entity)->bit19 = 0;
+            ENTITY_FLAG_BITS(entity)->attack_window = 0;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             if (rand() % 100 < entity->params->yaw_limit_deg) {
@@ -480,7 +480,7 @@ static void LivingArmor_Dormant(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->no_second_wall_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
         ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
+        ENTITY_FLAG_BITS(entity)->attacking = FALSE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
         break;
@@ -592,9 +592,9 @@ static void LivingArmor_MeleeAttack0(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->melee_2_hit = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->level_tables->frame);
         }
         if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAG_BITS(entity)->bit19 = 1;
+            ENTITY_FLAG_BITS(entity)->attack_window = 1;
         } else {
-            ENTITY_FLAG_BITS(entity)->bit19 = 0;
+            ENTITY_FLAG_BITS(entity)->attack_window = 0;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;

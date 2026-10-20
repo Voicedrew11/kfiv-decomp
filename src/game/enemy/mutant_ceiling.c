@@ -214,7 +214,7 @@ static void MutantCeiling_MeleeAttack(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->attack_index | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
+        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->attack_index | ENTITY_ANIMATION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
@@ -253,9 +253,9 @@ static void MutantCeiling_MeleeAttack(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->melee_2_hit = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->level_tables->frame);
         }
         if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAG_BITS(entity)->bit19 = 1;
+            ENTITY_FLAG_BITS(entity)->attack_window = 1;
         } else {
-            ENTITY_FLAG_BITS(entity)->bit19 = 0;
+            ENTITY_FLAG_BITS(entity)->attack_window = 0;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
@@ -310,9 +310,9 @@ static void MutantCeiling_RangedAttack(Entity *entity) {
         EntityAi_LaunchShots(entity, unk3D8, (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8,
                       entity->model->level_tables->frame);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
-            entity->flags |= ENTITY_FLAG_80000;
+            entity->flags |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            entity->flags &= ~ENTITY_FLAG_80000;
+            entity->flags &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;

@@ -272,7 +272,7 @@ static s32 AncientMummy_BackwardsCommand(Entity *entity, s32 unused, f32 reach) 
         }
     }
     if (reach < EntityMath_DistanceXZ(entity->model->position, entity->target)) {
-        command |= 2;
+        command |= MOVE_COMMAND_BACK;
     }
     return command;
 }
@@ -299,7 +299,7 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->hit_strength = 0;
         ai_state->turn_rate = 0.0f;
         ai_state->mode_timer = entity->params->far_distance;
-        ENTITY_FLAG_BITS(entity)->bit10 = 0;
+        ENTITY_FLAG_BITS(entity)->attacking = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
         break;

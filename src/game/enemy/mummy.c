@@ -252,7 +252,7 @@ done:
 static void Mummy_OnHit(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_LowerWeightsAfterHit((char *)entity);
-        ENTITY_FLAG_BITS(entity)->bit10 = 0;
+        ENTITY_FLAG_BITS(entity)->attacking = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->target = NULL;
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
@@ -277,13 +277,13 @@ static s32 Mummy_BackwardsCommand(Entity *entity, s32 unused, f32 reach) {
     turn = EntityMath_AngleDifference(entity->model->rotation[1], heading);
     limit = entity->params->turn_limit;
     if (0.0f <= turn ? limit < turn : limit < -turn) {
-        command = 0x100;
+        command = MOVE_COMMAND_TURN_LEFT;
         if (0.0f <= turn) {
-            command = 0x200;
+            command = MOVE_COMMAND_TURN_RIGHT;
         }
     }
     if (reach < EntityMath_DistanceXZ(entity->model->position, entity->target)) {
-        command |= 2;
+        command |= MOVE_COMMAND_BACK;
     }
     return command;
 }

@@ -94,12 +94,12 @@ static void LivingDead_OnHit(Entity *entity) {
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
-    entity->flags &= ~ENTITY_FLAG_400;
+    entity->flags &= ~ENTITY_FLAG_ATTACKING;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     flags = entity->flags;
     kind = (flags >> 36) & 3;
     if (kind == 1) {
-        if ((int)(flags >> 19) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->attack_window) {
             EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
             EntityAi_SetReaction(entity, LivingDead_ReactionLight, 0);
@@ -128,9 +128,9 @@ static void LivingDead_ReactionLight(Entity *entity) {
         }
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->animates = 1;
-        ENTITY_FLAG_BITS(entity)->bit19 = 0;
+        ENTITY_FLAG_BITS(entity)->attack_window = 0;
         ENTITY_FLAG_BITS(entity)->guarding = 0;
-        ENTITY_FLAG_BITS(entity)->bit10 = 0;
+        ENTITY_FLAG_BITS(entity)->attacking = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->reaction_step++;
         break;
@@ -175,12 +175,12 @@ static void LivingDead_ReactionHeavy(Entity *entity) {
         }
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->animates = 1;
-        ENTITY_FLAG_BITS(entity)->bit19 = 0;
+        ENTITY_FLAG_BITS(entity)->attack_window = 0;
         ENTITY_FLAG_BITS(entity)->guarding = 0;
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
             ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
         }
-        ENTITY_FLAG_BITS(entity)->bit10 = 0;
+        ENTITY_FLAG_BITS(entity)->attacking = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->reaction_step++;
         break;

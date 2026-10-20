@@ -207,7 +207,7 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (dark_succubus_fight_started[0] == 0) {
-        entity->model->draw_flags |= 0x800;
+        entity->model->draw_flags |= MODEL_DRAW_OWN_TEXTURE;
         ((EntityFlagWord *)&entity->spawn_info->spawn_flags)->bytes[3] = 0x1E;
         entity->model_alpha = 0x80;
         ENTITY_FLAGS(entity) |= 0x200000;
@@ -289,7 +289,7 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
         }
     }
     if (timers->vanish_frames != 0) {
-        entity->model->draw_flags |= 0x800;
+        entity->model->draw_flags |= MODEL_DRAW_OWN_TEXTURE;
         ((EntityFlagWord *)&entity->spawn_info->spawn_flags)->bytes[3] = 0x1E;
         entity->model_alpha = 0x80;
         ENTITY_FLAGS(entity) |= 0x200000;
@@ -297,7 +297,7 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
             timers->vanish_cooldown = entity->params->far_distance;
         }
     } else {
-        entity->model->draw_flags &= ~0x800;
+        entity->model->draw_flags &= ~MODEL_DRAW_OWN_TEXTURE;
         ((EntityFlagWord *)&entity->spawn_info->spawn_flags)->bytes[3] = 0x1F;
         ENTITY_FLAGS(entity) &= ~0x200000;
         if (timers->vanish_cooldown != 0) {
@@ -819,7 +819,7 @@ static void DarkSuccubus_ReactionLight(Entity *entity) {
         Motion_Start(entity, 0xE, 0, 5, 1);
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->flags |= ENTITY_FLAG_ANIMATES;
-        entity->flags &= ~ENTITY_FLAG_80000;
+        entity->flags &= ~ENTITY_FLAG_ATTACK_WINDOW;
         entity->flags &= ~ENTITY_FLAG_GUARDING;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->reaction_step++;
@@ -855,7 +855,7 @@ static void DarkSuccubus_ReactionHeavy(Entity *entity) {
         Motion_Start(entity, 0xF, 0, 5, 1);
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->flags |= ENTITY_FLAG_ANIMATES;
-        entity->flags &= ~ENTITY_FLAG_80000;
+        entity->flags &= ~ENTITY_FLAG_ATTACK_WINDOW;
         entity->flags &= ~ENTITY_FLAG_GUARDING;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->reaction_step++;
@@ -892,7 +892,7 @@ static void DarkSuccubus_Death(Entity *entity) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
         ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
-        entity->model->draw_flags &= ~0x800;
+        entity->model->draw_flags &= ~MODEL_DRAW_OWN_TEXTURE;
         ai_state->pause_timer = 0;
         ((EntityFlagWord *)&entity->spawn_info->spawn_flags)->bytes[3] = 0x1F;
         entity->model_alpha = 0x80;
@@ -912,7 +912,7 @@ static void DarkSuccubus_Death(Entity *entity) {
     case 2:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_ANIMATES;
-            ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_DYING_MASK) | 8;
+            ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_DYING_2;
             ENTITY_FLAGS(entity) |= ENTITY_FLAG_NO_RESPAWN;
             entity->action_timer = 20;
             EntityEvent_OnDeath(entity);
@@ -940,7 +940,7 @@ static void DarkSuccubus_MeleeAttack(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->attack_index | 0x14, 0, entity->params->motion_blend_frames >> 2, 1);
+        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->attack_index | ENTITY_ANIMATION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 2, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
         } else {
@@ -974,9 +974,9 @@ static void DarkSuccubus_MeleeAttack(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->melee_2_hit = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->level_tables->frame);
         }
         if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAG_BITS(entity)->bit19 = 1;
+            ENTITY_FLAG_BITS(entity)->attack_window = 1;
         } else {
-            ENTITY_FLAG_BITS(entity)->bit19 = 0;
+            ENTITY_FLAG_BITS(entity)->attack_window = 0;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
@@ -1031,9 +1031,9 @@ static void DarkSuccubus_RangedAttack(Entity *entity) {
         target[1] -= 190.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, 0.7853982f, 0.17453292f);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAGS(entity) |= 0x80000;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            ENTITY_FLAGS(entity) &= ~0x80000;
+            ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;

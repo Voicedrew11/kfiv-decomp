@@ -98,7 +98,7 @@ static void Slasher_OnHit(Entity *entity) {
     entity->flags = flags;
     hit_strength = (flags >> 36) & 3;
     if (hit_strength == 1) {
-        if ((s32)(flags >> 19) & 1) {
+        if (ENTITY_FLAG_BITS(entity)->attack_window) {
             EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
             EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);

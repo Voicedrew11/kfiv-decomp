@@ -263,9 +263,9 @@ static void Sentinel_MeleeAttack1(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->melee_2_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f));
         }
         if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAG_BITS(entity)->bit19 = 1;
+            ENTITY_FLAG_BITS(entity)->attack_window = 1;
         } else {
-            ENTITY_FLAG_BITS(entity)->bit19 = 0;
+            ENTITY_FLAG_BITS(entity)->attack_window = 0;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;

@@ -137,7 +137,7 @@ static void Npc_Animate(Entity *entity) {
    (entity_group_state[EntityParams.type_param_0].unk02). */
 static void Npc_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit(entity);
-    entity->flags &= ~ENTITY_FLAG_400;
+    entity->flags &= ~ENTITY_FLAG_ATTACKING;
     entity->target = NULL;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     EntityAi_SetReaction(entity, Npc_ReactionHeavy, 0);
@@ -405,12 +405,12 @@ static void Npc_ReactionHeavy(Entity *entity) {
         }
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->animates = 1;
-        ENTITY_FLAG_BITS(entity)->bit19 = 0;
+        ENTITY_FLAG_BITS(entity)->attack_window = 0;
         ENTITY_FLAG_BITS(entity)->guarding = 0;
         if (ENTITY_PARAMS_MOVEMENT_KIND(params) == ENTITY_PARAMS_MOVEMENT_WALK) {
             ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
         }
-        ENTITY_FLAG_BITS(entity)->bit10 = 0;
+        ENTITY_FLAG_BITS(entity)->attacking = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->reaction_step++;
         break;
@@ -638,7 +638,7 @@ void Npc_InitType81(Entity *entity) {
 static void Npc_OnHitType81(Entity *entity) {
     EntityAi_LowerWeightsAfterHit(entity);
     entity->target = NULL;
-    entity->flags &= ~ENTITY_FLAG_400;
+    entity->flags &= ~ENTITY_FLAG_ATTACKING;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     EntityAi_SetReaction(entity, Npc_ReactionHeavy, 0);
     entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].member_died = 1;

@@ -273,7 +273,7 @@ static void WiddaArcher_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
+    ENTITY_FLAG_BITS(entity)->attacking = FALSE;
     ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     side = EntityAi_PickCombatChoice(entity, 0);
     if (entity->action_timer == 0 || side == 0) {
@@ -368,9 +368,9 @@ static void WiddaArcher_RangedAttack(Entity *entity) {
         target[1] -= 190.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, 0.17453294f, 0.17453294f);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAGS(entity) |= 0x80000;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            ENTITY_FLAGS(entity) &= ~0x80000;
+            ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;

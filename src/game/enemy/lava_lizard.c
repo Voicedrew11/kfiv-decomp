@@ -289,9 +289,9 @@ static void LavaLizard_RangedAttack0(Entity *entity) {
             EntityAi_LaunchShots(entity, unk3D8, 50, 150);
         }
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAGS(entity) |= 0x80000;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            ENTITY_FLAGS(entity) &= ~0x80000;
+            ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;

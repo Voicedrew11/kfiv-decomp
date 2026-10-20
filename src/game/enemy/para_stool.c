@@ -246,9 +246,9 @@ static void ParaStool_MeleeAttack0(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->melee_0_hit = ParaStool_CheckPartHitInPlayerView(entity, unk240, 0, elapsed, entity->model->level_tables->frame, 0.0f);
         }
         if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
-            entity->flags |= ENTITY_FLAG_80000;
+            entity->flags |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            entity->flags &= ~ENTITY_FLAG_80000;
+            entity->flags &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;

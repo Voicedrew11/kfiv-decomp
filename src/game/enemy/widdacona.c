@@ -412,9 +412,9 @@ static void Widdacona_RangedAttack0(Entity *entity) {
             EntityShot_LaunchAimed(entity, unk3D8, 12, 76, direction, 0.3926991f, 0.17453294f);
         }
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAGS(entity) |= 0x80000;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            ENTITY_FLAGS(entity) &= ~0x80000;
+            ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;

@@ -353,9 +353,9 @@ static void IceGolem_RangedAttack0(Entity *entity) {
             }
         }
         if (entity->model->level_tables->frame > 0 && unk3D8->record.attack_end_frame >= entity->model->level_tables->frame) {
-            entity->flags |= ENTITY_FLAG_80000;
+            entity->flags |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            entity->flags &= ~ENTITY_FLAG_80000;
+            entity->flags &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;

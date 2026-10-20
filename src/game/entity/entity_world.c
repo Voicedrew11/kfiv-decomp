@@ -185,7 +185,7 @@ void Entity_ResetToSpawn(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit15 = FALSE;
     ENTITY_FLAG_BITS(entity)->respawn_roll_done = FALSE;
     ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit19 = FALSE;
+    ENTITY_FLAG_BITS(entity)->attack_window = FALSE;
     ENTITY_FLAG_BITS(entity)->bit20 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit21 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
@@ -196,7 +196,7 @@ void Entity_ResetToSpawn(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
     ENTITY_FLAG_BITS(entity)->map_record_inactive = FALSE;
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
-    ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
+    ENTITY_FLAG_BITS(entity)->attacking = FALSE;
     ENTITY_FLAG_BITS(entity)->draw_afterimage = TRUE;
     ENTITY_FLAG_BITS(entity)->turn_in_place = FALSE;
     entity->update_func = 0;
@@ -562,7 +562,7 @@ static int Entity_IsMapRecordActive(Entity *entity) {
     if (!found) {
         return TRUE;
     }
-    if (record->record_flags & 0x40000000) {
+    if (record->record_flags & MAP_RECORD_FLAG_INACTIVE) {
         return FALSE;
     }
     if (index == current_map_slot) {
@@ -615,7 +615,7 @@ static MapRecordBounds *Entity_FindMapRecordUnder(Entity *entity) {
         if (slots[map]->loaded != 0) {
             record = (MapRecordBounds *)slots[map]->records;
             for (i = 0; i < ((MapSlotUnk08 *)slots[map]->header)->record_count; i++, record++) {
-                if (record->record_flags & 0x40000000) {
+                if (record->record_flags & MAP_RECORD_FLAG_INACTIVE) {
                     continue;
                 }
                 if (record->collision_mesh_index == 0xFFFF) {
@@ -654,7 +654,7 @@ static MapRecordBounds *Entity_FindMapRecordUnder(Entity *entity) {
         if (slots[map]->loaded != 0) {
             record = (MapRecordBounds *)slots[map]->records;
             for (i = 0; i < ((MapSlotUnk08 *)slots[map]->header)->record_count; i++, record++) {
-                if (record->record_flags & 0x40000000) {
+                if (record->record_flags & MAP_RECORD_FLAG_INACTIVE) {
                     continue;
                 }
                 if (entity->model->position[0] < record->box_lowest[0] - reach) {

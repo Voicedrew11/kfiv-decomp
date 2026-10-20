@@ -254,7 +254,7 @@ static void FireGenie_ThinkDecide(Entity *entity, s32 unknown) {
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
     } else {
-        entity->flags |= ENTITY_FLAG_400;
+        entity->flags |= ENTITY_FLAG_ATTACKING;
         entity->flags |= ENTITY_FLAG_LOOK_AT_TARGET;
         if (FireGenie_ShouldRespawnOther(entity)) {
             EntityAi_StartAction(entity, FireGenie_RespawnOther, unknown);
@@ -301,9 +301,9 @@ static void FireGenie_RangedAttack0(Entity *entity) {
             }
         }
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAGS(entity) |= 0x80000;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            ENTITY_FLAGS(entity) &= ~0x80000;
+            ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
@@ -401,7 +401,7 @@ static void FireGenie_Death(Entity *entity) {
     case 2:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_ANIMATES;
-            ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_DYING_MASK) | 8;
+            ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_DYING_2;
             ENTITY_FLAGS(entity) |= ENTITY_FLAG_NO_RESPAWN;
             ENTITY_FLAGS(entity) |= ENTITY_FLAG_NO_PLAYER_COLLISION;
             ENTITY_FLAGS(entity) |= ENTITY_FLAG_NO_ENTITY_COLLISION;

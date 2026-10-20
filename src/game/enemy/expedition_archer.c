@@ -223,7 +223,7 @@ static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     side = EntityAi_PickCombatChoice(entity, 0);
-    ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
+    ENTITY_FLAG_BITS(entity)->attacking = FALSE;
     ENTITY_FLAG_BITS(entity)->look_at_target = TRUE;
     if (entity->action_timer == 0 || side == 0) {
         entity->prev_combat_choice = entity->combat_choice;
@@ -322,7 +322,7 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
         }
         break;
     case 2:
-        ENTITY_FLAG_BITS(entity)->bit10 = TRUE;
+        ENTITY_FLAG_BITS(entity)->attacking = TRUE;
         if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
         } else {
@@ -333,9 +333,9 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
         target[1] -= 170.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, 0.17453294f, 0.17453294f);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAGS(entity) |= 0x80000;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            ENTITY_FLAGS(entity) &= ~0x80000;
+            ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
@@ -382,12 +382,12 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
         }
         break;
     case 2:
-        ENTITY_FLAG_BITS(entity)->bit10 = TRUE;
+        ENTITY_FLAG_BITS(entity)->attacking = TRUE;
         EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAGS(entity) |= 0x80000;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            ENTITY_FLAGS(entity) &= ~0x80000;
+            ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (entity->model->level_tables->frame >= 0x2A) {
             entity->action_timer = 0x5A;
@@ -396,7 +396,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
         break;
     case 3:
         EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
-        ENTITY_FLAG_BITS(entity)->bit10 = TRUE;
+        ENTITY_FLAG_BITS(entity)->attacking = TRUE;
         ENTITY_FLAG_BITS(entity)->animates = FALSE;
         EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
         angle = EntityMath_AngleDifference(ai_state->point_y, entity->heading_to_player);

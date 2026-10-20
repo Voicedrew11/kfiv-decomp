@@ -881,9 +881,9 @@ void ScriptCmd_SetPropSolid(ScriptCallCommand *command) {
     prop = Map_GetRecordById(current_map_slot, command->target_id.value);
     if (prop != NULL) {
         if (command->first.value != 0) {
-            prop->record_flags &= ~MAP_RECORD_FLAG_NO_COLLISION;
+            prop->record_flags &= ~MAP_RECORD_FLAG_INACTIVE;
         } else {
-            prop->record_flags |= MAP_RECORD_FLAG_NO_COLLISION;
+            prop->record_flags |= MAP_RECORD_FLAG_INACTIVE;
         }
     }
     command->active = 0;

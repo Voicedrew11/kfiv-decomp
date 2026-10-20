@@ -622,7 +622,7 @@ void EntityCollision_WalkAgainstMap(Entity *entity) {
         if (slots[map]->loaded != 0) {
             record = (MapRecordBounds *)slots[map]->records;
             for (i = 0; i < slots[map]->header->record_count; i++, record++) {
-                if (record->record_flags & 0x40000000) {
+                if (record->record_flags & MAP_RECORD_FLAG_INACTIVE) {
                     continue;
                 }
                 if (record->collision_mesh_index == 0xFFFF) {
@@ -1073,7 +1073,7 @@ void EntityCollision_SphereAgainstMap(Entity *entity) {
         if (slots[map]->loaded != 0) {
             record = (MapRecordBounds *)slots[map]->records;
             for (i = 0; i < slots[map]->header->record_count; i++, record++) {
-                if (record->record_flags & 0x40000000) {
+                if (record->record_flags & MAP_RECORD_FLAG_INACTIVE) {
                     continue;
                 }
                 if (record->collision_mesh_index == 0xFFFF) {

@@ -7,6 +7,11 @@
 #include "map_object/map_object.h"
 #include "common.h"
 
+/* action_flags one-shot bits: that map object has been broken by this giant leader */
+#define GIANT_LEADER_BREAK_FIRST  1
+#define GIANT_LEADER_BREAK_SECOND 2
+#define GIANT_LEADER_BREAK_THIRD  4
+
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
@@ -137,59 +142,59 @@ static void GiantLeader_Think(Entity *entity, s32 unknown) {
         if (ai_state->step_index == 0) {
             records = (MapRecord *)map_slots[entity->group_id].records;
             if (entity->map_record == &records[0x11]) {
-                if (EntityCollision_LineHits(first, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & 1)
+                if (EntityCollision_LineHits(first, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & GIANT_LEADER_BREAK_FIRST)
                     && (EntityMath_DistanceXZ(&player_state, first->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, first->model->position) < entity->radius + 400.0f)
                     && player_state.map_record_index == 0x14) {
                     ai_state->step_index = 2;
-                    ai_state->action_flags |= 1;
+                    ai_state->action_flags |= GIANT_LEADER_BREAK_FIRST;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
                     return;
                 }
-                if (EntityCollision_LineHits(second, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & 2)
+                if (EntityCollision_LineHits(second, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & GIANT_LEADER_BREAK_SECOND)
                     && (EntityMath_DistanceXZ(&player_state, second->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, second->model->position) < entity->radius + 400.0f)
                     && player_state.map_record_index == 0x16) {
                     ai_state->step_index = 3;
-                    ai_state->action_flags |= 2;
+                    ai_state->action_flags |= GIANT_LEADER_BREAK_SECOND;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
                     return;
                 }
             } else if (entity->map_record == &records[0x14]) {
-                if (EntityCollision_LineHits(first, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & 1)
+                if (EntityCollision_LineHits(first, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & GIANT_LEADER_BREAK_FIRST)
                     && (EntityMath_DistanceXZ(&player_state, first->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, first->model->position) < entity->radius + 400.0f)
                     && player_state.map_record_index == 0x11) {
                     ai_state->step_index = 2;
-                    ai_state->action_flags |= 1;
+                    ai_state->action_flags |= GIANT_LEADER_BREAK_FIRST;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
                     return;
                 }
-                if (EntityCollision_LineHits(third, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & 4)
+                if (EntityCollision_LineHits(third, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & GIANT_LEADER_BREAK_THIRD)
                     && (EntityMath_DistanceXZ(&player_state, third->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, third->model->position) < entity->radius + 400.0f)
                     && player_state.map_record_index == 0x16) {
                     ai_state->step_index = 1;
-                    ai_state->action_flags |= 4;
+                    ai_state->action_flags |= GIANT_LEADER_BREAK_THIRD;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
                     return;
                 }
             } else if (entity->map_record == &records[0x16]) {
-                if (EntityCollision_LineHits(second, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & 2)
+                if (EntityCollision_LineHits(second, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & GIANT_LEADER_BREAK_SECOND)
                     && (EntityMath_DistanceXZ(&player_state, second->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, second->model->position) < entity->radius + 400.0f)
                     && player_state.map_record_index == 0x11) {
                     ai_state->step_index = 3;
-                    ai_state->action_flags |= 2;
+                    ai_state->action_flags |= GIANT_LEADER_BREAK_SECOND;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
                     return;
                 }
-                if (EntityCollision_LineHits(third, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & 4)
+                if (EntityCollision_LineHits(third, entity->model->position, &player_state) == 1 && !(ai_state->action_flags & GIANT_LEADER_BREAK_THIRD)
                     && (EntityMath_DistanceXZ(&player_state, third->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, third->model->position) < entity->radius + 400.0f)
                     && player_state.map_record_index == 0x14) {
                     ai_state->step_index = 1;
-                    ai_state->action_flags |= 4;
+                    ai_state->action_flags |= GIANT_LEADER_BREAK_THIRD;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
                     return;
                 }
@@ -351,9 +356,9 @@ static void GiantLeader_MeleeAttack0(Entity *entity) {
             }
         }
         if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAG_BITS(entity)->bit19 = 1;
+            ENTITY_FLAG_BITS(entity)->attack_window = 1;
         } else {
-            ENTITY_FLAG_BITS(entity)->bit19 = 0;
+            ENTITY_FLAG_BITS(entity)->attack_window = 0;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
@@ -513,7 +518,7 @@ static void GiantLeader_OnHit(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->hit_strength == 2) {
         EntityAi_LowerWeightsAfterHit((char *)entity);
         entity->target = NULL;
-        ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
+        ENTITY_FLAG_BITS(entity)->attacking = FALSE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         EntityAi_SetReaction(entity, EntityAi_ReactionHeavy, 0);
     }
@@ -565,9 +570,9 @@ static void GiantLeader_MeleeAttack1(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->melee_2_hit = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->level_tables->frame);
         }
         if (entity->model->level_tables->frame > 0 && unk240->hit_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAG_BITS(entity)->bit19 = 1;
+            ENTITY_FLAG_BITS(entity)->attack_window = 1;
         } else {
-            ENTITY_FLAG_BITS(entity)->bit19 = 0;
+            ENTITY_FLAG_BITS(entity)->attack_window = 0;
         }
         if (ai_state->action_counter == 0 && ENTITY_FLAG_BITS(entity)->melee_0_hit) {
             Attack_DrainPlayerMp(entity->params->type_param_2);

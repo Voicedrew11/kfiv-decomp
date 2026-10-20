@@ -490,7 +490,7 @@ static void Malice_FadeOutAndRelocate(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->hit_strength = 0;
         ai_state->pause_timer = 1;
         ai_state->turn_rate = 0.0f;
-        ENTITY_FLAG_BITS(entity)->bit10 = 0;
+        ENTITY_FLAG_BITS(entity)->attacking = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
         break;
@@ -580,10 +580,10 @@ static void Malice_FadeBackIn(Entity *entity) {
 static void Malice_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
-    ENTITY_FLAG_BITS(entity)->bit10 = 0;
+    ENTITY_FLAG_BITS(entity)->attacking = 0;
     ENTITY_FLAG_BITS(entity)->look_at_target = 0;
     if (ENTITY_FLAG_BITS(entity)->hit_strength == 1) {
-        if (ENTITY_FLAG_BITS(entity)->bit19) {
+        if (ENTITY_FLAG_BITS(entity)->attack_window) {
             EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
             EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);
@@ -615,7 +615,7 @@ static void Malice_Dormant(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->no_second_wall_collision = 1;
         ENTITY_FLAG_BITS(entity)->bit18 = 1;
         ENTITY_FLAG_BITS(entity)->no_floor_lift = 1;
-        ENTITY_FLAG_BITS(entity)->bit10 = 0;
+        ENTITY_FLAG_BITS(entity)->attacking = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
         break;
@@ -690,9 +690,9 @@ static void Malice_RangedAttack0(Entity *entity) {
             }
         }
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAGS(entity) |= 0x80000;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            ENTITY_FLAGS(entity) &= ~0x80000;
+            ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;

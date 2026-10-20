@@ -538,9 +538,9 @@ static void FireElemental_RangedAttack1(Entity *entity) {
         direction[1] = EntityMath_WrapAngle(entity->model->rotation[1] - 3.1415927f + 0.08726646f);
         EntityShot_Launch(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAGS(entity) |= 0x80000;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            ENTITY_FLAGS(entity) &= ~0x80000;
+            ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
@@ -581,10 +581,10 @@ static void FireElemental_AlertSameKind(Entity *entity) {
 static void FireElemental_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
-    ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
+    ENTITY_FLAG_BITS(entity)->attacking = FALSE;
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     if (ENTITY_FLAG_BITS(entity)->hit_strength == 1) {
-        if (ENTITY_FLAG_BITS(entity)->bit19) {
+        if (ENTITY_FLAG_BITS(entity)->attack_window) {
             EntityAi_SetReaction(entity, EntityAi_ReactionRewind, 0);
         } else {
             EntityAi_SetReaction(entity, EntityAi_ReactionLight, 0);
@@ -755,7 +755,7 @@ static s32 FireElemental_BackwardsCommand(Entity *entity, s32 unused, f32 reach)
         }
     }
     if (reach < EntityMath_DistanceXZ(entity->model->position, entity->target)) {
-        command |= 2;
+        command |= MOVE_COMMAND_BACK;
     }
     return command;
 }
@@ -772,7 +772,7 @@ static void FireElemental_ThinkReturn(Entity *entity, s32 unknown) {
 
     entity->action_timer = 0;
     ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
-    ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
+    ENTITY_FLAG_BITS(entity)->attacking = FALSE;
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn == 0) {
@@ -846,9 +846,9 @@ static void FireElemental_RangedAttack0(Entity *entity) {
         direction[1] = EntityMath_WrapAngle(direction[1] - 3.1415927f);
         EntityShot_Launch(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAGS(entity) |= 0x80000;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            ENTITY_FLAGS(entity) &= ~0x80000;
+            ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;

@@ -331,9 +331,9 @@ static void Onyx_RangedAttack0(Entity *entity) {
             }
         }
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
-            ENTITY_FLAGS(entity) |= 0x80000;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            ENTITY_FLAGS(entity) &= ~0x80000;
+            ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
@@ -508,23 +508,23 @@ static s32 Onyx_GetKeepRangeCommand(Entity *entity, s32 turn, f32 near_range, f3
         angle = EntityMath_AngleDifference(entity->model->rotation[1], angle);
         turn_limit = entity->params->turn_limit;
         if (0.0f <= angle ? turn_limit < angle : turn_limit < -angle) {
-            command = 0x100;
+            command = MOVE_COMMAND_TURN_LEFT;
             if (0.0f <= angle) {
-                command = 0x200;
+                command = MOVE_COMMAND_TURN_RIGHT;
             }
         }
     } else {
         if (turn > 0) {
-            command |= 0x200;
+            command |= MOVE_COMMAND_TURN_RIGHT;
         } else {
-            command |= 0x100;
+            command |= MOVE_COMMAND_TURN_LEFT;
         }
     }
     distance = EntityMath_DistanceXZ(entity->model->position, &player_state);
     if (distance < near_range + 100.0f + entity->radius) {
-        command |= 2;
+        command |= MOVE_COMMAND_BACK;
     } else if (far_range + 100.0f + entity->radius < distance) {
-        command |= 1;
+        command |= MOVE_COMMAND_FORWARD;
     }
     return command;
 }

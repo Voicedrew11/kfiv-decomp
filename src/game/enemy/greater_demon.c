@@ -650,7 +650,7 @@ static void GreaterDemon_OnHit(Entity *entity) {
     if ((((u64)entity->flags >> 36) & 3) == 2) {
         EntityAi_LowerWeightsAfterHit((char *)entity);
         entity->target = NULL;
-        entity->flags &= ~ENTITY_FLAG_400;
+        entity->flags &= ~ENTITY_FLAG_ATTACKING;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         EntityAi_SetReaction(entity, GreaterDemon_ReactionHeavy, 0);
     }
@@ -673,12 +673,12 @@ static void GreaterDemon_ReactionHeavy(Entity *entity) {
         }
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->animates = 1;
-        ENTITY_FLAG_BITS(entity)->bit19 = 0;
+        ENTITY_FLAG_BITS(entity)->attack_window = 0;
         ENTITY_FLAG_BITS(entity)->guarding = 0;
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
             ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
         }
-        ENTITY_FLAG_BITS(entity)->bit10 = 0;
+        ENTITY_FLAG_BITS(entity)->attacking = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->reaction_step++;
         ai_state->sliding = 0;
@@ -851,9 +851,9 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
             }
         }
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
-            entity->flags |= ENTITY_FLAG_80000;
+            entity->flags |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            entity->flags &= ~ENTITY_FLAG_80000;
+            entity->flags &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
@@ -933,9 +933,9 @@ static void GreaterDemon_RangedAttack(Entity *entity) {
         direction[2] = 0.0f;
         EntityShot_Launch(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
-            entity->flags |= ENTITY_FLAG_80000;
+            entity->flags |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            entity->flags &= ~ENTITY_FLAG_80000;
+            entity->flags &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;

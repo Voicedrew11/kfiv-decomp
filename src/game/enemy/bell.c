@@ -81,7 +81,7 @@ static void Bell_Think(Entity *entity, s32 run_now) {
 
     flags = entity->flags & ~ENTITY_FLAG_20000000;
     entity->flags = flags;
-    if ((s32)(flags >> 43) & 1) {
+    if (ENTITY_FLAG_BITS(entity)->hit_by_player) {
         if (entity->action_timer == 0) {
             entity->flags = flags | ENTITY_FLAG_20000000;
             angle = EntityMath_AngleXZ(player_state.position, (char *)entity->model->position);

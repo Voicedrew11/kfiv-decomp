@@ -352,9 +352,9 @@ static void Minion_MeleeAttack(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, ENTITY_FLAG_BITS(entity)->attack_index | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
+        EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, ENTITY_FLAG_BITS(entity)->attack_index | ENTITY_ANIMATION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
         if (ai_state->turn_in_place == 0) {
-            EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->attack_index | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
+            EntityAi_StartSlotMotion(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->attack_index | ENTITY_ANIMATION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
         }
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = 0;
@@ -391,9 +391,9 @@ static void Minion_MeleeAttack(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->melee_2_hit = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, slots->motion_slot_0.frame);
         }
         if (slots->motion_slot_0.frame > 0 && unk240->hit_end_frame >= slots->motion_slot_0.frame) {
-            ENTITY_FLAG_BITS(entity)->bit19 = 1;
+            ENTITY_FLAG_BITS(entity)->attack_window = 1;
         } else {
-            ENTITY_FLAG_BITS(entity)->bit19 = 0;
+            ENTITY_FLAG_BITS(entity)->attack_window = 0;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
@@ -447,9 +447,9 @@ static void Minion_RangedAttack(Entity *entity) {
         }
         Minion_LaunchShots(entity, unk3D8, (slots->motion_slot_0.frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8, slots->motion_slot_0.frame, NULL, 0.0f, 0.0f);
         if (slots->motion_slot_0.frame > 0 && unk3D8->attack_end_frame >= slots->motion_slot_0.frame) {
-            ENTITY_FLAG_BITS(entity)->bit19 = 1;
+            ENTITY_FLAG_BITS(entity)->attack_window = 1;
         } else {
-            ENTITY_FLAG_BITS(entity)->bit19 = 0;
+            ENTITY_FLAG_BITS(entity)->attack_window = 0;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
@@ -522,7 +522,7 @@ static void Minion_Move(Entity *entity) {
 static void Minion_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
-    ENTITY_FLAG_BITS(entity)->bit10 = 0;
+    ENTITY_FLAG_BITS(entity)->attacking = 0;
     ENTITY_FLAG_BITS(entity)->look_at_target = 0;
     if (ENTITY_FLAG_BITS(entity)->hit_strength == 1) {
         EntityAi_SetReaction(entity, Minion_ReactionLight, 0);
@@ -551,9 +551,9 @@ static void Minion_ReactionLight(Entity *entity) {
         }
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->animates = 1;
-        ENTITY_FLAG_BITS(entity)->bit19 = 0;
+        ENTITY_FLAG_BITS(entity)->attack_window = 0;
         ENTITY_FLAG_BITS(entity)->guarding = 0;
-        ENTITY_FLAG_BITS(entity)->bit10 = 0;
+        ENTITY_FLAG_BITS(entity)->attacking = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->reaction_step++;
         break;
@@ -595,12 +595,12 @@ static void Minion_ReactionHeavy(Entity *entity) {
         }
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->animates = 1;
-        ENTITY_FLAG_BITS(entity)->bit19 = 0;
+        ENTITY_FLAG_BITS(entity)->attack_window = 0;
         ENTITY_FLAG_BITS(entity)->guarding = 0;
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
             ENTITY_FLAG_BITS(entity)->no_floor_lift = 0;
         }
-        ENTITY_FLAG_BITS(entity)->bit10 = 0;
+        ENTITY_FLAG_BITS(entity)->attacking = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->reaction_step++;
         break;

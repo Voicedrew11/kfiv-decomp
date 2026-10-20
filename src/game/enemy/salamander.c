@@ -227,7 +227,7 @@ static void Salamander_ReactionLight(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         ai_state->turn_rate = 0;
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit19 = FALSE;
+        ENTITY_FLAG_BITS(entity)->attack_window = FALSE;
         ENTITY_FLAG_BITS(entity)->guarding = FALSE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->reaction_step++;
@@ -263,7 +263,7 @@ static void Salamander_ReactionHeavy(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         ai_state->turn_rate = 0;
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
-        ENTITY_FLAG_BITS(entity)->bit19 = FALSE;
+        ENTITY_FLAG_BITS(entity)->attack_window = FALSE;
         ENTITY_FLAG_BITS(entity)->guarding = FALSE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->reaction_step++;
@@ -354,7 +354,7 @@ static void Salamander_MeleeAttack(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_0, 0, kind | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
+        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_0, 0, kind | ENTITY_ANIMATION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
         ENTITY_FLAG_BITS(entity)->melee_1_hit = 0;
@@ -386,9 +386,9 @@ static void Salamander_MeleeAttack(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->melee_2_hit = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, ai_state->motion_slot_0.frame);
         }
         if (ai_state->motion_slot_0.frame > 0 && unk240->hit_end_frame >= ai_state->motion_slot_0.frame) {
-            entity->flags |= ENTITY_FLAG_80000;
+            entity->flags |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            entity->flags &= ~ENTITY_FLAG_80000;
+            entity->flags &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
@@ -447,9 +447,9 @@ static void Salamander_RangedAttack(Entity *entity) {
                           ai_state->motion_slot_0.frame);
         }
         if (ai_state->motion_slot_0.frame > 0 && unk3D8->attack_end_frame >= ai_state->motion_slot_0.frame) {
-            entity->flags |= ENTITY_FLAG_80000;
+            entity->flags |= ENTITY_FLAG_ATTACK_WINDOW;
         } else {
-            entity->flags &= ~ENTITY_FLAG_80000;
+            entity->flags &= ~ENTITY_FLAG_ATTACK_WINDOW;
         }
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
@@ -519,7 +519,7 @@ static void Salamander_ThinkReturn(Entity *entity, s32 unknown) {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
     entity->action_timer = 0;
-    ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
+    ENTITY_FLAG_BITS(entity)->attacking = FALSE;
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn == 0) {

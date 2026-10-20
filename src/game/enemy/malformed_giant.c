@@ -240,7 +240,7 @@ static void MalformedGiant_ThinkIdle(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
-    ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
+    ENTITY_FLAG_BITS(entity)->attacking = FALSE;
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {
@@ -266,7 +266,7 @@ static void MalformedGiant_ThinkPursue(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = 1;
     }
-    ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
+    ENTITY_FLAG_BITS(entity)->attacking = FALSE;
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     if (entity->action_timer == 0) {
         if (rand() % 100 < ENTITY_CONTROLLER(entity)->action_frames) {

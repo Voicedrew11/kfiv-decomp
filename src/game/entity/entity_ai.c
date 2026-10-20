@@ -1907,7 +1907,7 @@ int EntityAi_StartSlotMotion(Entity *entity, EntityMotionSlotWord *slot, int cha
     } else {
         slot->frames_left = frames;
     }
-    if (*(int *)slot & 0x20) {
+    if (*(int *)slot & ENTITY_MOTION_SLOT_MOVES_ENTITY) {
         ModelPart *root = ENTITY_MODEL(entity)->root_part;
 
         root->position[0] = root->position[1] = root->position[2] = 0.0f;

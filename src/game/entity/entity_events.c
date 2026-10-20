@@ -227,7 +227,7 @@ void EntityEvent_StartFrameEffects(Entity *entity, s32 animation, s32 frame_from
     if (entity->map_record == NULL) {
         return;
     }
-    if (!(((MapRecord *)entity->map_record)->record_flags & 0x4000000)) {
+    if (!(((MapRecord *)entity->map_record)->record_flags & MAP_RECORD_FLAG_FRAME_EFFECTS)) {
         return;
     }
     for (i = 0; i < count; i++, record++) {

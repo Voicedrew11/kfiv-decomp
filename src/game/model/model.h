@@ -190,7 +190,7 @@ typedef struct {
     char pad30[0x10];
 } ModelWideVertex;
 
-/* a block of a part's data in the models drawn with their own texture (MODEL_FLAG_800):
+/* a block of a part's data in the models drawn with their own texture (MODEL_DRAW_OWN_TEXTURE):
    0xB0 bytes of GS setup, then 0x40-byte vertices */
 typedef struct {
     u16 length;                     /* 0x00 in 16-byte units, not counting the first */
@@ -343,11 +343,11 @@ typedef union {
 
 #define POSED_MODEL_FILE_ANY(file) (((ModelFileUnion *)(file))->posed)
 
-#define MODEL_FLAG_800  0x800
 #define MODEL_FLAG_UNLIT 0x400          /* ModelInstance.model_flags: the light matrix is cleared, so the model is not lit */
 #define MODEL_DRAW_FACE_CAMERA_X 0x100  /* ModelInstance.draw_flags: turned about x to face the camera */
 #define MODEL_DRAW_FACE_CAMERA_Y 0x200  /* ModelInstance.draw_flags: turned about y to face the camera */
 #define MODEL_DRAW_FACE_CAMERA   0x300  /* either of the two above */
+#define MODEL_DRAW_OWN_TEXTURE   0x800  /* ModelInstance.draw_flags: drawn with its own texture, the frame copied into it first */
 #define MODEL_DRAW_TURN_Z_ONLY   0x400  /* ModelInstance.draw_flags: turned about z alone */
 
 /* ModelInstance with the three part slots at 0x130 as the array Model_SetUpSkinned fills
@@ -382,7 +382,7 @@ typedef struct ModelInstance {
     ModelPart *parts;               /* 0xF8 */
     ModelPartLevels **level_tables; /* 0xFC */
     u16 model_flags;                /* 0x100 bits: 1 motion on, 0x200 draw-list, 0x400 unlit, 0x800 record sent */
-    u16 draw_flags;                 /* 0x102 MODEL_FLAG_800: drawn with its own texture */
+    u16 draw_flags;                 /* 0x102 MODEL_DRAW_OWN_TEXTURE: drawn with its own texture */
     int effect_record_hint;         /* 0x104 int passed to Effect_FindModelRecord, unread */
     char pad108[0x08];
     ModelStripList *strips;         /* 0x110 also read as a CollisionMesh (collision/collision.h), NULL: none */

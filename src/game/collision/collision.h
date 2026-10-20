@@ -119,8 +119,7 @@ typedef struct {
     ModelInstance *model;           /* 0x7C */
 } MapRecordBounds;
 
-/* MapRecordBounds.record_flags bit: nothing collides with the record (ScriptCmd_SetPropSolid clears it to make a prop solid) */
-#define MAP_RECORD_FLAG_NO_COLLISION 0x40000000
+#define MAP_RECORD_FLAG_INACTIVE 0x40000000 /* the record is not active: nothing collides with it, Entity_IsMapRecordActive is FALSE */
 
 /* which of a mesh's strip lists (CollisionMeshLists) a hit is tested against: local tables
    that Attack_TestMapModel, Attack_TestMapModelFloors and Attack_TestMapModelWalls copy whole from read-only data */
