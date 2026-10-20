@@ -152,7 +152,7 @@ void EntityCollision_PushApart(Entity *entity) {
             if (!(ENTITY_FLAG_BITS(other)->live)) {
                 continue;
             }
-            if (((s32)(other->flags >> 2) & 3) >= 2) {
+            if (ENTITY_FLAG_BITS(other)->dying >= 2) {
                 continue;
             }
             if (other == entity) {
