@@ -62,6 +62,16 @@
 #define MENU_NUMBER_CLOCK_HOUR          41
 #define MENU_NUMBER_CLOCK_MINUTE        42
 #define MENU_NUMBER_CLOCK_SECOND        43
+#define MENU_NUMBER_SHOWN_PHYSICAL_1    44   /* menu_number_44 to _52: the nine stats of the item a screen shows, as attack_stats */
+#define MENU_NUMBER_SHOWN_PHYSICAL_2    45
+#define MENU_NUMBER_SHOWN_PHYSICAL_3    46
+#define MENU_NUMBER_SHOWN_FIRE          47
+#define MENU_NUMBER_SHOWN_EARTH         48
+#define MENU_NUMBER_SHOWN_WIND          49
+#define MENU_NUMBER_SHOWN_WATER         50
+#define MENU_NUMBER_SHOWN_HOLY          51
+#define MENU_NUMBER_SHOWN_DARK          52
+#define MENU_NUMBER_SHOWN_WEIGHT        53   /* menu_number_53: its weight, in tenths of a pound */
 #define MENU_NUMBER_WORN_PHYSICAL_1     55   /* worn_item_stats.values[0]: same layout as attack_stats */
 #define MENU_NUMBER_WORN_PHYSICAL_2     56
 #define MENU_NUMBER_WORN_PHYSICAL_3     57
@@ -824,25 +834,25 @@ int MenuDraw_GetNumber(int number) {
         return wall_clock_time.min;
     case MENU_NUMBER_CLOCK_SECOND:
         return wall_clock_time.sec;
-    case 44:
+    case MENU_NUMBER_SHOWN_PHYSICAL_1:
         return menu_number_44;
-    case 45:
+    case MENU_NUMBER_SHOWN_PHYSICAL_2:
         return menu_number_45;
-    case 46:
+    case MENU_NUMBER_SHOWN_PHYSICAL_3:
         return menu_number_46;
-    case 47:
+    case MENU_NUMBER_SHOWN_FIRE:
         return menu_number_47;
-    case 48:
+    case MENU_NUMBER_SHOWN_EARTH:
         return menu_number_48;
-    case 49:
+    case MENU_NUMBER_SHOWN_WIND:
         return menu_number_49;
-    case 50:
+    case MENU_NUMBER_SHOWN_WATER:
         return menu_number_50;
-    case 51:
+    case MENU_NUMBER_SHOWN_HOLY:
         return menu_number_51;
-    case 52:
+    case MENU_NUMBER_SHOWN_DARK:
         return menu_number_52;
-    case 53:
+    case MENU_NUMBER_SHOWN_WEIGHT:
         return menu_number_53;
     case 54:
         return menu_number_54;
@@ -3718,31 +3728,31 @@ static SpritePacket *MenuSprite_TintWeaponStat(SpritePacket *packet) {
     copy = *packet;
     current = MenuDraw_GetNumber(packet->number_id);
     switch (packet->number_id) {
-    case 0x2C:
+    case MENU_NUMBER_SHOWN_PHYSICAL_1:
         base = (weapon_level_records[menu_number_72].gained_values[0] + weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[0]) * weapon_level_records[menu_number_72].level / 100;
         break;
-    case 0x2D:
+    case MENU_NUMBER_SHOWN_PHYSICAL_2:
         base = (weapon_level_records[menu_number_72].gained_values[1] + weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[1]) * weapon_level_records[menu_number_72].level / 100;
         break;
-    case 0x2E:
+    case MENU_NUMBER_SHOWN_PHYSICAL_3:
         base = (weapon_level_records[menu_number_72].gained_values[2] + weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[2]) * weapon_level_records[menu_number_72].level / 100;
         break;
-    case 0x2F:
+    case MENU_NUMBER_SHOWN_FIRE:
         base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[3] * weapon_level_records[menu_number_72].level / 100;
         break;
-    case 0x30:
+    case MENU_NUMBER_SHOWN_EARTH:
         base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[4] * weapon_level_records[menu_number_72].level / 100;
         break;
-    case 0x31:
+    case MENU_NUMBER_SHOWN_WIND:
         base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[5] * weapon_level_records[menu_number_72].level / 100;
         break;
-    case 0x32:
+    case MENU_NUMBER_SHOWN_WATER:
         base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[6] * weapon_level_records[menu_number_72].level / 100;
         break;
-    case 0x33:
+    case MENU_NUMBER_SHOWN_HOLY:
         base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[7] * weapon_level_records[menu_number_72].level / 100;
         break;
-    case 0x34:
+    case MENU_NUMBER_SHOWN_DARK:
         base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[8] * weapon_level_records[menu_number_72].level / 100;
         break;
     default:
@@ -3770,31 +3780,31 @@ static SpritePacket *MenuSprite_TintWornStat(SpritePacket *packet, int index) {
     copy = *packet;
     current = MenuDraw_GetNumber(packet->number_id);
     switch (packet->number_id) {
-    case 0x2C:
+    case MENU_NUMBER_SHOWN_PHYSICAL_1:
         base = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
         break;
-    case 0x2D:
+    case MENU_NUMBER_SHOWN_PHYSICAL_2:
         base = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
         break;
-    case 0x2E:
+    case MENU_NUMBER_SHOWN_PHYSICAL_3:
         base = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
         break;
-    case 0x2F:
+    case MENU_NUMBER_SHOWN_FIRE:
         base = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
         break;
-    case 0x30:
+    case MENU_NUMBER_SHOWN_EARTH:
         base = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
         break;
-    case 0x31:
+    case MENU_NUMBER_SHOWN_WIND:
         base = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
         break;
-    case 0x32:
+    case MENU_NUMBER_SHOWN_WATER:
         base = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
         break;
-    case 0x33:
+    case MENU_NUMBER_SHOWN_HOLY:
         base = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
         break;
-    case 0x34:
+    case MENU_NUMBER_SHOWN_DARK:
         base = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
         break;
     default:
@@ -3822,31 +3832,31 @@ static SpritePacket *MenuSprite_TintMagicStat(SpritePacket *packet) {
     copy = *packet;
     current = MenuDraw_GetNumber(packet->number_id);
     switch (packet->number_id) {
-    case 0x2C:
+    case MENU_NUMBER_SHOWN_PHYSICAL_1:
         base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.element_strengths[0];
         break;
-    case 0x2D:
+    case MENU_NUMBER_SHOWN_PHYSICAL_2:
         base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.element_strengths[1];
         break;
-    case 0x2E:
+    case MENU_NUMBER_SHOWN_PHYSICAL_3:
         base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.element_strengths[2];
         break;
-    case 0x2F:
+    case MENU_NUMBER_SHOWN_FIRE:
         base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.element_strengths[3];
         break;
-    case 0x30:
+    case MENU_NUMBER_SHOWN_EARTH:
         base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.element_strengths[4];
         break;
-    case 0x31:
+    case MENU_NUMBER_SHOWN_WIND:
         base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.element_strengths[5];
         break;
-    case 0x32:
+    case MENU_NUMBER_SHOWN_WATER:
         base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.element_strengths[6];
         break;
-    case 0x33:
+    case MENU_NUMBER_SHOWN_HOLY:
         base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.element_strengths[7];
         break;
-    case 0x34:
+    case MENU_NUMBER_SHOWN_DARK:
     default:
         base = 0;
         break;
@@ -4101,31 +4111,31 @@ static SpritePacket *MenuSprite_TintWeaponStatAlt(SpritePacket *packet) {
     copy = *packet;
     current = MenuDraw_GetNumber(packet->number_id);
     switch (packet->number_id) {
-    case 0x2D:
+    case MENU_NUMBER_SHOWN_PHYSICAL_2:
         base = (weapon_level_records[menu_number_72].gained_values[0] + weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[0]) * weapon_level_records[menu_number_72].level / 100;
         break;
-    case 0x2E:
+    case MENU_NUMBER_SHOWN_PHYSICAL_3:
         base = (weapon_level_records[menu_number_72].gained_values[1] + weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[1]) * weapon_level_records[menu_number_72].level / 100;
         break;
-    case 0x2F:
+    case MENU_NUMBER_SHOWN_FIRE:
         base = (weapon_level_records[menu_number_72].gained_values[2] + weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[2]) * weapon_level_records[menu_number_72].level / 100;
         break;
-    case 0x30:
+    case MENU_NUMBER_SHOWN_EARTH:
         base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[3] * weapon_level_records[menu_number_72].level / 100;
         break;
-    case 0x31:
+    case MENU_NUMBER_SHOWN_WIND:
         base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[4] * weapon_level_records[menu_number_72].level / 100;
         break;
-    case 0x32:
+    case MENU_NUMBER_SHOWN_WATER:
         base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[5] * weapon_level_records[menu_number_72].level / 100;
         break;
-    case 0x33:
+    case MENU_NUMBER_SHOWN_HOLY:
         base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[6] * weapon_level_records[menu_number_72].level / 100;
         break;
-    case 0x34:
+    case MENU_NUMBER_SHOWN_DARK:
         base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[7] * weapon_level_records[menu_number_72].level / 100;
         break;
-    case 0x35:
+    case MENU_NUMBER_SHOWN_WEIGHT:
         base = weapon_defs[menu_number_72].attack_by_level[weapon_level_records[menu_number_72].level_index].values[8] * weapon_level_records[menu_number_72].level / 100;
         break;
     default:
@@ -4152,31 +4162,31 @@ static SpritePacket *MenuSprite_TintWornStatAlt(SpritePacket *packet, int index)
     copy = *packet;
     current = MenuDraw_GetNumber(packet->number_id);
     switch (packet->number_id) {
-    case 0x2D:
+    case MENU_NUMBER_SHOWN_PHYSICAL_2:
         base = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
         break;
-    case 0x2E:
+    case MENU_NUMBER_SHOWN_PHYSICAL_3:
         base = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
         break;
-    case 0x2F:
+    case MENU_NUMBER_SHOWN_FIRE:
         base = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
         break;
-    case 0x30:
+    case MENU_NUMBER_SHOWN_EARTH:
         base = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
         break;
-    case 0x31:
+    case MENU_NUMBER_SHOWN_WIND:
         base = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
         break;
-    case 0x32:
+    case MENU_NUMBER_SHOWN_WATER:
         base = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
         break;
-    case 0x33:
+    case MENU_NUMBER_SHOWN_HOLY:
         base = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
         break;
-    case 0x34:
+    case MENU_NUMBER_SHOWN_DARK:
         base = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
         break;
-    case 0x35:
+    case MENU_NUMBER_SHOWN_WEIGHT:
         base = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
         break;
     default:
