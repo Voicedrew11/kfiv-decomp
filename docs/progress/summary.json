@@ -49,7 +49,7 @@
    "name": "SDK and runtime libraries"
   }
  ],
- "generated": "2026-10-20",
+ "generated": "2026-10-21",
  "measures": {
   "complete_code": 1336416,
   "complete_code_percent": 99.5845,
@@ -87,7 +87,7 @@
   "padding_fields": 623,
   "placeholder_params": 0,
   "plain_pointer_casts": 1516,
-  "raw_case_labels": 1833,
+  "raw_case_labels": 232,
   "raw_float_constants": 21,
   "raw_state_values": 0,
   "recovered_structs": 581,

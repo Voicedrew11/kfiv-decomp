@@ -151,7 +151,7 @@ static page) and the table below; commit those with each batch of work.
 | gotos | 14 | left |
 | multi-line comments | 1798 | left |
 | unkXX names in comments | 790 | left |
-| raw `case N:` labels | 1833 | left |
+| raw `case N:` labels | 232 | left |
 | raw state/mode values | 0 | left |
 | plain pointer casts | 1516 | left |
 | placeholder parameters | 0 | left |
