@@ -408,7 +408,7 @@ typedef struct {
 /* item_name_defs[ITEM_COUNT]: param/item_nam.prm, 0x40 bytes per item, starting with its name. worn_name_defs is
    the run of them from ITEM_WORN_FIRST on (the items Attack_WearWornItem reads). */
 typedef struct {
-    char pad00[0x30];
+    u16 name[0x18];                 /* 0x00 the name, 16-bit menu text (MenuText_DrawLine reads it) */
     u32 file_number : 16;           /* 0x30 the number in its model file's name */
     u32 unk30_16 : 2;
     u32 state : 2;                  /* 0x32 bits 2-3: 0 is set to 1 when the table is reset */

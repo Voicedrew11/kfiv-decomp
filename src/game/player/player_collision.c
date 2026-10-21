@@ -110,7 +110,7 @@ int Player_CollideWithMap(void) {
                         points_left = strip->point_count - 2;
                         do {
                             Collision_DropOnTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position,
-                                          &player_state.position);
+                                          &player_state.position.x);
                             if (COLLISION_RESULT->hit != 0 && player_state.position.y - 230.0f <= COLLISION_RESULT->point[1]
                                 && COLLISION_RESULT->point[1] <= player_state.position.y) {
                                 surface = Collision_GetSurfaceEffect(strip_point->material_first, strip_point->material_second, strip_point->material_third);
@@ -133,7 +133,7 @@ int Player_CollideWithMap(void) {
                     points_left = strip->point_count - 2;
                     do {
                         Collision_CapsuleTriangle(strip_point[0].position, strip_point[1].position,
-                                      strip_point[2].position, (f32 *)&COLLISION_SCRATCH->wall_point, 100.0f, 230.0f);
+                                      strip_point[2].position, &COLLISION_SCRATCH->wall_point.x, 100.0f, 230.0f);
                         if (COLLISION_RESULT->hit != 0) {
                             COLLISION_SCRATCH->push.x = COLLISION_SCRATCH->wall_point.x - COLLISION_RESULT->point[0];
                             COLLISION_SCRATCH->push.y = 0.0f;
@@ -155,7 +155,7 @@ int Player_CollideWithMap(void) {
                         points_left = strip->point_count - 2;
                         do {
                             Collision_DropOnTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position,
-                                          &player_state.position);
+                                          &player_state.position.x);
                             if (COLLISION_RESULT->hit != 0
                                 && COLLISION_RESULT->point[1] <= player_state.position.y + player_state.fall_speed
                                 && (!(PLAYER_IS_IN_WATER(&player_state)) || COLLISION_RESULT->point[1] < player_state.water_surface_y)) {
@@ -186,7 +186,7 @@ int Player_CollideWithMap(void) {
                     points_left = strip->point_count - 2;
                     do {
                         Collision_DropOnTriangleWithin(strip_point[0].position, strip_point[1].position, strip_point[2].position,
-                                      &COLLISION_SCRATCH->point, reach);
+                                      &COLLISION_SCRATCH->point.x, reach);
                         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < floor_height) {
                             found = TRUE;
                             floor_height = COLLISION_RESULT->point[1];
@@ -288,7 +288,7 @@ void Player_PushOutOfWalls(void) {
                     points_left = strip->point_count - 2;
                     do {
                         Collision_CapsuleTriangle(strip_point[0].position, strip_point[1].position,
-                                      strip_point[2].position, (f32 *)&COLLISION_SCRATCH->point, 100.0f, 230.0f);
+                                      strip_point[2].position, &COLLISION_SCRATCH->point.x, 100.0f, 230.0f);
                         if (COLLISION_RESULT->hit != 0) {
                             COLLISION_SCRATCH->push.x = COLLISION_SCRATCH->point.x - COLLISION_RESULT->point[0];
                             COLLISION_SCRATCH->push.y = 0.0f;
@@ -353,7 +353,7 @@ void Player_FindFloorMaterial(void) {
                     points_left = strip->point_count - 2;
                     do {
                         Collision_DropOnTriangleWithin(strip_point[0].position, strip_point[1].position, strip_point[2].position,
-                                      &COLLISION_SCRATCH->point, 10.0f);
+                                      &COLLISION_SCRATCH->point.x, 10.0f);
                         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest) {
                             lowest = COLLISION_RESULT->point[1];
                             player_state.floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
@@ -538,7 +538,7 @@ void Player_CollideWithMapObjects(s32 climb) {
             reach += 30.0f;
         }
         if (!(PLAYER_IS_STEPPING_UP(&player_state))) {
-            hit = Collision_StandOnObjects((f32 *)&player_state, 1, reach, 100.0f);
+            hit = Collision_StandOnObjects(&player_state.position.x, 1, reach, 100.0f);
         }
         if (hit) {
             step = PLAYER_STEP_HEIGHT;
@@ -556,7 +556,7 @@ void Player_CollideWithMapObjects(s32 climb) {
         }
     }
     if (!(PLAYER_IS_STEPPING_UP(&player_state))) {
-        Collision_PushOutOfObjects((f32 *)&player_state, 0, 230.0f, 100.0f);
+        Collision_PushOutOfObjects(&player_state.position.x, 0, 230.0f, 100.0f);
     }
     if (player_state.touched_map_object != 0 && player_state.touched_map_object != player_previous.touched_map_object) {
         switch ((s16)player_state.touched_map_object->source->touch_status_flag) {

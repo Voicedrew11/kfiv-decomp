@@ -1003,7 +1003,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
     for (row = 0, node = trade_stock_list_top[0]; row < 7; node = node->prev, row++) {
         item = &item_level_defs[node->item_number];
         MenuText_SetPen(row_position);
-        MenuText_DrawLine((u16 *)item, 0x1A);
+        MenuText_DrawLine(item->name, 0x1A);
         row_position.f.mid16 += 0xB0;
         if (trade_stock_list_page_mark[0]->prev == node) {
             break;
@@ -1536,7 +1536,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
     for (row = 0; row < 7; row++) {
         item = &item_level_defs[node->item_number];
         MenuText_SetPen(position);
-        MenuText_DrawLine((u16 *)item, 0x1A);
+        MenuText_DrawLine(item->name, 0x1A);
         position.f.mid16 += 0xB0;
         if (trade_stock_list_page_mark[0]->prev == node) {
             break;
@@ -1852,7 +1852,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
     for (; row < 7; node = node->prev, row++) {
         item = &item_level_defs[node->item_number];
         MenuText_SetPen(position);
-        MenuText_DrawLine((u16 *)item, 0x1A);
+        MenuText_DrawLine(item->name, 0x1A);
         position.f.mid16 += 0xB0;
         if (item_list_page_mark[0]->prev == node) {
             break;
@@ -2320,7 +2320,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
     position.raw = 0x0C0975E07C307080L;
     MenuText_SetPen(position);
     for (row = 0; row < 7; row++) {
-        MenuText_DrawLine((u16 *)&item_level_defs[node->item_number], 0x1A);
+        MenuText_DrawLine(item_level_defs[node->item_number].name, 0x1A);
         if (item_list_page_mark[0]->prev == node) {
             break;
         }
@@ -3295,7 +3295,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
     for (line = 0, node = item_list_top[0]; line < 7; node = node->prev, line++) {
         def = &item_level_defs[node->item_number];
         MenuText_SetPen(word);
-        MenuText_DrawLine((u16 *)def, 0x1A);
+        MenuText_DrawLine(def->name, 0x1A);
         word.f.mid16 += 0xB0;
         if (item_list_page_mark[0]->prev == node) {
             break;
@@ -3774,7 +3774,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
     for (row = 0, item = item_list_top[0]; row < 7; item = item->prev, row++) {
         def = &item_level_defs[item->item_number];
         MenuText_SetPen(word);
-        MenuText_DrawLine((u16 *)def, 0x1A);
+        MenuText_DrawLine(def->name, 0x1A);
         word.f.mid16 += 0xB0;
         if (item_list_page_mark[0]->prev == item) {
             break;
@@ -4043,7 +4043,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
     for (line = 0, node = item_list_top[0]; line < 7; node = node->prev, line++) {
         def = &item_level_defs[node->item_number];
         MenuText_SetPen(word);
-        MenuText_DrawLine((u16 *)def, 0x1A);
+        MenuText_DrawLine(def->name, 0x1A);
         word.f.mid16 += 0xB0;
         if (item_list_page_mark[0]->prev == node) {
             break;
@@ -4217,7 +4217,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
         MenuText_SetColor(menu_draw_color);
         word.raw = 0x0A2DC6C07F5078C0;
         MenuText_SetPen(word);
-        MenuText_DrawLineCentered((u16 *)chosen, 0x18);
+        MenuText_DrawLineCentered(chosen->name, 0x18);
     }
     selected = item_list_cursor[0];
     table = Message_GetFontText(menu_heap);
@@ -4812,7 +4812,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
     for (line = 0, node = smith_collect_list_top[0]; line < 7; node = node->prev, line++) {
         def = &item_level_defs[node->item_number];
         MenuText_SetPen(word);
-        MenuText_DrawLine((u16 *)def, 0x1A);
+        MenuText_DrawLine(def->name, 0x1A);
         word.f.mid16 += 0xB0;
         if (smith_collect_list_page_mark[0]->prev == node) {
             break;

@@ -654,7 +654,7 @@ void ScriptCmd_ClearEntityFlag18(ScriptObjectCommand *command);
 
 /* script/script_tables.c */
 extern ScriptCommandHandler script_general_command_handlers[];
-extern u8 *script_game_var_blocks[];
+extern void *script_game_var_blocks[];
 extern ScriptCommandHandler script_world_command_handlers[];
 extern ScriptCommandHandler script_entity_command_handlers[];
 extern u32 script_spare_var_block_a[0x10];

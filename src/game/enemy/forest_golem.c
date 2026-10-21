@@ -69,7 +69,7 @@ void ForestGolem_Init(Entity *entity) {
     ai_state->death = NULL;
     index = entity->params->yaw_limit_deg;
     index += entity->params->pitch_limit_deg * 64;
-    if (((u8 *)map_script_flags)[index] != 0) {
+    if (map_script_flags[index] != 0) {
         ai_state->step_index = 1;
         ai_state->think = ForestGolem_ThinkStayInPlace;
     } else {
@@ -144,7 +144,7 @@ static void ForestGolem_Think(Entity *entity, s32 run_now) {
         s32 index = entity->params->yaw_limit_deg;
 
         index += entity->params->pitch_limit_deg * 64;
-        if (((u8 *)map_script_flags)[index] != 0) {
+        if (map_script_flags[index] != 0) {
             EntityAi_StartAction(entity, ForestGolem_StartScriptAndRumble, run_now);
             return;
         }

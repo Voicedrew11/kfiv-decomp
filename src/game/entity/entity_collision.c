@@ -113,9 +113,9 @@ void EntityCollision_PushApart(Entity *entity) {
     if (!(type_id >= 0x14 && type_id <= 0x16) && (u16)type_id != 0x2D && (u16)type_id != 0x63 && (u16)type_id != 0x97
         && (ENTITY_FLAG_BITS(entity)->live) && entity->hit_points != 0 && !(entity->flags & (ENTITY_FLAG_NOT_TARGETABLE | ENTITY_FLAG_NO_PLAYER_COLLISION))) {
         if (ENTITY_PARAMS_IS_SPHERE(entity->params)) {
-            EntityCollision_SphereCylinder(entity->model->position, (f32 *)&player_state.position, entity->radius, 100.0f, 230.0f);
+            EntityCollision_SphereCylinder(entity->model->position, &player_state.position.x, entity->radius, 100.0f, 230.0f);
         } else {
-            EntityCollision_CylinderCylinder(entity->model->position, (f32 *)&player_state.position, entity->radius, entity->height, 100.0f, 230.0f);
+            EntityCollision_CylinderCylinder(entity->model->position, &player_state.position.x, entity->radius, entity->height, 100.0f, 230.0f);
         }
         if (COLLISION_RESULT->hit != 0) {
             entity->model->position[0] = COLLISION_RESULT->point[0];
@@ -1501,7 +1501,7 @@ void EntityCollision_WalkAgainstObjects(Entity *entity) {
                 continue;
             }
             reach = entity->collision_radius + object->reach_radius;
-            if (reach < EntityMath_DistanceXZ(position, (f32 *)&object->model->position)) {
+            if (reach < EntityMath_DistanceXZ(position, &object->model->position.x)) {
                 continue;
             }
             COLLISION_RESULT->hit = 0;
@@ -1574,7 +1574,7 @@ void EntityCollision_SphereAgainstObjects(Entity *entity) {
                 continue;
             }
             reach = entity->collision_radius + object->reach_radius;
-            if (reach < EntityMath_DistanceXZ(position, (f32 *)&object->model->position)) {
+            if (reach < EntityMath_DistanceXZ(position, &object->model->position.x)) {
                 continue;
             }
             COLLISION_RESULT->hit = 0;

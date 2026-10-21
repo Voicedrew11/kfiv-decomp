@@ -198,11 +198,12 @@ void EntityAi_StepState(Entity *entity) {
    to do. */
 int EntityAi_TurnFromPush(void *entity_arg, void *heading_out) {
     Entity *entity = entity_arg;
+    f32 *heading = heading_out;
     f32 facing[4];
     f32 push[4];
     f32 angle;
 
-    *(f32 *)heading_out = 0.0f;
+    *heading = 0.0f;
     if (!(entity->flags & (ENTITY_FLAG_WALL_PUSH | ENTITY_FLAG_400000000000 | ENTITY_FLAG_ENTITY_PUSH))) {
         return 0;
     }
@@ -229,11 +230,11 @@ int EntityAi_TurnFromPush(void *entity_arg, void *heading_out) {
     Vector_Cross(facing, push, facing);
     if (facing[1] <= 0.0f) {
         angle = entity->model->rotation[1] + angle + DEG_TO_RAD(1);
-        *(f32 *)heading_out = angle;
+        *heading = angle;
         return 1;
     }
     angle = entity->model->rotation[1] - angle - DEG_TO_RAD(1);
-    *(f32 *)heading_out = angle;
+    *heading = angle;
     return -1;
 }
 

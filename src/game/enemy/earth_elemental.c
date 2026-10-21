@@ -455,7 +455,7 @@ static void EarthElemental_AlertSameKind(Entity *entity) {
             if (ai_state->pause_timer == 0
                 && EntityMath_DistanceXZ(entity->model->position, other->model->position)
                        < (s16)entity->params->action_frames
-                && EntityMath_DistanceXZ((float *)other->spawn_info, &player_state.position.x) < other->spawn_info->wander_radius) {
+                && EntityMath_DistanceXZ(&other->spawn_info->spawn_x, &player_state.position.x) < other->spawn_info->wander_radius) {
                 ai_state->pause_timer = 1;
             }
         }

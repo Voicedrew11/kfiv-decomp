@@ -179,7 +179,7 @@ static void Npc_ThinkReactToPlayer(Entity *entity, s32 run_now) {
     f32 limit;
     f32 direction;
 
-    direction = EntityMath_HeadingTo(entity->model->position, (float *)&player_state.position);
+    direction = EntityMath_HeadingTo(entity->model->position, &player_state.position.x);
     angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
     limit = DEG_TO_RAD((f32)ENTITY_CONTROLLER(entity)->far_distance);
     if (0.0f <= angle ? limit < angle : limit < -angle) {
@@ -204,7 +204,7 @@ static void Npc_ThinkTurnToPlayer(Entity *entity, s32 run_now) {
     f32 limit;
     f32 direction;
 
-    direction = EntityMath_HeadingTo(entity->model->position, (float *)&player_state.position);
+    direction = EntityMath_HeadingTo(entity->model->position, &player_state.position.x);
     angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
     limit = DEG_TO_RAD((f32)ENTITY_CONTROLLER(entity)->far_distance);
     if (0.0f <= angle ? limit < angle : limit < -angle) {

@@ -20,7 +20,7 @@ static inline f32 ModelMatrix_WrapAngle(f32 angle) {
 
 /* Builds a part's local matrix from its scale, its three angles (applied x, z, y) and its offset. */
 void ModelMatrix_BuildPartLocal(ModelInstance *model, ModelPart *part, ModelPart *dest) {
-    f32 *matrix = (f32 *)dest->matrix;
+    f32 *matrix = dest->matrix;
 
     sceVu0CopyMatrix(matrix, identity_matrix);
     matrix[0] = part->scale[0];
@@ -288,16 +288,16 @@ static void Matrix_RotateVector(void *dst, void *src_matrix, void *src_vec) {
 
 /* Makes the two matrices a model is drawn with: the first with its rows divided by the model's scale;
    the second, with MODEL_FLAG_FLAT_COLOUR, emptied but for the model's colour times its alpha. */
-void ModelMatrix_BuildDrawMatrices(ModelInstance *model, s32 normal_src, s32 light_src, void *normal_dest,
+void ModelMatrix_BuildDrawMatrices(ModelInstance *model, void *normal_src, void *light_src, void *normal_dest,
                                    void *light_dest) {
     f32 (*normal)[4] = normal_dest;
     f32 (*light)[4] = light_dest;
 
-    sceVu0CopyMatrix(normal, (void *)normal_src);
+    sceVu0CopyMatrix(normal, normal_src);
     sceVu0DivVectorXYZ(normal[0], normal[0], model->scale_x);
     sceVu0DivVectorXYZ(normal[1], normal[1], model->scale_y);
     sceVu0DivVectorXYZ(normal[2], normal[2], model->scale_z);
-    sceVu0CopyMatrix(light, (void *)light_src);
+    sceVu0CopyMatrix(light, light_src);
     if (model->model_flags & MODEL_FLAG_FLAT_COLOUR) {
         light[0][0] = 0.0f;
         light[0][1] = 0.0f;

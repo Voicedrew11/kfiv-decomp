@@ -767,7 +767,7 @@ static s32 SaveCard_StepSave(void) {
 }
 
 /* Starts reading save number save_index from a card into data, unless a task is running. */
-s32 SaveCard_StartLoad(s32 card, s32 file, s32 *data, s32 size) {
+s32 SaveCard_StartLoad(s32 card, s32 file, void *data, s32 size) {
     CardRecord *records = card_records;
     CardTask *task = &card_task;
     CardRecord *chosen = &card_records[card];

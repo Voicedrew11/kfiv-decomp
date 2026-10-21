@@ -25,7 +25,7 @@
 #define AT_LEAST_5(chance) ((chance) < 5 ? 5 : (chance))
 #define ENTITY_TYPE_LAST_BOSS 99
 /* EntityParams.unk238 as six signed bytes: tenths the six magic strengths of an entity's hit are scaled by */
-#define ENTITY_HIT_SCALES(entity) ((s8 *)&(entity)->params->shot_params)
+#define ENTITY_HIT_SCALES(entity) ((entity)->params->shot_params.bytes)
 /* store a strength as a whole number, rounded up when more than a thousandth is left over */
 #define STORE_ROUNDED_UP(dest, value) \
     strength = (value); \

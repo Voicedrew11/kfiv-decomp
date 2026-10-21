@@ -73,7 +73,7 @@ void MapObject_UpdateBreaking(MapObject *object) {
 
     if (MODEL_CHANNEL(object->model) != NULL && MODEL_CHANNEL(object->model)->frame != 0) {
         if (object->definition->definition_flags & MAP_OBJECT_DEF_FADE_ON_BREAK) {
-            total = ModelMotion_GetLastFrame((char *)object->model);
+            total = ModelMotion_GetLastFrame(object->model);
             if (total != 0) {
                 alpha = ((total - MODEL_CHANNEL(object->model)->frame) << 7) / total;
             } else {

@@ -68,7 +68,7 @@ typedef struct {
 
 /* one 0x80-byte part (joint) of a model, ModelInstance.parts[i] */
 typedef struct ModelPart {
-    char matrix[0x40];              /* 0x00 the part's matrix, passed by address */
+    f32 matrix[16];                 /* 0x00 the part's matrix, passed by address */
     f32 position[4];                /* 0x40 where it sits on its parent */
     f32 rotation_x;                 /* 0x50 an angle, wrapped to +-pi (about x) */
     f32 rotation_y;                 /* 0x54 angle about y */

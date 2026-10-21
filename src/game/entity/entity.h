@@ -248,8 +248,9 @@ typedef struct {
 #define UNK1B1470_UNIT_UNK4C_3 (0x8000L << 20)
 
 /* eight bytes the game copies with unaligned loads and stores */
-typedef struct {
+typedef union {
     s64 value;
+    s8 bytes[8];                    /* the six hit scales of an entity (ENTITY_HIT_SCALES in player/attack.c) */
 } __attribute__((packed)) EntityUnaligned64;
 
 /* what Shot_Alloc returns: something an entity launches */
