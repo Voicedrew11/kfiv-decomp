@@ -350,7 +350,7 @@ static void FireGenie_Death(Entity *entity) {
         Motion_Start(entity, 0x10, 0, 5, 1);
         ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         ENTITY_FLAGS(entity) |= ENTITY_FLAG_ANIMATES;
-        ENTITY_FLAGS(entity) |= 0x100000;
+        ENTITY_FLAGS(entity) |= ENTITY_FLAG_100000;
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_DYING_1;
         ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         if (ai_state->action_counter != 0) {
