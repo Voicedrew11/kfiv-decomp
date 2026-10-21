@@ -10,6 +10,15 @@
 /* SoundDriver_Remote command bits: the reply is taken into a buffer; a buffer is sent with the command */
 #define SOUND_COMMAND_REPLY        0x80000
 #define SOUND_COMMAND_SENDS_BUFFER 0x40000
+/* stream commands: the stream number (0 or 1) is added to the base */
+#define SOUND_STREAM_OPEN_CMD      0x3000   /* opens the file named in the RPC buffer as the stream */
+#define SOUND_STREAM_FILE_NAME_CMD 0x30A0   /* sends the stream the name of the file to play */
+/* SoundEffectFields.mode bit: the reverb clears its work area */
+#define SOUND_REVERB_MODE_CLEAR_WORK 0x100
+/* the fields of a packed envelope word (SoundDriver_SetAdsr): SoundVoiceStatus bits16_19, bits13_15 and bit5 */
+#define SOUND_ADSR_BITS16_19 0xF0000
+#define SOUND_ADSR_BITS13_15 0xE000
+#define SOUND_ADSR_BIT5      0x20
 
 /* a MIDI data byte: 7 bits, the low half of a 14-bit bend or value */
 #define MIDI_DATA_MASK             0x7F

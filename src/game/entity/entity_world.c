@@ -251,7 +251,7 @@ void Entity_UpdateAll(void) {
     Entity *entity;
     EntitySpawnInfo *spawn_info;
 
-    if (suspended_updates[0] & 4) {
+    if (suspended_updates[0] & UPDATE_HOLD_ENTITIES) {
         return;
     }
     for (entity = active_entities_head; entity != NULL; entity = entity->next) {
@@ -446,7 +446,7 @@ void Entity_DrawAll(int list) {
                     }
                 }
                 LinkedPoint_FindHitsForModel(ENTITY_MODEL(entity));
-                if (ENTITY_MODEL(entity)->alpha < 128.0f || (ENTITY_MODEL(entity)->model_flags & 0x200) || entity->spawn_info->type_id == 0x10) {
+                if (ENTITY_MODEL(entity)->alpha < 128.0f || (ENTITY_MODEL(entity)->model_flags & MODEL_FLAG_DRAW_LIST) || entity->spawn_info->type_id == 0x10) {
                     DrawList_Add(ENTITY_MODEL(entity), 0, list);
                 } else {
                     ModelTexture_SendForModel(ENTITY_MODEL(entity));

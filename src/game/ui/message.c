@@ -203,7 +203,7 @@ static void Message_Draw(void) {
         *words++ = 0;
         *words++ = 0;
         *words++ = 0;
-        *words++ = (glyph_count * 7 + 0xA) | 0x51000000;
+        *words++ = (glyph_count * 7 + 0xA) | VIF_CODE_DIRECTHL;
         /* GIF tag: three register writes */
         *words++ = 0x8003;
         *words++ = 0x10004000;

@@ -101,13 +101,13 @@ void Map_DrawRecords(int mode) {
             GsDraw_QueueFlush();
             for (; record != NULL; record = record->next) {
                 flags = record->flags;
-                if ((flags & 2) && mode != 0) {
+                if ((flags & MAP_RECORD_SCREEN_ONLY) && mode != 0) {
                     continue;
                 }
                 if ((flags & MAP_RECORD_RIPPLED) && mode != 0) {
                     continue;
                 }
-                if (!(flags & 0x20) && mode != 0) {
+                if (!(flags & MAP_RECORD_ALL_MODES) && mode != 0) {
                     continue;
                 }
                 if (active >= 2 && flags < 0 && map != current_map_slot) {
@@ -178,13 +178,13 @@ void Map_DrawLateRecords(int mode) {
             Packet_EndGsRegisters();
             for (; record != NULL; record = record->next) {
                 flags = record->flags;
-                if ((flags & 2) && mode != 0) {
+                if ((flags & MAP_RECORD_SCREEN_ONLY) && mode != 0) {
                     continue;
                 }
                 if ((flags & MAP_RECORD_RIPPLED) && mode != 0) {
                     continue;
                 }
-                if (!(flags & 0x20) && mode != 0) {
+                if (!(flags & MAP_RECORD_ALL_MODES) && mode != 0) {
                     continue;
                 }
                 if (active >= 2 && flags < 0 && map != current_map_slot) {
@@ -194,7 +194,7 @@ void Map_DrawLateRecords(int mode) {
                 z_mask = !(flags & MAP_RECORD_Z_WRITE);
                 if (z_mask != old_z_mask) {
                     Packet_BeginGsRegisters();
-                    Packet_AddGsRegister(GS_REG_ZBUF_1, ((s64)z_mask << 32) | 0xA000118);
+                    Packet_AddGsRegister(GS_REG_ZBUF_1, ((s64)z_mask << 32) | GS_ZBUF_CT16S_118);
                     Packet_EndGsRegisters();
                 }
                 if (record->flags & MAP_RECORD_CURRENT_BLOCKS) {
@@ -385,7 +385,7 @@ void Map_BuildModels(int map) {
                 ((ModelInstance **)slot->record_model_table)[record->model_index] = model;
             }
             Model_SetPrimBits(model, 0x20, 0x20);
-            if (record->record_flags & 0x202) {
+            if (record->record_flags & (MAP_RECORD_BIT1 | MAP_RECORD_RIPPLED)) {
                 Model_SetPrimBits(model, 0x60, 0x60);
                 Model_SetAlphaBlend(model, 0x48);
             }

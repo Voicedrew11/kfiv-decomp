@@ -414,7 +414,7 @@ static int Entity_TryActivate(Entity *entity) {
     model->draw = Entity_PrepareModelDraw;
     model->after_draw = NULL;
     if (entity->spawn_info->type_id == 0x47) {
-        model->model_flags |= 0x200;
+        model->model_flags |= MODEL_FLAG_DRAW_LIST;
         model->draw_flags |= MODEL_DRAW_OWN_TEXTURE;
         model->draw = Entity_PrepareScreenTexturedDraw;
         model->after_draw = Entity_AfterDrawEmpty;
@@ -855,7 +855,7 @@ static void EntityPool_FreeUnusedBlocks(void) {
     slot_index = 0;
     slot = entity_pool_slots;
     while (slot_index < ENTITY_POOL_SLOT_COUNT) {
-        if ((slot->head.word & 0x2FF) == (ENTITY_POOL_FLAG_200 | ENTITY_POOL_READY)) {
+        if ((slot->head.word & ENTITY_POOL_KIND_FLAG_200_MASK) == (ENTITY_POOL_FLAG_200 | ENTITY_POOL_READY)) {
             // match: a type in use skips straight to the next slot; break or flag forms reorder the blocks
             for (entity = list_a; entity != NULL; entity = entity->next) {
                 if (entity->spawn_info->type_id == slot->head.fields.type_id) {

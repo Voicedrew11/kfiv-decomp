@@ -27,6 +27,7 @@
 /* Timers. */ /* derived name */
 #define T0_COUNT ((volatile int *)0x10000000)
 #define T0_MODE ((volatile int *)0x10000010)
+#define TIMER_MODE_EQUF 0x400 /* T0_MODE bit 10, EQUF: the compare flag; Timer_CountOverflow writes it to acknowledge */
 #define T1_COUNT ((volatile int *)0x10000800)
 #define T1_MODE ((volatile int *)0x10000810)
 #define T3_MODE ((volatile int *)0x10001810)

@@ -144,7 +144,7 @@ int EffectHit_CheckAndEndByFlag(EffectActor *effect, s8 *state) {
     }
     if (effect->effect_param != 0xFFFF && effect->def->hit_check_index != 0xFF) {
         hit_flags = Attack_RunEffectHitCheck(effect);
-        if (hit_flags & 2) {
+        if (hit_flags & HIT_TARGET_ENTITY) {
             if (effect->def->child_effect_id != 0) {
                 Effect_Spawn(effect->def->child_effect_id, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
             }

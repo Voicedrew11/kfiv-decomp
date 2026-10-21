@@ -715,7 +715,7 @@ static void MapViewer_DrawKingsMap(void) {
     pulse_frame = (pulse_frame + 1) % period;
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(GS_REG_TEST_2, 0x51001);
-    Packet_AddGsRegister(GS_REG_ALPHA_2, ((s64)alpha << 32) | 0x68);
+    Packet_AddGsRegister(GS_REG_ALPHA_2, ((s64)alpha << 32) | GS_ALPHA_CS_FIX_CD);
     Packet_EndGsRegisters();
     pointer_model.light_block = (s32)&viewer_default_lights;
     pointer_model.hit_count = 0;
@@ -745,16 +745,16 @@ static void MapViewer_DrawKingsMap(void) {
                 default:
                     for (i = 0; i < ((MapSlotUnk08 *)slot->header)->record_count; i++, record++) {
                         flags = record->flags;
-                        if (flags & 0x40000000) {
+                        if (flags & MAP_RECORD_HIDDEN) {
                             continue;
                         }
-                        if (flags & 0x20000000) {
+                        if (flags & MAP_RECORD_20000000) {
                             continue;
                         }
                         if (flags < 0) {
                             continue;
                         }
-                        if (flags & 0x10) {
+                        if (flags & MAP_RECORD_CURRENT_BLOCKS) {
                             record->model->light_block = (s32)&map_draw_state.current_light_block;
                             record->model->fog_block = &map_draw_state.current_fog_block;
                         } else {

@@ -282,7 +282,7 @@ void WeaponTrail_Update(void) {
         Vu0_LoadMatrix(world_screen);
         Vu0_ProjectToScreen(&point, blade_base);
         point.z = (s32)point.z >> 4;
-        if (point.z > 0xFFFF0 || ((point.x | point.y) & 0xFFFF0000)) {
+        if (point.z > 0xFFFF0 || ((point.x | point.y) & SCREEN_XY_OUTSIDE_MASK)) {
             point.flags |= MODEL_SCREEN_POINT_FLAG_OFF_SCREEN;
         } else {
             point.flags = 0;
@@ -290,7 +290,7 @@ void WeaponTrail_Update(void) {
         WeaponTrail_Push(&point);
         Vu0_ProjectToScreen(&point, blade_tip);
         point.z = (s32)point.z >> 4;
-        if (point.z > 0xFFFF0 || ((point.x | point.y) & 0xFFFF0000)) {
+        if (point.z > 0xFFFF0 || ((point.x | point.y) & SCREEN_XY_OUTSIDE_MASK)) {
             point.flags |= MODEL_SCREEN_POINT_FLAG_OFF_SCREEN;
         } else {
             point.flags = 0;
@@ -353,12 +353,12 @@ void Player_DrawArm(void) {
         clipped = 6;
         size = count * 2 + 1;
         packet_start = packet = Packet_Alloc(size + 3);
-        *packet = (size + 1) | 0x10000000;
+        *packet = (size + 1) | DMA_TAG_CNT;
         packet += 7;
-        *packet++ = size | 0x51000000;
+        *packet++ = size | VIF_CODE_DIRECTHL;
         /* GIF tag: count vertices of two registers each, a shaded, blended triangle strip */
-        tag = count | 0x8000 | (0x8000L << 46);
-        tag |= 0x9900L << 38; // match: a second statement, or the two constants fold into one
+        tag = count | GIF_TAG_EOP | GIF_TAG_NREG_2;
+        tag |= GIF_TAG_PRE_PRIM_STRIP_SHADED_BLEND; // match: a second statement, or the two constants fold into one
         *(u64 *)packet = tag;
         packet += 2;
         *(u64 *)packet = 0x51; /* the registers: RGBAQ, XYZ2 */
@@ -373,7 +373,7 @@ void Player_DrawArm(void) {
             packet += 3;
             /* a point off the screen keeps the three triangles it is part of from being drawn */
             if (*packet != 0) {
-                clipped |= 4;
+                clipped |= WEAPON_TRAIL_CLIP_NEWEST;
             }
             if (clipped != 0) {
                 *packet++ = 0x8000;

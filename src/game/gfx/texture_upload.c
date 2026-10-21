@@ -9,6 +9,8 @@
 #include <eekernel.h>
 #include <string.h>
 
+/* quadwords after the end tag of the TEXFLUSH chain: a GIF tag and the A+D write */
+#define TEXFLUSH_TAG_QWC 2
 #define TEX0_BITS(header) ((TextureTex0Bits *)&(header)->tex0)
 
 static u32 texflush_packet[0xC];    /* 0x1DFAF80 where Texture_SendTexFlush builds its DMA packet */
@@ -198,7 +200,7 @@ static void Texture_BuildPacket(char **texture, char **packet) {
     *((u32 *)cursor)++ = 0;
     *((u32 *)cursor)++ = 0;
     *((u32 *)cursor)++ = 0;
-    *((u32 *)cursor)++ = total | 0x51000000;
+    *((u32 *)cursor)++ = total | VIF_CODE_DIRECTHL;
     *((u64 *)cursor)++ = 0x1000000000000004;
     *((u64 *)cursor)++ = 0xE;
     base_pointer = TEX0_BITS(header)->base_pointer;
@@ -269,7 +271,7 @@ void Texture_SendTexFlush(void) {
     u32 *cursor;
 
     cursor = texflush_packet;
-    *cursor++ = DMA_TAG_ID_END | 2;
+    *cursor++ = DMA_TAG_ID_END | TEXFLUSH_TAG_QWC;
     *cursor++ = 0;
     *cursor++ = 0;
     *cursor++ = 0;

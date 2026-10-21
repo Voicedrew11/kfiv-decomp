@@ -481,7 +481,7 @@ void MapItem_UpdateFalling(void) {
     float height;
 
     node = lying_items;
-    if (!(suspended_updates[0] & 0x10) && node != 0) {
+    if (!(suspended_updates[0] & UPDATE_HOLD_FALLING_ITEMS) && node != 0) {
         do {
             if (node->record != 0) {
                 flags = node->flags;

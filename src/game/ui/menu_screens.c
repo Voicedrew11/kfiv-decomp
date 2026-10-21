@@ -483,7 +483,7 @@ static void Menu_BuildItemRings(void) {
     first = NULL;
     count = 0;
     for (i = 1; i < 380; i++) {
-        if (item_counts.bytes[i] != 0 && !(item_level_defs[i].state & 2)) {
+        if (item_counts.bytes[i] != 0 && !(item_level_defs[i].state & ITEM_DEF_STATE_LOCKED)) {
             if ((i >= 0 && i < 150) || (i >= 150 && i < 220 && weapon_level_records[i - 150].in_smith_rings == 0) ||
                 (i >= 220 && i < 250 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
                 (i >= 250 && i < 275 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
@@ -2266,7 +2266,7 @@ static s32 Menu_CopyFrameToTexture(void) {
         packet[1] = 0x100B4000; // match: the tag word packet[0] is written last
         packet[2] = 0xE;
         packet[3] = 0;
-        *(u64 *)&packet[4] = (menu_first_draw_env[0] & ~0x1FFL) | 0x192;
+        *(u64 *)&packet[4] = (menu_first_draw_env[0] & ~0x1FFL) | GS_FRAME_FBP_MENU_WORK;
         packet[6] = 0x4C;
         packet[7] = 0;
         packet[8] = 0;
@@ -2281,7 +2281,7 @@ static s32 Menu_CopyFrameToTexture(void) {
         packet[17] = 0xE00000;
         packet[18] = 0x40;
         packet[19] = 0;
-        *(u64 *)&packet[20] = texture_base | 0x28028000 | 0x640000000L; /* TEX0: 1024 by 512 */
+        *(u64 *)&packet[20] = texture_base | GS_TEX0_TBW_640_TW_1024 | GS_TEX0_TH_512_TCC_RGBA; /* TEX0: 1024 by 512 */
         packet[22] = 0x6;
         packet[23] = 0;
         packet[24] = 0x80808080;
@@ -2444,7 +2444,7 @@ static void Menu_DrawBackdropPlain(void) {
         packet[3].as_int = 0;
         packet[4].as_int = 0x46;
         packet[5].as_int = 0;
-        packet[6].as_int = color.red | (color.green << 8) | (color.blue << 16) | 0x40000000;
+        packet[6].as_int = color.red | (color.green << 8) | (color.blue << 16) | GS_RGBAQ_ALPHA_HALF;
         packet[7].as_int = 0;
         packet[8].as_int = 0x79006C00;
         packet[9].as_int = 2;
@@ -7115,7 +7115,7 @@ void Menu_DrawBrightness(s32 level) {
             *(u64 *)&packet[6] = 0x6680288C0;
         }
     } while (0);
-    colour = level | 0x80000000;
+    colour = level | GS_RGBAQ_ALPHA_FULL;
     colour |= (level << 16) | (level << 8);
     (cursor++)->as_int = colour;
     (cursor++)->as_float = 1.0f;

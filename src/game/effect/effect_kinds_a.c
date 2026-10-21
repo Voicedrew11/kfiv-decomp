@@ -68,7 +68,7 @@ void EffectFly_Update(EffectActor *effect) {
     EffectKeys_ApplyColour(effect);
     motion = (ScaledFallMotion *)&effect->motion;
     if (effect->frame < effect->def->max_frames || effect->def->max_frames == 0) {
-        if (EFFECT_DEF_FLAGS(effect->def) & 0x80000) {
+        if (EFFECT_DEF_FLAGS(effect->def) & EFFECT_DEF_FLAG_FLY_ALONG_HEADING) {
             EffectAngle_ToVector(effect->def->speed, &step, &effect->model->rotation);
             motion->scale += effect->def->scale_per_frame;
             Vector_Scale(&step, &step, motion->scale);
@@ -334,7 +334,7 @@ void EffectTrailHoming_Update(EffectActor *actor) {
     COLLISION_RESULT->floor_material = 6;
     hit = Attack_RunEffectHitCheck(actor);
     if (hit != 0) {
-        if (hit & 2) {
+        if (hit & HIT_TARGET_ENTITY) {
             if (motion->hit_cooldown < 0) {
                 motion->turn_rate = actor->def->sub_effect_id;
                 Effect_Spawn(actor->def->radius_half, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
@@ -402,7 +402,7 @@ void EffectAimedHoming_Update(EffectActor *actor) {
     hit = Attack_RunEffectHitCheck(actor);
     if (hit != 0) {
         Effect_FreeSpawnersOf(actor);
-        if (hit & 2) {
+        if (hit & HIT_TARGET_ENTITY) {
             Vector_Copy(&vec, &actor->model->position);
             if (Collision_FindFloorBelow(350.0f, &actor->model->position) == 1) {
                 vec.y = COLLISION_RESULT->point[1];
@@ -613,7 +613,7 @@ void EffectFall_Update(EffectActor *effect) {
         EffectAngle_FromVector(&effect->model->rotation.x, &motion->velocity.x);
     }
     hit = Attack_RunEffectHitCheck(effect);
-    if (hit & 8) {
+    if (hit & HIT_TARGET_MAP_FLOOR) {
         if (COLLISION_RESULT->floor_material == 3 || COLLISION_RESULT->floor_material == 5) {
             if (COLLISION_RESULT->floor_material == 5) {
                 Effect_Spawn(0x16, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
@@ -789,7 +789,7 @@ void EffectGroundRun_Update(EffectActor *effect) {
         }
         if (effect->frame >= effect->def->radius_half && effect->frame <= effect->def->interval) {
             effect->model->position.y -= motion->hit_offset;
-            if (Attack_RunEffectHitCheck(effect) & 0x14) {
+            if (Attack_RunEffectHitCheck(effect) & (HIT_TARGET_MAP_OBJECT | HIT_TARGET_MAP_WALL)) {
                 if (COLLISION_RESULT->floor_material == 3 || COLLISION_RESULT->floor_material == 5) {
                     Effect_Spawn(effect->def->sub_effect_id, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                     Effect_Spawn(0x123, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
@@ -869,11 +869,11 @@ void EffectFloorSkim_Update(EffectActor *effect) {
         motion->frames_to_impact -= 1;
         hits = Attack_RunEffectHitCheck(effect);
         if (hits != 0) {
-            if ((hits & 2) && effect->def->child_effect_id != 0) {
+            if ((hits & HIT_TARGET_ENTITY) && effect->def->child_effect_id != 0) {
                 Effect_Spawn(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                 Effect_Spawn(0x33, &point, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                 motion->ends_next_frame = 1;
-            } else if ((hits & 8) && motion->frames_to_impact < 0) {
+            } else if ((hits & HIT_TARGET_MAP_FLOOR) && motion->frames_to_impact < 0) {
                 Vector_Copy(&point, &effect->model->position);
                 point.y -= 100.0f;
                 point.y = (Collision_FindFloorBelow(200.0f, &point) == 1) ? COLLISION_RESULT->point[1] : effect->model->position.y;
@@ -987,7 +987,7 @@ void EffectGroundSway_Update(EffectActor *effect) {
     effect->model->position.y -= 110.0f;
     hits = Attack_RunEffectHitCheck(effect);
     effect->model->position.y += 110.0f;
-    if (hits & 0x14) {
+    if (hits & (HIT_TARGET_MAP_OBJECT | HIT_TARGET_MAP_WALL)) {
         Effect_Free(effect);
         return;
     }
@@ -1081,7 +1081,7 @@ void EffectGroundTrail_Update(EffectActor *effect) {
     effect->model->position.y -= 110.0f;
     hits = Attack_RunEffectHitCheck(effect);
     effect->model->position.y += 110.0f;
-    if (hits & 0x14) {
+    if (hits & (HIT_TARGET_MAP_OBJECT | HIT_TARGET_MAP_WALL)) {
         Effect_Free(effect);
         return;
     }

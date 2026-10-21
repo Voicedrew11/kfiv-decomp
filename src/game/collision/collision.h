@@ -23,6 +23,10 @@ typedef struct {
     f32 normal[4];                  /* 0x20 unit vector away from what was hit */
 } CollisionResult;
 
+/* CollisionResult.hit bits */
+#define COLLISION_HIT_WALL      0x1     /* a side push: the entity is pushed out sideways (sets wall_push) */
+#define COLLISION_HIT_ON_TOP    0x2     /* the top of the object: the entity stands on it (sets on_top) */
+
 #define COLLISION_RESULT ((CollisionResult *)0x70000000)
 
 /* the scratchpad from 0x100 on: the points of a model's collision mesh (CollisionMesh.points)

@@ -414,6 +414,7 @@ typedef struct {
 extern LevelDef item_level_defs[380];
 
 #define ITEM_UPGRADE_MATERIAL_MASK 3 /* LevelDef.upgrade_material_kind low two bits: 1 bone, 2 scale, 3 claw */
+#define ITEM_DEF_STATE_LOCKED 2 /* LevelDef.state bit 1: the item is locked; the item lists leave it out */
 
 /* ini_keys[]: the keys of ini/NNNN.ini ("hp=", "equip_weapon=", "item_", ...) and what reads each; a NULL handler ends it */
 typedef struct {

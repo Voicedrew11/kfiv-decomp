@@ -131,7 +131,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
     s32 i;
     s32 j;
 
-    model->model_flags |= 0x4000;
+    model->model_flags |= MODEL_FLAG_ALPHA_DIRECT;
     cursor = (char *)*file_cursor;
     memory_base = (ModelPart *)*memory;
     model->file = (ModelFile *)cursor;
@@ -830,7 +830,7 @@ void Model_DrawPosed(ModelInstance *model) {
 
     if (model->parts != NULL && model->part_count != 0) {
         MODEL_BUILD_DRAW_MATRICES(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b);
-        if (model->model_flags & 0x800) {
+        if (model->model_flags & MODEL_FLAG_RECORD_SENT) {
             packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
             packet_start = packet = Packet_Alloc(0x1C);
@@ -873,7 +873,7 @@ void Model_DrawPosed(ModelInstance *model) {
             light_out += 4;
         }
         packet += 0x20;
-        if (model->model_flags & 0x800) {
+        if (model->model_flags & MODEL_FLAG_RECORD_SENT) {
             *packet++ = 0x10000004;
             *packet++ = 0;
             *packet++ = 0;
@@ -932,7 +932,7 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
     if (model->parts != NULL && model->part_count != 0) {
         matrix_b_ptr = matrix_b;
         MODEL_BUILD_DRAW_MATRICES(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b_ptr);
-        if (model->model_flags & 0x800) {
+        if (model->model_flags & MODEL_FLAG_RECORD_SENT) {
             packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
             packet_start = packet = Packet_Alloc(0x1C);
@@ -975,7 +975,7 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
             light_out += 4;
         }
         packet += 0x20;
-        if (model->model_flags & 0x800) {
+        if (model->model_flags & MODEL_FLAG_RECORD_SENT) {
             *packet++ = 0x10000004;
             *packet++ = 0;
             *packet++ = 0;
@@ -1035,7 +1035,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
 
     if (model->parts != NULL && model->part_count != 0) {
         MODEL_BUILD_DRAW_MATRICES(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b);
-        if (model->model_flags & 0x800) {
+        if (model->model_flags & MODEL_FLAG_RECORD_SENT) {
             packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
             packet_start = packet = Packet_Alloc(0x1C);
@@ -1078,7 +1078,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
             light_out += 4;
         }
         packet += 0x20;
-        if (model->model_flags & 0x800) {
+        if (model->model_flags & MODEL_FLAG_RECORD_SENT) {
             *packet++ = 0x10000004;
             *packet++ = 0;
             *packet++ = 0;
@@ -1148,7 +1148,7 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
     if (model->parts != NULL && model->part_count != 0) {
         MODEL_BUILD_DRAW_MATRICES(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b);
         /* the packet below is 0x1C quadwords either way: with the flag set the last 5 are never written */
-        if (model->model_flags & 0x800) {
+        if (model->model_flags & MODEL_FLAG_RECORD_SENT) {
             packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
             packet_start = packet = Packet_Alloc(0x1C);
@@ -1386,7 +1386,7 @@ void Model_SetVu1Program(ModelInstance *model, s32 value) {
     for (i = 0; i < model->part_count; i++, part++) {
         data = (ModelPartData *)(u32)part->data_addr;
         last_qword = (u32 *)((char *)data + data->length * 16);
-        last_qword[3] = value | 0x15000000;
+        last_qword[3] = value | VIF_CODE_MSCALF;
     }
 }
 

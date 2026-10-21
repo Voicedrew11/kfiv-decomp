@@ -43,7 +43,9 @@
 #define GS_PRIM_FLAT_SPRITE_MASK 0xFFFFFFE9 /* clears TME and the PRIM type bits of a sprite, which GS_PRIM_SPRITE sets again */
 #define GS_ALPHA_C_FIX      0x20    /* ALPHA field C set to FIX: the alpha is the FIX field, bits 32-39 */
 #define GS_ALPHA_CS_FIX_CD  0x68    /* ALPHA (Cs * FIX) + Cd: the blend that sets a frame's alpha */
+#define GS_ALPHA_LERP_CS_CD_FIX 0x64 /* ALPHA ((Cs - Cd) * FIX) + Cd: a fade from the frame toward the source, by FIX */
 #define GS_FRAME_FBW_640    0xA0000 /* FRAME FBW field (bits 16-21) of the 640-pixel-wide frame */
+#define GS_ZBUF_CT16S_118   0xA000118 /* ZBUF: Z base block 0x118 with PSM CT16S (0x0A at bit 24); the ZMSK bit 32 is OR'd in */
 #define GS_DISPFB_FBW_MASK  0x7E00  /* DISPFB FBW field, bits 9-14 */
 #define GS_FBW_MASK         0x3F    /* a buffer width value (FRAME, DISPFB), 6 bits */
 #define GS_DISPFB_FBP_MASK  0x1FF   /* DISPFB FBP field, bits 0-8 */
@@ -65,9 +67,17 @@
 #define GS_TEX0_CLD_LOAD_TO_CBP0 2   /* TEX0 CLD: load the CLUT and copy CBP to CBP0 */
 #define GS_BITBLTBUF_DBP_MASK 0x3FFF /* BITBLTBUF DBP: the destination base pointer (bits 32-45), in 64-word blocks */
 #define SCREEN_XY_OUTSIDE_MASK 0xFFFF0000 /* x or y bits above the GS's 16-bit window: the point is outside it */
+/* VIF command words (the top byte is the command, bits 16-23 NUM, the low 16 bits the immediate) */
+#define VIF_CODE_MSCALF 0x15000000       /* MSCALF: starts the VU1 microprogram at the immediate's address */
+#define VIF_CODE_DIRECTHL 0x51000000    /* DIRECTHL: the immediate's quadwords follow, sent to the GIF */
+#define VIF_UNPACK_V4_16_ADDR1 0x6D008001 /* UNPACK V4-16 to VU address 1 (immediate bit 15 set); NUM is the vertex count times 4 */
+#define VIF_UNPACK_V4_32_ADDR1 0x6C008001 /* UNPACK V4-32 to VU address 1 (immediate bit 15 set); NUM is the vertex count times 4 */
+#define VIF_UNPACK_V4_32_ADDR_C000 0x6C00C000 /* UNPACK V4-32 to VU address 0xC000 (the A+D register block); NUM is the register count plus 1 */
 #define GIF_TAG_FLG_IMAGE   0x800000000000000 /* GIF tag FLG (bits 58-59) at 2, image mode: the qwords after the tag are image data */
 #define GIF_TAG_PRIM_TME    0x80000 /* PRIM's TME bit in a GIF tag's second word (PRIM sits at bit 15): texture mapping */
 #define GIF_TAG_PRIM_ABE    0x200000 /* PRIM's ABE bit in a GIF tag's second word: alpha blending */
+#define GIF_TAG_NREG_2      (0x8000L << 46) /* GIF tag NREG (bits 60-63) of 2: two registers per loop */
+#define GIF_TAG_PRE_PRIM_STRIP_SHADED_BLEND (0x9900L << 38) /* GIF tag PRE set, PRIM 0x4C: triangle strip, Gouraud, alpha blend */
 /* PSM: the GS pixel storage formats (TEX0, BITBLTBUF, FRAME, ZBUF) */
 #define GS_PSM_CT32     0x00
 #define GS_PSM_CT24     0x01
@@ -84,6 +94,12 @@
 #define GS_PSM_Z16S     0x3A
 #define GS_PSM_4BIT_PALETTE 0x4     /* PSM bit 2: the 4-bit palette formats (PSMT4 0x14, PSMT4HL 0x24, PSMT4HH 0x2C) */
 #define GS_TEX0_TFX_DECAL   0x800000000 /* TEX0 TFX (bits 35-36) at 1: the texture is decal-blended over what is under it */
+#define GS_TEX0_TBW_640_TW_1024 0x28028000 /* TEX0 TBW 10 (bits 14-19) and TW 10 (bits 26-29): a 1024-wide texture in a 640-wide buffer */
+#define GS_TEX0_TH_512_TCC_RGBA 0x640000000L /* TEX0 TH 9 (bits 30-33, 512 high) and TCC 1 (bit 34): RGBA */
+#define GS_TEST_1_MP_BAR_FADE 0x30005 /* TEST_1 for the MP bar fade: alpha test on, ATST LESS, z test always; the fade goes in AREF (bits 4-11) */
+#define GS_RGBAQ_ALPHA_HALF 0x40000000 /* RGBAQ A (bits 24-31) = 0x40: half opacity */
+#define GS_RGBAQ_ALPHA_FULL 0x80000000 /* RGBAQ A (bits 24-31) = 0x80: full opacity */
+#define GS_FRAME_FBP_MENU_WORK 0x192 /* FRAME_1 FBP the menus draw their work frame at */
 
 /* a color as four bytes, passed in an 8-byte argument (MenuText_SetColor stores it to text_ink, ui/menu_draw.c) */
 typedef struct {

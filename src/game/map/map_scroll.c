@@ -91,14 +91,14 @@ void MapScroll_UpdateCopy(int map, int mode) {
                     spare_base = 0x3C40;
                     x_is_last = shift_y == 0;
                     packet_start = packet = Packet_Alloc(count + 3);
-                    *packet++ = count | 0x10000001;
+                    *packet++ = count | (DMA_TAG_CNT | 1);
                     *packet++ = 0;
                     *packet++ = 0;
                     *packet++ = 0;
                     *packet++ = 0;
                     *packet++ = 0;
                     *packet++ = 0;
-                    *packet++ = count | 0x51000000;
+                    *packet++ = count | VIF_CODE_DIRECTHL;
                     if (shift_x > 0) {
                         packet = MapScroll_AppendBitblt(packet, FALSE, format, buffer_width, width, height, base, 0, 0,
                                                           spare_base, 0, 0);

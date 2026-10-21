@@ -417,13 +417,13 @@ void EffectHandover_Update(EffectActor *effect) {
     }
     if (effect->frame <= effect->def->sub_effect_id) {
         hits = Attack_RunEffectHitCheck(effect);
-        if (hits & 2) {
+        if (hits & HIT_TARGET_ENTITY) {
             effect_id = (int)effect->def->ground_height;
             if (effect_id <= 0) {
                 effect_id = effect->def->end_effect;
             }
             EffectHandover_StartNext(effect, &effect->model->position, effect_id);
-        } else if (hits & 4) {
+        } else if (hits & HIT_TARGET_MAP_OBJECT) {
             if (effect_kind_handlers[effect->def->kind_index][0] == EffectHandover_StartBySurface && (COLLISION_RESULT->floor_material == 3 || COLLISION_RESULT->floor_material == 5)) {
                 EffectHandover_StartNext(effect, &effect->model->position, effect->def->child_effect_id);
             } else {
@@ -559,7 +559,7 @@ void EffectBolt_Update(EffectActor *actor) {
     } else if (actor->def->hit_check_index != 0xFF) {
         hit = Attack_RunEffectHitCheck(actor);
         if (hit != 0 && actor->def->end_effect != 0xFFFF) {
-            if (hit & 2) {
+            if (hit & HIT_TARGET_ENTITY) {
                 Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
             } else if ((effect_kind_handlers[actor->def->kind_index][0] == EffectBolt_StartBySurface || effect_kind_handlers[actor->def->kind_index][0] == EffectBolt_StartWithTargeters) && (COLLISION_RESULT->floor_material == 3 || COLLISION_RESULT->floor_material == 5)) {
                 Effect_Spawn(actor->def->interval, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
@@ -888,7 +888,7 @@ void EffectFloorChase_Update(EffectActor *actor) {
         actor->model->position.y -= 100.0f;
         check = Attack_RunEffectHitCheck(actor);
         actor->model->position.y += 100.0f;
-        if (check & 0x10) {
+        if (check & HIT_TARGET_MAP_WALL) {
             motion->ending = 1;
         } else if (check & 1) {
             Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);

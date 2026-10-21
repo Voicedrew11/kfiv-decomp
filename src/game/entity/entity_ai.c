@@ -374,9 +374,9 @@ s32 EntityAi_RemoveIfFallen(Entity *entity) {
 }
 
 /* 1 when the player is within 8000, unless the entity stands in a map record (Entity.map_record) whose flags lack
-   0x04000000 (0 then). Nothing calls it. */
+   MAP_RECORD_FRAME_EFFECTS (0 then). Nothing calls it. */
 static int EntityAi_IsPlayerNear(Entity *entity) {
-    if (entity->map_record != NULL && (((EntitySpawnInfo *)entity->map_record)->spawn_flags & 0x04000000) == 0) {
+    if (entity->map_record != NULL && (((EntitySpawnInfo *)entity->map_record)->spawn_flags & MAP_RECORD_FRAME_EFFECTS) == 0) {
         return 0;
     }
     if (entity->distance_to_player <= 8000.0f) {
@@ -1636,7 +1636,7 @@ void EntityAi_UpdateCollision(Entity *entity) {
     EntityCollision_PushApart(entity);
 
     if (!((s32)(ENTITY_FLAG_WORD(entity->flags) >> 25) & ENTITY_FLAG_ACTIVE_LIST)) {
-        if (ENTITY_PARAMS_WORD(entity->params) & 0x1000000) {
+        if (ENTITY_PARAMS_WORD(entity->params) & ENTITY_PARAMS_SPHERE_OBJECTS) {
             EntityCollision_SphereAgainstObjects(entity);
         } else {
             EntityCollision_WalkAgainstObjects(entity);
@@ -1970,7 +1970,7 @@ void Entity_DrawPoolModels(void) {
         model->light_block = ENTITY_MODEL(entity)->light_block;
         model->fog_block = ENTITY_MODEL(entity)->fog_block;
         Packet_BeginGsRegisters();
-        Packet_AddGsRegister(GS_REG_ALPHA_2, ((s64)(s32)(ENTITY_MODEL(entity)->alpha * 32.0f * (1.0f / 128.0f)) << 32) | 0x64);
+        Packet_AddGsRegister(GS_REG_ALPHA_2, ((s64)(s32)(ENTITY_MODEL(entity)->alpha * 32.0f * (1.0f / 128.0f)) << 32) | GS_ALPHA_LERP_CS_CD_FIX);
         Packet_EndGsRegisters();
         model->draw_parts(model);
         GsDraw_QueueFlush();

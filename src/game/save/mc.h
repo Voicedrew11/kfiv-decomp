@@ -40,6 +40,8 @@
 #define MC_STATUS_READ_DONE 0x48
 #define MC_STATUS_ERROR 0x64
 
+#define MC_ALIGN_MASK 0xFFFFFFE0 /* clears the low 5 bits: rounds a size down to 32 bytes (add 0x1F first to round up) */
+
 /* what sceMcGetInfo reported per port and slot */
 typedef struct {
     int type[2][4];                 /* 0x00 card type: 2 a PS2 card, 3 a PS1 card */

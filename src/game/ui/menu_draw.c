@@ -1084,7 +1084,7 @@ static void MenuDraw_TextAt(u16 *text, GsPackedWord origin) {
     *cursor++ = 0xFFFFF525;
     index = 0;
     count = 0;
-    while (text[index] != 0xFFFF && !(text[index] & 0x8000)) {
+    while (text[index] != 0xFFFF && !(text[index] & MENU_TEXT_NEW_LINE)) {
         if (text[index] & GLYPH_HALF_WIDTH) {
             glyph = text[index]; // match: read again into a 16-bit local
             code = glyph & GLYPH_CODE_MASK; // match: two statements
@@ -1174,7 +1174,7 @@ static void MenuDraw_TextRightAligned(u16 *text, GsPackedWord origin) {
     *cursor++ = 0xFFFFF525;
     index = 0;
     count = 0;
-    while (text[index] != 0xFFFF && !(text[index] & 0x8000)) {
+    while (text[index] != 0xFFFF && !(text[index] & MENU_TEXT_NEW_LINE)) {
         if (text[index] & GLYPH_HALF_WIDTH) {
             glyph = text[index]; // match: read again into a 16-bit local
             code = glyph & GLYPH_CODE_MASK; // match: two statements
@@ -1349,7 +1349,7 @@ s32 MenuText_DrawWrapped(u16 *text, s32 limit) {
             column = 0;
             continue;
         }
-        if ((text[i] & 0x8000) && column != 0) {
+        if ((text[i] & MENU_TEXT_NEW_LINE) && column != 0) {
             /* a line break in the text */
             top_left.pos_x = bottom_right.pos_x = text_pen.pos_x;
             top_left.pos_y += text_glyph_size.pos_y;
@@ -1475,7 +1475,7 @@ s32 MenuText_DrawWrappedLong(u16 *text, s32 limit) {
             column = 0;
             continue;
         }
-        if ((text[i] & 0x8000) && column != 0) {
+        if ((text[i] & MENU_TEXT_NEW_LINE) && column != 0) {
             /* a line break in the text */
             top_left.pos_x = bottom_right.pos_x = text_pen.pos_x;
             top_left.pos_y += text_glyph_size.pos_y;
@@ -1585,7 +1585,7 @@ s32 MenuText_DrawLine(u16 *text, s32 limit) {
         if (next_column % limit == 0) {
             break;
         }
-        if (text[i] & 0x8000) {
+        if (text[i] & MENU_TEXT_NEW_LINE) {
             break;
         }
         column = next_column;
@@ -1683,14 +1683,14 @@ s32 MenuText_DrawLineShortened(u16 *text, s32 limit) {
             color[3] = palette[12];
             continue;
         }
-        if (i != 0 && (text[i - 1] == 0x800 || (text[i - 1] & 0x8000))) {
+        if (i != 0 && (text[i - 1] == 0x800 || (text[i - 1] & MENU_TEXT_NEW_LINE))) {
             word_breaks++;
         }
         next_column = column + 1;
         if (next_column % limit == 0) {
             break;
         }
-        if ((text[i] & 0x8000) && text[i + 1] == 0xFFFF) {
+        if ((text[i] & MENU_TEXT_NEW_LINE) && text[i + 1] == 0xFFFF) {
             break;
         }
         if (dots == 3) {
@@ -1699,7 +1699,7 @@ s32 MenuText_DrawLineShortened(u16 *text, s32 limit) {
         column = next_column;
         if ((text[i] & GLYPH_HALF_WIDTH) || text[i] == 0x8000) {
             if (word_breaks < 3) {
-                if (text[i] & 0x8000) {
+                if (text[i] & MENU_TEXT_NEW_LINE) {
                     glyph = 0;
                 } else {
                     code = text[i]; // match: read again as an int, into its own variable
@@ -1812,7 +1812,7 @@ s32 MenuText_DrawLineCentered(u16 *text, s32 limit) {
         if (next_column % limit == 0) {
             break;
         }
-        if (text[i] & 0x8000) {
+        if (text[i] & MENU_TEXT_NEW_LINE) {
             break;
         }
         column = next_column;
@@ -1932,7 +1932,7 @@ static s32 MenuText_DrawWordWrapped(u16 *text, s32 limit) {
             column = 0;
             continue;
         }
-        if (text[i] & 0x8000) {
+        if (text[i] & MENU_TEXT_NEW_LINE) {
             count--;
             continue;
         }

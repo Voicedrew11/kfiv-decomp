@@ -175,6 +175,7 @@ typedef struct {
 #define HIT_TARGET_MAP_OBJECT       0x4    /* map objects */
 #define HIT_TARGET_MAP_FLOOR        0x8    /* map floors (Attack_TestMapModelFloors) */
 #define HIT_TARGET_MAP_WALL         0x10   /* map walls (Attack_TestMapModelWalls) */
+#define HIT_TARGET_MAP_OTHER        0x20   /* the map by the generic surface test (Attack_RunSphere reports 0x20 for its result 5) */
 #define HIT_TARGET_SKIP_OWNER       0x80   /* not the request's owner */
 
 /* the two blocks ParaStool_CheckPartHitInPlayerView fills for Attack_Run */
@@ -499,6 +500,8 @@ typedef struct {
 /* EntityParams.sphere_collision read through the whole word */
 #define ENTITY_PARAMS_SPHERE_MASK           0x8000000
 #define ENTITY_PARAMS_IS_SPHERE(params)     (((EntityParamsWord *)(params))->word & ENTITY_PARAMS_SPHERE_MASK)
+/* EntityParams word bit 24: the entity pushes against map objects as a sphere, not a walker (EntityCollision_SphereAgainstObjects) */
+#define ENTITY_PARAMS_SPHERE_OBJECTS        0x1000000
 
 /* sub-struct at Entity+0xE0: the work area of an entity's type. It starts with the handlers the
    type's set-up function installs; EntityAi_Update calls them. All of them take the entity. */
@@ -1164,12 +1167,16 @@ typedef struct {
 #define MAP_RECORD_HIDDEN            0x40000000  /* hidden: not collided with, not found by the box lookups (hide_record) */
 #define MAP_RECORD_BACKDROP          0x80000000  /* linked into backdrop_record_boxes, not record_boxes (Map_InsertRecordBySize) */
 #define MAP_RECORD_NOT_IN_BOX_LISTS  0x02000000  /* left out of the record box lists (Map_InsertRecordBySize) */
+#define MAP_RECORD_20000000          0x20000000  /* skipped by the map viewer's draw loop (ui/map_viewer.c); nothing else reads it */
 #define MAP_RECORD_SCREEN_EXEMPT     0x40        /* skips the on-screen test (Map_ClassifyRecordOnScreen) */
 #define MAP_RECORD_CURRENT_BLOCKS    0x10        /* drawn with the current light and fog blocks, not its map's own */
 #define MAP_RECORD_Z_WRITE           0x80        /* z writes on while it is drawn (Map_DrawLateRecords) */
 #define MAP_RECORD_WAVE_UVS          0x100       /* its UVs are built as waves (Map_BuildRecords) */
+#define MAP_RECORD_BIT1              0x2         /* record_flags bit 1, not yet named: with MAP_RECORD_RIPPLED it turns alpha blending on (Map_BuildRecords) */
 #define MAP_RECORD_RIPPLED           0x200       /* drawn rippled (Wobble_DrawRippledModel) */
 #define MAP_RECORD_FRAME_EFFECTS     0x4000000   /* EntityEvent_StartFrameEffects does its work while set */
+#define MAP_RECORD_SCREEN_ONLY       0x2         /* MapDrawRecord.flags: skipped in every draw mode but 0 (Map_DrawRecords, Map_DrawLateRecords) */
+#define MAP_RECORD_ALL_MODES         0x20        /* MapDrawRecord.flags: drawn in every draw mode, not only 0 (Map_DrawRecords, MapObject_DrawAll) */
 /* the map slot a MapRecord belongs to: bit 27 of record_flags (MapRecordBits.map) */
 #define MAP_RECORD_MAP(record) ((u8)((record)->record_flags >> 27) & 1)
 
@@ -1240,6 +1247,7 @@ typedef struct {
 /* EntityPoolSlot.head.word flag bits */
 #define ENTITY_POOL_FLAG_100    0x100
 #define ENTITY_POOL_FLAG_200    0x200
+#define ENTITY_POOL_KIND_FLAG_200_MASK 0x2FF /* head.word bits the slot test reads: the kind byte and ENTITY_POOL_FLAG_200 */
 
 /* one block of the entity pool, entity_pool_slots[5] (Entity_ResetAllLists.c's
    EntityPoolBlock, with the first word's bit view) */

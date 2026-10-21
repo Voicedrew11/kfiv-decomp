@@ -1989,7 +1989,7 @@ int SoundDriver_FlushCommands(void) {
 int SoundDriver_OpenStreamFile(int stream, char *file_name, int value) {
     strcpy(sound_rpc_file_name, file_name);
     stream &= 1;
-    sceSifCallRpc(&sound_rpc_client, stream | 0x3000, 0, sound_rpc_file_name, 0x100, &sound_rpc_buffer, 1, 0, 0);
+    sceSifCallRpc(&sound_rpc_client, stream | SOUND_STREAM_OPEN_CMD, 0, sound_rpc_file_name, 0x100, &sound_rpc_buffer, 1, 0, 0);
     if (sound_rpc_buffer.self == 0) {
         if (SoundDriver_Remote(1, 0x3040, stream, value) != 0) {
             SoundDriver_Remote(1, 0x3030, stream);
@@ -2008,7 +2008,7 @@ int SoundDriver_PlayStreamFile(int stream, char *file_name, int value) {
         return -1;
     }
     strcpy(sound_rpc_file_name, file_name);
-    sceSifCallRpc(&sound_rpc_client, stream | 0x30A0, 0, sound_rpc_file_name, 0x100, &sound_rpc_buffer, 1, 0, 0);
+    sceSifCallRpc(&sound_rpc_client, stream | SOUND_STREAM_FILE_NAME_CMD, 0, sound_rpc_file_name, 0x100, &sound_rpc_buffer, 1, 0, 0);
     if (sound_rpc_buffer.self != 0) {
         SoundDriver_Remote(1, 0x3030, stream);
         return -1;
@@ -2041,7 +2041,7 @@ int SoundDriver_AddReverb(int effect_flags, s16 param1, s16 param2, s16 param3, 
         return -2;
     }
     effect->core = effect_id;
-    effect->mode = effect_flags | 0x100;
+    effect->mode = effect_flags | SOUND_REVERB_MODE_CLEAR_WORK;
     effect->depth_l = param1;
     effect->depth_r = param2;
     effect->delay = param3;
@@ -2167,10 +2167,10 @@ void SoundDriver_SetAdsr(int voice_index, int value, u32 status) {
     packed = (status >> 31) << 31;
     packed |= ((((status >> 24) & 0x7F) ^ 0x7F) << 24);
     packed |= ((((status >> 20) & 0xF) ^ 0xF) << 20);
-    packed |= status & 0xF0000;
-    packed |= status & 0xE000;
+    packed |= status & SOUND_ADSR_BITS16_19;
+    packed |= status & SOUND_ADSR_BITS13_15;
     packed |= ((((status >> 6) & 0x7F) ^ 0x7F) << 6);
-    packed |= status & 0x20;
+    packed |= status & SOUND_ADSR_BIT5;
     packed |= (status & 0x1F) ^ 0x1F;
     SoundDriver_Remote(1, 0x120, voice->stereo_header_block, voice->header_size, value, packed);
 }

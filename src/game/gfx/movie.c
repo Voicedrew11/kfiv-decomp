@@ -16,6 +16,10 @@
 #include <stdio.h>
 #include <string.h>
 
+/* SPU2 core registers of the master volume, left and right (sceSdRemote command 0x8010 sets them) */
+#define SPU2_MASTER_VOLUME_LEFT  0x980
+#define SPU2_MASTER_VOLUME_RIGHT 0xA80
+
 int toupper(int); // match: ctype.h would make it a macro, which changes the code of MovieFile_Open
 
 /* The movie player's .data: the flags the vblank handler shares, the picture ring and the decoder state. */
@@ -599,8 +603,8 @@ static int MovieAudio_Start(MovieAudio *audio) {
     sceSdRemote(1, 0x8010, 0x1081, 0x7FFF);
     sceSdRemote(1, 0x8010, 0xD81, 0x7FFF);
     sceSdRemote(1, 0x8010, 0xE81, 0x7FFF);
-    sceSdRemote(1, 0x8010, 0x980, movie_thread.volume);
-    sceSdRemote(1, 0x8010, 0xA80, movie_thread.volume);
+    sceSdRemote(1, 0x8010, SPU2_MASTER_VOLUME_LEFT, movie_thread.volume);
+    sceSdRemote(1, 0x8010, SPU2_MASTER_VOLUME_RIGHT, movie_thread.volume);
     sceSdRemote(1, 0x8010, 0x981, movie_thread.volume);
     sceSdRemote(1, 0x8010, 0xA81, movie_thread.volume);
     audio->state = MOVIE_AUDIO_STATE_PLAY;
@@ -816,8 +820,8 @@ static void MovieAudio_SetMasterVolume(int volume) {
     int core;
 
     for (core = 0; core < 2; core++) {
-        sceSdRemote(1, 0x8010, core | 0x980, volume);
-        sceSdRemote(1, 0x8010, core | 0xA80, volume);
+        sceSdRemote(1, 0x8010, core | SPU2_MASTER_VOLUME_LEFT, volume);
+        sceSdRemote(1, 0x8010, core | SPU2_MASTER_VOLUME_RIGHT, volume);
     }
 }
 

@@ -5,7 +5,7 @@
 /* Timer 0 overflow handler: counts the overflow and acknowledges it. */
 void Timer_CountOverflow(void) {
     timer_overflow_count++;
-    *T0_MODE |= 0x400;
+    *T0_MODE |= TIMER_MODE_EQUF;
 }
 
 /* Restarts the timer 0 clock. */
