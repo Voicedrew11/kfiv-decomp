@@ -137,7 +137,7 @@ void Interact_FindTarget(void) {
                 sceVu0SubVector(delta, &object->model->position, &camera_state);
                 distance = sqrtf(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
             } else {
-                Collision_HitRayObj(object, (f32 *)&camera_state, view_ray_status.view_direction, reach);
+                Collision_HitRayObj(object, camera_state.position, view_ray_status.view_direction, reach);
                 if (COLLISION_RESULT->hit == 0) {
                     continue;
                 }

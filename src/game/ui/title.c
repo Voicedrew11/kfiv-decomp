@@ -153,7 +153,7 @@ int Title_UploadTexture(int index) {
     sceGsSetDefLoadImage(&load_image, title_textures[index].tex0.tbp0, title_textures[index].tex0.tbw,
                          title_textures[index].tex0.psm, 0, 0, width, height);
     FlushCache(0);
-    sceGsExecLoadImage(&load_image, (char *)title_textures[index].file + sizeof(TextureHeader));
+    sceGsExecLoadImage(&load_image, title_textures[index].file + 1);
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
     if (title_textures[index].tex0.psm == 0x13) {

@@ -64,7 +64,7 @@ typedef struct {
 
 /* one point of a triangle strip */
 typedef struct {
-    void *position;                 /* 0x00 */
+    f32 *position;                  /* 0x00 */
     s32 material_first;             /* 0x04 the first word of the floor material (Collision_GetFloorMaterial) */
     s32 material_second;            /* 0x08 the second word of the floor material */
     s32 material_third;             /* 0x0C the third word of the floor material */

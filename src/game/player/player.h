@@ -321,7 +321,7 @@ typedef struct {
     u8 exp;                         /* 0x13 */
     u8 level_index;                 /* 0x14 0 to 2: the row of attack_by_level the item uses, raised by use_count */
     char pad15[0x01];
-    s16 use_count;                  /* 0x16 uses of the item (Player_CountWeaponUse); ini "item_": the third number times 20 */
+    u16 use_count;                  /* 0x16 uses of the item (Player_CountWeaponUse); ini "item_": the third number times 20 */
     u8 in_smith_rings;              /* 0x18 nonzero: Smith_BuildItemRings lists the item among those whose time last_upgraded counts */
     union {
         char bytes[8];              /* 0x19 stored through this view (Smith_UpdateUpgradeConfirm, Smith_UpdateListWithConfirm) */
@@ -499,7 +499,7 @@ void Player_FlashDamage(void);
 void Player_BounceWeapon(void);
 void Player_SumWornBonuses(void);
 void Player_KnockBack(Vector4 *target, f32 speed);
-void Player_KnockBackFromHit(void *source, int damage);
+void Player_KnockBackFromHit(Unk1B1470Request *source, int damage);
 void Player_TiltViewFromHit(int damage);
 void Player_StopFootstepSound(void);
 void Player_Kill(void);

@@ -70,12 +70,10 @@ void MapViewer_Init(void) {
    it can be used. The game loop runs it (MapViewer_Run). */
 void MapViewer_OpenForItem(int viewer_number) {
     u32 viewer_index;
-    u8 *row;
 
     if (!game_status.bit8 && ((viewer_index = viewer_number - 1) < 5U)) {
         if (viewer_number == 5) {
-            row = (u8 *)map_slots + current_map_slot * 0x60;
-            if (MapViewer_IsKingsMapUsable(row[1]) == 0) {
+            if (MapViewer_IsKingsMapUsable(map_slots[current_map_slot].tag) == 0) {
                 Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_UNABLE_TO_USE_HERE);
                 return;
             }
@@ -539,10 +537,8 @@ int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y) {
    position on maps 017 to 019 and 024 to 025, FALSE elsewhere. */
 int MapViewer_LocateOnEarthFolksMap(int *map_x, int *map_y) {
     int area;
-    char *entry;
 
-    entry = (char *)map_slots + current_map_slot * 0x60;
-    area = ((u8 *)entry)[1];
+    area = map_slots[current_map_slot].tag;
     if (area >= 0x11) {
         if (area < 0x14) {
             *map_x = (player_state.position.x - 0.0f) * EARTH_FOLKS_MAP_X_SCALE / 1000.0f + 360.0f;

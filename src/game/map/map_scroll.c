@@ -11,23 +11,23 @@ static MapSlotPair map_scroll_draw_pairs[2][16];  /* 0x471FE0 */
 /* Clears the copy and draw scroll offsets for one map slot. */
 void MapScroll_ClearPairs(int map_slot) {
     int i;
-    s16 *p; // match: retail local name
+    MapSlotPair *pair;
 
-    p = (s16 *)(map_slot * 64 + (char *)map_scroll_copy_pairs);
+    pair = map_scroll_copy_pairs[map_slot];
     i = 0xF;
     do {
-        p[0] = 0;
+        pair->scroll_x = 0;
         i--;
-        p[1] = 0;
-        p += 2;
+        pair->scroll_y = 0;
+        pair++;
     } while (i >= 0);
-    p = (s16 *)(map_slot * 64 + (char *)map_scroll_draw_pairs);
+    pair = map_scroll_draw_pairs[map_slot];
     i = 0xF;
     do {
-        p[0] = 0;
+        pair->scroll_x = 0;
         i--;
-        p[1] = 0;
-        p += 2;
+        pair->scroll_y = 0;
+        pair++;
     } while (i >= 0);
 }
 

@@ -3350,18 +3350,18 @@ void MenuTexture_Upload(TextureHeader *header, LoadedBlockRef *block) {
     if (width * height * pixel_size > 0x7FFFF) {
         sceGsSetDefLoadImage(&image_load, HEADER_TEX0(header)->tbp0, HEADER_TEX0(header)->tbw, HEADER_TEX0(header)->psm, 0, 0, width, height >> 1);
         FlushCache(0);
-        sceGsExecLoadImage(&image_load, (char *)header + sizeof(TextureHeader));
+        sceGsExecLoadImage(&image_load, header->image);
         while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
         }
         sceGsSetDefLoadImage(&image_load, HEADER_TEX0(header)->tbp0, HEADER_TEX0(header)->tbw, HEADER_TEX0(header)->psm, 0, height >> 1, width, height >> 1);
         FlushCache(0);
-        sceGsExecLoadImage(&image_load, (char *)header + ((width * height * pixel_size >> 2) + sizeof(TextureHeader)));
+        sceGsExecLoadImage(&image_load, header->image + (width * height * pixel_size >> 2));
         while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
         }
     } else {
         sceGsSetDefLoadImage(&image_load, HEADER_TEX0(header)->tbp0, HEADER_TEX0(header)->tbw, HEADER_TEX0(header)->psm, 0, 0, width, height);
         FlushCache(0);
-        sceGsExecLoadImage(&image_load, (char *)header + sizeof(TextureHeader));
+        sceGsExecLoadImage(&image_load, header->image);
         while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
         }
     }
@@ -3375,7 +3375,7 @@ void MenuTexture_Upload(TextureHeader *header, LoadedBlockRef *block) {
     clut_height = (pixel_format & GS_PSM_4BIT_PALETTE) ? 2 : 16;
     sceGsSetDefLoadImage(&clut_load, HEADER_TEX0(header)->cbp, 1, HEADER_TEX0(header)->cpsm, 0, 0, clut_width, clut_height);
     FlushCache(0);
-    sceGsExecLoadImage(&clut_load, (char *)header + (header->image_size + sizeof(TextureHeader)));
+    sceGsExecLoadImage(&clut_load, header->image + header->image_size);
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
 }
@@ -3386,7 +3386,7 @@ static void MenuTexture_UploadInStrips(TextureHeader *header) {
     u16 width = 1 << HEADER_TEX0(header)->tw;
     u16 height = 1 << HEADER_TEX0(header)->th;
     u16 base_pointer = HEADER_TEX0(header)->tbp0;
-    char *image;
+    u8 *image;
     f32 strip_rows;
     f32 rows;
     int pixel_format;
@@ -3397,7 +3397,7 @@ static void MenuTexture_UploadInStrips(TextureHeader *header) {
     if (menu_font_page_tex0 != NULL) {
         *(u64 *)menu_font_page_tex0 = header->tex0;
     }
-    image = (char *)header + sizeof(TextureHeader);
+    image = header->image;
     strip_rows = 131068.0f / (((f32)(u32)header->data_offset - 16.0f) / width);
     strip_rows = (int)(strip_rows * (1.0f / 64.0f)) << 6;
     rows = (height < strip_rows) ? height : strip_rows;
@@ -3428,7 +3428,7 @@ static void MenuTexture_UploadInStrips(TextureHeader *header) {
     clut_height = (pixel_format & GS_PSM_4BIT_PALETTE) ? 2 : 16;
     sceGsSetDefLoadImage(&load_image, HEADER_TEX0(header)->cbp, 1, HEADER_TEX0(header)->cpsm, 0, 0, clut_width, clut_height);
     FlushCache(0);
-    sceGsExecLoadImage(&load_image, (char *)header + (header->image_size + sizeof(TextureHeader)));
+    sceGsExecLoadImage(&load_image, header->image + header->image_size);
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
 }
@@ -3441,7 +3441,7 @@ void MenuTexture_UploadTwoCluts(TextureHeader *header, u64 *tex0_out, u64 *trail
     u16 width = 1 << HEADER_TEX0(header)->tw;
     u16 height = 1 << HEADER_TEX0(header)->th;
     u16 base_pointer = HEADER_TEX0(header)->tbp0;
-    char *image;
+    u8 *image;
     f32 strip_rows;
     f32 rows;
     int pixel_format;
@@ -3455,7 +3455,7 @@ void MenuTexture_UploadTwoCluts(TextureHeader *header, u64 *tex0_out, u64 *trail
     }
     // match: no code; without it gcc loads TEX0 into other registers ($7/$5 in retail), same instructions otherwise
     __asm__ volatile("" : : : "memory");
-    image = (char *)header + sizeof(TextureHeader);
+    image = header->image;
     switch (HEADER_TEX0(header)->psm) {
     case GS_PSM_CT32:
     case GS_PSM_Z32:
@@ -3516,7 +3516,7 @@ void MenuTexture_UploadTwoCluts(TextureHeader *header, u64 *tex0_out, u64 *trail
     }
     sceGsSetDefLoadImage(&load_image, HEADER_TEX0(header)->cbp, 1, HEADER_TEX0(header)->cpsm, 0, 0, clut_width, clut_height);
     FlushCache(0);
-    sceGsExecLoadImage(&load_image, (char *)header + (header->image_size + sizeof(TextureHeader)));
+    sceGsExecLoadImage(&load_image, header->image + header->image_size);
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
     trailer = (u64 *)((char *)header + clut_width * clut_height * 4 + (header->image_size + sizeof(TextureHeader)));

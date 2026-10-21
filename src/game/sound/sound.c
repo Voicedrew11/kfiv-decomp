@@ -71,7 +71,7 @@ int SoundDriver_Init(void) {
     FlushCache(0);
     sound_state = &sound_state_storage;
     sound_state->dma_src = SoundDriver_Remote(1, 0x10);
-    *(int *)sound_state->volume_and_stereo = 0x3FFF; // match: the int at 0x4D0; the header has six chars there
+    sound_state->volume = 0x3FFF;
     SoundDriver_Remote(1, 0x30, 0x3FFF, 0x3FFF);
     sound_state->load_addr = NULL;
     sound_state->iop_buffer = SoundDriver_Remote(1, 0xA0);
@@ -80,7 +80,7 @@ int SoundDriver_Init(void) {
     sound_command_list[0] = 0;
     // match: as above
     *(char **)&sound_state->sample_area_start = *(char **)&sound_state->spu_used_end = (char *)0x5010;
-    *(u16 *)&sound_state->volume_and_stereo[4] = 1; // match: the u16 at 0x4D4
+    sound_state->stereo = 1;
     sound_state->active = 0;
     voice = sound_state->voices;
     for (i = 15; i != -1; i--, voice++) {
@@ -303,7 +303,7 @@ void SoundDriver_SetMono(void) {
     if (sound_state->active != 0) {
         SoundDriver_Remote(1, 0x50);
     }
-    *(u16 *)&sound_state->volume_and_stereo[4] = 0; // match: the u16 at 0x4D4; the header has six chars there
+    sound_state->stereo = 0;
     SoundDriver_Remote(1, 0xC0, 0);
     voice = sound_state->voices;
     for (i = 0; i < 16; i++) {
@@ -347,7 +347,7 @@ void SoundDriver_SetStereo(void) {
     if (sound_state->active != 0) {
         SoundDriver_Remote(1, 0x50);
     }
-    *(u16 *)&sound_state->volume_and_stereo[4] = 1; // match: the u16 at 0x4D4; the header has six chars there
+    sound_state->stereo = 1;
     SoundDriver_Remote(1, 0xC0, 1);
     voice = sound_state->voices;
     for (i = 0; i < 16; i++) {
@@ -1790,7 +1790,7 @@ int SoundDriver_NoteOn(u32 slot, int voice_index, char channel, char program, ch
         *out++ = program;
     }
     // match: the u16 at 0x4D4; the header has six chars there
-    if (*(u16 *)&sound_state->volume_and_stereo[4] == 0 || voice->stereo_selected == 0) {
+    if (sound_state->stereo == 0 || voice->stereo_selected == 0) {
         pan = 0x3F;
     }
     *out++ = 0xF9;
@@ -1898,7 +1898,7 @@ int SoundDriver_SetNoteControl(int kind, u32 slot, int value) {
         break;
     case SOUND_NOTE_CONTROL_PAN:
         // match: the u16 at 0x4D4; the header has six chars there
-        if (*(u16 *)&sound_state->volume_and_stereo[4] == 0 || voice->stereo_selected == 0) {
+        if (sound_state->stereo == 0 || voice->stereo_selected == 0) {
             value = 0x3F;
         }
         *out++ = 0xFD;

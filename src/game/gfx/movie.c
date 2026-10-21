@@ -2001,7 +2001,7 @@ static s32 MovieFile_Open(MovieFile *file, char *path) {
     s32 device_length;
     s32 name_length;
     s32 i;
-    char *suffix;
+    const char *suffix;
 
     name = index(path, ':');
     if (name != NULL) {
@@ -2018,7 +2018,7 @@ static s32 MovieFile_Open(MovieFile *file, char *path) {
                 }
                 name[i] = toupper(name[i]);
             }
-            suffix = index(path, ';') ? (char *)empty_string : (char *)cd_version_suffix;
+            suffix = index(path, ';') ? empty_string : cd_version_suffix;
             sprintf(full_path, cd_path_format, name, suffix);
         } else {
             file->is_cd_stream = FALSE;

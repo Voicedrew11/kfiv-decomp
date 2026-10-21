@@ -32,7 +32,7 @@ char *Collision_RelocateMesh(char *data, ModelInstance *model, int use_scratchpa
         cursor += 0x20;
         if (use_scratchpad) {
             for (j = 0; j < strip->point_count; j++) {
-                point->position = &COLLISION_WORLD_POINTS[(int)point->position];
+                point->position = &COLLISION_WORLD_POINTS[(int)point->position].x;
                 point++;
             }
         } else {

@@ -728,7 +728,7 @@ typedef struct {
 
 /* EffectMotion as EffectOwnerFloor_Start uses it: a flag byte at the very start */
 typedef struct {
-    u8 no_floor;                    /* 0x00 set when EffectOwnerFloor_Start finds no floor */
+    s8 no_floor;                    /* 0x00 set when EffectOwnerFloor_Start finds no floor */
     char pad01[0x2F];
 } GroundedMotion;
 

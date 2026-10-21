@@ -1051,7 +1051,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
         trade_stock_list_model_angle -= PI;
         sceVu0RotMatrixY(local_matrix, view_matrix, trade_stock_list_model_angle);
         sceVu0TransMatrix(local_matrix, local_matrix, trade_stock_list_model_position);
-        Menu_DrawItemModel((f32 *)local_matrix);
+        Menu_DrawItemModel(&local_matrix[0][0]);
     }
 
     if (modal_input_locked == 0) {
@@ -1405,7 +1405,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
     trade_take_amount_model_angle = angle - (s32)(angle / TWO_PI) * TWO_PI - PI;
     sceVu0RotMatrixY(local_matrix, view_matrix, trade_take_amount_model_angle);
     sceVu0TransMatrix(local_matrix, local_matrix, trade_take_amount_model_position);
-    Menu_DrawItemModel((f32 *)local_matrix);
+    Menu_DrawItemModel(&local_matrix[0][0]);
 
     if (modal_input_locked == 0 && (menu_buttons & PAD_TRIANGLE) && Menu_IsEquipSlotFilled(record, trade_stock_list_cursor[0]->group)) {
         trade_take_amount_panel_sound_pending = 1;
@@ -1847,7 +1847,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
     trade_owned_list_model_angle -= PI;
     sceVu0RotMatrixY(local_matrix, &view_matrix, trade_owned_list_model_angle);
     sceVu0TransMatrix(local_matrix, local_matrix, trade_owned_list_model_position);
-    Menu_DrawItemModel((f32 *)local_matrix);
+    Menu_DrawItemModel(&local_matrix[0][0]);
 
     for (; row < 7; node = node->prev, row++) {
         item = &item_level_defs[node->item_number];
@@ -2188,7 +2188,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
     trade_give_amount_model_angle = angle - (s32)(angle / TWO_PI) * TWO_PI - PI;
     sceVu0RotMatrixY(local_matrix, view_matrix, trade_give_amount_model_angle);
     sceVu0TransMatrix(local_matrix, local_matrix, trade_give_amount_model_position);
-    Menu_DrawItemModel((f32 *)local_matrix);
+    Menu_DrawItemModel(&local_matrix[0][0]);
 
     if (modal_input_locked == 0) {
         group = item_list_cursor[0]->group;

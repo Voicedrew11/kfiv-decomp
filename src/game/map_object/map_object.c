@@ -204,7 +204,7 @@ void MapObject_StartMap(int map) {
         if (Game_GetTriggerItem(tag, object->source->spawn_flags.bytes[2])) {
             flag = 1;
         }
-        object->map_record = (s32)Map_FindRecordAtInSlot((f32 *)&object->model->position, 0.0f, MAP_OBJECT_BYTES(object)->map_slot & 1);
+        object->map_record = (s32)Map_FindRecordAtInSlot(&object->model->position.x, 0.0f, MAP_OBJECT_BYTES(object)->map_slot & 1);
         if (in_use) {
             MapObject_Activate(object);
         } else {
@@ -530,7 +530,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
                 object->model->fog_block = &map_draw_state.fog_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->fog_block_index];
             }
             if (object->definition->kind == MAP_OBJECT_KIND_LIGHT) {
-                LinkedPoint_FindHitsExclude(object->model, *(s16 *)object->work);
+                LinkedPoint_FindHitsExclude(object->model, MAP_OBJECT_WORK_LIGHT(object)->linked_point_handle);
             } else if (object->source->linked_point_owner != 0 && object->source->linked_point_owner != 0xFF) {
                 LinkedPoint_FindHitsForOwner(object->model, object->source->linked_point_owner);
             } else {
@@ -591,7 +591,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
                 object->model->fog_block = &map_draw_state.fog_blocks[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[4]];
             }
             if (object->definition->kind == MAP_OBJECT_KIND_LIGHT) {
-                LinkedPoint_FindHitsExclude(object->model, *(s16 *)object->work);
+                LinkedPoint_FindHitsExclude(object->model, MAP_OBJECT_WORK_LIGHT(object)->linked_point_handle);
             } else if (object->source->linked_point_owner != 0 && object->source->linked_point_owner != 0xFF) {
                 LinkedPoint_FindHitsForOwner(object->model, object->source->linked_point_owner);
             } else {

@@ -191,7 +191,7 @@ void Effect_DebugFreeAllButPlayer(void) {
         }
     }
 
-    for (i = 0; i < EFFECT_COUNT; i++, effect = (EffectActor *)((char *)effect + sizeof(EffectActor))) {
+    for (i = 0; i < EFFECT_COUNT; i++, effect++) {
         if (effect->flags & EFFECT_FLAG_LIVE) {
             printf("SFX[%d] OWNER[0x%x]\n", i, effect->owner_entity);
             if (!(effect->flags & EFFECT_FLAG_LIVE)) {
@@ -419,8 +419,8 @@ void Effect_DrawAll(int pass) {
         model = effect->model;
         if (placement == 0 || placement == EFFECT_DEF_PLACEMENT_MASK) {
             // match: the margin is set up before the node, so the call passes it first
-            if (((int (*)(f32 *, f32, AreaNode *))Map_IsPointInRecord)((f32 *)&model->position, 0.0f, (AreaNode *)effect->map_record) == 0) {
-                effect->map_record = (char *)Map_FindRecordAt((f32 *)&effect->model->position, 0.0f);
+            if (((int (*)(f32 *, f32, AreaNode *))Map_IsPointInRecord)(&model->position.x, 0.0f, (AreaNode *)effect->map_record) == 0) {
+                effect->map_record = (char *)Map_FindRecordAt(&effect->model->position.x, 0.0f);
             }
             if (effect->map_record == NULL && effect->owner_entity == (Entity *)&player_state && ((PlayerState *)effect->owner_entity)->map_index != 0xFFFF) {
                 effect->map_record = map_slots[current_map_slot].records + (((PlayerState *)effect->owner_entity)->map_index << 7);
@@ -547,7 +547,7 @@ static void Effect_RunSpawner(EffectSlot *slot) {
         }
         placement = EFFECT_DEF_FLAGS(effect->def) & EFFECT_DEF_PLACEMENT_MASK;
         if (placement == 0 || placement == EFFECT_DEF_PLACEMENT_MASK) {
-            effect->map_record = (char *)Map_FindRecordAt((f32 *)&effect->model->position, 0.0f);
+            effect->map_record = (char *)Map_FindRecordAt(&effect->model->position.x, 0.0f);
         }
         def = EFFECT_SLOT_VIEW(slot)->def;
     }

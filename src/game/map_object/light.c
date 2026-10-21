@@ -16,7 +16,7 @@
    a point of the model, and for the flickering sorts (0, 1) rolls the two
    flicker periods and where in them it starts. */
 void MapObject_StartLight(MapObject *object) {
-    s16 *work = (s16 *)object->work;
+    MapObjectWorkLight *work = MAP_OBJECT_WORK_LIGHT(object);
     Vector4 colour;
     MapObjectUnk08Words *source = MAP_OBJECT_WORDS(object);
     void *point;
@@ -29,14 +29,14 @@ void MapObject_StartLight(MapObject *object) {
     colour.w = 1.0f;
     point = object->model->get_point(object->model, source->kind_param_7);
     params = MAP_OBJECT_WORDS(object);
-    work[0] = LinkedPoint_Allocate(params->kind_param_3, point, &colour, 0, MAP_OBJECT_BYTES(object)->map_slot & 1, params->kind_param_4 != 0 ? params->kind_param_5 : -1, 1);
+    work->linked_point_handle = LinkedPoint_Allocate(params->kind_param_3, point, &colour, 0, MAP_OBJECT_BYTES(object)->map_slot & 1, params->kind_param_4 != 0 ? params->kind_param_5 : -1, 1);
     sort = MAP_OBJECT_WORDS(object)->kind_param_6;
     if (sort >= 0) {
         if (sort <= 1) {
-            work[2] = (int)(rand() * 6.0f * RAND_SCALE) + 0x14;
-            work[1] = work[2] * (f32)rand() * RAND_SCALE;
-            work[4] = (int)(rand() * 6.0f * RAND_SCALE) + 5;
-            work[3] = work[4] * (f32)rand() * RAND_SCALE;
+            work->flicker_period_a = (int)(rand() * 6.0f * RAND_SCALE) + 0x14;
+            work->flicker_phase_a = work->flicker_period_a * (f32)rand() * RAND_SCALE;
+            work->flicker_period_b = (int)(rand() * 6.0f * RAND_SCALE) + 5;
+            work->flicker_phase_b = work->flicker_period_b * (f32)rand() * RAND_SCALE;
         }
     }
     MAP_OBJECT_BYTES(object)->step = LIGHT_STEP_ACTIVE;
@@ -46,7 +46,7 @@ void MapObject_StartLight(MapObject *object) {
    step their two periods and scale the colour by the product of the two waves
    read from the table sine_table (0xA00 entries a period). */
 void MapObject_UpdateLight(MapObject *object) {
-    s16 *work = (s16 *)object->work;
+    MapObjectWorkLight *work = MAP_OBJECT_WORK_LIGHT(object);
     MapObjectUnk08Words *source = MAP_OBJECT_WORDS(object);
     Vector4 colour;
     f32 level;
@@ -57,9 +57,9 @@ void MapObject_UpdateLight(MapObject *object) {
             f32 depth = 0.1f;
             f32 base = 0.9f;
 
-            work[1] = (work[1] + 1) % work[2];
-            work[3] = (work[3] + 1) % work[4];
-            level = sine_table[work[1] * 0xA00 / work[2]] * sine_table[work[3] * 0xA00 / work[4]];
+            work->flicker_phase_a = (work->flicker_phase_a + 1) % work->flicker_period_a;
+            work->flicker_phase_b = (work->flicker_phase_b + 1) % work->flicker_period_b;
+            level = sine_table[work->flicker_phase_a * 0xA00 / work->flicker_period_a] * sine_table[work->flicker_phase_b * 0xA00 / work->flicker_period_b];
             depth *= level;
             level = depth + base;
             break;
@@ -68,9 +68,9 @@ void MapObject_UpdateLight(MapObject *object) {
             f32 depth = 0.25f;
             f32 base = 0.75f;
 
-            work[1] = (work[1] + 1) % work[2];
-            work[3] = (work[3] + 1) % work[4];
-            level = sine_table[work[1] * 0xA00 / work[2]] * sine_table[work[3] * 0xA00 / work[4]];
+            work->flicker_phase_a = (work->flicker_phase_a + 1) % work->flicker_period_a;
+            work->flicker_phase_b = (work->flicker_phase_b + 1) % work->flicker_period_b;
+            level = sine_table[work->flicker_phase_a * 0xA00 / work->flicker_period_a] * sine_table[work->flicker_phase_b * 0xA00 / work->flicker_period_b];
             depth *= level;
             level = depth + base;
             break;
@@ -84,17 +84,17 @@ void MapObject_UpdateLight(MapObject *object) {
     colour.y = level * source->kind_param_1;
     colour.z = level * source->kind_param_2;
     colour.w = 1.0f;
-    LinkedPoint_Retarget(source->kind_param_3, work[0], &colour);
+    LinkedPoint_Retarget(source->kind_param_3, work->linked_point_handle, &colour);
 }
 
 /* End hook of the light kind (9): releases its light (the LinkedPoint handle in its work area), if it has
    one. */
 void MapObject_ReleaseLight(MapObject *object) {
-    s16 *handle = (s16 *)object->work;
+    MapObjectWorkLight *light = MAP_OBJECT_WORK_LIGHT(object);
 
-    if (*handle >= 0) {
-        LinkedPoint_ReleaseIndex(*handle);
-        *handle = -1;
+    if (light->linked_point_handle >= 0) {
+        LinkedPoint_ReleaseIndex(light->linked_point_handle);
+        light->linked_point_handle = -1;
     }
 }
 
