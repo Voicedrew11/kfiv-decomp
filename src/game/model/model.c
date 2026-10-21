@@ -269,10 +269,10 @@ void Model_DrawSkinned(ModelInstance *model) {
     light_out = packet;
     light_out_b = packet + 0x10;
     for (i = 0; i < model->hit_count; i++) {
-        *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
-        *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
+        *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].position;
+        *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].target;
         light_out_b += 4;
-        ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
+        ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].progress_scale;
         light_out += 4;
     }
     packet += 0x20;
@@ -406,10 +406,10 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
     light_out = packet;
     light_out_b = packet + 0x10;
     for (i = 0; i < model->hit_count; i++) {
-        *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
-        *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
+        *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].position;
+        *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].target;
         light_out_b += 4;
-        ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
+        ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].progress_scale;
         light_out += 4;
     }
     packet += 0x20;
@@ -866,10 +866,10 @@ void Model_DrawPosed(ModelInstance *model) {
         light_out = packet;
         light_out_b = packet + 0x10;
         for (i = 0; i < model->hit_count; i++) {
-            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
-            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
+            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].position;
+            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].target;
             light_out_b += 4;
-            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
+            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].progress_scale;
             light_out += 4;
         }
         packet += 0x20;
@@ -968,10 +968,10 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
         light_out = packet;
         light_out_b = packet + 0x10;
         for (i = 0; i < model->hit_count; i++) {
-            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
-            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
+            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].position;
+            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].target;
             light_out_b += 4;
-            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
+            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].progress_scale;
             light_out += 4;
         }
         packet += 0x20;
@@ -1071,10 +1071,10 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
         light_out = packet;
         light_out_b = packet + 0x10;
         for (i = 0; i < model->hit_count; i++) {
-            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
-            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
+            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].position;
+            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].target;
             light_out_b += 4;
-            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
+            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].progress_scale;
             light_out += 4;
         }
         packet += 0x20;
@@ -1184,10 +1184,10 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
         light_out = packet;
         light_out_b = packet + 0x10;
         for (i = 0; i < model->hit_count; i++) {
-            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
-            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
+            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].position;
+            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].target;
             light_out_b += 4;
-            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
+            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].progress_scale;
             light_out += 4;
         }
         Packet_AppendToChain(packet_start, Packet_Alloc(1)); /* the packet ends where the next one would start */

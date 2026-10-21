@@ -41,7 +41,7 @@ typedef struct {
     u16 sub_effect_id;              /* 0xF0 effect ids passed to Effect_SpawnFromEffect */
     u16 child_effect_id;            /* 0xF2 effect spawned each frame or on hit; a link count for chains */
     u8 draw_hook_index;             /* 0xF4 with the placement bits, picks the model's draw routine from effect_draw_hooks */
-    u8 unkF5;                       /* 0xF5 bit 0: drawn with the map's own light block; bit 1: not drawn in the second pass */
+    u8 draw_flags;                  /* 0xF5 bit 0: drawn with the map's own light block; bit 1: not drawn in the second pass */
     u8 texture_anim_mode;           /* 0xF6 how the texture frames run: 0 loop, 1 once, 2 once and hold the last */
     u8 texture_frame_count;         /* 0xF7 how many texture frames, 0: not animated */
     u16 texture_frame_stride;       /* 0xF8 record ids between two texture frames */

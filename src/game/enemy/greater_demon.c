@@ -563,11 +563,11 @@ static void GreaterDemon_SlideToStop(Entity *entity) {
                 EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
-        entity->move_delta_x = -sinf(EntityMath_WrapAngle(entity->model->rotation[1])) * ai_state->unk44;
-        entity->move_delta_z = -cosf(EntityMath_WrapAngle(entity->model->rotation[1])) * ai_state->unk44;
-        ai_state->unk44 -= 2.0f;
-        if (ai_state->unk44 < 0.0f) {
-            ai_state->unk44 = 0.0f;
+        entity->move_delta_x = -sinf(EntityMath_WrapAngle(entity->model->rotation[1])) * ai_state->move_speed;
+        entity->move_delta_z = -cosf(EntityMath_WrapAngle(entity->model->rotation[1])) * ai_state->move_speed;
+        ai_state->move_speed -= 2.0f;
+        if (ai_state->move_speed < 0.0f) {
+            ai_state->move_speed = 0.0f;
         }
         break;
     }

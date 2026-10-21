@@ -735,7 +735,7 @@ void Attack_HitPlayer(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             player_state.mp_now = 0;
         }
     }
-    if (UNK1B1470_REQUEST_UNIT(request) & UNK1B1470_UNIT_UNK4C_3) {
+    if (UNK1B1470_REQUEST_UNIT(request) & UNK1B1470_UNIT_KNOCKBACK) {
         Player_KnockBackFromHit(request, damage);
     }
     Player_TiltViewFromHit(damage);
@@ -1006,7 +1006,7 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
 
     Attack_RollEntityAilments(entity, &request->ailment_chances);
     // match: flag bit 40 (still named pad40); the source bit is read as a u8 field
-    ENTITY_FLAG_BITS(entity)->last_hit_knockback = ((Unk1B1470RequestBits *)request)->unk4C_3;
+    ENTITY_FLAG_BITS(entity)->last_hit_knockback = ((Unk1B1470RequestBits *)request)->knockback;
 
     if (by_magic && request->instant_kill_chance_percent != 0 && damage > 0) {
         chance = request->instant_kill_chance_percent - entity->params->critical_defence;
@@ -1483,7 +1483,7 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
     } else {
         request.strengths = SHOT_REQUEST->strengths;
         request.ailment_chances = SHOT_REQUEST->ailment_chances;
-        request.knockback = ((Unk1B1470RequestBits *)SHOT_REQUEST)->unk4C_3;
+        request.knockback = ((Unk1B1470RequestBits *)SHOT_REQUEST)->knockback;
         request.instant_kill_chance_percent = 0;
         request.stun_frames = 0;
         request.double_hit_chance_percent = SHOT_REQUEST->double_hit_chance_percent;

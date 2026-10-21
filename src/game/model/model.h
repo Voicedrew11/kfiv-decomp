@@ -461,12 +461,12 @@ typedef struct {
     f32 colour[4];                  /* 0x30 r, g, b, a */
 } BlendVertex;
 
-/* one of the 0x40-byte lights at linked_point_pool, as the drawing code copies it into a packet */
+/* a LinkedPoint (entity/entity.h) at linked_point_pool as the drawing code copies it into a packet as a light */
 typedef struct {
-    f32 unk00[4];                   /* 0x00 sent whole, but for the last word */
-    f32 unk10[4];                   /* 0x10 sent whole */
+    f32 position[4];                /* 0x00 LinkedPoint.position, sent whole but for the last word */
+    f32 target[4];                  /* 0x10 LinkedPoint.target, sent whole */
     char pad20[0x04];
-    f32 unk24;                      /* 0x24 sent in place of unk00[3] */
+    f32 progress_scale;             /* 0x24 LinkedPoint.progress_scale, sent in place of position[3] */
     char pad28[0x18];
 } __attribute__((aligned(16))) ModelLight;
 
@@ -840,14 +840,14 @@ typedef struct {
    the list of the ones in use. */
 typedef struct ModelNode {
     s32 pad00;                      /* 0x00 */
-    s32 unk04;                      /* 0x04 cleared when the node is unlinked */
-    s32 unk08;                      /* 0x08 cleared when the node is unlinked */
-    s32 unk0C;                      /* 0x0C bit 0: the map slot */
+    s32 record;                     /* 0x04 ItemNode.record, cleared when the node is unlinked */
+    s32 map_object;                 /* 0x08 ItemNode.map_object, cleared when the node is unlinked */
+    s32 flags;                      /* 0x0C ItemNodeBits; bit 0: the map slot */
     char pad10[0x04];
-    void *unk14;                    /* 0x14 the MapRecordInfo (map/map.h) it is standing in, found every frame */
+    void *map_record;               /* 0x14 the MapRecordInfo (map/map.h) it is standing in, found every frame */
     ModelInstance *model;           /* 0x18 non-null while the node is in use */
     s16 item;                       /* 0x1C which item it is (index into item_name_defs) */
-    s16 unk1E;                      /* 0x1E index into the map's row of map_item_pickup_counts */
+    s16 index;                      /* 0x1E index into the map's row of map_item_pickup_counts */
     struct ModelNode *prev;         /* 0x20 */
     struct ModelNode *next;         /* 0x24 */
     char pad28[0x14];

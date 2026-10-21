@@ -790,8 +790,8 @@ static void EntityPool_CopyLoadedFile(EntityPoolSlot *slot) {
     controller = (EntityController *)(entity_params + slot->head.fields.type_id * 0x450);
     file = (EntityTypeFileHeader *)file_load_buffer;
     size = 0;
-    if ((table_offset = file->unk10) != 0 || (table_offset = file->unk0C) != 0) {
-        size = table_offset + *(int *)(file_load_buffer + table_offset);
+    if ((table_offset = file->pool_model_offset) != 0 || (table_offset = file->texture_offset) != 0) {
+        size = table_offset + *(int *)(file_load_buffer + table_offset); /* the last part's offset plus its size word */
     }
     // match: retail shares one hang loop at the end for all three checks; only gotos give that layout
     if (size == 0) {
