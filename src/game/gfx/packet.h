@@ -9,6 +9,7 @@ typedef union {
     u32 *word;
     f32 *real;
     u64 *dword;
+    char *byte;
 } PacketCursor;
 
 /* the GS XYZ2 register: 12.4 fixed-point x and y, 32-bit z */

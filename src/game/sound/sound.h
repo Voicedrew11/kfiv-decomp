@@ -376,7 +376,7 @@ extern int bgm_sequence_buffer[];
 extern SoundBankSpec map_bank_files;
 extern f32 sound_cos_polynomial[4];
 extern u8 voice_ranges[][2];
-extern void *tracked_sound_players[];
+extern int (*tracked_sound_players[])();
 extern SoundChannel sound_channels[];
 
 /* data still in asm */

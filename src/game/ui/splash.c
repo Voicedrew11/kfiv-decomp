@@ -368,7 +368,7 @@ static void Splash_BuildImagePacket(int tbp, int cbp) {
     source = file_load_buffer;
     source += sizeof(TextureHeader);
     memcpy(cursor.word, source, size);
-    output = (char *)cursor.word + size;
+    output = cursor.byte + size;
     output = align16(output);
 
     if (has_palette) {
