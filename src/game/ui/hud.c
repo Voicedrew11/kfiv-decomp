@@ -143,7 +143,7 @@ void Hud_Draw(void) {
             fade = 0;
         }
         Packet_BeginGsRegisters();
-        Packet_AddGsRegister(GS_REG_TEST_1, ((s64)fade << 4) | 0x30005);
+        Packet_AddGsRegister(GS_REG_TEST_1, ((s64)fade << 4) | GS_TEST_1_MP_BAR_FADE);
         Packet_AddGsRegister(0x4A, 1);
         Packet_EndGsRegisters();
         sprite = hud_sprites[5];

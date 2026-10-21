@@ -211,7 +211,7 @@ s32 EntityAi_SendMeleeHit(Entity *entity, EntityParamsUnk240 *record, s32 index,
     request.ailment_chances = record->hit_parts[index].ailment_chances;
     request.hit_armor_part = record->wear_armour_part;
     request.knockback = record->hit_parts[index].hit_flags & 1;
-    if ((ENTITY_PART_FLAGS(&record->hit_parts[index])->flags >> 1) & 1) {
+    if ((ENTITY_PART_FLAGS(&record->hit_parts[index])->flags >> ENTITY_PART_MP_DAMAGE_BIT) & 1) {
         request.mp_damage = record->hit_parts[index].mp_damage;
     }
     extra.is_magic_shot = 0;
@@ -250,8 +250,8 @@ void EntityAi_SpawnBoneEffect(Entity *entity, int effect_id, int point) {
     f32 yaw;
     f32 turns;
 
-    from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, point);
-    tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, point + 1);
+    from = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), point);
+    tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), point + 1);
     if (from != NULL && tip != NULL) {
         delta_x = tip[0] - from[0];
         delta_y = tip[1] - from[1];
@@ -362,7 +362,7 @@ static int EntityAi_LookAtAimPartFromPlayerHead(Entity *entity, int angles, int 
 s32 EntityAi_RemoveIfFallen(Entity *entity) {
     u16 ctrl_flags;
 
-    if (*(f32 *)((char *)entity->model + 0xC4) > 10000.0f) {
+    if (ENTITY_MODEL(entity)->position.y > 10000.0f) {
         ctrl_flags = ENTITY_CONTROLLER(entity)->respawn_effect_id;
         if (ctrl_flags != 0 && ctrl_flags != 0xFFFF) {
             Effect_FreeForOwner(entity);
@@ -374,9 +374,9 @@ s32 EntityAi_RemoveIfFallen(Entity *entity) {
 }
 
 /* 1 when the player is within 8000, unless the entity stands in a map record (Entity.map_record) whose flags lack
-   0x04000000 (0 then). Nothing calls it. */
+   MAP_RECORD_FRAME_EFFECTS (0 then). Nothing calls it. */
 static int EntityAi_IsPlayerNear(Entity *entity) {
-    if (entity->map_record != NULL && (((EntitySpawnInfo *)entity->map_record)->spawn_flags & 0x04000000) == 0) {
+    if (entity->map_record != NULL && (((EntitySpawnInfo *)entity->map_record)->spawn_flags & MAP_RECORD_FRAME_EFFECTS) == 0) {
         return 0;
     }
     if (entity->distance_to_player <= 8000.0f) {
@@ -1636,7 +1636,7 @@ void EntityAi_UpdateCollision(Entity *entity) {
     EntityCollision_PushApart(entity);
 
     if (!((s32)(ENTITY_FLAG_WORD(entity->flags) >> 25) & ENTITY_FLAG_ACTIVE_LIST)) {
-        if (ENTITY_PARAMS_WORD(entity->params) & 0x1000000) {
+        if (ENTITY_PARAMS_WORD(entity->params) & ENTITY_PARAMS_SPHERE_OBJECTS) {
             EntityCollision_SphereAgainstObjects(entity);
         } else {
             EntityCollision_WalkAgainstObjects(entity);
@@ -1970,7 +1970,7 @@ void Entity_DrawPoolModels(void) {
         model->light_block = ENTITY_MODEL(entity)->light_block;
         model->fog_block = ENTITY_MODEL(entity)->fog_block;
         Packet_BeginGsRegisters();
-        Packet_AddGsRegister(GS_REG_ALPHA_2, ((s64)(s32)(ENTITY_MODEL(entity)->alpha * 32.0f * (1.0f / 128.0f)) << 32) | 0x64);
+        Packet_AddGsRegister(GS_REG_ALPHA_2, ((s64)(s32)(ENTITY_MODEL(entity)->alpha * 32.0f * (1.0f / 128.0f)) << 32) | GS_ALPHA_LERP_CS_CD_FIX);
         Packet_EndGsRegisters();
         model->draw_parts(model);
         GsDraw_QueueFlush();

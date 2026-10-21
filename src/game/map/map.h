@@ -357,7 +357,7 @@ typedef struct {
     u8 needs_neighbour_map;         /* 0x39 nonzero: the neighbouring map must be loaded before going on */
     u8 neighbour_origin_index;      /* 0x3A which of MapSlot.origins leads to the neighbouring map, 0xFF: none */
     char pad3B[0x01];
-    s32 unk3C;                      /* 0x3C flags */
+    s32 flags;                      /* 0x3C */
     char pad40[0x3C];
     ModelInstance *model;           /* 0x7C */
 } MapRecordInfo;
@@ -381,8 +381,8 @@ typedef struct {
         u64 raw;
         struct {
             u64 bit0 : 1;
-            u64 bit1 : 1;
-            u64 bit2 : 1;
+            u64 held : 1;           /* MAP_LOAD_HELD */
+            u64 hold_requested : 1; /* MAP_LOAD_HOLD_REQUESTED */
         } f;
     } flags;                        /* 0x20 */
     s32 timer;                      /* 0x28 frames to wait */
@@ -400,6 +400,7 @@ typedef struct {
 /* MapLoadState.flags.raw bits: the background load is held off at a safe step; a hold has been asked for */
 #define MAP_LOAD_HELD           0x2
 #define MAP_LOAD_HOLD_REQUESTED 0x4
+#define MAP_LOAD_HELD_BIT       1
 #define MAP_LOAD_HOLD_MASK      (MAP_LOAD_HELD | MAP_LOAD_HOLD_REQUESTED)
 
 /* map_slot_memory[2]: the memory each map slot is loaded into */
@@ -488,6 +489,14 @@ typedef struct {
 } TriggerItemRecord;
 
 #define TRIGGER_ITEM_RECORD_COUNT 5
+
+/* ItemCommonDef.timed_flags bits: bit n starts PlayerState.timed_flags[n] (ailment slot n) for 60 frames */
+#define ITEM_TIMED_FLAG_0 0x1
+#define ITEM_TIMED_FLAG_1 0x2
+#define ITEM_TIMED_FLAG_2 0x4
+#define ITEM_TIMED_FLAG_3 0x8
+#define ITEM_TIMED_FLAG_4 0x10
+#define ITEM_TIMED_FLAG_5 0x20
 
 /* item_common_defs[150]: param/item_cmn.prm, a row for each item below ITEM_WEAPON_FIRST; type says what using it
    does (Player_UseItem): 0 heals (the Herb...), 1 and 5 are used on a map object, 2 on the map object the player

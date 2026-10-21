@@ -13,6 +13,10 @@
 #define SCREEN_SIDE_RIGHT 2
 #define SCREEN_SIDE_TOP 4
 #define SCREEN_SIDE_BOTTOM 8
+/* the out-of-range window of the vertices being clipped: bit 2 the one two back, bit 1 the one before, bit 0 this one */
+#define OUT_OF_RANGE_TWO_BACK 4
+#define OUT_OF_RANGE_ONE_BACK 2
+#define OUT_OF_RANGE_THIS 1
 
 #define CLIP_SIDES(point, sides)                                                                   \
     if ((point)->x < 0x6C00) {                                                                   \
@@ -109,7 +113,7 @@ void ModelScreen_CutClippedTriangles(ModelInstance *model) {
                 point2[2] = vertex->z;
                 point2[3] = 1.0f;
                 vertex++;
-                Vu0_ProjectToScreen3((int *)screen++, (int *)screen++, (int *)screen++, point0, point1, point2);
+                Vu0_ProjectToScreen3(screen++, screen++, screen++, point0, point1, point2);
             }
             for (k = vertex_count % 3; --k != -1;) {
                 point0[0] = vertex->x;
@@ -117,7 +121,7 @@ void ModelScreen_CutClippedTriangles(ModelInstance *model) {
                 point0[2] = vertex->z;
                 point0[3] = 1.0f;
                 vertex++;
-                Vu0_ProjectToScreen((int *)screen++, point0);
+                Vu0_ProjectToScreen(screen++, point0);
             }
             clip[0] = clip[1] = clip[2] = 0;
             outside = 0;
@@ -125,20 +129,20 @@ void ModelScreen_CutClippedTriangles(ModelInstance *model) {
             screen = MODEL_CLIP_SCREEN_POINTS;
             CLIP_SIDES(screen, clip[2]);
             if (OUT_OF_RANGE(screen)) {
-                outside = 4;
+                outside = OUT_OF_RANGE_TWO_BACK;
             }
             vertex++;
             screen++;
             CLIP_SIDES(screen, clip[1]);
             if (OUT_OF_RANGE(screen)) {
-                outside |= 2;
+                outside |= OUT_OF_RANGE_ONE_BACK;
             }
             vertex++;
             screen++;
             for (k = 2; k < vertex_count; k++, vertex++, screen++) {
                 CLIP_SIDES(screen, clip[0]);
                 if (OUT_OF_RANGE(screen)) {
-                    outside |= 1;
+                    outside |= OUT_OF_RANGE_THIS;
                 }
                 if (vertex->cut_flag == 0 && outside != 0 && outside != 7) {
                     if (!(clip[0] & clip[1] & clip[2])) {
@@ -156,7 +160,7 @@ void ModelScreen_CutClippedTriangles(ModelInstance *model) {
                 clip[1] = clip[0];
                 clip[0] = 0;
             }
-            block = (ModelPartData *)((char *)block + (length + 1) * 16);
+            block = MODEL_PART_DATA_SKIP(block, length + 1);
         }
     }
 }
@@ -225,7 +229,7 @@ void ModelScreen_QueueCutTriangle(u32 *data, ModelPartVertexWords *vertex, int f
     *packet++ = *data++;
     *packet = *data;
     packet += 4;
-    *packet++ = (vertex_count << 18) | 0x6D008001;
+    *packet++ = (vertex_count << 18) | VIF_UNPACK_V4_16_ADDR1;
     ModelScreen_StepVertices(MODEL_CUT_EDGE, before, vertex, steps);
     edge_point = MODEL_CUT_EDGE + 1;
     ModelScreen_StepVertices(previous, apex, MODEL_CUT_EDGE, steps);
@@ -466,7 +470,7 @@ void ModelScreen_QueueCutFloatTriangle(u32 *data, ModelPartVertexWords *vertex, 
     *packet++ = *data++;
     *packet = *data;
     packet += 4;
-    *packet++ = (vertex_count << 18) | 0x6C008001;
+    *packet++ = (vertex_count << 18) | VIF_UNPACK_V4_32_ADDR1;
     ModelScreen_StepFloatVertices(MODEL_CUT_BLEND_EDGE, &before_point, &vertex_point, steps);
     edge_point = MODEL_CUT_BLEND_EDGE + 1;
     ModelScreen_StepFloatVertices(MODEL_CUT_BLEND_ROW_B, &apex_point, MODEL_CUT_BLEND_EDGE, steps);
@@ -627,7 +631,7 @@ void ModelScreen_SetUvsFromScreen(ModelInstance *model) {
                 vertex->uvs_set_from_screen = 1;
                 vertex++;
             }
-            next_data = (ModelPartData *)((char *)data + (length + 1) * 0x10);
+            next_data = MODEL_PART_DATA_SKIP(data, length + 1);
         }
     }
 }

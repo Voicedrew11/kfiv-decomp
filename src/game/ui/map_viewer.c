@@ -30,6 +30,11 @@
 #include "sound/sound_game.h"
 #include <stdio.h>
 
+/* viewer_picture on Zastari's Map: one picture per level of the Ancient City */
+#define ZASTARI_PICTURE_LEVEL_1 0
+#define ZASTARI_PICTURE_LEVEL_2 1
+#define ZASTARI_PICTURE_LEVEL_3 2
+
 /* Picture pixels per 1000 world units on each map picture of the viewer. */
 #define CARETAKERS_MAP_X_SCALE 24.615385f
 #define CARETAKERS_MAP_Z_SCALE 24.88889f
@@ -70,12 +75,10 @@ void MapViewer_Init(void) {
    it can be used. The game loop runs it (MapViewer_Run). */
 void MapViewer_OpenForItem(int viewer_number) {
     u32 viewer_index;
-    u8 *row;
 
     if (!game_status.bit8 && ((viewer_index = viewer_number - 1) < 5U)) {
         if (viewer_number == 5) {
-            row = (u8 *)map_slots + current_map_slot * 0x60;
-            if (MapViewer_IsKingsMapUsable(row[1]) == 0) {
+            if (MapViewer_IsKingsMapUsable(map_slots[current_map_slot].tag) == 0) {
                 Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_UNABLE_TO_USE_HERE);
                 return;
             }
@@ -383,7 +386,7 @@ void MapViewer_DrawPictureMap(void) {
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
     Packet_EndGsRegisters();
-    Game_ApplyBrightness(game_options[10]);
+    Game_ApplyBrightness(game_options[GAME_OPTION_BRIGHTNESS]);
 }
 
 /* Where the player's marker goes on picture viewer_picture of the Caretaker's Map: -1 for a fixed spot on the
@@ -466,7 +469,7 @@ int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y) {
    out from the player's position when the current map is on that picture, FALSE when it is not. */
 int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y) {
     switch (viewer_picture) {
-    case 0:
+    case ZASTARI_PICTURE_LEVEL_1:
         switch (map_slots[current_map_slot].tag) {
         case MAP_TAG_ANCIENT_CITY_L1_CENTRAL_TOWER:
         case MAP_TAG_ANCIENT_CITY_L1_WEST:
@@ -483,7 +486,7 @@ int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y) {
             return TRUE;
         }
         break;
-    case 1:
+    case ZASTARI_PICTURE_LEVEL_2:
         switch (map_slots[current_map_slot].tag) {
         case MAP_TAG_NORTH_CLIFFS:
             *screen_x = (player_state.position.x - 0.0f) * ZASTARI_PICTURE1_X_SCALE / 1000.0f + 348.0f;
@@ -503,7 +506,7 @@ int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y) {
             return TRUE;
         }
         break;
-    case 2:
+    case ZASTARI_PICTURE_LEVEL_3:
         switch (map_slots[current_map_slot].tag) {
         case MAP_TAG_ANCIENT_CITY_L3_WEST:
             *screen_x = (player_state.position.x - 9300.0f) * ZASTARI_PICTURE2_X_SCALE / 1000.0f + 194.0f;
@@ -539,10 +542,8 @@ int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y) {
    position on maps 017 to 019 and 024 to 025, FALSE elsewhere. */
 int MapViewer_LocateOnEarthFolksMap(int *map_x, int *map_y) {
     int area;
-    char *entry;
 
-    entry = (char *)map_slots + current_map_slot * 0x60;
-    area = ((u8 *)entry)[1];
+    area = map_slots[current_map_slot].tag;
     if (area >= 0x11) {
         if (area < 0x14) {
             *map_x = (player_state.position.x - 0.0f) * EARTH_FOLKS_MAP_X_SCALE / 1000.0f + 360.0f;
@@ -719,7 +720,7 @@ static void MapViewer_DrawKingsMap(void) {
     pulse_frame = (pulse_frame + 1) % period;
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(GS_REG_TEST_2, 0x51001);
-    Packet_AddGsRegister(GS_REG_ALPHA_2, ((s64)alpha << 32) | 0x68);
+    Packet_AddGsRegister(GS_REG_ALPHA_2, ((s64)alpha << 32) | GS_ALPHA_CS_FIX_CD);
     Packet_EndGsRegisters();
     pointer_model.light_block = (s32)&viewer_default_lights;
     pointer_model.hit_count = 0;
@@ -749,16 +750,16 @@ static void MapViewer_DrawKingsMap(void) {
                 default:
                     for (i = 0; i < ((MapSlotUnk08 *)slot->header)->record_count; i++, record++) {
                         flags = record->flags;
-                        if (flags & 0x40000000) {
+                        if (flags & MAP_RECORD_HIDDEN) {
                             continue;
                         }
-                        if (flags & 0x20000000) {
+                        if (flags & MAP_RECORD_20000000) {
                             continue;
                         }
                         if (flags < 0) {
                             continue;
                         }
-                        if (flags & 0x10) {
+                        if (flags & MAP_RECORD_CURRENT_BLOCKS) {
                             record->model->light_block = (s32)&map_draw_state.current_light_block;
                             record->model->fog_block = &map_draw_state.current_fog_block;
                         } else {
@@ -821,7 +822,7 @@ static void MapViewer_DrawKingsMap(void) {
     Packet_EndGsRegisters();
     GsDraw_QueueFlush();
     GsDraw_QueueTexturedSprite(&kings_map_corner_rect);
-    Game_ApplyBrightness(game_options[10]);
+    Game_ApplyBrightness(game_options[GAME_OPTION_BRIGHTNESS]);
 }
 
 /* Whether the King's Map works on the map with this tag: not on the maps the Caretaker's Map shows (000,

@@ -60,6 +60,7 @@ void Ini_Load(int number) {
     int file;
     int i;
     char *line;
+    int length;
 
     sprintf(path, ini_path_format, number);
     file = File_Open(path, 0, 1);
@@ -70,9 +71,9 @@ void Ini_Load(int number) {
             return;
         }
     }
-    line = (char *)File_Read(file, file_load_buffer, -1);
+    length = File_Read(file, file_load_buffer, -1);
     File_Close(file);
-    Ini_SetText(file_load_buffer, (int)line);
+    Ini_SetText(file_load_buffer, length);
     while ((line = Ini_ReadLine()) != NULL) {
         for (i = 0; ini_keys[i].handler != NULL; i++) {
             if (strncmp(line, ini_keys[i].key, strlen(ini_keys[i].key)) == 0) {

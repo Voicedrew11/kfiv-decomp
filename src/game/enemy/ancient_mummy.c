@@ -23,7 +23,6 @@
 #define ANCIENT_MUMMY_FADE_BACK_STEP_FADE_IN 2      /* scales and fades the model back in, then waits */
 #define ANCIENT_MUMMY_FADE_BACK_STEP_END     3      /* lets the motion end, then goes to state 2 and thinks */
 
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void AncientMummy_Think(Entity *entity, s32 run_now);
 static void AncientMummy_ThinkCombat(Entity *entity, s32 run_now);
@@ -293,7 +292,7 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
         if (ai_state->step_index == 0) {
             position = entity->model->position;
             destination = ai_state->target_point;
-            EntityPoint_PickNearFromDistance(destination, position, EntityMath_DistanceXZ(position, (float *)entity->spawn_info), entity->spawn_info->wander_radius);
+            EntityPoint_PickNearFromDistance(destination, position, EntityMath_DistanceXZ(position, &entity->spawn_info->spawn_x), entity->spawn_info->wander_radius);
             height = EntityCollision_DistanceToPropFloor(entity->map_record, destination);
             if (height != ancient_mummy_no_floor_height[0]) {
                 yaw = EntityMath_AngleXZ(&player_state.position.x, destination);

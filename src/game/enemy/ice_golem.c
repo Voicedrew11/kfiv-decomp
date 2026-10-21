@@ -20,7 +20,6 @@
 #define ICE_GOLEM_MOVE_CHOICE_RUN_IN 1
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void IceGolem_Think(Entity *entity, s32 run_now);
 static void IceGolem_ThinkCombat(Entity *entity, s32 run_now);
@@ -30,15 +29,15 @@ static void IceGolem_RangedAttack0(Entity *entity);
 /* Set-up of a type 47 entity: clears its work area and installs the type's handlers. */
 void IceGolem_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
-    // match: the three fills name their target inside the loop; unkBC and unkC0 above are
+    // match: the three fills name their target inside the loop; choice_weights and attack_weights above are
     // otherwise unused but retail computes them up front and copies them before each loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *work_area = (u8 *)&entity->ai_state;
+        u8 *work_area = ENTITY_WORK_BYTES(entity);
 
         work_area[i] = 0;
     }
@@ -101,7 +100,7 @@ static void IceGolem_Think(Entity *entity, s32 run_now) {
         }
     }
     if (frame_counter % 3U == 0) {
-        EntityEvent_StartEffectAtPoint((char **)entity, 0x3AD, 0xFF, (int)entity->model->rotation);
+        EntityEvent_StartEffectAtPoint(entity, 0x3AD, 0xFF, entity->model->rotation);
     }
 }
 
@@ -312,8 +311,8 @@ static void IceGolem_RangedAttack0(Entity *entity) {
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         for (frame = (s16)entity->params->action_frames; frame < entity->params->near_distance; frame += entity->params->far_distance) {
             if ((entity->ailment_4_frames == 0 || unk3D8->ignores_ailment_4 != 0) && elapsed < frame && entity->model->level_tables->frame >= frame) {
-                base = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, unk3D8->bone_index);
-                tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, unk3D8->bone_index + 1);
+                base = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), unk3D8->bone_index);
+                tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), unk3D8->bone_index + 1);
                 if (base != NULL && tip != NULL) {
                     delta_x = tip[0] - base[0];
                     delta_z = tip[2] - base[2];

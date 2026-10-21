@@ -37,8 +37,8 @@ static s32 Onyx_GetKeepRangeCommand(Entity *entity, s32 turn, f32 near_range, f3
 /* Set-up of a type 74 entity: clears its work area and installs the type's handlers. */
 void Onyx_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     EntityModelPart80 *part;
     s32 i;
@@ -48,7 +48,7 @@ void Onyx_Init(Entity *entity) {
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->ai_state;
+        u8 *dest = ENTITY_WORK_BYTES(entity);
 
         dest[i] = 0;
     }
@@ -86,7 +86,7 @@ void Onyx_Init(Entity *entity) {
     for (part_index = 0; part_index < 25; part_index++) {
         part = &((EntityModelPart80 *)entity->model->parts)[part_index + 8];
         ENTITY_MODEL_PART_FLAG_BITS(part)->bit40 = TRUE;
-        ENTITY_MODEL_PART_FLAG_BITS(part)->bit41 = TRUE;
+        ENTITY_MODEL_PART_FLAG_BITS(part)->opaque = TRUE;
         ai_state->pause_timer = 0;
         ai_state->sub_timer = 0;
         ai_state->mode_timer = 0;
@@ -118,7 +118,7 @@ void Onyx_Init(Entity *entity) {
     for (part_index = 0; part_index < part_count; part_index++) {
         part = &((EntityModelPart80 *)entity->model->parts)[first_part + part_index];
         ENTITY_MODEL_PART_FLAG_BITS(part)->bit40 = FALSE;
-        ENTITY_MODEL_PART_FLAG_BITS(part)->bit41 = FALSE;
+        ENTITY_MODEL_PART_FLAG_BITS(part)->opaque = FALSE;
     }
     ai_state->reload_timer = entity->params->action_frames;
     Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
@@ -357,7 +357,7 @@ static void Onyx_SwitchAttack(Entity *entity) {
             for (part_index = 0; part_index < 25; part_index++) {
                 part = &((EntityModelPart80 *)entity->model->parts)[part_index + 8];
                 ENTITY_MODEL_PART_FLAG_BITS(part)->bit40 = TRUE;
-                ENTITY_MODEL_PART_FLAG_BITS(part)->bit41 = TRUE;
+                ENTITY_MODEL_PART_FLAG_BITS(part)->opaque = TRUE;
                 ai_state->pause_timer = 0;
                 ai_state->sub_timer = 0;
                 ai_state->mode_timer = 0;
@@ -386,7 +386,7 @@ static void Onyx_SwitchAttack(Entity *entity) {
             for (part_index = 0; part_index < part_count; part_index++) {
                 part = &((EntityModelPart80 *)entity->model->parts)[first_part + part_index];
                 ENTITY_MODEL_PART_FLAG_BITS(part)->bit40 = FALSE;
-                ENTITY_MODEL_PART_FLAG_BITS(part)->bit41 = FALSE;
+                ENTITY_MODEL_PART_FLAG_BITS(part)->opaque = FALSE;
             }
             entity->action_step++;
         }

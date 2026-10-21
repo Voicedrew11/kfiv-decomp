@@ -165,7 +165,7 @@ void MapObject_LiftMarkerStone(MapObject *object) {
     MAP_OBJECT_BYTES(object)->step = MARKER_STEP_MOVE_OUT;
     MapObject_RebuildMarkerMatrices(object);
     object->model->update_bone_points(object->model);
-    point = (void *)object->model->get_point(object->model, 0);
+    point = object->model->get_point(object->model, 0);
     Vector_Copy(&origin, point);
     Vector_Copy(&target, &player_state.position);
     target.y -= 115.0f;
@@ -235,24 +235,24 @@ void MapObject_ShowMarkerStone(MapObject *object, int item) {
     chunk = item - 0x86;
     shown = (chunk <= 4U) ? (int)chunk : -1;
 
-    *skip_mask &= ~1u;
+    *skip_mask &= ~MODEL_CHUNK_SKIP_0;
     if (shown != 0) {
-        *skip_mask |= 1;
+        *skip_mask |= MODEL_CHUNK_SKIP_0;
     }
-    *skip_mask &= ~2u;
+    *skip_mask &= ~MODEL_CHUNK_SKIP_1;
     if (shown != 1) {
-        *skip_mask |= 2;
+        *skip_mask |= MODEL_CHUNK_SKIP_1;
     }
-    *skip_mask &= ~4u;
+    *skip_mask &= ~MODEL_CHUNK_SKIP_2;
     if (shown != 2) {
-        *skip_mask |= 4;
+        *skip_mask |= MODEL_CHUNK_SKIP_2;
     }
-    *skip_mask &= ~8u;
+    *skip_mask &= ~MODEL_CHUNK_SKIP_3;
     if (shown != 3) {
-        *skip_mask |= 8;
+        *skip_mask |= MODEL_CHUNK_SKIP_3;
     }
-    *(u32 *)&object->model->chunk_skip_mask &= ~0x10u;
+    *(u32 *)&object->model->chunk_skip_mask &= ~MODEL_CHUNK_SKIP_4;
     if (shown != 4) {
-        *(u32 *)&object->model->chunk_skip_mask |= 0x10;
+        *(u32 *)&object->model->chunk_skip_mask |= MODEL_CHUNK_SKIP_4;
     }
 }

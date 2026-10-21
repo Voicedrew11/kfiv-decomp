@@ -162,7 +162,7 @@
 /* Lists the owned, unlocked items of one group that the table gives a value for and whose record is not in use. */
 #define LINK_OWNED_GROUP(nodes, records, record_base, item_base, item_count)                                       \
     for (i = 1; i < (item_count); i++) {                                                                           \
-        if (item_counts.bytes[(item_base) + i] != 0 && !(item_level_defs[(item_base) + i].state & 2) &&                        \
+        if (item_counts.bytes[(item_base) + i] != 0 && !(item_level_defs[(item_base) + i].state & ITEM_DEF_STATE_LOCKED) &&                        \
             values.values[table][(item_base) + i].give_value != 0 && (records)[(record_base) + i].in_smith_rings == 0) {    \
             LINK_ITEM(&(nodes)[i], item_list_page_mark)                                                                     \
         }                                                                                                          \
@@ -227,7 +227,7 @@ static inline s32 Trade_StockListScrollDown(void) {
 /* The owned, usable items of one run of definitions whose record is idle and below level 100. */
 #define APPEND_UPGRADABLE(nodes, records, base, first_item, limit) \
     for (i = 1; i < limit; i++) { \
-        if (item_counts.bytes[first_item + i] != 0 && !(item_level_defs[first_item + i].state & 2) && \
+        if (item_counts.bytes[first_item + i] != 0 && !(item_level_defs[first_item + i].state & ITEM_DEF_STATE_LOCKED) && \
             records[base + i].in_smith_rings == 0 && records[base + i].level < 100) { \
             APPEND(&nodes[i], item_list_page_mark[0]) \
         } \
@@ -235,7 +235,7 @@ static inline s32 Trade_StockListScrollDown(void) {
 /* The owned, usable items of one run of definitions whose record is idle. */
 #define APPEND_IDLE(nodes, records, base, first_item, limit) \
     for (i = 1; i < limit; i++) { \
-        if (item_counts.bytes[first_item + i] != 0 && !(item_level_defs[first_item + i].state & 2) && \
+        if (item_counts.bytes[first_item + i] != 0 && !(item_level_defs[first_item + i].state & ITEM_DEF_STATE_LOCKED) && \
             records[base + i].in_smith_rings == 0) { \
             APPEND(&nodes[i], item_list_page_mark[0]) \
         } \
@@ -374,7 +374,7 @@ static void Trade_BuildItemRings(s32 table) {
     first = NULL;
     count = 0;
     for (i = 1; i < 150; i++) {
-        if (item_counts.bytes[i] != 0 && !(item_level_defs[i].state & 2) && values.values[table][i].give_value != 0) {
+        if (item_counts.bytes[i] != 0 && !(item_level_defs[i].state & ITEM_DEF_STATE_LOCKED) && values.values[table][i].give_value != 0) {
             LINK_ITEM(&common_item_entries[i], item_list_page_mark)
         }
     }
@@ -415,7 +415,7 @@ static void Trade_BuildItemRings(s32 table) {
     first = NULL;
     count = 0;
     for (i = 1; i < 0x17C; i++) {
-        if (stock_counts[i] != 0 && values.values[table][i].take_value != 0 && !(item_level_defs[i].state & 2)) {
+        if (stock_counts[i] != 0 && values.values[table][i].take_value != 0 && !(item_level_defs[i].state & ITEM_DEF_STATE_LOCKED)) {
             LINK_ITEM(&all_item_entries[i], trade_stock_list_page_mark)
         }
     }
@@ -493,7 +493,7 @@ static s32 Trade_CopyFrameToTexture(s32 unused_step) {
     packet[1] = 0x100B4000; // match: the tag word packet[0] is written last
     packet[2] = 0xE;
     packet[3] = 0;
-    *(u64 *)&packet[4] = (menu_first_draw_env[0] & ~0x1FFL) | 0x192;
+    *(u64 *)&packet[4] = (menu_first_draw_env[0] & ~0x1FFL) | GS_FRAME_FBP_MENU_WORK;
     packet[6] = 0x4C;
     packet[7] = 0;
     packet[8] = 0;
@@ -508,7 +508,7 @@ static s32 Trade_CopyFrameToTexture(s32 unused_step) {
     packet[17] = 0xE00000;
     packet[18] = 0x40;
     packet[19] = 0;
-    *(u64 *)&packet[20] = texture_base | 0x28028000 | 0x640000000L; /* TEX0: 1024 by 512 */
+    *(u64 *)&packet[20] = texture_base | GS_TEX0_TBW_640_TW_1024 | GS_TEX0_TH_512_TCC_RGBA; /* TEX0: 1024 by 512 */
     packet[22] = 0x6;
     packet[23] = 0;
     packet[24] = 0x80808080;
@@ -1003,7 +1003,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
     for (row = 0, node = trade_stock_list_top[0]; row < 7; node = node->prev, row++) {
         item = &item_level_defs[node->item_number];
         MenuText_SetPen(row_position);
-        MenuText_DrawLine((u16 *)item, 0x1A);
+        MenuText_DrawLine(item->name, 0x1A);
         row_position.f.mid16 += 0xB0;
         if (trade_stock_list_page_mark[0]->prev == node) {
             break;
@@ -1049,9 +1049,9 @@ static void Trade_UpdateStockList(HandlerContext *context) {
         trade_stock_list_model_angle += PI;
         trade_stock_list_model_angle -= (s32)(trade_stock_list_model_angle / TWO_PI) * TWO_PI;
         trade_stock_list_model_angle -= PI;
-        sceVu0RotMatrixY((f32 *)local_matrix, (f32 *)view_matrix, trade_stock_list_model_angle);
-        sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, trade_stock_list_model_position);
-        Menu_DrawItemModel((f32 *)local_matrix);
+        sceVu0RotMatrixY(local_matrix, view_matrix, trade_stock_list_model_angle);
+        sceVu0TransMatrix(local_matrix, local_matrix, trade_stock_list_model_position);
+        Menu_DrawItemModel(&local_matrix[0][0]);
     }
 
     if (modal_input_locked == 0) {
@@ -1403,9 +1403,9 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
     angle = trade_take_amount_model_angle + PI;
     trade_take_amount_model_angle = angle - (s32)(angle / TWO_PI) * TWO_PI - PI;
-    sceVu0RotMatrixY((f32 *)local_matrix, (f32 *)view_matrix, trade_take_amount_model_angle);
-    sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, trade_take_amount_model_position);
-    Menu_DrawItemModel((f32 *)local_matrix);
+    sceVu0RotMatrixY(local_matrix, view_matrix, trade_take_amount_model_angle);
+    sceVu0TransMatrix(local_matrix, local_matrix, trade_take_amount_model_position);
+    Menu_DrawItemModel(&local_matrix[0][0]);
 
     if (modal_input_locked == 0 && (menu_buttons & PAD_TRIANGLE) && Menu_IsEquipSlotFilled(record, trade_stock_list_cursor[0]->group)) {
         trade_take_amount_panel_sound_pending = 1;
@@ -1536,7 +1536,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
     for (row = 0; row < 7; row++) {
         item = &item_level_defs[node->item_number];
         MenuText_SetPen(position);
-        MenuText_DrawLine((u16 *)item, 0x1A);
+        MenuText_DrawLine(item->name, 0x1A);
         position.f.mid16 += 0xB0;
         if (trade_stock_list_page_mark[0]->prev == node) {
             break;
@@ -1845,14 +1845,14 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
     trade_owned_list_model_angle += PI;
     trade_owned_list_model_angle -= (s32)(trade_owned_list_model_angle / TWO_PI) * TWO_PI;
     trade_owned_list_model_angle -= PI;
-    sceVu0RotMatrixY((f32 *)local_matrix, (f32 *)&view_matrix, trade_owned_list_model_angle);
-    sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, trade_owned_list_model_position);
-    Menu_DrawItemModel((f32 *)local_matrix);
+    sceVu0RotMatrixY(local_matrix, &view_matrix, trade_owned_list_model_angle);
+    sceVu0TransMatrix(local_matrix, local_matrix, trade_owned_list_model_position);
+    Menu_DrawItemModel(&local_matrix[0][0]);
 
     for (; row < 7; node = node->prev, row++) {
         item = &item_level_defs[node->item_number];
         MenuText_SetPen(position);
-        MenuText_DrawLine((u16 *)item, 0x1A);
+        MenuText_DrawLine(item->name, 0x1A);
         position.f.mid16 += 0xB0;
         if (item_list_page_mark[0]->prev == node) {
             break;
@@ -2186,9 +2186,9 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
     angle = trade_give_amount_model_angle + PI;
     trade_give_amount_model_angle = angle - (s32)(angle / TWO_PI) * TWO_PI - PI;
-    sceVu0RotMatrixY((f32 *)local_matrix, (f32 *)view_matrix, trade_give_amount_model_angle);
-    sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, trade_give_amount_model_position);
-    Menu_DrawItemModel((f32 *)local_matrix);
+    sceVu0RotMatrixY(local_matrix, view_matrix, trade_give_amount_model_angle);
+    sceVu0TransMatrix(local_matrix, local_matrix, trade_give_amount_model_position);
+    Menu_DrawItemModel(&local_matrix[0][0]);
 
     if (modal_input_locked == 0) {
         group = item_list_cursor[0]->group;
@@ -2320,7 +2320,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
     position.raw = 0x0C0975E07C307080L;
     MenuText_SetPen(position);
     for (row = 0; row < 7; row++) {
-        MenuText_DrawLine((u16 *)&item_level_defs[node->item_number], 0x1A);
+        MenuText_DrawLine(item_level_defs[node->item_number].name, 0x1A);
         if (item_list_page_mark[0]->prev == node) {
             break;
         }
@@ -2650,7 +2650,7 @@ static void Smith_BuildItemRings(s32 mode) {
     for (i = 1; i < 380; i++) {
         if (i >= 150) {
             if (i < 220) {
-                if (i != 150 && weapon_level_records[i - 150].in_smith_rings != 0 && !(item_level_defs[i].state & 2) &&
+                if (i != 150 && weapon_level_records[i - 150].in_smith_rings != 0 && !(item_level_defs[i].state & ITEM_DEF_STATE_LOCKED) &&
                     PlayTime_SecondsBetween(weapon_level_records[i - 150].last_upgraded.time, current_play_time) >= item_level_defs[i].upgrade_wait_minutes * 60) {
                     // match: written out; through APPEND's `(node)->next` the item pointer is reduced differently
                     count++;
@@ -2666,7 +2666,7 @@ static void Smith_BuildItemRings(s32 mode) {
                     last = &all_item_entries[i];
                 }
             } else {
-                if (i != 220 && worn_item_level_records[i - 220].in_smith_rings != 0 && !(item_level_defs[i].state & 2) &&
+                if (i != 220 && worn_item_level_records[i - 220].in_smith_rings != 0 && !(item_level_defs[i].state & ITEM_DEF_STATE_LOCKED) &&
                     PlayTime_SecondsBetween(worn_item_level_records[i - 220].last_upgraded.time, current_play_time) >= item_level_defs[i].upgrade_wait_minutes * 60) {
                     count++;
                     if (count == 7) {
@@ -2825,7 +2825,7 @@ static s32 Smith_CopyFrameToTexture(s32 unused_step) {
     packet[1] = 0x100B4000; // match: the tag word packet[0] is written last
     packet[2] = 0xE;
     packet[3] = 0;
-    *(u64 *)&packet[4] = (menu_first_draw_env[0] & ~0x1FFL) | 0x192;
+    *(u64 *)&packet[4] = (menu_first_draw_env[0] & ~0x1FFL) | GS_FRAME_FBP_MENU_WORK;
     packet[6] = 0x4C;
     packet[7] = 0;
     packet[8] = 0;
@@ -2840,7 +2840,7 @@ static s32 Smith_CopyFrameToTexture(s32 unused_step) {
     packet[17] = 0xE00000;
     packet[18] = 0x40;
     packet[19] = 0;
-    *(u64 *)&packet[20] = texture_base | 0x28028000 | 0x640000000L; /* TEX0: 1024 by 512 */
+    *(u64 *)&packet[20] = texture_base | GS_TEX0_TBW_640_TW_1024 | GS_TEX0_TH_512_TCC_RGBA; /* TEX0: 1024 by 512 */
     packet[22] = 0x6;
     packet[23] = 0;
     packet[24] = 0x80808080;
@@ -3295,7 +3295,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
     for (line = 0, node = item_list_top[0]; line < 7; node = node->prev, line++) {
         def = &item_level_defs[node->item_number];
         MenuText_SetPen(word);
-        MenuText_DrawLine((u16 *)def, 0x1A);
+        MenuText_DrawLine(def->name, 0x1A);
         word.f.mid16 += 0xB0;
         if (item_list_page_mark[0]->prev == node) {
             break;
@@ -3774,7 +3774,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
     for (row = 0, item = item_list_top[0]; row < 7; item = item->prev, row++) {
         def = &item_level_defs[item->item_number];
         MenuText_SetPen(word);
-        MenuText_DrawLine((u16 *)def, 0x1A);
+        MenuText_DrawLine(def->name, 0x1A);
         word.f.mid16 += 0xB0;
         if (item_list_page_mark[0]->prev == item) {
             break;
@@ -4043,7 +4043,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
     for (line = 0, node = item_list_top[0]; line < 7; node = node->prev, line++) {
         def = &item_level_defs[node->item_number];
         MenuText_SetPen(word);
-        MenuText_DrawLine((u16 *)def, 0x1A);
+        MenuText_DrawLine(def->name, 0x1A);
         word.f.mid16 += 0xB0;
         if (item_list_page_mark[0]->prev == node) {
             break;
@@ -4217,7 +4217,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
         MenuText_SetColor(menu_draw_color);
         word.raw = 0x0A2DC6C07F5078C0;
         MenuText_SetPen(word);
-        MenuText_DrawLineCentered((u16 *)chosen, 0x18);
+        MenuText_DrawLineCentered(chosen->name, 0x18);
     }
     selected = item_list_cursor[0];
     table = Message_GetFontText(menu_heap);
@@ -4812,7 +4812,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
     for (line = 0, node = smith_collect_list_top[0]; line < 7; node = node->prev, line++) {
         def = &item_level_defs[node->item_number];
         MenuText_SetPen(word);
-        MenuText_DrawLine((u16 *)def, 0x1A);
+        MenuText_DrawLine(def->name, 0x1A);
         word.f.mid16 += 0xB0;
         if (smith_collect_list_page_mark[0]->prev == node) {
             break;
@@ -5201,7 +5201,7 @@ static s32 SaveScreen_DrawBackground(int unused) {
     packet->gif_tag_prim = 0x100B4000;
     packet->gif_tag_register_list = 0xE;
     packet->gif_tag_register_list_hi = 0;
-    packet->work_target_frame = (menu_first_draw_env[0] & ~0x1FFLL) | 0x192;
+    packet->work_target_frame = (menu_first_draw_env[0] & ~0x1FFLL) | GS_FRAME_FBP_MENU_WORK;
     packet->work_target_frame_register = 0x4C;
     packet->work_target_frame_pad = 0;
     packet->xyoffset = 0;
@@ -5216,7 +5216,7 @@ static s32 SaveScreen_DrawBackground(int unused) {
     packet->scissor_y = 0xE00000;
     packet->scissor_register = 0x40;
     packet->scissor_pad = 0;
-    packet->source_tex0 = (s64)(flag | 0x28028000 | ((s64)0xC800 << 19));
+    packet->source_tex0 = (s64)(flag | GS_TEX0_TBW_640_TW_1024 | ((s64)0xC800 << 19));
     packet->source_tex0_register = 6;
     packet->source_tex0_pad = 0;
     packet->rgbaq_rgba = 0x80808080;

@@ -98,7 +98,7 @@ void Gold_InitMap(int map) {
         model->light_block = (s32)&map_draw_state.current_light_block;
         model->fog_block = &map_draw_state.current_fog_block;
         model->texture_data = (int)map_gold_texture;
-        model->texture_slot = 2;
+        model->texture_slot = TEXTURE_SLOT_ITEM;
         model->draw = Gold_PrepareFadedDraw;
     }
     tag = map_slots[map].tag; // match: kept in a variable, retail does not read it again after the copy
@@ -121,7 +121,7 @@ void Gold_UnlinkMap(int slot) {
     MapActor *actor = map_actors_in_use;
 
     while (actor != NULL) {
-        if (((actor->flags >> 2) & 1) == slot) {
+        if (MAP_ACTOR_BITS(actor)->map == slot) {
             actor = Gold_UnlinkFromList(actor);
         } else {
             actor = actor->next;
@@ -385,7 +385,7 @@ void Gold_SaveMark(MapActor *actor) {
     MapSlot *entry;
     ObjectMark *mark;
 
-    map_slot = (actor->flags >> 2) & 1;
+    map_slot = MAP_ACTOR_BITS(actor)->map;
     entry = &map_slots[map_slot];
     mark = &map_object_marks[entry->tag].marks[((char *)actor - (char *)map_actors[map_slot]) / sizeof(MapActor)];
     memset(mark, 0, sizeof(ObjectMark));
@@ -404,7 +404,7 @@ void Gold_ClearMark(MapActor *actor) {
     MapSlot *entry;
     ObjectMark *mark;
 
-    map_slot = (actor->flags >> 2) & 1;
+    map_slot = MAP_ACTOR_BITS(actor)->map;
     entry = &map_slots[map_slot];
     slot = ((char *)actor - (char *)map_actors[map_slot]) / sizeof(MapActor);
     // match: retail adds the tag row and the slot before the table base
@@ -416,7 +416,7 @@ void Gold_ClearMark(MapActor *actor) {
    its fade alpha (ModelInstance.fade_alpha) and the tests, then sends its textures. */
 void Gold_PrepareFadedDraw(OverlaySprite *sprite) {
     Packet_BeginGsRegisters();
-    Packet_AddGsRegister(GS_REG_ALPHA_1, ((s64)sprite->fade_alpha << 32) | 0x64);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, ((s64)sprite->fade_alpha << 32) | GS_ALPHA_LERP_CS_CD_FIX);
     Packet_AddGsRegister(GS_REG_TEST_1, 0x51001);
     Packet_AddGsRegister(0x48, 0x30001);
     Packet_EndGsRegisters();

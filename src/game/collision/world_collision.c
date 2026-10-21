@@ -21,8 +21,8 @@ typedef void (*MapObjectCircleTest)(MapObject *, f32 *, f32, f32);
    notes the object when the point tested is the player's position */
 #define NOTE_FOUND(object) \
     result = TRUE; \
-    if (centre == (f32 *)&player_state) { \
-        ((PlayerState *)centre)->floor_map_object = (object); \
+    if (centre == &player_state.position.x) { \
+        player_state.floor_map_object = (object); \
     }
 // match: the last test is called for its value, which keeps it an ordinary call
 typedef int (*WallTest)(void *, void *, f32, void *, f32);
@@ -70,7 +70,7 @@ typedef int (*CornerTest)(void *, f32, f32, void *, f32, f32);
 /* Drops a vertical line through `point` onto a triangle: on a hit the scratchpad result gets the
    height where it meets the triangle and how far that is from the point (positive: below it, as y grows
    downward). */
-void Collision_DropOnTriangle(void *corner_a, void *corner_b, void *corner_c, void *point) {
+void Collision_DropOnTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *point) {
     f32 hit_point[4];
     f32 edge_a[4];
     f32 edge_c[4];
@@ -104,12 +104,12 @@ void Collision_DropOnTriangle(void *corner_a, void *corner_b, void *corner_c, vo
     if (-COLLISION_PARALLEL_EPSILON < scalar && scalar < COLLISION_PARALLEL_EPSILON) {
         return;
     }
-    scalar = (normal[0] * ((f32 *)corner_a)[0] + scalar * ((f32 *)corner_a)[1] + normal[2] * ((f32 *)corner_a)[2] +
-              (-normal[0] * ((f32 *)point)[0] - scalar * ((f32 *)point)[1] - normal[2] * ((f32 *)point)[2])) /
+    scalar = (normal[0] * corner_a[0] + scalar * corner_a[1] + normal[2] * corner_a[2] +
+              (-normal[0] * point[0] - scalar * point[1] - normal[2] * point[2])) /
              scalar;
-    hit_point[0] = ((f32 *)point)[0];
-    hit_point[1] = ((f32 *)point)[1] + scalar;
-    hit_point[2] = ((f32 *)point)[2];
+    hit_point[0] = point[0];
+    hit_point[1] = point[1] + scalar;
+    hit_point[2] = point[2];
     COLLISION_RESULT->distance = scalar;
     Vector_Subtract(offset, hit_point, corner_b);
     scalar = edge_c[0] * edge_a[2] - edge_c[2] * edge_a[0];
@@ -131,7 +131,7 @@ void Collision_DropOnTriangle(void *corner_a, void *corner_b, void *corner_c, vo
 
 /* Collision_DropOnTriangle with a limit: the triangle must lie at or below the point (y grows downward), by
    no more than reach. */
-void Collision_DropOnTriangleWithin(void *corner_a, void *corner_b, void *corner_c, void *point, f32 reach) {
+void Collision_DropOnTriangleWithin(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *point, f32 reach) {
     f32 hit_point[4];
     f32 edge_a[4];
     f32 edge_c[4];
@@ -165,8 +165,8 @@ void Collision_DropOnTriangleWithin(void *corner_a, void *corner_b, void *corner
     if (-COLLISION_PARALLEL_EPSILON < scalar && scalar < COLLISION_PARALLEL_EPSILON) {
         return;
     }
-    scalar = (normal[0] * ((f32 *)corner_a)[0] + scalar * ((f32 *)corner_a)[1] + normal[2] * ((f32 *)corner_a)[2] +
-              (-normal[0] * ((f32 *)point)[0] - scalar * ((f32 *)point)[1] - normal[2] * ((f32 *)point)[2])) /
+    scalar = (normal[0] * corner_a[0] + scalar * corner_a[1] + normal[2] * corner_a[2] +
+              (-normal[0] * point[0] - scalar * point[1] - normal[2] * point[2])) /
              scalar;
     if (scalar < negative_zero_drop_within_limit[0]) {
         return;
@@ -174,9 +174,9 @@ void Collision_DropOnTriangleWithin(void *corner_a, void *corner_b, void *corner
     if (reach < scalar) {
         return;
     }
-    hit_point[0] = ((f32 *)point)[0];
-    hit_point[1] = ((f32 *)point)[1] + scalar;
-    hit_point[2] = ((f32 *)point)[2];
+    hit_point[0] = point[0];
+    hit_point[1] = point[1] + scalar;
+    hit_point[2] = point[2];
     COLLISION_RESULT->distance = scalar;
     Vector_Subtract(offset, hit_point, corner_b);
     scalar = edge_c[0] * edge_a[2] - edge_c[2] * edge_a[0];
@@ -1086,12 +1086,12 @@ void Collision_HitRayBoxObj(void *target, f32 *from, f32 *direction, float dista
     if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
         return;
     }
-    corner0 = (f32 *)object->model->get_point(object->model, 0);
-    top = (f32 *)object->model->get_point(object->model, 0x1F);
+    corner0 = object->model->get_point(object->model, 0);
+    top = object->model->get_point(object->model, 0x1F);
     height = corner0[1] - top[1];
-    corner1 = (f32 *)object->model->get_point(object->model, 1);
-    corner2 = (f32 *)object->model->get_point(object->model, 2);
-    corner3 = (f32 *)object->model->get_point(object->model, 3);
+    corner1 = object->model->get_point(object->model, 1);
+    corner2 = object->model->get_point(object->model, 2);
+    corner3 = object->model->get_point(object->model, 3);
     Vector_Copy(&bottom[0], corner0);
     bottom[0].y -= height;
     Collision_RayTriangle(corner0, corner1, &bottom[0].x, from, direction, distance);
@@ -1149,12 +1149,12 @@ void Collision_HitRayDoubleDoorObj(void *target, f32 *from, f32 *direction, floa
         return;
     }
     if (MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->frame == 1) {
-        corner0 = (f32 *)object->model->get_point(object->model, 0);
-        top = (f32 *)object->model->get_point(object->model, 0x1F);
+        corner0 = object->model->get_point(object->model, 0);
+        top = object->model->get_point(object->model, 0x1F);
         height = corner0[1] - top[1];
-        corner1 = (f32 *)object->model->get_point(object->model, 1);
-        corner2 = (f32 *)object->model->get_point(object->model, 6);
-        corner3 = (f32 *)object->model->get_point(object->model, 7);
+        corner1 = object->model->get_point(object->model, 1);
+        corner2 = object->model->get_point(object->model, 6);
+        corner3 = object->model->get_point(object->model, 7);
         Vector_Copy(&bottom[0], corner0);
         bottom[0].y -= height;
         Collision_RayTriangle(corner0, corner1, &bottom[0].x, from, direction, distance);
@@ -1194,12 +1194,12 @@ void Collision_HitRayDoubleDoorObj(void *target, f32 *from, f32 *direction, floa
         Collision_RayTriangle(corner0, &bottom[3].x, &bottom[0].x, from, direction, distance);
         return;
     }
-    corner0 = (f32 *)object->model->get_point(object->model, 0);
-    top = (f32 *)object->model->get_point(object->model, 0x1F);
+    corner0 = object->model->get_point(object->model, 0);
+    top = object->model->get_point(object->model, 0x1F);
     height = corner0[1] - top[1];
-    corner1 = (f32 *)object->model->get_point(object->model, 1);
-    corner2 = (f32 *)object->model->get_point(object->model, 2);
-    corner3 = (f32 *)object->model->get_point(object->model, 3);
+    corner1 = object->model->get_point(object->model, 1);
+    corner2 = object->model->get_point(object->model, 2);
+    corner3 = object->model->get_point(object->model, 3);
     Vector_Copy(&bottom[0], corner0);
     bottom[0].y -= height;
     Collision_RayTriangle(corner0, corner1, &bottom[0].x, from, direction, distance);
@@ -1240,10 +1240,10 @@ void Collision_HitRayDoubleDoorObj(void *target, f32 *from, f32 *direction, floa
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    corner0 = (f32 *)object->model->get_point(object->model, 4);
-    corner1 = (f32 *)object->model->get_point(object->model, 5);
-    corner2 = (f32 *)object->model->get_point(object->model, 6);
-    corner3 = (f32 *)object->model->get_point(object->model, 7);
+    corner0 = object->model->get_point(object->model, 4);
+    corner1 = object->model->get_point(object->model, 5);
+    corner2 = object->model->get_point(object->model, 6);
+    corner3 = object->model->get_point(object->model, 7);
     Vector_Copy(&bottom[0], corner0);
     bottom[0].y -= height;
     Collision_RayTriangle(corner0, corner1, &bottom[0].x, from, direction, distance);
@@ -1352,10 +1352,10 @@ void Collision_HitRayPitfallObj(void *target, f32 *from, f32 *direction, float d
         return;
     }
     for (i = 0; i < 0x20; i += 4) {
-        corner0 = (f32 *)object->model->get_point(object->model, i);
-        corner1 = (f32 *)object->model->get_point(object->model, i + 1);
-        corner2 = (f32 *)object->model->get_point(object->model, i + 2);
-        corner3 = (f32 *)object->model->get_point(object->model, i + 3);
+        corner0 = object->model->get_point(object->model, i);
+        corner1 = object->model->get_point(object->model, i + 1);
+        corner2 = object->model->get_point(object->model, i + 2);
+        corner3 = object->model->get_point(object->model, i + 3);
         if (corner0[0] == object->model->position.x && corner0[1] == object->model->position.y && corner0[2] == object->model->position.z) {
             return;
         }
@@ -1428,23 +1428,23 @@ int Collision_HitSphereBoxObj(MapObject *object, f32 *point, f32 reach) {
     if (object->model->get_point(object->model, 0x1F) == 0) {
         return;
     }
-    corner0 = (f32 *)object->model->get_point(object->model, 0);
+    corner0 = object->model->get_point(object->model, 0);
     if (corner0 == NULL) {
         return;
     }
-    corner1 = (f32 *)object->model->get_point(object->model, 1);
+    corner1 = object->model->get_point(object->model, 1);
     if (corner1 == NULL) {
         return;
     }
-    corner2 = (f32 *)object->model->get_point(object->model, 2);
+    corner2 = object->model->get_point(object->model, 2);
     if (corner2 == NULL) {
         return;
     }
-    corner3 = (f32 *)object->model->get_point(object->model, 3);
+    corner3 = object->model->get_point(object->model, 3);
     if (corner3 == NULL) {
         return;
     }
-    top = (f32 *)object->model->get_point(object->model, 0x1F);
+    top = object->model->get_point(object->model, 0x1F);
     if (top == NULL) {
         return;
     }
@@ -1488,23 +1488,23 @@ int Collision_HitSphereDoubleDoorObj(MapObject *object, f32 *point, f32 reach) {
         return;
     }
     if (MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->frame < 2) {
-        corner0 = (f32 *)object->model->get_point(object->model, 0);
+        corner0 = object->model->get_point(object->model, 0);
         if (corner0 == NULL) {
             return;
         }
-        corner1 = (f32 *)object->model->get_point(object->model, 1);
+        corner1 = object->model->get_point(object->model, 1);
         if (corner1 == NULL) {
             return;
         }
-        corner2 = (f32 *)object->model->get_point(object->model, 6);
+        corner2 = object->model->get_point(object->model, 6);
         if (corner2 == NULL) {
             return;
         }
-        corner3 = (f32 *)object->model->get_point(object->model, 7);
+        corner3 = object->model->get_point(object->model, 7);
         if (corner3 == NULL) {
             return;
         }
-        top = (f32 *)object->model->get_point(object->model, 0x1F);
+        top = object->model->get_point(object->model, 0x1F);
         if (top == NULL) {
             return;
         }
@@ -1526,39 +1526,39 @@ int Collision_HitSphereDoubleDoorObj(MapObject *object, f32 *point, f32 reach) {
         }
         return ((WallTest)Collision_BallEdge)(corner3, corner0, height, point, reach);
     }
-    corner0 = (f32 *)object->model->get_point(object->model, 0);
+    corner0 = object->model->get_point(object->model, 0);
     if (corner0 == NULL) {
         return;
     }
-    corner1 = (f32 *)object->model->get_point(object->model, 1);
+    corner1 = object->model->get_point(object->model, 1);
     if (corner1 == NULL) {
         return;
     }
-    corner2 = (f32 *)object->model->get_point(object->model, 2);
+    corner2 = object->model->get_point(object->model, 2);
     if (corner2 == NULL) {
         return;
     }
-    corner3 = (f32 *)object->model->get_point(object->model, 3);
+    corner3 = object->model->get_point(object->model, 3);
     if (corner3 == NULL) {
         return;
     }
-    corner4 = (f32 *)object->model->get_point(object->model, 4);
+    corner4 = object->model->get_point(object->model, 4);
     if (corner4 == NULL) {
         return;
     }
-    corner5 = (f32 *)object->model->get_point(object->model, 5);
+    corner5 = object->model->get_point(object->model, 5);
     if (corner5 == NULL) {
         return;
     }
-    corner6 = (f32 *)object->model->get_point(object->model, 6);
+    corner6 = object->model->get_point(object->model, 6);
     if (corner6 == NULL) {
         return;
     }
-    corner7 = (f32 *)object->model->get_point(object->model, 7);
+    corner7 = object->model->get_point(object->model, 7);
     if (corner7 == NULL) {
         return;
     }
-    top = (f32 *)object->model->get_point(object->model, 0x1F);
+    top = object->model->get_point(object->model, 0x1F);
     if (top == NULL) {
         return;
     }
@@ -1612,10 +1612,10 @@ void Collision_HitSphereQuadObj(MapObject *object, f32 *point, f32 reach) {
     if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
         return;
     }
-    corner_0 = (f32 *)object->model->get_point(object->model, 0);
-    corner_1 = (f32 *)object->model->get_point(object->model, 1);
-    corner_2 = (f32 *)object->model->get_point(object->model, 2);
-    corner_3 = (f32 *)object->model->get_point(object->model, 3);
+    corner_0 = object->model->get_point(object->model, 0);
+    corner_1 = object->model->get_point(object->model, 1);
+    corner_2 = object->model->get_point(object->model, 2);
+    corner_3 = object->model->get_point(object->model, 3);
     Collision_PointTriangle(corner_0, corner_1, corner_2, point, reach);
     if (COLLISION_RESULT->hit == 0) {
         Collision_PointTriangle(corner_0, corner_2, corner_3, point, reach);
@@ -1664,10 +1664,10 @@ void Collision_HitSpherePitfallObj(MapObject *object, f32 *point, f32 reach) {
         return;
     }
     for (i = 0; i < 0x20; i += 4) {
-        corner0 = (f32 *)object->model->get_point(object->model, i);
-        corner1 = (f32 *)object->model->get_point(object->model, i + 1);
-        corner2 = (f32 *)object->model->get_point(object->model, i + 2);
-        corner3 = (f32 *)object->model->get_point(object->model, i + 3);
+        corner0 = object->model->get_point(object->model, i);
+        corner1 = object->model->get_point(object->model, i + 1);
+        corner2 = object->model->get_point(object->model, i + 2);
+        corner3 = object->model->get_point(object->model, i + 3);
         if (corner0[0] == object->model->position.x && corner0[1] == object->model->position.y && corner0[2] == object->model->position.z) {
             return;
         }
@@ -1742,23 +1742,23 @@ int Collision_HitCapsuleBoxObj(MapObject *object, f32 *point, f32 radius, f32 pu
     if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
         return;
     }
-    corner0 = (f32 *)object->model->get_point(object->model, 0);
+    corner0 = object->model->get_point(object->model, 0);
     if (corner0 == NULL) {
         return;
     }
-    corner1 = (f32 *)object->model->get_point(object->model, 1);
+    corner1 = object->model->get_point(object->model, 1);
     if (corner1 == NULL) {
         return;
     }
-    corner2 = (f32 *)object->model->get_point(object->model, 2);
+    corner2 = object->model->get_point(object->model, 2);
     if (corner2 == NULL) {
         return;
     }
-    corner3 = (f32 *)object->model->get_point(object->model, 3);
+    corner3 = object->model->get_point(object->model, 3);
     if (corner3 == NULL) {
         return;
     }
-    top = (f32 *)object->model->get_point(object->model, 0x1F);
+    top = object->model->get_point(object->model, 0x1F);
     if (top == NULL) {
         return;
     }
@@ -1812,23 +1812,23 @@ void Collision_HitCapsuleDoubleDoorObj(MapObject *object, f32 *centre, f32 radiu
 
     if (object->state_flags & MAP_OBJECT_IN_USE) {
         if (MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->frame < 2) {
-            point0 = (f32 *)object->model->get_point(object->model, 0);
+            point0 = object->model->get_point(object->model, 0);
             if (point0 == NULL) {
                 return;
             }
-            point1 = (f32 *)object->model->get_point(object->model, 1);
+            point1 = object->model->get_point(object->model, 1);
             if (point1 == NULL) {
                 return;
             }
-            point2 = (f32 *)object->model->get_point(object->model, 6);
+            point2 = object->model->get_point(object->model, 6);
             if (point2 == NULL) {
                 return;
             }
-            point3 = (f32 *)object->model->get_point(object->model, 7);
+            point3 = object->model->get_point(object->model, 7);
             if (point3 == NULL) {
                 return;
             }
-            top = (f32 *)object->model->get_point(object->model, 0x1F);
+            top = object->model->get_point(object->model, 0x1F);
             if (top == NULL) {
                 return;
             }
@@ -1842,39 +1842,39 @@ void Collision_HitCapsuleDoubleDoorObj(MapObject *object, f32 *centre, f32 radiu
             TEST_POST(point2);
             Collision_CylinderCylinder(centre, push, radius, point3, 0.0f, height);
         } else {
-            point0 = (f32 *)object->model->get_point(object->model, 0);
+            point0 = object->model->get_point(object->model, 0);
             if (point0 == NULL) {
                 return;
             }
-            point1 = (f32 *)object->model->get_point(object->model, 1);
+            point1 = object->model->get_point(object->model, 1);
             if (point1 == NULL) {
                 return;
             }
-            point2 = (f32 *)object->model->get_point(object->model, 2);
+            point2 = object->model->get_point(object->model, 2);
             if (point2 == NULL) {
                 return;
             }
-            point3 = (f32 *)object->model->get_point(object->model, 3);
+            point3 = object->model->get_point(object->model, 3);
             if (point3 == NULL) {
                 return;
             }
-            point4 = (f32 *)object->model->get_point(object->model, 4);
+            point4 = object->model->get_point(object->model, 4);
             if (point4 == NULL) {
                 return;
             }
-            point5 = (f32 *)object->model->get_point(object->model, 5);
+            point5 = object->model->get_point(object->model, 5);
             if (point5 == NULL) {
                 return;
             }
-            point6 = (f32 *)object->model->get_point(object->model, 6);
+            point6 = object->model->get_point(object->model, 6);
             if (point6 == NULL) {
                 return;
             }
-            point7 = (f32 *)object->model->get_point(object->model, 7);
+            point7 = object->model->get_point(object->model, 7);
             if (point7 == NULL) {
                 return;
             }
-            top = (f32 *)object->model->get_point(object->model, 0x1F);
+            top = object->model->get_point(object->model, 0x1F);
             if (top == NULL) {
                 return;
             }
@@ -1957,15 +1957,15 @@ void Collision_HitFanMeshObj(MapObject *object, Vector4 *origin, f32 radius, f32
             if (j > 0) {
                 second_sides = 0;
                 first_sides = 0;
-                TEST_SIDES((f32 *)strip->points[0].position);
+                TEST_SIDES(strip->points[0].position);
                 first_sides <<= 1;
                 second_sides <<= 1;
-                TEST_SIDES((f32 *)strip->points[1].position);
+                TEST_SIDES(strip->points[1].position);
                 first_sides <<= 1;
                 second_sides <<= 1;
                 point += 2;
                 do {
-                    TEST_SIDES((f32 *)point->position);
+                    TEST_SIDES(point->position);
                     if (second_sides != 7 && first_sides != 7) {
                         // match: the unsigned indices give retail's two-step address
                         Collision_CapsuleTriangle(point[-2U].position, point[-1U].position, point->position,
@@ -2226,10 +2226,10 @@ void Collision_HitFanQuadObj(MapObject *object, Vector4 *origin, f32 radius, f32
     if (object->state_flags & MAP_OBJECT_IN_USE) {
         second_sides = 0;
         first_sides = 0;
-        points[0] = (f32 *)object->model->get_point(object->model, 1);
-        points[1] = (f32 *)object->model->get_point(object->model, 2);
-        points[2] = (f32 *)object->model->get_point(object->model, 0);
-        points[3] = (f32 *)object->model->get_point(object->model, 3);
+        points[0] = object->model->get_point(object->model, 1);
+        points[1] = object->model->get_point(object->model, 2);
+        points[2] = object->model->get_point(object->model, 0);
+        points[3] = object->model->get_point(object->model, 3);
         TEST_SIDES(points[0]);
         first_sides <<= 1;
         second_sides <<= 1;
@@ -2337,23 +2337,23 @@ void Collision_PushOutOfBoxObj(MapObject *object, f32 *centre, f32 radius, f32 p
     f32 height;
 
     if (object->state_flags & MAP_OBJECT_IN_USE) {
-        point0 = (f32 *)object->model->get_point(object->model, 0);
+        point0 = object->model->get_point(object->model, 0);
         if (point0 == NULL) {
             return;
         }
-        point1 = (f32 *)object->model->get_point(object->model, 1);
+        point1 = object->model->get_point(object->model, 1);
         if (point1 == NULL) {
             return;
         }
-        point2 = (f32 *)object->model->get_point(object->model, 2);
+        point2 = object->model->get_point(object->model, 2);
         if (point2 == NULL) {
             return;
         }
-        point3 = (f32 *)object->model->get_point(object->model, 3);
+        point3 = object->model->get_point(object->model, 3);
         if (point3 == NULL) {
             return;
         }
-        top = (f32 *)object->model->get_point(object->model, 0x1F);
+        top = object->model->get_point(object->model, 0x1F);
         if (top == NULL) {
             return;
         }
@@ -2404,7 +2404,7 @@ void Collision_PushOutOfBoxObj(MapObject *object, f32 *centre, f32 radius, f32 p
 static inline s32 gap_is_closed(MapObject *object, f32 *centre, f32 push, f32 first_gap, f32 second_gap) {
     s32 closed = FALSE;
 
-    if (centre == (f32 *)&player_state) {
+    if (centre == &player_state.position.x) {
         closed = -(object->door_open_flags & 1);
     } else if (first_gap <= push * 2.25f || second_gap <= push * 2.25f) {
         closed = TRUE;
@@ -2425,23 +2425,23 @@ void Collision_PushOutOfDoubleDoorObj(MapObject *object, f32 *centre, f32 radius
     if (object->state_flags & MAP_OBJECT_IN_USE) {
         object->model->update_bone_points(object->model);
         if (MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->frame == 1) {
-            point0 = (f32 *)object->model->get_point(object->model, 0);
+            point0 = object->model->get_point(object->model, 0);
             if (point0 == NULL) {
                 return;
             }
-            point1 = (f32 *)object->model->get_point(object->model, 1);
+            point1 = object->model->get_point(object->model, 1);
             if (point1 == NULL) {
                 return;
             }
-            point2 = (f32 *)object->model->get_point(object->model, 6);
+            point2 = object->model->get_point(object->model, 6);
             if (point2 == NULL) {
                 return;
             }
-            point3 = (f32 *)object->model->get_point(object->model, 7);
+            point3 = object->model->get_point(object->model, 7);
             if (point3 == NULL) {
                 return;
             }
-            top = (f32 *)object->model->get_point(object->model, 0x1F);
+            top = object->model->get_point(object->model, 0x1F);
             if (top == NULL) {
                 return;
             }
@@ -2479,15 +2479,15 @@ void Collision_PushOutOfDoubleDoorObj(MapObject *object, f32 *centre, f32 radius
                 PUSH_OUT(push + 0.001f);
             }
         } else {
-            point0 = (f32 *)object->model->get_point(object->model, 0);
-            point1 = (f32 *)object->model->get_point(object->model, 1);
-            point2 = (f32 *)object->model->get_point(object->model, 2);
-            point3 = (f32 *)object->model->get_point(object->model, 3);
-            point4 = (f32 *)object->model->get_point(object->model, 4);
-            point5 = (f32 *)object->model->get_point(object->model, 5);
-            point6 = (f32 *)object->model->get_point(object->model, 6);
-            point7 = (f32 *)object->model->get_point(object->model, 7);
-            top = (f32 *)object->model->get_point(object->model, 0x1F);
+            point0 = object->model->get_point(object->model, 0);
+            point1 = object->model->get_point(object->model, 1);
+            point2 = object->model->get_point(object->model, 2);
+            point3 = object->model->get_point(object->model, 3);
+            point4 = object->model->get_point(object->model, 4);
+            point5 = object->model->get_point(object->model, 5);
+            point6 = object->model->get_point(object->model, 6);
+            point7 = object->model->get_point(object->model, 7);
+            top = object->model->get_point(object->model, 0x1F);
             height = point0[1] - top[1];
             delta_x = point2[0] - point5[0];
             delta_z = point2[2] - point5[2];
@@ -2598,9 +2598,9 @@ void Collision_PushOutOfQuadObj(CollisionOwner *owner, f32 *position, f32 radius
     f32 height;
 
     if (owner->flags & OBJECT_FLAG_QUAD_HIT) {
-        point0 = (f32 *)owner->model->get_point(owner->model, 0);
-        point1 = (f32 *)owner->model->get_point(owner->model, 1);
-        point3 = (f32 *)owner->model->get_point(owner->model, 3);
+        point0 = owner->model->get_point(owner->model, 0);
+        point1 = owner->model->get_point(owner->model, 1);
+        point3 = owner->model->get_point(owner->model, 3);
         Vector_TriangleNormal(normal, point0, point1, point3);
         Vector_Normalize(normal, normal);
         if (normal[1] < -QUAD_FLOOR_NORMAL_Y) {
@@ -2684,10 +2684,10 @@ s32 Collision_StandOnQuadObj(CollisionOwner *owner, f32 *position, f32 radius) {
     f32 lowest;
 
     if (owner->flags & OBJECT_FLAG_QUAD_HIT) {
-        point0 = (f32 *)owner->model->get_point(owner->model, 0);
-        point1 = (f32 *)owner->model->get_point(owner->model, 1);
-        point2 = (f32 *)owner->model->get_point(owner->model, 2);
-        point3 = (f32 *)owner->model->get_point(owner->model, 3);
+        point0 = owner->model->get_point(owner->model, 0);
+        point1 = owner->model->get_point(owner->model, 1);
+        point2 = owner->model->get_point(owner->model, 2);
+        point3 = owner->model->get_point(owner->model, 3);
         Vector_TriangleNormal(normal, point0, point1, point3);
         Vector_Normalize(normal, normal);
         if (normal[1] >= -QUAD_FLOOR_NORMAL_Y && normal[1] <= QUAD_FLOOR_NORMAL_Y) {
@@ -2776,10 +2776,10 @@ s32 Collision_StandOnPitfallObj(MapObject *object, f32 *position, f32 radius) {
         lowest = largest_float_strip_lowest_seed[0];
         centre[1] = centre[1] - 1.0f - radius;
         for (i = 0; i < 0x20; i += 4) {
-            point0 = (f32 *)object->model->get_point(object->model, i);
-            point1 = (f32 *)object->model->get_point(object->model, i + 1);
-            point2 = (f32 *)object->model->get_point(object->model, i + 2);
-            point3 = (f32 *)object->model->get_point(object->model, i + 3);
+            point0 = object->model->get_point(object->model, i);
+            point1 = object->model->get_point(object->model, i + 1);
+            point2 = object->model->get_point(object->model, i + 2);
+            point3 = object->model->get_point(object->model, i + 3);
             if (SAME_POINT(point0, object->model->position) || SAME_POINT(point1, object->model->position)
                 || SAME_POINT(point2, object->model->position) || SAME_POINT(point3, object->model->position)) {
                 return FALSE;

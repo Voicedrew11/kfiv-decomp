@@ -27,6 +27,7 @@
 /* Timers. */ /* derived name */
 #define T0_COUNT ((volatile int *)0x10000000)
 #define T0_MODE ((volatile int *)0x10000010)
+#define TIMER_MODE_EQUF 0x400 /* T0_MODE bit 10, EQUF: the compare flag; Timer_CountOverflow writes it to acknowledge */
 #define T1_COUNT ((volatile int *)0x10000800)
 #define T1_MODE ((volatile int *)0x10000810)
 #define T3_MODE ((volatile int *)0x10001810)
@@ -153,5 +154,6 @@
 #define GS_BUSDIR ((volatile unsigned long *)0x12001040)
 #define GS_CSR_FINISH 0x2       /* bit1: FINISH, the GS finished a drawing; written 1 to clear */
 #define GS_CSR_FIELD 0x2000     /* bit13: FIELD, the field the GS is on */
+#define GS_CSR_FIELD_SHIFT 13
 
 #endif /* SCE_LIBKERNL_EEREGS_H */

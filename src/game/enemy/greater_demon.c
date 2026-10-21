@@ -31,7 +31,6 @@
 
 static KfVector climb_points[3]; /* 0x4FF390 the points GreaterDemon_Think climbs over (it indexes up to 5) */
 
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 static void GreaterDemon_Think(Entity *entity, s32 run_now);
 static void GreaterDemon_Move(Entity *entity);
 static void GreaterDemon_OnHit(Entity *entity);
@@ -50,15 +49,15 @@ static void GreaterDemon_ReactionHeavy(Entity *);
 /* Set-up of a type 56 entity: clears its work area and installs the type's handlers. */
 void GreaterDemon_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
-    // match: the three fills name their target inside the loop; unkBC and unkC0 above are
+    // match: the three fills name their target inside the loop; choice_weights and attack_weights above are
     // otherwise unused but retail computes them up front and copies them before each loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *work_area = (u8 *)&entity->ai_state;
+        u8 *work_area = ENTITY_WORK_BYTES(entity);
 
         work_area[i] = 0;
     }
@@ -563,11 +562,11 @@ static void GreaterDemon_SlideToStop(Entity *entity) {
                 EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
-        entity->move_delta_x = -sinf(EntityMath_WrapAngle(entity->model->rotation[1])) * ai_state->unk44;
-        entity->move_delta_z = -cosf(EntityMath_WrapAngle(entity->model->rotation[1])) * ai_state->unk44;
-        ai_state->unk44 -= 2.0f;
-        if (ai_state->unk44 < 0.0f) {
-            ai_state->unk44 = 0.0f;
+        entity->move_delta_x = -sinf(EntityMath_WrapAngle(entity->model->rotation[1])) * ai_state->move_speed;
+        entity->move_delta_z = -cosf(EntityMath_WrapAngle(entity->model->rotation[1])) * ai_state->move_speed;
+        ai_state->move_speed -= 2.0f;
+        if (ai_state->move_speed < 0.0f) {
+            ai_state->move_speed = 0.0f;
         }
         break;
     }
@@ -699,7 +698,7 @@ static void GreaterDemon_Guard(Entity *entity) {
             entity->flags &= ~ENTITY_FLAG_HIT_BY_PLAYER;
             entity->action_timer = entity->params->guard_frames;
         }
-        EntityEvent_StartEffectAtPoint((char **)entity, 0x32F, 0, (int)entity->model->rotation);
+        EntityEvent_StartEffectAtPoint(entity, 0x32F, 0, entity->model->rotation);
         if (entity->action_timer == 0) {
             ENTITY_FLAG_BITS(entity)->guarding = 0;
             ENTITY_FLAG_BITS(entity)->animates = TRUE;

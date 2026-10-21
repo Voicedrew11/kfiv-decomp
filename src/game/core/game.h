@@ -45,6 +45,7 @@ typedef struct {
 /* GameStatus.camera_mode */
 #define CAMERA_MODE_FOLLOW_PLAYER   0       /* the camera follows the player */
 #define CAMERA_MODE_SCRIPTED        1       /* the script places the camera */
+#define CAMERA_MODE_FIXED           2       /* the camera stays where it is; it may still look at a point */
 
 /* GameStatus.camera_look_mode: no look at a point, turn at once to it, or ease toward it */
 #define CAMERA_LOOK_NONE            0
@@ -58,7 +59,7 @@ typedef struct {
     u32 bits0 : 9;                  /* 0x24 */
     u32 bit9 : 1;
     u32 bit10 : 1;
-    u32 bit11 : 1;
+    u32 play_ending_movie : 1;      /* the game was won: Movie_PlayEnding plays KF4ED.PSS, not the staff roll */
     u32 bits12 : 20;
 } GameStatusSplitBits;
 
@@ -76,9 +77,12 @@ typedef struct {
 #define GAME_STATUS_FLAG_HOLD_ARMED 0x1000
 /* GameStatus bit 13: set by the main loop when START is pressed while held; it then skips drawing and input */
 #define GAME_STATUS_FLAG_HOLDING    0x2000
+/* GameStatus bit 11: play_ending_movie (GameStatusSplitBits) */
+#define GAME_STATUS_ENDING_MOVIE_SHIFT 11
 /* GameStatus.update_hold_flags bits: 0x40 holds the scripts (Script_UpdateAll), 0x400 updates only the effect owned by effect_owner */
 #define UPDATE_HOLD_SCRIPTS            0x40
 #define UPDATE_HOLD_EFFECT_OWNER_ONLY  0x400
+#define UPDATE_HOLD_FALLING_ITEMS      0x10   /* holds back MapItem_UpdateFalling, the dropped items still falling */
 /* game_status_flags, the flag word of GameStatus (0x24), as bit-fields */
 typedef struct {
     u32 pad0 : 1;
@@ -88,6 +92,7 @@ typedef struct {
 #define GAME_STATUS_FLAG_BITS(flags) ((GameStatusFlagBits *)(flags))
 
 #define UPDATE_HOLD_MAP_OBJECTS 0x8        /* holds back MapObject_UpdateAll, the map objects' update */
+#define UPDATE_HOLD_ENTITIES    0x4        /* holds back Entity_UpdateAll, the entities' update */
 
 /* an 8-byte time passed by value: the wall clock (PlayTime_DayOfYear, PlayTime_ClockSecondsBetween), and the play time
    current_play_time, which PlayTime_ComputeCurrent splits the same way (mday counts hundreds of hours); the record
@@ -256,6 +261,7 @@ typedef struct {
 #define GAME_DEFINITION_STATE_MASK 0xC0000
 #define GAME_DEFINITION_STATE_SHIFT 18
 #define GAME_DEFINITION_STATE_VALUE_MASK 3  /* the state once shifted down to bit 0 */
+#define GAME_DEFINITION_STATE_1 0x40000  /* GameDefinitionFlags state 1 (bit 18 set): what Game_ReadSaveImage restores a saved 1 to */
 
 /* map_entry_counters: each byte holds two 4-bit death counters, the even spawn record in the low nibble */
 #define SPAWN_COUNTER_LOW_MASK  0xF
@@ -301,7 +307,7 @@ typedef struct ListNode {
 /* pool_slots[32]: a pool of 0x70-byte slots chained into a free list through `next`;
    pool_slot_free_list holds the head */
 typedef struct PoolSlot {
-    char pad00[0x40];
+    f32 matrix[16];                 /* 0x00 the slot's world matrix (PoolNode_Pose and PoolSlot_Draw fill it) */
     struct PoolSlot *parent;        /* 0x40 the parent slot, whose matrix this slot's model follows */
     struct PoolPart *part;          /* 0x44 the 0x50-byte part this slot shows, NULL: none */
     struct PoolPartRecord *part_record; /* 0x48 the record of the part this slot shows; NULL: no parent */

@@ -16,6 +16,10 @@
 #include <stdio.h>
 #include <string.h>
 
+/* SPU2 core registers of the master volume, left and right (sceSdRemote command 0x8010 sets them) */
+#define SPU2_MASTER_VOLUME_LEFT  0x980
+#define SPU2_MASTER_VOLUME_RIGHT 0xA80
+
 int toupper(int); // match: ctype.h would make it a macro, which changes the code of MovieFile_Open
 
 /* The movie player's .data: the flags the vblank handler shares, the picture ring and the decoder state. */
@@ -599,8 +603,8 @@ static int MovieAudio_Start(MovieAudio *audio) {
     sceSdRemote(1, 0x8010, 0x1081, 0x7FFF);
     sceSdRemote(1, 0x8010, 0xD81, 0x7FFF);
     sceSdRemote(1, 0x8010, 0xE81, 0x7FFF);
-    sceSdRemote(1, 0x8010, 0x980, movie_thread.volume);
-    sceSdRemote(1, 0x8010, 0xA80, movie_thread.volume);
+    sceSdRemote(1, 0x8010, SPU2_MASTER_VOLUME_LEFT, movie_thread.volume);
+    sceSdRemote(1, 0x8010, SPU2_MASTER_VOLUME_RIGHT, movie_thread.volume);
     sceSdRemote(1, 0x8010, 0x981, movie_thread.volume);
     sceSdRemote(1, 0x8010, 0xA81, movie_thread.volume);
     audio->state = MOVIE_AUDIO_STATE_PLAY;
@@ -816,8 +820,8 @@ static void MovieAudio_SetMasterVolume(int volume) {
     int core;
 
     for (core = 0; core < 2; core++) {
-        sceSdRemote(1, 0x8010, core | 0x980, volume);
-        sceSdRemote(1, 0x8010, core | 0xA80, volume);
+        sceSdRemote(1, 0x8010, core | SPU2_MASTER_VOLUME_LEFT, volume);
+        sceSdRemote(1, 0x8010, core | SPU2_MASTER_VOLUME_RIGHT, volume);
     }
 }
 
@@ -1893,7 +1897,7 @@ static int Movie_VblankHandler(int cause) {
     MovieOutTag *tag;
     s32 unused[4]; // match: retail keeps 0x10 bytes of stack it never touches
 
-    movie_start_field = (*GS_CSR >> 13) & 1;
+    movie_start_field = (*GS_CSR >> GS_CSR_FIELD_SHIFT) & 1;
     if (movie_pictures_enabled != 0) {
         movie_picture_vblanks++;
         movie_path3_busy = sceGsSyncPath(1, 0);
@@ -2001,7 +2005,7 @@ static s32 MovieFile_Open(MovieFile *file, char *path) {
     s32 device_length;
     s32 name_length;
     s32 i;
-    char *suffix;
+    const char *suffix;
 
     name = index(path, ':');
     if (name != NULL) {
@@ -2018,16 +2022,16 @@ static s32 MovieFile_Open(MovieFile *file, char *path) {
                 }
                 name[i] = toupper(name[i]);
             }
-            suffix = index(path, ';') ? (char *)empty_string : (char *)cd_version_suffix;
-            sprintf(full_path, (char *)cd_path_format, name, suffix);
+            suffix = index(path, ';') ? empty_string : cd_version_suffix;
+            sprintf(full_path, cd_path_format, name, suffix);
         } else {
             file->is_cd_stream = FALSE;
-            sprintf(full_path, (char *)device_path_format, device, name);
+            sprintf(full_path, device_path_format, device, name);
         }
     } else {
         memcpy(device, default_device, 6);
         file->is_cd_stream = FALSE;
-        sprintf(full_path, (char *)device_path_format, device, path);
+        sprintf(full_path, device_path_format, device, path);
     }
     if (file->is_cd_stream) {
         sceCdDiskReady(0);

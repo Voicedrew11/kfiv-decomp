@@ -65,6 +65,10 @@
 /* GameLoop_SetCameraMatrices' mode: the world to screen matrix, plain or flipped about the mirror's height */
 #define CAMERA_MATRIX_PLAIN         0
 #define CAMERA_MATRIX_MIRROR        1
+#define CAMERA_MATRIX_VIEW_SPACE    2       /* for models placed relative to the camera: no world to view, 220 up */
+/* GameLoop_SetCameraMatrices' projection: the screen's, or one scaled down for the offscreen target */
+#define CAMERA_PROJECTION_NORMAL    0
+#define CAMERA_PROJECTION_OFFSCREEN 1
 
 
 /* Resets every game system for a new session; a loaded save is then applied on top. */
@@ -170,7 +174,7 @@ void GameLoop_Run(int arg) {
         Splash_Update();
         ItemEffect_Update();
         GameLoop_UpdateCamera();
-        GameLoop_SetCameraMatrices(0, 0);
+        GameLoop_SetCameraMatrices(CAMERA_PROJECTION_NORMAL, CAMERA_MATRIX_PLAIN);
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         WeaponTrail_Update();
         if (!(game_status.bit12 && game_status.bit13)) {
@@ -190,8 +194,8 @@ void GameLoop_Run(int arg) {
     Input_StopRumble();
     Message_CloseBox();
     Message_ClearNotices();
-    saved = game_options[1];
-    game_options[1] = 0;
+    saved = game_options[GAME_OPTION_MUSIC_VOLUME];
+    game_options[GAME_OPTION_MUSIC_VOLUME] = 0;
     Sound_SetBgmVolume(0);
     Sound_SetBankVolumes(0);
     while (sound_load_queue.map_bank_load_pending != 0 ||
@@ -203,7 +207,7 @@ void GameLoop_Run(int arg) {
         GameLoop_RunSoundLoads();
         Sound_Update();
     }
-    game_options[1] = saved;
+    game_options[GAME_OPTION_MUSIC_VOLUME] = saved;
     game_status.bit9 = FALSE;
     File_CloseAll();
     Packet_SwapBuffers();
@@ -224,7 +228,7 @@ void GameLoop_DrawFrame(int arg) {
     GsDraw_ResetDrawTarget();
     switch (MAP_DRAW_OVERLAYS->mode) {
     case MAP_DRAW_PLAIN:
-        GameLoop_SetCameraMatrices(0, 0);
+        GameLoop_SetCameraMatrices(CAMERA_PROJECTION_NORMAL, CAMERA_MATRIX_PLAIN);
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         ModelTexture_ResetSlots();
         Map_DrawRecords(0);
@@ -238,17 +242,17 @@ void GameLoop_DrawFrame(int arg) {
         Map_DrawLateRecords(0);
         Effect_DrawAll(0);
         DrawList_Draw(0, 0);
-        GameLoop_SetCameraMatrices(0, 2);
+        GameLoop_SetCameraMatrices(CAMERA_PROJECTION_NORMAL, CAMERA_MATRIX_VIEW_SPACE);
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         DrawList_Draw(1, 0);
         DrawList_Draw(2, 0);
         GsDraw_EnableDepthTest();
-        GameLoop_SetCameraMatrices(0, 0);
+        GameLoop_SetCameraMatrices(CAMERA_PROJECTION_NORMAL, CAMERA_MATRIX_PLAIN);
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         MapItem_DrawPicked(0);
         break;
     case MAP_DRAW_MIRROR_FIRST:
-        GameLoop_SetCameraMatrices(0, 1);
+        GameLoop_SetCameraMatrices(CAMERA_PROJECTION_NORMAL, CAMERA_MATRIX_MIRROR);
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         ModelTexture_ResetSlots();
         Map_DrawRecords(1);
@@ -261,12 +265,12 @@ void GameLoop_DrawFrame(int arg) {
         Effect_DrawAll(1);
         DrawList_Draw(0, 1);
         GsDraw_EnableDepthTest();
-        GameLoop_SetCameraMatrices(0, 1);
+        GameLoop_SetCameraMatrices(CAMERA_PROJECTION_NORMAL, CAMERA_MATRIX_MIRROR);
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         MapItem_DrawPicked(1);
         Map_CoverScreenWithMapTint();
         GsDraw_ClearDepth();
-        GameLoop_SetCameraMatrices(0, 0);
+        GameLoop_SetCameraMatrices(CAMERA_PROJECTION_NORMAL, CAMERA_MATRIX_PLAIN);
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         ModelTexture_ResetSlots();
         Map_DrawRecords(0);
@@ -280,19 +284,19 @@ void GameLoop_DrawFrame(int arg) {
         Map_DrawLateRecords(0);
         Effect_DrawAll(0);
         DrawList_Draw(0, 0);
-        GameLoop_SetCameraMatrices(0, 2);
+        GameLoop_SetCameraMatrices(CAMERA_PROJECTION_NORMAL, CAMERA_MATRIX_VIEW_SPACE);
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         DrawList_Draw(1, 0);
         DrawList_Draw(2, 0);
         GsDraw_EnableDepthTest();
-        GameLoop_SetCameraMatrices(0, 0);
+        GameLoop_SetCameraMatrices(CAMERA_PROJECTION_NORMAL, CAMERA_MATRIX_PLAIN);
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         MapItem_DrawPicked(0);
         break;
     case MAP_DRAW_OFFSCREEN_FIRST:
         Map_SetOffscreenTarget();
         GsDraw_ClearFrame();
-        GameLoop_SetCameraMatrices(1, 1);
+        GameLoop_SetCameraMatrices(CAMERA_PROJECTION_OFFSCREEN, CAMERA_MATRIX_MIRROR);
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         ModelTexture_ResetSlots();
         Map_DrawRecords(2);
@@ -306,13 +310,13 @@ void GameLoop_DrawFrame(int arg) {
         Effect_DrawAll(1);
         DrawList_Draw(0, 1);
         GsDraw_EnableDepthTest();
-        GameLoop_SetCameraMatrices(1, 1);
+        GameLoop_SetCameraMatrices(CAMERA_PROJECTION_OFFSCREEN, CAMERA_MATRIX_MIRROR);
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         MapItem_DrawPicked(1);
         GsDraw_ResetDrawTarget();
         GsDraw_QueueTexFlush();
         GsDraw_ClearDepth();
-        GameLoop_SetCameraMatrices(0, 0);
+        GameLoop_SetCameraMatrices(CAMERA_PROJECTION_NORMAL, CAMERA_MATRIX_PLAIN);
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         ModelTexture_ResetSlots();
         Map_DrawRecords(0);
@@ -325,19 +329,19 @@ void GameLoop_DrawFrame(int arg) {
         Map_DrawLateRecords(0);
         Effect_DrawAll(0);
         DrawList_Draw(0, 0);
-        GameLoop_SetCameraMatrices(0, 2);
+        GameLoop_SetCameraMatrices(CAMERA_PROJECTION_NORMAL, CAMERA_MATRIX_VIEW_SPACE);
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         DrawList_Draw(1, 0);
         DrawList_Draw(2, 0);
         GsDraw_EnableDepthTest();
-        GameLoop_SetCameraMatrices(0, 0);
+        GameLoop_SetCameraMatrices(CAMERA_PROJECTION_NORMAL, CAMERA_MATRIX_PLAIN);
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         MapItem_DrawPicked(0);
         break;
     }
-    GameLoop_SetCameraMatrices(0, 0);
+    GameLoop_SetCameraMatrices(CAMERA_PROJECTION_NORMAL, CAMERA_MATRIX_PLAIN);
     GsDraw_QueueVu1Matrix(world_screen_matrix);
-    if ((s32)(player_state.status_bits >> 39) & 1) {
+    if (PLAYER_IS_UNDERWATER(&player_state)) {
         GsDraw_CopyFrame(0x2BC0);
         tinted = TRUE;
         Game_DrawWobblingScreen(0x80, 0x80, 0x80, 0x80, 1.0f);
@@ -380,7 +384,7 @@ void GameLoop_DrawFrame(int arg) {
     DrawList_Draw(3, 0);
     Player_DrawArm();
     Player_DrawScreenTints();
-    if ((s32)(player_state.status_bits >> 39) & 1) {
+    if (PLAYER_IS_UNDERWATER(&player_state)) {
         if (map_slots[current_map_slot].tag == 0x23 && guardians_room_water_purified[0] == 0) {
             GsDraw_FillScreen(0x40, 0x80, 0x40, 0x78, 0x44);
         } else {
@@ -415,7 +419,7 @@ void GameLoop_DrawFrame(int arg) {
         GsDraw_FillScreen(0, 0, 0, 0x40, 0x44);
         Hud_DrawPaused();
     }
-    Game_ApplyBrightness(game_options[10]);
+    Game_ApplyBrightness(game_options[GAME_OPTION_BRIGHTNESS]);
     Packet_OnFrameEnd();
 }
 
@@ -443,7 +447,7 @@ void GameLoop_UpdateCameraShake(void) {
         sceVu0RotMatrixZ(matrix[0], matrix[0], angle);
         sceVu0RotMatrixX(matrix[0], matrix[0], camera_state.pitch);
         sceVu0RotMatrixY(matrix[0], matrix[0], camera_state.yaw);
-        sceVu0ApplyMatrix(camera_state.script_shake_offset, (int *)matrix, camera_state.script_shake_offset);
+        sceVu0ApplyMatrix(camera_state.script_shake_offset, matrix, camera_state.script_shake_offset);
         if (camera_state.script_shake_frames > 0) {
             camera_state.script_shake_frames--;
         }
@@ -461,7 +465,7 @@ void GameLoop_UpdateCameraShake(void) {
         sceVu0RotMatrixZ(matrix[0], matrix[0], angle);
         sceVu0RotMatrixX(matrix[0], matrix[0], camera_state.pitch);
         sceVu0RotMatrixY(matrix[0], matrix[0], camera_state.yaw);
-        sceVu0ApplyMatrix(camera_state.entity_shake_offset, (int *)matrix, camera_state.entity_shake_offset);
+        sceVu0ApplyMatrix(camera_state.entity_shake_offset, matrix, camera_state.entity_shake_offset);
         if (camera_state.entity_shake_frames > 0) {
             camera_state.entity_shake_frames--;
         }
@@ -506,7 +510,7 @@ void GameLoop_UpdateCamera(void) {
             }
         }
         break;
-    case 2:
+    case CAMERA_MODE_FIXED:
         break;
     }
     if (game_status.camera_mode != CAMERA_MODE_FOLLOW_PLAYER && (s8)game_status.camera_look_mode != CAMERA_LOOK_NONE) {
@@ -537,10 +541,10 @@ void GameLoop_SetCameraMatrices(int projection, int mode) {
     f32 angle;
 
     switch (projection) {
-    case 0:
+    case CAMERA_PROJECTION_NORMAL:
         sceVu0ViewScreenMatrix(view_screen_matrix, 512.0f, 1.0f, 1.0f, 2048.0f, 2048.0f, 1.0f, 1048560.0f, 1.0f, 65535.0f);
         break;
-    case 1:
+    case CAMERA_PROJECTION_OFFSCREEN:
         sceVu0ViewScreenMatrix(view_screen_matrix, 512.0f, 0.4f, 0.5714286f, 2048.0f, 2048.0f, 1.0f, 1048560.0f, 1.0f,
                                65535.0f);
         break;
@@ -573,7 +577,7 @@ void GameLoop_SetCameraMatrices(int projection, int mode) {
         sceVu0MulMatrix(world_screen_matrix, view_screen_matrix, world_view_matrix);
         sceVu0MulMatrix(world_screen_matrix, world_screen_matrix, local);
         break;
-    case 2:
+    case CAMERA_MATRIX_VIEW_SPACE:
         translation[1] = 220.0f;
         translation[0] = translation[2] = translation[3] = angle = 0.0f;
         sceVu0TransMatrix(local, identity_matrix, translation);
@@ -641,7 +645,7 @@ void GameLoop_OpenRequestedMenu(void) {
     PlayerState *player = &player_state;
     int menu_ran = FALSE;
     int faded_out = FALSE;
-    u8 brightness = game_options[10];
+    u8 brightness = game_options[GAME_OPTION_BRIGHTNESS];
     int load_held;
     PlayerItemDef *item_def;
 
@@ -816,13 +820,13 @@ void GameLoop_DrawFrameWithoutHud(void) {
 }
 
 /* Draws the grabbed frame (texture page 0x3240, the menus' backdrop) over the whole screen into both frame
-   buffers, its colour game_options[10] * 128 / divisor. */
+   buffers, its colour game_options[GAME_OPTION_BRIGHTNESS] * 128 / divisor. */
 void GameLoop_ShowGrabbedFrame(int divisor) {
     ScreenSprite sprite;
     int brightness;
     int pass;
 
-    brightness = (game_options[10] << 7) / divisor;
+    brightness = (game_options[GAME_OPTION_BRIGHTNESS] << 7) / divisor;
     if (brightness > 0xFF) {
         brightness = 0xFF;
     }

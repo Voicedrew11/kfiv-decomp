@@ -49,17 +49,17 @@ static void Game_SetObjectBit(int map, int entry, int bit, int value);
 /* sets the options to their defaults */
 void Game_SetDefaultOptions(void) {
     memset(game_options, 0, sizeof(game_options));
-    game_options[0] = 1;
-    game_options[1] = 0x40;
-    game_options[2] = 0x40;
-    game_options[3] = 0x40;
+    game_options[GAME_OPTION_STEREO] = 1;
+    game_options[GAME_OPTION_MUSIC_VOLUME] = 0x40;
+    game_options[GAME_OPTION_SOUND_VOLUME] = 0x40;
+    game_options[GAME_OPTION_THIRD_BAR] = 0x40;
     game_options[4] = 1;
-    game_options[5] = 1;
-    game_options[6] = 1;
+    game_options[GAME_OPTION_HEAD_BOB] = 1;
+    game_options[GAME_OPTION_RUMBLE] = 1;
     game_options[7] = 1;
-    game_options[8] = 0;
-    game_options[9] = 1;
-    game_options[10] = 0x88;
+    game_options[GAME_OPTION_MENU_BACKDROP] = 0;
+    game_options[GAME_OPTION_HUD] = 1;
+    game_options[GAME_OPTION_BRIGHTNESS] = 0x88;
 }
 
 /* clears the state a new game starts from */
@@ -246,20 +246,20 @@ void Game_CountSpawnDeath(u32 map, int entry) {
     int merged;
 
     if (map < 0x80 && entry >= 0 && entry < 0x80) {
-        count = (old_byte = ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)]);
+        count = (old_byte = map_entry_counters[map][entry / 2]);
         if (entry & 1) {
             count >>= SPAWN_COUNTER_HIGH_SHIFT;
             count++;
             shifted = count << 4;
-            ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)] = (low_nibble = old_byte & SPAWN_COUNTER_LOW_MASK);
+            map_entry_counters[map][entry / 2] = (low_nibble = old_byte & SPAWN_COUNTER_LOW_MASK);
             count = shifted & 0xFF;
         } else {
             count &= SPAWN_COUNTER_LOW_MASK;
             count++;
-            ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)] = old_byte & SPAWN_COUNTER_HIGH_MASK;
+            map_entry_counters[map][entry / 2] = old_byte & SPAWN_COUNTER_HIGH_MASK;
         }
-        merged = count | ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)]; // match: merged in an int
-        ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)] = merged;
+        merged = count | map_entry_counters[map][entry / 2]; // match: merged in an int
+        map_entry_counters[map][entry / 2] = merged;
     }
 }
 
@@ -405,16 +405,16 @@ int Game_FindTriggerOfItem(int item, int *map_tag, int *trigger_id) {
             *trigger_id = record->trigger_id;
             tag = record->map_tag;
             *map_tag = tag;
-            if ((u32)(tag - 0x11) < 3) {
+            if ((u32)(tag - MAP_TAG_FORGE_017) < 3) {
                 switch ((u8)story_flags[6]) {
                 case 0:
-                    *map_tag = 0x11;
+                    *map_tag = MAP_TAG_FORGE_017;
                     break;
                 case 1:
-                    *map_tag = 0x12;
+                    *map_tag = MAP_TAG_FORGE_018;
                     break;
                 case 2:
-                    *map_tag = 0x13;
+                    *map_tag = MAP_TAG_FORGE_019;
                     break;
                 }
             }
@@ -562,20 +562,20 @@ void Game_WriteSaveImage(void) {
     memcpy(save_cursor, &trade_stock_4, 0x17C); save_cursor += 0x17C;
     memcpy(save_cursor, &trade_stock_5, 0x17C); save_cursor += 0x17C;
     memcpy(save_cursor, &player_state, 0x10); save_cursor += 0x10;
-    memcpy(save_cursor, (u8 *)&player_state + 0x10, 0x10); save_cursor += 0x10;
-    memcpy(save_cursor, (u8 *)&player_state + 0x20, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&player_state + 0x24, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&player_state + 0x28, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&player_state + 0x2C, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&player_state + 0x30, 0xC); save_cursor += 0xC;
-    memcpy(save_cursor, (u8 *)&player_state + 0x3C, 0x10); save_cursor += 0x10;
-    memcpy(save_cursor, (u8 *)&player_state + 0x4C, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&player_state + 0x50, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&player_state + 0x54, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&player_state + 0xB4, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&player_state + 0xB8, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&player_state + 0xD4, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&player_state + 0xD8, 4); save_cursor += 4;
+    memcpy(save_cursor, &player_state.rotation, 0x10); save_cursor += 0x10;
+    memcpy(save_cursor, &player_state.hp_base, 4); save_cursor += 4;
+    memcpy(save_cursor, &player_state.mp_base, 4); save_cursor += 4;
+    memcpy(save_cursor, &player_state.power_base, 4); save_cursor += 4;
+    memcpy(save_cursor, &player_state.magic_base, 4); save_cursor += 4;
+    memcpy(save_cursor, &player_state.timed_flags, 0xC); save_cursor += 0xC;
+    memcpy(save_cursor, &player_state.weapon, 0x10); save_cursor += 0x10;
+    memcpy(save_cursor, &player_state.gold, 4); save_cursor += 4;
+    memcpy(save_cursor, &player_state.experience, 4); save_cursor += 4;
+    memcpy(save_cursor, &player_state.level, 4); save_cursor += 4;
+    memcpy(save_cursor, &player_state.hp_now, 4); save_cursor += 4;
+    memcpy(save_cursor, &player_state.mp_now, 4); save_cursor += 4;
+    memcpy(save_cursor, &player_state.weapon_use_count, 4); save_cursor += 4;
+    memcpy(save_cursor, &player_state.magic_use_count, 4); save_cursor += 4;
     map_tag = map_slots[*(volatile int *)&current_map_slot].tag; // match: a volatile load keeps it where the save writer reads it
     memcpy(save_cursor, &map_tag, 4); save_cursor += 4;
     memcpy(save_cursor, key_item_slots, 0x30); save_cursor += 0x30;
@@ -687,20 +687,20 @@ void Game_ReadSaveImage(void) {
     memcpy(&trade_stock_4, save_cursor, 0x17C); save_cursor += 0x17C;
     memcpy(&trade_stock_5, save_cursor, 0x17C); save_cursor += 0x17C;
     memcpy(&player_state, save_cursor, 0x10); save_cursor += 0x10;
-    memcpy((u8 *)&player_state + 0x10, save_cursor, 0x10); save_cursor += 0x10;
-    memcpy((u8 *)&player_state + 0x20, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&player_state + 0x24, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&player_state + 0x28, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&player_state + 0x2C, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&player_state + 0x30, save_cursor, 0xC); save_cursor += 0xC;
-    memcpy((u8 *)&player_state + 0x3C, save_cursor, 0x10); save_cursor += 0x10;
-    memcpy((u8 *)&player_state + 0x4C, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&player_state + 0x50, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&player_state + 0x54, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&player_state + 0xB4, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&player_state + 0xB8, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&player_state + 0xD4, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&player_state + 0xD8, save_cursor, 4); save_cursor += 4;
+    memcpy(&player_state.rotation, save_cursor, 0x10); save_cursor += 0x10;
+    memcpy(&player_state.hp_base, save_cursor, 4); save_cursor += 4;
+    memcpy(&player_state.mp_base, save_cursor, 4); save_cursor += 4;
+    memcpy(&player_state.power_base, save_cursor, 4); save_cursor += 4;
+    memcpy(&player_state.magic_base, save_cursor, 4); save_cursor += 4;
+    memcpy(&player_state.timed_flags, save_cursor, 0xC); save_cursor += 0xC;
+    memcpy(&player_state.weapon, save_cursor, 0x10); save_cursor += 0x10;
+    memcpy(&player_state.gold, save_cursor, 4); save_cursor += 4;
+    memcpy(&player_state.experience, save_cursor, 4); save_cursor += 4;
+    memcpy(&player_state.level, save_cursor, 4); save_cursor += 4;
+    memcpy(&player_state.hp_now, save_cursor, 4); save_cursor += 4;
+    memcpy(&player_state.mp_now, save_cursor, 4); save_cursor += 4;
+    memcpy(&player_state.weapon_use_count, save_cursor, 4); save_cursor += 4;
+    memcpy(&player_state.magic_use_count, save_cursor, 4); save_cursor += 4;
     memcpy(&saved_map_tag, save_cursor, 4); save_cursor += 4;
     memcpy(key_item_slots, save_cursor, 0x30); save_cursor += 0x30;
     memcpy(&item_drop_counter, save_cursor, 4); save_cursor += 4;
@@ -715,7 +715,7 @@ void Game_ReadSaveImage(void) {
         flags = ((GameDefinitionFlags *)item_name_defs)[i].flags;
         if (((flags >> GAME_DEFINITION_STATE_SHIFT) & GAME_DEFINITION_STATE_VALUE_MASK) < 2) {
             if (flag_bits & 1) {
-                ((GameDefinitionFlags *)item_name_defs)[i].flags = (flags & ~GAME_DEFINITION_STATE_MASK) | 0x40000;
+                ((GameDefinitionFlags *)item_name_defs)[i].flags = (flags & ~GAME_DEFINITION_STATE_MASK) | GAME_DEFINITION_STATE_1;
             } else {
                 ((GameDefinitionFlags *)item_name_defs)[i].flags = flags & ~GAME_DEFINITION_STATE_MASK;
             }
@@ -1578,7 +1578,7 @@ void Game_ShiftScreenByFocusTurn(void) {
 }
 
 /* draws the picture over itself in ten strips, its colour multiplied by brightness / 128: the brightness option
-   (game_options[10]) */
+   (game_options[GAME_OPTION_BRIGHTNESS]) */
 void Game_ApplyBrightness(int brightness) {
     char unused_stack[0x60]; // match: retail reserves the 0x60 bytes
     GsSpritePacket sprite;

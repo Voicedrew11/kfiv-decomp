@@ -99,7 +99,7 @@ typedef struct {
 typedef struct {
     u64 pad0 : 40;
     u64 bit40 : 1;
-    u64 bit41 : 1;
+    u64 opaque : 1;                 /* ModelPartFlagBits.opaque */
     u64 pad42 : 22;
 } EntityModelPartFlagBits;
 
@@ -152,6 +152,7 @@ typedef struct {
     u16 flags;                      /* 0x1E bit 1: mp_damage is copied */
 } EntityParamsUnk240PartFlags;
 
+#define ENTITY_PART_MP_DAMAGE_BIT 1  /* EntityParamsUnk240PartFlags.flags: mp_damage is copied */
 #define ENTITY_PART_FLAGS(part) ((EntityParamsUnk240PartFlags *)&(part)->hit_flags)
 
 /* one of the 0x88-byte records at EntityParams+0x240 (EntityParams.melee_attack_third is the third) */
@@ -175,6 +176,7 @@ typedef struct {
 #define HIT_TARGET_MAP_OBJECT       0x4    /* map objects */
 #define HIT_TARGET_MAP_FLOOR        0x8    /* map floors (Attack_TestMapModelFloors) */
 #define HIT_TARGET_MAP_WALL         0x10   /* map walls (Attack_TestMapModelWalls) */
+#define HIT_TARGET_MAP_OTHER        0x20   /* the map by the generic surface test (Attack_RunSphere reports 0x20 for its result 5) */
 #define HIT_TARGET_SKIP_OWNER       0x80   /* not the request's owner */
 
 /* the two blocks ParaStool_CheckPartHitInPlayerView fills for Attack_Run */
@@ -225,13 +227,13 @@ typedef struct {
     char pad28[0x08];
 } Unk1B1470Extra;
 
-/* Unk1B1470Request with the bits at 0x4C as byte-sized fields: Attack_HitEntity reads unk4C_3 as a u8 */
+/* Unk1B1470Request with the bits at 0x4C as byte-sized fields: Attack_HitEntity reads knockback as a u8 */
 typedef struct {
     char pad00[0x4C];
     u8 shape : 2;                   /* 0x4C the request shape 0 to 3 (Attack_Run) */
-    u8 unk4C_2 : 1;
-    u8 unk4C_3 : 1;
-    u8 unk4C_4 : 4;
+    u8 cleared_on_effect_check : 1;
+    u8 knockback : 1;               /* Unk1B1470Request.knockback */
+    u8 pad4C_4 : 4;
     char pad4D[0x33];
 } __attribute__((aligned(8))) Unk1B1470RequestBits;
 
@@ -243,12 +245,13 @@ typedef struct {
 } Unk1B1470RequestUnit;
 
 #define UNK1B1470_REQUEST_UNIT(request) (((Unk1B1470RequestUnit *)(request))->owner_and_flags)
-/* unk4C_3 as a bit of the 64-bit word */
-#define UNK1B1470_UNIT_UNK4C_3 (0x8000L << 20)
+/* knockback as a bit of the 64-bit word */
+#define UNK1B1470_UNIT_KNOCKBACK (0x8000L << 20)
 
 /* eight bytes the game copies with unaligned loads and stores */
-typedef struct {
+typedef union {
     s64 value;
+    s8 bytes[8];                    /* the six hit scales of an entity (ENTITY_HIT_SCALES in player/attack.c) */
 } __attribute__((packed)) EntityUnaligned64;
 
 /* what Shot_Alloc returns: something an entity launches */
@@ -499,6 +502,8 @@ typedef struct {
 /* EntityParams.sphere_collision read through the whole word */
 #define ENTITY_PARAMS_SPHERE_MASK           0x8000000
 #define ENTITY_PARAMS_IS_SPHERE(params)     (((EntityParamsWord *)(params))->word & ENTITY_PARAMS_SPHERE_MASK)
+/* EntityParams word bit 24: the entity pushes against map objects as a sphere, not a walker (EntityCollision_SphereAgainstObjects) */
+#define ENTITY_PARAMS_SPHERE_OBJECTS        0x1000000
 
 /* sub-struct at Entity+0xE0: the work area of an entity's type. It starts with the handlers the
    type's set-up function installs; EntityAi_Update calls them. All of them take the entity. */
@@ -636,7 +641,7 @@ typedef struct {
     f32 unk20[4];                   /* 0x20 */
     char pad30[0x10];
     f32 unk40;                      /* 0x40 */
-    f32 unk44;                      /* 0x44 */
+    f32 move_speed;                 /* 0x44 speed along its heading (GreaterDemon_DescendAtPlayer, GreaterDemon_SlideToStop) */
     char pad48[0x22];
     s16 climb_point_index;          /* 0x6A which of the 5 climb_points it heads for next */
     s16 unk6C;                      /* 0x6C */
@@ -944,6 +949,10 @@ typedef struct Entity {
 #define ENTITY_FLAG_MOTION_STEP_MODE_MASK    0x3800                /* the mode (0 to 2) Motion_Step and Motion_StepSlot are given */
 #define ENTITY_FLAG_MOTION_STEP_MODE_1       0x800                 /* that mode at 1, which the start of every action sets */
 #define ENTITY_FLAG_ANIMATES                 0x4000                /* the animate handler blends or steps the motion while set */
+/* bit numbers of three of them, for the code that tests them as (flags >> bit) & 1 */
+#define ENTITY_FLAG_LIVE_BIT                 1
+#define ENTITY_FLAG_ATTACKING_BIT            10
+#define ENTITY_FLAG_ANIMATES_BIT             14
 #define ENTITY_FLAG_8000                     0x8000                /* read by Motion_Step: the motion stands on its first frame */
 #define ENTITY_FLAG_NOT_TARGETABLE           0x10000               /* Effect_IsEntityUntargetable calls it flagged out: an entity holding an animation has it */
 #define ENTITY_FLAG_DRAW_AFTERIMAGE          0x20000               /* Entity_DrawAll draws the pool block's model again for the entities that have it */
@@ -1164,12 +1173,16 @@ typedef struct {
 #define MAP_RECORD_HIDDEN            0x40000000  /* hidden: not collided with, not found by the box lookups (hide_record) */
 #define MAP_RECORD_BACKDROP          0x80000000  /* linked into backdrop_record_boxes, not record_boxes (Map_InsertRecordBySize) */
 #define MAP_RECORD_NOT_IN_BOX_LISTS  0x02000000  /* left out of the record box lists (Map_InsertRecordBySize) */
+#define MAP_RECORD_20000000          0x20000000  /* skipped by the map viewer's draw loop (ui/map_viewer.c); nothing else reads it */
 #define MAP_RECORD_SCREEN_EXEMPT     0x40        /* skips the on-screen test (Map_ClassifyRecordOnScreen) */
 #define MAP_RECORD_CURRENT_BLOCKS    0x10        /* drawn with the current light and fog blocks, not its map's own */
 #define MAP_RECORD_Z_WRITE           0x80        /* z writes on while it is drawn (Map_DrawLateRecords) */
 #define MAP_RECORD_WAVE_UVS          0x100       /* its UVs are built as waves (Map_BuildRecords) */
+#define MAP_RECORD_BIT1              0x2         /* record_flags bit 1, not yet named: with MAP_RECORD_RIPPLED it turns alpha blending on (Map_BuildRecords) */
 #define MAP_RECORD_RIPPLED           0x200       /* drawn rippled (Wobble_DrawRippledModel) */
 #define MAP_RECORD_FRAME_EFFECTS     0x4000000   /* EntityEvent_StartFrameEffects does its work while set */
+#define MAP_RECORD_SCREEN_ONLY       0x2         /* MapDrawRecord.flags: skipped in every draw mode but 0 (Map_DrawRecords, Map_DrawLateRecords) */
+#define MAP_RECORD_ALL_MODES         0x20        /* MapDrawRecord.flags: drawn in every draw mode, not only 0 (Map_DrawRecords, MapObject_DrawAll) */
 /* the map slot a MapRecord belongs to: bit 27 of record_flags (MapRecordBits.map) */
 #define MAP_RECORD_MAP(record) ((u8)((record)->record_flags >> 27) & 1)
 
@@ -1240,6 +1253,7 @@ typedef struct {
 /* EntityPoolSlot.head.word flag bits */
 #define ENTITY_POOL_FLAG_100    0x100
 #define ENTITY_POOL_FLAG_200    0x200
+#define ENTITY_POOL_KIND_FLAG_200_MASK 0x2FF /* head.word bits the slot test reads: the kind byte and ENTITY_POOL_FLAG_200 */
 
 /* one block of the entity pool, entity_pool_slots[5] (Entity_ResetAllLists.c's
    EntityPoolBlock, with the first word's bit view) */
@@ -1270,7 +1284,9 @@ extern EntityPoolSlot entity_pool_slots[ENTITY_POOL_SLOT_COUNT];
 /* the first 0x20 bytes of a loaded type file (file_load_buffer), kept in entity_type_file_header while the file's
    sound part is handed to the sound loader */
 typedef struct {
-    char pad00[0x14];
+    char pad00[0x0C];
+    int texture_offset;             /* 0x0C file offset of the textures (EntityPoolData.texture_data) */
+    int pool_model_offset;          /* 0x10 file offset of the slot's own model, 0: none (EntityPoolData) */
     int sound_buffer_b_offset;      /* 0x14 file offset of sound buffer b, made an address */
     int sound_buffer_a_offset;      /* 0x18 file offset of sound buffer a, made an address */
     char pad1C[0x04];

@@ -208,11 +208,11 @@ void Player_Update(void) {
     player_state.ground_effect_active = 0;
     if (game_status.player_control != 0 && !(game_status.update_hold_flags & 1)) {
         PLAYER_STATUS(&player_state)->in_water = FALSE;
-        PLAYER_STATUS(&player_state)->bit39 = FALSE;
+        PLAYER_STATUS(&player_state)->underwater = FALSE;
         player_state.water_surface_y = player_no_water_surface_y[0];
-        PLAYER_STATUS(&player_state)->bit34 = TRUE;
+        PLAYER_STATUS(&player_state)->airborne = TRUE;
     } else {
-        PLAYER_STATUS(&player_state)->bit34 = FALSE;
+        PLAYER_STATUS(&player_state)->airborne = FALSE;
     }
     if (recent_damage_frames != 0) {
         recent_damage_frames--;
@@ -339,12 +339,12 @@ void Player_Update(void) {
     /* the stride: stride_phase runs from 0 to STRIDE_LENGTH, faster when running and slower in water */
     if (game_status.player_control != 0 && !(game_status.update_hold_flags & 1)) {
         stride_speed = 1.0f;
-        if ((s32)(player_state.status_bits >> 35) & 1) {
+        if (PLAYER_IS_RUNNING(&player_state)) {
             stride_speed = 1.6f;
         }
-        if ((s32)(player_state.status_bits >> 39) & 1) {
+        if (PLAYER_IS_UNDERWATER(&player_state)) {
             stride_speed *= 0.5f;
-        } else if ((s32)(player_state.status_bits >> 38) & 1) {
+        } else if (PLAYER_IS_IN_WATER(&player_state)) {
             stride_speed *= 2.0f / 3.0f;
         }
         stride_step = stride_speed * 256.0f;
@@ -363,7 +363,7 @@ void Player_Update(void) {
         }
     }
     /* head bob, when the option is on */
-    if ((s8)game_options[5] != 0) { // match: retail reads the head bob option through game_options, as a signed byte
+    if ((s8)game_options[GAME_OPTION_HEAD_BOB] != 0) { // match: retail reads the head bob option through game_options, as a signed byte
         player_state.head_bob_offset = sinf((f32)player_state.stride_phase * TWO_PI / 5120.0f) * 2.75f;
     } else {
         player_state.head_bob_offset = 0.0f;
@@ -373,13 +373,13 @@ void Player_Update(void) {
     if (game_status.player_control != 0 && !(game_status.update_hold_flags & 1) && player_state.death_timer == 0 &&
         PLAYER_STATUS(&player_state)->step_sounded == FALSE &&
         !(ABS(player_state.strafe_speed) < movement_top_speed * 0.5f && ABS(player_state.walk_speed) < movement_top_speed * 0.5f) &&
-        !((s32)(player_state.status_bits >> 34) & 1) && player_state.stride_phase >= 0xF00) {
+        !(PLAYER_IS_AIRBORNE(&player_state)) && player_state.stride_phase >= 0xF00) {
         sound_free = sound_load_queue.pending_map_slot == 0 && sound_load_queue.next_map_slot == 0;
         footstep_voice = -1;
-        if ((s32)(player_state.status_bits >> 39) & 1) {
+        if (PLAYER_IS_UNDERWATER(&player_state)) {
             PLAYER_STATUS(&player_state)->step_sounded = TRUE;
             footstep_voice = Sound_PlayFootstep(0x25);
-        } else if ((s32)(player_state.status_bits >> 38) & 1) {
+        } else if (PLAYER_IS_IN_WATER(&player_state)) {
             PLAYER_STATUS(&player_state)->step_sounded = TRUE;
             footstep_voice = Sound_PlayFootstep(0x24);
         } else if (player_state.ground_effect_active != 0 && player_state.ground_effect_kind == GROUND_EFFECT_DAMAGE) {
@@ -443,7 +443,7 @@ void Player_Update(void) {
     if (player_state.equipment[EQUIP_HELM] == ITEM_WORN_INDEX(ITEM_SACRIFICIAL_MASK) && game_status.player_control != 0 && !(game_status.update_hold_flags & 1)) {
         if (sacrificial_mask_cooldown > 0) {
             sacrificial_mask_cooldown--;
-        } else if (!(((s32)(player_state.status_bits >> 38) & 1) &&
+        } else if (!((PLAYER_IS_IN_WATER(&player_state)) &&
                      player_state.water_surface_y < player_state.position.y - fx_table[0x7C].effect_depth_below) &&
                    (s32)((f32)rand() * 451.0f * RAND_SCALE) == 0) {
             shot = Shot_Alloc();
@@ -454,7 +454,7 @@ void Player_Update(void) {
             sacrificial_mask_cooldown = 30;
         }
     }
-    if (map_slots[current_map_slot].tag == 0x23 && guardians_room_water_purified[0] == 0 && ((s32)(player_state.status_bits >> 38) & 1) &&
+    if (map_slots[current_map_slot].tag == 0x23 && guardians_room_water_purified[0] == 0 && (PLAYER_IS_IN_WATER(&player_state)) &&
         game_status.player_control != 0 && !(game_status.update_hold_flags & 1)) {
         Player_TakeDamageNoRumble(1);
     }
@@ -748,8 +748,8 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             ModelMotion_Step(WEAPON_MODEL);
         } else {
             swing_magic_frames--;
-            if (((s32)(player_state.status_bits >> 39) & 1) ||
-                (((s32)(player_state.status_bits >> 38) & 1) &&
+            if ((PLAYER_IS_UNDERWATER(&player_state)) ||
+                ((PLAYER_IS_IN_WATER(&player_state)) &&
                  player_state.position.y - fx_table[swing_magic_id].effect_depth_below > player_state.water_surface_y)) {
                 Effect_FreeSpawnersByParam(swing_magic_id);
                 swing_magic_frames = 0;
@@ -841,7 +841,7 @@ void Player_InvokeTargetHandler(u16 target_id, u16 command) {
 void Player_FireProjectile(u16 held, u16 pressed) {
     PlayerItemDef *def = &weapon_defs[player_state.weapon];
 
-    if ((attack_button & pressed) && !((s32)(player_state.status_bits >> 39) & 1) && item_counts.bytes[def->ammo_item_index] != 0) {
+    if ((attack_button & pressed) && !(PLAYER_IS_UNDERWATER(&player_state)) && item_counts.bytes[def->ammo_item_index] != 0) {
         ModelMotion_Select(WEAPON_MODEL, 0);
         MODEL_CHANNEL(WEAPON_MODEL)->frame = 0;
         MODEL_CHANNEL(WEAPON_MODEL)->frame_fixed = 0;
@@ -879,7 +879,7 @@ void Player_DrawBow(u16 held, u16 pressed) {
     if (player_state.draw_motion_complete == FALSE) {
         player_state.draw_motion_complete = MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->draw_ready_frame;
     }
-    if (player_state.swing_ended == 0 && !((s32)(player_state.status_bits >> 39) & 1) && Player_CanFireAtAim()) {
+    if (player_state.swing_ended == 0 && !(PLAYER_IS_UNDERWATER(&player_state)) && Player_CanFireAtAim()) {
         if (!player_state.draw_sound_played && def->draw_sound_id != 0xFFFF && MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->draw_sound_frame) {
             ((int (*)(int))Sound_PlaySw)(0); // match: called as if it returned a value
             player_state.draw_sound_played = 1;
@@ -1043,9 +1043,9 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
 
     if (player_previous.ground_effect_active != 0 && player_previous.ground_effect_kind == GROUND_EFFECT_DAMAGE) {
         row = 4;
-    } else if ((s32)(player_previous.status_bits >> 39) & 1) {
+    } else if (PLAYER_IS_UNDERWATER(&player_previous)) {
         row = 3;
-    } else if ((s32)(player_previous.status_bits >> 38) & 1) {
+    } else if (PLAYER_IS_IN_WATER(&player_previous)) {
         row = 2;
     } else {
         row = player_previous.floor_material == 3;
@@ -1077,15 +1077,15 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
         top_look *= 0.5f;
         level_step *= 0.5f;
     }
-    if ((s32)(player_state.status_bits >> 35) & 1) {
+    if (PLAYER_IS_RUNNING(&player_state)) {
         top_speed *= 1.6f;
     }
-    if ((s32)(player_state.status_bits >> 36) & 1) {
+    if (PLAYER_IS_ON_LADDER(&player_state)) {
         buttons &= look_down_button | look_up_button;
     }
 
     if (player_state.aim_speed > 0.0f) {
-        Vector_Scale((f32 *)&delta, (f32 *)&player_state.aim, player_state.aim_speed);
+        Vector_Scale(&delta, &player_state.aim, player_state.aim_speed);
         Vector_Add(&player_state, &player_state, &delta);
         player_state.aim_speed -= ((f32)player_state.weight + 600.0f) / 600.0f * 20.0f;
         if (player_state.aim_speed < 0.0) {
@@ -1116,7 +1116,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
     }
 
     /* looking up and down */
-    if (!((s32)(player_state.status_bits >> 32) & 1)) {
+    if (!(PLAYER_IS_VIEW_LEVELLING(&player_state))) {
         if (look_down_button & buttons) {
             if (look_up_button & buttons) {
                 player_state.look_speed = 0.0f;
@@ -1262,8 +1262,8 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
     }
 
     /* falling */
-    if (game_status.player_control != 0 && !(game_status.update_hold_flags & 1) && !((s32)(player_state.status_bits >> 36) & 1)) {
-        if ((s32)(player_state.status_bits >> 33) & 1) {
+    if (game_status.player_control != 0 && !(game_status.update_hold_flags & 1) && !(PLAYER_IS_ON_LADDER(&player_state))) {
+        if (PLAYER_IS_STEPPING_UP(&player_state)) {
             player_state.fall_speed = 0.0f;
         } else if (player_state.death_timer == 0) {
             player_state.fall_speed += gravity;
@@ -1306,8 +1306,8 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
                 steps = (s32)(distance / STEP_LENGTH);
                 delta.y = 0.0f;
                 Vector_Normalize(&delta, &delta);
-                Vector_Scale((f32 *)&step, (f32 *)&delta, STEP_LENGTH);
-                Vector_Scale((f32 *)&delta, (f32 *)&delta, distance - (f32)steps * STEP_LENGTH);
+                Vector_Scale(&step, &delta, STEP_LENGTH);
+                Vector_Scale(&delta, &delta, distance - (f32)steps * STEP_LENGTH);
                 Vector_Copy(&player_state, &player_previous);
                 do {
                     Vector_Add(&player_state, &player_state, &step);
@@ -1319,24 +1319,24 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
             }
         }
         Player_CollideWithEntities(1);
-        if (!((s32)(player_state.status_bits >> 36) & 1)) {
+        if (!(PLAYER_IS_ON_LADDER(&player_state))) {
             Player_CollideWithMap();
             Player_CollideWithMapObjects(1);
             if (player_state.floor_material == 6 && player_state.floor_map_object != 0 && player_state.floor_map_object->definition->kind == MAP_OBJECT_KIND_SYMBOL_OF_PASSAGE) {
                 Player_FindFloorMaterial();
             }
-            if (!((s32)(player_state.status_bits >> 34) & 1)) {
-                if (((s32)(player_previous.status_bits >> 34) & 1) && player_state.death_timer == 0) {
+            if (!(PLAYER_IS_AIRBORNE(&player_state))) {
+                if ((PLAYER_IS_AIRBORNE(&player_previous)) && player_state.death_timer == 0) {
                     if (player_state.position.y - player_state.airborne_start_y > 110.0f) {
-                        if (!((s32)(player_state.status_bits >> 38) & 1)) {
+                        if (!(PLAYER_IS_IN_WATER(&player_state))) {
                             Sound_PlayCommon(0x22);
-                        } else if (!((s32)(player_previous.status_bits >> 38) & 1)) {
+                        } else if (!(PLAYER_IS_IN_WATER(&player_previous))) {
                             Sound_PlayMap(0x38);
                         }
                     }
                     if (player_previous.fall_speed >= FALL_DAMAGE_MIN_SPEED) {
                         Player_TakeFallDamage(player_previous.fall_speed);
-                        if (!((s32)(player_state.status_bits >> 38) & 1) && player_state.ground_effect_kind != GROUND_EFFECT_DAMAGE) {
+                        if (!(PLAYER_IS_IN_WATER(&player_state)) && player_state.ground_effect_kind != GROUND_EFFECT_DAMAGE) {
                             player_state.status_bits |= PLAYER_FLAG_37;
                             player_state.landing_dip_depth = player_previous.fall_speed * 0.5f;
                             if (player_state.landing_dip_depth > 150.0f) {
@@ -1349,7 +1349,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
                     }
                 }
             }
-            if (((s32)(player_state.status_bits >> 34) & 1) && !((s32)(player_previous.status_bits >> 34) & 1)) {
+            if ((PLAYER_IS_AIRBORNE(&player_state)) && !(PLAYER_IS_AIRBORNE(&player_previous))) {
                 player_state.airborne_start_y = player_previous.position.y;
             }
         }
@@ -1359,7 +1359,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
         }
     }
 
-    if ((s32)(player_state.status_bits >> 37) & 1) {
+    if (PLAYER_IS_LANDING_DIP(&player_state)) {
         player_state.landing_dip_offset = (f32)sin((f32)player_state.landing_dip_frame * PI / (f32)player_state.landing_dip_frames) * player_state.landing_dip_depth;
         if (player_state.landing_dip_frame++ >= player_state.landing_dip_frames) {
             player_state.status_bits &= ~PLAYER_FLAG_37;
@@ -1391,22 +1391,22 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
                               + player_state.floor_push.z * player_state.floor_push.z);
                 if (speed > (f32)record->push_max_speed) {
                     Vector_Normalize(velocity, velocity);
-                    Vector_Scale((f32 *)velocity, (f32 *)velocity, (f32)record->push_max_speed);
+                    Vector_Scale(velocity, velocity, (f32)record->push_max_speed);
                 }
             } else {
                 Vector_Normalize(&delta, velocity);
-                Vector_Scale((f32 *)&delta, (f32 *)&delta, -speed_loss);
+                Vector_Scale(&delta, &delta, -speed_loss);
                 Vector_Add(velocity, velocity, &delta);
                 speed = sqrtf(player_state.floor_push.x * player_state.floor_push.x + player_state.floor_push.y * player_state.floor_push.y
                               + player_state.floor_push.z * player_state.floor_push.z);
                 if (speed > (f32)record->push_max_speed) {
                     Vector_Normalize(velocity, velocity);
-                    Vector_Scale((f32 *)velocity, (f32 *)velocity, (f32)record->push_max_speed);
+                    Vector_Scale(velocity, velocity, (f32)record->push_max_speed);
                 }
             }
         } else if (speed > speed_loss) {
             Vector_Normalize(&delta, &player_state.floor_push);
-            Vector_Scale((f32 *)&delta, (f32 *)&delta, -speed_loss);
+            Vector_Scale(&delta, &delta, -speed_loss);
             Vector_Add(&player_state.floor_push, &player_state.floor_push, &delta);
         } else {
             player_state.floor_push.x = player_state.floor_push.y = player_state.floor_push.z = 0.0f;
@@ -1536,8 +1536,8 @@ void Player_UpdateBreath(void) {
     int filled;
 
     player = &player_state;
-    was_set = (player_status_bits[0] >> 39) & 1;
-    is_set = (player->status_bits >> 39) & 1;
+    was_set = (player_status_bits[0] >> PLAYER_STATUS_UNDERWATER_BIT) & 1;
+    is_set = PLAYER_IS_UNDERWATER(player);
     if (is_set != was_set) {
         if (is_set != 0) {
             start_full = (player->power * 9) + 0x78;
@@ -1742,7 +1742,7 @@ void Player_UpdateStatus(void) {
     }
 
     if (player_state.death_timer == 0 && player_state.item_action_step == PLAYER_ITEM_ACTION_IDLE) {
-        if ((s32)(player_state.status_bits >> 35) & 1) {
+        if (PLAYER_IS_RUNNING(&player_state)) {
             player_state.power_gauge -= 83;
             if (player_state.power_gauge < 0) {
                 player_state.power_gauge = 0;
@@ -1769,7 +1769,7 @@ void Player_UpdateStatus(void) {
         }
     }
     if (player_state.death_timer == 0 && player_state.charging_magic != 0) {
-        if ((s32)(player_state.status_bits >> 35) & 1) {
+        if (PLAYER_IS_RUNNING(&player_state)) {
             player_state.magic_gauge -= 83;
             if (player_state.magic_gauge < 0) {
                 player_state.magic_gauge = 0;
@@ -1801,7 +1801,7 @@ void Player_UpdateStatus(void) {
     if ((u16)player_state.timed_flags[5] != 0) {
         player_state.magic_gauge = 0;
     }
-    if (!((s32)(player_state.status_bits >> 37) & 1) && player_state.landing_slow_timer > 0) {
+    if (!(PLAYER_IS_LANDING_DIP(&player_state)) && player_state.landing_slow_timer > 0) {
         player_state.landing_slow_timer--;
     }
 
@@ -1914,23 +1914,23 @@ void Player_RecomputeStats(void) {
     player_state.ailment_attack_rates.values[4] += player_state.ailment_attack_bonus[4];
     player_state.ailment_attack_rates.values[5] += player_state.ailment_attack_bonus[5];
     memset(&player_state.worn_item_stats, 0, sizeof(PlayerShotStats));
-    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_SHIELD]);
-    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_HELM]);
-    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_ARMOR]);
-    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_GAUNTLET]);
-    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_BOOT]);
-    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_RING]);
-    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_BRACELET]);
-    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_AMULET]);
+    Player_AddWornItemValues(player_state.worn_item_stats.values, player_state.equipment[EQUIP_SHIELD]);
+    Player_AddWornItemValues(player_state.worn_item_stats.values, player_state.equipment[EQUIP_HELM]);
+    Player_AddWornItemValues(player_state.worn_item_stats.values, player_state.equipment[EQUIP_ARMOR]);
+    Player_AddWornItemValues(player_state.worn_item_stats.values, player_state.equipment[EQUIP_GAUNTLET]);
+    Player_AddWornItemValues(player_state.worn_item_stats.values, player_state.equipment[EQUIP_BOOT]);
+    Player_AddWornItemValues(player_state.worn_item_stats.values, player_state.equipment[EQUIP_RING]);
+    Player_AddWornItemValues(player_state.worn_item_stats.values, player_state.equipment[EQUIP_BRACELET]);
+    Player_AddWornItemValues(player_state.worn_item_stats.values, player_state.equipment[EQUIP_AMULET]);
     memset(&player_state.defence_stats, 0, sizeof(PlayerShotStats));
-    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_SHIELD]);
-    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_HELM]);
-    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_ARMOR]);
-    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_GAUNTLET]);
-    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_BOOT]);
-    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_RING]);
-    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_BRACELET]);
-    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_AMULET]);
+    Player_AddWornItemValues(player_state.defence_stats.values, player_state.equipment[EQUIP_SHIELD]);
+    Player_AddWornItemValues(player_state.defence_stats.values, player_state.equipment[EQUIP_HELM]);
+    Player_AddWornItemValues(player_state.defence_stats.values, player_state.equipment[EQUIP_ARMOR]);
+    Player_AddWornItemValues(player_state.defence_stats.values, player_state.equipment[EQUIP_GAUNTLET]);
+    Player_AddWornItemValues(player_state.defence_stats.values, player_state.equipment[EQUIP_BOOT]);
+    Player_AddWornItemValues(player_state.defence_stats.values, player_state.equipment[EQUIP_RING]);
+    Player_AddWornItemValues(player_state.defence_stats.values, player_state.equipment[EQUIP_BRACELET]);
+    Player_AddWornItemValues(player_state.defence_stats.values, player_state.equipment[EQUIP_AMULET]);
     player_state.defence_stats.values[0] += player_state.physical_defence_bonus[0];
     player_state.defence_stats.values[1] += player_state.physical_defence_bonus[1];
     player_state.defence_stats.values[2] += player_state.physical_defence_bonus[2];

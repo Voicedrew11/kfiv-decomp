@@ -23,6 +23,10 @@ typedef struct {
     f32 normal[4];                  /* 0x20 unit vector away from what was hit */
 } CollisionResult;
 
+/* CollisionResult.hit bits */
+#define COLLISION_HIT_WALL      0x1     /* a side push: the entity is pushed out sideways (sets wall_push) */
+#define COLLISION_HIT_ON_TOP    0x2     /* the top of the object: the entity stands on it (sets on_top) */
+
 #define COLLISION_RESULT ((CollisionResult *)0x70000000)
 
 /* the scratchpad from 0x100 on: the points of a model's collision mesh (CollisionMesh.points)
@@ -64,7 +68,7 @@ typedef struct {
 
 /* one point of a triangle strip */
 typedef struct {
-    void *position;                 /* 0x00 */
+    f32 *position;                  /* 0x00 */
     s32 material_first;             /* 0x04 the first word of the floor material (Collision_GetFloorMaterial) */
     s32 material_second;            /* 0x08 the second word of the floor material */
     s32 material_third;             /* 0x0C the third word of the floor material */
@@ -180,8 +184,8 @@ u32 Collision_IsBarrierFloor(u32 first, u32 second, int third);
 
 /* collision/world_collision.c */
 int Collision_TransformMeshPoints(void *target);
-void Collision_DropOnTriangle(void *corner_a, void *corner_b, void *corner_c, void *point);
-void Collision_DropOnTriangleWithin(void *corner_a, void *corner_b, void *corner_c, void *point, f32 reach);
+void Collision_DropOnTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *point);
+void Collision_DropOnTriangleWithin(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *point, f32 reach);
 int Collision_FindFloorBelow(f32 reach, void *point_arg);
 int Collision_FindWaterBelow(f32 reach, void *point_arg);
 void Collision_CastRayAtMap(f32 scale, void *position_arg, void *direction);

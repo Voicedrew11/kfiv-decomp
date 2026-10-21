@@ -5,6 +5,8 @@
 #include "common.h"
 #include "gfx/texture.h"
 
+#define SPLASH_TEX0_TBP0 0x2E40 /* TEX0 TBP0 the splash image is drawn from */
+
 /* the image file as loaded, at file_load_buffer */
 typedef struct {
     u64 pad00;                      /* 0x00 */

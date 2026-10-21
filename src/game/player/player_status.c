@@ -210,7 +210,7 @@ void Player_FlashDamage(void) {
 }
 
 /* Knocks the player back away from source (along x/z), faster the bigger the damage is against the most HP. */
-void Player_KnockBackFromHit(void *source, int damage) {
+void Player_KnockBackFromHit(Unk1B1470Request *source, int damage) {
     PlayerState *player;
     float speed;
 
@@ -219,9 +219,9 @@ void Player_KnockBackFromHit(void *source, int damage) {
             player = &player_state;
             if (player->death_timer == 0) {
                 if (player->hp_max > 0) {
-                    player->aim.x = player->position.x - ((float *)source)[0];
+                    player->aim.x = player->position.x - source->position[0];
                     player->aim.y = 0;
-                    player->aim.z = player->position.z - ((float *)source)[2];
+                    player->aim.z = player->position.z - source->position[2];
                     Vector_Normalize(&player->aim, &player->aim);
                     speed = ((float)(damage * damage) / (float)player->hp_max) * 99.0f;
                     player->aim_speed = speed;
@@ -345,7 +345,7 @@ void Player_FindMapRecord(void) {
     PlayerState *player = &player_state;
     MapRecordInfo *record;
 
-    record = Map_FindRecordAtInSlot((f32 *)player, 100.0f, current_map_slot);
+    record = Map_FindRecordAtInSlot(&player->position.x, 100.0f, current_map_slot);
     if (record != NULL) {
         // match: retail shifts by 14, not by 7 (the records are 0x80 bytes each)
         player->map_index = (u32)((char *)record - map_slots[current_map_slot].records) >> 14;
@@ -365,7 +365,7 @@ void Player_UpdateScreenFade(void) {
 
     slot = &map_slots[current_map_slot];
     player = &player_state;
-    area = *(char *)((player->map_index << 7) + (int)slot->records + 0x4C); // match: summed as integers, index first
+    area = slot->records[(player->map_index << 7) + 0x4C];
     player->fade_area = area;
     if (area - player_previous_fade_level[0] < 0) {
         player->screen_fade_step = SCREEN_FADE_AREA_DROP_STEP;
@@ -489,7 +489,7 @@ void Player_CountWeaponUse(int weapon) {
     int count;
     PlayerState *player;
 
-    uses = *(u16 *)&record->use_count; // match: read as unsigned
+    uses = record->use_count;
     if (uses < 0x1E0) {
         new_uses = uses + 1;
         record->use_count = new_uses;

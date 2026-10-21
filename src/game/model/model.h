@@ -68,7 +68,7 @@ typedef struct {
 
 /* one 0x80-byte part (joint) of a model, ModelInstance.parts[i] */
 typedef struct ModelPart {
-    char matrix[0x40];              /* 0x00 the part's matrix, passed by address */
+    f32 matrix[16];                 /* 0x00 the part's matrix, passed by address */
     f32 position[4];                /* 0x40 where it sits on its parent */
     f32 rotation_x;                 /* 0x50 an angle, wrapped to +-pi (about x) */
     f32 rotation_y;                 /* 0x54 angle about y */
@@ -148,6 +148,9 @@ typedef struct {
     char pad78[0x18];
     ModelPartVertex vertices[1];    /* 0x90 */
 } ModelPartData;
+
+/* the data block `qwords` quadwords on from `data` */
+#define MODEL_PART_DATA_SKIP(data, qwords) ((ModelPartData *)((char *)(data) + (qwords) * 16))
 
 #define MODEL_RECORD_ID_MASK 0x3FFF          /* ModelPartRecord.id_word: the record id, low 14 bits */
 #define MODEL_RECORD_PAYLOAD_MASK 0x7FFF     /* ModelPartRecord.payload_size: low 15 bits */
@@ -242,9 +245,12 @@ typedef struct {
     char pad00[0x68];
     u64 pad68_0 : 40;
     u64 bit40 : 1;                  /* 0x6D bit 0, set: Model_DrawPosedWithAlpha does not draw the part */
-    u64 bit41 : 1;                  /* 0x6D bit 1, set by Model_SetUpSkinned */
+    u64 opaque : 1;                 /* 0x6D bit 1, MODEL_PART_OPAQUE_BIT: the part is drawn in the opaque pass */
     u64 pad68_42 : 22;
 } ModelPartFlagBits;
+
+#define ITEM_NODE_FALLING_BIT 2  /* ItemNode.flags: ItemNodeBits.falling */
+#define MODEL_PART_OPAQUE_BIT 41
 
 #define MODEL_PART_FLAG_BITS(part) ((ModelPartFlagBits *)(part))
 
@@ -355,11 +361,21 @@ typedef union {
 #define POSED_MODEL_FILE_ANY(file) (((ModelFileUnion *)(file))->posed)
 
 #define MODEL_FLAG_FLAT_COLOUR 0x400    /* ModelInstance.model_flags: no directional light, lit flat by its own colour times its alpha */
+#define MODEL_FLAG_1000 0x1000          /* ModelInstance.model_flags bit 12: set with RECORD_SENT on effect models; nothing tests it */
+#define MODEL_FLAG_RECORD_SENT 0x800    /* ModelInstance.model_flags: a record was sent for it, so its draw packet is longer (Model_DrawPosed) */
+#define MODEL_FLAG_ALPHA_DIRECT 0x4000  /* ModelInstance.model_flags: alpha is set straight; clear, it fades through fade_alpha */
+#define MODEL_FLAG_DRAW_LIST    0x200   /* ModelInstance.model_flags: drawn through the draw list (DrawList_Add) when set */
 #define MODEL_DRAW_FACE_CAMERA_X 0x100  /* ModelInstance.draw_flags: turned about x to face the camera */
 #define MODEL_DRAW_FACE_CAMERA_Y 0x200  /* ModelInstance.draw_flags: turned about y to face the camera */
 #define MODEL_DRAW_FACE_CAMERA   0x300  /* either of the two above */
 #define MODEL_DRAW_OWN_TEXTURE   0x800  /* ModelInstance.draw_flags: drawn with its own texture, the frame copied into it first */
 #define MODEL_DRAW_TURN_Z_ONLY   0x400  /* ModelInstance.draw_flags: turned about z alone */
+/* ModelInstance.chunk_skip_mask: bit n set skips texture chunk n */
+#define MODEL_CHUNK_SKIP_0       0x1u
+#define MODEL_CHUNK_SKIP_1       0x2u
+#define MODEL_CHUNK_SKIP_2       0x4u
+#define MODEL_CHUNK_SKIP_3       0x8u
+#define MODEL_CHUNK_SKIP_4       0x10u
 
 /* ModelInstance with the three part slots at 0x130 as the array Model_SetUpSkinned fills
    (ModelInstance.root_part is the first) */
@@ -379,7 +395,7 @@ typedef struct ModelWaveUv {
 
 typedef struct ModelInstance {
     char pad00[0x40];
-    char model_matrix[0x40];        /* 0x40 a matrix, passed by address */
+    f32 model_matrix[16];           /* 0x40 a matrix, passed by address */
     char collision_matrix[0x40];    /* 0x80 a copy of model_matrix */
     Vector4 position;               /* 0xC0 */
     Vector4 rotation;               /* 0xD0 x, y (heading), z in radians */
@@ -422,7 +438,7 @@ typedef struct ModelInstance {
     int found_record_id;            /* 0x17C the id Effect_FindModelRecord last found; sent after the colour at colour_red by Model_DrawPosed, in its alpha slot */
     VuIntVector found_record;       /* 0x180 a copy of that record, its id bits replaced; a quadword sent after it
                                        (Effect_FindModelRecord clears it with one sq, so it is 16-byte aligned) */
-    u16 texture_slot;               /* 0x190 slot of texture_data in texture_slots (0..2), 3: always sent */
+    u16 texture_slot;               /* 0x190 TEXTURE_SLOT_*: which texture_slots entry texture_data goes in */
     s16 shared_texture_slot;        /* 0x192 which entry of the shared last-sent texture record applies */
     int texture_data;               /* 0x194 the model's texture: a chunk table, or a raw packet */
     int shared_texture_packet;      /* 0x198 map texture packet 5, tracked in the shared record */
@@ -433,9 +449,15 @@ typedef struct ModelInstance {
     void (*draw)(struct ModelInstance *model); /* 0x1AC sets the GS state and draws */
     void (*after_draw)(struct ModelInstance *model); /* 0x1B0 called with the model by DrawList_Draw */
     void (*update_bone_points)(struct ModelInstance *model); /* 0x1B4 recomputes the 32 bone positions from the bone anchors */
-    void *(*get_point)(void *model, int index); /* 0x1B8 the point (a vector) of index */
+    f32 *(*get_point)(struct ModelInstance *model, int index); /* 0x1B8 point `index` as x, y, z, w */
     void (*on_textures_sent)(struct ModelInstance *model); /* 0x1BC called when ModelTexture_SendForModel sent new textures */
 } ModelInstance;
+
+/* ModelInstance.texture_slot: the texture_slots entry per kind of model, or none */
+#define TEXTURE_SLOT_ENTITY         0
+#define TEXTURE_SLOT_MAP_OBJECT     1
+#define TEXTURE_SLOT_ITEM           2       /* map items, gold and item effects */
+#define TEXTURE_SLOT_ALWAYS_SENT    3       /* effects: the packet is sent every time, not from a texture slot */
 
 /* a 0x40-byte vertex of four vectors; ModelScreen_StepFloatVertices fills the steps between two of them */
 typedef struct {
@@ -445,12 +467,12 @@ typedef struct {
     f32 colour[4];                  /* 0x30 r, g, b, a */
 } BlendVertex;
 
-/* one of the 0x40-byte lights at linked_point_pool, as the drawing code copies it into a packet */
+/* a LinkedPoint (entity/entity.h) at linked_point_pool as the drawing code copies it into a packet as a light */
 typedef struct {
-    f32 unk00[4];                   /* 0x00 sent whole, but for the last word */
-    f32 unk10[4];                   /* 0x10 sent whole */
+    f32 position[4];                /* 0x00 LinkedPoint.position, sent whole but for the last word */
+    f32 target[4];                  /* 0x10 LinkedPoint.target, sent whole */
     char pad20[0x04];
-    f32 unk24;                      /* 0x24 sent in place of unk00[3] */
+    f32 progress_scale;             /* 0x24 LinkedPoint.progress_scale, sent in place of position[3] */
     char pad28[0x18];
 } __attribute__((aligned(16))) ModelLight;
 
@@ -627,6 +649,9 @@ typedef struct {
 #define MAP_OBJECT_DEF_FLAGS(def) (*(u32 *)(def))
 #define MAP_OBJECT_DEF_CARRIES 0x8000   /* bit15 */
 #define MAP_OBJECT_DEF_FADE_ON_BREAK 0x20000 /* definition_flags: fades out over its breaking animation (MapObject_UpdateBreaking) */
+#define MAP_OBJECT_DEF_UNLISTED 0x400   /* first word: left out of both draw lists (MapObject_BuildDrawLists) */
+#define MAP_OBJECT_DEF_SEPARATE_PASS 0x10000 /* definition_flags: drawn only by the only_one pass of MapObject_DrawAll, not the main one */
+#define MAP_OBJECT_SPAWN_ALWAYS_DRAWN 0x1000000000000L /* spawn_flags bit 48: always drawn through the draw list (DrawList_Add) */
 
 /* MapObjectUnk04.kind read as the byte it is, where retail compares it that way (Collision_PushOutOfMeshObj) */
 #define MAP_OBJECT_DEF_KIND(def) (*(u8 *)(def))
@@ -688,6 +713,8 @@ typedef struct {
 #define MAP_OBJECT_IN_USE           0x10000   /* bit 16: in use (MapObject_Activate sets it, MapObject_Deactivate clears it) */
 #define MAP_OBJECT_ON               0x20000   /* bit 17: open, on or firing (doors, switches, chests, shooters and pitfalls) */
 #define MAP_OBJECT_EMPTIED          0x40000   /* bit 18: it has given out the item or key it held (MapObject_MarkEmptied) */
+#define MAP_OBJECT_STEPPED          0x8       /* bit 3: the animation was stepped this frame (MapObject_StepAnim sets it, MapObject_UpdateAll clears it) */
+#define MAP_OBJECT_SCRIPTED_ANIM    0x200000  /* bit 21: a script-driven object's animation steps (MapObject_UpdateScenery) */
 #define MAP_OBJECT_SCRIPTED         0x100000  /* bit 20: a script drives it (MapObject_SetScripted) */
 #define MAP_OBJECT_FLAG_400000      0x400000  /* bit 22: set from a script; the motion-done script commands treat it as never done */
 
@@ -695,6 +722,7 @@ typedef struct {
 #define MAP_OBJECT_DEF_WORD(object) (*(u32 *)(object)->definition)
 #define MAP_OBJECT_DEF_SKINNED      0x100   /* drawn as a skinned model (from the skinned object models) */
 #define MAP_OBJECT_DEF_HAS_MOTION   0x200   /* has a motion (its motion_index) */
+#define MAP_OBJECT_DEF_WEAPON_DAMAGE_MULTIPLIER 0x2000 /* a weapon hit's damage is scaled by request->map_object_damage_multiplier */
 #define MAP_OBJECT_DEF_GLOW         0x4000  /* lit by the glow lights while the glow item is worn */
 #define MAP_OBJECT_DEF_BREAKABLE    0x800   /* MapObject_Break can break it */
 #define MAP_OBJECT_DEF_BREAK_ANIM   0x1000  /* it has a breaking animation */
@@ -709,6 +737,17 @@ typedef struct {
 } MapObjectWork;
 
 #define MAP_OBJECT_WORK(object) ((MapObjectWork *)(object)->work)
+
+/* MapObject.work of the light kind: the linked point handle its hit test excludes, and the two flicker phases and periods */
+typedef struct {
+    s16 linked_point_handle;        /* 0x00 -1 when none */
+    s16 flicker_phase_a;            /* 0x02 where the first flicker period is */
+    s16 flicker_period_a;           /* 0x04 the first flicker period */
+    s16 flicker_phase_b;            /* 0x06 where the second flicker period is */
+    s16 flicker_period_b;           /* 0x08 the second flicker period */
+} MapObjectWorkLight;
+
+#define MAP_OBJECT_WORK_LIGHT(object) ((MapObjectWorkLight *)(object)->work)
 
 /* MapObject.work of the kind that fades with the distance to the player (MapObject_StartDistanceFade) */
 typedef struct {
@@ -747,22 +786,24 @@ typedef struct {
 /* the word at MapObject+0x10 (and MapTrigger+0x10) as bit-fields */
 typedef struct {
     u32 map : 1;                    /* which of the two loaded maps it belongs to */
-    u32 bit1 : 1;
-    u32 bit2 : 1;
+    u32 in_view : 1;
+    u32 in_view_previous : 1;
     u32 bits3 : 5;
     u32 step : 8;                   /* 0x11 step of the kind's state machine, 0: not started */
-    u32 bit16 : 1;                  /* in use */
-    u32 bit17 : 1;
-    u32 bit18 : 1;
+    u32 in_use : 1;
+    u32 on : 1;
+    u32 emptied : 1;
     u32 bit19 : 1;
-    u32 bit20 : 1;                  /* a script drives it (MapObject_SetScripted) */
-    u32 bit21 : 1;
+    u32 scripted : 1;               /* a script drives it (MapObject_SetScripted) */
+    u32 scripted_anim : 1;
     u32 bit22 : 1;
     u32 bit23 : 1;
     u32 anim : 8;                   /* 0x13 the animation MapObject_StartAnim started */
 } MapObjectBits;
 
 #define MAP_OBJECT_BITS(object) ((MapObjectBits *)&(object)->state_flags)
+/* MAP_OBJECT_ON read as a shift of the word, as some callers compile it */
+#define MAP_OBJECT_IS_ON(object) (((object)->state_flags >> 17) & 1)
 
 /* the same word as bytes */
 typedef struct {
@@ -805,14 +846,14 @@ typedef struct {
    the list of the ones in use. */
 typedef struct ModelNode {
     s32 pad00;                      /* 0x00 */
-    s32 unk04;                      /* 0x04 cleared when the node is unlinked */
-    s32 unk08;                      /* 0x08 cleared when the node is unlinked */
-    s32 unk0C;                      /* 0x0C bit 0: the map slot */
+    s32 record;                     /* 0x04 ItemNode.record, cleared when the node is unlinked */
+    s32 map_object;                 /* 0x08 ItemNode.map_object, cleared when the node is unlinked */
+    s32 flags;                      /* 0x0C ItemNodeBits; bit 0: the map slot */
     char pad10[0x04];
-    void *unk14;                    /* 0x14 the MapRecordInfo (map/map.h) it is standing in, found every frame */
+    void *map_record;               /* 0x14 the MapRecordInfo (map/map.h) it is standing in, found every frame */
     ModelInstance *model;           /* 0x18 non-null while the node is in use */
     s16 item;                       /* 0x1C which item it is (index into item_name_defs) */
-    s16 unk1E;                      /* 0x1E index into the map's row of map_item_pickup_counts */
+    s16 index;                      /* 0x1E index into the map's row of map_item_pickup_counts */
     struct ModelNode *prev;         /* 0x20 */
     struct ModelNode *next;         /* 0x24 */
     char pad28[0x14];
@@ -882,7 +923,7 @@ typedef struct {
     char pad00[0x0C];
     u32 map : 1;                    /* 0x0C which of the two loaded maps it lies in */
     u32 bit1 : 1;
-    u32 bit2 : 1;                   /* set on a dropped item */
+    u32 falling : 1;                /* a dropped item still falling to the floor (MapItem_UpdateFalling) */
     u32 priority : 4;               /* a dropped item is only replaced by one whose priority is not lower */
     u32 bits7 : 25;
 } ItemNodeBits;
@@ -960,7 +1001,7 @@ typedef struct {
 void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory);
 void Model_UpdateSkinnedBonePoints(ModelInstance *actor);
 // match: gcse hashes names into Model_SetUpSkinned's registers; these names and their order give retail's
-char *Model_GetSkinnedBonePoint(char *model, u32 index);
+f32 *Model_GetSkinnedBonePoint(ModelInstance *model, int index);
 void Model_DrawSkinned(ModelInstance *model);
 void Model_DrawPosed(ModelInstance *model);
 void Model_MultiplyChildMatrices(ModelPart *part);
@@ -975,7 +1016,7 @@ void Model_SetAlphaBlend(ModelInstance *model, s64 value);
 void Model_SetVu1Program(ModelInstance *model, s32 value);
 int Model_FadeVertexColoursNear(int model_arg, void *centre_arg, int *steps, int *targets, float radius);
 void Model_UpdateBonePoints(ModelInstance *model);
-Vector4 *Model_GetBonePoint(ModelInstance *model, s32 index);
+f32 *Model_GetBonePoint(ModelInstance *model, int index);
 
 /* model/model_screen.c */
 void ModelScreen_CutClippedTriangles(ModelInstance *model);

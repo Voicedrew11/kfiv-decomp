@@ -191,7 +191,7 @@ void Effect_DebugFreeAllButPlayer(void) {
         }
     }
 
-    for (i = 0; i < EFFECT_COUNT; i++, effect = (EffectActor *)((char *)effect + sizeof(EffectActor))) {
+    for (i = 0; i < EFFECT_COUNT; i++, effect++) {
         if (effect->flags & EFFECT_FLAG_LIVE) {
             printf("SFX[%d] OWNER[0x%x]\n", i, effect->owner_entity);
             if (!(effect->flags & EFFECT_FLAG_LIVE)) {
@@ -419,8 +419,8 @@ void Effect_DrawAll(int pass) {
         model = effect->model;
         if (placement == 0 || placement == EFFECT_DEF_PLACEMENT_MASK) {
             // match: the margin is set up before the node, so the call passes it first
-            if (((int (*)(f32 *, f32, AreaNode *))Map_IsPointInRecord)((f32 *)&model->position, 0.0f, (AreaNode *)effect->map_record) == 0) {
-                effect->map_record = (char *)Map_FindRecordAt((f32 *)&effect->model->position, 0.0f);
+            if (((int (*)(f32 *, f32, AreaNode *))Map_IsPointInRecord)(&model->position.x, 0.0f, (AreaNode *)effect->map_record) == 0) {
+                effect->map_record = (char *)Map_FindRecordAt(&effect->model->position.x, 0.0f);
             }
             if (effect->map_record == NULL && effect->owner_entity == (Entity *)&player_state && ((PlayerState *)effect->owner_entity)->map_index != 0xFFFF) {
                 effect->map_record = map_slots[current_map_slot].records + (((PlayerState *)effect->owner_entity)->map_index << 7);
@@ -547,7 +547,7 @@ static void Effect_RunSpawner(EffectSlot *slot) {
         }
         placement = EFFECT_DEF_FLAGS(effect->def) & EFFECT_DEF_PLACEMENT_MASK;
         if (placement == 0 || placement == EFFECT_DEF_PLACEMENT_MASK) {
-            effect->map_record = (char *)Map_FindRecordAt((f32 *)&effect->model->position, 0.0f);
+            effect->map_record = (char *)Map_FindRecordAt(&effect->model->position.x, 0.0f);
         }
         def = EFFECT_SLOT_VIEW(slot)->def;
     }
@@ -671,19 +671,19 @@ static void Effect_SetupModel(int index) {
 
     Memory_ClearWords(model, sizeof(ModelInstance) / 4);
     def = effect->def;
-    if (EFFECT_DEF_FLAGS(def) & 0x20000) {
+    if (EFFECT_DEF_FLAGS(def) & EFFECT_DEF_FLAG_FACE_CAMERA) {
         if ((EFFECT_DEF_FLAGS(def) & EFFECT_DEF_PLACEMENT_MASK) == 0 || (EFFECT_DEF_FLAGS(def) & EFFECT_DEF_PLACEMENT_MASK) == EFFECT_DEF_PLACEMENT_MASK) {
             model->draw_flags |= MODEL_DRAW_FACE_CAMERA;
         } else {
             model->draw_flags |= MODEL_DRAW_TURN_Z_ONLY;
         }
     }
-    model->model_flags |= 0x1800;
+    model->model_flags |= MODEL_FLAG_1000 | MODEL_FLAG_RECORD_SENT;
     file_cursor = effect_model_table[def->model_index];
     memory = effect_model_memory + (index << 11);
     Model_SetUpPosed(model, &file_cursor, &memory);
     model->draw = effect_draw_hooks[((EffectTableEntry *)effect->def)->placement][effect->def->draw_hook_index];
-    model->model_flags |= 0x800;
+    model->model_flags |= MODEL_FLAG_RECORD_SENT;
     if (Wobble_ModelUsesTextures(model, 0x3BC0, 0x3C3F) != 0) {
         // match: the owner is read from the effect again for every test (a macro in the game, most likely)
         if (effect->owner_entity == (Entity *)&map_slots[0]) {
@@ -697,7 +697,7 @@ static void Effect_SetupModel(int index) {
         } else {
             map = current_map_slot;
         }
-        effect->model->texture_slot = 3;
+        effect->model->texture_slot = TEXTURE_SLOT_ALWAYS_SENT;
         effect->model->texture_data = (int)Map_GetSlotPacket(map, 4);
         effect->model->shared_texture_slot = 0;
         effect->model->shared_texture_packet = (int)Map_GetSlotPacket(map, 5);

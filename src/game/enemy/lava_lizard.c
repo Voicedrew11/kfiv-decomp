@@ -20,7 +20,6 @@
 /* LavaLizard_RunAtPlayer: Entity.action_step (step 0 is the shared start) */
 #define LAVA_LIZARD_RUN_STEP_TURN 1                 /* turns to the player until action_timer runs out or it is pushed */
 
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void LavaLizard_Think(Entity *entity, s32 run_now);
 static void LavaLizard_ThinkCombat(Entity *entity, s32 run_now);

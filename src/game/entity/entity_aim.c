@@ -154,7 +154,7 @@ void EntityAim_PredictPlayerPosition(f32 *point, s32 frames) {
     offset[2] = player_state.walk_speed;
     offset[3] = 0.0f;
     sceVu0RotMatrixY(MODEL_MATRIX_SCRATCH, identity_matrix, player_state.rotation.y);
-    sceVu0ApplyMatrix(offset, (int *)MODEL_MATRIX_SCRATCH, offset);
+    sceVu0ApplyMatrix(offset, MODEL_MATRIX_SCRATCH, offset);
     Vector_Scale(offset, offset, frames);
     Vector_Add(point, &player_state, offset);
 }
@@ -450,7 +450,7 @@ s32 EntitySight_EntityInWay(Entity *entity) {
     other = active_entities_head;
     while (other != NULL) {
         flags = other->flags;
-        if (((s32)(flags >> 1) & 1) && ENTITY_FLAG_BITS(other)->dying < 2 && other != entity) {
+        if (((s32)(flags >> ENTITY_FLAG_LIVE_BIT) & 1) && ENTITY_FLAG_BITS(other)->dying < 2 && other != entity) {
             if (EntityCollision_PointNearSegment(other->radius, (int *)&player_state, (int)entity->model->position, (int)other->model->position)) {
                 return TRUE;
             }

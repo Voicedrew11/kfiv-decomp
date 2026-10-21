@@ -101,13 +101,13 @@ void Map_DrawRecords(int mode) {
             GsDraw_QueueFlush();
             for (; record != NULL; record = record->next) {
                 flags = record->flags;
-                if ((flags & 2) && mode != 0) {
+                if ((flags & MAP_RECORD_SCREEN_ONLY) && mode != 0) {
                     continue;
                 }
                 if ((flags & MAP_RECORD_RIPPLED) && mode != 0) {
                     continue;
                 }
-                if (!(flags & 0x20) && mode != 0) {
+                if (!(flags & MAP_RECORD_ALL_MODES) && mode != 0) {
                     continue;
                 }
                 if (active >= 2 && flags < 0 && map != current_map_slot) {
@@ -178,13 +178,13 @@ void Map_DrawLateRecords(int mode) {
             Packet_EndGsRegisters();
             for (; record != NULL; record = record->next) {
                 flags = record->flags;
-                if ((flags & 2) && mode != 0) {
+                if ((flags & MAP_RECORD_SCREEN_ONLY) && mode != 0) {
                     continue;
                 }
                 if ((flags & MAP_RECORD_RIPPLED) && mode != 0) {
                     continue;
                 }
-                if (!(flags & 0x20) && mode != 0) {
+                if (!(flags & MAP_RECORD_ALL_MODES) && mode != 0) {
                     continue;
                 }
                 if (active >= 2 && flags < 0 && map != current_map_slot) {
@@ -194,7 +194,7 @@ void Map_DrawLateRecords(int mode) {
                 z_mask = !(flags & MAP_RECORD_Z_WRITE);
                 if (z_mask != old_z_mask) {
                     Packet_BeginGsRegisters();
-                    Packet_AddGsRegister(GS_REG_ZBUF_1, ((s64)z_mask << 32) | 0xA000118);
+                    Packet_AddGsRegister(GS_REG_ZBUF_1, ((s64)z_mask << 32) | GS_ZBUF_CT16S_118);
                     Packet_EndGsRegisters();
                 }
                 if (record->flags & MAP_RECORD_CURRENT_BLOCKS) {
@@ -271,7 +271,7 @@ void Map_ParseFile(int map) {
     slot->record_model_spare_bytes = work;
     work += header->record_model_count;
     // match: stored as a u8 *; as a char * the read of header->script_offset below comes one instruction late
-    *(u8 **)&memory->work_cursor = (u8 *)work;
+    *(u8 **)&memory->work_cursor = work;
 
     /* the file: its fixed parts, then the tables whose sizes the header gives */
     cursor = (char *)header;
@@ -299,7 +299,7 @@ void Map_ParseFile(int map) {
     cursor += header->item_count * 0x40;
     map_item_model_kinds[map] = (s16 *)cursor;
     cursor += 0x40;
-    map_item_group_thresholds[map] = (u8 *)cursor;
+    map_item_group_thresholds[map] = cursor;
 
     /* the parts the header gives offsets for */
     cursor = (char *)header;
@@ -318,7 +318,7 @@ void Map_ParseFile(int map) {
     }
     cursor = (char *)header;
     cursor += offset;
-    slot->sound_bank = (s32 *)cursor;
+    slot->sound_bank = cursor;
     /* two offsets in that part become addresses */
     ((char **)cursor)[1] += (s32)memory->file_base;
     ((char **)cursor)[3] += (s32)memory->file_base;
@@ -385,7 +385,7 @@ void Map_BuildModels(int map) {
                 ((ModelInstance **)slot->record_model_table)[record->model_index] = model;
             }
             Model_SetPrimBits(model, 0x20, 0x20);
-            if (record->record_flags & 0x202) {
+            if (record->record_flags & (MAP_RECORD_BIT1 | MAP_RECORD_RIPPLED)) {
                 Model_SetPrimBits(model, 0x60, 0x60);
                 Model_SetAlphaBlend(model, 0x48);
             }
@@ -432,7 +432,7 @@ void Map_BuildModels(int map) {
         object->model = model;
         object->source = info;
         object->definition = (MapObjectUnk04 *)&map_object_defs[info->def_index * 0x80];
-        object->map_record = (s32)Map_FindRecordAtInSlot((f32 *)info, 0.0f, map);
+        object->map_record = (s32)Map_FindRecordAtInSlot(&info->position.x, 0.0f, map);
         MAP_OBJECT_BITS(object)->map = (u8)map;
     }
     cursor = (int)header + header->object_model_offset;
@@ -442,7 +442,7 @@ void Map_BuildModels(int map) {
             if (object->definition->model_index != 0xFFFF && !(MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_SKINNED) && object->source->model_index == i) {
                 next = cursor; // match: retail bug, only set when an object uses this model (see cursor = next)
                 Model_SetUpPosed(object->model, (char **)&next, &work);
-                object->model->texture_slot = 1;
+                object->model->texture_slot = TEXTURE_SLOT_MAP_OBJECT;
                 object->model->texture_data = next;
                 next += *(int *)next;
                 object->model->texture_packet_3 = 0;
@@ -458,7 +458,7 @@ void Map_BuildModels(int map) {
             if (object->definition->model_index != 0xFFFF && (MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_SKINNED) && object->source->model_index == i) {
                 next = cursor; // match: retail bug, as in the loop above
                 Model_SetUpSkinned(object->model, &next, (int *)&work);
-                object->model->texture_slot = 1;
+                object->model->texture_slot = TEXTURE_SLOT_MAP_OBJECT;
                 object->model->texture_data = next;
                 next += *(int *)next;
                 object->model->texture_packet_3 = (int)Map_GetSlotPacket(map, 3);
@@ -604,10 +604,10 @@ void Map_PlaceRecordModels(int map) {
             MODEL_MATRIX(model)[0][0] *= model->scale_x;
             MODEL_MATRIX(model)[1][1] *= model->scale_y;
             MODEL_MATRIX(model)[2][2] *= model->scale_z;
-            sceVu0RotMatrixX((f32 *)matrix, (f32 *)matrix, model->rotation.x);
-            sceVu0RotMatrixY((f32 *)matrix, (f32 *)matrix, model->rotation.y);
-            sceVu0RotMatrixZ((f32 *)matrix, (f32 *)matrix, model->rotation.z);
-            sceVu0TransMatrix((f32 *)matrix, (f32 *)matrix, &model->position.x);
+            sceVu0RotMatrixX(matrix, matrix, model->rotation.x);
+            sceVu0RotMatrixY(matrix, matrix, model->rotation.y);
+            sceVu0RotMatrixZ(matrix, matrix, model->rotation.z);
+            sceVu0TransMatrix(matrix, matrix, &model->position.x);
             Matrix_Multiply(model, world_screen_matrix, matrix);
             for (j = 0; j < model->part_count; j++) {
                 // match: the callee returns a value here, which keeps $2 busy

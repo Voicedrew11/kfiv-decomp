@@ -25,7 +25,7 @@
 #define AT_LEAST_5(chance) ((chance) < 5 ? 5 : (chance))
 #define ENTITY_TYPE_LAST_BOSS 99
 /* EntityParams.shot_params as six signed bytes: tenths the six magic strengths of an entity's hit are scaled by */
-#define ENTITY_HIT_SCALES(entity) ((s8 *)&(entity)->params->shot_params)
+#define ENTITY_HIT_SCALES(entity) ((entity)->params->shot_params.bytes)
 /* store a strength as a whole number, rounded up when more than a thousandth is left over */
 #define STORE_ROUNDED_UP(dest, value) \
     strength = (value); \
@@ -36,9 +36,11 @@
     }
 #define SHOT_REQUEST ((Unk1B1470Request *)shot->attack_request)
 
-/* Unk1B1470Request.shape (entity.h): the hit's shape; shapes 1 and 2 do nothing */
-#define ATTACK_SHAPE_SPHERE 0
-#define ATTACK_SHAPE_SWEPT  3
+/* Unk1B1470Request.shape (entity.h): the hit's shape; cylinder and segment do nothing */
+#define ATTACK_SHAPE_SPHERE   0
+#define ATTACK_SHAPE_CYLINDER 1 /* radius and height */
+#define ATTACK_SHAPE_SEGMENT  2 /* from the position to second_point */
+#define ATTACK_SHAPE_SWEPT    3
 /* the strip list of a map model that Attack_TestMapModel touched: a floor (list 1) */
 #define ATTACK_LIST_FLOOR   1
 
@@ -56,9 +58,9 @@ s32 Attack_Run(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     switch (((Unk1B1470RequestBits *)request)->shape) {
     case ATTACK_SHAPE_SPHERE:
         return Attack_RunSphere(request, extra);
-    case 1:
+    case ATTACK_SHAPE_CYLINDER:
         return Attack_RunShape1Stub();
-    case 2:
+    case ATTACK_SHAPE_SEGMENT:
         return Attack_RunShape2Stub();
     case ATTACK_SHAPE_SWEPT:
         return Attack_RunSwept(request, extra);
@@ -86,7 +88,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     s32 kind;
     s32 result;
 
-    if (request->target_mask & 4) {
+    if (request->target_mask & HIT_TARGET_MAP_OBJECT) {
         for (index = 0; index < 2; index++) {
             if (map_slots[index].loaded == 0) {
                 continue;
@@ -127,7 +129,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             }
         }
     }
-    if (request->target_mask & 2) {
+    if (request->target_mask & HIT_TARGET_ENTITY) {
         for (entity = active_entities_head; entity != NULL; entity = entity->next) {
             if (!(ENTITY_FLAG_BITS(entity)->live)) {
                 continue;
@@ -159,7 +161,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                     if (!(body->flags_or_model_point.flags & ENTITY_BODY_USED)) {
                         continue;
                     }
-                    point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->flags_or_model_point.point);
+                    point = ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->flags_or_model_point.point);
                     if (!(body->flags_or_model_point.flags & ENTITY_BODY_ROUND)) {
                         Collision_SphereCylinder(point, request->position, body->radius * scale, body->height * ENTITY_MODEL(entity)->scale_y,
                                       request->radius);
@@ -176,7 +178,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     }
     if ((UNK1B1470_REQUEST_UNIT(request) & (0xC000L << 29)) == (0xC000L << 29)) {
         kind = 0;
-    } else if (request->target_mask & 8) {
+    } else if (request->target_mask & HIT_TARGET_MAP_FLOOR) {
         kind = 1;
     } else {
         kind = -1;
@@ -278,7 +280,7 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             }
         }
     }
-    if (request->target_mask & 2) {
+    if (request->target_mask & HIT_TARGET_ENTITY) {
         for (entity = active_entities_head; entity != NULL; entity = entity->next) {
             if (!(ENTITY_FLAG_BITS(entity)->live)) {
                 continue;
@@ -320,7 +322,7 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                     if (!(body->flags_or_model_point.flags & ENTITY_BODY_USED)) {
                         continue;
                     }
-                    point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->flags_or_model_point.point);
+                    point = ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->flags_or_model_point.point);
                     if (!(body->flags_or_model_point.flags & ENTITY_BODY_ROUND)) {
                         if (IS_PLAYER(request->owner)) {
                             Collision_CylinderArcPitch(point, request->position, body->radius * width_scale, body->height * ENTITY_MODEL(entity)->scale_y,
@@ -350,7 +352,7 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     if (!IS_PLAYER(request->owner)) {
         return 0;
     }
-    if (request->target_mask & 4) {
+    if (request->target_mask & HIT_TARGET_MAP_OBJECT) {
         Vector_Copy(tip, request);
         tip[1] += request->height;
         for (index = 0; index < 2; index++) {
@@ -363,7 +365,7 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                 Vector_Subtract(direction, &held_item_arm_points.points[1], &held_item_arm_points.points[0]);
                 length = sqrtf(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);
                 Vector_Scale(direction, direction, 1.0f / length);
-                Collision_HitRayObj(object, (f32 *)&held_item_arm_points.points[0], direction, length);
+                Collision_HitRayObj(object, &held_item_arm_points.points[0].x, direction, length);
                 if (COLLISION_RESULT->hit != 0) {
                     Attack_HitMapObject(request, extra, object);
                     return 4;
@@ -371,7 +373,7 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                 Vector_Subtract(direction, &held_item_arm_points.points[1], &held_item_arm_points_prev.points[1]);
                 length = sqrtf(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);
                 Vector_Scale(direction, direction, 1.0f / length);
-                Collision_HitRayObj(object, (f32 *)&held_item_arm_points_prev.points[1], direction, length);
+                Collision_HitRayObj(object, &held_item_arm_points_prev.points[1].x, direction, length);
                 if (COLLISION_RESULT->hit != 0) {
                     Attack_HitMapObject(request, extra, object);
                     return 4;
@@ -382,12 +384,12 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     if (!IS_PLAYER(request->owner)) {
         return 0;
     }
-    Collision_CastSegmentAtMap((f32 *)&held_item_arm_points.points[0], (f32 *)&held_item_arm_points.points[1]);
+    Collision_CastSegmentAtMap(&held_item_arm_points.points[0].x, &held_item_arm_points.points[1].x);
     if (COLLISION_RESULT->hit != 0) {
         Attack_HitMap(request, extra);
         return 0x10;
     }
-    Collision_CastSegmentAtMap((f32 *)&held_item_arm_points.points[1], (f32 *)&held_item_arm_points_prev.points[1]);
+    Collision_CastSegmentAtMap(&held_item_arm_points.points[1].x, &held_item_arm_points_prev.points[1].x);
     if (COLLISION_RESULT->hit != 0) {
         Attack_HitMap(request, extra);
         return 0x10;
@@ -735,7 +737,7 @@ void Attack_HitPlayer(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             player_state.mp_now = 0;
         }
     }
-    if (UNK1B1470_REQUEST_UNIT(request) & UNK1B1470_UNIT_UNK4C_3) {
+    if (UNK1B1470_REQUEST_UNIT(request) & UNK1B1470_UNIT_KNOCKBACK) {
         Player_KnockBackFromHit(request, damage);
     }
     Player_TiltViewFromHit(damage);
@@ -1006,7 +1008,7 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
 
     Attack_RollEntityAilments(entity, &request->ailment_chances);
     // match: flag bit 40 (still named pad40); the source bit is read as a u8 field
-    ENTITY_FLAG_BITS(entity)->last_hit_knockback = ((Unk1B1470RequestBits *)request)->unk4C_3;
+    ENTITY_FLAG_BITS(entity)->last_hit_knockback = ((Unk1B1470RequestBits *)request)->knockback;
 
     if (by_magic && request->instant_kill_chance_percent != 0 && damage > 0) {
         chance = request->instant_kill_chance_percent - entity->params->critical_defence;
@@ -1128,7 +1130,7 @@ void Attack_HitMapObject(Unk1B1470Request *request, Unk1B1470Extra *extra, MapOb
     if (by_weapon) {
         damage = damage * extra->strength_gauge / 5000;
     }
-    if ((MAP_OBJECT_DEF_WORD(object) & 0x2000) && by_weapon) {
+    if ((MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_WEAPON_DAMAGE_MULTIPLIER) && by_weapon) {
         damage *= request->map_object_damage_multiplier;
     }
     if (damage >= MAP_OBJECT_DEF_TOUGHNESS(object->definition)) {
@@ -1307,7 +1309,7 @@ void Attack_WearArmorFromHit(int damage, Unk1B1470Request *request) {
     } else {
         part = (int)(rand() * 4.0f * RAND_SCALE) + 1;
     }
-    if (!((s32)(player_state.status_bits >> 35) & 1) && player_state.equipment[EQUIP_SHIELD] != ITEM_WORN_INDEX(ITEM_SHIELD_NONE)) {
+    if (!(PLAYER_IS_RUNNING(&player_state)) && player_state.equipment[EQUIP_SHIELD] != ITEM_WORN_INDEX(ITEM_SHIELD_NONE)) {
         shield_exp = 1;
         if (!(percent < 5.0f)) {
             shield_exp = amount * 2;
@@ -1424,15 +1426,15 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
             request.radius = check->radius;
             request.shape = ATTACK_SHAPE_SPHERE;
             break;
-        case 1:
+        case ATTACK_SHAPE_CYLINDER:
             position = &effect->saved_position;
             request.radius = check->radius;
-            request.shape = 1;
+            request.shape = ATTACK_SHAPE_CYLINDER;
             request.height = check->height;
             break;
-        case 2:
+        case ATTACK_SHAPE_SEGMENT:
             position = &effect->saved_position;
-            request.shape = 2;
+            request.shape = ATTACK_SHAPE_SEGMENT;
             Vector_Copy(request.second_point, position);
             break;
         default:
@@ -1449,20 +1451,20 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
     if (check->target_mask & HIT_TARGET_PLAYER) {
         request.target_mask = HIT_TARGET_PLAYER;
     }
-    if (check->target_mask & 2) {
-        request.target_mask |= 2;
+    if (check->target_mask & HIT_TARGET_ENTITY) {
+        request.target_mask |= HIT_TARGET_ENTITY;
     }
-    if (check->target_mask & 4) {
-        request.target_mask |= 4;
+    if (check->target_mask & HIT_TARGET_MAP_OBJECT) {
+        request.target_mask |= HIT_TARGET_MAP_OBJECT;
     }
-    if (check->target_mask & 8) {
-        request.target_mask |= 8;
+    if (check->target_mask & HIT_TARGET_MAP_FLOOR) {
+        request.target_mask |= HIT_TARGET_MAP_FLOOR;
     }
     if (check->target_mask & HIT_TARGET_MAP_WALL) {
         request.target_mask |= HIT_TARGET_MAP_WALL;
     }
-    if (check->target_mask & 0x20) {
-        request.target_mask |= 0x20;
+    if (check->target_mask & HIT_TARGET_MAP_OTHER) {
+        request.target_mask |= HIT_TARGET_MAP_OTHER;
     }
     if (check->target_mask & HIT_TARGET_SKIP_OWNER) {
         request.target_mask |= HIT_TARGET_SKIP_OWNER;
@@ -1483,7 +1485,7 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
     } else {
         request.strengths = SHOT_REQUEST->strengths;
         request.ailment_chances = SHOT_REQUEST->ailment_chances;
-        request.knockback = ((Unk1B1470RequestBits *)SHOT_REQUEST)->unk4C_3;
+        request.knockback = ((Unk1B1470RequestBits *)SHOT_REQUEST)->knockback;
         request.instant_kill_chance_percent = 0;
         request.stun_frames = 0;
         request.double_hit_chance_percent = SHOT_REQUEST->double_hit_chance_percent;

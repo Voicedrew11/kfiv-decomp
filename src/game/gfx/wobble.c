@@ -129,7 +129,7 @@ void Wobble_DrawRippledModel(ModelInstance *model, int unk1, int unk2, int unk3,
                 packet = Packet_Alloc(vertex_count * 2 + 3);
                 *packet = (vertex_count * 2 + 2) | DMA_TAG_ID_CNT;
                 packet += 7;
-                *packet++ = (vertex_count * 2) | 0x51000001;
+                *packet++ = (vertex_count * 2) | VIF_CODE_DIRECTHL | 1;
                 tag_low = (u64)vertex_count | GIF_TAG_EOP | ((u64)2 << 60);
                 tag_high = (prim << 47) | ((u64)1 << 46);
                 *(u64 *)packet = tag_low | tag_high;
@@ -196,7 +196,7 @@ void Wobble_DrawRippledModel(ModelInstance *model, int unk1, int unk2, int unk3,
                     out->tex_t = (f32)(screens[0][1] - 0x7200) / 7168.0f;
                     out++;
                 }
-                next = (ModelPartData *)((char *)data + (length + 1) * 0x10);
+                next = MODEL_PART_DATA_SKIP(data, length + 1);
             }
         }
         packet = Packet_Alloc(4);
@@ -263,7 +263,7 @@ int Wobble_ModelUsesTextures(ModelInstance *model, int first, int last) {
             if (texture >= first && texture <= last) {
                 return TRUE;
             }
-            data = (ModelPartData *)((char *)data + (length + 1) * 0x10);
+            data = MODEL_PART_DATA_SKIP(data, length + 1);
         }
     }
 }
@@ -353,7 +353,7 @@ void Wobble_BuildWaveUvs(ModelInstance *model, u32 *alloc) {
                 wave_uv++;
                 vertex++;
             }
-            next_data = (ModelPartData *)((char *)data + (length + 1) * 0x10);
+            next_data = MODEL_PART_DATA_SKIP(data, length + 1);
         }
     }
     address = (u32)wave_uv;
@@ -398,7 +398,7 @@ void Wobble_ApplyWaveUvs(ModelInstance *model) {
                 wave_uv++;
                 vertex++;
             }
-            next_data = (ModelPartData *)((char *)data + (length + 1) * 0x10);
+            next_data = MODEL_PART_DATA_SKIP(data, length + 1);
         }
     }
 }
@@ -450,7 +450,7 @@ void Wobble_SetUvsFromJitteredScreen(ModelInstance *model) {
                 vertex->tex_v = (*&MODEL_PROJECT_SCRATCH->screen[1] - 0x7200) / 7168.0f * 4096.0f;
                 vertex++;
             }
-            next_data = (ModelPartData *)((char *)data + (length + 1) * 0x10);
+            next_data = MODEL_PART_DATA_SKIP(data, length + 1);
         }
     }
 }

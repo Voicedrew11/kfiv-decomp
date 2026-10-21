@@ -60,7 +60,7 @@ static int display_buffer_index = 0;                   /* 0x446E88 the frame buf
 static u16 menu_held_stick = 0xFFFF;                  /* 0x446E8C PAD_UP/PAD_DOWN from the stick last frame */
 static u16 game_over_held_stick = 0xFFFF;             /* 0x446E8E */
 
-static TextureHeader *texture_cursor;                  /* 0x4473B4 where the next texture file is loaded */
+static u8 *texture_cursor;                             /* 0x4473B4 where the next texture file is loaded */
 static int texture_cursor_unused;                      /* 0x4473B8 never used by this code */
 static u32 *packet_cursor;                             /* 0x4473BC */
 static int packet_cursor_unused;                       /* 0x4473C0 never used by this code */
@@ -73,7 +73,7 @@ static s8 menu_confirmed;                              /* 0x4473D8 */
 static int game_over_choice;                           /* 0x4473DC 0 load, 1 quit */
 static s8 game_over_confirmed;                         /* 0x4473E0 */
 
-static Uint128 sprite_packet[0x100];                   /* 0x5F9B60 */
+static u32 sprite_packet[0x400] __attribute__((aligned(16)));  /* 0x5F9B60 the GS packet, 16-byte aligned */
 static BootTexture title_textures[32];                 /* 0x5FAB60 */
 static BootSprite logo_sprite;                         /* 0x5FAD60 */
 static BootSprite logo2_sprite;                        /* 0x5FAD80 */
@@ -111,7 +111,7 @@ int Title_Init(void) {
     sceGsSetDefDBuff(&title_dbuff, 0, 640, 224, 3, 0, 1);
     title_dbuff.clear1.rgbaq = title_dbuff.clear0.rgbaq = 0x180000000;
     ((int (*)(void))Title_SwapBuffers)(); // match: called as if it returned a value, which keeps $2 busy
-    texture_cursor = (TextureHeader *)map_file_area;
+    texture_cursor = map_file_area;
     Title_LoadTexture("title\\logo.tm2", TITLE_TEXTURE_LOGO);
     Title_LoadTexture("title\\title_menu1.tm2", TITLE_TEXTURE_PRESS_START);
     Title_LoadTexture("title\\title_menu2.tm2", TITLE_TEXTURE_MENU_CHOICE + 0);
@@ -137,9 +137,9 @@ void Title_LoadTexture(char *name, int index) {
     file = File_Open(name, 0, 1);
     size = File_Read(file, texture_cursor, -1);
     File_Close(file);
-    title_textures[index].file = texture_cursor;
-    title_textures[index].tex0 = *(BootTex0 *)&texture_cursor->tex0;
-    texture_cursor = (TextureHeader *)((char *)texture_cursor + size);
+    title_textures[index].file = (TextureHeader *)texture_cursor;
+    title_textures[index].tex0 = *(BootTex0 *)&title_textures[index].file->tex0;
+    texture_cursor += size;
 }
 
 /* Sends a texture of the title screens to GS memory, and its palette when it has 8-bit pixels. */
@@ -153,14 +153,13 @@ int Title_UploadTexture(int index) {
     sceGsSetDefLoadImage(&load_image, title_textures[index].tex0.tbp0, title_textures[index].tex0.tbw,
                          title_textures[index].tex0.psm, 0, 0, width, height);
     FlushCache(0);
-    sceGsExecLoadImage(&load_image, (char *)title_textures[index].file + sizeof(TextureHeader));
+    sceGsExecLoadImage(&load_image, title_textures[index].file->image);
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
     if (title_textures[index].tex0.psm == 0x13) {
         sceGsSetDefLoadImage(&load_image, title_textures[index].tex0.cbp, 1, title_textures[index].tex0.cpsm, 0, 0, 16, 16);
         FlushCache(0);
-        sceGsExecLoadImage(&load_image,
-                           (char *)title_textures[index].file + (title_textures[index].file->image_size + sizeof(TextureHeader)));
+        sceGsExecLoadImage(&load_image, title_textures[index].file->image + title_textures[index].file->image_size);
         while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
         }
     }
@@ -200,7 +199,7 @@ int Title_DrawSprite(float scale, BootSprite *sprite, int blend) {
     }
     alpha *= scale;
 
-    packet_cursor = (u32 *)sprite_packet;
+    packet_cursor = sprite_packet;
     *packet_cursor++ = 0x8001;
     *packet_cursor++ = 0x20000000;
     *packet_cursor++ = 0xEE;
@@ -228,7 +227,7 @@ int Title_DrawSprite(float scale, BootSprite *sprite, int blend) {
     *packet_cursor++ = 0xFFFF;
     *packet_cursor++ = 0;
     *packet_cursor++ = 0;
-    Title_SendPacket((u32)sprite_packet, (u32)(packet_cursor - (u32 *)sprite_packet) / 4);
+    Title_SendPacket((u32)sprite_packet, (u32)(packet_cursor - sprite_packet) / 4);
     sprite->frame++;
     if (sprite->track->length < sprite->frame) {
         sprite->frame = 0;
@@ -464,7 +463,7 @@ int Title_InitGameOver(void) {
     sceGsSetDefDBuff(&title_dbuff, 0, 640, 224, 3, 0, 1);
     title_dbuff.clear1.rgbaq = title_dbuff.clear0.rgbaq = 0x180000000L;
     ((int (*)(void))Title_SwapBuffers)(); // match: called as if it returned a value, which keeps $2 busy
-    texture_cursor = (TextureHeader *)map_file_area;
+    texture_cursor = map_file_area;
     Title_LoadTexture("title\\gameover_load.tm2", TITLE_TEXTURE_GAME_OVER_LOAD);
     Title_LoadTexture("title\\gameover_quit.tm2", TITLE_TEXTURE_GAME_OVER_QUIT);
     Title_LoadTexture("title\\gameover_ok.tm2", TITLE_TEXTURE_GAME_OVER_OK);

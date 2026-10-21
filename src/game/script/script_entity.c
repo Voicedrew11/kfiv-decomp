@@ -679,10 +679,10 @@ void ScriptCmd_SetEntityFlags(ScriptSetFlagsCommand *command) {
     if (command->mask.value & SCRIPT_ENTITY_FLAG_RESPAWNABLE) {
         ENTITY_FLAG_BITS(entity)->respawnable = command->value.value >> 4;
     }
-    if (command->mask.value & 0x20) {
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_ENTITY_40000) {
         ENTITY_FLAG_BITS(entity)->bit18 = command->value.value >> 5;
     }
-    if (command->mask.value & 0x40) {
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_ENTITY_400000) {
         ENTITY_FLAG_BITS(entity)->bit22 = command->value.value >> 6;
     }
     if (command->mask.value & SCRIPT_ENTITY_FLAG_NO_WALL_COLLISION) {
@@ -709,7 +709,7 @@ void ScriptCmd_SetEntityFlags(ScriptSetFlagsCommand *command) {
     if (command->mask.value & SCRIPT_ENTITY_FLAG_LOOK_AT_TARGET) {
         ENTITY_FLAG_BITS(entity)->look_at_target = command->value.value >> 14;
     }
-    if (command->mask.value & 0x8000) {
+    if (command->mask.value & SCRIPT_ENTITY_FLAG_ENTITY_20000000) {
         ENTITY_FLAG_BITS(entity)->bit29 = command->value.value >> 15;
     }
     command->active = 0;
@@ -737,10 +737,10 @@ void ScriptCmd_GetEntityFlags(ScriptQueryCommand *command) {
             result |= SCRIPT_ENTITY_FLAG_RESPAWNABLE;
         }
         if (ENTITY_FLAG_BITS(entity)->bit18) {
-            result |= 0x20;
+            result |= SCRIPT_ENTITY_FLAG_ENTITY_40000;
         }
         if (ENTITY_FLAG_BITS(entity)->bit22) {
-            result |= 0x40;
+            result |= SCRIPT_ENTITY_FLAG_ENTITY_400000;
         }
         if (ENTITY_FLAG_BITS(entity)->no_wall_collision) {
             result |= SCRIPT_ENTITY_FLAG_NO_WALL_COLLISION;
@@ -767,7 +767,7 @@ void ScriptCmd_GetEntityFlags(ScriptQueryCommand *command) {
             result |= SCRIPT_ENTITY_FLAG_LOOK_AT_TARGET;
         }
         if (ENTITY_FLAG_BITS(entity)->bit29) {
-            result |= 0x8000;
+            result |= SCRIPT_ENTITY_FLAG_ENTITY_20000000;
         }
         Script_StoreResult(&command->result, result);
     }

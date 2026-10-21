@@ -27,13 +27,13 @@ static void Crow_PlayAnim21(Entity *entity);
 /* Set-up of a type 12 entity: clears its work area and installs the type's handlers. */
 void Crow_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->ai_state;
+        u8 *dest = ENTITY_WORK_BYTES(entity);
 
         dest[i] = 0;
     }
@@ -144,7 +144,7 @@ static void Crow_MoveOffAndRemove(Entity *entity, s32 run_now) {
     ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     entity->move_command |= MOVE_COMMAND_FORWARD;
     if (ai_state->pause_timer < entity->params->type_param_0) {
-        EntityEvent_StartEffectAtPoint((char **)entity, entity->params->far_distance, 0xFF, (int)entity->model->rotation);
+        EntityEvent_StartEffectAtPoint(entity, entity->params->far_distance, 0xFF, entity->model->rotation);
         ai_state->pause_timer++;
     }
     // match: the whole step is written out in both arms (only the call is shared in retail)

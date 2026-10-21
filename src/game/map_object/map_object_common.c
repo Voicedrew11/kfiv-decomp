@@ -52,7 +52,7 @@ void MapObject_UpdateScenery(MapObject *object) {
     }
     if (object->model->model_flags & 1) {
         if (object->state_flags & MAP_OBJECT_SCRIPTED) {
-            if (object->state_flags & 0x200000) {
+            if (object->state_flags & MAP_OBJECT_SCRIPTED_ANIM) {
                 if ((object->state_flags & MAP_OBJECT_FLAG_400000) || MODEL_CHANNEL(object->model)->frame != 0) {
                     MapObject_StepAnim(object);
                 }
@@ -73,13 +73,13 @@ void MapObject_UpdateBreaking(MapObject *object) {
 
     if (MODEL_CHANNEL(object->model) != NULL && MODEL_CHANNEL(object->model)->frame != 0) {
         if (object->definition->definition_flags & MAP_OBJECT_DEF_FADE_ON_BREAK) {
-            total = ModelMotion_GetLastFrame((char *)object->model);
+            total = ModelMotion_GetLastFrame(object->model);
             if (total != 0) {
                 alpha = ((total - MODEL_CHANNEL(object->model)->frame) << 7) / total;
             } else {
                 alpha = total; // match: 0, through the variable
             }
-            if (object->model->model_flags & 0x4000) {
+            if (object->model->model_flags & MODEL_FLAG_ALPHA_DIRECT) {
                 object->model->alpha = alpha;
             } else {
                 object->model->fade_enabled = 1;

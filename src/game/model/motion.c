@@ -61,7 +61,7 @@ void Motion_SetPartSlots(EntityModel *model, s32 first, s32 last, s32 value) {
 /* As Motion_SeekKeys, for the parts in motion slot `slot` only. */
 int Motion_SeekSlotKeys(ModelInstance *model, int slot, int table_index, int value) {
     // match: indexing level_tables as an array swaps the addu operands
-    ModelPartLevels **table = (ModelPartLevels **)((char *)model->level_tables + (table_index << 2));
+    ModelPartLevels **table = &model->level_tables[table_index];
     ModelPartLevels *levels;
     ModelPart *part;
     u16 *threshold;
@@ -106,8 +106,7 @@ s32 Motion_StepSlot(Entity *entity, EntityAiMotionSlotBits *slot_bits, s32 type,
 
     params = entity->params;
     table = params->motion_ids[slot->index];
-    // match: indexing level_tables as an array swaps the addu operands
-    motion = *(MotionData **)((char *)ENTITY_MODEL(entity)->level_tables + (table << 2));
+    motion = (MotionData *)MODEL_CHANNEL(ENTITY_MODEL(entity))->tables[table];
     motion = (MotionData *)((ModelPartLevels *)motion - 1);
     if (entity->ailment_3_frames != 0 && (entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY)) == 0) {
         step = (f32)params->motion_speeds[entity->animation_index] * 0.75f;
@@ -198,10 +197,9 @@ static s32 Motion_PoseSlot(ModelInstance *model, s32 type, s32 table, s32 frame_
     s32 frame;
     s32 target;
 
-    // match: indexing level_tables as an array swaps the addu operands
-    motion = *(MotionData **)((char *)model->level_tables + (table << 2));
+    motion = (MotionData *)MODEL_CHANNEL(model)->tables[table];
     motion = (MotionData *)((ModelPartLevels *)motion - 1);
-    record = *(ModelPartLevels **)((char *)model->level_tables + (table << 2));
+    record = model->level_tables[table];
     vectors = motion->vectors;
     if (backwards != 0) {
         frame_fixed -= step;
@@ -331,10 +329,9 @@ s32 Motion_BlendSlotToPose(ModelInstance *model, s32 type, s32 table, s16 frame,
     f32 tilt;
     f32 spin;
 
-    // match: indexing level_tables as an array swaps the addu operands
-    motion = *(MotionData **)((char *)model->level_tables + (table << 2));
+    motion = (MotionData *)MODEL_CHANNEL(model)->tables[table];
     motion = (MotionData *)((ModelPartLevels *)motion - 1);
-    record = *(ModelPartLevels **)((char *)model->level_tables + (table << 2));
+    record = model->level_tables[table];
     vectors = motion->vectors;
     for (i = 0; i < model->part_count; i++, record++) {
         part = &model->parts[i];
@@ -455,12 +452,12 @@ s32 Motion_MixSlotFirstKeys(ModelInstance *model, s32 type, s32 table_a, s32 tab
     f32 angle;
     f32 angle_alt;
 
-    motion_a = *(MotionData **)((char *)model->level_tables + (table_a << 2));
+    motion_a = (MotionData *)MODEL_CHANNEL(model)->tables[table_a];
     motion_a = (MotionData *)((ModelPartLevels *)motion_a - 1);
-    motion_b = *(MotionData **)((char *)model->level_tables + (table_b << 2));
+    motion_b = (MotionData *)MODEL_CHANNEL(model)->tables[table_b];
     motion_b = (MotionData *)((ModelPartLevels *)motion_b - 1);
-    record_a = *(ModelPartLevels **)((char *)model->level_tables + (table_a << 2));
-    record_b = *(ModelPartLevels **)((char *)model->level_tables + (table_b << 2));
+    record_a = model->level_tables[table_a];
+    record_b = model->level_tables[table_b];
     vectors_a = motion_a->vectors;
     vectors_b = motion_b->vectors;
     part = model->parts;
@@ -565,8 +562,7 @@ int Motion_SeekKeys(ModelInstance *model, int table_index, int value) {
     int i, passed;
     u16 *threshold;
 
-    /* match: indexing level_tables as an array swaps the addu operands */
-    levels = *(ModelPartLevels **)((char *)model->level_tables + (table_index << 2));
+    levels = MODEL_CHANNEL(model)->tables[table_index];
     for (i = 0; i < model->part_count; i++, levels++) {
         part = &model->parts[i];
         if (levels->thresholds == NULL || levels->count == 0) {
@@ -1136,12 +1132,12 @@ s32 Motion_MixFirstKeys(ModelInstance *model, s32 table_a, s32 table_b, f32 rati
     f32 angle;
     f32 angle_alt;
 
-    motion_a = *(MotionData **)((char *)model->level_tables + (table_a << 2));
+    motion_a = (MotionData *)MODEL_CHANNEL(model)->tables[table_a];
     motion_a = (MotionData *)((ModelPartLevels *)motion_a - 1);
-    motion_b = *(MotionData **)((char *)model->level_tables + (table_b << 2));
+    motion_b = (MotionData *)MODEL_CHANNEL(model)->tables[table_b];
     motion_b = (MotionData *)((ModelPartLevels *)motion_b - 1);
-    record_a = *(ModelPartLevels **)((char *)model->level_tables + (table_a << 2));
-    record_b = *(ModelPartLevels **)((char *)model->level_tables + (table_b << 2));
+    record_a = model->level_tables[table_a];
+    record_b = model->level_tables[table_b];
     vectors_a = motion_a->vectors;
     vectors_b = motion_b->vectors;
     part = model->parts;

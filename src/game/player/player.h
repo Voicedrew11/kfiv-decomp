@@ -263,14 +263,15 @@ typedef struct {
 
 /* PlayerState.status_bits as the bit-fields the game sets */
 typedef struct {
-    u64 pad0 : 33;
+    u64 pad0 : 32;
+    u64 view_levelling : 1;         /* the view is levelling out (Player_UpdateLook) */
     u64 step_up_pending : 1;        /* a step up too high to take at once is being taken (PlayerState.step_remainder) */
-    u64 bit34 : 1;                  /* set: Ladder_Start does nothing */
+    u64 airborne : 1;               /* off the ground: set each frame, cleared by a floor found; Ladder_Start does nothing */
     u64 running : 1;                /* the run button is held while moving (Player_Update) */
     u64 on_ladder : 1;              /* on an object set up by Ladder_Start (a ladder, it seems) */
-    u64 pad37 : 1;
+    u64 landing_dip : 1;            /* the view dips after a landing (landing_dip_*) */
     u64 in_water : 1;               /* a water surface is under the player: the stride is slower (Player_Update) */
-    u64 bit39 : 1;
+    u64 underwater : 1;             /* the water surface is 220 or more above the feet: the breath bar runs */
     u64 pad40 : 24;
 } PlayerStatusBits;
 
@@ -281,18 +282,30 @@ typedef struct {
     s32 step_sounded;               /* 0x1C8 set once the footstep of the current stride (PlayerState.stride_phase) has sounded */
     u64 pad32 : 1;                  /* 0x1CC the bits of PlayerStatusBits */
     u64 step_up_pending : 1;
-    u64 bit34 : 1;
+    u64 airborne : 1;
     u64 running : 1;
     u64 on_ladder : 1;
-    u64 pad37 : 1;
+    u64 landing_dip : 1;
     u64 in_water : 1;
-    u64 bit39 : 1;
+    u64 underwater : 1;
     u64 pad40 : 24;
 } PlayerStatusView;
 
 #define PLAYER_STATUS(player) ((PlayerStatusView *)(player))
 
 #define PLAYER_STATUS_BITS(player) ((PlayerStatusBits *)&(player)->status_bits)
+
+/* status bit `bit` of a PlayerState, read as retail does (the whole doubleword, shifted) */
+#define PLAYER_STATUS_BIT(player, bit) ((s32)((player)->status_bits >> (bit)) & 1)
+#define PLAYER_IS_VIEW_LEVELLING(player)  PLAYER_STATUS_BIT(player, 32)
+#define PLAYER_IS_STEPPING_UP(player)     PLAYER_STATUS_BIT(player, 33)
+#define PLAYER_IS_AIRBORNE(player)        PLAYER_STATUS_BIT(player, 34)
+#define PLAYER_IS_RUNNING(player)         PLAYER_STATUS_BIT(player, 35)
+#define PLAYER_IS_ON_LADDER(player)       PLAYER_STATUS_BIT(player, 36)
+#define PLAYER_IS_LANDING_DIP(player)     PLAYER_STATUS_BIT(player, 37)
+#define PLAYER_IS_IN_WATER(player)        PLAYER_STATUS_BIT(player, 38)
+#define PLAYER_STATUS_UNDERWATER_BIT 39  /* also tested in player_status_bits, the frame before */
+#define PLAYER_IS_UNDERWATER(player)      PLAYER_STATUS_BIT(player, PLAYER_STATUS_UNDERWATER_BIT)
 
 /* player_level_steps[100]: the experience a level needs (PlayerState.experience against level) and what reaching it adds */
 typedef struct {
@@ -321,7 +334,7 @@ typedef struct {
     u8 exp;                         /* 0x13 */
     u8 level_index;                 /* 0x14 0 to 2: the row of attack_by_level the item uses, raised by use_count */
     char pad15[0x01];
-    s16 use_count;                  /* 0x16 uses of the item (Player_CountWeaponUse); ini "item_": the third number times 20 */
+    u16 use_count;                  /* 0x16 uses of the item (Player_CountWeaponUse); ini "item_": the third number times 20 */
     u8 in_smith_rings;              /* 0x18 nonzero: Smith_BuildItemRings lists the item among those whose time last_upgraded counts */
     union {
         char bytes[8];              /* 0x19 stored through this view (Smith_UpdateUpgradeConfirm, Smith_UpdateListWithConfirm) */
@@ -396,7 +409,7 @@ typedef struct {
 /* item_name_defs[ITEM_COUNT]: param/item_nam.prm, 0x40 bytes per item, starting with its name. worn_name_defs is
    the run of them from ITEM_WORN_FIRST on (the items Attack_WearWornItem reads). */
 typedef struct {
-    char pad00[0x30];
+    u16 name[0x18];                 /* 0x00 the name, 16-bit menu text (MenuText_DrawLine reads it) */
     u32 file_number : 16;           /* 0x30 the number in its model file's name */
     u32 unk30_16 : 2;
     u32 state : 2;                  /* 0x32 bits 2-3: 0 is set to 1 when the table is reset */
@@ -414,6 +427,7 @@ typedef struct {
 extern LevelDef item_level_defs[380];
 
 #define ITEM_UPGRADE_MATERIAL_MASK 3 /* LevelDef.upgrade_material_kind low two bits: 1 bone, 2 scale, 3 claw */
+#define ITEM_DEF_STATE_LOCKED 2 /* LevelDef.state bit 1: the item is locked; the item lists leave it out */
 
 /* ini_keys[]: the keys of ini/NNNN.ini ("hp=", "equip_weapon=", "item_", ...) and what reads each; a NULL handler ends it */
 typedef struct {
@@ -499,7 +513,7 @@ void Player_FlashDamage(void);
 void Player_BounceWeapon(void);
 void Player_SumWornBonuses(void);
 void Player_KnockBack(Vector4 *target, f32 speed);
-void Player_KnockBackFromHit(void *source, int damage);
+void Player_KnockBackFromHit(Unk1B1470Request *source, int damage);
 void Player_TiltViewFromHit(int damage);
 void Player_StopFootstepSound(void);
 void Player_Kill(void);

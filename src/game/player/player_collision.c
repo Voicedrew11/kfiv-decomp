@@ -10,8 +10,13 @@
 
 #define PLAYER_STEP_HEIGHT 16.666666f
 
-/* map_object.touch_status_flag: 1 starts the poison (timed_flags[0]) */
-#define TOUCH_STATUS_POISON 1
+/* map_object.touch_status_flag: which of PlayerState.timed_flags[0] to [5] touching the object starts */
+#define TOUCH_STATUS_POISON     1
+#define TOUCH_STATUS_PARALYSIS  2 /* no moves, a yellow tint */
+#define TOUCH_STATUS_AILMENT_2  3 /* timed_flags[2]: no effect found yet */
+#define TOUCH_STATUS_WEAKNESS   4 /* power and magic halved, a purple tint */
+#define TOUCH_STATUS_SLOW       5 /* half speed, a white tint */
+#define TOUCH_STATUS_MAGIC_SEAL 6 /* the magic gauge stays empty */
 
 /* moves the player out of the body just hit: to `push` from it, but by no more than 50 a frame */
 #define PUSH_PLAYER_OUT()                                                                          \
@@ -56,7 +61,7 @@ int Player_CollideWithMap(void) {
     u32 surface;
     f32 drop;
 
-    step_bit = (s32)(player_state.status_bits >> 33) & 1;
+    step_bit = PLAYER_IS_STEPPING_UP(&player_state);
     stepping = step_bit; // match: tested as the bit, kept as a byte
     if (step_bit) {
         if (player_state.step_remainder <= player_state.step_per_frame) {
@@ -110,7 +115,7 @@ int Player_CollideWithMap(void) {
                         points_left = strip->point_count - 2;
                         do {
                             Collision_DropOnTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position,
-                                          &player_state.position);
+                                          &player_state.position.x);
                             if (COLLISION_RESULT->hit != 0 && player_state.position.y - 230.0f <= COLLISION_RESULT->point[1]
                                 && COLLISION_RESULT->point[1] <= player_state.position.y) {
                                 surface = Collision_GetSurfaceEffect(strip_point->material_first, strip_point->material_second, strip_point->material_third);
@@ -132,8 +137,8 @@ int Player_CollideWithMap(void) {
                     strip_point = strip->points;
                     points_left = strip->point_count - 2;
                     do {
-                        Collision_CapsuleTriangle((f32 *)strip_point[0].position, (f32 *)strip_point[1].position,
-                                      (f32 *)strip_point[2].position, (f32 *)&COLLISION_SCRATCH->wall_point, 100.0f, 230.0f);
+                        Collision_CapsuleTriangle(strip_point[0].position, strip_point[1].position,
+                                      strip_point[2].position, &COLLISION_SCRATCH->wall_point.x, 100.0f, 230.0f);
                         if (COLLISION_RESULT->hit != 0) {
                             COLLISION_SCRATCH->push.x = COLLISION_SCRATCH->wall_point.x - COLLISION_RESULT->point[0];
                             COLLISION_SCRATCH->push.y = 0.0f;
@@ -155,10 +160,10 @@ int Player_CollideWithMap(void) {
                         points_left = strip->point_count - 2;
                         do {
                             Collision_DropOnTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position,
-                                          &player_state.position);
+                                          &player_state.position.x);
                             if (COLLISION_RESULT->hit != 0
                                 && COLLISION_RESULT->point[1] <= player_state.position.y + player_state.fall_speed
-                                && (!((s32)(player_state.status_bits >> 38) & 1) || COLLISION_RESULT->point[1] < player_state.water_surface_y)) {
+                                && (!(PLAYER_IS_IN_WATER(&player_state)) || COLLISION_RESULT->point[1] < player_state.water_surface_y)) {
                                 player_state.water_surface_y = COLLISION_RESULT->point[1];
                                 player_state.status_bits |= 0x8000L << 23;
                                 if (COLLISION_RESULT->point[1] <= player_state.position.y - 220.0f) {
@@ -186,7 +191,7 @@ int Player_CollideWithMap(void) {
                     points_left = strip->point_count - 2;
                     do {
                         Collision_DropOnTriangleWithin(strip_point[0].position, strip_point[1].position, strip_point[2].position,
-                                      &COLLISION_SCRATCH->point, reach);
+                                      &COLLISION_SCRATCH->point.x, reach);
                         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < floor_height) {
                             found = TRUE;
                             floor_height = COLLISION_RESULT->point[1];
@@ -222,10 +227,10 @@ int Player_CollideWithMap(void) {
             player_state.position.y += player_state.fall_speed * (f32)(60 - player_state.death_timer) / 60.0f;
         }
     }
-    if (((s32)(player_state.status_bits >> 33) & 1) || found) {
+    if ((PLAYER_IS_STEPPING_UP(&player_state)) || found) {
         player_state.status_bits &= ~(0x8000L << 19);
     }
-    if (!((s32)(player_previous.status_bits >> 38) & 1) && ((s32)(player_state.status_bits >> 38) & 1)) {
+    if (!(PLAYER_IS_IN_WATER(&player_previous)) && (PLAYER_IS_IN_WATER(&player_state))) {
         player_state.fall_speed = 0.0f;
         player_state.status_bits &= ~(0x8000L << 19);
     }
@@ -287,8 +292,8 @@ void Player_PushOutOfWalls(void) {
                     strip_point = strip->points;
                     points_left = strip->point_count - 2;
                     do {
-                        Collision_CapsuleTriangle((f32 *)strip_point[0].position, (f32 *)strip_point[1].position,
-                                      (f32 *)strip_point[2].position, (f32 *)&COLLISION_SCRATCH->point, 100.0f, 230.0f);
+                        Collision_CapsuleTriangle(strip_point[0].position, strip_point[1].position,
+                                      strip_point[2].position, &COLLISION_SCRATCH->point.x, 100.0f, 230.0f);
                         if (COLLISION_RESULT->hit != 0) {
                             COLLISION_SCRATCH->push.x = COLLISION_SCRATCH->point.x - COLLISION_RESULT->point[0];
                             COLLISION_SCRATCH->push.y = 0.0f;
@@ -353,7 +358,7 @@ void Player_FindFloorMaterial(void) {
                     points_left = strip->point_count - 2;
                     do {
                         Collision_DropOnTriangleWithin(strip_point[0].position, strip_point[1].position, strip_point[2].position,
-                                      &COLLISION_SCRATCH->point, 10.0f);
+                                      &COLLISION_SCRATCH->point.x, 10.0f);
                         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest) {
                             lowest = COLLISION_RESULT->point[1];
                             player_state.floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
@@ -393,7 +398,7 @@ void Player_CollideWithEntities(int climb) {
         Vector_Copy(old_position, &player_state);
         player_state.position.y += 1.0f;
         reach = player_state.fall_speed + 75.0f;
-        if (!((s32)(player_state.status_bits >> 33) & 1)) {
+        if (!(PLAYER_IS_STEPPING_UP(&player_state))) {
             for (entity = active_entities_head; entity != NULL; entity = entity->next) {
                 if (!(ENTITY_FLAG_BITS(entity)->live)) {
                     continue;
@@ -488,7 +493,7 @@ void Player_CollideWithEntities(int climb) {
                 if (entity->spawn_info->type_id == 0x9B && i != 3) {
                     continue;
                 }
-                point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->flags_or_model_point.point);
+                point = ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->flags_or_model_point.point);
                 Vector_Copy(position, point);
                 if (!(body->flags_or_model_point.flags & ENTITY_BODY_ROUND)) {
                     radius = body->radius * ENTITY_MODEL(entity)->scale_x;
@@ -537,8 +542,8 @@ void Player_CollideWithMapObjects(s32 climb) {
             player_state.position.y += 30.0f;
             reach += 30.0f;
         }
-        if (!((s32)(player_state.status_bits >> 33) & 1)) {
-            hit = Collision_StandOnObjects((f32 *)&player_state, 1, reach, 100.0f);
+        if (!(PLAYER_IS_STEPPING_UP(&player_state))) {
+            hit = Collision_StandOnObjects(&player_state.position.x, 1, reach, 100.0f);
         }
         if (hit) {
             step = PLAYER_STEP_HEIGHT;
@@ -555,8 +560,8 @@ void Player_CollideWithMapObjects(s32 climb) {
             Vector_Copy(&player_state, old_position);
         }
     }
-    if (!((s32)(player_state.status_bits >> 33) & 1)) {
-        Collision_PushOutOfObjects((f32 *)&player_state, 0, 230.0f, 100.0f);
+    if (!(PLAYER_IS_STEPPING_UP(&player_state))) {
+        Collision_PushOutOfObjects(&player_state.position.x, 0, 230.0f, 100.0f);
     }
     if (player_state.touched_map_object != 0 && player_state.touched_map_object != player_previous.touched_map_object) {
         switch ((s16)player_state.touched_map_object->source->touch_status_flag) {
@@ -564,23 +569,23 @@ void Player_CollideWithMapObjects(s32 climb) {
             player_state.timed_flags[0] = 1800;
             player_state.ailment0_start_frame = frame_counter;
             break;
-        case 2:
+        case TOUCH_STATUS_PARALYSIS:
             player_state.timed_flags[1] = 150;
             player_state.ailment1_start_frame = frame_counter;
             break;
-        case 3:
+        case TOUCH_STATUS_AILMENT_2:
             player_state.timed_flags[2] = 3600;
             player_state.ailment2_start_frame = frame_counter;
             break;
-        case 4:
+        case TOUCH_STATUS_WEAKNESS:
             player_state.timed_flags[3] = 5400;
             player_state.ailment3_start_frame = frame_counter;
             break;
-        case 5:
+        case TOUCH_STATUS_SLOW:
             player_state.timed_flags[4] = 1800;
             player_state.ailment4_start_frame = frame_counter;
             break;
-        case 6:
+        case TOUCH_STATUS_MAGIC_SEAL:
             player_state.timed_flags[5] = 18000;
             player_state.ailment5_start_frame = frame_counter;
             break;

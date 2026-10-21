@@ -42,7 +42,7 @@ s32 EntityCollision_LineHits(Entity *target, f32 *from, f32 *destination);
 f32 EntityCollision_DistanceToPropFloor(void *prop_arg, void *position_arg);
 
 /* The strip list (1-4) of the nearest triangle of the prop a ray hits, 0: none. */
-s32 EntityCollision_RayProp(void *prop_arg, f32 *origin, f32 *direction, f32 length, s32 out_point_arg);
+s32 EntityCollision_RayProp(void *prop_arg, f32 *origin, f32 *direction, f32 length, void *out_point);
 
 /* The strip list (1-4) a ray hits among the props of the loaded maps, 0: none. */
 s32 EntityCollision_RayProps(f32 *origin, f32 *direction, void *out_point, f32 length);

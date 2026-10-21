@@ -42,15 +42,15 @@ static void FireGenie_SignalRespawned(Entity *entity);
 /* Set-up of a type 66 entity: clears its work area and installs the type's handlers. */
 void FireGenie_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
-    // match: the three fills name their target inside the loop; unkBC and unkC0 above are
+    // match: the three fills name their target inside the loop; choice_weights and attack_weights above are
     // otherwise unused but retail computes them up front and copies them before each loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *work_area = (u8 *)&entity->ai_state;
+        u8 *work_area = ENTITY_WORK_BYTES(entity);
 
         work_area[i] = 0;
     }
@@ -350,7 +350,7 @@ static void FireGenie_Death(Entity *entity) {
         Motion_Start(entity, 0x10, 0, 5, 1);
         ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         ENTITY_FLAGS(entity) |= ENTITY_FLAG_ANIMATES;
-        ENTITY_FLAGS(entity) |= 0x100000;
+        ENTITY_FLAGS(entity) |= ENTITY_FLAG_100000;
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_DYING_1;
         ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         if (ai_state->action_counter != 0) {

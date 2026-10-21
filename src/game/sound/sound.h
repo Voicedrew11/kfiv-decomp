@@ -10,6 +10,15 @@
 /* SoundDriver_Remote command bits: the reply is taken into a buffer; a buffer is sent with the command */
 #define SOUND_COMMAND_REPLY        0x80000
 #define SOUND_COMMAND_SENDS_BUFFER 0x40000
+/* stream commands: the stream number (0 or 1) is added to the base */
+#define SOUND_STREAM_OPEN_CMD      0x3000   /* opens the file named in the RPC buffer as the stream */
+#define SOUND_STREAM_FILE_NAME_CMD 0x30A0   /* sends the stream the name of the file to play */
+/* SoundEffectFields.mode bit: the reverb clears its work area */
+#define SOUND_REVERB_MODE_CLEAR_WORK 0x100
+/* the fields of a packed envelope word (SoundDriver_SetAdsr): SoundVoiceStatus bits16_19, bits13_15 and bit5 */
+#define SOUND_ADSR_BITS16_19 0xF0000
+#define SOUND_ADSR_BITS13_15 0xE000
+#define SOUND_ADSR_BIT5      0x20
 
 /* a MIDI data byte: 7 bits, the low half of a 14-bit bend or value */
 #define MIDI_DATA_MASK             0x7F
@@ -125,7 +134,8 @@ typedef struct {
     int dma_src;                    /* 0x4C4 */
     int iop_buffer;                 /* 0x4C8 the IOP buffer the streams are read into */
     int dma_dest;                   /* 0x4CC */
-    char volume_and_stereo[0x06];   /* 0x4D0 six bytes: a volume int and a stereo u16 */
+    s32 volume;                     /* 0x4D0 the volume the driver was last given */
+    u16 stereo;                     /* 0x4D4 1 when stereo output is on (0 mutes the voices) */
     u16 active;                     /* 0x4D6 */
     char pad4D8[0x08];              /* the block in .bss is 0x4E0 bytes */
 } SoundState;
@@ -366,7 +376,7 @@ extern int bgm_sequence_buffer[];
 extern SoundBankSpec map_bank_files;
 extern f32 sound_cos_polynomial[4];
 extern u8 voice_ranges[][2];
-extern void *tracked_sound_players[];
+extern int (*tracked_sound_players[])();
 extern SoundChannel sound_channels[];
 
 /* data still in asm */

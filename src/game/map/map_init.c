@@ -72,7 +72,7 @@ void Map_ResetGameState(void) {
     map_draw_state.screen_fill_green = 0;
     map_draw_state.screen_fill_blue = 0;
     map_draw_state.screen_fill_alpha = 0;
-    map_draw_state.screen_fill_blend = 0x44;
+    map_draw_state.screen_fill_blend = GS_ALPHA_BLEND_NORMAL;
     memset(&camera_state, 0, sizeof(CameraState));
     camera_state.screen_scale = 512.0f;
 }

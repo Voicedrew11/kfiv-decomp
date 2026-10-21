@@ -41,7 +41,7 @@ typedef struct {
     u16 sub_effect_id;              /* 0xF0 effect ids passed to Effect_SpawnFromEffect */
     u16 child_effect_id;            /* 0xF2 effect spawned each frame or on hit; a link count for chains */
     u8 draw_hook_index;             /* 0xF4 with the placement bits, picks the model's draw routine from effect_draw_hooks */
-    u8 unkF5;                       /* 0xF5 bit 0: drawn with the map's own light block; bit 1: not drawn in the second pass */
+    u8 draw_flags;                  /* 0xF5 bit 0: drawn with the map's own light block; bit 1: not drawn in the second pass */
     u8 texture_anim_mode;           /* 0xF6 how the texture frames run: 0 loop, 1 once, 2 once and hold the last */
     u8 texture_frame_count;         /* 0xF7 how many texture frames, 0: not animated */
     u16 texture_frame_stride;       /* 0xF8 record ids between two texture frames */
@@ -79,6 +79,10 @@ typedef struct {
 #define EFFECT_DEF_FLAG_KEEP_PITCH  0x40000
 /* the start rotation's z (roll) is dropped; the definition's own roll base and spread are still added */
 #define EFFECT_DEF_FLAG_RESET_ROLL  0x800000
+/* the effect's model faces the camera; with a one-sided placement it turns about z alone */
+#define EFFECT_DEF_FLAG_FACE_CAMERA 0x20000
+/* a flying effect moves along its heading at a speed that grows by scale_per_frame (EffectFly_Update) */
+#define EFFECT_DEF_FLAG_FLY_ALONG_HEADING 0x80000
 
 /* EffectActor+0x10, which the update functions keep a pointer to. Each kind of
    effect uses the bytes after the velocity its own way; the *Motion types below
@@ -728,7 +732,7 @@ typedef struct {
 
 /* EffectMotion as EffectOwnerFloor_Start uses it: a flag byte at the very start */
 typedef struct {
-    u8 no_floor;                    /* 0x00 set when EffectOwnerFloor_Start finds no floor */
+    s8 no_floor;                    /* 0x00 set when EffectOwnerFloor_Start finds no floor */
     char pad01[0x2F];
 } GroundedMotion;
 
@@ -1042,7 +1046,7 @@ typedef struct {
 
 /* fx_table[]: a table entry of 0x110 bytes, indexed by effect id (Attack_LaunchMagicEffect) */
 typedef struct {
-    char pad00[0x34];
+    u16 name[0x1A];                 /* 0x00 the spell's name, 16-bit menu text (MenuText_DrawLine) */
     FxTableHitCheck hit_checks[3];  /* 0x34 */
     FxTableStats stats;             /* 0xAC what casting the magic does to the player (Player_CastMagic) */
     u16 mp_cost;                    /* 0xFC taken from PlayerState.mp_now to cast it (Player_CastMagic) */

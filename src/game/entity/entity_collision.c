@@ -113,9 +113,9 @@ void EntityCollision_PushApart(Entity *entity) {
     if (!(type_id >= 0x14 && type_id <= 0x16) && (u16)type_id != 0x2D && (u16)type_id != 0x63 && (u16)type_id != 0x97
         && (ENTITY_FLAG_BITS(entity)->live) && entity->hit_points != 0 && !(entity->flags & (ENTITY_FLAG_NOT_TARGETABLE | ENTITY_FLAG_NO_PLAYER_COLLISION))) {
         if (ENTITY_PARAMS_IS_SPHERE(entity->params)) {
-            EntityCollision_SphereCylinder(entity->model->position, (f32 *)&player_state.position, entity->radius, 100.0f, 230.0f);
+            EntityCollision_SphereCylinder(entity->model->position, &player_state.position.x, entity->radius, 100.0f, 230.0f);
         } else {
-            EntityCollision_CylinderCylinder(entity->model->position, (f32 *)&player_state.position, entity->radius, entity->height, 100.0f, 230.0f);
+            EntityCollision_CylinderCylinder(entity->model->position, &player_state.position.x, entity->radius, entity->height, 100.0f, 230.0f);
         }
         if (COLLISION_RESULT->hit != 0) {
             entity->model->position[0] = COLLISION_RESULT->point[0];
@@ -1501,7 +1501,7 @@ void EntityCollision_WalkAgainstObjects(Entity *entity) {
                 continue;
             }
             reach = entity->collision_radius + object->reach_radius;
-            if (reach < EntityMath_DistanceXZ(position, (f32 *)&object->model->position)) {
+            if (reach < EntityMath_DistanceXZ(position, &object->model->position.x)) {
                 continue;
             }
             COLLISION_RESULT->hit = 0;
@@ -1522,13 +1522,13 @@ void EntityCollision_WalkAgainstObjects(Entity *entity) {
                 break;
             }
             hit = COLLISION_RESULT->hit;
-            if (hit & 1) {
+            if (hit & COLLISION_HIT_WALL) {
                 Vector_Add(normal_sum, normal_sum, COLLISION_RESULT->normal);
                 ENTITY_FLAG_BITS(entity)->object_push = TRUE;
                 ENTITY_FLAG_BITS(entity)->wall_push = TRUE;
                 hit = COLLISION_RESULT->hit; // match: read again after the call, into the same register
             }
-            if (hit & 2) {
+            if (hit & COLLISION_HIT_ON_TOP) {
                 ENTITY_FLAG_BITS(entity)->object_push = TRUE;
                 ENTITY_FLAG_BITS(entity)->on_top = TRUE;
             }
@@ -1574,7 +1574,7 @@ void EntityCollision_SphereAgainstObjects(Entity *entity) {
                 continue;
             }
             reach = entity->collision_radius + object->reach_radius;
-            if (reach < EntityMath_DistanceXZ(position, (f32 *)&object->model->position)) {
+            if (reach < EntityMath_DistanceXZ(position, &object->model->position.x)) {
                 continue;
             }
             COLLISION_RESULT->hit = 0;
@@ -1633,23 +1633,23 @@ static void EntityCollision_PushOutOfBox(CollisionOwner *owner, f32 *centre, f32
     f32 height;
 
     COLLISION_RESULT->hit = 0;
-    corner_a = (f32 *)owner->model->get_point(owner->model, 0);
+    corner_a = owner->model->get_point(owner->model, 0);
     if (corner_a == NULL) {
         return;
     }
-    corner_b = (f32 *)owner->model->get_point(owner->model, 1);
+    corner_b = owner->model->get_point(owner->model, 1);
     if (corner_b == NULL) {
         return;
     }
-    corner_c = (f32 *)owner->model->get_point(owner->model, 2);
+    corner_c = owner->model->get_point(owner->model, 2);
     if (corner_c == NULL) {
         return;
     }
-    corner_d = (f32 *)owner->model->get_point(owner->model, 3);
+    corner_d = owner->model->get_point(owner->model, 3);
     if (corner_d == NULL) {
         return;
     }
-    top = (f32 *)owner->model->get_point(owner->model, 0x1F);
+    top = owner->model->get_point(owner->model, 0x1F);
     if (top != NULL) {
         height = corner_a[1] - top[1];
         Collision_CylinderEdge(corner_a, corner_b, height, centre, radius, push);
@@ -1713,23 +1713,23 @@ static void EntityCollision_PushOutOfBoxPair(CollisionOwner *owner, f32 *centre,
 
     COLLISION_RESULT->hit = 0;
     if (((EntityModel *)owner->model)->level_tables->motion_index == BOX_PAIR_ONE_RING_MOTION && ((EntityModel *)owner->model)->level_tables->frame < 2) {
-        corner_a = (f32 *)owner->model->get_point(owner->model, 0);
+        corner_a = owner->model->get_point(owner->model, 0);
         if (corner_a == NULL) {
             return;
         }
-        corner_b = (f32 *)owner->model->get_point(owner->model, 5);
+        corner_b = owner->model->get_point(owner->model, 5);
         if (corner_b == NULL) {
             return;
         }
-        corner_c = (f32 *)owner->model->get_point(owner->model, 6);
+        corner_c = owner->model->get_point(owner->model, 6);
         if (corner_c == NULL) {
             return;
         }
-        corner_d = (f32 *)owner->model->get_point(owner->model, 3);
+        corner_d = owner->model->get_point(owner->model, 3);
         if (corner_d == NULL) {
             return;
         }
-        top = (f32 *)owner->model->get_point(owner->model, 0x1F);
+        top = owner->model->get_point(owner->model, 0x1F);
         if (top != NULL) {
             height = corner_a[1] - top[1];
             Collision_CylinderEdge(corner_a, corner_b, height, centre, radius, push);
@@ -1774,39 +1774,39 @@ static void EntityCollision_PushOutOfBoxPair(CollisionOwner *owner, f32 *centre,
             }
         }
     } else {
-        corner_a = (f32 *)owner->model->get_point(owner->model, 0);
+        corner_a = owner->model->get_point(owner->model, 0);
         if (corner_a == NULL) {
             return;
         }
-        corner_b = (f32 *)owner->model->get_point(owner->model, 1);
+        corner_b = owner->model->get_point(owner->model, 1);
         if (corner_b == NULL) {
             return;
         }
-        corner_c = (f32 *)owner->model->get_point(owner->model, 2);
+        corner_c = owner->model->get_point(owner->model, 2);
         if (corner_c == NULL) {
             return;
         }
-        corner_d = (f32 *)owner->model->get_point(owner->model, 3);
+        corner_d = owner->model->get_point(owner->model, 3);
         if (corner_d == NULL) {
             return;
         }
-        corner_e = (f32 *)owner->model->get_point(owner->model, 4);
+        corner_e = owner->model->get_point(owner->model, 4);
         if (corner_e == NULL) {
             return;
         }
-        corner_f = (f32 *)owner->model->get_point(owner->model, 5);
+        corner_f = owner->model->get_point(owner->model, 5);
         if (corner_f == NULL) {
             return;
         }
-        corner_g = (f32 *)owner->model->get_point(owner->model, 6);
+        corner_g = owner->model->get_point(owner->model, 6);
         if (corner_g == NULL) {
             return;
         }
-        corner_h = (f32 *)owner->model->get_point(owner->model, 7);
+        corner_h = owner->model->get_point(owner->model, 7);
         if (corner_h == NULL) {
             return;
         }
-        top = (f32 *)owner->model->get_point(owner->model, 0x1F);
+        top = owner->model->get_point(owner->model, 0x1F);
         if (top != NULL) {
             height = corner_a[1] - top[1];
             if (EntityMath_DistanceXZ(corner_b, corner_e) <= push * 2.5f) {
@@ -1911,11 +1911,11 @@ static void EntityCollision_PushOutOfQuad(CollisionOwner *owner, f32 *centre, f3
     f32 *point_a, *point_b, *point_c, *point_d;
 
     COLLISION_RESULT->hit = 0;
-    if (owner->flags & 0x10000) {
-        point_a = (f32 *)owner->model->get_point(owner->model, 0);
-        point_b = (f32 *)owner->model->get_point(owner->model, 1);
-        point_c = (f32 *)owner->model->get_point(owner->model, 2);
-        point_d = (f32 *)owner->model->get_point(owner->model, 3);
+    if (owner->flags & OBJECT_FLAG_QUAD_HIT) {
+        point_a = owner->model->get_point(owner->model, 0);
+        point_b = owner->model->get_point(owner->model, 1);
+        point_c = owner->model->get_point(owner->model, 2);
+        point_d = owner->model->get_point(owner->model, 3);
         Collision_CapsuleTriangle(point_a, point_b, point_c, centre, push, radius);
         if (COLLISION_RESULT->hit == 0) {
             Collision_CapsuleTriangle(point_a, point_c, point_d, centre, push, radius);
@@ -2018,23 +2018,23 @@ static void EntityCollision_SphereBox(CollisionOwner *owner, void *centre, f32 r
     if (owner->model->get_point(owner->model, 0x1F) == 0) {
         return;
     }
-    corner_a = (f32 *)owner->model->get_point(owner->model, 0);
+    corner_a = owner->model->get_point(owner->model, 0);
     if (corner_a == NULL) {
         return;
     }
-    corner_b = (f32 *)owner->model->get_point(owner->model, 1);
+    corner_b = owner->model->get_point(owner->model, 1);
     if (corner_b == NULL) {
         return;
     }
-    corner_c = (f32 *)owner->model->get_point(owner->model, 2);
+    corner_c = owner->model->get_point(owner->model, 2);
     if (corner_c == NULL) {
         return;
     }
-    corner_d = (f32 *)owner->model->get_point(owner->model, 3);
+    corner_d = owner->model->get_point(owner->model, 3);
     if (corner_d == NULL) {
         return;
     }
-    top = (f32 *)owner->model->get_point(owner->model, 0x1F);
+    top = owner->model->get_point(owner->model, 0x1F);
     if (top != NULL) {
         height = corner_a[1] - top[1];
         Collision_BallEdge(corner_a, corner_b, height, centre, radius);
@@ -2063,23 +2063,23 @@ static void EntityCollision_SphereBoxPair(CollisionOwner *owner, void *centre, f
 
     COLLISION_RESULT->hit = 0;
     if (((EntityModel *)owner->model)->level_tables->motion_index == BOX_PAIR_ONE_RING_MOTION && ((EntityModel *)owner->model)->level_tables->frame < 2) {
-        corner_a = (f32 *)owner->model->get_point(owner->model, 0);
+        corner_a = owner->model->get_point(owner->model, 0);
         if (corner_a == NULL) {
             return;
         }
-        corner_b = (f32 *)owner->model->get_point(owner->model, 0);
+        corner_b = owner->model->get_point(owner->model, 0);
         if (corner_b == NULL) {
             return;
         }
-        corner_c = (f32 *)owner->model->get_point(owner->model, 6);
+        corner_c = owner->model->get_point(owner->model, 6);
         if (corner_c == NULL) {
             return;
         }
-        corner_d = (f32 *)owner->model->get_point(owner->model, 3);
+        corner_d = owner->model->get_point(owner->model, 3);
         if (corner_d == NULL) {
             return;
         }
-        top = (f32 *)owner->model->get_point(owner->model, 0x1F);
+        top = owner->model->get_point(owner->model, 0x1F);
         if (top != NULL) {
             height = corner_a[1] - top[1];
             Collision_BallEdge(corner_a, corner_b, height, centre, radius);
@@ -2097,39 +2097,39 @@ static void EntityCollision_SphereBoxPair(CollisionOwner *owner, void *centre, f
             Collision_BallEdge(corner_d, corner_a, height, centre, radius);
         }
     } else {
-        corner_a = (f32 *)owner->model->get_point(owner->model, 0);
+        corner_a = owner->model->get_point(owner->model, 0);
         if (corner_a == NULL) {
             return;
         }
-        corner_b = (f32 *)owner->model->get_point(owner->model, 1);
+        corner_b = owner->model->get_point(owner->model, 1);
         if (corner_b == NULL) {
             return;
         }
-        corner_c = (f32 *)owner->model->get_point(owner->model, 2);
+        corner_c = owner->model->get_point(owner->model, 2);
         if (corner_c == NULL) {
             return;
         }
-        corner_d = (f32 *)owner->model->get_point(owner->model, 3);
+        corner_d = owner->model->get_point(owner->model, 3);
         if (corner_d == NULL) {
             return;
         }
-        corner_e = (f32 *)owner->model->get_point(owner->model, 4);
+        corner_e = owner->model->get_point(owner->model, 4);
         if (corner_e == NULL) {
             return;
         }
-        corner_f = (f32 *)owner->model->get_point(owner->model, 5);
+        corner_f = owner->model->get_point(owner->model, 5);
         if (corner_f == NULL) {
             return;
         }
-        corner_g = (f32 *)owner->model->get_point(owner->model, 6);
+        corner_g = owner->model->get_point(owner->model, 6);
         if (corner_g == NULL) {
             return;
         }
-        corner_h = (f32 *)owner->model->get_point(owner->model, 7);
+        corner_h = owner->model->get_point(owner->model, 7);
         if (corner_h == NULL) {
             return;
         }
-        top = (f32 *)owner->model->get_point(owner->model, 0x1F);
+        top = owner->model->get_point(owner->model, 0x1F);
         if (top != NULL) {
             height = corner_a[1] - top[1];
             Collision_BallEdge(corner_a, corner_b, height, centre, radius);
@@ -2170,11 +2170,11 @@ static void EntityCollision_SphereQuad(CollisionOwner *owner, void *centre, f32 
     void *point_a, *point_b, *point_c, *point_d;
 
     COLLISION_RESULT->hit = 0;
-    if (owner->flags & 0x10000) {
-        point_a = (void *)owner->model->get_point(owner->model, 0);
-        point_b = (void *)owner->model->get_point(owner->model, 1);
-        point_c = (void *)owner->model->get_point(owner->model, 2);
-        point_d = (void *)owner->model->get_point(owner->model, 3);
+    if (owner->flags & OBJECT_FLAG_QUAD_HIT) {
+        point_a = owner->model->get_point(owner->model, 0);
+        point_b = owner->model->get_point(owner->model, 1);
+        point_c = owner->model->get_point(owner->model, 2);
+        point_d = owner->model->get_point(owner->model, 3);
         EntityCollision_SphereTriangle(point_a, point_b, point_c, centre, radius);
         if (COLLISION_RESULT->hit != 0) {
             return;
@@ -2190,16 +2190,16 @@ static void EntityCollision_SphereQuads(CollisionOwner *owner, void *centre, f32
     s32 i;
 
     COLLISION_RESULT->hit = 0;
-    if (owner->flags & 0x10000) {
-        if (!(owner->flags & 0x20000)) {
+    if (owner->flags & OBJECT_FLAG_QUAD_HIT) {
+        if (!(owner->flags & MAP_OBJECT_ON)) {
             EntityCollision_SphereMesh(owner, centre, radius);
             return;
         }
         for (i = 0; i < 0x20; i += 4) {
-            corner_a = (f32 *)owner->model->get_point(owner->model, i);
-            corner_b = (f32 *)owner->model->get_point(owner->model, i + 1);
-            corner_c = (f32 *)owner->model->get_point(owner->model, i + 2);
-            corner_d = (f32 *)owner->model->get_point(owner->model, i + 3);
+            corner_a = owner->model->get_point(owner->model, i);
+            corner_b = owner->model->get_point(owner->model, i + 1);
+            corner_c = owner->model->get_point(owner->model, i + 2);
+            corner_d = owner->model->get_point(owner->model, i + 3);
             if (corner_a[0] == owner->model->position.x && corner_a[1] == owner->model->position.y
                 && corner_a[2] == owner->model->position.z) {
                 return;
@@ -2377,9 +2377,8 @@ f32 EntityCollision_DistanceToPropFloor(void *prop_arg, void *position_arg) {
 
 /* Finds the nearest triangle of the prop's mesh a ray hits. Returns which of the four strip lists it is in
    (1-4, 0: none), leaves the distance in the result and copies the point to `out_point`. */
-s32 EntityCollision_RayProp(void *prop_arg, f32 *origin, f32 *direction, f32 length, s32 out_point_arg) {
+s32 EntityCollision_RayProp(void *prop_arg, f32 *origin, f32 *direction, f32 length, void *out_point) {
     MapProp *prop = prop_arg;
-    void *out_point = (void *)out_point_arg;
     CollisionMesh *mesh;
     CollisionStrip *strip;
     CollisionStripPoint *point;
@@ -2519,7 +2518,7 @@ s32 EntityCollision_RayProps(f32 *origin, f32 *direction, void *out_point, f32 l
         if (slots[map]->loaded != 0) {
             record = (MapRecord *)slots[map]->records;
             for (i = 0; i < slots[map]->header->record_count; i++, record++) {
-                if (((EntitySpawnFlags *)&record->record_flags)->halves[1] & 0x40000000) {
+                if (((EntitySpawnFlags *)&record->record_flags)->halves[1] & MAP_RECORD_HIDDEN) {
                     continue;
                 }
                 if (record->collision_mesh_index == 0xFFFF) {
@@ -2537,7 +2536,7 @@ s32 EntityCollision_RayProps(f32 *origin, f32 *direction, void *out_point, f32 l
                 if (highest[2] < record->lowest[2] || record->highest[2] < lowest[2]) {
                     continue;
                 }
-                kind = EntityCollision_RayProp(record, origin, direction, length, (s32)point);
+                kind = EntityCollision_RayProp(record, origin, direction, length, point);
                 // match: retail never lowers `nearest`, so every hit passes and the last one wins
                 if (kind != 0 && COLLISION_RESULT->distance < nearest) {
                     result = kind;

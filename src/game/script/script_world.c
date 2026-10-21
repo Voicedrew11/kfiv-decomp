@@ -288,7 +288,7 @@ void ScriptCmd_IsMapObjectOpen(ScriptCallCommand *command) {
 
     object = MapObject_GetById(current_map_slot, command->target_id.value);
     if (object != NULL) {
-        Script_StoreResult(&command->first, MAP_OBJECT_BITS(object)->bit17);
+        Script_StoreResult(&command->first, MAP_OBJECT_BITS(object)->on);
     } else {
         Script_StoreResult(&command->first, 0);
     }
@@ -578,7 +578,7 @@ void ScriptCmd_AddItem(ScriptPairCommand *command) {
     int amount;
     int count;
     int def_offset;
-    u8 *def;
+    ItemCommonDef *def;
     u8 *owned;
 
     amount = command->second.value;
@@ -594,14 +594,14 @@ void ScriptCmd_AddItem(ScriptPairCommand *command) {
             *owned = count;
         }
         if ((int)item < 150) {
-            def_offset = item << 5; // match: the byte offset of the item's ItemCommonDef, kept for both reads
-            def = (u8 *)item_common_defs + def_offset;
-            if (((ItemCommonDef *)def)->flags >> 1 & 1) {
+            def_offset = item << 5; // match: the byte offset of the item's ItemCommonDef, passed on below
+            def = &item_common_defs[item];
+            if (def->flags >> 1 & 1) {
                 if (item_counts.bytes[item] >= 2) {
                     item_counts.bytes[item] = 1;
                 }
             }
-            if (((u8 *)item_common_defs)[def_offset] == 3) {
+            if (item_common_defs[item].type == 3) {
                 // match: three arguments are passed; the definition takes the first alone
                 ((void (*)(u32, u32, int))Menu_AddKeyItem)(item, item, def_offset);
             }
@@ -1089,7 +1089,7 @@ void ScriptCmd_PlaySoundAt(ScriptSoundAtCommand *command) {
 void ScriptCmd_PlaySoundAtPoint(ScriptPointSoundCommand *command) {
     Vector4Arg position = { command->x.value, command->y.value, command->z.value, 1.0f };
 
-    Sound_PlayMapAtRange(command->sound.value, command->mode.value, (f32 *)&position, command->range.value);
+    Sound_PlayMapAtRange(command->sound.value, command->mode.value, &position.x, command->range.value);
     command->active = 0;
 }
 
@@ -1235,7 +1235,7 @@ void ScriptCmd_ExitMainLoop(ScriptValueCommand *command) {
 
     status->bit9 = TRUE;
     status->bit10 = TRUE;
-    status->bit11 = command->value.value != 0;
+    status->play_ending_movie = command->value.value != 0;
     command->active = 0;
 }
 
@@ -1285,8 +1285,13 @@ void ScriptCmd_SetHudShown(ScriptValueCommand *command) {
     command->active = 0;
 }
 
+/* ScriptScreenColorCommand.blend: how the screen fill is meant to blend */
+#define SCREEN_FILL_BLEND_NORMAL   0
+#define SCREEN_FILL_BLEND_ADD      1
+#define SCREEN_FILL_BLEND_SUBTRACT 2
+
 /* Command 197: sets the colour and alpha the screen is covered with (GsDraw_FillScreen), then finishes. The
-   blend mode is meant to come from `blend`, but the switch has no breaks and it always ends as 0x44. */
+   blend mode is meant to come from `blend`, but the switch has no breaks and it always ends as normal blending. */
 void ScriptCmd_SetScreenColor(ScriptScreenColorCommand *command) {
     MapDrawStateOverlays *overlays = MAP_DRAW_OVERLAYS;
 
@@ -1295,14 +1300,14 @@ void ScriptCmd_SetScreenColor(ScriptScreenColorCommand *command) {
     overlays->screen_fill_blue = command->blue.value;
     overlays->screen_fill_alpha = command->alpha.value;
     switch (command->blend.value) {
-    case 0:
-        overlays->screen_fill_blend = 0x44;
-    case 1: // match: no break in any case, so the blend mode always ends as 0x44
-        map_draw_state.screen_fill_blend = 0x48;
-    case 2:
-        map_draw_state.screen_fill_blend = 0x42;
+    case SCREEN_FILL_BLEND_NORMAL:
+        overlays->screen_fill_blend = GS_ALPHA_BLEND_NORMAL;
+    case SCREEN_FILL_BLEND_ADD: // match: no break in any case, so the blend mode always ends as normal
+        map_draw_state.screen_fill_blend = GS_ALPHA_BLEND_ADD;
+    case SCREEN_FILL_BLEND_SUBTRACT:
+        map_draw_state.screen_fill_blend = GS_ALPHA_BLEND_SUBTRACT;
     default:
-        map_draw_state.screen_fill_blend = 0x44;
+        map_draw_state.screen_fill_blend = GS_ALPHA_BLEND_NORMAL;
     }
     command->active = 0;
 }

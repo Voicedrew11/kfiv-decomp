@@ -27,7 +27,6 @@
 #define MALICE_FADE_BACK_IN_STEP_FADE_IN        2   /* fades the model back in, then ends */
 #define MALICE_DORMANT_STEP_FADE_IN             2   /* fades the model in, then sets it to the live state */
 
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void Malice_Think(Entity *entity, s32 run_now);
 static void Malice_ThinkCombat(Entity *entity, s32 run_now);
@@ -464,7 +463,7 @@ static void Malice_FadeOutAndRelocate(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->no_player_collision = 1;
             ai_state->action_counter = 0;
             ai_state->reload_timer = 0;
-            EntityEvent_StartEffectAtPoint((char **)entity, 0x234, 0, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, 0x234, 0, entity->model->rotation);
             entity->action_step++;
         }
         break;
@@ -516,7 +515,7 @@ static void Malice_FadeBackIn(Entity *entity) {
         if ((s16)entity->params->action_frames < ai_state->mode_timer++) {
             Motion_Start(entity, 1, 0, 0, 0);
             entity->model->rotation[1] = EntityMath_HeadingTo(entity->model->position, &player_state.position.x);
-            EntityEvent_StartEffectAtPoint((char **)entity, 0x235, 0, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, 0x235, 0, entity->model->rotation);
             entity->action_step++;
         }
         break;

@@ -26,14 +26,14 @@ static void DarkOne_DeathByMoonlightSword(Entity *entity);
 /* Set-up of a type 75 entity: clears its work area and installs the type's handlers. */
 void DarkOne_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->ai_state;
+        u8 *dest = ENTITY_WORK_BYTES(entity);
 
         dest[i] = 0;
     }
@@ -83,18 +83,18 @@ static void DarkOne_Think(Entity *entity, s32 run_now) {
     if (frame_counter % 3U == 0) {
         switch (dark_one_hits_left) {
         case 3:
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->pitch_limit_deg, 0xFF, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, entity->params->pitch_limit_deg, 0xFF, entity->model->rotation);
             break;
         case 2:
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->yaw_limit_deg, 0xFF, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, entity->params->yaw_limit_deg, 0xFF, entity->model->rotation);
             break;
         default:
-            EntityEvent_StartEffectAtPoint((char **)entity, (s16)entity->params->action_frames, 0xFF, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, (s16)entity->params->action_frames, 0xFF, entity->model->rotation);
             break;
         }
     }
     if (ENTITY_FLAG_BITS(entity)->hit_by_player) {
-        EntityEvent_StartEffectAtPoint((char **)entity, 0x13D, 0xFF, (int)entity->model->rotation);
+        EntityEvent_StartEffectAtPoint(entity, 0x13D, 0xFF, entity->model->rotation);
         ENTITY_FLAG_BITS(entity)->hit_by_player = FALSE;
         if (dark_one_hits_left <= 0) {
             entity->hit_flash_frames = 6;

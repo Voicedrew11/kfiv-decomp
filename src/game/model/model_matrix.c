@@ -20,7 +20,7 @@ static inline f32 ModelMatrix_WrapAngle(f32 angle) {
 
 /* Builds a part's local matrix from its scale, its three angles (applied x, z, y) and its offset. */
 void ModelMatrix_BuildPartLocal(ModelInstance *model, ModelPart *part, ModelPart *dest) {
-    f32 *matrix = (f32 *)dest->matrix;
+    f32 *matrix = dest->matrix;
 
     sceVu0CopyMatrix(matrix, identity_matrix);
     matrix[0] = part->scale[0];
@@ -47,13 +47,13 @@ static void ModelMatrix_BuildFromModel(ModelInstance *model) {
     f32 *matrix;
 
     if (!(model->draw_flags & MODEL_DRAW_FACE_CAMERA)) {
-        matrix = (f32 *)model->model_matrix;
+        matrix = model->model_matrix;
         sceVu0RotMatrixX(matrix, identity_matrix, ModelMatrix_WrapAngle(model->rotation.x));
         sceVu0RotMatrixY(matrix, matrix, ModelMatrix_WrapAngle(model->rotation.y));
         sceVu0RotMatrixZ(matrix, matrix, ModelMatrix_WrapAngle(model->rotation.z));
         sceVu0TransMatrix(matrix, matrix, &model->position.x);
     } else {
-        matrix = (f32 *)model->model_matrix;
+        matrix = model->model_matrix;
         sceVu0RotMatrixZ(matrix, identity_matrix, ModelMatrix_WrapAngle(model->rotation.z));
         Matrix_Multiply(matrix, flagged_model_transform_matrix, matrix);
         sceVu0TransMatrix(matrix, matrix, &model->position.x);
@@ -99,7 +99,7 @@ static void ModelMatrix_BuildFlattenedSheared(ModelInstance *model) {
     f32 *matrix;
 
     sceVu0CopyMatrix(work, identity_matrix);
-    matrix = (f32 *)model->model_matrix;
+    matrix = model->model_matrix;
     work[0] *= model->scale_x;
     work[5] *= model->scale_y;
     work[10] *= model->scale_z;
@@ -119,7 +119,7 @@ static void ModelMatrix_BuildXYZ(ModelInstance *model, Vector4 *position, Vector
     f32 *matrix;
 
     sceVu0CopyMatrix(SCRATCH_MATRIX, identity_matrix);
-    matrix = (f32 *)model->model_matrix;
+    matrix = model->model_matrix;
     scratch[0] *= scale[0];
     scratch[5] *= scale[1];
     scratch[10] *= scale[2];
@@ -136,7 +136,7 @@ static void ModelMatrix_BuildZYX(ModelInstance *model, Vector4 *position, Vector
     f32 *matrix;
 
     sceVu0CopyMatrix(SCRATCH_MATRIX, identity_matrix);
-    matrix = (f32 *)model->model_matrix;
+    matrix = model->model_matrix;
     scratch[0] *= scale[0];
     scratch[5] *= scale[1];
     scratch[10] *= scale[2];
@@ -173,14 +173,14 @@ void ModelMatrix_Build(ModelInstance *model, Vector4 *position, Vector4 *rotatio
             }
             sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, angle);
         }
-        sceVu0TransMatrix((f32 *)model->model_matrix, SCRATCH_MATRIX, &model->position.x);
+        sceVu0TransMatrix(model->model_matrix, SCRATCH_MATRIX, &model->position.x);
     } else if (model->draw_flags & MODEL_DRAW_TURN_Z_ONLY) {
         sceVu0CopyMatrix(SCRATCH_MATRIX, scale_matrices);
         scratch[0] *= scale[0];
         scratch[5] *= scale[1];
         scratch[10] *= scale[2];
         sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->z));
-        sceVu0TransMatrix((f32 *)model->model_matrix, SCRATCH_MATRIX, &position->x);
+        sceVu0TransMatrix(model->model_matrix, SCRATCH_MATRIX, &position->x);
     } else {
         sceVu0CopyMatrix(SCRATCH_MATRIX, scale_matrices);
         scratch[0] *= scale[0];
@@ -189,7 +189,7 @@ void ModelMatrix_Build(ModelInstance *model, Vector4 *position, Vector4 *rotatio
         sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->z));
         sceVu0RotMatrixX(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->x));
         sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->y));
-        sceVu0TransMatrix((f32 *)model->model_matrix, SCRATCH_MATRIX, &position->x);
+        sceVu0TransMatrix(model->model_matrix, SCRATCH_MATRIX, &position->x);
     }
 }
 
@@ -200,7 +200,7 @@ static void ModelMatrix_BuildFlatScaled(ModelInstance *model, f32 *position, Vec
     f32 *matrix;
 
     sceVu0CopyMatrix(SCRATCH_MATRIX, identity_matrix);
-    matrix = (f32 *)model->model_matrix;
+    matrix = model->model_matrix;
     scratch[0] *= scale[0];
     scratch[5] *= scale[1];
     sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->z));
@@ -217,7 +217,7 @@ static void ModelMatrix_BuildMirroredFlat(ModelInstance *model, Vector4 *rotatio
     f32 *matrix;
 
     sceVu0CopyMatrix(SCRATCH_MATRIX, identity_matrix);
-    matrix = (f32 *)model->model_matrix;
+    matrix = model->model_matrix;
     scratch[0] *= scale[0];
     scratch[5] *= scale[1];
     scratch[10] = -1.0f;
@@ -288,16 +288,16 @@ static void Matrix_RotateVector(void *dst, void *src_matrix, void *src_vec) {
 
 /* Makes the two matrices a model is drawn with: the first with its rows divided by the model's scale;
    the second, with MODEL_FLAG_FLAT_COLOUR, emptied but for the model's colour times its alpha. */
-void ModelMatrix_BuildDrawMatrices(ModelInstance *model, s32 normal_src, s32 light_src, void *normal_dest,
+void ModelMatrix_BuildDrawMatrices(ModelInstance *model, void *normal_src, void *light_src, void *normal_dest,
                                    void *light_dest) {
     f32 (*normal)[4] = normal_dest;
     f32 (*light)[4] = light_dest;
 
-    sceVu0CopyMatrix(normal, (void *)normal_src);
+    sceVu0CopyMatrix(normal, normal_src);
     sceVu0DivVectorXYZ(normal[0], normal[0], model->scale_x);
     sceVu0DivVectorXYZ(normal[1], normal[1], model->scale_y);
     sceVu0DivVectorXYZ(normal[2], normal[2], model->scale_z);
-    sceVu0CopyMatrix(light, (void *)light_src);
+    sceVu0CopyMatrix(light, light_src);
     if (model->model_flags & MODEL_FLAG_FLAT_COLOUR) {
         light[0][0] = 0.0f;
         light[0][1] = 0.0f;

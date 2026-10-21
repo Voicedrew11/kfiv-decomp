@@ -25,14 +25,14 @@ static void Slasher_AlertSameKind(Entity *entity);
 /* Set-up of a type 26 entity: clears its work area and installs the type's handlers. */
 void Slasher_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->ai_state;
+        u8 *dest = ENTITY_WORK_BYTES(entity);
 
         dest[i] = 0;
     }
@@ -100,7 +100,7 @@ static void Slasher_OnHit(Entity *entity) {
    EntityParams.type_param_0 at the points Model_GetSkinnedBonePoint gives for 30 and 31. */
 static void Slasher_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
-    char *part;
+    f32 *part;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
@@ -124,9 +124,9 @@ static void Slasher_Think(Entity *entity, s32 run_now) {
             }
         }
     }
-    part = Model_GetSkinnedBonePoint((char *)entity->model, 0x1E);
+    part = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0x1E);
     Effect_StartSpawner(entity->params->type_param_0, part, entity->model->rotation, entity);
-    part = Model_GetSkinnedBonePoint((char *)entity->model, 0x1F);
+    part = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0x1F);
     Effect_StartSpawner(entity->params->type_param_0, part, entity->model->rotation, entity);
 }
 
@@ -171,9 +171,9 @@ static void Slasher_AlertSameKind(Entity *entity) {
     Entity *other_entity = active_entities_head;
     while (other_entity != NULL) {
         if (entity->params == other_entity->params) {
-            if (*(int *)&other_entity->flags & ENTITY_FLAG_ACTIVE_LIST) {
+            if (ENTITY_FLAG_BITS(other_entity)->active_list) {
                 u64 other_flags = other_entity->flags;
-                if (((int)(other_flags >> 1) & 1) && !ENTITY_FLAG_BITS(other_entity)->dying &&
+                if (((int)(other_flags >> ENTITY_FLAG_LIVE_BIT) & 1) && !ENTITY_FLAG_BITS(other_entity)->dying &&
                     other_entity != entity) {
                     EntityAiState *other_unkE0 = &other_entity->ai_state;
                     if (other_unkE0->step_index == 0 &&

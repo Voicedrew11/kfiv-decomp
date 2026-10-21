@@ -26,6 +26,7 @@
 
 /* the sceMcGetInfo-side results Mc_GetCardStatus switches on, negated (0 is success) */
 #define MC_RESULT_SUCCEED                   0
+#define MC_RESULT_NEW_CARD                  1
 #define MC_RESULT_UNFORMATTED               2
 
 /* mc_request.step of the requests that make one library call and wait for its answer */
@@ -191,8 +192,8 @@ static int Mc_StepGetInfo(int port, int slot, int *type, int *free_clusters, int
 }
 
 /* The status for the answer of a card check of the current port and slot: MC_STATUS_OK for a formatted PS2
-   card, MC_STATUS_NO_CARD for a PS1 card or no answer, MC_STATUS_UNFORMATTED, 2 or 4 for a new card (sceMcGetInfo
-   -1 and -2), MC_STATUS_ERROR otherwise. */
+   card, MC_STATUS_NO_CARD for a PS1 card or no answer, MC_STATUS_UNFORMATTED, MC_STATUS_NEW_CARD or
+   MC_STATUS_NEW_UNFORMATTED for a new card (sceMcGetInfo -1 and -2), MC_STATUS_ERROR otherwise. */
 static int Mc_GetInfoStatus(int result) {
     int port = mc_request.port;
     int slot = mc_request.slot;
@@ -210,13 +211,13 @@ static int Mc_GetInfoStatus(int result) {
         if (MC_CARD_INFO->type[port][slot] == 3) {
             return MC_STATUS_NO_CARD;
         }
-        return 2;
+        return MC_STATUS_NEW_CARD;
     }
     if (result == -2) {
         if (MC_CARD_INFO->type[port][slot] == 3) {
             return MC_STATUS_NO_CARD;
         }
-        return 4;
+        return MC_STATUS_NEW_UNFORMATTED;
     }
     if (result <= -11) {
         return MC_STATUS_NO_CARD;
@@ -476,7 +477,7 @@ static int Mc_StepWriteChecked(void) {
         if (quantity > 0) {
             mc_file_size += (quantity + 0x3FE) / 0x3FF;
         }
-        mc_file_size = (mc_file_size + 0x1F) & 0xFFFFFFE0;
+        mc_file_size = (mc_file_size + 0x1F) & MC_ALIGN_MASK;
         quantity = (u32)(mc_file_size + 0x3FF) >> 10;
         reserved = 2;
         if (mc_dir_entry.FileSizeByte != 0) {
@@ -852,7 +853,7 @@ static int Mc_StepReadChecked(void) {
             mc_file_size_padded += (remaining + 0x3FE) / 0x3FF;
         }
         padded_size = mc_file_size_padded + 0x1F;
-        total_size = padded_size & 0xFFFFFFE0;
+        total_size = padded_size & MC_ALIGN_MASK;
         mc_end_mark_offset = padded_size - total_size;
         mc_request.retries = 0;
         mc_request.step++;
@@ -2249,8 +2250,8 @@ int Mc_GetCardStatus(int port, int slot) {
         case MC_RESULT_SUCCEED:
             mc_request.status = MC_STATUS_OK;
             break;
-        case 1:
-            mc_request.status = 2;
+        case MC_RESULT_NEW_CARD:
+            mc_request.status = MC_STATUS_NEW_CARD;
             break;
         case MC_RESULT_UNFORMATTED:
             mc_request.status = MC_STATUS_UNFORMATTED;

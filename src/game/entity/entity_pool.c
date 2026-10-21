@@ -414,7 +414,7 @@ static int Entity_TryActivate(Entity *entity) {
     model->draw = Entity_PrepareModelDraw;
     model->after_draw = NULL;
     if (entity->spawn_info->type_id == 0x47) {
-        model->model_flags |= 0x200;
+        model->model_flags |= MODEL_FLAG_DRAW_LIST;
         model->draw_flags |= MODEL_DRAW_OWN_TEXTURE;
         model->draw = Entity_PrepareScreenTexturedDraw;
         model->after_draw = Entity_AfterDrawEmpty;
@@ -426,7 +426,7 @@ static int Entity_TryActivate(Entity *entity) {
     ModelMotion_LoadFile(data_address, &work_address, ENTITY_MODEL(entity), 1);
     data_address = slot->base_address + data->texture_data;
     ENTITY_MODEL(entity)->texture_data = data_address;
-    ENTITY_MODEL(entity)->texture_slot = 0;
+    ENTITY_MODEL(entity)->texture_slot = TEXTURE_SLOT_ENTITY;
     ENTITY_MODEL(entity)->texture_packet_3 = (int)Map_GetSlotPacket(entity->group_id, 3);
     ENTITY_MODEL(entity)->texture_packet_5 = (int)Map_GetSlotPacket(entity->group_id, 5);
     entity->sound_bank = slot->sound_bank;
@@ -465,8 +465,8 @@ static int EntityPool_ClaimBlock(void) {
     best = -1;
     for (i = 0; i < 5; i++) {
         slot = &entity_pool_slots[i];
-        if ((slot->head.word >> 9) & 1) { continue; }
-        if ((slot->head.word >> 8) & 1) { continue; }
+        if (slot->head.bits.flag_200) { continue; }
+        if (slot->head.bits.flag_100) { continue; }
         if (slot->head.fields.kind == ENTITY_POOL_FREE) { return i; }
         if (slot->head.fields.kind != ENTITY_POOL_READY) { continue; }
         if (slot->entity_count != 0) { continue; }
@@ -783,16 +783,15 @@ static void EntityPool_RemoveUser(int slot_index) {
 /* Copies the loaded type file into the slot's block; hangs if it is empty or too big for the block. */
 static void EntityPool_CopyLoadedFile(EntityPoolSlot *slot) {
     EntityController *controller;
-    int *file;
+    EntityTypeFileHeader *file;
     int table_offset;
     int size;
 
     controller = (EntityController *)(entity_params + slot->head.fields.type_id * 0x450);
-    file = (int *)file_load_buffer;
+    file = (EntityTypeFileHeader *)file_load_buffer;
     size = 0;
-    // match: header words of the loaded file, no named struct yet
-    if ((table_offset = file[4]) != 0 || (table_offset = file[3]) != 0) {
-        size = table_offset + *(int *)(table_offset + (char *)file);
+    if ((table_offset = file->pool_model_offset) != 0 || (table_offset = file->texture_offset) != 0) {
+        size = table_offset + *(int *)(file_load_buffer + table_offset); /* the last part's offset plus its size word */
     }
     // match: retail shares one hang loop at the end for all three checks; only gotos give that layout
     if (size == 0) {
@@ -855,7 +854,7 @@ static void EntityPool_FreeUnusedBlocks(void) {
     slot_index = 0;
     slot = entity_pool_slots;
     while (slot_index < ENTITY_POOL_SLOT_COUNT) {
-        if ((slot->head.word & 0x2FF) == (ENTITY_POOL_FLAG_200 | ENTITY_POOL_READY)) {
+        if ((slot->head.word & ENTITY_POOL_KIND_FLAG_200_MASK) == (ENTITY_POOL_FLAG_200 | ENTITY_POOL_READY)) {
             // match: a type in use skips straight to the next slot; break or flag forms reorder the blocks
             for (entity = list_a; entity != NULL; entity = entity->next) {
                 if (entity->spawn_info->type_id == slot->head.fields.type_id) {

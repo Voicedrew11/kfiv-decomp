@@ -11,7 +11,7 @@ void ModelMatrix_BuildPartLocal(ModelInstance *model, ModelPart *part, ModelPart
 void ModelMatrix_Build(ModelInstance *model, Vector4 *position, Vector4 *rotation, f32 *scale);
 
 /* Makes the two matrices a model is drawn with from the two sources. */
-void ModelMatrix_BuildDrawMatrices(ModelInstance *model, s32 normal_src, s32 light_src, void *normal_dest,
+void ModelMatrix_BuildDrawMatrices(ModelInstance *model, void *normal_src, void *light_src, void *normal_dest,
                                    void *light_dest);
 
 /* data still in asm */

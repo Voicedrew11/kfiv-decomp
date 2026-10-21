@@ -140,12 +140,12 @@ static void Phagos_RunAwayAndRemove(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
             entity->action_timer = 20;
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->pitch_limit_deg, 0xFF, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, entity->params->pitch_limit_deg, 0xFF, entity->model->rotation);
             entity->action_step = PHAGOS_ACTION_STEP_FADE_OUT;
         } else if (EntityCollision_RayHitsPropWall(entity->model->position, direction, entity->radius, bounds)) {
             Vector_Copy(ai_state->target_point, entity->model->position);
             ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->pitch_limit_deg, 0xFF, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, entity->params->pitch_limit_deg, 0xFF, entity->model->rotation);
             entity->action_step++;
         }
         break;

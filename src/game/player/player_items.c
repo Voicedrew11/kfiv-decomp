@@ -132,27 +132,27 @@ void Player_UseItem(void) {
                     player_state.mp_now = player_state.mp_max;
                 }
                 timed = def->timed_flags;
-                if (timed & 1) {
+                if (timed & ITEM_TIMED_FLAG_0) {
                     player_state.timed_flags[0] = 0;
                     player_state.flag_timers[0] = 60;
                 }
-                if (timed & 2) {
+                if (timed & ITEM_TIMED_FLAG_1) {
                     player_state.timed_flags[1] = 0;
                     player_state.flag_timers[1] = 60;
                 }
-                if (timed & 4) {
+                if (timed & ITEM_TIMED_FLAG_2) {
                     player_state.timed_flags[2] = 0;
                     player_state.flag_timers[2] = 60;
                 }
-                if (timed & 8) {
+                if (timed & ITEM_TIMED_FLAG_3) {
                     player_state.timed_flags[3] = 0;
                     player_state.flag_timers[3] = 60;
                 }
-                if (timed & 0x10) {
+                if (timed & ITEM_TIMED_FLAG_4) {
                     player_state.timed_flags[4] = 0;
                     player_state.flag_timers[4] = 60;
                 }
-                if (timed & 0x20) {
+                if (timed & ITEM_TIMED_FLAG_5) {
                     player_state.timed_flags[5] = 0;
                     player_state.flag_timers[5] = 60;
                 }

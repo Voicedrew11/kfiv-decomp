@@ -224,8 +224,7 @@ int ModelMotion_BlendInto(ModelInstance *model, u8 index, u16 speed) {
 }
 
 /* The last frame of the model's current motion. */
-u16 ModelMotion_GetLastFrame(char *model_arg) {
-    ModelInstance *model = (ModelInstance *)model_arg;
+u16 ModelMotion_GetLastFrame(ModelInstance *model) {
     ModelChannel *channel = MODEL_CHANNEL(model);
 
     return ((ModelTableHeader *)channel->tables[channel->motion_index] - 1)->frame_count;

@@ -29,7 +29,7 @@ void MapObject_UpdateItemHolder(MapObject *object) {
         if (object->source->kind_param_0 != 0 && !(object->state_flags & MAP_OBJECT_EMPTIED)) {
             object->model->update_bone_points(object->model);
             MapItem_StartPickup(MapItem_PutOutForObject(
-                MAP_OBJECT_BYTES(object)->map_slot & 1, object->source->kind_param_0, (void *)object->model->get_point(object->model, 0),
+                MAP_OBJECT_BYTES(object)->map_slot & 1, object->source->kind_param_0, object->model->get_point(object->model, 0),
                 &object->model->rotation, &unk_value, object));
         } else if (work[0] <= 0) {
             Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->definition->definition_flags);
@@ -62,7 +62,7 @@ void MapObject_SpawnHeldItem(MapObject *object) {
         if (!(object->state_flags & MAP_OBJECT_EMPTIED)) {
             map_object_update_hooks[object->definition->kind](object);
             object->model->update_bone_points(object->model);
-            MapItem_PutOutForObject((u8)object->state_flags & 1, object->source->kind_param_0, (void *)object->model->get_point(object->model, 0),
+            MapItem_PutOutForObject((u8)object->state_flags & 1, object->source->kind_param_0, object->model->get_point(object->model, 0),
                           &object->model->rotation, drop_params, object);
         }
     }
@@ -139,22 +139,22 @@ void MapObject_UpdateClosedChest(MapObject *object) {
             source = object->source;
         }
         MAP_OBJECT_BYTES(object)->step = CHEST_STEP_OPENING;
-        MAP_OBJECT_BITS(object)->bit17 = TRUE;
+        MAP_OBJECT_BITS(object)->on = TRUE;
         work[1] = 0;
-        MAP_OBJECT_BITS(object)->bit18 = TRUE;
+        MAP_OBJECT_BITS(object)->emptied = TRUE;
         if (source->kind_param_0 != 0) {
             position.x = object->model->position.x;
             position.y = object->model->position.y - 25.0f;
             position.z = object->model->position.z;
             MapItem_PutOutForObject(MAP_OBJECT_BYTES(object)->map_slot & 1, source->kind_param_0, &position, &object->model->rotation, &unk_value, object);
-            MAP_OBJECT_BITS(object)->bit18 = FALSE;
+            MAP_OBJECT_BITS(object)->emptied = FALSE;
         } else if (((MapObjectUnk08Words *)source)->kind_param_2 > 0) {
             position.x = object->model->position.x;
             position.y = object->model->position.y - 25.0f;
             position.z = object->model->position.z;
             turn.y = object->model->rotation.y;
             Gold_Drop(&position, &turn, MAP_OBJECT_BYTES(object)->map_slot & 1, ((MapObjectUnk08Words *)source)->kind_param_2, source->spawn_flags.bytes[2], 0, 1);
-            MAP_OBJECT_BITS(object)->bit18 = FALSE;
+            MAP_OBJECT_BITS(object)->emptied = FALSE;
         }
     }
 }

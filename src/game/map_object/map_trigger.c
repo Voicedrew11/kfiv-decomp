@@ -283,7 +283,7 @@ void MapObject_StartPulse(MapTrigger *trigger) {
     MapTriggerShotKind122E88 *shot = (MapTriggerShotKind122E88 *)&trigger->shot;
     ModelInstance *model = trigger->model;
 
-    model->draw_flags |= 0x200;
+    model->draw_flags |= MODEL_DRAW_FACE_CAMERA_Y;
     model->fade_enabled = 1;
     trigger->model->fade_alpha = 0;
     /* 4.656613e-10f is 1 / 2^31: rand() scaled to 0..1 */

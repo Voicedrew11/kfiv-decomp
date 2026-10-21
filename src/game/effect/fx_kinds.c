@@ -222,9 +222,12 @@ void EffectGroundFan_Update(EffectActor *actor) {
 
 /* Kind 36 start: keeps how many levels the spawner is below def->max_level. */
 void EffectLevelHeight_Start(EffectActor *actor, EffectSlot *spawn_slot) {
+    ProgressMotion *motion;
+
     EffectStart_TurnModel(actor, spawn_slot);
     EffectStart_PlaceModel(actor, spawn_slot);
-    *(int *)&actor->motion = actor->def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level;
+    motion = (ProgressMotion *)&actor->motion;
+    motion->progress = actor->def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level;
 }
 
 /* Kind 36 update: sets the model's y scale to def->turn_rate plus the keyed y scale times that share of
@@ -414,13 +417,13 @@ void EffectHandover_Update(EffectActor *effect) {
     }
     if (effect->frame <= effect->def->sub_effect_id) {
         hits = Attack_RunEffectHitCheck(effect);
-        if (hits & 2) {
+        if (hits & HIT_TARGET_ENTITY) {
             effect_id = (int)effect->def->ground_height;
             if (effect_id <= 0) {
                 effect_id = effect->def->end_effect;
             }
             EffectHandover_StartNext(effect, &effect->model->position, effect_id);
-        } else if (hits & 4) {
+        } else if (hits & HIT_TARGET_MAP_OBJECT) {
             if (effect_kind_handlers[effect->def->kind_index][0] == EffectHandover_StartBySurface && (COLLISION_RESULT->floor_material == 3 || COLLISION_RESULT->floor_material == 5)) {
                 EffectHandover_StartNext(effect, &effect->model->position, effect->def->child_effect_id);
             } else {
@@ -556,7 +559,7 @@ void EffectBolt_Update(EffectActor *actor) {
     } else if (actor->def->hit_check_index != 0xFF) {
         hit = Attack_RunEffectHitCheck(actor);
         if (hit != 0 && actor->def->end_effect != 0xFFFF) {
-            if (hit & 2) {
+            if (hit & HIT_TARGET_ENTITY) {
                 Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
             } else if ((effect_kind_handlers[actor->def->kind_index][0] == EffectBolt_StartBySurface || effect_kind_handlers[actor->def->kind_index][0] == EffectBolt_StartWithTargeters) && (COLLISION_RESULT->floor_material == 3 || COLLISION_RESULT->floor_material == 5)) {
                 Effect_Spawn(actor->def->interval, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
@@ -635,14 +638,14 @@ void EffectBoneFade_Update(EffectActor *actor) {
     float distance;
     float fade;
     FadingMotion *motion;
-    char *bone;
+    f32 *bone;
 
     EffectKeys_ApplyScale(actor);
     motion = (FadingMotion *)&actor->motion;
     EffectKeys_ApplySpin(actor);
     EffectKeys_ApplyColour(actor);
     Model_UpdateSkinnedBonePoints(ENTITY_MODEL(actor->owner_entity));
-    bone = Model_GetSkinnedBonePoint((char *)actor->owner_entity->model, ENTITY_CONTROLLER(actor->owner_entity)->respawn_effect_bone);
+    bone = Model_GetSkinnedBonePoint(ENTITY_MODEL(actor->owner_entity), ENTITY_CONTROLLER(actor->owner_entity)->respawn_effect_bone);
     Vector_Copy(&actor->model->position, bone);
     Vector_Copy(&actor->model->rotation, &ENTITY_MODEL(actor->owner_entity)->rotation);
     distance = Effect_Distance(&player_state.position, &actor->model->position);
@@ -885,7 +888,7 @@ void EffectFloorChase_Update(EffectActor *actor) {
         actor->model->position.y -= 100.0f;
         check = Attack_RunEffectHitCheck(actor);
         actor->model->position.y += 100.0f;
-        if (check & 0x10) {
+        if (check & HIT_TARGET_MAP_WALL) {
             motion->ending = 1;
         } else if (check & 1) {
             Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
@@ -1540,7 +1543,10 @@ void EffectOwnerFloor_Start(EffectActor *actor, EffectSlot *spawn_slot) {
 
 /* Kind 77 update: ends when no floor was found, else runs its keys. */
 void EffectOwnerFloor_Update(EffectActor *effect) {
-    if (*(s8 *)&effect->motion != 0) { // match: velocity.x's first byte is read as a signed byte
+    GroundedMotion *motion;
+
+    motion = (GroundedMotion *)&effect->motion;
+    if (motion->no_floor != 0) {
         return Effect_Free(effect);
     }
     EffectKeys_ApplyScale(effect);
@@ -1945,7 +1951,7 @@ void EffectDrop_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     Collision_CastRayAtMap(1.0f, &actor->model->position, &probe);
     if (COLLISION_RESULT->hit != 0) {
         Vector_Copy(&actor->motion, COLLISION_RESULT);
-        motion->floor_material = *(u8 *)&COLLISION_RESULT->floor_material; // match: a byte load of the word's low byte
+        motion->floor_material = (u8)COLLISION_RESULT->floor_material;
         distance = Effect_Distance(&actor->motion, &actor->model->position);
         velocity = 0.0f;
         fallen = 0.0f;
@@ -2271,10 +2277,13 @@ void EffectSeekPoint_Update(EffectActor *effect) {
 
 /* Kind 107 start: drops the target and clears the stop flag. */
 void EffectLoopUntilFlag_Start(EffectActor *effect, EffectSlot *spawn_slot) {
+    LoopMotion *motion;
+
     EffectStart_TurnModel(effect, spawn_slot);
     EffectStart_PlaceModel(effect, spawn_slot);
     effect->target = NULL;
-    *(int *)&effect->motion = 0; // match: an int store of the velocity's first word (sw $0)
+    motion = (LoopMotion *)&effect->motion;
+    motion->stopped = 0;
 }
 
 /* Kind 107 update: loops its first def->radius_half frames until loop_effect_stop_state is 3. */

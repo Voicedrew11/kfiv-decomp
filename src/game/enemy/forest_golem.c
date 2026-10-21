@@ -49,15 +49,15 @@ static void ForestGolem_WalkToMapObjectNegX(Entity *entity, s32 run_now);
 void ForestGolem_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityAiStateKind1740A8 *work = (EntityAiStateKind1740A8 *)&entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     s32 i;
     s32 index;
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->ai_state;
+        u8 *dest = ENTITY_WORK_BYTES(entity);
 
         dest[i] = 0;
     }
@@ -69,7 +69,7 @@ void ForestGolem_Init(Entity *entity) {
     ai_state->death = NULL;
     index = entity->params->yaw_limit_deg;
     index += entity->params->pitch_limit_deg * 64;
-    if (((u8 *)map_script_flags)[index] != 0) {
+    if (map_script_flags[index] != 0) {
         ai_state->step_index = 1;
         ai_state->think = ForestGolem_ThinkStayInPlace;
     } else {
@@ -144,7 +144,7 @@ static void ForestGolem_Think(Entity *entity, s32 run_now) {
         s32 index = entity->params->yaw_limit_deg;
 
         index += entity->params->pitch_limit_deg * 64;
-        if (((u8 *)map_script_flags)[index] != 0) {
+        if (map_script_flags[index] != 0) {
             EntityAi_StartAction(entity, ForestGolem_StartScriptAndRumble, run_now);
             return;
         }
@@ -224,14 +224,14 @@ static void ForestGolem_Move(Entity *entity) {
    where ForestGolem_Init tests a map script flag. */
 static void ForestGolem_InitByVariant(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->ai_state;
+        u8 *dest = ENTITY_WORK_BYTES(entity);
 
         dest[i] = 0;
     }
@@ -503,11 +503,11 @@ static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 run_now) {
     }
     map_object = MapObject_GetById(entity->group_id, entity->spawn_info->map_object_id);
     if (map_object != NULL) {
-        ai_state->turn_in_place = (map_object->state_flags >> 17) & 1;
+        ai_state->turn_in_place = MAP_OBJECT_IS_ON(map_object);
     }
     map_object = MapObject_GetById(entity->group_id, entity->spawn_info->second_map_object_id);
     if (map_object != NULL) {
-        ai_state->step_index = (map_object->state_flags >> 17) & 1;
+        ai_state->step_index = MAP_OBJECT_IS_ON(map_object);
     }
     if (!ai_state->turn_in_place || !ai_state->step_index) {
         ForestGolem_WalkToMapObjectPosX(entity, run_now);
@@ -612,11 +612,11 @@ static void ForestGolem_ThinkUseMapObjectsNegX(Entity *entity, s32 run_now) {
     }
     map_object = MapObject_GetById(entity->group_id, entity->spawn_info->map_object_id);
     if (map_object != NULL) {
-        ai_state->turn_in_place = (map_object->state_flags >> 17) & 1;
+        ai_state->turn_in_place = MAP_OBJECT_IS_ON(map_object);
     }
     map_object = MapObject_GetById(entity->group_id, entity->spawn_info->second_map_object_id);
     if (map_object != NULL) {
-        ai_state->step_index = (map_object->state_flags >> 17) & 1;
+        ai_state->step_index = MAP_OBJECT_IS_ON(map_object);
     }
     if (!ai_state->turn_in_place || !ai_state->step_index) {
         ForestGolem_WalkToMapObjectNegX(entity, run_now);

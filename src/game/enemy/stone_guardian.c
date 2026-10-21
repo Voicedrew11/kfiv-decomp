@@ -77,13 +77,13 @@ static s32 StoneGuardian_Mode6IsNearestWaiting(Entity *entity, f32 limit);
 /* Set-up of a type 23 entity: clears its work area and installs the type's handlers. */
 void StoneGuardian_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->ai_state;
+        u8 *dest = ENTITY_WORK_BYTES(entity);
 
         dest[i] = 0;
     }
@@ -312,7 +312,7 @@ static void StoneGuardian_ThinkMode2StayInBounds(Entity *entity, s32 run_now) {
         is_open = 0;
         map_object = MapObject_GetById(entity->group_id, entity->spawn_info->variant);
         if (map_object != NULL) {
-            is_open = (map_object->state_flags >> 17) & 1;
+            is_open = MAP_OBJECT_IS_ON(map_object);
         }
         player_in_zone = FALSE;
         if (player_state.position.x > -9700.0f && player_state.position.x < -700.0f &&
@@ -609,7 +609,7 @@ static void StoneGuardian_ThinkMode3StayInBounds(Entity *entity, s32 run_now) {
         is_open = 0;
         map_object = MapObject_GetById(entity->group_id, entity->spawn_info->variant);
         if (map_object != NULL) {
-            is_open = (map_object->state_flags >> 17) & 1;
+            is_open = MAP_OBJECT_IS_ON(map_object);
         }
         player_in_zone = FALSE;
         if (player_state.position.z > -6000.0f && player_state.position.z < -2800.0f &&
@@ -823,7 +823,7 @@ static void StoneGuardian_ThinkMode4StayInBounds(Entity *entity, s32 run_now) {
         is_open = 0;
         map_object = MapObject_GetById(entity->group_id, entity->spawn_info->variant);
         if (map_object != NULL) {
-            is_open = (map_object->state_flags >> 17) & 1;
+            is_open = MAP_OBJECT_IS_ON(map_object);
         }
         player_in_zone = FALSE;
         if (player_state.position.z > -6000.0f && player_state.position.z < -2800.0f &&
@@ -1033,7 +1033,7 @@ static void StoneGuardian_ThinkMode5StayInBounds(Entity *entity, s32 run_now) {
         is_open = 0;
         map_object = MapObject_GetById(entity->group_id, entity->spawn_info->variant);
         if (map_object != NULL) {
-            is_open = (map_object->state_flags >> 17) & 1;
+            is_open = MAP_OBJECT_IS_ON(map_object);
         }
         player_in_zone = FALSE;
         if (player_state.position.x > -20300.0f && player_state.position.x < -13350.0f &&
@@ -1247,12 +1247,12 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 run_now) {
     first_open = 0;
     map_object = MapObject_GetById(entity->group_id, entity->spawn_info->variant);
     if (map_object != NULL) {
-        first_open = (map_object->state_flags >> 17) & 1;
+        first_open = MAP_OBJECT_IS_ON(map_object);
     }
     second_open = 0;
     map_object = MapObject_GetById(entity->group_id, entity->spawn_info->map_object_id);
     if (map_object != NULL) {
-        second_open = (map_object->state_flags >> 17) & 1;
+        second_open = MAP_OBJECT_IS_ON(map_object);
     }
     both_open = first_open && second_open;
     if (entity->busy_flags != 0) {

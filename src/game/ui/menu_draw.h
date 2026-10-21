@@ -8,6 +8,8 @@
 #include "core/state.h"
 #include "ui/menu.h"
 #include "core/game.h"
+
+#define MENU_TEXT_NEW_LINE 0x8000 /* a menu text word (u16): the line break, the GLYPH_NEW_LINE bit of ui/message.h */
 #include "gfx/screen.h"
 #include "core/load.h"
 #include "gfx/texture.h"

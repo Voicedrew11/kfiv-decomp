@@ -117,7 +117,7 @@ void MapObject_UpdateOpeningDoor(MapObject *object) {
         work->timer--;
     }
     if (MODEL_CHANNEL(object->model)->frame != 0) {
-        ((int (*)(char *))MapObject_StepAnim)((char *)object); // match: it returns a value
+        MapObject_StepAnim(object);
         kind = object->definition->kind;
         if (kind == 6) {
             Vector_Subtract(&delta, object->model->parts[1].position, work);
@@ -131,10 +131,10 @@ void MapObject_UpdateOpeningDoor(MapObject *object) {
         } else if (kind == 2) {
             if (object->door_open_flags & 1) {
                 object->model->update_bone_points(object->model);
-                point_a = (f32 *)object->model->get_point(object->model, 2);
-                point_b = (f32 *)object->model->get_point(object->model, 3);
-                point_c = (f32 *)object->model->get_point(object->model, 4);
-                point_d = (f32 *)object->model->get_point(object->model, 5);
+                point_a = object->model->get_point(object->model, 2);
+                point_b = object->model->get_point(object->model, 3);
+                point_c = object->model->get_point(object->model, 4);
+                point_d = object->model->get_point(object->model, 5);
                 delta_x = point_a[0] - point_d[0];
                 delta_z = point_a[2] - point_d[2];
                 gap_ad = sqrtf(delta_x * delta_x + delta_z * delta_z);
@@ -190,7 +190,7 @@ void MapObject_UpdateClosingDoor(MapObject *object) {
         work->timer--;
     }
     if (MODEL_CHANNEL(object->model)->frame != 0) {
-        ((int (*)(char *))MapObject_StepAnim)((char *)object); // match: it returns a value
+        MapObject_StepAnim(object);
         if (object->definition->kind == MAP_OBJECT_KIND_MOVING_DOOR) {
             Vector_Subtract(&delta, object->model->parts[1].position, work);
             sine = sinf(-object->model->rotation.y);

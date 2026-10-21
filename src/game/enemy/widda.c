@@ -29,14 +29,14 @@ static void Widda_Move(Entity *entity);
 /* Set-up of a type 19 entity: clears its work area and installs the type's handlers. */
 void Widda_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->ai_state;
+        u8 *dest = ENTITY_WORK_BYTES(entity);
 
         dest[i] = 0;
     }
@@ -237,7 +237,7 @@ static void Widda_ThinkCombat(Entity *entity, s32 run_now) {
             break;
         }
     }
-    angle = EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ((float *)&player_state.position, entity->model->position));
+    angle = EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position));
     if (entity->distance_to_player_3d - entity->radius - 100.0f < 200.0f && ABS(angle) < DEG_TO_RAD(40)
         && frame_counter % 10U == entity->spawn_index % 10U && rand() % 100 < ENTITY_CONTROLLER(entity)->action_frames) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);

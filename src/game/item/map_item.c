@@ -125,7 +125,7 @@ void MapItem_InitMap(int map) {
             Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
             node->model->draw = MapItem_PrepareDraw;
             node->model->texture_data = (int)source->texture;
-            node->model->texture_slot = 2;
+            node->model->texture_slot = TEXTURE_SLOT_ITEM;
             TextureTable_SetBasePointers((TextureTableHeader *)source->texture, 0x3B40, 0x3EC0);
         }
     }
@@ -374,7 +374,7 @@ s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f3
     Vector_Copy(&node->model->position, position);
     Vector_Copy(&node->model->rotation, rotation);
     Vector_Copy(&node->model->scale_x, scale);
-    ITEM_NODE_BITS(node)->bit2 = TRUE;
+    ITEM_NODE_BITS(node)->falling = TRUE;
     node->position_y = position[1];
     node->floor_y = floor_y;
     node->fall_speed = 0.0f;
@@ -383,7 +383,7 @@ s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f3
     Model_SetUpPosed(node->model, &model_data, &buffer);
     Model_SetTextureBase(node->model, 0x3B40, 0x3EC0);
     Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
-    node->model->texture_slot = 2;
+    node->model->texture_slot = TEXTURE_SLOT_ITEM;
     node->model->texture_data = (int)source->texture;
     TextureTable_SetBasePointers((TextureTableHeader *)source->texture, 0x3B40, 0x3EC0);
     if (order == 0xFFFFFFFF) {
@@ -454,7 +454,7 @@ ItemNode *MapItem_PutOutForObject(int map, int item, void *position, void *rotat
     Model_SetUpPosed(node->model, &sources[0], &sources[1]);
     Model_SetTextureBase(node->model, 0x3B40, 0x3EC0);
     Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
-    node->model->texture_slot = 2;
+    node->model->texture_slot = TEXTURE_SLOT_ITEM;
     node->model->texture_data = (int)source->texture;
     TextureTable_SetBasePointers((TextureTableHeader *)source->texture, 0x3B40, 0x3EC0);
     MapItem_Link((ListNode *)node);
@@ -481,11 +481,11 @@ void MapItem_UpdateFalling(void) {
     float height;
 
     node = lying_items;
-    if (!(suspended_updates[0] & 0x10) && node != 0) {
+    if (!(suspended_updates[0] & UPDATE_HOLD_FALLING_ITEMS) && node != 0) {
         do {
             if (node->record != 0) {
                 flags = node->flags;
-                if (((u32)flags >> 2) & 1) {
+                if (((u32)flags >> ITEM_NODE_FALLING_BIT) & 1) {
                     height = node->position_y + node->fall_speed;
                     node->position_y = height;
                     if (node->floor_y <= height) {
@@ -519,7 +519,7 @@ void MapItem_DrawAll(int with_picked) {
     Packet_AddGsRegister(0x47, 0x5000D);
     Packet_EndGsRegisters();
     for (node = lying_items; node != NULL; node = node->next) {
-        node->map_record = Map_FindRecordAtInSlot((f32 *)&node->model->position, 0.0f, node->flags & 1);
+        node->map_record = Map_FindRecordAtInSlot(&node->model->position.x, 0.0f, node->flags & 1);
         if (node->map_record == NULL) {
             continue;
         }
@@ -561,7 +561,7 @@ void MapItem_DrawPicked(int hidden) {
     if (node == NULL || hidden != 0) {
         return;
     }
-    node->map_record = Map_FindRecordAtInSlot((f32 *)&node->model->position, 0.0f, node->flags & 1);
+    node->map_record = Map_FindRecordAtInSlot(&node->model->position.x, 0.0f, node->flags & 1);
     if (node->map_record == NULL) {
         return;
     }
@@ -581,10 +581,10 @@ void MapItem_DrawPicked(int hidden) {
         PART_MATRIX(part)[0][0] = part->scale[0];
         PART_MATRIX(part)[1][1] = part->scale[1];
         PART_MATRIX(part)[2][2] = part->scale[2];
-        sceVu0RotMatrixX((f32 *)part, (f32 *)part, wrap_angle(turn[0]));
-        sceVu0RotMatrixZ((f32 *)part, (f32 *)part, wrap_angle(turn[2]));
-        sceVu0RotMatrixY((f32 *)part, (f32 *)part, wrap_angle(turn[1]));
-        sceVu0TransMatrix((f32 *)part, (f32 *)part, offset);
+        sceVu0RotMatrixX(part, part, wrap_angle(turn[0]));
+        sceVu0RotMatrixZ(part, part, wrap_angle(turn[2]));
+        sceVu0RotMatrixY(part, part, wrap_angle(turn[1]));
+        sceVu0TransMatrix(part, part, offset);
     }
     node->model->light_block = (s32)&map_draw_state.light_blocks[node->flags & 1][map_slots[node->flags & 1].header->light_block];
     node->model->fog_block = &map_draw_state.fog_blocks[node->flags & 1][((MapRecordInfo *)node->map_record)->draw_block_index];
@@ -911,7 +911,7 @@ int MapItem_UniqueNotDropped(int item) {
     int j;
     DroppedItemRecord *record;
     ItemCommonDef *common;
-    char *base = (char *)dropped_item_records;
+    DroppedItemRecord *base = &dropped_item_records[0][0];
 
     common = item_common_defs + item;
     for (i = 0; i < 0x80; i++) {

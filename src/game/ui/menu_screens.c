@@ -142,6 +142,10 @@
 #define OPTION_LINE_SOUND_MODE         0
 #define OPTION_LINE_MUSIC_VOLUME       1
 #define OPTION_LINE_SOUND_VOLUME       2
+#define OPTION_LINE_HEAD_BOB           3
+#define OPTION_LINE_RUMBLE             4
+#define OPTION_LINE_HUD                5
+#define OPTION_LINE_MENU_BACKDROP      6
 
 /* the sprites of the button screen (keyconf_parts handler_index) */
 #define KEYCONF_PART_PROMPT            2
@@ -242,12 +246,16 @@ __asm__("equip_panel_state = equip_state + 1");
     }
 #define LIST_PAGES 50
 #define LIST_ROWS 7
-/* The offset of text `number` in the text table, 0 when it has none. */
-static inline s32 GetListTextOffset(s32 table, s32 number) {
-    return ((s32 *)table)[number];
+/* The address `offset` bytes into a loaded file: the offsets in its headers count from the file's start. */
+static inline void *LoadedFile_At(void *file, s32 offset) {
+    return (char *)file + offset;
 }
-/* The offset of text `number` in the text table, 0 when it has none. */
-static inline s32 GetPageTextOffset(s32 table, s32 number) {
+/* The text at byte `offset` in a text table. */
+static inline void *TextTable_Text(s32 table, s32 offset) {
+    return (char *)table + offset;
+}
+/* The offset of text `number` in a text table (a list of offsets from the table's start), 0 when it has none. */
+static inline s32 TextTable_Offset(s32 table, s32 number) {
     return ((s32 *)table)[number];
 }
 static inline s32 ScaleValue(s32 value, s32 percent, s32 divisor) {
@@ -483,7 +491,7 @@ static void Menu_BuildItemRings(void) {
     first = NULL;
     count = 0;
     for (i = 1; i < 380; i++) {
-        if (item_counts.bytes[i] != 0 && !(item_level_defs[i].state & 2)) {
+        if (item_counts.bytes[i] != 0 && !(item_level_defs[i].state & ITEM_DEF_STATE_LOCKED)) {
             if ((i >= 0 && i < 150) || (i >= 150 && i < 220 && weapon_level_records[i - 150].in_smith_rings == 0) ||
                 (i >= 220 && i < 250 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
                 (i >= 250 && i < 275 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
@@ -927,7 +935,7 @@ static void Menu_FinishModelLoad(LinkNode *node) {
     LinkFile *file;
 
     file = ((ChunkPoolNode *)node->pool_node)->buffer;
-    PoolPartFile_Relocate((PoolPartFile *)((char *)file + file->first_offset));
+    PoolPartFile_Relocate(LoadedFile_At(file, file->first_offset));
     FlushCache(0);
     node->done = 1;
     node->stage = 0;
@@ -1012,8 +1020,8 @@ static void Menu_FinishWornModelLoad(LinkNode *node) {
         return;
     }
     file = ((ChunkPoolNode *)node->pool_node)->buffer;
-    pool_part_sources[target->slot]->texture = (char *)file + file->second_offset;
-    pool_part_sources[target->slot]->file = (PoolPartFile *)((char *)file + file->first_offset);
+    pool_part_sources[target->slot]->texture = LoadedFile_At(file, file->second_offset);
+    pool_part_sources[target->slot]->file = LoadedFile_At(file, file->first_offset);
     PoolPartFile_Relocate(pool_part_sources[target->slot]->file);
     pool_node = node->target_node->pool_node;
     node->target_node->pool_node = node->pool_node;
@@ -1086,15 +1094,15 @@ static void Menu_WaitPackageRead(ChunkUpload *upload) {
 static void Menu_FinishPackageLoad(ChunkUpload *upload) {
     u32 i;
     u32 *header;
-    char *next;
-    char *chunk;
+    void *next;
+    PackageChunk *chunk;
 
     header = upload->pool_node->buffer;
-    chunk = (char *)header + 0x10;
+    chunk = LoadedFile_At(header, 0x10);
     for (i = 0; i < *header; i++) {
-        next = chunk + ((int *)chunk)[3];
-        PoolPartFile_Relocate((PoolPartFile *)(chunk + ((int *)chunk)[1]));
-        chunk = next + ((int *)chunk)[2];
+        next = LoadedFile_At(chunk, chunk->chunk_padding_size);
+        PoolPartFile_Relocate(LoadedFile_At(chunk, chunk->payload_offset));
+        chunk = LoadedFile_At(next, chunk->chunk_data_size);
     }
     FlushCache(0);
     upload->done = 1;
@@ -1550,10 +1558,10 @@ void Menu_InitLoadBuffers(void) {
     free_load_buffers = load_buffer_nodes;
     for (i = 0; i < 15; i++) {
         load_buffer_nodes[i].next = &load_buffer_nodes[i + 1];
-        load_buffer_nodes[i].buffer = (void *)MenuArena_Alloc(0x25800, 0x10);
+        load_buffer_nodes[i].buffer = MenuArena_Alloc(0x25800, 0x10);
     }
     load_buffer_nodes[15].next = NULL;
-    load_buffer_nodes[15].buffer = (void *)MenuArena_Alloc(0x25800, 0x10);
+    load_buffer_nodes[15].buffer = MenuArena_Alloc(0x25800, 0x10);
     npc_package_load.pool_node = load_buffer_nodes;
     npc_package_load.callback = Menu_StepPackageLoad;
     npc_package_load.stage = 0;
@@ -1841,7 +1849,7 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
     ClockTime clock;
     struct tm calendar;
     MenuWeekdayNames weekday_names;
-    u32 *packet;
+    PacketCursor packet;
     s32 status; // match: one variable for the card state in the loop and the menu number after it
 
     sceGsSyncPath(0, 0);
@@ -1884,52 +1892,52 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
         }
     }
     if (menu_mode == MENU_MODE_GAME_MENU && card_screen_state.save_loaded == 0) {
-        packet = MenuDraw_NextPacket();
-        packet[1] = 0x100B4000; // match: the tag word packet[0] is written last
-        packet[2] = 0xE;
-        packet[3] = 0;
-        *(u64 *)&packet[4] = 0x66802B240;
-        packet[6] = 6;
-        packet[7] = 0;
-        *(u64 *)&packet[8] = game_dbuff_draw0.frame;
-        packet[10] = 0x4C;
-        packet[11] = 0;
-        packet[12] = 0;
-        packet[13] = 1;
-        packet[14] = 0x4E;
-        packet[15] = 0;
-        packet[16] = 0x30000;
-        packet[17] = 0;
-        packet[18] = 0x47;
-        packet[19] = 0;
-        packet[20] = 0;
-        packet[21] = 0;
-        packet[22] = 0x18;
-        packet[23] = 0;
-        packet[24] = 0;
-        packet[25] = 0;
-        packet[26] = 2;
-        packet[27] = 0;
-        packet[28] = 0;
-        packet[29] = 0;
-        packet[30] = 5;
-        packet[31] = 0;
-        *(f32 *)&packet[32] = 0.625f;
-        *(f32 *)&packet[33] = 0.4375f;
-        packet[34] = 2;
-        packet[35] = 0;
-        packet[36] = 0x1C002800;
-        packet[37] = 0;
-        packet[38] = 5;
-        packet[39] = 0;
-        packet[40] = 0;
-        packet[41] = 0;
-        packet[42] = 0x3F;
-        packet[43] = 0;
-        packet[0] = 0x800A;
+        packet.word = MenuDraw_NextPacket();
+        packet.word[1] = 0x100B4000; // match: the tag word packet.word[0] is written last
+        packet.word[2] = 0xE;
+        packet.word[3] = 0;
+        packet.dword[2] = 0x66802B240;
+        packet.word[6] = 6;
+        packet.word[7] = 0;
+        packet.dword[4] = game_dbuff_draw0.frame;
+        packet.word[10] = 0x4C;
+        packet.word[11] = 0;
+        packet.word[12] = 0;
+        packet.word[13] = 1;
+        packet.word[14] = 0x4E;
+        packet.word[15] = 0;
+        packet.word[16] = 0x30000;
+        packet.word[17] = 0;
+        packet.word[18] = 0x47;
+        packet.word[19] = 0;
+        packet.word[20] = 0;
+        packet.word[21] = 0;
+        packet.word[22] = 0x18;
+        packet.word[23] = 0;
+        packet.word[24] = 0;
+        packet.word[25] = 0;
+        packet.word[26] = 2;
+        packet.word[27] = 0;
+        packet.word[28] = 0;
+        packet.word[29] = 0;
+        packet.word[30] = 5;
+        packet.word[31] = 0;
+        packet.real[32] = 0.625f;
+        packet.real[33] = 0.4375f;
+        packet.word[34] = 2;
+        packet.word[35] = 0;
+        packet.word[36] = 0x1C002800;
+        packet.word[37] = 0;
+        packet.word[38] = 5;
+        packet.word[39] = 0;
+        packet.word[40] = 0;
+        packet.word[41] = 0;
+        packet.word[42] = 0x3F;
+        packet.word[43] = 0;
+        packet.word[0] = 0x800A;
         while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
         *D2_QWC = 11;
-        *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
+        *D2_MADR = ((u32)packet.word & 0x7FFFFFFF) | D_MADR_SPR;
         *D2_CHCR = D_CHCR_STR;
         context2_buffer_half = context1_buffer_half = 1;
     }
@@ -2255,116 +2263,116 @@ int Menu_DrawItemModel(f32 *matrix) { // match: callers declare an int result; n
 static s32 Menu_CopyFrameToTexture(void) {
     f32 unused[28]; // match: 0x70 bytes of locals nothing uses
     u32 texture_base; /* where the shown buffer is as a texture: 0x1180 when it is the second one */
-    u32 *packet;
+    PacketCursor packet;
 
     if (menu_mode == MENU_MODE_GAME_MENU) {
-        packet = MenuDraw_NextPacket();
+        packet.word = MenuDraw_NextPacket();
         texture_base = 0x1180;
         if (context1_buffer_half == 0) {
             texture_base = 0;
         }
-        packet[1] = 0x100B4000; // match: the tag word packet[0] is written last
-        packet[2] = 0xE;
-        packet[3] = 0;
-        *(u64 *)&packet[4] = (menu_first_draw_env[0] & ~0x1FFL) | 0x192;
-        packet[6] = 0x4C;
-        packet[7] = 0;
-        packet[8] = 0;
-        packet[9] = 0;
-        packet[10] = 0x18;
-        packet[11] = 0;
-        packet[12] = 0x30000;
-        packet[13] = 0;
-        packet[14] = 0x47;
-        packet[15] = 0;
-        packet[16] = 0x2800000;
-        packet[17] = 0xE00000;
-        packet[18] = 0x40;
-        packet[19] = 0;
-        *(u64 *)&packet[20] = texture_base | 0x28028000 | 0x640000000L; /* TEX0: 1024 by 512 */
-        packet[22] = 0x6;
-        packet[23] = 0;
-        packet[24] = 0x80808080;
-        *(f32 *)&packet[25] = 1.0f;
-        packet[26] = 0x1;
-        packet[27] = 0;
-        packet[28] = 0;
-        packet[29] = 0;
-        packet[30] = 0x2;
-        packet[31] = 0;
-        packet[32] = 0;
-        packet[33] = 0;
-        packet[34] = 0x5;
-        packet[35] = 0;
-        *(f32 *)&packet[36] = 0.625f;
-        *(f32 *)&packet[37] = 0.875f;
-        packet[38] = 0x2;
-        packet[39] = 0;
-        packet[40] = 0xE002800;
-        packet[41] = 0;
-        packet[42] = 0x5;
-        packet[43] = 0;
-        packet[44] = 0;
-        packet[45] = 0;
-        packet[46] = 0x3F;
-        packet[47] = 0;
-        *(u64 *)&packet[48] = menu_first_draw_env[0];
-        packet[50] = 0x4C;
-        packet[51] = 0;
-        *(u64 *)&packet[52] = 0x66802B240;
-        packet[54] = 0x6;
-        packet[55] = 0;
-        packet[56] = 0;
-        packet[57] = 0;
-        packet[58] = 0x2;
-        packet[59] = 0;
-        packet[60] = 0;
-        packet[61] = 0;
-        packet[62] = 0x5;
-        packet[63] = 0;
-        *(f32 *)&packet[64] = 0.625f;
-        *(f32 *)&packet[65] = 0.4375f;
-        packet[66] = 0x2;
-        packet[67] = 0;
-        packet[68] = 0xE002800;
-        packet[69] = 0;
-        packet[70] = 0x5;
-        packet[71] = 0;
-        *(u64 *)&packet[72] = menu_first_draw_env[46];
-        packet[74] = 0x4C;
-        packet[75] = 0;
-        packet[76] = 0;
-        packet[77] = 0;
-        packet[78] = 0x2;
-        packet[79] = 0;
-        packet[80] = 0;
-        packet[81] = 0;
-        packet[82] = 0x5;
-        packet[83] = 0;
-        *(f32 *)&packet[84] = 0.625f;
-        *(f32 *)&packet[85] = 0.4375f;
-        packet[86] = 0x2;
-        packet[87] = 0;
-        packet[88] = 0xE002800;
-        packet[89] = 0;
-        packet[90] = 0x5;
-        packet[91] = 0;
-        packet[92] = 0x50000;
-        packet[93] = 0;
-        packet[94] = 0x47;
-        packet[95] = 0;
-        packet[96] = 0;
-        packet[97] = 0;
-        packet[98] = 0x3F;
-        packet[99] = 0;
-        packet[100] = 0x44;
-        packet[101] = 0;
-        packet[102] = 0x42;
-        packet[103] = 0;
-        packet[0] = 0x8019;
+        packet.word[1] = 0x100B4000; // match: the tag word packet.word[0] is written last
+        packet.word[2] = 0xE;
+        packet.word[3] = 0;
+        packet.dword[2] = (menu_first_draw_env[0] & ~0x1FFL) | GS_FRAME_FBP_MENU_WORK;
+        packet.word[6] = 0x4C;
+        packet.word[7] = 0;
+        packet.word[8] = 0;
+        packet.word[9] = 0;
+        packet.word[10] = 0x18;
+        packet.word[11] = 0;
+        packet.word[12] = 0x30000;
+        packet.word[13] = 0;
+        packet.word[14] = 0x47;
+        packet.word[15] = 0;
+        packet.word[16] = 0x2800000;
+        packet.word[17] = 0xE00000;
+        packet.word[18] = 0x40;
+        packet.word[19] = 0;
+        packet.dword[10] = texture_base | GS_TEX0_TBW_640_TW_1024 | GS_TEX0_TH_512_TCC_RGBA; /* TEX0: 1024 by 512 */
+        packet.word[22] = 0x6;
+        packet.word[23] = 0;
+        packet.word[24] = 0x80808080;
+        packet.real[25] = 1.0f;
+        packet.word[26] = 0x1;
+        packet.word[27] = 0;
+        packet.word[28] = 0;
+        packet.word[29] = 0;
+        packet.word[30] = 0x2;
+        packet.word[31] = 0;
+        packet.word[32] = 0;
+        packet.word[33] = 0;
+        packet.word[34] = 0x5;
+        packet.word[35] = 0;
+        packet.real[36] = 0.625f;
+        packet.real[37] = 0.875f;
+        packet.word[38] = 0x2;
+        packet.word[39] = 0;
+        packet.word[40] = 0xE002800;
+        packet.word[41] = 0;
+        packet.word[42] = 0x5;
+        packet.word[43] = 0;
+        packet.word[44] = 0;
+        packet.word[45] = 0;
+        packet.word[46] = 0x3F;
+        packet.word[47] = 0;
+        packet.dword[24] = menu_first_draw_env[0];
+        packet.word[50] = 0x4C;
+        packet.word[51] = 0;
+        packet.dword[26] = 0x66802B240;
+        packet.word[54] = 0x6;
+        packet.word[55] = 0;
+        packet.word[56] = 0;
+        packet.word[57] = 0;
+        packet.word[58] = 0x2;
+        packet.word[59] = 0;
+        packet.word[60] = 0;
+        packet.word[61] = 0;
+        packet.word[62] = 0x5;
+        packet.word[63] = 0;
+        packet.real[64] = 0.625f;
+        packet.real[65] = 0.4375f;
+        packet.word[66] = 0x2;
+        packet.word[67] = 0;
+        packet.word[68] = 0xE002800;
+        packet.word[69] = 0;
+        packet.word[70] = 0x5;
+        packet.word[71] = 0;
+        packet.dword[36] = menu_first_draw_env[46];
+        packet.word[74] = 0x4C;
+        packet.word[75] = 0;
+        packet.word[76] = 0;
+        packet.word[77] = 0;
+        packet.word[78] = 0x2;
+        packet.word[79] = 0;
+        packet.word[80] = 0;
+        packet.word[81] = 0;
+        packet.word[82] = 0x5;
+        packet.word[83] = 0;
+        packet.real[84] = 0.625f;
+        packet.real[85] = 0.4375f;
+        packet.word[86] = 0x2;
+        packet.word[87] = 0;
+        packet.word[88] = 0xE002800;
+        packet.word[89] = 0;
+        packet.word[90] = 0x5;
+        packet.word[91] = 0;
+        packet.word[92] = 0x50000;
+        packet.word[93] = 0;
+        packet.word[94] = 0x47;
+        packet.word[95] = 0;
+        packet.word[96] = 0;
+        packet.word[97] = 0;
+        packet.word[98] = 0x3F;
+        packet.word[99] = 0;
+        packet.word[100] = 0x44;
+        packet.word[101] = 0;
+        packet.word[102] = 0x42;
+        packet.word[103] = 0;
+        packet.word[0] = 0x8019;
         while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
         *D2_QWC = 26;
-        *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
+        *D2_MADR = ((u32)packet.word & 0x7FFFFFFF) | D_MADR_SPR;
         *D2_CHCR = D_CHCR_STR;
     }
     sceGsSyncPath(0, 0);
@@ -2383,7 +2391,7 @@ static int Menu_ReturnTrue(void) {
 s32 Menu_EndFrame(s32 run_handler) {
     s32 even_field;
 
-    Menu_DrawBrightness(game_options[10]);
+    Menu_DrawBrightness(game_options[GAME_OPTION_BRIGHTNESS]);
     SoundDriver_FlushCommands();
     sceGsSyncPath(0, 0);
     menu_frame_ticks = Timer_GetTicks();
@@ -2393,13 +2401,13 @@ s32 Menu_EndFrame(s32 run_handler) {
         menu_l2_cycle_step++;
     }
     menu_l2_cycle_step %= 3;
-    sceGsSetHalfOffset(context1_buffer_half != 0 ? menu_second_draw_env : (char *)menu_first_draw_env, 0x800, 0x800, even_field);
+    sceGsSetHalfOffset(context1_buffer_half != 0 ? menu_second_draw_env : menu_first_draw_env, 0x800, 0x800, even_field);
     sceGsSetHalfOffset2(context1_buffer_half != 0 ? menu_second_draw_env2 : menu_first_draw_env2, 0x800, 0x800, even_field);
     FlushCache(0);
     sceGsSyncPath(0, 0);
     sceGsSwapDBuffDc(&menu_frame_buffers, context1_buffer_half);
     if (run_handler != 0) {
-        frame_end_drawers[(s8)game_options[8]]();
+        frame_end_drawers[(s8)game_options[GAME_OPTION_MENU_BACKDROP]]();
     }
     context1_buffer_half = context1_buffer_half == 0;
     context2_buffer_half = context2_buffer_half == 0;
@@ -2411,45 +2419,45 @@ s32 Menu_EndFrame(s32 run_handler) {
 static void Menu_DrawBackdropPlain(void) {
     f32 unused[24];
     ColorBytes color = backdrop_shade_color[0];
-    u32 *packet;
+    GsPacketWord *packet;
 
     if (menu_mode == MENU_MODE_GAME_MENU) {
         packet = MenuDraw_NextPacket();
-        packet[0] = 0x8001;
-        packet[1] = 0x740B4000;
-        packet[2] = 0xF5252160;
-        packet[3] = 0;
-        packet[4] = 0x16;
-        packet[5] = 0;
+        packet[0].as_int = 0x8001;
+        packet[1].as_int = 0x740B4000;
+        packet[2].as_int = 0xF5252160;
+        packet[3].as_int = 0;
+        packet[4].as_int = 0x16;
+        packet[5].as_int = 0;
         *(u64 *)&packet[6] = 0x66802B240;
-        packet[8] = 0x80808080;
-        *(f32 *)&packet[9] = 1.0f;
-        packet[10] = 0;
-        packet[11] = 0;
-        packet[12] = 0x79006C00;
-        packet[13] = 1;
-        *(f32 *)&packet[14] = 0.625f;
-        *(f32 *)&packet[15] = 0.4375f;
-        packet[16] = 0x87009400;
-        packet[17] = 1;
+        packet[8].as_int = 0x80808080;
+        packet[9].as_float = 1.0f;
+        packet[10].as_int = 0;
+        packet[11].as_int = 0;
+        packet[12].as_int = 0x79006C00;
+        packet[13].as_int = 1;
+        packet[14].as_float = 0.625f;
+        packet[15].as_float = 0.4375f;
+        packet[16].as_int = 0x87009400;
+        packet[17].as_int = 1;
         while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
         *D2_QWC = 5;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
         *D2_CHCR = D_CHCR_STR;
         sceGsSyncPath(0, 0);
         packet = MenuDraw_NextPacket();
-        packet[0] = 0x8001;
-        packet[1] = 0x44000000;
-        packet[2] = 0x5510;
-        packet[3] = 0;
-        packet[4] = 0x46;
-        packet[5] = 0;
-        packet[6] = color.red | (color.green << 8) | (color.blue << 16) | 0x40000000;
-        packet[7] = 0;
-        packet[8] = 0x79006C00;
-        packet[9] = 2;
-        packet[10] = 0x87009400;
-        packet[11] = 2;
+        packet[0].as_int = 0x8001;
+        packet[1].as_int = 0x44000000;
+        packet[2].as_int = 0x5510;
+        packet[3].as_int = 0;
+        packet[4].as_int = 0x46;
+        packet[5].as_int = 0;
+        packet[6].as_int = color.red | (color.green << 8) | (color.blue << 16) | GS_RGBAQ_ALPHA_HALF;
+        packet[7].as_int = 0;
+        packet[8].as_int = 0x79006C00;
+        packet[9].as_int = 2;
+        packet[10].as_int = 0x87009400;
+        packet[11].as_int = 2;
         while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
         *D2_QWC = 3;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
@@ -2487,7 +2495,7 @@ static void Menu_DrawBackdropPreshopParts(void) {
 /* Second step of Menu_Run's loop: steps the model loads, then runs the menu step menu_step names.
    Returns what the step returns, 1 when there is none. */
 static int Menu_RunStep(void) {
-    int (*step)(char *);
+    int (*step)(char *context);
 
     Menu_StepModelLoads(0);
     step = menu_steps[menu_step];
@@ -2535,24 +2543,24 @@ static s32 Menu_Start(char *context) {
     }
     switch (menu_mode) {
     case MENU_MODE_GAME_MENU:
-        menu_screen_handler = (void *)Menu_OpenMain;
+        menu_screen_handler = Menu_OpenMain;
         break;
     case MENU_MODE_MEMORY_CARD:
-        menu_screen_handler = (void *)Menu_OpenCardSlot;
+        menu_screen_handler = Menu_OpenCardSlot;
         break;
     case MENU_MODE_OPTIONS:
-        menu_screen_handler = (void *)Menu_UpdateOptions;
+        menu_screen_handler = Menu_UpdateOptions;
         break;
     case MENU_MODE_BUTTONS:
         Menu_ReadButtonSettings();
-        menu_screen_handler = (void *)Menu_UpdateButtonConfig;
+        menu_screen_handler = Menu_UpdateButtonConfig;
         break;
     case MENU_MODE_CARD_CHECK:
-        menu_screen_handler = (void *)Menu_OpenCardCheck;
+        menu_screen_handler = Menu_OpenCardCheck;
         break;
     case MENU_MODE_BRIGHTNESS:
         brightness_before = brightness_option[0];
-        menu_screen_handler = (void *)Menu_UpdateBrightness;
+        menu_screen_handler = Menu_UpdateBrightness;
         pulse_value_falling = 0;
         system_screen_state = SYSTEM_SCREEN_STATE_FADE_IN;
         break;
@@ -2630,7 +2638,7 @@ static void Menu_OpenMain(void) {
     menu_input_enabled = 0;
     memset(screen_part_alphas, 0, 0x400);
     memset(panel_part_alphas, 0, 0x400);
-    menu_screen_handler = (void *)Menu_UpdateMain;
+    menu_screen_handler = Menu_UpdateMain;
 }
 
 /* The main menu: moves the cursor over its seven lines, draws the parts, and fades out to the chosen screen. */
@@ -2711,7 +2719,7 @@ static void Menu_UpdateMain(HandlerContext *context) {
                             break;
                         }
                         if (Menu_KnowsCastableSpell() != 0 || main_menu_line != 1) {
-                            menu_screen_handler = (void *)Menu_OpenChosenScreen;
+                            menu_screen_handler = Menu_OpenChosenScreen;
                             context->active_list = main_menu_line;
                             switch (context->active_list) {
                             case MAIN_MENU_LINE_USE_ITEM:
@@ -2888,7 +2896,7 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         item = item_list_cursor[0];
         table = Message_GetFontText(menu_heap);
         slot = item->item_number + MSG_ITEM_TEXT_FIRST + 1;
-        entry = ((s32 *)table)[slot];
+        entry = TextTable_Offset(table, slot);
         word.raw = 0x000A875083207080;
         MenuText_SetPen(word);
         if (entry != 0) {
@@ -3068,7 +3076,7 @@ static void Menu_UpdateCastSpell(s32 context) {
     item = castable_spell_top[0];
     MenuText_SetColor(menu_draw_color);
     for (row = 0; row < 7; row++, item = item->prev) {
-        MenuText_DrawLine((u16 *)&fx_table[item->item_number], 0x1A);
+        MenuText_DrawLine(fx_table[item->item_number].name, 0x1A);
         word.f.mid16 += 0xB0; // match: dead, left over from the item menu (Menu_UpdateUseItem), which sets the row's place here
         word.f.lo16 = 0x7080; // match: dead as well; without the two lines the loop is compiled differently
         if (castable_spell_page_mark[0]->prev == item) {
@@ -3078,11 +3086,11 @@ static void Menu_UpdateCastSpell(s32 context) {
     selected = castable_spell_cursor[0];
     table = Message_GetFontText(menu_heap);
     slot = selected->item_number + MSG_MAGIC_TEXT_FIRST + 1;
-    entry = ((s32 *)table)[slot];
+    entry = TextTable_Offset(table, slot);
     word.raw = 0x000A875082E07000;
     MenuText_SetPen(word);
     if (entry != 0) {
-        MenuText_DrawWordWrappedLong((u16 *)(table + entry), 0x35);
+        MenuText_DrawWordWrappedLong(TextTable_Text(table, entry), 0x35);
     }
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
     sceVu0TransMatrix(local, view, cast_spell_model_position);
@@ -3344,9 +3352,9 @@ static void Menu_UpdateEquip(void) {
     first_offset = equip_model_offset_low;
     second_offset = equip_model_offset_middle;
     third_offset = equip_model_offset_high;
-    sceVu0TransMatrix((f32 *)&pool_slots[21], unit, &first_offset.x);
-    sceVu0TransMatrix((f32 *)&pool_slots[22], unit, &second_offset.x);
-    sceVu0TransMatrix((f32 *)&pool_slots[23], unit, &third_offset.x);
+    sceVu0TransMatrix(&pool_slots[21], unit, &first_offset.x);
+    sceVu0TransMatrix(&pool_slots[22], unit, &second_offset.x);
+    sceVu0TransMatrix(&pool_slots[23], unit, &third_offset.x);
     DRAW_SLOT(&pool_slots[21]);
     DRAW_SLOT(&pool_slots[22]);
     DRAW_SLOT(&pool_slots[23]);
@@ -3871,10 +3879,10 @@ static void Menu_UpdateStatus(void) {
             if (screen_part_alphas[i] < 0.0f) {
                 memset(screen_part_alphas, 0, 0x400);
                 if (key_items_state == 3) {
-                    menu_screen_handler = (void *)Menu_OpenMain;
+                    menu_screen_handler = Menu_OpenMain;
                     Menu_ResetLoadBuffers(0);
                 } else {
-                    menu_screen_handler = (void *)Menu_UpdateKeyItems;
+                    menu_screen_handler = Menu_UpdateKeyItems;
                 }
                 key_items_state = 0;
                 break;
@@ -4011,7 +4019,7 @@ static void Menu_UpdateKeyItems(void) {
         upload = (ChunkUpload *)((s32)key_item_model_loads + slot * sizeof(ChunkUpload)); // match: &key_item_model_loads[slot] as a sum of numbers gives the madd
         if (upload->done != 0) {
             file = upload->pool_node->buffer;
-            texture = (TextureHeader *)((char *)file + file->texture_offset);
+            texture = LoadedFile_At(file, file->texture_offset);
             part = (struct PoolPart *)((char *)file + file->part_offset + 0x10);
             TEXTURE_HEADER_BITS(texture)->tex0.f.tbp0 = texture_pages.base[i];
             TEXTURE_HEADER_BITS(texture)->tex0.f.cbp = clut_pages.base[i];
@@ -4022,7 +4030,7 @@ static void Menu_UpdateKeyItems(void) {
             pool_slots[31].part_record = NULL;
             pool_slots[31].parent = NULL;
             MenuTexture_Upload(texture, NULL);
-            sceVu0TransMatrix((f32 *)&pool_slots[31], view, positions.position[i]);
+            sceVu0TransMatrix(&pool_slots[31], view, positions.position[i]);
             PoolSlot_Draw((RenderSlot *)&pool_slots[31], slot_arg); // match: slot_arg is never set
             number = &numbers.number[key_item_slots[i + key_item_row * 3]];
             if (item_counts.bytes[*number] != 0) {
@@ -4089,7 +4097,7 @@ static void Menu_UpdateKeyItems(void) {
             if (screen_part_alphas[i] < 0.0f) {
                 memset(screen_part_alphas, 0, 0x400);
                 key_item_row = 0;
-                menu_screen_handler = (void *)Menu_UpdateUseItem;
+                menu_screen_handler = Menu_UpdateUseItem;
                 Menu_ResetLoadBuffers(0);
                 Menu_ChainItemListModels(0);
                 if (key_items_state == 5) {
@@ -4242,7 +4250,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
         *D2_QWC = 3;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
         *D2_CHCR = D_CHCR_STR;
-        chunk = (PackageChunk *)((char *)npc_package_load.pool_node->buffer + 0x10);
+        chunk = LoadedFile_At(npc_package_load.pool_node->buffer, 0x10);
         for (i = 0; i < recollection_page; i++) {
             chunk = (PackageChunk *)((char *)chunk + chunk->chunk_padding_size + chunk->chunk_data_size);
         }
@@ -4261,7 +4269,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
 
     table = Message_GetFontText(menu_heap);
     first_text = recollection_page * LIST_PAGES + MSG_RECOLLECTION_FIRST + 1;
-    entry = GetListTextOffset(table, first_text + LIST_PAGES - 1);
+    entry = TextTable_Offset(table, first_text + LIST_PAGES - 1);
     word.raw = 0x000A875081106E80;
     MenuText_SetPen(word);
     if (entry != 0) {
@@ -4269,7 +4277,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
         MenuText_SetColor(menu_draw_color);
         MenuText_DrawLineCentered((u16 *)text, 0x17);
     }
-    entry = GetListTextOffset(table, first_text + recollection_pages[recollection_page] - 1);
+    entry = TextTable_Offset(table, first_text + recollection_pages[recollection_page] - 1);
     word.raw = 0x000A875083106FE0;
     MenuText_SetPen(word);
     if (entry != 0) {
@@ -4314,7 +4322,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
 
     if ((menu_buttons & PAD_CROSS) && recollection_state == 1 && menu_input_enabled != 0) {
         Sound_PlayMenu(0);
-        menu_screen_handler = (void *)Menu_UpdateRecollectionPage;
+        menu_screen_handler = Menu_UpdateRecollectionPage;
         context->active_list = recollection_page * LIST_PAGES + rows[recollection_cursor] + MSG_RECOLLECTION_FIRST;
         menu_input_enabled = 0;
     } else if ((menu_buttons & PAD_CIRCLE) && recollection_state == 1 && menu_input_enabled != 0) {
@@ -4366,7 +4374,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
             if (screen_part_alphas[i] < 0.0f) {
                 memset(screen_part_alphas, 0, 0x400);
                 recollection_top = 0;
-                menu_screen_handler = (void *)Menu_OpenMain;
+                menu_screen_handler = Menu_OpenMain;
                 recollection_cursor = 0;
                 recollection_page = 0;
                 if (npc_package_load.done != 0) {
@@ -4436,7 +4444,7 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
         *D2_QWC = 3;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
         *D2_CHCR = D_CHCR_STR;
-        chunk = (PackageChunk *)((char *)npc_package_load.pool_node->buffer + 0x10);
+        chunk = LoadedFile_At(npc_package_load.pool_node->buffer, 0x10);
         for (i = 0; (s32)i < page; i++) {
             chunk = (PackageChunk *)((char *)chunk + chunk->chunk_padding_size + chunk->chunk_data_size);
         }
@@ -4448,31 +4456,31 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
     table = Message_GetFontText(menu_heap);
     word.raw = 0x000A875081106E80;
     number = page * 50 + MSG_RECOLLECTION_FIRST + 1;
-    entry = GetPageTextOffset(table, number + 49);
+    entry = TextTable_Offset(table, number + 49);
     MenuText_SetPen(word);
     if (entry != 0) {
-        MenuText_DrawLineCentered((u16 *)(table + entry), 0x17);
+        MenuText_DrawLineCentered(TextTable_Text(table, entry), 0x17);
     }
     word.raw = 0x000A875083106FE0;
-    entry = GetPageTextOffset(table, number + recollection_pages[page] - 1);
+    entry = TextTable_Offset(table, number + recollection_pages[page] - 1);
     MenuText_SetPen(word);
     if (entry != 0) {
-        MenuText_DrawWrappedLong((u16 *)(table + entry), 0x33);
+        MenuText_DrawWrappedLong(TextTable_Text(table, entry), 0x33);
     }
     word.raw = 0x000AAE607C307F80;
     MenuText_SetPen(word);
     entry = ((s32 *)table)[context->active_list + 1];
     if (entry != 0) {
         if (page == 0) {
-            MenuText_DrawWrappedLong((u16 *)(table + entry), 0x1B);
+            MenuText_DrawWrappedLong(TextTable_Text(table, entry), 0x1B);
         } else {
-            MenuText_DrawWordWrappedLong((u16 *)(table + entry), 0x1B);
+            MenuText_DrawWordWrappedLong(TextTable_Text(table, entry), 0x1B);
         }
     }
     if (menu_buttons & PAD_CIRCLE) {
         Sound_PlayMenu(2);
         context->active_list = 0;
-        menu_screen_handler = (void *)Menu_UpdateRecollection;
+        menu_screen_handler = Menu_UpdateRecollection;
         menu_input_enabled = 1;
     }
 }
@@ -4638,7 +4646,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     texts = Message_GetFontText(menu_heap);
     position.raw = 0x000A875083207080;
     text_index = node->item_number + MSG_ITEM_TEXT_FIRST + 1;
-    text_offset = ((s32 *)texts)[text_index];
+    text_offset = TextTable_Offset(texts, text_index);
     MenuText_SetPen(position);
     if (text_offset != 0) {
         text = texts + text_offset;
@@ -4843,7 +4851,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             if (screen_part_alphas[i] < 0.0f) {
                 memset(screen_part_alphas, 0, 0x400);
                 Menu_BuildItemRings();
-                menu_screen_handler = (void *)Menu_OpenMain;
+                menu_screen_handler = Menu_OpenMain;
                 Menu_ResetLoadBuffers(0);
                 visible_item_state = VISIBLE_ITEM_STATE_FADE_IN;
                 visible_panel_state = DETAIL_PANEL_STATE_FADE_IN;
@@ -4990,7 +4998,7 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
     if (game_status.bit9) {
         context->selection = 0;
         system_menu_line = 0;
-        menu_screen_handler = (void *)Menu_OpenMain;
+        menu_screen_handler = Menu_OpenMain;
     }
 
     switch (system_screen_state) {
@@ -5050,7 +5058,7 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
                     } else if (system_screen_state == SYSTEM_SCREEN_STATE_FADE_OUT_BACK) {
                         context->selection = 0;
                         system_menu_line = 0;
-                        menu_screen_handler = (void *)Menu_OpenMain;
+                        menu_screen_handler = Menu_OpenMain;
                     } else if (system_screen_state == SYSTEM_SCREEN_STATE_FADE_OUT_TO_QUIT) {
                         menu_step++;
                         context->selection = 0;
@@ -5495,15 +5503,15 @@ static void Menu_UpdateCardSlot(void) {
                     pulse_sprite_falling = 0;
                     if (system_screen_state == SYSTEM_SCREEN_STATE_FADE_OUT_FORWARD) {
                         card_screen_state.list_step = MENU_SAVE_LIST_STEP_WAIT_INPUT;
-                        menu_screen_handler = (void *)Menu_UpdateSaveList;
-                        save_list_opener = (void *)Menu_UpdateCardSlot;
+                        menu_screen_handler = Menu_UpdateSaveList;
+                        save_list_opener = Menu_UpdateCardSlot;
                         card_screen_state.selected_save = 0;
                         card_screen_state.confirm_press_state = CONFIRM_PRESS_IDLE;
                         SaveCard_ClearLoadFailed(0);
                         SaveCard_ClearLoadFailed(1);
                     } else if (system_screen_state == SYSTEM_SCREEN_STATE_FADE_OUT_BACK) {
                         if (menu_mode != MENU_MODE_MEMORY_CARD) {
-                            menu_screen_handler = (void *)Menu_UpdateSystem;
+                            menu_screen_handler = Menu_UpdateSystem;
                         } else {
                             menu_step++;
                         }
@@ -5663,7 +5671,7 @@ static void Menu_UpdateSaveList(void) {
         MenuText_SetPen(word);
         MenuText_SetColor(menu_draw_color);
         if (entry != 0) {
-            MenuText_DrawWrapped((u16 *)(table + entry), 0x18);
+            MenuText_DrawWrapped(TextTable_Text(table, entry), 0x18);
         }
         word.f.mid16 += 0x340;
     }
@@ -5783,7 +5791,7 @@ static void Menu_UpdateSaveList(void) {
                     Sound_PlayMenu(0);
                     card_screen_state.list_step = MENU_SAVE_LIST_STEP_LOADING;
                     memset(save_image, 0, 0x20000);
-                    SaveCard_StartLoad(card_screen_state.selected_card, card_screen_state.selected_save, (s32 *)save_image, 0x20000);
+                    SaveCard_StartLoad(card_screen_state.selected_card, card_screen_state.selected_save, save_image, 0x20000);
                 } else {
                     Sound_PlayMenu(2);
                     card_screen_state.list_step = MENU_SAVE_LIST_STEP_WAIT_INPUT;
@@ -5920,14 +5928,14 @@ static void Menu_UpdateSaveList(void) {
                     if (save_list_leave_steps != 2) {
                         card_screen_state.save_loaded = 1;
                         system_screen_state = SYSTEM_SCREEN_STATE_FADE_IN;
-                        menu_screen_handler = (void *)Menu_UpdateCardSlot;
+                        menu_screen_handler = Menu_UpdateCardSlot;
                         save_list_leave_steps = 0;
                         MenuHeap_FreeToMark();
                         menu_step++;
                     }
                 } else if (system_screen_state == SYSTEM_SCREEN_STATE_FADE_OUT_BACK) {
                     card_screen_state.confirm_choice = CONFIRM_CHOICE_NO;
-                    menu_screen_handler = (void *)Menu_UpdateCardSlot;
+                    menu_screen_handler = Menu_UpdateCardSlot;
                     system_screen_state = SYSTEM_SCREEN_STATE_FADE_IN;
                     save_list_leave_steps = 0;
                     SaveCard_StartCheck(0);
@@ -5961,13 +5969,13 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
         if ((menu_buttons & (PAD_LEFT | PAD_RIGHT)) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
             if (sound_mode_change != 1) {
-                sound_mode_before = game_options[0];
+                sound_mode_before = game_options[GAME_OPTION_STEREO];
             }
             sound_mode_change = 1;
-            game_options[0]++;
-            game_options[0] %= 2;
+            game_options[GAME_OPTION_STEREO]++;
+            game_options[GAME_OPTION_STEREO] %= 2;
         } else if (sound_mode_change == 1 && !(menu_buttons & (PAD_LEFT | PAD_RIGHT)) && menu_input_enabled != 0) {
-            if (game_options[0] == 0) {
+            if (game_options[GAME_OPTION_STEREO] == 0) {
                 if (sound_mode_before != 0) {
                     sound_mode_change = 2;
                     SoundDriver_SetMono();
@@ -5985,55 +5993,55 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
         }
         break;
     case OPTION_LINE_MUSIC_VOLUME:
-        if ((menu_buttons & PAD_RIGHT) && game_options[1] < 0x7F && menu_input_enabled != 0) {
-            game_options[1] += 4;
+        if ((menu_buttons & PAD_RIGHT) && game_options[GAME_OPTION_MUSIC_VOLUME] < 0x7F && menu_input_enabled != 0) {
+            game_options[GAME_OPTION_MUSIC_VOLUME] += 4;
             Sound_PlayMenu(1);
-        } else if ((menu_buttons & PAD_LEFT) && game_options[1] != 0 && menu_input_enabled != 0) {
-            game_options[1] -= 4;
+        } else if ((menu_buttons & PAD_LEFT) && game_options[GAME_OPTION_MUSIC_VOLUME] != 0 && menu_input_enabled != 0) {
+            game_options[GAME_OPTION_MUSIC_VOLUME] -= 4;
             Sound_PlayMenu(1);
         }
-        Sound_SetBgmVolume(game_options[1]);
+        Sound_SetBgmVolume(game_options[GAME_OPTION_MUSIC_VOLUME]);
         Sound_SyncBgmLevel();
         break;
     case OPTION_LINE_SOUND_VOLUME:
-        if ((menu_buttons & PAD_RIGHT) && game_options[2] < 0x7F && menu_input_enabled != 0) {
-            game_options[2] += 4;
+        if ((menu_buttons & PAD_RIGHT) && game_options[GAME_OPTION_SOUND_VOLUME] < 0x7F && menu_input_enabled != 0) {
+            game_options[GAME_OPTION_SOUND_VOLUME] += 4;
             Sound_PlayMenu(1);
-        } else if ((menu_buttons & PAD_LEFT) && game_options[2] != 0 && menu_input_enabled != 0) {
-            game_options[2] -= 4;
+        } else if ((menu_buttons & PAD_LEFT) && game_options[GAME_OPTION_SOUND_VOLUME] != 0 && menu_input_enabled != 0) {
+            game_options[GAME_OPTION_SOUND_VOLUME] -= 4;
             Sound_PlayMenu(1);
         }
         break;
-    case 3:
+    case OPTION_LINE_HEAD_BOB:
         if ((menu_buttons & (PAD_LEFT | PAD_RIGHT)) && menu_input_enabled != 0) {
-            game_options[5]++;
+            game_options[GAME_OPTION_HEAD_BOB]++;
             Sound_PlayMenu(1);
         }
-        game_options[5] = (s8)game_options[5] % 2;
+        game_options[GAME_OPTION_HEAD_BOB] = (s8)game_options[GAME_OPTION_HEAD_BOB] % 2;
         break;
-    case 4:
+    case OPTION_LINE_RUMBLE:
         if ((menu_buttons & (PAD_LEFT | PAD_RIGHT)) && menu_input_enabled != 0) {
-            game_options[6]++;
+            game_options[GAME_OPTION_RUMBLE]++;
             Sound_PlayMenu(1);
         }
-        game_options[6] = (s8)game_options[6] % 2;
+        game_options[GAME_OPTION_RUMBLE] = (s8)game_options[GAME_OPTION_RUMBLE] % 2;
         break;
-    case 5:
+    case OPTION_LINE_HUD:
         if ((menu_buttons & (PAD_LEFT | PAD_RIGHT)) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
-            game_options[9]++;
+            game_options[GAME_OPTION_HUD]++;
         }
-        game_options[9] = (s8)game_options[9] % 2;
+        game_options[GAME_OPTION_HUD] = (s8)game_options[GAME_OPTION_HUD] % 2;
         break;
-    case 6:
+    case OPTION_LINE_MENU_BACKDROP:
         if ((menu_buttons & PAD_RIGHT) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
-            game_options[8]++;
+            game_options[GAME_OPTION_MENU_BACKDROP]++;
         } else if ((menu_buttons & PAD_LEFT) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
-            game_options[8]--;
+            game_options[GAME_OPTION_MENU_BACKDROP]--;
         }
-        game_options[8] = (s8)(game_options[8] + 3) % 3;
+        game_options[GAME_OPTION_MENU_BACKDROP] = (s8)(game_options[GAME_OPTION_MENU_BACKDROP] + 3) % 3;
         break;
     }
 
@@ -6089,7 +6097,7 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
                     system_screen_state = SYSTEM_SCREEN_STATE_FADE_IN;
                     context->selection = 0;
                     if (sound_mode_change == 1) {
-                        if (game_options[0] == 0) {
+                        if (game_options[GAME_OPTION_STEREO] == 0) {
                             if (sound_mode_before != 0) {
                                 sound_mode_change = 2;
                                 SoundDriver_SetMono();
@@ -6106,7 +6114,7 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
                         }
                     }
                     if (menu_mode != MENU_MODE_OPTIONS) {
-                        menu_screen_handler = (void *)Menu_UpdateSystem;
+                        menu_screen_handler = Menu_UpdateSystem;
                     } else {
                         menu_step++;
                     }
@@ -6124,7 +6132,7 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
 static const s8 default_button_choices[12] = { 0, 1, 3, 2, 4, 10, 9, 6, 7, 5, 11, 8 };
 /* the twelve button settings, in the order of the button screen's lines */
 static u16 *const button_settings[12] = {
-    &forward_button, &back_button, &turn_left_button, &turn_right_button, &step_left_button, &step_right_button, &attack_button, &magic_button, &action_button, &look_down_button, &look_up_button, (u16 *)&menu_button,
+    &forward_button, &back_button, &turn_left_button, &turn_right_button, &step_left_button, &step_right_button, &attack_button, &magic_button, &action_button, &look_down_button, &look_up_button, &menu_button,
 };
 
 /* Fills both 12-entry tables with the index that goes with each slot's pad button bit. */
@@ -6426,7 +6434,7 @@ static void Menu_UpdateButtonConfig(void) {
                     buttons_leave_steps = 0;
                     system_screen_state = SYSTEM_SCREEN_STATE_FADE_IN;
                     if (menu_mode != MENU_MODE_BUTTONS) {
-                        menu_screen_handler = (void *)Menu_UpdateSystem;
+                        menu_screen_handler = Menu_UpdateSystem;
                     } else {
                         menu_step++;
                     }
@@ -6449,7 +6457,7 @@ static void Menu_OpenCardCheck(void) {
         SaveCard_StartCheck(1);
         SaveCard_Update();
         memset(screen_part_alphas, 0, 0x400);
-        menu_screen_handler = (void *)Menu_UpdateCardCheck;
+        menu_screen_handler = Menu_UpdateCardCheck;
         card_screen_state.check_step = CARD_CHECK_STEP_START;
         system_screen_state = SYSTEM_SCREEN_STATE_FADE_IN;
         pulse_value_falling = 0;
@@ -6685,17 +6693,17 @@ static void Menu_UpdateBrightness(void) {
 
     if ((menu_buttons & PAD_RIGHT) && menu_input_enabled != 0) {
         Sound_PlayMenu(1);
-        if (game_options[10] < 0xFC) {
-            game_options[10] += 4;
+        if (game_options[GAME_OPTION_BRIGHTNESS] < 0xFC) {
+            game_options[GAME_OPTION_BRIGHTNESS] += 4;
         } else {
-            game_options[10] = 0x20;
+            game_options[GAME_OPTION_BRIGHTNESS] = 0x20;
         }
     } else if ((menu_buttons & PAD_LEFT) && menu_input_enabled != 0) {
         Sound_PlayMenu(1);
-        if (game_options[10] > 0x20) {
-            game_options[10] -= 4;
+        if (game_options[GAME_OPTION_BRIGHTNESS] > 0x20) {
+            game_options[GAME_OPTION_BRIGHTNESS] -= 4;
         } else {
-            game_options[10] = 0xFC;
+            game_options[GAME_OPTION_BRIGHTNESS] = 0xFC;
         }
     } else if ((menu_buttons & PAD_CROSS) && menu_input_enabled != 0) {
         Sound_PlayMenu(0);
@@ -6703,11 +6711,11 @@ static void Menu_UpdateBrightness(void) {
         system_screen_state = SYSTEM_SCREEN_STATE_FADE_OUT_FORWARD;
     } else if ((menu_buttons & PAD_CIRCLE) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
-        game_options[10] = brightness_before;
+        game_options[GAME_OPTION_BRIGHTNESS] = brightness_before;
         system_screen_state = SYSTEM_SCREEN_STATE_FADE_OUT_BACK;
         menu_input_enabled = 0;
     }
-    brightness_slider = (game_options[10] - 32.0f) * 402.0f / 220.0f;
+    brightness_slider = (game_options[GAME_OPTION_BRIGHTNESS] - 32.0f) * 402.0f / 220.0f;
     for (i = 0; i < bright_part_count; i++) {
         kind = bright_parts[i].handler_index;
         Menu_SetBlendMode(bright_parts[i].blend_mode);
@@ -6739,7 +6747,7 @@ static void Menu_UpdateBrightness(void) {
                 system_screen_state = SYSTEM_SCREEN_STATE_FADE_IN;
                 pulse_sprite_falling = 0;
                 if (menu_mode != MENU_MODE_BRIGHTNESS) {
-                    menu_screen_handler = (void *)Menu_UpdateSystem;
+                    menu_screen_handler = Menu_UpdateSystem;
                 } else {
                     menu_step++;
                 }
@@ -6755,7 +6763,7 @@ static void Menu_UpdateBrightness(void) {
 static void Menu_WaitForCancel(void) {
     if (Pad_GetReport(0, 0)->pressed & PAD_CIRCLE) {
         if (pad_mode != 0xFF) {
-            menu_screen_handler = (void *)Menu_OpenMain;
+            menu_screen_handler = Menu_OpenMain;
             Sound_PlayMenu(2);
         }
     }
@@ -6773,12 +6781,12 @@ static int Menu_DrawEquipItemText(s32 index) {
     node = (DataNode *)equip_list_shown[0]->item;
     table = Message_GetFontText(menu_heap);
     slot = node->table_row + 1;
-    entry = ((s32 *)table)[index + slot];
+    entry = TextTable_Offset(table, index + slot);
     word.raw = 0x000A87507E9080C0;
     MenuText_SetPen(word);
     if (entry != 0) {
         MenuDraw_SetGsRegister(GS_REG_TEST_1, 0x30000);
-        return MenuText_DrawWrappedLong((u16 *)(table + entry), 0x1B);
+        return MenuText_DrawWrappedLong(TextTable_Text(table, entry), 0x1B);
     }
 }
 
@@ -7063,7 +7071,7 @@ static void Menu_OpenCardSlot(void) {
     SaveCard_ClearLoadFailed(0);
     SaveCard_ClearLoadFailed(1);
     SaveCard_StartCheck(1);
-    menu_screen_handler = (void *)Menu_UpdateCardSlot;
+    menu_screen_handler = Menu_UpdateCardSlot;
 }
 
 /* Tells whether value (an equipment slot's number) differs from the "None" of the slot the given step stands for. */
@@ -7115,7 +7123,7 @@ void Menu_DrawBrightness(s32 level) {
             *(u64 *)&packet[6] = 0x6680288C0;
         }
     } while (0);
-    colour = level | 0x80000000;
+    colour = level | GS_RGBAQ_ALPHA_FULL;
     colour |= (level << 16) | (level << 8);
     (cursor++)->as_int = colour;
     (cursor++)->as_float = 1.0f;
@@ -7244,7 +7252,7 @@ void Menu_ClearEquipSlot(s8 slot) {
             *equipped_item_refs[9] = amulet_entries;
             player_state.equipment[EQUIP_AMULET] = ITEM_WORN_INDEX(ITEM_AMULET_NONE);
             break;
-        case 11:
+        case MENU_ITEM_GROUP_ITEM:
             *equipped_item_refs[10] = shortcut_entries;
             player_state.shortcut_type = SHORTCUT_TYPE_NONE;
             player_state.shortcut = 0;

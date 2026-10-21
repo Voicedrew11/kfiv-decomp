@@ -17,6 +17,16 @@ extern s8 menu_backdrop_option[];
 extern s8 hud_option[];
 extern u8 brightness_option[];
 extern u8 game_options[0x10];  /* the options block, a byte per setting */
+/* game_options indices */
+#define GAME_OPTION_STEREO          0
+#define GAME_OPTION_MUSIC_VOLUME    1
+#define GAME_OPTION_SOUND_VOLUME    2
+#define GAME_OPTION_THIRD_BAR       3
+#define GAME_OPTION_HEAD_BOB        5
+#define GAME_OPTION_RUMBLE          6
+#define GAME_OPTION_MENU_BACKDROP   8
+#define GAME_OPTION_HUD             9
+#define GAME_OPTION_BRIGHTNESS      10
 extern u8 game_option_third_bar[];
 extern u8 ocean_shore_icon_of_fire_placed[];
 extern u8 guardians_room_water_purified[];

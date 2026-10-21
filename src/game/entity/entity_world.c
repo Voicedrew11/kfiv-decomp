@@ -220,7 +220,7 @@ void Entity_ClearMapSlot(int array_index) {
     memset(entity_pool[array_index], 0, sizeof(entity_pool[array_index]));
     for (i = 0; i < 0x80; i++) {
         entity = &entity_pool[array_index ^ 1][i];
-        if (entity->map_record != NULL && ((u8)(((MapRecord *)entity->map_record)->record_flags >> 27) & 1) == array_index) {
+        if (entity->map_record != NULL && MAP_RECORD_MAP(MAP_RECORD(entity)) == array_index) {
             entity->map_record = NULL;
         }
     }
@@ -251,7 +251,7 @@ void Entity_UpdateAll(void) {
     Entity *entity;
     EntitySpawnInfo *spawn_info;
 
-    if (suspended_updates[0] & 4) {
+    if (suspended_updates[0] & UPDATE_HOLD_ENTITIES) {
         return;
     }
     for (entity = active_entities_head; entity != NULL; entity = entity->next) {
@@ -353,12 +353,12 @@ void Entity_UpdateAll(void) {
         if ((s8)SPAWN_FLAGS(spawn_info)->bytes[2] != -1 || entity->map_record == NULL) {
             ENTITY_MODEL(entity)->fog_block = &map_draw_state.fog_blocks[entity->group_id][(s8)SPAWN_FLAGS(spawn_info)->bytes[2]];
         } else {
-            ENTITY_MODEL(entity)->fog_block = &map_draw_state.fog_blocks[(u8)(MAP_RECORD(entity)->record_flags >> 27) & 1][MAP_RECORD(entity)->draw_block_index];
+            ENTITY_MODEL(entity)->fog_block = &map_draw_state.fog_blocks[MAP_RECORD_MAP(MAP_RECORD(entity))][MAP_RECORD(entity)->draw_block_index];
         }
         if ((s8)SPAWN_FLAGS(spawn_info)->bytes[3] != -1 || entity->map_record == NULL) {
             ENTITY_MODEL(entity)->light_block = (s32)&map_draw_state.light_blocks[entity->group_id][(s8)SPAWN_FLAGS(spawn_info)->bytes[3]];
         } else {
-            ENTITY_MODEL(entity)->light_block = (s32)&map_draw_state.light_blocks[(u8)(MAP_RECORD(entity)->record_flags >> 27) & 1][MAP_RECORD(entity)->light_block_index];
+            ENTITY_MODEL(entity)->light_block = (s32)&map_draw_state.light_blocks[MAP_RECORD_MAP(MAP_RECORD(entity))][MAP_RECORD(entity)->light_block_index];
         }
         Model_UpdateSkinnedBonePoints(ENTITY_MODEL(entity));
     }
@@ -446,7 +446,7 @@ void Entity_DrawAll(int list) {
                     }
                 }
                 LinkedPoint_FindHitsForModel(ENTITY_MODEL(entity));
-                if (ENTITY_MODEL(entity)->alpha < 128.0f || (ENTITY_MODEL(entity)->model_flags & 0x200) || entity->spawn_info->type_id == 0x10) {
+                if (ENTITY_MODEL(entity)->alpha < 128.0f || (ENTITY_MODEL(entity)->model_flags & MODEL_FLAG_DRAW_LIST) || entity->spawn_info->type_id == 0x10) {
                     DrawList_Add(ENTITY_MODEL(entity), 0, list);
                 } else {
                     ModelTexture_SendForModel(ENTITY_MODEL(entity));

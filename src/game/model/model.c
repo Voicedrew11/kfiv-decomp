@@ -131,7 +131,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
     s32 i;
     s32 j;
 
-    model->model_flags |= 0x4000;
+    model->model_flags |= MODEL_FLAG_ALPHA_DIRECT;
     cursor = (char *)*file_cursor;
     memory_base = (ModelPart *)*memory;
     model->file = (ModelFile *)cursor;
@@ -150,12 +150,12 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
         part->data_count = file_part->data_count;
         part->data_addr = *file_cursor + file_part->data_offset;
         part->parent_index = file_part->parent;
-        MODEL_PART_FLAG_BITS(part)->bit41 = TRUE;
+        MODEL_PART_FLAG_BITS(part)->opaque = TRUE;
         // match: retail keeps only the empty loop; a walk whose result nothing uses is deleted like this one
         data = (ModelPartData *)(u32)part->data_addr;
         for (j = 0; j < file_part->data_count; j++) {
             length = data->length;
-            data = (ModelPartData *)((char *)data + length * 16);
+            data = MODEL_PART_DATA_SKIP(data, length);
         }
         part->position[0] = part->position[1] = part->position[2] = 0.0f;
         part->position[3] = 1.0f;
@@ -169,7 +169,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
     model->draw_parts = Model_DrawSkinned;
     *file_cursor += file->size;
     model->update_bone_points = Model_UpdateSkinnedBonePoints;
-    model->get_point = (void *(*)(void *, int))Model_GetSkinnedBonePoint;
+    model->get_point = Model_GetSkinnedBonePoint;
     first = TRUE;
     model->draw_header_vector[0] = 0;
     model->draw_header_vector[1] = 0;
@@ -188,7 +188,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
                 first = FALSE;
                 data->texture_word.clut_load_mode = GS_TEX0_CLD_LOAD_TO_CBP0;
             }
-            data = (ModelPartData *)((char *)data + length * 16);
+            data = MODEL_PART_DATA_SKIP(data, length);
         }
     }
 }
@@ -269,10 +269,10 @@ void Model_DrawSkinned(ModelInstance *model) {
     light_out = packet;
     light_out_b = packet + 0x10;
     for (i = 0; i < model->hit_count; i++) {
-        *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
-        *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
+        *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].position;
+        *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].target;
         light_out_b += 4;
-        ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
+        ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].progress_scale;
         light_out += 4;
     }
     packet += 0x20;
@@ -331,7 +331,7 @@ void Model_DrawSkinned(ModelInstance *model) {
             *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
             *packet = (u32)data + 0x10;
             packet += 3;
-            data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+            data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
         }
     }
     packet = Packet_Alloc(1); // match: packet named after packet_start's last use, or the stores go through packet_start
@@ -406,10 +406,10 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
     light_out = packet;
     light_out_b = packet + 0x10;
     for (i = 0; i < model->hit_count; i++) {
-        *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
-        *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
+        *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].position;
+        *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].target;
         light_out_b += 4;
-        ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
+        ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].progress_scale;
         light_out += 4;
     }
     packet += 0x20;
@@ -437,7 +437,7 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
         Packet_EndGsRegisters();
         part = model->parts;
         for (i = 0; i < model->part_count; i++, part++) {
-            if (((u8)(MODEL_PART_FLAG_WORD(part) >> 41) & 1) == pass) {
+            if (((u8)(MODEL_PART_FLAG_WORD(part) >> MODEL_PART_OPAQUE_BIT) & 1) == pass) {
                 continue;
             }
             if (MODEL_PART_FLAG_WORD(part) & MODEL_PART_BIT40) {
@@ -483,7 +483,7 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
                 *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
-                data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+                data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
             }
             packet = Packet_Alloc(1); // match: packet named after packet_start's last use, or the stores go through packet_start
             Packet_AppendToChain(packet_start, packet);
@@ -520,12 +520,12 @@ void Model_UpdateSkinnedBonePoints(ModelInstance *actor) {
 }
 
 /* Where point `index` of a model is: one of its 32 bone points, or its position for any other index. */
-char *Model_GetSkinnedBonePoint(char *model, u32 index) {
+f32 *Model_GetSkinnedBonePoint(ModelInstance *model, int index) {
     if (model != NULL) {
-        if (index < 0x20U) {
-            return (char *)&((ModelInstance *)model)->bone_positions[index];
+        if ((u32)index < 32) {
+            return &model->bone_positions[index].x;
         }
-        return (char *)&((ModelInstance *)model)->position;
+        return &model->position.x;
     }
     return NULL;
 }
@@ -724,7 +724,7 @@ void Model_RestoreGsWordsAndUvs(ModelInstance *model) {
 
 /* whether the primitive of a GIF tag is alpha blended, from the tag's high word */
 static inline s32 is_blended(u64 tag_high) {
-    return (tag_high >> 21) & 1;
+    return (tag_high >> GIF_TAG_PRIM_ABE_BIT) & 1;
 }
 
 /* Set a model instance up from a model file whose parts come with their pose: the parts are
@@ -766,7 +766,7 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
             if (!blended || ((GsAlphaReg *)&data->blend)->f.a_source != 0 || ((GsAlphaReg *)&data->blend)->f.b_source != 2 || ((GsAlphaReg *)&data->blend)->f.d_source != 1) {
                 opaque = TRUE;
             }
-            MODEL_PART_FLAG_BITS(part)->bit41 = opaque;
+            MODEL_PART_FLAG_BITS(part)->opaque = opaque;
             if (first) {
                 count = file_part->data_count;
                 data = (ModelPartData *)(u32)part->data_addr;
@@ -777,7 +777,7 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
                         first = FALSE;
                         break;
                     }
-                    data = (ModelPartData *)((char *)data + (length + 1) * 16);
+                    data = MODEL_PART_DATA_SKIP(data, length + 1);
                 }
             }
             part->position[0] = file_part->position[0];
@@ -807,7 +807,7 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
     model->draw_parts = Model_DrawPosed;
     *file_cursor += file->size;
     model->update_bone_points = Model_UpdateBonePoints;
-    model->get_point = (void *(*)(void *, int))Model_GetBonePoint;
+    model->get_point = Model_GetBonePoint;
 }
 
 /* Draws a model (ModelInstance.draw_parts of the models Model_SetUpPosed sets up): queues a packet with
@@ -830,7 +830,7 @@ void Model_DrawPosed(ModelInstance *model) {
 
     if (model->parts != NULL && model->part_count != 0) {
         MODEL_BUILD_DRAW_MATRICES(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b);
-        if (model->model_flags & 0x800) {
+        if (model->model_flags & MODEL_FLAG_RECORD_SENT) {
             packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
             packet_start = packet = Packet_Alloc(0x1C);
@@ -866,14 +866,14 @@ void Model_DrawPosed(ModelInstance *model) {
         light_out = packet;
         light_out_b = packet + 0x10;
         for (i = 0; i < model->hit_count; i++) {
-            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
-            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
+            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].position;
+            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].target;
             light_out_b += 4;
-            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
+            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].progress_scale;
             light_out += 4;
         }
         packet += 0x20;
-        if (model->model_flags & 0x800) {
+        if (model->model_flags & MODEL_FLAG_RECORD_SENT) {
             *packet++ = 0x10000004;
             *packet++ = 0;
             *packet++ = 0;
@@ -905,7 +905,7 @@ void Model_DrawPosed(ModelInstance *model) {
                 *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
-                data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+                data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
             }
         }
         packet = Packet_Alloc(1);
@@ -932,7 +932,7 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
     if (model->parts != NULL && model->part_count != 0) {
         matrix_b_ptr = matrix_b;
         MODEL_BUILD_DRAW_MATRICES(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b_ptr);
-        if (model->model_flags & 0x800) {
+        if (model->model_flags & MODEL_FLAG_RECORD_SENT) {
             packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
             packet_start = packet = Packet_Alloc(0x1C);
@@ -968,14 +968,14 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
         light_out = packet;
         light_out_b = packet + 0x10;
         for (i = 0; i < model->hit_count; i++) {
-            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
-            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
+            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].position;
+            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].target;
             light_out_b += 4;
-            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
+            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].progress_scale;
             light_out += 4;
         }
         packet += 0x20;
-        if (model->model_flags & 0x800) {
+        if (model->model_flags & MODEL_FLAG_RECORD_SENT) {
             *packet++ = 0x10000004;
             *packet++ = 0;
             *packet++ = 0;
@@ -1009,7 +1009,7 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
                 *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
-                data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+                data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
             }
         }
         packet = Packet_Alloc(1);
@@ -1035,7 +1035,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
 
     if (model->parts != NULL && model->part_count != 0) {
         MODEL_BUILD_DRAW_MATRICES(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b);
-        if (model->model_flags & 0x800) {
+        if (model->model_flags & MODEL_FLAG_RECORD_SENT) {
             packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
             packet_start = packet = Packet_Alloc(0x1C);
@@ -1071,14 +1071,14 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
         light_out = packet;
         light_out_b = packet + 0x10;
         for (i = 0; i < model->hit_count; i++) {
-            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
-            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
+            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].position;
+            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].target;
             light_out_b += 4;
-            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
+            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].progress_scale;
             light_out += 4;
         }
         packet += 0x20;
-        if (model->model_flags & 0x800) {
+        if (model->model_flags & MODEL_FLAG_RECORD_SENT) {
             *packet++ = 0x10000004;
             *packet++ = 0;
             *packet++ = 0;
@@ -1122,7 +1122,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
                 *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
-                data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+                data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
             }
             Packet_AppendToChain(packet_start, packet);
         }
@@ -1148,7 +1148,7 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
     if (model->parts != NULL && model->part_count != 0) {
         MODEL_BUILD_DRAW_MATRICES(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b);
         /* the packet below is 0x1C quadwords either way: with the flag set the last 5 are never written */
-        if (model->model_flags & 0x800) {
+        if (model->model_flags & MODEL_FLAG_RECORD_SENT) {
             packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
             packet_start = packet = Packet_Alloc(0x1C);
@@ -1184,10 +1184,10 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
         light_out = packet;
         light_out_b = packet + 0x10;
         for (i = 0; i < model->hit_count; i++) {
-            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk00;
-            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].unk10;
+            *(u_long128 *)light_out = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].position;
+            *(u_long128 *)light_out_b = *(u_long128 *)LINKED_POINT_LIGHTS[model->hit_handles[i]].target;
             light_out_b += 4;
-            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].unk24;
+            ((f32 *)light_out)[3] = LINKED_POINT_LIGHTS[model->hit_handles[i]].progress_scale;
             light_out += 4;
         }
         Packet_AppendToChain(packet_start, Packet_Alloc(1)); /* the packet ends where the next one would start */
@@ -1238,7 +1238,7 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
                 *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
-                data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+                data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
             }
             Packet_AppendToChain(packet_start, packet);
         }
@@ -1275,11 +1275,11 @@ void Model_UpdateBonePoints(ModelInstance *model) {
 }
 
 /* Where bone `index` of a model is; the model's own position when it has no bones or there is no such bone. */
-Vector4 *Model_GetBonePoint(ModelInstance *model, s32 index) {
+f32 *Model_GetBonePoint(ModelInstance *model, int index) {
     if (model->bone_anchors != NULL && index >= 0 && index < 32) {
-        return &model->bone_positions[index];
+        return &model->bone_positions[index].x;
     }
-    return &model->position;
+    return &model->position.x;
 }
 
 /* Rewrites the PRIM field (bits 15-25 of the GIF tag's high word at +0x74) of every data block of every part:
@@ -1347,7 +1347,7 @@ void Model_SetTexture(ModelInstance *model, u64 unk40, s64 unk30) {
                 ((ModelPartDataBits30 *)&block->tex0)->clut_load_mode = GS_TEX0_CLD_LOAD_TO_CBP0;
                 first = FALSE;
             }
-            data = (ModelPartData *)((char *)block + (length + 1) * 16);
+            data = MODEL_PART_DATA_SKIP(block, length + 1);
         }
     }
 }
@@ -1386,7 +1386,7 @@ void Model_SetVu1Program(ModelInstance *model, s32 value) {
     for (i = 0; i < model->part_count; i++, part++) {
         data = (ModelPartData *)(u32)part->data_addr;
         last_qword = (u32 *)((char *)data + data->length * 16);
-        last_qword[3] = value | 0x15000000;
+        last_qword[3] = value | VIF_CODE_MSCALF;
     }
 }
 

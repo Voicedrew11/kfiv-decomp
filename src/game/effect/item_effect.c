@@ -186,12 +186,12 @@ void ItemEffect_Start(int kind, int marked) {
     item_effect_step = 0;
     if (kind >= 0x4D) {
         model = item_effect_model_b;
-        model->texture_slot = 2;
+        model->texture_slot = TEXTURE_SLOT_ITEM;
         model->texture_data = (int)item_effect_textures[kind - 0x4C];
         item_effect_model = model;
     } else {
         model = item_effect_model_a;
-        model->texture_slot = 2;
+        model->texture_slot = TEXTURE_SLOT_ITEM;
         model->texture_data = (int)item_effect_textures[kind - 0x46];
         item_effect_model = model;
     }
@@ -201,7 +201,7 @@ void ItemEffect_Start(int kind, int marked) {
     ModelMotion_Step(item_effect_model);
     item_effect_brightness = 0x80;
     Model_SetVertexColour(item_effect_model, 0x80, 0x80, 0x80, item_effect_brightness);
-    Vector_Scale((float *)&item_effect_model->position, view_ray_status.view_direction, 75.0f);
+    Vector_Scale(&item_effect_model->position, view_ray_status.view_direction, 75.0f);
     Vector_Add(&item_effect_model->position, &item_effect_model->position, view_ray_status.view_origin);
     Vector_Copy(&item_effect_model->rotation, &player_state.rotation);
     item_effect_model->scale_x = item_effect_model->scale_y = item_effect_model->scale_z = 1.0f;
@@ -210,9 +210,9 @@ void ItemEffect_Start(int kind, int marked) {
     item_effect_model->fog_block = map_draw_slot_blocks[current_map_slot];
     for (i = 0; i < item_effect_model->part_count; i++) {
         if (i == 0) {
-            MODEL_PART_FLAG_BITS(&item_effect_model->parts[0])->bit41 = TRUE;
+            MODEL_PART_FLAG_BITS(&item_effect_model->parts[0])->opaque = TRUE;
         } else {
-            MODEL_PART_FLAG_BITS(&item_effect_model->parts[i])->bit41 = FALSE;
+            MODEL_PART_FLAG_BITS(&item_effect_model->parts[i])->opaque = FALSE;
         }
     }
 }

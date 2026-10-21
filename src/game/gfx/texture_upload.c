@@ -9,6 +9,8 @@
 #include <eekernel.h>
 #include <string.h>
 
+/* quadwords after the end tag of the TEXFLUSH chain: a GIF tag and the A+D write */
+#define TEXFLUSH_TAG_QWC 2
 #define TEX0_BITS(header) ((TextureTex0Bits *)&(header)->tex0)
 
 static u32 texflush_packet[0xC];    /* 0x1DFAF80 where Texture_SendTexFlush builds its DMA packet */
@@ -46,20 +48,20 @@ static void Texture_LoadTm2(TextureHeader *header) {
     height = 1 << TEX0_BITS(header)->height_log2;
     sceGsSetDefLoadImage(&load_image, (u16)TEX0_BITS(header)->base_pointer, buffer_width, image_format, 0, 0, width, height);
     FlushCache(0);
-    sceGsExecLoadImage(&load_image, (char *)header + sizeof(TextureHeader));
+    sceGsExecLoadImage(&load_image, header->image);
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
     pixel_format = TEX0_BITS(header)->pixel_format;
     if (pixel_format == GS_PSM_T8 || pixel_format == GS_PSM_T8H) {
         sceGsSetDefLoadImage(&load_image, (u16)TEX0_BITS(header)->clut_pointer, 1, (u16)TEX0_BITS(header)->clut_format, 0, 0, 16, 16);
         FlushCache(0);
-        sceGsExecLoadImage(&load_image, (char *)header + (header->image_size + sizeof(TextureHeader)));
+        sceGsExecLoadImage(&load_image, header->image + header->image_size);
         while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
         }
     } else if (pixel_format == GS_PSM_T4 || pixel_format == GS_PSM_T4HL || pixel_format == GS_PSM_T4HH) {
         sceGsSetDefLoadImage(&load_image, (u16)TEX0_BITS(header)->clut_pointer, 1, (u16)TEX0_BITS(header)->clut_format, 0, 0, 8, 2);
         FlushCache(0);
-        sceGsExecLoadImage(&load_image, (char *)header + (header->image_size + sizeof(TextureHeader)));
+        sceGsExecLoadImage(&load_image, header->image + header->image_size);
         while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
         }
     }
@@ -114,7 +116,7 @@ static void Texture_BuildPacketWrapper(char **texture, char **packet) {
    leaves *packet after the data. Does nothing for a pixel format it does not know. */
 static void Texture_BuildPacket(char **texture, char **packet) {
     TextureHeader *header = (TextureHeader *)*texture;
-    char *cursor = *packet;
+    PacketCursor cursor;
     u64 *tags;
     char *bytes;
     u16 width;
@@ -136,6 +138,8 @@ static void Texture_BuildPacket(char **texture, char **packet) {
     u32 *tex0_words;
     u32 tex0_low;
     u32 tex0_high;
+
+    cursor.byte = *packet;
 
     width = 1 << TEX0_BITS(header)->width_log2;
     height = 1 << TEX0_BITS(header)->height_log2;
@@ -190,36 +194,36 @@ static void Texture_BuildPacket(char **texture, char **packet) {
     } else {
         total = quadwords + 6;
     }
-    // match: one cursor stepped through casts gives the separate increments; the CLUT part below is indexed
-    *((u32 *)cursor)++ = (total + 1) | DMA_TAG_ID_END;
-    *((u32 *)cursor)++ = 0;
-    *((u32 *)cursor)++ = 0;
-    *((u32 *)cursor)++ = 0;
-    *((u32 *)cursor)++ = 0;
-    *((u32 *)cursor)++ = 0;
-    *((u32 *)cursor)++ = 0;
-    *((u32 *)cursor)++ = total | 0x51000000;
-    *((u64 *)cursor)++ = 0x1000000000000004;
-    *((u64 *)cursor)++ = 0xE;
+    // match: one cursor stepped per store gives the separate increments; the CLUT part below is indexed
+    *cursor.word++ = (total + 1) | DMA_TAG_ID_END;
+    *cursor.word++ = 0;
+    *cursor.word++ = 0;
+    *cursor.word++ = 0;
+    *cursor.word++ = 0;
+    *cursor.word++ = 0;
+    *cursor.word++ = 0;
+    *cursor.word++ = total | VIF_CODE_DIRECTHL;
+    *cursor.dword++ = 0x1000000000000004;
+    *cursor.dword++ = 0xE;
     base_pointer = TEX0_BITS(header)->base_pointer;
     buffer_width = TEX0_BITS(header)->buffer_width;
     image_format = TEX0_BITS(header)->pixel_format;
-    *((u64 *)cursor)++ = ((u64)base_pointer << 32) | ((u64)buffer_width << 48) | ((u64)image_format << 56);
-    *((u64 *)cursor)++ = 0x50;
-    *((u64 *)cursor)++ = 0;
-    *((u64 *)cursor)++ = 0x51;
-    *((u64 *)cursor)++ = width | ((u64)height << 32);
-    *((u64 *)cursor)++ = 0x52;
-    *((u64 *)cursor)++ = 0;
-    *((u64 *)cursor)++ = 0x53;
+    *cursor.dword++ = ((u64)base_pointer << 32) | ((u64)buffer_width << 48) | ((u64)image_format << 56);
+    *cursor.dword++ = 0x50;
+    *cursor.dword++ = 0;
+    *cursor.dword++ = 0x51;
+    *cursor.dword++ = width | ((u64)height << 32);
+    *cursor.dword++ = 0x52;
+    *cursor.dword++ = 0;
+    *cursor.dword++ = 0x53;
     if (has_clut) {
-        *((u64 *)cursor)++ = quadwords | (0x8000L << 44);
+        *cursor.dword++ = quadwords | (0x8000L << 44);
     } else {
-        *((u64 *)cursor)++ = (quadwords | GIF_TAG_EOP) | (0x8000L << 44);
+        *cursor.dword++ = (quadwords | GIF_TAG_EOP) | (0x8000L << 44);
     }
-    *((u64 *)cursor)++ = 0;
-    bytes = cursor;
-    memcpy(bytes, (char *)header + sizeof(TextureHeader), size);
+    *cursor.dword++ = 0;
+    bytes = cursor.byte;
+    memcpy(bytes, header->image, size);
     bytes += size;
     for (i = 0; i < quadwords * 16 - size; i++) {
         *bytes++ = 0;
@@ -268,8 +272,8 @@ static void Texture_BuildPacket(char **texture, char **packet) {
 void Texture_SendTexFlush(void) {
     u32 *cursor;
 
-    cursor = (u32 *)texflush_packet;
-    *cursor++ = DMA_TAG_ID_END | 2;
+    cursor = texflush_packet;
+    *cursor++ = DMA_TAG_ID_END | TEXFLUSH_TAG_QWC;
     *cursor++ = 0;
     *cursor++ = 0;
     *cursor++ = 0;

@@ -3,6 +3,7 @@
 #define KF_PACKET_H
 
 #include "common.h"
+#include "gfx/gs.h"
 
 /* the GS XYZ2 register: 12.4 fixed-point x and y, 32-bit z */
 typedef struct {
@@ -60,6 +61,8 @@ typedef struct {
 } SpritePacketColorView;
 
 #define SPRITE_PACKET_COLOR_VIEW(packet) ((SpritePacketColorView *)(packet))
+
+#define DMA_TAG_CNT         0x10000000 /* DMA tag ID 1 (CNT, bits 28-30): the quadwords that follow the tag */
 
 /* one quadword DMA tag at the head of a packet chain */
 typedef struct {

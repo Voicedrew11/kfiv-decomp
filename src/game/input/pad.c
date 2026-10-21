@@ -11,7 +11,11 @@
 #define PAD_REQSTATE_FAILED         1
 
 /* scePadInfoMode(1): controller type */
+#define PAD_TYPE_NEGCON             2
+#define PAD_TYPE_KONAMI_GUN         3
 #define PAD_TYPE_DIGITAL            4
+#define PAD_TYPE_ANALOG_JOYSTICK    5
+#define PAD_TYPE_NAMCO_GUN          6
 #define PAD_TYPE_DUALSHOCK          7
 
 /* PadSlot.phase: step of the set-up state machine in Pad_Update */
@@ -164,10 +168,10 @@ void Pad_Update(void) {
                         case PAD_TYPE_DUALSHOCK:
                             pad->phase = PAD_PHASE_QUERY_DUALSHOCK;
                             break;
-                        case 2:
-                        case 3:
-                        case 5:
-                        case 6:
+                        case PAD_TYPE_NEGCON:
+                        case PAD_TYPE_KONAMI_GUN:
+                        case PAD_TYPE_ANALOG_JOYSTICK:
+                        case PAD_TYPE_NAMCO_GUN:
                         case 0x100:
                         case 0x300:
                             break;

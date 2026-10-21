@@ -26,7 +26,6 @@
 #define ANCIENT_KING_DEATH_STEP_FADE_OUT        5   /* fades the model out over action_timer, then frees it */
 #define ANCIENT_KING_RESPAWN_STEP_END           3   /* waits for the motion to end, then ends the action */
 
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void AncientKing_Animate(Entity *entity);
 static void AncientKing_Think(Entity *entity, s32 run_now);
@@ -48,15 +47,15 @@ static void AncientKing_RespawnTwoOthers(Entity *entity);
 /* Set-up of a type 61 entity: clears its work area and installs the type's handlers. */
 void AncientKing_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     s32 i;
     Entity *other;
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->ai_state;
+        u8 *dest = ENTITY_WORK_BYTES(entity);
 
         dest[i] = 0;
     }
@@ -338,10 +337,10 @@ static void AncientKing_RespawnOthers(Entity *entity) {
         break;
     case ACTION_STEP_PLAY:
         if (((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame == entity->params->far_distance) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->near_distance, entity->params->type_param_2, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, entity->params->near_distance, entity->params->type_param_2, entity->model->rotation);
         }
         if (entity->params->type_param_1 < ((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->type_param_0, entity->params->type_param_2, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, entity->params->type_param_0, entity->params->type_param_2, entity->model->rotation);
             AncientKing_RespawnTwoOthers(entity);
             entity->action_step++;
         }
@@ -666,7 +665,7 @@ static void AncientKing_RangedAttack1(Entity *entity) {
         for (i = 0; i < 4; i++) {
             if (entity->ailment_4_frames == 0 || unk3D8->ignores_ailment_4 != 0) {
                 if (elapsed < launch_frames.frames[i] && entity->model->level_tables->frame >= launch_frames.frames[i]) {
-                    source = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->type_param_2);
+                    source = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), entity->params->type_param_2);
                     if (source != NULL) {
                         delta_x = source[0] - entity->model->position[0];
                         delta_z = source[2] - entity->model->position[2];
@@ -714,10 +713,10 @@ static void AncientKing_RespawnOthersAfterSwitch(Entity *entity) {
         break;
     case ACTION_STEP_PLAY:
         if (((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame == entity->params->far_distance) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->near_distance, entity->params->type_param_2, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, entity->params->near_distance, entity->params->type_param_2, entity->model->rotation);
         }
         if (entity->params->type_param_1 < entity->model->level_tables->frame) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->type_param_0, entity->params->type_param_2, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, entity->params->type_param_0, entity->params->type_param_2, entity->model->rotation);
             AncientKing_RespawnTwoOthers(entity);
             entity->action_step++;
         }

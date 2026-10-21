@@ -130,7 +130,7 @@ static s32 SaveCard_Fail(void);
 static void SaveCard_SetFailureMessage(void);
 static int SaveCard_FindFile(char *name, int size);
 static int SaveCard_VerifySaves(void);
-static void SaveCard_FillSaveInfo(void *unused_arg0, s32 index);
+static void SaveCard_FillSaveInfo(s32 unused_arg0, s32 index);
 
 /* Starts the memory card library and clears both task records. Returns -1 when the library does not start. */
 s32 SaveCard_Init(void) {
@@ -181,7 +181,7 @@ s32 SaveCard_Open(void) {
     card_records[1].icon_data_backup = icon_file;
     memset(dir_entries, 0, 0x2C0);
     memset(icon_sys, 0, 0x3C4);
-    memset((void *)save_infos, 0, 0x480);
+    memset(save_infos, 0, 0x480);
     card = card_records;
     do {
         SaveCard_ResetRecord(card);
@@ -318,7 +318,7 @@ static s32 SaveCard_StepCheck(void) {
             task->step = CARD_CHECK_STEP_CARD1_PROBE;
             break;
         case MC_STATUS_UNFORMATTED:
-        case 4:
+        case MC_STATUS_NEW_UNFORMATTED:
         case 0x15:
             if (++task->retries == 5) {
                 card->present = 1;
@@ -332,7 +332,7 @@ static s32 SaveCard_StepCheck(void) {
             }
             break;
         case MC_STATUS_OK:
-        case 2:
+        case MC_STATUS_NEW_CARD:
             status = Mc_GetCheckResult(index, 0);
             if (status <= 0) {
                 if (status >= -2) {
@@ -715,7 +715,7 @@ static s32 SaveCard_StepSave(void) {
         }
         break;
     case CARD_SAVE_STEP_FILL_LIST:
-        SaveCard_FillSaveInfo((void *)task->card_index, file);
+        SaveCard_FillSaveInfo(task->card_index, file);
         sprintf(save_path, "%s%s%s%s", "/BASLUS-20318", "S", "/BASLUS-20318", "S");
         task->step++;
     case CARD_SAVE_STEP_WRITE_LIST:
@@ -767,7 +767,7 @@ static s32 SaveCard_StepSave(void) {
 }
 
 /* Starts reading save number save_index from a card into data, unless a task is running. */
-s32 SaveCard_StartLoad(s32 card, s32 file, s32 *data, s32 size) {
+s32 SaveCard_StartLoad(s32 card, s32 file, void *data, s32 size) {
     CardRecord *records = card_records;
     CardTask *task = &card_task;
     CardRecord *chosen = &card_records[card];
@@ -986,7 +986,7 @@ static s32 SaveCard_StepRescan(void) {
             task->step = CARD_RESCAN_STEP_CARD1_PROBE;
             break;
         case MC_STATUS_UNFORMATTED:
-        case 4:
+        case MC_STATUS_NEW_UNFORMATTED:
             if (++task->retries == 5) {
                 card->present = 1;
                 card->message = 3;
@@ -999,7 +999,7 @@ static s32 SaveCard_StepRescan(void) {
             }
             break;
         case MC_STATUS_OK:
-        case 2:
+        case MC_STATUS_NEW_CARD:
             card->formatted = card->present = 1;
             card->has_save_folder = 0;
             task->step++;
@@ -1384,7 +1384,7 @@ static int SaveCard_FindFile(char *name, int size) {
     result = 0;
     found = 0;
     for (i = 0; i < 11; i++) {
-        if (strcmp((char *)entry->EntryName, name) == 0) {
+        if (strcmp(entry->EntryName, name) == 0) {
             found = 1;
             if (size > 0) {
                 result = (entry->FileSizeByte == size) ? 0 : -1;
@@ -1430,7 +1430,7 @@ static int SaveCard_VerifySaves(void) {
 /* Writes what the save list shows of the game being saved into the list record of save number index:
    save_area_name_id[0], then the player's experience, level, hit and magic points with their maximums, two more
    words and gold, and the play time. */
-static void SaveCard_FillSaveInfo(void *unused_arg0, s32 index) {
+static void SaveCard_FillSaveInfo(s32 unused_arg0, s32 index) {
     SaveInfo *info;
 
     if (save_infos == NULL) {

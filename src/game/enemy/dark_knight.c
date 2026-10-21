@@ -42,15 +42,15 @@ static s32 DarkKnight_PickAttack(Entity *entity);
 /* Set-up of a type 64 entity: clears its work area and installs the type's handlers. */
 void DarkKnight_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
-    // match: the three fills name their target inside the loop; unkBC and unkC0 above are
+    // match: the three fills name their target inside the loop; choice_weights and attack_weights above are
     // otherwise unused but retail computes them up front and copies them before each loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *work_area = (u8 *)&entity->ai_state;
+        u8 *work_area = ENTITY_WORK_BYTES(entity);
 
         work_area[i] = 0;
     }
@@ -121,35 +121,35 @@ static void DarkKnight_Think(Entity *entity, s32 run_now) {
     ai_state->pose_blend_weight = 0.5f;
     first_aim = aims->first_aim;
     second_aim = aims->second_aim;
-    from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x1E);
-    tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x1C);
+    from = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0x1E);
+    tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0x1C);
     delta[0] = tip[0] - from[0];
     delta[1] = tip[1] - from[1];
     delta[2] = tip[2] - from[2];
     first_aim[0] = atan2f(-delta[1], sqrtf(delta[0] * delta[0] + delta[2] * delta[2]));
     first_aim[1] = atan2f(delta[0], delta[2]);
     first_aim[2] = 0.0f;
-    from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x1F);
-    tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x1D);
+    from = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0x1F);
+    tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0x1D);
     delta[0] = tip[0] - from[0];
     delta[1] = tip[1] - from[1];
     delta[2] = tip[2] - from[2];
     second_aim[0] = atan2f(-delta[1], sqrtf(delta[0] * delta[0] + delta[2] * delta[2]));
     second_aim[1] = atan2f(delta[0], delta[2]);
     second_aim[2] = 0.0f;
-    EntityEvent_StartEffectAtPoint((char **)entity, 0x3D7, 0x1E, (int)first_aim);
-    EntityEvent_StartEffectAtPoint((char **)entity, 0x3D7, 0x1F, (int)second_aim);
+    EntityEvent_StartEffectAtPoint(entity, 0x3D7, 0x1E, first_aim);
+    EntityEvent_StartEffectAtPoint(entity, 0x3D7, 0x1F, second_aim);
     if (ai_state->pause_timer > 0) {
         if (ai_state->pause_timer > (s16)entity->params->action_frames - entity->params->near_distance) {
-            from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 4);
-            tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 5);
+            from = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 4);
+            tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 5);
             delta[0] = tip[0] - from[0];
             delta[1] = tip[1] - from[1];
             delta[2] = tip[2] - from[2];
             aims->effect_angles[0] = atan2f(-delta[1], sqrtf(delta[0] * delta[0] + delta[2] * delta[2]));
             aims->effect_angles[1] = atan2f(delta[0], delta[2]);
             aims->effect_angles[2] = 0.0f;
-            EntityEvent_StartEffectAtPoint((char **)entity, rand() % 3 + 0x21F, 4, (int)aims->effect_angles);
+            EntityEvent_StartEffectAtPoint(entity, rand() % 3 + 0x21F, 4, aims->effect_angles);
             frames = entity->params->far_distance;
             entity->params->melee_attacks[0].hit_parts[0].strengths.element_strengths[8] = frames;
             entity->params->melee_attacks[0].hit_parts[1].strengths.element_strengths[8] = frames;
@@ -181,7 +181,7 @@ static void DarkKnight_Think(Entity *entity, s32 run_now) {
     }
     if (ai_state->sub_timer > 0) {
         if (frame_counter % 3U == 0) {
-            EntityEvent_StartEffectAtPoint((char **)entity, 0x25C, 0, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, 0x25C, 0, entity->model->rotation);
         }
         ENTITY_FLAGS(entity) |= 0x8000L << 20;
         ai_state->sub_timer--;

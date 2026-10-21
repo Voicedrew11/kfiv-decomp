@@ -14,7 +14,7 @@ int EntityShot_LaunchAimed(Entity *entity, EntityParamsUnk3D8 *record, s32 frame
 int EntityShot_Launch(Entity *entity, EntityParamsUnk3D8 *record, s32 frame_from, s32 frame_to, f32 *direction);
 
 /* Starts effect `effect_id` at point `point_id` of the entity's model, turned by `rotation`. */
-void EntityEvent_StartEffectAtPoint(char **entity, int effect_id, u32 point_id, int rotation);
+void EntityEvent_StartEffectAtPoint(Entity *entity, int effect_id, u32 point_id, f32 *rotation);
 
 /* Starts the effects animation `animation` lists for the frames in [frame_from, frame_to). */
 void EntityEvent_StartFrameEffects(Entity *entity, s32 animation, s32 frame_from, s32 frame_to);

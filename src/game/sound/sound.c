@@ -29,8 +29,8 @@ typedef char *va_list;
 #define va_arg(ap, type) (*(type *)((ap += 8) - 8))
 
 static void SoundDriver_DisableOutput(void);
-static int SoundDriver_GetFileSize(char *);
-static int SoundDriver_LoadIopFile(char *, void *);
+static int SoundDriver_GetFileSize(char *name);
+static int SoundDriver_LoadIopFile(char *name, void *addr);
 extern int (*const voice_load_steps[])(int *, int *);
 
 
@@ -71,7 +71,7 @@ int SoundDriver_Init(void) {
     FlushCache(0);
     sound_state = &sound_state_storage;
     sound_state->dma_src = SoundDriver_Remote(1, 0x10);
-    *(int *)sound_state->volume_and_stereo = 0x3FFF; // match: the int at 0x4D0; the header has six chars there
+    sound_state->volume = 0x3FFF;
     SoundDriver_Remote(1, 0x30, 0x3FFF, 0x3FFF);
     sound_state->load_addr = NULL;
     sound_state->iop_buffer = SoundDriver_Remote(1, 0xA0);
@@ -80,7 +80,7 @@ int SoundDriver_Init(void) {
     sound_command_list[0] = 0;
     // match: as above
     *(char **)&sound_state->sample_area_start = *(char **)&sound_state->spu_used_end = (char *)0x5010;
-    *(u16 *)&sound_state->volume_and_stereo[4] = 1; // match: the u16 at 0x4D4
+    sound_state->stereo = 1;
     sound_state->active = 0;
     voice = sound_state->voices;
     for (i = 15; i != -1; i--, voice++) {
@@ -303,7 +303,7 @@ void SoundDriver_SetMono(void) {
     if (sound_state->active != 0) {
         SoundDriver_Remote(1, 0x50);
     }
-    *(u16 *)&sound_state->volume_and_stereo[4] = 0; // match: the u16 at 0x4D4; the header has six chars there
+    sound_state->stereo = 0;
     SoundDriver_Remote(1, 0xC0, 0);
     voice = sound_state->voices;
     for (i = 0; i < 16; i++) {
@@ -347,7 +347,7 @@ void SoundDriver_SetStereo(void) {
     if (sound_state->active != 0) {
         SoundDriver_Remote(1, 0x50);
     }
-    *(u16 *)&sound_state->volume_and_stereo[4] = 1; // match: the u16 at 0x4D4; the header has six chars there
+    sound_state->stereo = 1;
     SoundDriver_Remote(1, 0xC0, 1);
     voice = sound_state->voices;
     for (i = 0; i < 16; i++) {
@@ -1790,7 +1790,7 @@ int SoundDriver_NoteOn(u32 slot, int voice_index, char channel, char program, ch
         *out++ = program;
     }
     // match: the u16 at 0x4D4; the header has six chars there
-    if (*(u16 *)&sound_state->volume_and_stereo[4] == 0 || voice->stereo_selected == 0) {
+    if (sound_state->stereo == 0 || voice->stereo_selected == 0) {
         pan = 0x3F;
     }
     *out++ = 0xF9;
@@ -1844,7 +1844,7 @@ int SoundDriver_NoteOff(u32 key_index) {
     key = (SoundKey *)sound_state->note_keys[key_index];
     *write_ptr++ = 0xFF;
     // match: byte 0x18 of the voice (low byte of driver_voice_id), read as a byte
-    *write_ptr++ = ((u8 *)sound_state + (key->voice << 5))[0x18];
+    *write_ptr++ = (u8)sound_state->voices[key->voice].driver_voice_id;
     *write_ptr++ = 7;
     *write_ptr++ = 0xFD;
     *write_ptr++ = 0x10;
@@ -1898,7 +1898,7 @@ int SoundDriver_SetNoteControl(int kind, u32 slot, int value) {
         break;
     case SOUND_NOTE_CONTROL_PAN:
         // match: the u16 at 0x4D4; the header has six chars there
-        if (*(u16 *)&sound_state->volume_and_stereo[4] == 0 || voice->stereo_selected == 0) {
+        if (sound_state->stereo == 0 || voice->stereo_selected == 0) {
             value = 0x3F;
         }
         *out++ = 0xFD;
@@ -1989,7 +1989,7 @@ int SoundDriver_FlushCommands(void) {
 int SoundDriver_OpenStreamFile(int stream, char *file_name, int value) {
     strcpy(sound_rpc_file_name, file_name);
     stream &= 1;
-    sceSifCallRpc(&sound_rpc_client, stream | 0x3000, 0, sound_rpc_file_name, 0x100, &sound_rpc_buffer, 1, 0, 0);
+    sceSifCallRpc(&sound_rpc_client, stream | SOUND_STREAM_OPEN_CMD, 0, sound_rpc_file_name, 0x100, &sound_rpc_buffer, 1, 0, 0);
     if (sound_rpc_buffer.self == 0) {
         if (SoundDriver_Remote(1, 0x3040, stream, value) != 0) {
             SoundDriver_Remote(1, 0x3030, stream);
@@ -2008,7 +2008,7 @@ int SoundDriver_PlayStreamFile(int stream, char *file_name, int value) {
         return -1;
     }
     strcpy(sound_rpc_file_name, file_name);
-    sceSifCallRpc(&sound_rpc_client, stream | 0x30A0, 0, sound_rpc_file_name, 0x100, &sound_rpc_buffer, 1, 0, 0);
+    sceSifCallRpc(&sound_rpc_client, stream | SOUND_STREAM_FILE_NAME_CMD, 0, sound_rpc_file_name, 0x100, &sound_rpc_buffer, 1, 0, 0);
     if (sound_rpc_buffer.self != 0) {
         SoundDriver_Remote(1, 0x3030, stream);
         return -1;
@@ -2041,7 +2041,7 @@ int SoundDriver_AddReverb(int effect_flags, s16 param1, s16 param2, s16 param3, 
         return -2;
     }
     effect->core = effect_id;
-    effect->mode = effect_flags | 0x100;
+    effect->mode = effect_flags | SOUND_REVERB_MODE_CLEAR_WORK;
     effect->depth_l = param1;
     effect->depth_r = param2;
     effect->delay = param3;
@@ -2167,10 +2167,10 @@ void SoundDriver_SetAdsr(int voice_index, int value, u32 status) {
     packed = (status >> 31) << 31;
     packed |= ((((status >> 24) & 0x7F) ^ 0x7F) << 24);
     packed |= ((((status >> 20) & 0xF) ^ 0xF) << 20);
-    packed |= status & 0xF0000;
-    packed |= status & 0xE000;
+    packed |= status & SOUND_ADSR_BITS16_19;
+    packed |= status & SOUND_ADSR_BITS13_15;
     packed |= ((((status >> 6) & 0x7F) ^ 0x7F) << 6);
-    packed |= status & 0x20;
+    packed |= status & SOUND_ADSR_BIT5;
     packed |= (status & 0x1F) ^ 0x1F;
     SoundDriver_Remote(1, 0x120, voice->stereo_header_block, voice->header_size, value, packed);
 }
