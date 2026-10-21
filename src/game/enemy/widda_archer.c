@@ -273,7 +273,7 @@ static void WiddaArcher_ThinkCombat(Entity *entity, s32 run_now) {
             break;
         }
     }
-    angle = EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ((float *)&player_state.position, entity->model->position));
+    angle = EntityMath_AngleDifference(player_state.rotation.y, EntityMath_AngleXZ(&player_state.position.x, entity->model->position));
     if (entity->distance_to_player_3d - entity->radius - 100.0f < 200.0f && ABS(angle) < DEG_TO_RAD(40)) {
         if (frame_counter % 10U == entity->spawn_index % 10U &&
             rand() % 100 < (entity->params->hit_points - entity->hit_points) * 100 / entity->params->hit_points) {

@@ -1087,14 +1087,14 @@ static void Menu_FinishPackageLoad(ChunkUpload *upload) {
     u32 i;
     u32 *header;
     char *next;
-    char *chunk;
+    PackageChunk *chunk;
 
     header = upload->pool_node->buffer;
-    chunk = (char *)header + 0x10;
+    chunk = (PackageChunk *)((char *)header + 0x10);
     for (i = 0; i < *header; i++) {
-        next = chunk + ((int *)chunk)[3];
-        PoolPartFile_Relocate((PoolPartFile *)(chunk + ((int *)chunk)[1]));
-        chunk = next + ((int *)chunk)[2];
+        next = (char *)chunk + chunk->chunk_padding_size;
+        PoolPartFile_Relocate((PoolPartFile *)((char *)chunk + chunk->payload_offset));
+        chunk = (PackageChunk *)(next + chunk->chunk_data_size);
     }
     FlushCache(0);
     upload->done = 1;
@@ -2393,7 +2393,7 @@ s32 Menu_EndFrame(s32 run_handler) {
         menu_l2_cycle_step++;
     }
     menu_l2_cycle_step %= 3;
-    sceGsSetHalfOffset(context1_buffer_half != 0 ? menu_second_draw_env : (char *)menu_first_draw_env, 0x800, 0x800, even_field);
+    sceGsSetHalfOffset(context1_buffer_half != 0 ? menu_second_draw_env : menu_first_draw_env, 0x800, 0x800, even_field);
     sceGsSetHalfOffset2(context1_buffer_half != 0 ? menu_second_draw_env2 : menu_first_draw_env2, 0x800, 0x800, even_field);
     FlushCache(0);
     sceGsSyncPath(0, 0);
@@ -3068,7 +3068,7 @@ static void Menu_UpdateCastSpell(s32 context) {
     item = castable_spell_top[0];
     MenuText_SetColor(menu_draw_color);
     for (row = 0; row < 7; row++, item = item->prev) {
-        MenuText_DrawLine((u16 *)&fx_table[item->item_number], 0x1A);
+        MenuText_DrawLine(fx_table[item->item_number].name, 0x1A);
         word.f.mid16 += 0xB0; // match: dead, left over from the item menu (Menu_UpdateUseItem), which sets the row's place here
         word.f.lo16 = 0x7080; // match: dead as well; without the two lines the loop is compiled differently
         if (castable_spell_page_mark[0]->prev == item) {
@@ -5783,7 +5783,7 @@ static void Menu_UpdateSaveList(void) {
                     Sound_PlayMenu(0);
                     card_screen_state.list_step = MENU_SAVE_LIST_STEP_LOADING;
                     memset(save_image, 0, 0x20000);
-                    SaveCard_StartLoad(card_screen_state.selected_card, card_screen_state.selected_save, (s32 *)save_image, 0x20000);
+                    SaveCard_StartLoad(card_screen_state.selected_card, card_screen_state.selected_save, save_image, 0x20000);
                 } else {
                     Sound_PlayMenu(2);
                     card_screen_state.list_step = MENU_SAVE_LIST_STEP_WAIT_INPUT;

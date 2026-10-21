@@ -106,7 +106,7 @@ extern MenuItem *item_list_page_mark[4];
 extern GsDoubleBufferDc menu_frame_buffers;
 extern u64 menu_first_draw_env[47];  /* the frame register of the first buffer ([0]) and of the second ([46]) */
 extern char menu_first_draw_env2[];
-extern char menu_second_draw_env[];  /* inside menu_frame_buffers: the second buffer's draw environments */
+extern u64 menu_second_draw_env[];  /* inside menu_frame_buffers: the second buffer's draw environments */
 extern char menu_second_draw_env2[];
 extern LinkNode model_load_shown;
 extern char model_name_shown[];  /* the names of the five link nodes at model_load_shown */

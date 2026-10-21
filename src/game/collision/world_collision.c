@@ -70,7 +70,7 @@ typedef int (*CornerTest)(void *, f32, f32, void *, f32, f32);
 /* Drops a vertical line through `point` onto a triangle: on a hit the scratchpad result gets the
    height where it meets the triangle and how far that is from the point (positive: below it, as y grows
    downward). */
-void Collision_DropOnTriangle(void *corner_a, void *corner_b, void *corner_c, void *point) {
+void Collision_DropOnTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *point) {
     f32 hit_point[4];
     f32 edge_a[4];
     f32 edge_c[4];
@@ -104,12 +104,12 @@ void Collision_DropOnTriangle(void *corner_a, void *corner_b, void *corner_c, vo
     if (-COLLISION_PARALLEL_EPSILON < scalar && scalar < COLLISION_PARALLEL_EPSILON) {
         return;
     }
-    scalar = (normal[0] * ((f32 *)corner_a)[0] + scalar * ((f32 *)corner_a)[1] + normal[2] * ((f32 *)corner_a)[2] +
-              (-normal[0] * ((f32 *)point)[0] - scalar * ((f32 *)point)[1] - normal[2] * ((f32 *)point)[2])) /
+    scalar = (normal[0] * corner_a[0] + scalar * corner_a[1] + normal[2] * corner_a[2] +
+              (-normal[0] * point[0] - scalar * point[1] - normal[2] * point[2])) /
              scalar;
-    hit_point[0] = ((f32 *)point)[0];
-    hit_point[1] = ((f32 *)point)[1] + scalar;
-    hit_point[2] = ((f32 *)point)[2];
+    hit_point[0] = point[0];
+    hit_point[1] = point[1] + scalar;
+    hit_point[2] = point[2];
     COLLISION_RESULT->distance = scalar;
     Vector_Subtract(offset, hit_point, corner_b);
     scalar = edge_c[0] * edge_a[2] - edge_c[2] * edge_a[0];
@@ -131,7 +131,7 @@ void Collision_DropOnTriangle(void *corner_a, void *corner_b, void *corner_c, vo
 
 /* Collision_DropOnTriangle with a limit: the triangle must lie at or below the point (y grows downward), by
    no more than reach. */
-void Collision_DropOnTriangleWithin(void *corner_a, void *corner_b, void *corner_c, void *point, f32 reach) {
+void Collision_DropOnTriangleWithin(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *point, f32 reach) {
     f32 hit_point[4];
     f32 edge_a[4];
     f32 edge_c[4];
@@ -165,8 +165,8 @@ void Collision_DropOnTriangleWithin(void *corner_a, void *corner_b, void *corner
     if (-COLLISION_PARALLEL_EPSILON < scalar && scalar < COLLISION_PARALLEL_EPSILON) {
         return;
     }
-    scalar = (normal[0] * ((f32 *)corner_a)[0] + scalar * ((f32 *)corner_a)[1] + normal[2] * ((f32 *)corner_a)[2] +
-              (-normal[0] * ((f32 *)point)[0] - scalar * ((f32 *)point)[1] - normal[2] * ((f32 *)point)[2])) /
+    scalar = (normal[0] * corner_a[0] + scalar * corner_a[1] + normal[2] * corner_a[2] +
+              (-normal[0] * point[0] - scalar * point[1] - normal[2] * point[2])) /
              scalar;
     if (scalar < negative_zero_drop_within_limit[0]) {
         return;
@@ -174,9 +174,9 @@ void Collision_DropOnTriangleWithin(void *corner_a, void *corner_b, void *corner
     if (reach < scalar) {
         return;
     }
-    hit_point[0] = ((f32 *)point)[0];
-    hit_point[1] = ((f32 *)point)[1] + scalar;
-    hit_point[2] = ((f32 *)point)[2];
+    hit_point[0] = point[0];
+    hit_point[1] = point[1] + scalar;
+    hit_point[2] = point[2];
     COLLISION_RESULT->distance = scalar;
     Vector_Subtract(offset, hit_point, corner_b);
     scalar = edge_c[0] * edge_a[2] - edge_c[2] * edge_a[0];
@@ -1965,7 +1965,7 @@ void Collision_HitFanMeshObj(MapObject *object, Vector4 *origin, f32 radius, f32
                 second_sides <<= 1;
                 point += 2;
                 do {
-                    TEST_SIDES((f32 *)point->position);
+                    TEST_SIDES(point->position);
                     if (second_sides != 7 && first_sides != 7) {
                         // match: the unsigned indices give retail's two-step address
                         Collision_CapsuleTriangle(point[-2U].position, point[-1U].position, point->position,

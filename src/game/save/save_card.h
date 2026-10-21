@@ -102,7 +102,7 @@ s32 SaveCard_StartReadList(s32 card, char must_exist);
 s32 SaveCard_StartSave(s32 card, s32 file, s32 *data);
 
 /* Starts reading save number save_index from a card into data, unless a task is running. */
-s32 SaveCard_StartLoad(s32 card, s32 file, s32 *data, s32 size);
+s32 SaveCard_StartLoad(s32 card, s32 file, void *data, s32 size);
 
 /* Starts formatting a card, unless a task is running. */
 s32 SaveCard_StartFormat(s32 card);

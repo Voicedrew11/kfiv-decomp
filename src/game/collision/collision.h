@@ -184,8 +184,8 @@ u32 Collision_IsBarrierFloor(u32 first, u32 second, int third);
 
 /* collision/world_collision.c */
 int Collision_TransformMeshPoints(void *target);
-void Collision_DropOnTriangle(void *corner_a, void *corner_b, void *corner_c, void *point);
-void Collision_DropOnTriangleWithin(void *corner_a, void *corner_b, void *corner_c, void *point, f32 reach);
+void Collision_DropOnTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *point);
+void Collision_DropOnTriangleWithin(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *point, f32 reach);
 int Collision_FindFloorBelow(f32 reach, void *point_arg);
 int Collision_FindWaterBelow(f32 reach, void *point_arg);
 void Collision_CastRayAtMap(f32 scale, void *position_arg, void *direction);

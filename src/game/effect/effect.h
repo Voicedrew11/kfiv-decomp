@@ -1046,7 +1046,7 @@ typedef struct {
 
 /* fx_table[]: a table entry of 0x110 bytes, indexed by effect id (Attack_LaunchMagicEffect) */
 typedef struct {
-    char pad00[0x34];
+    u16 name[0x1A];                 /* 0x00 the spell's name, 16-bit menu text (MenuText_DrawLine) */
     FxTableHitCheck hit_checks[3];  /* 0x34 */
     FxTableStats stats;             /* 0xAC what casting the magic does to the player (Player_CastMagic) */
     u16 mp_cost;                    /* 0xFC taken from PlayerState.mp_now to cast it (Player_CastMagic) */

@@ -519,7 +519,7 @@ void MapItem_DrawAll(int with_picked) {
     Packet_AddGsRegister(0x47, 0x5000D);
     Packet_EndGsRegisters();
     for (node = lying_items; node != NULL; node = node->next) {
-        node->map_record = Map_FindRecordAtInSlot((f32 *)&node->model->position, 0.0f, node->flags & 1);
+        node->map_record = Map_FindRecordAtInSlot(&node->model->position.x, 0.0f, node->flags & 1);
         if (node->map_record == NULL) {
             continue;
         }
@@ -561,7 +561,7 @@ void MapItem_DrawPicked(int hidden) {
     if (node == NULL || hidden != 0) {
         return;
     }
-    node->map_record = Map_FindRecordAtInSlot((f32 *)&node->model->position, 0.0f, node->flags & 1);
+    node->map_record = Map_FindRecordAtInSlot(&node->model->position.x, 0.0f, node->flags & 1);
     if (node->map_record == NULL) {
         return;
     }
@@ -911,7 +911,7 @@ int MapItem_UniqueNotDropped(int item) {
     int j;
     DroppedItemRecord *record;
     ItemCommonDef *common;
-    char *base = (char *)dropped_item_records;
+    DroppedItemRecord *base = &dropped_item_records[0][0];
 
     common = item_common_defs + item;
     for (i = 0; i < 0x80; i++) {
