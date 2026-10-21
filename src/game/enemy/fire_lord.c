@@ -18,6 +18,18 @@
 #include "model/motion.h"
 #include "player/player.h"
 
+/* EntityAiStateKind131390.distance_band: the distance to the player, far to near */
+#define FIRE_LORD_BAND_APPROACH                0   /* far: walks in towards the player */
+#define FIRE_LORD_BAND_SHOOT_OR_APPROACH       1   /* shoots, or approaches */
+#define FIRE_LORD_BAND_SIDE_ANIM_OR_APPROACH   2   /* side animation, or approaches */
+#define FIRE_LORD_BAND_CLOSE_IN                3   /* closes in on the player */
+#define FIRE_LORD_BAND_BACK_AWAY               4   /* backs away from the player */
+
+/* Entity.action_step values of FireLord_MeleeAttack0 past the shared ones */
+#define FIRE_LORD_MELEE_STEP_WINDUP            2   /* turns towards the player until frame 8, then pauses */
+#define FIRE_LORD_MELEE_STEP_LUNGE             3   /* steps forward until close or the pause runs out */
+#define FIRE_LORD_MELEE_STEP_SWING             4   /* swings the blade (bones 8-9), ends when the motion ends */
+
 static void FireLord_Animate(Entity *entity);
 static void FireLord_Think(Entity *entity, s32 run_now);
 static void FireLord_ThinkIdle(Entity *entity, s32 run_now);
@@ -174,36 +186,36 @@ static void FireLord_ThinkCombat(Entity *entity, s32 run_now) {
     if (ai_state->distance_band_timer <= 0) {
         distance = entity->distance_to_player - entity->radius - 100.0f;
         if (distance > 1200.0f) {
-            ai_state->distance_band = 0;
+            ai_state->distance_band = FIRE_LORD_BAND_APPROACH;
             ai_state->distance_band_timer = 10;
         } else if (distance <= 1200.0f && distance > 800.0f) {
-            ai_state->distance_band = 1;
+            ai_state->distance_band = FIRE_LORD_BAND_SHOOT_OR_APPROACH;
             ai_state->distance_band_timer = 10;
         } else if (distance <= 800.0f && distance > 500.0f) {
-            ai_state->distance_band = 2;
+            ai_state->distance_band = FIRE_LORD_BAND_SIDE_ANIM_OR_APPROACH;
             ai_state->distance_band_timer = 10;
         } else if (distance <= 500.0f && distance > 100.0f) {
-            ai_state->distance_band = 3;
+            ai_state->distance_band = FIRE_LORD_BAND_CLOSE_IN;
             ai_state->distance_band_timer = 10;
         } else {
-            ai_state->distance_band = 4;
+            ai_state->distance_band = FIRE_LORD_BAND_BACK_AWAY;
             ai_state->distance_band_timer = 10;
         }
     }
     switch (ai_state->distance_band) {
-    case 0:
+    case FIRE_LORD_BAND_APPROACH:
         FireLord_ThinkCombatApproach(entity, run_now);
         break;
-    case 1:
+    case FIRE_LORD_BAND_SHOOT_OR_APPROACH:
         FireLord_ThinkCombatShootOrApproach(entity, run_now);
         break;
-    case 2:
+    case FIRE_LORD_BAND_SIDE_ANIM_OR_APPROACH:
         FireLord_ThinkCombatSideAnimOrApproach(entity, run_now);
         break;
-    case 3:
+    case FIRE_LORD_BAND_CLOSE_IN:
         FireLord_ThinkCombatCloseIn(entity, run_now);
         break;
-    case 4:
+    case FIRE_LORD_BAND_BACK_AWAY:
         FireLord_ThinkCombatBackAway(entity, run_now);
         break;
     default:
@@ -443,7 +455,7 @@ static void FireLord_PlayAnim6Or7Alternately(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         if (ai_state->alternate_anim_flag != FALSE) {
             Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 0);
         } else {
@@ -451,12 +463,12 @@ static void FireLord_PlayAnim6Or7Alternately(Entity *entity) {
         }
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
@@ -491,7 +503,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
@@ -499,7 +511,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (unk240->hit_start_frame != 0) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
@@ -507,7 +519,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case FIRE_LORD_MELEE_STEP_WINDUP:
         if (unk240->hit_start_frame >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
@@ -519,7 +531,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case FIRE_LORD_MELEE_STEP_LUNGE:
         EntityMath_FacingVector((Vector4 *)position, entity->model->rotation[1]);
         Vector_Scale(position, position, 30.0f);
         entity->move_delta_x += position[0];
@@ -530,7 +542,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 4:
+    case FIRE_LORD_MELEE_STEP_SWING:
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
         if (unk240->hit_start_frame >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
@@ -611,7 +623,7 @@ static void FireLord_MeleeAttack1(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x15, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
@@ -619,7 +631,7 @@ static void FireLord_MeleeAttack1(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (unk240->hit_start_frame != 0) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
@@ -627,7 +639,7 @@ static void FireLord_MeleeAttack1(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (unk240->hit_start_frame >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
@@ -701,7 +713,7 @@ static void FireLord_PlayAnim6Or7ThenMelee0(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
         player = &player_state;
         if (EntityMath_AngleDifference(player->rotation.y, EntityMath_AngleXZ(&player->position.x, entity->model->position)) >= 0.0f) {
@@ -711,12 +723,12 @@ static void FireLord_PlayAnim6Or7ThenMelee0(Entity *entity) {
         }
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;

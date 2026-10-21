@@ -18,6 +18,11 @@
 #include "entity/entity_ai_choice.h"
 #include "player/player.h"
 
+/* Entity.action_step values past the shared ones */
+#define DARK_KNIGHT_HOLD_GUARD_STEP_END         2   /* holds the guard pose until its timer runs out, then ends */
+#define DARK_KNIGHT_MELEE_STEP_BLEND_IN         3   /* waits for the attack motion to blend in */
+#define DARK_KNIGHT_MELEE_STEP_SWING            4   /* turns to the player and checks the blade's hits, ends with the motion */
+
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 static void DarkKnight_OnHit(Entity *entity);
@@ -331,7 +336,7 @@ static void DarkKnight_PlayTurnAnim(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         if (ai_state->action_flags > 0) {
             Motion_Start(entity, 0xC, 0, entity->params->motion_blend_frames, 1);
         } else {
@@ -340,12 +345,12 @@ static void DarkKnight_PlayTurnAnim(Entity *entity) {
         entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
@@ -369,14 +374,14 @@ static void DarkKnight_HoldGuardPose(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_GUARD;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0xD, 0, 0xA, 1);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_timer = entity->params->guard_frames;
             ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_ANIMATES;
@@ -384,7 +389,7 @@ static void DarkKnight_HoldGuardPose(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case DARK_KNIGHT_HOLD_GUARD_STEP_END:
         if (entity->action_timer == 0) {
             ENTITY_FLAGS(entity) |= ENTITY_FLAG_ANIMATES;
             entity->busy_flags = 0;
@@ -411,7 +416,7 @@ static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         if (ABS(entity->heading_to_player - entity->model->rotation[1]) < DEG_TO_RAD(30)) {
             Motion_Start(entity, 0x11, 0, 5, 1);
             ai_state->step_index = 0;
@@ -431,13 +436,13 @@ static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->guarding = 1;
         entity->action_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         ai_state->pose_blend_weight = 0.5f;
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             if (ai_state->step_index == 0) {
                 Motion_Start(entity, 0x14, 0xE, 0, 1);
@@ -447,7 +452,7 @@ static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DARK_KNIGHT_MELEE_STEP_BLEND_IN:
         ai_state->pose_blend_weight = 0.5f;
         if (entity->model->level_tables->blend_left == 0) {
             ENTITY_FLAG_BITS(entity)->guarding = 0;
@@ -457,7 +462,7 @@ static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
-    case 4:
+    case DARK_KNIGHT_MELEE_STEP_SWING:
         if (unk240->hit_start_frame >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
@@ -503,7 +508,7 @@ static void DarkKnight_MeleeAttack2(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x16, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
@@ -511,7 +516,7 @@ static void DarkKnight_MeleeAttack2(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
@@ -519,7 +524,7 @@ static void DarkKnight_MeleeAttack2(Entity *entity) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (unk240->hit_start_frame >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
@@ -563,12 +568,12 @@ static void DarkKnight_RangedAttack0(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
         ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
@@ -576,7 +581,7 @@ static void DarkKnight_RangedAttack0(Entity *entity) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
@@ -616,7 +621,7 @@ static void DarkKnight_RangedAttack1(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x18, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
@@ -625,7 +630,7 @@ static void DarkKnight_RangedAttack1(Entity *entity) {
         }
         ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
@@ -633,7 +638,7 @@ static void DarkKnight_RangedAttack1(Entity *entity) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {

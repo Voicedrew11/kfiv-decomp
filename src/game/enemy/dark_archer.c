@@ -25,6 +25,17 @@
 /* EntitySpawnInfo.spawn_mode: the default spawn, which keeps the think handler with states */
 #define DARK_ARCHER_SPAWN_MODE_DEFAULT 0
 
+/* DarkArcher_DormantFadeIn: Entity.action_step */
+#define DARK_ARCHER_FADE_IN_STEP_WAIT       1       /* waits for the succubus fight to start */
+#define DARK_ARCHER_FADE_IN_STEP_FADE       2       /* fades the model in over 20 frames, then thinks */
+/* DarkArcher_DeathWithoutReward: Entity.action_step */
+#define DARK_ARCHER_DEATH_STEP_FADE_OUT     2       /* fades the model out over action_timer, then frees it */
+/* DarkArcher_MoveAlongArc: Entity.action_step (steps 0 and 1 are the shared ones) */
+#define DARK_ARCHER_ARC_STEP_BEGIN          2       /* waits for frame 17, then starts moving along the arc */
+#define DARK_ARCHER_ARC_STEP_LEAP           3       /* runs along the arc until it is off the floor or high enough */
+#define DARK_ARCHER_ARC_STEP_LAND           4       /* keeps moving until it lands, then plays the landing */
+#define DARK_ARCHER_ARC_STEP_END            5       /* ends the action once the landing motion ends */
+
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 static void DarkArcher_Animate(Entity *entity);
@@ -279,7 +290,7 @@ static void DarkArcher_DormantFadeIn(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0, 0, 0, 1);
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->flags |= ENTITY_FLAG_200000;
@@ -288,12 +299,12 @@ static void DarkArcher_DormantFadeIn(Entity *entity) {
         entity->model_alpha = 0;
         ai_state->action_flags = 0;
         entity->action_step++;
-    case 1:
+    case DARK_ARCHER_FADE_IN_STEP_WAIT:
         if (dark_succubus_fight_started[0] != 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case DARK_ARCHER_FADE_IN_STEP_FADE:
         entity->model_alpha = (ai_state->action_flags << 7) / 20;
         ai_state->action_flags++;
         if (ai_state->action_flags > 20) {
@@ -321,7 +332,7 @@ static void DarkArcher_DormantFadeIn(Entity *entity) {
 static void DarkArcher_DeathWithoutReward(Entity *entity) {
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 1);
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->flags |= ENTITY_FLAG_ANIMATES;
@@ -331,7 +342,7 @@ static void DarkArcher_DeathWithoutReward(Entity *entity) {
         entity->flags = (entity->flags & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_DYING_1;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;
@@ -344,7 +355,7 @@ static void DarkArcher_DeathWithoutReward(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case DARK_ARCHER_DEATH_STEP_FADE_OUT:
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
@@ -491,7 +502,7 @@ static void DarkArcher_RangedAttack(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, kind + ENTITY_MOTION_RANGED_ATTACK, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
@@ -500,7 +511,7 @@ static void DarkArcher_RangedAttack(Entity *entity) {
         }
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
@@ -508,7 +519,7 @@ static void DarkArcher_RangedAttack(Entity *entity) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
@@ -564,17 +575,17 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
     height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames, 1);
         ai_state->heading_speed = 0.0f;
         ai_state->keep_min_distance = 0.0f;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case DARK_ARCHER_ARC_STEP_BEGIN:
         if (entity->model->level_tables->frame >= 0x11) {
             ai_state->pitch_speed = EntityMath_WrapAngle(entity->model->rotation[1] + PI);
             ai_state->heading_speed = -entity->params->far_distance;
@@ -583,7 +594,7 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DARK_ARCHER_ARC_STEP_LEAP:
         Motion_Start(entity, 4, 0, 0, 0);
         ai_state->keep_min_distance = EntityMath_Approach(ai_state->keep_min_distance, entity->params->max_speed, entity->params->speed_step_per_frame);
         ai_state->heading_speed = EntityMath_Approach(ai_state->heading_speed, -entity->params->type_param_1, -entity->params->type_param_0);
@@ -592,7 +603,7 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 4:
+    case DARK_ARCHER_ARC_STEP_LAND:
         ai_state->keep_min_distance = EntityMath_Approach(ai_state->keep_min_distance, entity->params->max_speed, entity->params->speed_step_per_frame);
         ai_state->heading_speed = EntityMath_Approach(ai_state->heading_speed, entity->params->type_param_1, entity->params->type_param_0);
         if (ENTITY_FLAGS(entity) & (0x8200L << 35)) {
@@ -603,7 +614,7 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 5:
+    case DARK_ARCHER_ARC_STEP_END:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;

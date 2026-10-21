@@ -255,16 +255,16 @@ static void DarkFlower_RangedAttack0(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (entity->model->level_tables->frame >= entity->params->pitch_limit_deg && entity->model->level_tables->frame <= entity->params->yaw_limit_deg) {
             if ((s16)entity->params->action_frames == 0) {
                 EntityAi_LaunchShots(entity, unk3D8, 30, 50);

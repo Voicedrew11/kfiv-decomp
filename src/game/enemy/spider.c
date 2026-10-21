@@ -21,6 +21,9 @@
 /* Entity.ai_state.move_choice 1: walks to the point near the spawn, stopping 50 short of it */
 #define SPIDER_MOVE_CHOICE_TO_POINT 1
 
+/* Spider_Dormant: Entity.action_step */
+#define SPIDER_DORMANT_STEP_LEAVE_SPAWN 1           /* waits until it is pitch_limit_deg from its spawn point, then thinks */
+
 static void Spider_Animate(Entity *entity);
 static void Spider_Think(Entity *entity, s32 run_now);
 static void Spider_ThinkWander(Entity *entity, s32 run_now);
@@ -277,7 +280,7 @@ static void Spider_RangedAttack(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, kind + ENTITY_MOTION_RANGED_ATTACK, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
@@ -286,7 +289,7 @@ static void Spider_RangedAttack(Entity *entity) {
         }
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
@@ -294,7 +297,7 @@ static void Spider_RangedAttack(Entity *entity) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
         } else {
@@ -332,7 +335,7 @@ static void Spider_Dormant(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 3, 0, 0, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
@@ -342,7 +345,7 @@ static void Spider_Dormant(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->no_floor_lift = TRUE;
         entity->action_step++;
         break;
-    case 1:
+    case SPIDER_DORMANT_STEP_LEAVE_SPAWN:
         if (EntityMath_DistanceXZ(entity->model->position, &entity->spawn_info->spawn_x) >= (f32)entity->params->pitch_limit_deg) {
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
             ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
@@ -382,7 +385,7 @@ static void Spider_Death(Entity *entity) {
     EntityMath_EaseAngleToward(&entity->model->rotation[0], 0.0f, 6.0f);
     EntityMath_EaseAngleToward(&entity->model->rotation[2], 0.0f, 6.0f);
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
@@ -399,12 +402,12 @@ static void Spider_Death(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->no_wall_collision = FALSE;
         ENTITY_FLAG_BITS(entity)->no_second_wall_collision = FALSE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;
@@ -416,7 +419,7 @@ static void Spider_Death(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DEATH_STEP_FADE_OUT:
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {

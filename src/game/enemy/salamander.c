@@ -19,6 +19,11 @@
 #define SALAMANDER_MOVE_CHOICE_ATTACK_IN_VIEW 1
 #define SALAMANDER_MOVE_CHOICE_BACK_OFF        2
 
+/* Salamander_ReactionLight: Entity.reaction_step */
+/* Salamander_Death: Entity.action_step */
+#define SALAMANDER_DEATH_STEP_FALL              2       /* waits for frame 30, then the body falls free */
+#define SALAMANDER_DEATH_STEP_LEVEL             3       /* eases the body level while the fall plays */
+#define SALAMANDER_DEATH_STEP_FADE_OUT          4       /* fades the model out over action_timer, then frees it */
 
 static void Salamander_Animate(Entity *entity);
 static void Salamander_OnHit(Entity *entity);
@@ -168,7 +173,7 @@ static void Salamander_ReactionRewind(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_REACTION_LIGHT;
     switch (entity->reaction_step) {
-    case 0:
+    case ACTION_STEP_START:
         frame = ai_state->motion_slot_0.frame - 3;
         if (frame < 0) {
             frame = 0;
@@ -177,7 +182,7 @@ static void Salamander_ReactionRewind(Entity *entity) {
         entity->reaction_step++;
         entity->flags = ((entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1) & ~ENTITY_FLAG_LOOK_AT_TARGET;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (ai_state->motion_slot_0.frames_left == 0) {
             entity->busy_flags &= ~ENTITY_BUSY_REACTION_LIGHT;
             EntityAi_SetReaction(entity, NULL, 0);
@@ -193,7 +198,7 @@ static void Salamander_ReactionLight(Entity *entity) {
 
     entity->busy_flags = ENTITY_BUSY_REACTION_LIGHT;
     switch (entity->reaction_step) {
-    case 0:
+    case ACTION_STEP_START:
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&((EntityAiStateKind1740A8 *)&entity->ai_state)->motion_slot_0, 0, 0xE, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0;
@@ -203,12 +208,12 @@ static void Salamander_ReactionLight(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->reaction_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (ai_state->motion_slot_0.frames_left == 0) {
             entity->reaction_step++;
         }
         break;
-    case 2:
+    case REACTION_LIGHT_STEP_END:
         EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
         EntityAi_SetReaction(entity, NULL, 0);
         entity->busy_flags = 0;
@@ -229,7 +234,7 @@ static void Salamander_ReactionHeavy(Entity *entity) {
 
     entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
-    case 0:
+    case ACTION_STEP_START:
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&((EntityAiStateKind1740A8 *)&entity->ai_state)->motion_slot_0, 0, 0xF, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0;
@@ -239,12 +244,12 @@ static void Salamander_ReactionHeavy(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->reaction_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (ai_state->motion_slot_0.frames_left == 0) {
             entity->reaction_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
             EntityAi_SetReaction(entity, NULL, 0);
@@ -269,7 +274,7 @@ static void Salamander_Death(Entity *entity) {
 
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_0, 0, 0x10, 0, 5, 1);
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_1, 1, 0x10, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
@@ -281,18 +286,18 @@ static void Salamander_Death(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->no_entity_collision = TRUE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (ai_state->motion_slot_0.frames_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case SALAMANDER_DEATH_STEP_FALL:
         if (ai_state->motion_slot_0.frame >= 30) {
             ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
             entity->action_step++;
         }
         break;
-    case 3:
+    case SALAMANDER_DEATH_STEP_LEVEL:
         EntityMath_EaseAngleToward(&entity->model->rotation[0], 0.0f, 10.0f);
         EntityMath_EaseAngleToward(&entity->model->rotation[2], 0.0f, 10.0f);
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
@@ -304,7 +309,7 @@ static void Salamander_Death(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 4:
+    case SALAMANDER_DEATH_STEP_FADE_OUT:
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
@@ -324,7 +329,7 @@ static void Salamander_MeleeAttack(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_0, 0, kind | ENTITY_MOTION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
@@ -332,7 +337,7 @@ static void Salamander_MeleeAttack(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (ai_state->motion_slot_0.frames_left == 0) {
             entity->action_step++;
         }
@@ -340,7 +345,7 @@ static void Salamander_MeleeAttack(Entity *entity) {
             EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ai_state->motion_slot_0.frame <= unk240->hit_start_frame) {
             EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
         } else {
@@ -386,12 +391,12 @@ static void Salamander_RangedAttack(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         EntityAi_StartSlotMotion(entity, (EntityMotionSlotWord *)&ai_state->motion_slot_0, 0, kind + ENTITY_MOTION_RANGED_ATTACK, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (ai_state->motion_slot_0.frames_left == 0) {
             entity->action_step++;
         }
@@ -399,7 +404,7 @@ static void Salamander_RangedAttack(Entity *entity) {
             EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ai_state->motion_slot_0.frame <= unk3D8->turn_frames) {
             EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
         } else {

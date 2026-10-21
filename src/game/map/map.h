@@ -261,6 +261,52 @@ typedef struct MapSlot {
     s32 script;                     /* 0x5C passed to Script_Init when the map becomes current */
 } MapSlot;
 
+/* MapSlot.tag: the map's file number (NNN.map), named as in docs/GAME_DATA.md */
+#define MAP_TAG_VILLAGE_RUINS                    0x00
+#define MAP_TAG_MINERS_CEMETERY                  0x02
+#define MAP_TAG_EAST_VALLEY                      0x04
+#define MAP_TAG_UPPER_MINES                      0x08
+#define MAP_TAG_LOWER_MINES                      0x09
+#define MAP_TAG_ARMORY                           0x0B
+#define MAP_TAG_ANCIENT_CITY_EXTERIOR            0x0C
+#define MAP_TAG_ANCIENT_CITY_L3_WEST             0x0F
+#define MAP_TAG_SOUTH_CLIFFS                     0x10
+#define MAP_TAG_FORGE_017                        0x11
+#define MAP_TAG_FORGE_018                        0x12
+#define MAP_TAG_FORGE_019                        0x13
+#define MAP_TAG_EARTH_FOLKS_VILLAGE              0x14
+#define MAP_TAG_CAVERN_OF_LAVA                   0x18
+#define MAP_TAG_FIRE_LORDS_DOMAIN                0x19
+#define MAP_TAG_CLIFF_PASSAGE                    0x1A
+#define MAP_TAG_OCEAN_SHORE                      0x1B
+#define MAP_TAG_UNDERGROUND_CANAL                0x1D
+#define MAP_TAG_NORTH_CLIFFS                     0x1F
+#define MAP_TAG_GUARDIANS_ROOM                   0x23
+#define MAP_TAG_DARK_SANCTUARY                   0x26
+#define MAP_TAG_KINGS_THRONE_ALCOVES             0x29
+#define MAP_TAG_SANCTUARY_OF_LIGHT               0x2A
+#define MAP_TAG_UNDERGROUND_GRAVEYARD            0x5F
+#define MAP_TAG_SHOP                             0x60
+#define MAP_TAG_ICON_OF_HEALING                  0x61
+#define MAP_TAG_PALACE_OF_OATH_INTERIOR          0x62
+#define MAP_TAG_PALACE_OF_OATH_EXTERIOR          0x63
+#define MAP_TAG_ANCIENT_CITY_L3_CENTRAL_TOWER    0x64
+#define MAP_TAG_ANCIENT_CITY_L3_NORTH            0x65
+#define MAP_TAG_ANCIENT_CITY_L3_EAST             0x66
+#define MAP_TAG_ANCIENT_CITY_L3_EAST_CATACOMBS   0x67
+#define MAP_TAG_ANCIENT_CITY_L3_CRAFTSMANS_ROOM  0x68
+#define MAP_TAG_ANCIENT_CITY_L3_SOUTH            0x69
+#define MAP_TAG_ANCIENT_CITY_L3_SOUTH_WIDDA_AREAS 0x6A
+#define MAP_TAG_ANCIENT_CITY_L2_CENTRAL_TOWER    0x6B
+#define MAP_TAG_ANCIENT_CITY_L2_SOUTH            0x6C
+#define MAP_TAG_ANCIENT_CITY_L2_WEST             0x6D
+#define MAP_TAG_ANCIENT_CITY_L2_SORCERERS_AREA   0x6E
+#define MAP_TAG_ANCIENT_CITY_L2_NORTH            0x6F
+#define MAP_TAG_ANCIENT_CITY_L1_CENTRAL_TOWER    0x70
+#define MAP_TAG_ANCIENT_CITY_L1_WEST             0x71
+#define MAP_TAG_ANCIENT_CITY_L1_AND_2_EAST       0x73
+#define MAP_TAG_TREASURY                         0x74
+
 /* what MapSlot.unk08 points at */
 typedef struct {
     s32 file_size;                  /* 0x00 how long the map file's first part is */

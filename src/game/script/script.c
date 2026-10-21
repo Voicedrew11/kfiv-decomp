@@ -21,6 +21,30 @@
 #include "save/save_state.h"
 #include "sound/sound_game.h"
 
+/* the comparisons of a script "if" (Script_EvalIf), the low half of the comparison word */
+#define SCRIPT_COMPARE_EQUAL            0
+#define SCRIPT_COMPARE_NOT_EQUAL        1
+#define SCRIPT_COMPARE_GREATER          2
+#define SCRIPT_COMPARE_LESS             3
+#define SCRIPT_COMPARE_GREATER_EQUAL    4
+#define SCRIPT_COMPARE_LESS_EQUAL       5
+
+/* the operators of a script "set" (Script_EvalSet), the high byte of an operator word */
+#define SCRIPT_OP_NONE                  0xFF    /* the first operand: no operator before it */
+#define SCRIPT_OP_ADD                   0
+#define SCRIPT_OP_SUB                   1
+#define SCRIPT_OP_MUL                   2
+#define SCRIPT_OP_DIV                   3
+#define SCRIPT_OP_MOD                   4
+#define SCRIPT_OP_SHL                   5
+#define SCRIPT_OP_SHR                   6
+#define SCRIPT_OP_AND                   7
+#define SCRIPT_OP_OR                    8
+
+/* the low byte of the words that follow a set's operands (Script_EvalSet) */
+#define SCRIPT_SET_OPERATOR             4       /* the next word is an operator */
+#define SCRIPT_SET_END                  0xFF    /* the set ends */
+
 static ScriptThread *current_thread = NULL; /* 0x446FD0 the thread being stepped */
 static int command_count;                   /* 0x4473E4 commands in use, as Script_StepHeldCommands counts them */
 static u32 *script_top;                     /* 0x4473E8 the current map's script */
@@ -429,43 +453,43 @@ static int Script_EvalIf(ScriptThread *thread, u32 *cursor) {
             left_float = left.as_float.value;
             right_float = right.as_float.value;
             switch (comparison) {
-            case 0:
+            case SCRIPT_COMPARE_EQUAL:
                 results[i] = left_float == right_float;
                 break;
-            case 1:
+            case SCRIPT_COMPARE_NOT_EQUAL:
                 results[i] = left_float != right_float;
                 break;
-            case 2:
+            case SCRIPT_COMPARE_GREATER:
                 results[i] = left_float > right_float;
                 break;
-            case 3:
+            case SCRIPT_COMPARE_LESS:
                 results[i] = left_float < right_float;
                 break;
-            case 4:
+            case SCRIPT_COMPARE_GREATER_EQUAL:
                 results[i] = left_float >= right_float;
                 break;
-            case 5:
+            case SCRIPT_COMPARE_LESS_EQUAL:
                 results[i] = left_float <= right_float;
                 break;
             }
         } else {
             switch (comparison) {
-            case 0:
+            case SCRIPT_COMPARE_EQUAL:
                 results[i] = left.as_int.value == right.as_int.value;
                 break;
-            case 1:
+            case SCRIPT_COMPARE_NOT_EQUAL:
                 results[i] = left.as_int.value != right.as_int.value;
                 break;
-            case 2:
+            case SCRIPT_COMPARE_GREATER:
                 results[i] = left.as_int.value > right.as_int.value;
                 break;
-            case 3:
+            case SCRIPT_COMPARE_LESS:
                 results[i] = left.as_int.value < right.as_int.value;
                 break;
-            case 4:
+            case SCRIPT_COMPARE_GREATER_EQUAL:
                 results[i] = left.as_int.value >= right.as_int.value;
                 break;
-            case 5:
+            case SCRIPT_COMPARE_LESS_EQUAL:
                 results[i] = left.as_int.value <= right.as_int.value;
                 break;
             }
@@ -508,7 +532,7 @@ static u32 *Script_EvalSet(ScriptThread *thread, u32 *cursor) {
 
     running = TRUE;
     want_operator = FALSE;
-    operator = 0xFF;
+    operator = SCRIPT_OP_NONE;
     cursor++;
     target.as_int.opcode = cursor[0];
     target.as_int.value = cursor[1];
@@ -521,65 +545,65 @@ static u32 *Script_EvalSet(ScriptThread *thread, u32 *cursor) {
             cursor += 2;
             if (!is_float) {
                 switch (operator) {
-                case 0xFF:
+                case SCRIPT_OP_NONE:
                     total = operand.as_int.value;
                     break;
-                case 0:
+                case SCRIPT_OP_ADD:
                     total += operand.as_int.value;
                     break;
-                case 1:
+                case SCRIPT_OP_SUB:
                     total -= operand.as_int.value;
                     break;
-                case 2:
+                case SCRIPT_OP_MUL:
                     total *= operand.as_int.value;
                     break;
-                case 3:
+                case SCRIPT_OP_DIV:
                     total /= operand.as_int.value;
                     break;
-                case 4:
+                case SCRIPT_OP_MOD:
                     total %= operand.as_int.value;
                     break;
-                case 5:
+                case SCRIPT_OP_SHL:
                     total <<= operand.as_int.value;
                     break;
-                case 6:
+                case SCRIPT_OP_SHR:
                     total >>= operand.as_int.value;
                     break;
-                case 7:
+                case SCRIPT_OP_AND:
                     total &= operand.as_int.value;
                     break;
-                case 8:
+                case SCRIPT_OP_OR:
                     total |= operand.as_int.value;
                     break;
                 }
             } else {
                 switch (operator) {
-                case 0xFF:
+                case SCRIPT_OP_NONE:
                     float_total = operand.as_float.value;
                     break;
-                case 0:
+                case SCRIPT_OP_ADD:
                     float_total += operand.as_float.value;
                     break;
-                case 1:
+                case SCRIPT_OP_SUB:
                     float_total -= operand.as_float.value;
                     break;
-                case 2:
+                case SCRIPT_OP_MUL:
                     float_total *= operand.as_float.value;
                     break;
-                case 3:
+                case SCRIPT_OP_DIV:
                     float_total /= operand.as_float.value;
                     break;
                 }
             }
-            operator = 0xFF;
+            operator = SCRIPT_OP_NONE;
         } else {
             word = *cursor;
             switch (word & 0xFF) {
-            case 0xFF:
+            case SCRIPT_SET_END:
                 cursor++;
                 running = FALSE;
                 break;
-            case 4:
+            case SCRIPT_SET_OPERATOR:
                 operator = word >> 8;
                 cursor++;
                 break;
@@ -659,20 +683,20 @@ static void Script_ReadGameVar(ScriptArg *result, u32 code, int offset) {
     source = script_game_var_blocks[code & 0xFF] + offset;
     type = code >> 8;
     switch (type) {
-    case 0:
+    case SCRIPT_TYPE_S8:
         result->value = *(s8 *)source;
         break;
-    case 1:
+    case SCRIPT_TYPE_U8:
         result->value = *source;
         break;
-    case 2:
+    case SCRIPT_TYPE_S16:
         result->value = *(s16 *)source;
         break;
-    case 3:
+    case SCRIPT_TYPE_U16:
         result->value = *(u16 *)source;
         break;
-    case 4:
-    case 5:
+    case SCRIPT_TYPE_S32:
+    case SCRIPT_TYPE_U32:
     case SCRIPT_TYPE_FLOAT:
         result->value = *(s32 *)source;
         break;
@@ -692,20 +716,20 @@ static void Script_ReadSharedVar(ScriptArg *result, u32 code, int offset) {
         script_error_flags[SCRIPT_ERROR_BAD_SHARED_VAR] = 1;
     }
     switch (type) {
-    case 0:
+    case SCRIPT_TYPE_S8:
         result->value = *(s8 *)source;
         break;
-    case 1:
+    case SCRIPT_TYPE_U8:
         result->value = *source;
         break;
-    case 2:
+    case SCRIPT_TYPE_S16:
         result->value = *(s16 *)source;
         break;
-    case 3:
+    case SCRIPT_TYPE_U16:
         result->value = *(u16 *)source;
         break;
-    case 4:
-    case 5:
+    case SCRIPT_TYPE_S32:
+    case SCRIPT_TYPE_U32:
     case SCRIPT_TYPE_FLOAT:
         result->value = *(s32 *)source;
         break;
@@ -724,20 +748,20 @@ static void Script_ReadLocalVar(ScriptArg *result, ScriptThread *thread, u32 cod
         script_error_flags[SCRIPT_ERROR_BAD_LOCAL_VAR] = 1;
     }
     switch (type) {
-    case 0:
+    case SCRIPT_TYPE_S8:
         result->value = *(s8 *)source;
         break;
-    case 1:
+    case SCRIPT_TYPE_U8:
         result->value = *source;
         break;
-    case 2:
+    case SCRIPT_TYPE_S16:
         result->value = *(s16 *)source;
         break;
-    case 3:
+    case SCRIPT_TYPE_U16:
         result->value = *(u16 *)source;
         break;
-    case 4:
-    case 5:
+    case SCRIPT_TYPE_S32:
+    case SCRIPT_TYPE_U32:
     case SCRIPT_TYPE_FLOAT:
         result->value = *(s32 *)source;
         break;
@@ -754,16 +778,16 @@ static void Script_WriteGameVar(ScriptArg *source, u32 code, int offset) {
     dest = script_game_var_blocks[code & 0xFF] + offset;
     type = code >> 8;
     switch (type) {
-    case 0:
-    case 1:
+    case SCRIPT_TYPE_S8:
+    case SCRIPT_TYPE_U8:
         *dest = source->value;
         break;
-    case 2:
-    case 3:
+    case SCRIPT_TYPE_S16:
+    case SCRIPT_TYPE_U16:
         *(u16 *)dest = source->value;
         break;
-    case 4:
-    case 5:
+    case SCRIPT_TYPE_S32:
+    case SCRIPT_TYPE_U32:
     case SCRIPT_TYPE_FLOAT:
         *(s32 *)dest = source->value;
         break;
@@ -781,16 +805,16 @@ static void Script_WriteSharedVar(ScriptArg *source, u32 code, int offset) {
         script_error_flags[SCRIPT_ERROR_BAD_SHARED_VAR] = 1;
     }
     switch (type) {
-    case 0:
-    case 1:
+    case SCRIPT_TYPE_S8:
+    case SCRIPT_TYPE_U8:
         *dest = source->value;
         break;
-    case 2:
-    case 3:
+    case SCRIPT_TYPE_S16:
+    case SCRIPT_TYPE_U16:
         *(u16 *)dest = source->value;
         break;
-    case 4:
-    case 5:
+    case SCRIPT_TYPE_S32:
+    case SCRIPT_TYPE_U32:
     case SCRIPT_TYPE_FLOAT:
         *(s32 *)dest = source->value;
         break;
@@ -809,16 +833,16 @@ static void Script_WriteCurrentLocalVar(ScriptArg *source, u32 code, int offset)
         script_error_flags[SCRIPT_ERROR_BAD_LOCAL_VAR] = 1;
     }
     switch (type) {
-    case 0:
-    case 1:
+    case SCRIPT_TYPE_S8:
+    case SCRIPT_TYPE_U8:
         *dest = source->value;
         break;
-    case 2:
-    case 3:
+    case SCRIPT_TYPE_S16:
+    case SCRIPT_TYPE_U16:
         *(u16 *)dest = source->value;
         break;
-    case 4:
-    case 5:
+    case SCRIPT_TYPE_S32:
+    case SCRIPT_TYPE_U32:
     case SCRIPT_TYPE_FLOAT:
         *(s32 *)dest = source->value;
         break;
@@ -836,16 +860,16 @@ static void Script_WriteLocalVar(ScriptArg *source, ScriptThread *thread, u32 co
         script_error_flags[SCRIPT_ERROR_BAD_LOCAL_VAR] = 1;
     }
     switch (type) {
-    case 0:
-    case 1:
+    case SCRIPT_TYPE_S8:
+    case SCRIPT_TYPE_U8:
         *dest = source->value;
         break;
-    case 2:
-    case 3:
+    case SCRIPT_TYPE_S16:
+    case SCRIPT_TYPE_U16:
         *(u16 *)dest = source->value;
         break;
-    case 4:
-    case 5:
+    case SCRIPT_TYPE_S32:
+    case SCRIPT_TYPE_U32:
     case SCRIPT_TYPE_FLOAT:
         *(s32 *)dest = source->value;
         break;

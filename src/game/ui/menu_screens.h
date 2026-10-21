@@ -228,6 +228,9 @@ extern SpritePacket *tune_mess_parts;
 extern SpritePacket *mc_mess_parts;
 extern SpritePacket *equip_m2_parts;
 extern s8 system_screen_state;
+/* system_screen_state: the first two states every screen that uses it shares */
+#define SYSTEM_SCREEN_STATE_FADE_IN     0
+#define SYSTEM_SCREEN_STATE_OPEN        1
 extern ColorBytes menu_draw_color;
 extern ColorBytes panel_text_color;
 extern ColorBytes model_draw_color;

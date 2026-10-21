@@ -10,6 +10,9 @@
 
 #define PLAYER_STEP_HEIGHT 16.666666f
 
+/* map_object.touch_status_flag: 1 starts the poison (timed_flags[0]) */
+#define TOUCH_STATUS_POISON 1
+
 /* moves the player out of the body just hit: to `push` from it, but by no more than 50 a frame */
 #define PUSH_PLAYER_OUT()                                                                          \
     Vector_Scale(offset, COLLISION_RESULT->normal, push);                                       \
@@ -557,7 +560,7 @@ void Player_CollideWithMapObjects(s32 climb) {
     }
     if (player_state.touched_map_object != 0 && player_state.touched_map_object != player_previous.touched_map_object) {
         switch ((s16)player_state.touched_map_object->source->touch_status_flag) {
-        case 1:
+        case TOUCH_STATUS_POISON:
             player_state.timed_flags[0] = 1800;
             player_state.ailment0_start_frame = frame_counter;
             break;

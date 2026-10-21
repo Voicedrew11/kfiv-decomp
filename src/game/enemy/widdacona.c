@@ -18,6 +18,12 @@
 #include "player/player.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
+
+/* ai_state->step_index: set once this widdacona's death motion ends; its partner then dies too */
+#define WIDDACONA_DIED                      1
+/* Widdacona_Death: Entity.action_step (steps 0 to 2 are the shared ones) */
+#define WIDDACONA_DEATH_STEP_FOLLOW_PARTNER 3       /* waits for the partner's death, then dies too */
+#define WIDDACONA_DEATH_STEP_FADE_OUT       4       /* fades the model out over action_timer, then removes it */
 // match: the definition takes an Actor, a struct local to its file
 
 static void Widdacona_Animate(Entity *entity);
@@ -115,7 +121,7 @@ static void Widdacona_Death(Entity *entity) {
 
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x10, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FLY) {
@@ -127,12 +133,12 @@ static void Widdacona_Death(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             part = Model_GetSkinnedBonePoint((char *)entity->model, 0x14);
             if (part != NULL) {
@@ -147,11 +153,11 @@ static void Widdacona_Death(Entity *entity) {
                 Effect_StartSpawner(0x3BC, part, entity->model->rotation, &player_state.position);
             }
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
-            ai_state->step_index = 1;
+            ai_state->step_index = WIDDACONA_DIED;
             entity->action_step++;
         }
         break;
-    case 3:
+    case WIDDACONA_DEATH_STEP_FOLLOW_PARTNER:
         other = Entity_GetBySpawnIdForMap(entity->group_id, entity->spawn_info->spawn_mode);
         if (other != NULL && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST) && other->ai_state.step_index != 0) {
             ENTITY_FLAG_BITS(entity)->dying = 2;
@@ -164,7 +170,7 @@ static void Widdacona_Death(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 4:
+    case WIDDACONA_DEATH_STEP_FADE_OUT:
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
@@ -183,7 +189,7 @@ static void Widdacona_Dormant(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 1, 0, 0, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
@@ -199,7 +205,7 @@ static void Widdacona_Dormant(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
         break;
-    case 1:
+    case DORMANT_STEP_SLEEP:
         if (player_state.position.x > -4900.0f && player_state.position.x < -2500.0f &&
             player_state.position.z > -5350.0f && player_state.position.z < -3350.0f) {
             if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
@@ -214,12 +220,12 @@ static void Widdacona_Dormant(Entity *entity) {
             }
         }
         break;
-    case 2:
+    case DORMANT_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DORMANT_STEP_WAKE:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetState(entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
@@ -249,19 +255,19 @@ static void Widdacona_ReturnToDormant(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 2, EntityAi_AnimationFrameCount(entity, 2) - 1, entity->params->motion_blend_frames, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ENTITY_FLAG_BITS(entity)->bit15 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
@@ -363,12 +369,12 @@ static void Widdacona_RangedAttack0(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
@@ -376,7 +382,7 @@ static void Widdacona_RangedAttack0(Entity *entity) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {

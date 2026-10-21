@@ -191,23 +191,23 @@ void Interact_FindTarget(void) {
             if (map_slots[item_map].loaded != 0) {
                 object = NULL;
                 switch (map_slots[item_map].tag) {
-                case 0xC:
+                case MAP_TAG_ANCIENT_CITY_EXTERIOR:
                     if (def->slot_id == 0xFA) {
                         object = MapObject_GetById(item_map, def->slot_id);
                     }
                     break;
-                case 0x11:
+                case MAP_TAG_FORGE_017:
                     if (def->slot_id == 0xC9) {
                         object = MapObject_GetById(item_map, def->slot_id + 0x32);
                     }
                     break;
-                case 0x12:
-                case 0x13:
+                case MAP_TAG_FORGE_018:
+                case MAP_TAG_FORGE_019:
                     if (def->slot_id == 0xC9 || def->slot_id == 0xCA) {
                         object = MapObject_GetById(item_map, def->slot_id + 0x32);
                     }
                     break;
-                case 0x6D:
+                case MAP_TAG_ANCIENT_CITY_L2_WEST:
                     if (def->slot_id >= 0xFA && def->slot_id <= 0xFD) {
                         object = MapObject_GetById(item_map, def->slot_id);
                     }

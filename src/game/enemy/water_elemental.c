@@ -17,6 +17,9 @@
 // Local: entity_math.h says float * for DistanceXZ and AngleXZ, and callers pass the player block.
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
+
+/* WaterElemental_RunAtPlayer: Entity.action_step (steps 0 and 1 are the shared ones) */
+#define WATER_ELEMENTAL_RUN_STEP_CHASE 2       /* each frame guards, dodges or runs at the player */
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void WaterElemental_Think(Entity *entity, s32 run_now);
@@ -236,7 +239,7 @@ static void WaterElemental_PlayTurnAnim(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         if (ai_state->step_index > 0) {
             Motion_Start(entity, 0xC, 0, entity->params->motion_blend_frames, 1);
         } else {
@@ -245,12 +248,12 @@ static void WaterElemental_PlayTurnAnim(Entity *entity) {
         entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
@@ -276,7 +279,7 @@ static void WaterElemental_RecoverHealth(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x12, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
         ai_state->turn_rate = 0.0f;
@@ -284,12 +287,12 @@ static void WaterElemental_RecoverHealth(Entity *entity) {
         ai_state->action_counter = 0;
         entity->action_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ai_state->action_counter == 0 && entity->model->level_tables->frame == entity->params->type_param_2) {
             entity->hit_points += (s32)(entity->params->hit_points * (f32)entity->params->type_param_0 / 100.0f);
             ai_state->mode_timer = entity->params->type_param_1;
@@ -387,19 +390,19 @@ static void WaterElemental_RunAtPlayer(Entity *entity) {
 
     entity->busy_flags |= (ENTITY_BUSY_1000 | ENTITY_BUSY_2000);
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
         ai_state->turn_rate = 0.0f;
         ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case WATER_ELEMENTAL_RUN_STEP_CHASE:
         if (WaterElemental_ShouldDodgeMagic(entity, 200.0f, DEG_TO_RAD(60))) {
             EntityAi_StartAction(entity, EntityAi_Dodge, 1);
             break;

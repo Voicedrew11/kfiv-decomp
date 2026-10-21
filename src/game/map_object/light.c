@@ -2,6 +2,11 @@
 #include "model/linked_point.h"
 #include "math/angle.h"
 
+/* MapObjectUnk08.kind_param_6: the light's sort (LIGHT_SORT_* flicker or steady) */
+#define LIGHT_SORT_FAINT_FLICKER    0
+#define LIGHT_SORT_STRONG_FLICKER   1
+#define LIGHT_SORT_STEADY           2
+
 /* MapObject.step of a light (kind 9) */
 #define LIGHT_STEP_ACTIVE           1       /* the update flickers it (sorts 0 and 1) */
 /* MapObject.step of a status-on-touch object (kind 10) */
@@ -47,7 +52,7 @@ void MapObject_UpdateLight(MapObject *object) {
     f32 level;
 
     switch (source->kind_param_6) {
-        case 0: {
+        case LIGHT_SORT_FAINT_FLICKER: {
             // match: the depth and base are locals of each case
             f32 depth = 0.1f;
             f32 base = 0.9f;
@@ -59,7 +64,7 @@ void MapObject_UpdateLight(MapObject *object) {
             level = depth + base;
             break;
         }
-        case 1: {
+        case LIGHT_SORT_STRONG_FLICKER: {
             f32 depth = 0.25f;
             f32 base = 0.75f;
 
@@ -70,7 +75,7 @@ void MapObject_UpdateLight(MapObject *object) {
             level = depth + base;
             break;
         }
-        case 2: // match: the steady sort is named, which decides the order of the tests
+        case LIGHT_SORT_STEADY: // match: the steady sort is named, which decides the order of the tests
         default:
             level = 1.0f;
             break;

@@ -78,6 +78,29 @@
 #define CARD_FORMAT_STEP_START              2
 #define CARD_FORMAT_STEP_WAIT               3
 
+/* CardTask.step % 5 in SaveCard_StepCheck: the stages of one card's check */
+#define CARD_CHECK_SUB_PROBE                0
+#define CARD_CHECK_SUB_PROBE_WAIT           1
+#define CARD_CHECK_SUB_TYPE                 2
+#define CARD_CHECK_SUB_DIR                  3
+#define CARD_CHECK_SUB_DIR_WAIT             4
+
+/* CardTask.step % 7 in SaveCard_StepRescan: the stages of one card's rescan */
+#define CARD_RESCAN_SUB_PROBE               0
+#define CARD_RESCAN_SUB_PROBE_WAIT          1
+#define CARD_RESCAN_SUB_TYPE                2
+#define CARD_RESCAN_SUB_DIR                 3
+#define CARD_RESCAN_SUB_DIR_WAIT            4
+#define CARD_RESCAN_SUB_FILES               5
+#define CARD_RESCAN_SUB_FILES_WAIT          6
+
+/* SaveCard_SetFailureMessage: the failed task's kind minus 2 (last_kind - 2, the kinds from CARD_TASK_FORMAT up) */
+#define CARD_FAILURE_FORMAT                 0
+#define CARD_FAILURE_READ_LIST              1
+#define CARD_FAILURE_SAVE                   2
+#define CARD_FAILURE_LOAD                   3
+#define CARD_FAILURE_RESCAN                 4
+
 
 static sceMcTblGetDir *dir_entries;     /* 0x447334 the eleven directory entries a directory request fills */
 static McIconSys *icon_sys;             /* 0x447338 */
@@ -266,7 +289,7 @@ static s32 SaveCard_StepCheck(void) {
     index = task->step / 5;
     card = &card_records[index];
     switch (task->step % 5) {
-    case 0:
+    case CARD_CHECK_SUB_PROBE:
         if (Mc_StartCheck(index, 0) != 0) {
             if (++task->retries == 5) {
                 card->no_card = 1;
@@ -280,7 +303,7 @@ static s32 SaveCard_StepCheck(void) {
             task->step++;
         }
         break;
-    case 1:
+    case CARD_CHECK_SUB_PROBE_WAIT:
         if (Mc_Update() > 0) {
             return 0;
         }
@@ -346,7 +369,7 @@ static s32 SaveCard_StepCheck(void) {
             break;
         }
         break;
-    case 2:
+    case CARD_CHECK_SUB_TYPE:
         card->status.bytes.card_type = Mc_GetCardType(index, 0);
         if (card->formatted != 0 && card->status.bytes.card_type == 2) {
             card->free_clusters = Mc_GetFreeClusters(index, 0);
@@ -361,7 +384,7 @@ static s32 SaveCard_StepCheck(void) {
             task->step = CARD_CHECK_STEP_CARD1_PROBE;
         }
         break;
-    case 3:
+    case CARD_CHECK_SUB_DIR:
         if (Mc_StartGetDir(index, 0, "/BASLUS-20318*", 0, 0xB, dir_entries) != 0) {
             if (++task->retries == 5) {
                 if (task->step == CARD_CHECK_STEP_CARD1_DIR) {
@@ -374,7 +397,7 @@ static s32 SaveCard_StepCheck(void) {
             task->step++;
         }
         break;
-    case 4:
+    case CARD_CHECK_SUB_DIR_WAIT:
         if (Mc_Update() > 0) {
             return 0;
         }
@@ -935,7 +958,7 @@ static s32 SaveCard_StepRescan(void) {
     s32 result = 0;
 
     switch (task->step % 7) {
-    case 0:
+    case CARD_RESCAN_SUB_PROBE:
         if (Mc_Update() > 0) {
             break;
         }
@@ -948,7 +971,7 @@ static s32 SaveCard_StepRescan(void) {
             result = 1;
         }
         break;
-    case 1:
+    case CARD_RESCAN_SUB_PROBE_WAIT:
         if (Mc_Update() > 0) {
             break;
         }
@@ -1000,7 +1023,7 @@ static s32 SaveCard_StepRescan(void) {
             break;
         }
         break;
-    case 2:
+    case CARD_RESCAN_SUB_TYPE:
         if ((card->status.bytes.card_type = Mc_GetCardType(index, 0)) == 2) {
             if (card->formatted != 0) {
                 card->free_clusters = Mc_GetFreeClusters(index, 0);
@@ -1013,7 +1036,7 @@ static s32 SaveCard_StepRescan(void) {
             result = 1;
         }
         break;
-    case 3:
+    case CARD_RESCAN_SUB_DIR:
         if (Mc_StartGetDir(index, 0, "/BASLUS-20318*", 0, 0xB, dir_entries) == 0) {
             task->retries = 0;
             task->step++;
@@ -1027,7 +1050,7 @@ static s32 SaveCard_StepRescan(void) {
             break;
         }
         break;
-    case 4:
+    case CARD_RESCAN_SUB_DIR_WAIT:
         if (Mc_Update() > 0) {
             break;
         }
@@ -1052,7 +1075,7 @@ static s32 SaveCard_StepRescan(void) {
         }
         task->step = CARD_RESCAN_STEP_CARD1_PROBE;
         break;
-    case 5:
+    case CARD_RESCAN_SUB_FILES:
         memset(dir_entries, 0, 0x2C0);
         if (Mc_StartGetDir(index, 0, "/BASLUS-20318S/*", 0, 0xB, dir_entries) != 0) {
             if (++task->retries < 5) {
@@ -1069,7 +1092,7 @@ static s32 SaveCard_StepRescan(void) {
         task->retries = 0;
         task->step++;
         break;
-    case 6:
+    case CARD_RESCAN_SUB_FILES_WAIT:
         if (Mc_Update() > 0) {
             break;
         }
@@ -1223,7 +1246,7 @@ static void SaveCard_SetFailureMessage(void) {
     s32 answer = Mc_GetCardStatus(task->card_index, 0);
 
     switch ((s16)(task->last_kind - 2)) {
-    case 0:
+    case CARD_FAILURE_FORMAT:
         if (answer == 0) {
             card->message = 6;
         } else {
@@ -1239,7 +1262,7 @@ static void SaveCard_SetFailureMessage(void) {
             }
         }
         break;
-    case 1:
+    case CARD_FAILURE_READ_LIST:
         if (answer == 0) {
             card->message = 10;
         } else if (answer == 1) {
@@ -1260,7 +1283,7 @@ static void SaveCard_SetFailureMessage(void) {
             card->has_save_list = 0;
         }
         break;
-    case 2:
+    case CARD_FAILURE_SAVE:
         if (answer < 0) {
             card->message = 9;
             card->status.bytes.card_type = 0;
@@ -1279,7 +1302,7 @@ static void SaveCard_SetFailureMessage(void) {
             card->message = 9;
         }
         break;
-    case 3:
+    case CARD_FAILURE_LOAD:
         if (answer < 0) {
             card->message = 7;
             card->status.bytes.card_type = 0;
@@ -1299,7 +1322,7 @@ static void SaveCard_SetFailureMessage(void) {
             card->message = 7;
         }
         break;
-    case 4:
+    case CARD_FAILURE_RESCAN:
     default:
         card->message = 1;
         break;

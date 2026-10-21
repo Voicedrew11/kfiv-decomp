@@ -23,6 +23,17 @@
 #include "save/save_state.h"
 #include "sound/sound.h"
 
+/* spell_levels entries: 0 not learned, else the spell's level (its experience starts at 0, 50 or 150) */
+#define SPELL_LEVEL_NONE            0
+#define SPELL_LEVEL_1               1
+#define SPELL_LEVEL_2               2
+#define SPELL_LEVEL_3               3
+
+/* kf4_directory_words[3]: the fade running, 0 none (Game_StartFadeIn sets 1, Game_StartFadeOut -1) */
+#define FADE_DIRECTION_NONE         0
+#define FADE_DIRECTION_IN           1
+#define FADE_DIRECTION_OUT          -1
+
 /* cos 30 degrees: focus candidates must lie within this cone around the view ray */
 #define FOCUS_CONE_MIN_COS 0.86602497f
 
@@ -170,16 +181,16 @@ void Game_NormalizeStartState(void) {
         for (j = 0; j < 5; j++) {
             if (spell_experience[i][j] == 0) {
                 switch (spell_levels[i][j]) {
-                case 0:
+                case SPELL_LEVEL_NONE:
                     spell_experience[i][j] = 0;
                     break;
-                case 1:
+                case SPELL_LEVEL_1:
                     spell_experience[i][j] = 0;
                     break;
-                case 2:
+                case SPELL_LEVEL_2:
                     spell_experience[i][j] = 50;
                     break;
-                case 3:
+                case SPELL_LEVEL_3:
                     spell_experience[i][j] = 150;
                     break;
                 default:
@@ -786,12 +797,12 @@ void Game_DrawFade(void) {
     int alpha;
 
     switch (kf4_directory_words[3]) {
-    case 0:
+    case FADE_DIRECTION_NONE:
         return;
-    case 1:
+    case FADE_DIRECTION_IN:
         alpha = (fade_frames_left << 7) / fade_frames;
         break;
-    case -1:
+    case FADE_DIRECTION_OUT:
         alpha = 0x80 - (fade_frames_left << 7) / fade_frames;
         break;
     default:

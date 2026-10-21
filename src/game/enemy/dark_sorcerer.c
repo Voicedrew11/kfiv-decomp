@@ -29,6 +29,12 @@
 #define DARK_SORCERER_MOVE_CHOICE_STEP_RIGHT  3
 #define DARK_SORCERER_MOVE_CHOICE_TURN        4
 
+/* Entity.action_step values past the shared ones */
+#define DARK_SORCERER_DORMANT_STEP_FADE_IN    2   /* fades the model in over 20 frames */
+#define DARK_SORCERER_DEATH_STEP_FADE_START   2   /* plays the death motion; the fade starts past action_frames */
+#define DARK_SORCERER_ATTACK_STEP_FIRE        2   /* on its frame fires the shots or starts the map scripts, then pauses */
+#define DARK_SORCERER_ATTACK_STEP_END         3   /* waits for the motion to end, then ends the action */
+
 static void DarkSorcerer_OnHit(Entity *entity);
 static void DarkSorcerer_Think(Entity *entity, s32 run_now);
 static void DarkSorcerer_ThinkDecide(Entity *entity, s32 run_now);
@@ -400,7 +406,7 @@ static void DarkSorcerer_Dormant(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0, 0, 0, 1);
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->flags |= ENTITY_FLAG_200000;
@@ -410,12 +416,12 @@ static void DarkSorcerer_Dormant(Entity *entity) {
         entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
         ai_state->action_flags = 0;
         entity->action_step++;
-    case 1:
+    case DORMANT_STEP_SLEEP:
         if (dark_sorcerer_fight_started[0] != 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case DARK_SORCERER_DORMANT_STEP_FADE_IN:
         entity->model_alpha = ai_state->action_flags * 0x60 / 20 + 0x20;
         ai_state->action_flags++;
         if (ai_state->action_flags > 20) {
@@ -446,7 +452,7 @@ static void DarkSorcerer_MeleeAttack(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, kind | ENTITY_MOTION_ATTACK_BASE, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
@@ -458,7 +464,7 @@ static void DarkSorcerer_MeleeAttack(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
@@ -466,7 +472,7 @@ static void DarkSorcerer_MeleeAttack(Entity *entity) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (unk240->hit_start_frame >= entity->model->level_tables->frame) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
@@ -514,7 +520,7 @@ static void DarkSorcerer_RangedAttack(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, kind + ENTITY_MOTION_RANGED_ATTACK, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
@@ -523,7 +529,7 @@ static void DarkSorcerer_RangedAttack(Entity *entity) {
         }
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
@@ -531,7 +537,7 @@ static void DarkSorcerer_RangedAttack(Entity *entity) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
@@ -569,7 +575,7 @@ static void DarkSorcerer_Death(Entity *entity) {
 
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x10, 0, 5, 1);
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->flags |= ENTITY_FLAG_ANIMATES;
@@ -580,12 +586,12 @@ static void DarkSorcerer_Death(Entity *entity) {
         entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case DARK_SORCERER_DEATH_STEP_FADE_START:
         if ((s16)entity->params->action_frames < entity->model->level_tables->frame) {
             entity->action_timer = ai_state->pause_timer = EntityAi_AnimationFrameCount(entity, entity->animation_index) - entity->model->level_tables->frame;
             ENTITY_FLAG_BITS(entity)->dying = 2;
@@ -594,7 +600,7 @@ static void DarkSorcerer_Death(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DEATH_STEP_FADE_OUT:
         entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / (f32)ai_state->pause_timer;
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
@@ -653,24 +659,24 @@ static void DarkSorcerer_PlayAnim17AndShoot(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames >> 1, 1);
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case DARK_SORCERER_ATTACK_STEP_FIRE:
         if (entity->model->level_tables->frame >= 0x28) {
             DarkSorcerer_LaunchShotsAtFixedPoints(entity);
             ai_state->sub_timer = 0x5A;
             entity->action_step++;
         }
         break;
-    case 3:
+    case DARK_SORCERER_ATTACK_STEP_END:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
@@ -782,24 +788,24 @@ static void DarkSorcerer_PlayAnim18AndShoot(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x12, 0, entity->params->motion_blend_frames >> 1, 1);
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case DARK_SORCERER_ATTACK_STEP_FIRE:
         if (entity->model->level_tables->frame >= 0x10) {
             EntityAi_LaunchShot(entity, 0xC9, entity->model->position, entity->model->rotation);
             ai_state->sub_timer = 0x5A;
             entity->action_step++;
         }
         break;
-    case 3:
+    case DARK_SORCERER_ATTACK_STEP_END:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;
@@ -824,24 +830,24 @@ static void DarkSorcerer_PlayAnim19StartScripts(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_4000;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x13, 0, entity->params->motion_blend_frames >> 1, 1);
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case DARK_SORCERER_ATTACK_STEP_FIRE:
         if (entity->model->level_tables->frame >= 0x18) {
             DarkSorcerer_StartMapScripts(entity);
             ai_state->sub_timer = 0x5A;
             entity->action_step++;
         }
         break;
-    case 3:
+    case DARK_SORCERER_ATTACK_STEP_END:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;

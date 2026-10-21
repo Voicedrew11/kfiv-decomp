@@ -13,6 +13,9 @@
 #include <stdlib.h>
 #include "model/motion.h"
 #include "player/player.h"
+
+/* Entity.action_step of WiddaQueen_MeleeAttack1 past the shared ones */
+#define WIDDA_QUEEN_MELEE_STEP_SWING  2   /* swings with its hit windows until frame 61, then ends */
 #include "entity/entity_ai.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
@@ -195,7 +198,7 @@ static void WiddaQueen_MeleeAttack0(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ENTITY_FLAG_BITS(entity)->melee_0_hit = 0;
@@ -203,7 +206,7 @@ static void WiddaQueen_MeleeAttack0(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
@@ -211,7 +214,7 @@ static void WiddaQueen_MeleeAttack0(Entity *entity) {
             ai_state->step_index = 1;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (unk240->hit_start_frame >= entity->model->level_tables->frame) {
             ai_state->step_index = 1;
         } else {
@@ -256,7 +259,7 @@ static void WiddaQueen_MeleeAttack1(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x15, 10, (s16)entity->params->action_frames, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ai_state->step_index = 0;
@@ -265,12 +268,12 @@ static void WiddaQueen_MeleeAttack1(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->melee_2_hit = 0;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case WIDDA_QUEEN_MELEE_STEP_SWING:
         frame = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->melee_0_hit) {
             ENTITY_FLAG_BITS(entity)->melee_0_hit = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->frame, entity->model->rotation[1] - DEG_TO_RAD(45));
@@ -308,12 +311,12 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
@@ -321,7 +324,7 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
             ai_state->step_index = 1;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             ai_state->step_index = 1;
         } else {
@@ -363,12 +366,12 @@ static void WiddaQueen_RangedAttack1(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x18, 0, entity->params->motion_blend_frames >> 1, 1);
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
@@ -376,7 +379,7 @@ static void WiddaQueen_RangedAttack1(Entity *entity) {
             ai_state->step_index = 1;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             ai_state->step_index = 1;
         } else {
@@ -495,7 +498,7 @@ static s32 WiddaQueen_PickAttack(Entity *entity) {
 static void WiddaQueen_Death(Entity *entity) {
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x10, 0, 5, 1);
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->flags |= ENTITY_FLAG_ANIMATES;
@@ -504,12 +507,12 @@ static void WiddaQueen_Death(Entity *entity) {
         entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;
@@ -521,7 +524,7 @@ static void WiddaQueen_Death(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DEATH_STEP_FADE_OUT:
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {

@@ -412,7 +412,7 @@ void EntityCollision_ApplySurfaceEffect(Entity *entity, s32 material_first, s32 
     s32 amount;
 
     switch (Collision_GetSurfaceEffect(material_first, material_second, material_third)) {
-    case 1:
+    case GROUND_EFFECT_POISON_LOW_CHANCE:
         chance = 20 - entity->params->ailment_defence_1;
         if (chance <= 0) {
             return;
@@ -422,7 +422,7 @@ void EntityCollision_ApplySurfaceEffect(Entity *entity, s32 material_first, s32 
         }
         entity->ailment_1_frames = 1800;
         break;
-    case 2:
+    case GROUND_EFFECT_POISON_HIGH_CHANCE:
         chance = 50 - entity->params->ailment_defence_1;
         if (chance <= 0) {
             return;
@@ -432,10 +432,10 @@ void EntityCollision_ApplySurfaceEffect(Entity *entity, s32 material_first, s32 
         }
         entity->ailment_1_frames = 1800;
         break;
-    case 3:
+    case GROUND_EFFECT_POISON_CERTAIN:
         entity->ailment_1_frames = 1800;
         break;
-    case 4:
+    case GROUND_EFFECT_DAMAGE:
         chance = 50 - (200 - (entity->params->magic_defence + entity->params->resist_fire)) / 200;
         if (chance <= 0) {
             return;
@@ -450,7 +450,7 @@ void EntityCollision_ApplySurfaceEffect(Entity *entity, s32 material_first, s32 
             entity->hit_flash_frames = 3;
         }
         break;
-    case 5:
+    case GROUND_EFFECT_WEAR_DAMAGE:
         if (entity->hit_points != 0) {
             entity->hit_points = (entity->hit_points > 30) ? entity->hit_points - 30 : 0;
             entity->hit_flash_frames = 3;
@@ -1506,13 +1506,13 @@ void EntityCollision_WalkAgainstObjects(Entity *entity) {
             }
             COLLISION_RESULT->hit = 0;
             switch (object->definition->kind) {
-            case 1:
+            case MAP_OBJECT_KIND_DOOR:
                 EntityCollision_PushOutOfBox((CollisionOwner *)object, position, entity->collision_height, entity->collision_radius);
                 break;
-            case 2:
+            case MAP_OBJECT_KIND_DOUBLE_DOOR:
                 EntityCollision_PushOutOfBoxPair((CollisionOwner *)object, position, entity->collision_height, entity->collision_radius);
                 break;
-            case 0x11:
+            case MAP_OBJECT_KIND_SIGNAL_DOOR:
                 EntityCollision_PushOutOfQuad((CollisionOwner *)object, position, entity->collision_height, entity->collision_radius);
                 break;
             default:
@@ -1579,16 +1579,16 @@ void EntityCollision_SphereAgainstObjects(Entity *entity) {
             }
             COLLISION_RESULT->hit = 0;
             switch (object->definition->kind) {
-            case 1:
+            case MAP_OBJECT_KIND_DOOR:
                 EntityCollision_SphereBox((CollisionOwner *)object, position, entity->collision_radius);
                 break;
-            case 2:
+            case MAP_OBJECT_KIND_DOUBLE_DOOR:
                 EntityCollision_SphereBoxPair((CollisionOwner *)object, position, entity->collision_radius);
                 break;
-            case 0x11:
+            case MAP_OBJECT_KIND_SIGNAL_DOOR:
                 EntityCollision_SphereQuad((CollisionOwner *)object, position, entity->collision_radius);
                 break;
-            case 0x12:
+            case MAP_OBJECT_KIND_PITFALL:
                 EntityCollision_SphereQuads((CollisionOwner *)object, position, entity->collision_radius);
                 break;
             default:

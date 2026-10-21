@@ -68,6 +68,20 @@
 #define GIF_TAG_FLG_IMAGE   0x800000000000000 /* GIF tag FLG (bits 58-59) at 2, image mode: the qwords after the tag are image data */
 #define GIF_TAG_PRIM_TME    0x80000 /* PRIM's TME bit in a GIF tag's second word (PRIM sits at bit 15): texture mapping */
 #define GIF_TAG_PRIM_ABE    0x200000 /* PRIM's ABE bit in a GIF tag's second word: alpha blending */
+/* PSM: the GS pixel storage formats (TEX0, BITBLTBUF, FRAME, ZBUF) */
+#define GS_PSM_CT32     0x00
+#define GS_PSM_CT24     0x01
+#define GS_PSM_CT16     0x02
+#define GS_PSM_CT16S    0x0A
+#define GS_PSM_T8       0x13
+#define GS_PSM_T4       0x14
+#define GS_PSM_T8H      0x1B
+#define GS_PSM_T4HL     0x24
+#define GS_PSM_T4HH     0x2C
+#define GS_PSM_Z32      0x30
+#define GS_PSM_Z24      0x31
+#define GS_PSM_Z16      0x32
+#define GS_PSM_Z16S     0x3A
 #define GS_PSM_4BIT_PALETTE 0x4     /* PSM bit 2: the 4-bit palette formats (PSMT4 0x14, PSMT4HL 0x24, PSMT4HH 0x2C) */
 #define GS_TEX0_TFX_DECAL   0x800000000 /* TEX0 TFX (bits 35-36) at 1: the texture is decal-blended over what is under it */
 

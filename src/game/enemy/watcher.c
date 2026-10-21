@@ -7,6 +7,9 @@
 #include "entity/entity_events.h"
 #include "math/vu0.h"
 #include "player/player.h"
+
+/* Entity.action_step of Watcher_Death past the shared ones */
+#define WATCHER_DEATH_STEP_FADE_OUT   1   /* fades the model out over action_timer, then frees it */
 #include "entity/entity_ai.h"
 #include "entity/entity_ai_handlers.h"
 #include "model/motion.h"
@@ -112,7 +115,7 @@ static void Watcher_Move(Entity *entity) {
 static void Watcher_Death(Entity *entity) {
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         EntityEvent_StartCueAlways(entity, 2, 0);
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
@@ -127,7 +130,7 @@ static void Watcher_Death(Entity *entity) {
         EntityEvent_OnDeath(entity);
         entity->action_step++;
         break;
-    case 1:
+    case WATCHER_DEATH_STEP_FADE_OUT:
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {

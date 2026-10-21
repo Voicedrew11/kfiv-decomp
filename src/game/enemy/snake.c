@@ -21,7 +21,14 @@
 /* EntitySpawnInfo.spawn_mode: which dormant hold it starts in */
 #define SNAKE_SPAWN_MODE_HOLD_ANIM2       0
 #define SNAKE_SPAWN_MODE_HOLD_ANIM8_THEN_MOVE 1
-/* MapObject step of a broken map object (MapObject_Break sets it) */
+
+/* Snake_DormantHoldAnim8ThenMove: Entity.action_step */
+#define SNAKE_LEAP_STEP_WAKE                1       /* waits for the player to come near, then animates */
+#define SNAKE_LEAP_STEP_LAUNCH              2       /* stops the animation at frame 30, ready to leap */
+#define SNAKE_LEAP_STEP_FLY                 3       /* moves forward and up until it lands */
+#define SNAKE_LEAP_STEP_END                 4       /* ends the action once the motion ends */
+/* Snake_Dormant: Entity.action_step */
+#define SNAKE_DORMANT_STEP_LEAVE_SPAWN      2       /* moves on until it is type_param_0 from its spawn point */
 
 
 static void Snake_DormantHoldAnim2(Entity *entity);
@@ -90,7 +97,7 @@ static void Snake_DormantHoldAnim2(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 2, 0, 0, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0.0f;
@@ -104,7 +111,7 @@ static void Snake_DormantHoldAnim2(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
         break;
-    case 1:
+    case DORMANT_STEP_SLEEP:
         ENTITY_FLAG_BITS(entity)->animates = FALSE;
         if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_strength != 0) {
             map_object = MapObject_GetById(entity->group_id, entity->spawn_info->variant);
@@ -117,7 +124,7 @@ static void Snake_DormantHoldAnim2(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetState(entity, 2);
             ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
@@ -152,7 +159,7 @@ static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 8, 0, 0, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0.0f;
@@ -165,7 +172,7 @@ static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
         break;
-    case 1:
+    case SNAKE_LEAP_STEP_WAKE:
         if (entity->spawn_info->variant != 0 &&
             map_script_flags[entity->spawn_info->second_map_object_id + entity->spawn_info->map_object_id * 64] != 0) {
             ENTITY_FLAG_BITS(entity)->live = FALSE;
@@ -178,13 +185,13 @@ static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case SNAKE_LEAP_STEP_LAUNCH:
         if (entity->model->level_tables->frame > 30) {
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
             entity->action_step++;
         }
         break;
-    case 3:
+    case SNAKE_LEAP_STEP_FLY:
         distance = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
         if (ENTITY_FLAG_BITS(entity)->on_floor || distance < 100.0f) {
             ENTITY_FLAG_BITS(entity)->animates = TRUE;
@@ -198,7 +205,7 @@ static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
         entity->move_delta_y += direction[1];
         entity->move_delta_z += direction[2];
         break;
-    case 4:
+    case SNAKE_LEAP_STEP_END:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetState(entity, 2);
             ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
@@ -228,7 +235,7 @@ static void Snake_Dormant(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 3, 0, 0, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0.0f;
@@ -241,14 +248,14 @@ static void Snake_Dormant(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
         break;
-    case 1:
+    case DORMANT_STEP_SLEEP:
         ENTITY_FLAG_BITS(entity)->animates = FALSE;
         if (entity->distance_to_player < (f32)entity->spawn_info->wake_distance) {
             ENTITY_FLAG_BITS(entity)->animates = TRUE;
             entity->action_step++;
         }
         break;
-    case 2:
+    case SNAKE_DORMANT_STEP_LEAVE_SPAWN:
         if (EntityMath_DistanceXZ(entity->model->position, &entity->spawn_info->spawn_x) >= (f32)entity->params->type_param_0) {
             EntityAi_SetState(entity, 2);
             ENTITY_FLAG_BITS(entity)->no_player_collision = FALSE;
@@ -296,13 +303,13 @@ static void Snake_Think(Entity *entity, s32 run_now) {
             EntityAi_ThinkReturn(entity, run_now);
         } else {
             switch (entity->state) {
-            case 0:
+            case ENTITY_STATE_UNAWARE:
                 EntityAi_ThinkIdle(entity, run_now);
                 break;
-            case 1:
+            case ENTITY_STATE_SEARCHING:
                 EntityAi_ThinkPursue(entity, run_now);
                 break;
-            case 2:
+            case ENTITY_STATE_NOTICED:
                 EntityAi_ThinkCombat(entity, run_now);
                 break;
             default:
@@ -320,7 +327,7 @@ static void Snake_Think(Entity *entity, s32 run_now) {
 static void Snake_Death(Entity *entity) {
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x10, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
@@ -331,12 +338,12 @@ static void Snake_Death(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;
@@ -350,7 +357,7 @@ static void Snake_Death(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DEATH_STEP_FADE_OUT:
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {

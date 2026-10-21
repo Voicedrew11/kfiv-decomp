@@ -195,7 +195,7 @@ static void Giant_PlayAnim17(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_1000;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 0);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
@@ -205,12 +205,12 @@ static void Giant_PlayAnim17(Entity *entity) {
         ai_state->turn_rate = 0.0f;
         entity->action_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
             entity->move_command = 0;

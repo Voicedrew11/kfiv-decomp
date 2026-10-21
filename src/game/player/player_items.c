@@ -13,6 +13,19 @@
 #include "save/save_state.h"
 #include "ui/menu_screens.h"
 
+/* ItemCommonDef.type: what using the item does (Player_UseItem); 4, 5 and 7 are left as numbers */
+#define ITEM_TYPE_HEAL              0       /* heals hp and mp and clears the ailments its timed_flags name */
+#define ITEM_TYPE_USE_ON_OBJECT     1       /* used on the map object in view (MapObject_UseItem) */
+#define ITEM_TYPE_WAND              2       /* takes the player to the passage symbol the player stands on */
+#define ITEM_TYPE_KEY               3       /* a key, added to the key items */
+#define ITEM_TYPE_MAP               6       /* opens the map viewer */
+#define ITEM_TYPE_NOTHING_HAPPENS   8       /* shows "Nothing happened" */
+
+/* ItemCommonDef.use_mode: what using the item does to the stock */
+#define ITEM_USE_MODE_TAKE          0       /* the item is used up */
+#define ITEM_USE_MODE_KEEP          1       /* the item is kept */
+#define ITEM_USE_MODE_EXCHANGE      2       /* the item is used up and the player gets def->item */
+
 /* TRUE when the player cannot take one more of the item ("Can't carry any more", MapItem_PickupHold): a one-of-a-kind
    item already carried, or 99 of another. */
 int Player_CannotCarryItem(int idx) {
@@ -109,7 +122,7 @@ void Player_UseItem(void) {
             }
             Player_ApplyItem(item);
             switch (def->type) {
-            case 0:
+            case ITEM_TYPE_HEAL:
                 player_state.hp_now += def->hp_heal;
                 if (player_state.hp_now > player_state.hp_max) {
                     player_state.hp_now = player_state.hp_max;
@@ -144,7 +157,7 @@ void Player_UseItem(void) {
                     player_state.flag_timers[5] = 60;
                 }
                 break;
-            case 1:
+            case ITEM_TYPE_USE_ON_OBJECT:
             case 4:
             case 5:
                 if (view_ray_status.current == NULL || !MapObject_UseItem(view_ray_status.current, item)) {
@@ -152,21 +165,21 @@ void Player_UseItem(void) {
                     return;
                 }
                 break;
-            case 2:
+            case ITEM_TYPE_WAND:
                 stood_on = object_under_player[0];
                 if (stood_on == NULL || stood_on->definition->kind != MAP_OBJECT_KIND_SYMBOL_OF_PASSAGE || !MapChange_StartPassage(item)) {
                     Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_NOTHING_HAPPENED);
                     return;
                 }
                 break;
-            case 3:
+            case ITEM_TYPE_KEY:
                 return;
-            case 6:
+            case ITEM_TYPE_MAP:
                 MapViewer_OpenForItem(item);
                 break;
             case 7:
                 break;
-            case 8:
+            case ITEM_TYPE_NOTHING_HAPPENS:
                 Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_NOTHING_HAPPENED);
                 return;
             default:
@@ -174,12 +187,12 @@ void Player_UseItem(void) {
             }
             Player_ApplyPoisonWater(item);
             switch (def->use_mode) {
-            case 0:
+            case ITEM_USE_MODE_TAKE:
                 item_counts.bytes[item]--;
                 break;
-            case 1:
+            case ITEM_USE_MODE_KEEP:
                 break;
-            case 2:
+            case ITEM_USE_MODE_EXCHANGE:
                 item_counts.bytes[item]--;
                 item_counts.bytes[def->item]++;
                 break;

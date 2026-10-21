@@ -57,6 +57,15 @@
 #include "core/play_time.h"
 #include "math/vu0.h"
 
+/* MapDrawState.mode: how the frame is drawn; 1 and 2 draw a second view first (map.h) */
+#define MAP_DRAW_PLAIN              0
+#define MAP_DRAW_MIRROR_FIRST       1       /* the mirrored view, then the picture */
+#define MAP_DRAW_OFFSCREEN_FIRST    2       /* the picture into the offscreen target, then the screen */
+
+/* GameLoop_SetCameraMatrices' mode: the world to screen matrix, plain or flipped about the mirror's height */
+#define CAMERA_MATRIX_PLAIN         0
+#define CAMERA_MATRIX_MIRROR        1
+
 
 /* Resets every game system for a new session; a loaded save is then applied on top. */
 void GameLoop_ResetSystems(int arg) {
@@ -214,7 +223,7 @@ void GameLoop_DrawFrame(int arg) {
     Packet_OnFrameStart();
     GsDraw_ResetDrawTarget();
     switch (MAP_DRAW_OVERLAYS->mode) {
-    case 0:
+    case MAP_DRAW_PLAIN:
         GameLoop_SetCameraMatrices(0, 0);
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         ModelTexture_ResetSlots();
@@ -238,7 +247,7 @@ void GameLoop_DrawFrame(int arg) {
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         MapItem_DrawPicked(0);
         break;
-    case 1:
+    case MAP_DRAW_MIRROR_FIRST:
         GameLoop_SetCameraMatrices(0, 1);
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         ModelTexture_ResetSlots();
@@ -280,7 +289,7 @@ void GameLoop_DrawFrame(int arg) {
         GsDraw_QueueVu1Matrix(world_screen_matrix);
         MapItem_DrawPicked(0);
         break;
-    case 2:
+    case MAP_DRAW_OFFSCREEN_FIRST:
         Map_SetOffscreenTarget();
         GsDraw_ClearFrame();
         GameLoop_SetCameraMatrices(1, 1);
@@ -548,10 +557,10 @@ void GameLoop_SetCameraMatrices(int projection, int mode) {
     sceVu0RotMatrixZ(inverse_camera_rotation, inverse_camera_rotation, camera_state.roll);
     sceVu0InversMatrix(inverse_camera_rotation, inverse_camera_rotation);
     switch (mode) {
-    case 0:
+    case CAMERA_MATRIX_PLAIN:
         sceVu0MulMatrix(world_screen_matrix, view_screen_matrix, world_view_matrix);
         break;
-    case 1:
+    case CAMERA_MATRIX_MIRROR:
         translation[1] = ((MapDrawStateMirror *)&map_draw_state)->mirror_height;
         translation[0] = translation[2] = translation[3] = 0.0f;
         sceVu0TransMatrix(local, identity_matrix, translation);

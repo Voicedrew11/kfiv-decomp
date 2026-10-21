@@ -29,6 +29,15 @@
 #define STONE_GUARDIAN_STATE_CHASE             2 /* the player is in the zone: chases in bounds */
 #define STONE_GUARDIAN_STATE_RETURN_TO_SPAWN   3 /* the map object is open: returns to its spawn point */
 
+/* AiState.step_index in StoneGuardian_ThinkMode6HideSequence, the steps of the hide sequence */
+#define STONE_GUARDIAN_HIDE_STEP_STAY_HIDDEN          1 /* hidden while the map objects stay shut */
+#define STONE_GUARDIAN_HIDE_STEP_WAIT_TURN_HIDDEN     2 /* waits for the hiding spots to be free, then turns to them */
+#define STONE_GUARDIAN_HIDE_STEP_LEAVE_HIDING         3 /* leaves the hiding spot */
+#define STONE_GUARDIAN_HIDE_STEP_MEASURE_POST         4 /* measures its distance to the post, then goes on */
+#define STONE_GUARDIAN_HIDE_STEP_WAIT_TURN_SHOWN      5 /* waits for its turn to come out, turning as it waits */
+#define STONE_GUARDIAN_HIDE_STEP_RETURN_TO_HIDING     6 /* walks back to the hiding spot */
+#define STONE_GUARDIAN_HIDE_STEP_WALK_TO_HIDE_POINT   7 /* walks to the hide point */
+
 // Local: callers pass Entity/PlayerState positions, so these take void *; entity_math.h says float *.
 
 static void StoneGuardian_Animate(Entity *entity);
@@ -221,7 +230,7 @@ static void StoneGuardian_TurnToSpawnHeading(Entity *entity) {
 
     entity->busy_flags = ENTITY_BUSY_1000;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         if (EntityMath_AngleDifference(entity->model->rotation[1], entity->spawn_info->spawn_rotation_y) >= 0.0f) {
             Motion_Start(entity, 0xC, 0, entity->params->motion_blend_frames, 1);
         } else {
@@ -230,7 +239,7 @@ static void StoneGuardian_TurnToSpawnHeading(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             frames = EntityAi_AnimationFrameCount(entity, entity->animation_index);
             entity->action_timer = frames;
@@ -240,7 +249,7 @@ static void StoneGuardian_TurnToSpawnHeading(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         EntityMath_EaseAngleToward(&entity->model->rotation[1], entity->spawn_info->spawn_rotation_y, entity->action_timer);
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->busy_flags = 0;
@@ -1256,7 +1265,7 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 run_now) {
         }
     }
     switch (ai_state->step_index) {
-    case 1:
+    case STONE_GUARDIAN_HIDE_STEP_STAY_HIDDEN:
         if (!both_open) {
             ai_state->step_index++;
             EntityAi_StartAction(entity, ai_state->move, run_now);
@@ -1264,7 +1273,7 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 run_now) {
             StoneGuardian_Mode6StayHidden(entity, run_now);
         }
         break;
-    case 2:
+    case STONE_GUARDIAN_HIDE_STEP_WAIT_TURN_HIDDEN:
         if (!both_open) {
             if (!StoneGuardian_Mode6IsStepFree(entity, 3) || !StoneGuardian_Mode6IsStepFree(entity, 6) || !StoneGuardian_Mode6IsStepFree(entity, 7)) {
                 StoneGuardian_Mode6WaitTurnHidden(entity, run_now);
@@ -1277,7 +1286,7 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 run_now) {
             EntityAi_StartAction(entity, ai_state->move, run_now);
         }
         break;
-    case 3:
+    case STONE_GUARDIAN_HIDE_STEP_LEAVE_HIDING:
         if (!both_open) {
             StoneGuardian_Mode6LeaveHiding(entity, run_now);
         } else {
@@ -1285,7 +1294,7 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 run_now) {
             EntityAi_StartAction(entity, ai_state->move, run_now);
         }
         break;
-    case 4:
+    case STONE_GUARDIAN_HIDE_STEP_MEASURE_POST:
         post[0] = -18450.0f;
         post[1] = 3190.0f;
         post[2] = 4900.0f;
@@ -1293,7 +1302,7 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 run_now) {
         ai_state->step_index++;
         EntityAi_StartAction(entity, ai_state->move, run_now);
         break;
-    case 5:
+    case STONE_GUARDIAN_HIDE_STEP_WAIT_TURN_SHOWN:
         if (!both_open) {
             ai_state->step_index = 0;
             EntityAi_StartAction(entity, ai_state->move, run_now);
@@ -1305,7 +1314,7 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 run_now) {
             StoneGuardian_Mode6WaitTurnShown(entity, run_now);
         }
         break;
-    case 6:
+    case STONE_GUARDIAN_HIDE_STEP_RETURN_TO_HIDING:
         if (!both_open) {
             ai_state->step_index = 0;
             EntityAi_StartAction(entity, ai_state->move, run_now);
@@ -1313,7 +1322,7 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 run_now) {
             StoneGuardian_Mode6ReturnToHiding(entity, run_now);
         }
         break;
-    case 7:
+    case STONE_GUARDIAN_HIDE_STEP_WALK_TO_HIDE_POINT:
         if (!both_open) {
             ai_state->step_index = 3;
             EntityAi_StartAction(entity, ai_state->move, run_now);
@@ -1448,16 +1457,16 @@ static void StoneGuardian_PlayAnim9(Entity *entity) {
     entity->model_alpha = 0x80;
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 9, 0, entity->params->motion_blend_frames, 0);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ai_state->step_index = 0;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
@@ -1557,16 +1566,16 @@ static void StoneGuardian_PlayAnim8(Entity *entity) {
     entity->model_alpha = 0x80;
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames, 0);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ai_state->step_index = 7;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;

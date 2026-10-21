@@ -10,6 +10,8 @@
 #include "entity/entity_math.h"
 #include "model/motion.h"
 #include "player/player.h"
+
+/* Entity.reaction_step values past the shared ones */
 #include <stdlib.h>
 #include "entity/entity_ai.h"
 #include "entity/entity_ai_choice.h"
@@ -90,7 +92,7 @@ static void LivingDead_ReactionLight(Entity *entity) {
 
     entity->busy_flags = ENTITY_BUSY_REACTION_LIGHT;
     switch (entity->reaction_step) {
-    case 0:
+    case ACTION_STEP_START:
         EntityEvent_StartFrameCues(entity, 0xE, 0, 0);
         Motion_Start(entity, 0xE, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
@@ -106,12 +108,12 @@ static void LivingDead_ReactionLight(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->reaction_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->reaction_step++;
         }
         break;
-    case 2:
+    case REACTION_LIGHT_STEP_END:
         EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
         EntityAi_SetReaction(entity, NULL, 0);
         entity->busy_flags = 0;
@@ -138,7 +140,7 @@ static void LivingDead_ReactionHeavy(Entity *entity) {
 
     entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0xF, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
@@ -156,12 +158,12 @@ static void LivingDead_ReactionHeavy(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->reaction_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->reaction_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
             EntityAi_SetReaction(entity, NULL, 0);

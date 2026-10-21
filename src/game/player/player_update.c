@@ -34,6 +34,7 @@ static f32 movement_top_speed;                    /* 0x447124 top walk speed thi
 
 #define WEAPON_MODEL ((ModelInstance *)held_item_model_ptr)
 #define WEAPON_AIM_MODEL ((struct PlayerWeaponModel *)held_item_model_ptr)
+/* PlayerState.shortcut_type: what the shortcut button does (ini equip_shortcut_type) */
 #define FALL_DAMAGE_MIN_SPEED 66.666664f
 #define SCREEN_TINT_STEP_PER_FRAME (1.0f / 128.0f)
 
@@ -250,15 +251,15 @@ void Player_Update(void) {
         if ((shortcut_button & pressed) && player_state.shortcut != 0 && player_state.death_timer == 0 &&
             !(game_status.bit2 || game_status.bit3 || game_status.bit4)) {
             switch (player_state.shortcut_type) {
-            case 0:
+            case SHORTCUT_TYPE_NONE:
                 break;
-            case 1:
+            case SHORTCUT_TYPE_ITEM:
                 if (item_counts.bytes[player_state.shortcut] != 0) {
                     game_status.item_to_use = player_state.shortcut;
                     game_status.bit6 = TRUE;
                 }
                 break;
-            case 2:
+            case SHORTCUT_TYPE_MAGIC:
                 if (player_state.magic_gauge >= 5000 && player_state.mp_now >= fx_table[player_state.shortcut].mp_cost) {
                     Player_CastMagic(player_state.shortcut);
                 }
@@ -985,8 +986,6 @@ void Player_UpdateWeaponAim(void) {
     weapon_tip_angles[0] = atan2f(-vec[1], sqrtf(vec[0] * vec[0] + vec[2] * vec[2]));
     weapon_tip_angles[1] = atan2f(vec[0], vec[2]);
 }
-
-/* the pad bits of each control */
 
 #define PLAYER_FLAG_32 0x100000000L /* the view is levelling out */
 #define PLAYER_FLAG_37 0x2000000000L /* the view dips after a landing */

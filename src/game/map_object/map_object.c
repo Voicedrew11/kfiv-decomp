@@ -32,6 +32,14 @@ extern void (*map_object_update_hooks[])(MapObject *);
 extern void (*map_object_offset_hooks[])(MapObject *, void *);
 extern void (*map_object_setup_hooks[])(MapObject *);
 
+/* MapObjectUnk04.bit8: which draw function the object gets (MapObject_InitMap) */
+#define MAP_OBJECT_DRAW_NORMAL  0
+#define MAP_OBJECT_DRAW_ALPHA   1
+/* MapObjectAnim.sound_kind: which sound call plays the anim's sound */
+#define MAP_OBJECT_ANIM_SOUND_COMMON 0
+#define MAP_OBJECT_ANIM_SOUND_MAP    1
+#define MAP_OBJECT_ANIM_SOUND_TAGGED 2
+
 static s32 sway_frame = 0;                      /* 0x4467A0 counts 0 to 59 */
 static s32 next_sound_channel = 0;              /* 0x4467A4 0 to 31, the next of the channels 0x20 to 0x3F */
 s32 map_objects_started[2] = { 0, 0 };         /* the objects of each map have been started */
@@ -108,11 +116,11 @@ void MapObject_InitMap(int map) {
         }
         map_object_update_hooks[object->definition->kind](object);
         switch (object->definition->bit8) {
-            case 0:
+            case MAP_OBJECT_DRAW_NORMAL:
                 object->model->draw = MapObject_DrawModel;
                 object->model->draw_parts = Model_DrawPosedWithAlpha;
                 break;
-            case 1:
+            case MAP_OBJECT_DRAW_ALPHA:
                 object->model->draw = MapObject_DrawModelWithAlpha;
                 break;
             default:
@@ -700,14 +708,14 @@ int MapObject_StepAnim(MapObject *object) {
                 range = object->definition->sound_range;
             }
             switch (anim->sound_kind) {
-                case 0:
+                case MAP_OBJECT_ANIM_SOUND_COMMON:
                     Sound_PlayCommonAt(range, anim->sound, &model->position.x);
                     break;
-                case 1:
+                case MAP_OBJECT_ANIM_SOUND_MAP:
                     // match: the range is evaluated before the position
                     ((int (*)(u8, u8, f32, f32 *))Sound_PlayMapAtRange)(anim->sound, object->definition->sound_falloff_mode, range, &model->position.x);
                     break;
-                case 2:
+                case MAP_OBJECT_ANIM_SOUND_TAGGED:
                     Sound_StartTaggedAt((u8)next_sound_channel + 0x20, anim->sound, object->definition->sound_falloff_mode, range, (Vector4Arg *)&model->position);
                     object->sound = (u8)next_sound_channel + 0x20;
                     next_sound_channel = (next_sound_channel + 1) % 32;
@@ -724,13 +732,13 @@ int MapObject_StepAnim(MapObject *object) {
             }
             MapObject_StopSound(object);
             switch (anim->sound_kind) {
-                case 0:
+                case MAP_OBJECT_ANIM_SOUND_COMMON:
                     Sound_PlayCommonAt(range, anim->sound, &object->model->position.x);
                     break;
-                case 1:
+                case MAP_OBJECT_ANIM_SOUND_MAP:
                     Sound_PlayMapAtRange(anim->sound, object->definition->sound_falloff_mode, &object->model->position.x, range);
                     break;
-                case 2:
+                case MAP_OBJECT_ANIM_SOUND_TAGGED:
                     break;
             }
         }

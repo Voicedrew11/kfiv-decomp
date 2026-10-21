@@ -20,6 +20,13 @@
 #include "entity/entity_math.h"
 #include "player/player.h"
 
+/* Entity.action_step values of the malice's own actions past the shared ones */
+#define MALICE_TOGGLE_STEP_FADE                 2   /* fades the model to full or ghost alpha, then ends */
+#define MALICE_FADE_OUT_STEP_RELOCATE           2   /* picks a point near the spawn and moves the malice there */
+#define MALICE_FADE_BACK_IN_STEP_APPEAR         1   /* waits its time, then appears facing the player */
+#define MALICE_FADE_BACK_IN_STEP_FADE_IN        2   /* fades the model back in, then ends */
+#define MALICE_DORMANT_STEP_FADE_IN             2   /* fades the model in, then sets it to the live state */
+
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void Malice_Think(Entity *entity, s32 run_now);
@@ -393,17 +400,17 @@ static void Malice_ToggleFadeLevel(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 1, 0, entity->params->motion_blend_frames, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case MALICE_TOGGLE_STEP_FADE:
         if (ai_state->action_flags != 0) {
             entity->model_alpha++;
         } else {
@@ -439,7 +446,7 @@ static void Malice_FadeOutAndRelocate(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 1, 0, entity->params->motion_blend_frames, 0);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ENTITY_FLAG_BITS(entity)->hit_strength = 0;
@@ -449,7 +456,7 @@ static void Malice_FadeOutAndRelocate(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             ENTITY_FLAG_BITS(entity)->bit20 = 1;
             ENTITY_FLAG_BITS(entity)->bit18 = 1;
@@ -461,7 +468,7 @@ static void Malice_FadeOutAndRelocate(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case MALICE_FADE_OUT_STEP_RELOCATE:
         if (ai_state->action_counter == 0) {
             destination = ai_state->target_point;
             EntityPoint_PickNearFromDistance(destination, &entity->spawn_info->spawn_x, EntityMath_DistanceXZ(entity->model->position, &entity->spawn_info->spawn_x), entity->spawn_info->wander_radius);
@@ -498,14 +505,14 @@ static void Malice_FadeBackIn(Entity *entity) {
 
     entity->busy_flags |= (ENTITY_BUSY_1000 | ENTITY_BUSY_2000);
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         ENTITY_FLAG_BITS(entity)->hit_strength = 0;
         ai_state->mode_timer = 0;
         entity->model_alpha = 0;
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         entity->action_step++;
         break;
-    case 1:
+    case MALICE_FADE_BACK_IN_STEP_APPEAR:
         if ((s16)entity->params->action_frames < ai_state->mode_timer++) {
             Motion_Start(entity, 1, 0, 0, 0);
             entity->model->rotation[1] = EntityMath_HeadingTo(entity->model->position, &player_state.position.x);
@@ -513,7 +520,7 @@ static void Malice_FadeBackIn(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case MALICE_FADE_BACK_IN_STEP_FADE_IN:
         entity->model_alpha++;
         if (entity->model_alpha > (ai_state->action_flags != 0 ? 0x10 : 0x30)) {
             entity->busy_flags = 0;
@@ -556,7 +563,7 @@ static void Malice_Dormant(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 1, 0, 0, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
@@ -574,14 +581,14 @@ static void Malice_Dormant(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
         break;
-    case 1:
+    case DORMANT_STEP_SLEEP:
         if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
             ENTITY_FLAG_BITS(entity)->hit_strength = 0;
             entity->action_step++;
         }
         break;
-    case 2:
+    case MALICE_DORMANT_STEP_FADE_IN:
         entity->model_alpha++;
         if (entity->model_alpha >= 0x30) {
             entity->model_alpha = 0x30;
@@ -617,12 +624,12 @@ static void Malice_RangedAttack0(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
         ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
@@ -630,7 +637,7 @@ static void Malice_RangedAttack0(Entity *entity) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
@@ -672,7 +679,7 @@ static void Malice_Death(Entity *entity) {
 
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x10, 0, 5, 1);
         params = entity->params;
         if (params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
@@ -693,12 +700,12 @@ static void Malice_Death(Entity *entity) {
             Effect_FreeForOwner(entity);
         }
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->action_timer = 20;
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
@@ -708,7 +715,7 @@ static void Malice_Death(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DEATH_STEP_FADE_OUT:
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {

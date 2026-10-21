@@ -10,6 +10,28 @@
 #define PAD_REQSTATE_COMPLETE       0
 #define PAD_REQSTATE_FAILED         1
 
+/* scePadInfoMode(1): controller type */
+#define PAD_TYPE_DIGITAL            4
+#define PAD_TYPE_DUALSHOCK          7
+
+/* PadSlot.phase: step of the set-up state machine in Pad_Update */
+#define PAD_PHASE_IDENTIFY              0x00
+#define PAD_PHASE_QUERY_DIGITAL         0x28
+#define PAD_PHASE_QUERY_DUALSHOCK       0x46
+#define PAD_PHASE_SET_DIGITAL           0x64
+#define PAD_PHASE_WAIT_SET_DIGITAL      0x65
+#define PAD_PHASE_SET_ANALOG            0x6E
+#define PAD_PHASE_WAIT_SET_ANALOG       0x6F
+#define PAD_PHASE_ENTER_PRESSURE        0x78
+#define PAD_PHASE_WAIT_ENTER_PRESSURE   0x79
+#define PAD_PHASE_EXIT_PRESSURE         0x82
+#define PAD_PHASE_WAIT_EXIT_PRESSURE    0x83
+#define PAD_PHASE_ALIGN_ACTUATORS       0xC8
+#define PAD_PHASE_WAIT_ALIGN_ACTUATORS  0xC9
+#define PAD_PHASE_SETTLED_DIGITAL       0xFD
+#define PAD_PHASE_SETTLED_ANALOG        0xFE
+#define PAD_PHASE_SETTLED_PRESSURE      0xFF
+
 static PadSystem pad_system; /* 0x1E0DB00 */
 
 /* Reads the controller into pad->report and turns its button bits round (a set bit is then a pressed button).
@@ -71,7 +93,7 @@ int Pad_Init(int mode) {
         pad->report.pressed = 0;
         pad->report.repeated = 0;
         pad->repeat_mask = 0;
-        pad->phase = 0;
+        pad->phase = PAD_PHASE_IDENTIFY;
         pad->pad_type = 0;
         pad->mode = PAD_MODE_NONE;
         pad->mode_request = PAD_MODE_NONE;
@@ -116,11 +138,11 @@ void Pad_Update(void) {
             pad = &pad_system.slots[port * 4 + slot];
             pad->state = scePadGetState(port, slot);
             if (pad->state == PAD_STATE_DISCONNECTED) {
-                pad->phase = 0;
+                pad->phase = PAD_PHASE_IDENTIFY;
             }
             pad->request_state = scePadGetReqState(port, slot);
             switch (pad->phase) {
-                case 0:
+                case PAD_PHASE_IDENTIFY:
                     pad->mode = PAD_MODE_NONE;
                     if (pad->state == PAD_STATE_DISCONNECTED) {
                         continue;
@@ -136,11 +158,11 @@ void Pad_Update(void) {
                     }
                     pad->actuators_aligned = 0;
                     switch (type) {
-                        case 4:
-                            pad->phase = 0x28;
+                        case PAD_TYPE_DIGITAL:
+                            pad->phase = PAD_PHASE_QUERY_DIGITAL;
                             break;
-                        case 7:
-                            pad->phase = 0x46;
+                        case PAD_TYPE_DUALSHOCK:
+                            pad->phase = PAD_PHASE_QUERY_DUALSHOCK;
                             break;
                         case 2:
                         case 3:
@@ -151,9 +173,9 @@ void Pad_Update(void) {
                             break;
                     }
                     continue;
-                case 0x28:
-                case 0x46:
-                    if (pad->phase != 0x28 || scePadInfoMode(port, slot, 4, -1) != 0) {
+                case PAD_PHASE_QUERY_DIGITAL:
+                case PAD_PHASE_QUERY_DUALSHOCK:
+                    if (pad->phase != PAD_PHASE_QUERY_DIGITAL || scePadInfoMode(port, slot, 4, -1) != 0) {
                         pad->features |= PAD_FEATURE_MODE_SWITCH;
                     }
                     pad->actuator_count = scePadInfoAct(port, slot, -1, 0);
@@ -165,39 +187,39 @@ void Pad_Update(void) {
                     }
                     if ((pad->features & PAD_FEATURE_MODE_SWITCH) &&
                         (pad->mode_request == PAD_MODE_ANALOG || pad->mode_request == PAD_MODE_PRESSURE)) {
-                        pad->phase = 0x6E;
+                        pad->phase = PAD_PHASE_SET_ANALOG;
                     } else if (pad->mode_request == PAD_MODE_DIGITAL) {
-                        pad->phase = 0x64;
-                    } else if (pad->phase == 0x28) {
-                        pad->phase = 0xFD;
+                        pad->phase = PAD_PHASE_SET_DIGITAL;
+                    } else if (pad->phase == PAD_PHASE_QUERY_DIGITAL) {
+                        pad->phase = PAD_PHASE_SETTLED_DIGITAL;
                     } else {
-                        pad->phase = 0xFE;
+                        pad->phase = PAD_PHASE_SETTLED_ANALOG;
                     }
                     continue;
-                case 0x64:
+                case PAD_PHASE_SET_DIGITAL:
                     if (scePadSetMainMode(port, slot, 0, pad->mode_lock) == 1) {
-                        pad->phase = 0x65;
+                        pad->phase = PAD_PHASE_WAIT_SET_DIGITAL;
                     }
                     continue;
-                case 0x65:
+                case PAD_PHASE_WAIT_SET_DIGITAL:
                     if (pad->request_state == PAD_REQSTATE_FAILED) {
-                        pad->phase = 0x64;
+                        pad->phase = PAD_PHASE_SET_DIGITAL;
                     }
                     if (pad->request_state == PAD_REQSTATE_COMPLETE) {
                         if (pad->state == PAD_STATE_STABLE || pad->state == PAD_STATE_FINDCTP1) {
                             pad->actuators_aligned = 0;
-                            pad->phase = 0xFD;
+                            pad->phase = PAD_PHASE_SETTLED_DIGITAL;
                         }
                     }
                     continue;
-                case 0x6E:
+                case PAD_PHASE_SET_ANALOG:
                     if (scePadSetMainMode(port, slot, 1, pad->mode_lock) == 1) {
-                        pad->phase = 0x6F;
+                        pad->phase = PAD_PHASE_WAIT_SET_ANALOG;
                     }
                     continue;
-                case 0x6F:
+                case PAD_PHASE_WAIT_SET_ANALOG:
                     if (pad->request_state == PAD_REQSTATE_FAILED) {
-                        pad->phase = 0x6E;
+                        pad->phase = PAD_PHASE_SET_ANALOG;
                     }
                     if (pad->request_state == PAD_REQSTATE_COMPLETE) {
                         if (pad->state == PAD_STATE_STABLE || pad->state == PAD_STATE_FINDCTP1) {
@@ -205,41 +227,41 @@ void Pad_Update(void) {
                             if (scePadInfoPressMode(port, slot) == 1) {
                                 pad->features |= PAD_FEATURE_PRESSURE;
                             }
-                            pad->phase = 0xFE;
+                            pad->phase = PAD_PHASE_SETTLED_ANALOG;
                         }
                     }
                     continue;
-                case 0x78:
+                case PAD_PHASE_ENTER_PRESSURE:
                     if (scePadEnterPressMode(port, slot) == 1) {
-                        pad->phase = 0x79;
+                        pad->phase = PAD_PHASE_WAIT_ENTER_PRESSURE;
                     }
                     continue;
-                case 0x79:
+                case PAD_PHASE_WAIT_ENTER_PRESSURE:
                     if (pad->request_state == PAD_REQSTATE_FAILED) {
-                        pad->phase = 0x78;
+                        pad->phase = PAD_PHASE_ENTER_PRESSURE;
                     }
                     if (pad->request_state == PAD_REQSTATE_COMPLETE) {
                         if (pad->state == PAD_STATE_STABLE || pad->state == PAD_STATE_FINDCTP1) {
-                            pad->phase = 0xFF;
+                            pad->phase = PAD_PHASE_SETTLED_PRESSURE;
                         }
                     }
                     continue;
-                case 0x82:
+                case PAD_PHASE_EXIT_PRESSURE:
                     if (scePadExitPressMode(port, slot) == 1) {
-                        pad->phase = 0x83;
+                        pad->phase = PAD_PHASE_WAIT_EXIT_PRESSURE;
                     }
                     continue;
-                case 0x83:
+                case PAD_PHASE_WAIT_EXIT_PRESSURE:
                     if (pad->request_state == PAD_REQSTATE_FAILED) {
-                        pad->phase = 0x82;
+                        pad->phase = PAD_PHASE_EXIT_PRESSURE;
                     }
                     if (pad->request_state == PAD_REQSTATE_COMPLETE) {
                         if (pad->state == PAD_STATE_STABLE || pad->state == PAD_STATE_FINDCTP1) {
-                            pad->phase = 0xFE;
+                            pad->phase = PAD_PHASE_SETTLED_ANALOG;
                         }
                     }
                     continue;
-                case 0xC8:
+                case PAD_PHASE_ALIGN_ACTUATORS:
                     for (i = 0; i < 6; i++) {
                         align[i] = 0xFF;
                         pad->actuators[i] = 0;
@@ -251,65 +273,65 @@ void Pad_Update(void) {
                         pad->phase++;
                     }
                     continue;
-                case 0xC9:
+                case PAD_PHASE_WAIT_ALIGN_ACTUATORS:
                     if (pad->request_state == PAD_REQSTATE_FAILED) {
-                        pad->phase = 0xC8;
+                        pad->phase = PAD_PHASE_ALIGN_ACTUATORS;
                     }
                     if (pad->request_state == PAD_REQSTATE_COMPLETE) {
                         pad->actuators_aligned = 1;
                         pad->phase = pad->next_phase;
                     }
                     continue;
-                case 0xFF:
+                case PAD_PHASE_SETTLED_PRESSURE:
                     if (pad->mode_request == PAD_MODE_PRESSURE) {
                         pad->mode_request = PAD_MODE_NONE;
                     }
                     if (pad->mode_request < PAD_MODE_PRESSURE) {
                         pad->mode = PAD_MODE_NONE;
-                        pad->phase = 0x82;
+                        pad->phase = PAD_PHASE_EXIT_PRESSURE;
                         continue;
                     }
                     pad->mode = PAD_MODE_PRESSURE;
                     if (!pad->actuators_aligned && (pad->features & PAD_FEATURE_ACTUATORS)) {
                         pad->next_phase = pad->phase;
-                        pad->phase = 0xC8;
+                        pad->phase = PAD_PHASE_ALIGN_ACTUATORS;
                         continue;
                     }
                     break;
-                case 0xFE:
+                case PAD_PHASE_SETTLED_ANALOG:
                     if (pad->mode_request == PAD_MODE_ANALOG) {
                         pad->mode_request = PAD_MODE_NONE;
                     }
                     if (pad->mode_request == PAD_MODE_DIGITAL) {
                         pad->mode = PAD_MODE_NONE;
-                        pad->phase = 0;
+                        pad->phase = PAD_PHASE_IDENTIFY;
                         continue;
                     }
                     if (pad->mode_request == PAD_MODE_PRESSURE) {
                         pad->mode = PAD_MODE_NONE;
-                        pad->phase = 0x78;
+                        pad->phase = PAD_PHASE_ENTER_PRESSURE;
                         continue;
                     }
                     pad->mode = PAD_MODE_ANALOG;
                     if (!pad->actuators_aligned && (pad->features & PAD_FEATURE_ACTUATORS)) {
                         pad->next_phase = pad->phase;
-                        pad->phase = 0xC8;
+                        pad->phase = PAD_PHASE_ALIGN_ACTUATORS;
                         continue;
                     }
                     break;
-                case 0xFD:
+                case PAD_PHASE_SETTLED_DIGITAL:
                     if (pad->mode_request == PAD_MODE_DIGITAL) {
                         pad->mode_request = PAD_MODE_NONE;
                     }
                     if (pad->mode_request == PAD_MODE_ANALOG || pad->mode_request == PAD_MODE_PRESSURE) {
                         pad->mode = PAD_MODE_NONE;
-                        pad->phase = 0;
+                        pad->phase = PAD_PHASE_IDENTIFY;
                         continue;
                     }
                     pad->mode = PAD_MODE_DIGITAL;
                     if (!pad->actuators_aligned && (pad->features & PAD_FEATURE_ACTUATORS)) {
                         pad->next_phase = pad->phase;
-                        pad->phase = 0xC8;
+                        pad->phase = PAD_PHASE_ALIGN_ACTUATORS;
                         continue;
                     }
                     break;
@@ -322,7 +344,7 @@ void Pad_Update(void) {
                 continue;
             }
             if (read_result == -1) {
-                pad->phase = 0;
+                pad->phase = PAD_PHASE_IDENTIFY;
             }
             pad->report.pressed = pad->report.held & ~old_buttons;
             Pad_StepRepeat(pad);

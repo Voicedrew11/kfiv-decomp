@@ -21,16 +21,78 @@
 #include "math/vu0.h"
 #include "save/save_state.h"
 
+/* SpritePacket.number_id: the number a sprite stands for (MenuDraw_GetNumber gives its value) */
+#define MENU_NUMBER_NONE                0
+#define MENU_NUMBER_HP_MAX              1
+#define MENU_NUMBER_MP_MAX              2
+#define MENU_NUMBER_POWER_BASE          3
+#define MENU_NUMBER_MAGIC_BASE          4
+#define MENU_NUMBER_ATTACK_PHYSICAL_1   5    /* attack_stats.values[0]: the physical kinds are 0 to 2 */
+#define MENU_NUMBER_ATTACK_PHYSICAL_2   6
+#define MENU_NUMBER_ATTACK_PHYSICAL_3   7
+#define MENU_NUMBER_ATTACK_FIRE         8    /* attack_stats.values[3]: the six magic schools, fire to dark */
+#define MENU_NUMBER_ATTACK_EARTH        9
+#define MENU_NUMBER_ATTACK_WIND         10
+#define MENU_NUMBER_ATTACK_WATER        11
+#define MENU_NUMBER_ATTACK_HOLY         12
+#define MENU_NUMBER_ATTACK_DARK         13
+#define MENU_NUMBER_DEFENCE_PHYSICAL_1  14   /* defence_stats.values[0] */
+#define MENU_NUMBER_DEFENCE_PHYSICAL_2  17   /* defence_stats.values[1] */
+#define MENU_NUMBER_DEFENCE_PHYSICAL_3  18
+#define MENU_NUMBER_DEFENCE_FIRE        19   /* defence_stats.values[3] */
+#define MENU_NUMBER_DEFENCE_EARTH       20
+#define MENU_NUMBER_DEFENCE_WIND        21
+#define MENU_NUMBER_DEFENCE_WATER       22
+#define MENU_NUMBER_DEFENCE_HOLY        23
+#define MENU_NUMBER_DEFENCE_DARK        24
+#define MENU_NUMBER_GOLD                25
+#define MENU_NUMBER_EXPERIENCE          28
+#define MENU_NUMBER_LEVEL               29
+#define MENU_NUMBER_HP_NOW              30
+#define MENU_NUMBER_MP_NOW              31
+#define MENU_NUMBER_POWER               32   /* power in effect, with the items' bonus */
+#define MENU_NUMBER_MAGIC               33   /* magic in effect, with the items' bonus */
+#define MENU_NUMBER_PLAY_DAYS           34   /* current_play_time.mday */
+#define MENU_NUMBER_PLAY_HOURS          35
+#define MENU_NUMBER_PLAY_MINUTES        36
+#define MENU_NUMBER_PLAY_SECONDS        37
+#define MENU_NUMBER_CLOCK_YEAR          38   /* wall_clock_time, year since 2000 */
+#define MENU_NUMBER_CLOCK_MONTH         39
+#define MENU_NUMBER_CLOCK_DAY           40
+#define MENU_NUMBER_CLOCK_HOUR          41
+#define MENU_NUMBER_CLOCK_MINUTE        42
+#define MENU_NUMBER_CLOCK_SECOND        43
+#define MENU_NUMBER_WORN_PHYSICAL_1     55   /* worn_item_stats.values[0]: same layout as attack_stats */
+#define MENU_NUMBER_WORN_PHYSICAL_2     56
+#define MENU_NUMBER_WORN_PHYSICAL_3     57
+#define MENU_NUMBER_WORN_FIRE           58
+#define MENU_NUMBER_WORN_EARTH          59
+#define MENU_NUMBER_WORN_WIND           60
+#define MENU_NUMBER_WORN_WATER          61
+#define MENU_NUMBER_WORN_HOLY           62
+#define MENU_NUMBER_WORN_DARK           63
+#define MENU_NUMBER_WEIGHT              66
+#define MENU_NUMBER_MAX_WEIGHT          67
+
+/* SpritePacket.slot of the option and volume sprites (MenuSprite_SizeToLevel, MenuSprite_ShowIfOptionChosen) */
+#define MENU_BAR_SLOT_MUSIC_VOLUME      0    /* MenuSprite_SizeToLevel: the option bars (game_option_third_bar is the third) */
+#define MENU_BAR_SLOT_SFX_VOLUME        1
+#define MENU_BAR_SLOT_THIRD_OPTION      2
+#define MENU_OPTION_SLOT_MONO           0    /* MenuSprite_ShowIfOptionChosen: game_options[0] is 0 for mono */
+#define MENU_OPTION_SLOT_STEREO         1
+#define MENU_OPTION_SLOT_HEAD_BOB_OFF   2    /* head_bob_option 0 */
+#define MENU_OPTION_SLOT_HEAD_BOB_ON    3
+#define MENU_OPTION_SLOT_RUMBLE_OFF     4    /* rumble_option 0 */
+#define MENU_OPTION_SLOT_RUMBLE_ON      5
+#define MENU_OPTION_SLOT_HUD_OFF        6    /* hud_option 0 */
+#define MENU_OPTION_SLOT_HUD_ON         7
+
 /* The module's own variables are defined where the original has them: the initialised ones in front of the
    function that first uses them (retail keeps them in that order), the others here. */
 static s64 *color_data;             /* 0x447344 set by MenuSprite_ColorFromNumber and never read */
 static s32 heap_mark;               /* 0x447348 what MenuHeap_FreeToMark goes back to */
 static s32 heap_top;                /* 0x44734C where the next block of the menus' heap comes from */
 static u32 long_text_packets[2][0x3700]; /* 0x5DDF00 the two packet buffers of the long text drawers */
-
-/* the numbers a menu sprite can stand for (MenuDraw_GetNumber) */
-
-/* the loaded menu file */
 
 /* 0x428BD0 the matrix the menu model drawer multiplies the light by */
 f32 menu_model_light_colors[16] = {
@@ -676,91 +738,91 @@ void MenuDraw_Bar(MenuCursorBar *bar) {
 /* Gives the current value of the number a menu sprite stands for (SpritePacket.number_id). */
 int MenuDraw_GetNumber(int number) {
     switch (number) {
-    case 0:
+    case MENU_NUMBER_NONE:
     case 64:
     case 65:
         return 0;
-    case 1:
+    case MENU_NUMBER_HP_MAX:
         return player_state.hp_max;
-    case 2:
+    case MENU_NUMBER_MP_MAX:
         return player_state.mp_max;
-    case 3:
+    case MENU_NUMBER_POWER_BASE:
         return player_state.power_base;
-    case 4:
+    case MENU_NUMBER_MAGIC_BASE:
         return player_state.magic_base;
-    case 5:
+    case MENU_NUMBER_ATTACK_PHYSICAL_1:
         return player_state.attack_stats.values[0];
-    case 6:
+    case MENU_NUMBER_ATTACK_PHYSICAL_2:
         return player_state.attack_stats.values[1];
-    case 7:
+    case MENU_NUMBER_ATTACK_PHYSICAL_3:
         return player_state.attack_stats.values[2];
-    case 8:
+    case MENU_NUMBER_ATTACK_FIRE:
         return player_state.attack_stats.values[3];
-    case 9:
+    case MENU_NUMBER_ATTACK_EARTH:
         return player_state.attack_stats.values[4];
-    case 10:
+    case MENU_NUMBER_ATTACK_WIND:
         return player_state.attack_stats.values[5];
-    case 11:
+    case MENU_NUMBER_ATTACK_WATER:
         return player_state.attack_stats.values[6];
-    case 12:
+    case MENU_NUMBER_ATTACK_HOLY:
         return player_state.attack_stats.values[7];
-    case 13:
+    case MENU_NUMBER_ATTACK_DARK:
         return player_state.attack_stats.values[8];
-    case 14:
+    case MENU_NUMBER_DEFENCE_PHYSICAL_1:
     case 15:
     case 16:
         return player_state.defence_stats.values[0];
-    case 17:
+    case MENU_NUMBER_DEFENCE_PHYSICAL_2:
         return player_state.defence_stats.values[1];
-    case 18:
+    case MENU_NUMBER_DEFENCE_PHYSICAL_3:
         return player_state.defence_stats.values[2];
-    case 19:
+    case MENU_NUMBER_DEFENCE_FIRE:
         return player_state.defence_stats.values[3];
-    case 20:
+    case MENU_NUMBER_DEFENCE_EARTH:
         return player_state.defence_stats.values[4];
-    case 21:
+    case MENU_NUMBER_DEFENCE_WIND:
         return player_state.defence_stats.values[5];
-    case 22:
+    case MENU_NUMBER_DEFENCE_WATER:
         return player_state.defence_stats.values[6];
-    case 23:
+    case MENU_NUMBER_DEFENCE_HOLY:
         return player_state.defence_stats.values[7];
-    case 24:
+    case MENU_NUMBER_DEFENCE_DARK:
         return player_state.defence_stats.values[8];
-    case 25:
+    case MENU_NUMBER_GOLD:
     case 26:
     case 27:
         return player_state.gold;
-    case 28:
+    case MENU_NUMBER_EXPERIENCE:
         return player_state.experience;
-    case 29:
+    case MENU_NUMBER_LEVEL:
         return player_state.level;
-    case 30:
+    case MENU_NUMBER_HP_NOW:
         return player_state.hp_now;
-    case 31:
+    case MENU_NUMBER_MP_NOW:
         return player_state.mp_now;
-    case 32:
+    case MENU_NUMBER_POWER:
         return player_state.power;
-    case 33:
+    case MENU_NUMBER_MAGIC:
         return player_state.magic;
-    case 34:
+    case MENU_NUMBER_PLAY_DAYS:
         return current_play_time.mday;
-    case 35:
+    case MENU_NUMBER_PLAY_HOURS:
         return current_play_time.hour;
-    case 36:
+    case MENU_NUMBER_PLAY_MINUTES:
         return current_play_time.min;
-    case 37:
+    case MENU_NUMBER_PLAY_SECONDS:
         return current_play_time.sec;
-    case 38:
+    case MENU_NUMBER_CLOCK_YEAR:
         return wall_clock_time.year + 2000;
-    case 39:
+    case MENU_NUMBER_CLOCK_MONTH:
         return wall_clock_time.mon;
-    case 40:
+    case MENU_NUMBER_CLOCK_DAY:
         return wall_clock_time.mday;
-    case 41:
+    case MENU_NUMBER_CLOCK_HOUR:
         return wall_clock_time.hour;
-    case 42:
+    case MENU_NUMBER_CLOCK_MINUTE:
         return wall_clock_time.min;
-    case 43:
+    case MENU_NUMBER_CLOCK_SECOND:
         return wall_clock_time.sec;
     case 44:
         return menu_number_44;
@@ -784,27 +846,27 @@ int MenuDraw_GetNumber(int number) {
         return menu_number_53;
     case 54:
         return menu_number_54;
-    case 55:
+    case MENU_NUMBER_WORN_PHYSICAL_1:
         return player_state.worn_item_stats.values[0];
-    case 56:
+    case MENU_NUMBER_WORN_PHYSICAL_2:
         return player_state.worn_item_stats.values[1];
-    case 57:
+    case MENU_NUMBER_WORN_PHYSICAL_3:
         return player_state.worn_item_stats.values[2];
-    case 58:
+    case MENU_NUMBER_WORN_FIRE:
         return player_state.worn_item_stats.values[3];
-    case 59:
+    case MENU_NUMBER_WORN_EARTH:
         return player_state.worn_item_stats.values[4];
-    case 60:
+    case MENU_NUMBER_WORN_WIND:
         return player_state.worn_item_stats.values[5];
-    case 61:
+    case MENU_NUMBER_WORN_WATER:
         return player_state.worn_item_stats.values[6];
-    case 62:
+    case MENU_NUMBER_WORN_HOLY:
         return player_state.worn_item_stats.values[7];
-    case 63:
+    case MENU_NUMBER_WORN_DARK:
         return player_state.worn_item_stats.values[8];
-    case 66:
+    case MENU_NUMBER_WEIGHT:
         return player_state.weight;
-    case 67:
+    case MENU_NUMBER_MAX_WEIGHT:
         return player_state.max_weight;
     case 70:
         return menu_number_70;
@@ -3395,22 +3457,22 @@ void MenuTexture_UploadTwoCluts(TextureHeader *header, u64 *tex0_out, u64 *trail
     __asm__ volatile("" : : : "memory");
     image = (char *)header + sizeof(TextureHeader);
     switch (HEADER_TEX0(header)->psm) {
-    case 0x00:
-    case 0x30:
+    case GS_PSM_CT32:
+    case GS_PSM_Z32:
         pixel_bytes = 4.0f;
         break;
-    case 0x01:
-    case 0x31:
+    case GS_PSM_CT24:
+    case GS_PSM_Z24:
         pixel_bytes = 3.0f;
         break;
-    case 0x02:
-    case 0x0A:
-    case 0x32:
-    case 0x3A:
+    case GS_PSM_CT16:
+    case GS_PSM_CT16S:
+    case GS_PSM_Z16:
+    case GS_PSM_Z16S:
         pixel_bytes = 2.0f;
         break;
-    case 0x13:
-    case 0x1B:
+    case GS_PSM_T8:
+    case GS_PSM_T8H:
         pixel_bytes = 1.0f;
         break;
     default:
@@ -3822,26 +3884,26 @@ static SpritePacket *MenuSprite_ShowIfOptionChosen(SpritePacket *packet) {
     static SpritePacket copy; /* 0x5DD940 */
     copy = *packet;
     switch (packet->slot) {
-    case 0:
-    case 1:
+    case MENU_OPTION_SLOT_MONO:
+    case MENU_OPTION_SLOT_STEREO:
         if (packet->slot == game_options[0]) {
             return packet; // match: the packet itself, not the copy just made
         }
         break;
-    case 2:
-    case 3:
+    case MENU_OPTION_SLOT_HEAD_BOB_OFF:
+    case MENU_OPTION_SLOT_HEAD_BOB_ON:
         if (packet->slot - 2 == head_bob_option[0]) {
             return packet;
         }
         break;
-    case 4:
-    case 5:
+    case MENU_OPTION_SLOT_RUMBLE_OFF:
+    case MENU_OPTION_SLOT_RUMBLE_ON:
         if (packet->slot - 4 == rumble_option[0]) {
             return packet;
         }
         break;
-    case 6:
-    case 7:
+    case MENU_OPTION_SLOT_HUD_OFF:
+    case MENU_OPTION_SLOT_HUD_ON:
         if (packet->slot - 6 == hud_option[0]) {
             return packet;
         }
@@ -3880,13 +3942,13 @@ static SpritePacket *MenuSprite_SizeToLevel(SpritePacket *packet) {
 
     copy = *packet;
     switch (packet->slot) {
-    case 0:
+    case MENU_BAR_SLOT_MUSIC_VOLUME:
         level = music_volume[0];
         break;
-    case 1:
+    case MENU_BAR_SLOT_SFX_VOLUME:
         level = sfx_volume[0];
         break;
-    case 2:
+    case MENU_BAR_SLOT_THIRD_OPTION:
         level = game_option_third_bar[0];
         break;
     default:

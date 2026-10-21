@@ -114,11 +114,11 @@ static void DarkOne_Think(Entity *entity, s32 run_now) {
     if (entity->busy_flags == 0) {
         EntityAi_StepState(entity);
         switch (entity->state) {
-        case 1:
-        case 2:
+        case ENTITY_STATE_SEARCHING:
+        case ENTITY_STATE_NOTICED:
             EntityAi_ThinkCombat(entity, run_now);
             break;
-        case 0:
+        case ENTITY_STATE_UNAWARE:
         default:
             EntityAi_ThinkIdle(entity, run_now);
             break;
@@ -146,7 +146,7 @@ static void DarkOne_Death(Entity *entity) {
 static void DarkOne_DeathByOtherWeapon(Entity *entity) {
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
@@ -168,12 +168,12 @@ static void DarkOne_DeathByOtherWeapon(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         EntityEvent_OnDeath(entity);
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;
@@ -192,7 +192,7 @@ static void DarkOne_DeathByOtherWeapon(Entity *entity) {
 static void DarkOne_DeathByMoonlightSword(Entity *entity) {
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
@@ -202,12 +202,12 @@ static void DarkOne_DeathByMoonlightSword(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         EntityEvent_OnDeath(entity);
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;

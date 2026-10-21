@@ -4,25 +4,31 @@
 #include "save/save_state.h"
 #include "player/player.h"
 
+/* Title_Run's result: the menu choice picked, plus one (0 is none); the menus each choice opens (Menu_Run mode) */
+#define TITLE_CHOICE_NEW_GAME               1       /* a new game: returns 0 */
+#define TITLE_CHOICE_LOAD                   2       /* Menu_Run(1), the memory card screens */
+#define TITLE_CHOICE_OPTIONS                3       /* Menu_Run(2) */
+#define TITLE_CHOICE_BUTTONS                4       /* Menu_Run(3) */
+
 /* The title screen's loop: runs Title_Run and the menus it leads to; 0 for a new game, 1 once a game was loaded. */
 int TitleMenu_Run(void) {
     int screen = 0;
 
     do {
         switch (Title_Run(screen)) {
-        case 1:
+        case TITLE_CHOICE_NEW_GAME:
             return 0;
-        case 2:
+        case TITLE_CHOICE_LOAD:
             if (Menu_Run(1) != 0) {
                 return 1;
             }
             screen = 2;
             break;
-        case 3:
+        case TITLE_CHOICE_OPTIONS:
             Menu_Run(2);
             screen = 2;
             break;
-        case 4:
+        case TITLE_CHOICE_BUTTONS:
             Menu_Run(3);
             screen = 2;
             break;

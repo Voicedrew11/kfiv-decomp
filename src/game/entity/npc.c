@@ -153,10 +153,10 @@ void Npc_Think(Entity *entity, s32 run_now) {
                 Npc_ThinkStopWatching(entity, run_now);
             }
             break;
-        case 0:
-        case 1:
-        case 2:
-        case 3:
+        case ENTITY_STATE_UNAWARE:
+        case ENTITY_STATE_SEARCHING:
+        case ENTITY_STATE_NOTICED:
+        case ENTITY_STATE_HELD:
         default:
             Npc_ThinkStand(entity, run_now);
             break;
@@ -268,7 +268,7 @@ static void Npc_TurnToPlayer(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
         if (entity->spawn_info->spawn_mode == NPC_SPAWN_MODE_SCRIPTED
             && map_script_flags[entity->spawn_info->map_object_id + entity->spawn_info->variant * 0x40] == entity->spawn_info->second_map_object_id) {
@@ -286,13 +286,13 @@ static void Npc_TurnToPlayer(Entity *entity) {
         }
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_timer = EntityAi_AnimationFrameCount(entity, entity->animation_index);
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         yaw = entity->model->rotation[1];
         EntityMath_EaseAngleToward(&yaw, entity->heading_to_player, entity->action_timer);
         entity->turn_delta_yaw += yaw - entity->model->rotation[1];
@@ -319,7 +319,7 @@ static void Npc_TurnToSpawnHeading(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->spawn_info->spawn_rotation_y);
         if (entity->spawn_info->spawn_mode == NPC_SPAWN_MODE_SCRIPTED
             && map_script_flags[entity->spawn_info->map_object_id + entity->spawn_info->variant * 0x40] == entity->spawn_info->second_map_object_id) {
@@ -337,13 +337,13 @@ static void Npc_TurnToSpawnHeading(Entity *entity) {
         }
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_timer = EntityAi_AnimationFrameCount(entity, entity->animation_index);
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         yaw = entity->model->rotation[1];
         EntityMath_EaseAngleToward(&yaw, entity->spawn_info->spawn_rotation_y, entity->action_timer);
         entity->turn_delta_yaw += yaw - entity->model->rotation[1];
@@ -370,7 +370,7 @@ static void Npc_ReactionHeavy(Entity *entity) {
 
     entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
-    case 0:
+    case ACTION_STEP_START:
         if (entity->spawn_info->spawn_mode == NPC_SPAWN_MODE_SCRIPTED
             && map_script_flags[entity->spawn_info->map_object_id + entity->spawn_info->variant * 0x40] == entity->spawn_info->second_map_object_id) {
             Motion_Start(entity, 0x12, 0, 5, 1);
@@ -398,12 +398,12 @@ static void Npc_ReactionHeavy(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->reaction_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->reaction_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
             EntityAi_SetReaction(entity, NULL, 0);
@@ -429,7 +429,7 @@ static void Npc_Death(Entity *entity) {
 
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         if (entity->spawn_info->spawn_mode == NPC_SPAWN_MODE_SCRIPTED
             && map_script_flags[entity->spawn_info->map_object_id + entity->spawn_info->variant * 0x40] == entity->spawn_info->second_map_object_id) {
             Motion_Start(entity, 0x13, 0, 5, 1);
@@ -453,12 +453,12 @@ static void Npc_Death(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->no_entity_collision = 1;
         ENTITY_FLAG_BITS(entity)->look_at_target = 0;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             entity->action_timer = 20;
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
@@ -472,7 +472,7 @@ static void Npc_Death(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DEATH_STEP_FADE_OUT:
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {

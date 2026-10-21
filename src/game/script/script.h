@@ -27,7 +27,13 @@
 #define SCRIPT_ARG_OUT_LOCAL_VAR    0x12
 #define SCRIPT_ARG_OUT_SHARED_VAR   0x13
 
-/* ScriptArg.opcode of a value read from a variable: 0 s8, 1 u8, 2 s16, 3 u16, 4 and 5 32 bits, 6 float */
+/* ScriptArg.opcode of a value read from a variable (4 and 5 are both read as 32 bits) */
+#define SCRIPT_TYPE_S8              0
+#define SCRIPT_TYPE_U8              1
+#define SCRIPT_TYPE_S16             2
+#define SCRIPT_TYPE_U16             3
+#define SCRIPT_TYPE_S32             4
+#define SCRIPT_TYPE_U32             5
 #define SCRIPT_TYPE_FLOAT           6
 
 /* a command number with this bit set is not stepped by Script_StepCommands (only by the unused Script_StepHeldCommands) */

@@ -17,6 +17,11 @@
 #include "model/motion.h"
 #include "player/player.h"
 
+/* Entity.action_step values of ExpeditionArcher_RangedAttack1 past the shared ones */
+#define EXPEDITION_ARCHER_RANGED_STEP_DRAW          2   /* turns and draws the bow until frame 42 */
+#define EXPEDITION_ARCHER_RANGED_STEP_TURN_TO_AIM   3   /* turns until aimed at the player, or the timer runs out */
+#define EXPEDITION_ARCHER_RANGED_STEP_SHOOT         4   /* launches the aimed shot, ends when the motion ends */
+
 #define ENTITY_WORK_AREA_SIZE 0xA0
 
 /* EntitySpawnInfo.spawn_mode: the spawn id of the partner archer, 0 for none */
@@ -268,7 +273,7 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, attack_index + ENTITY_MOTION_RANGED_ATTACK, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
@@ -282,7 +287,7 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
         }
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
@@ -290,7 +295,7 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
             EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         ENTITY_FLAG_BITS(entity)->attacking = TRUE;
         if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
@@ -335,7 +340,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, ENTITY_FLAG_BITS(entity)->attack_index + ENTITY_MOTION_RANGED_ATTACK, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
@@ -345,12 +350,12 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case EXPEDITION_ARCHER_RANGED_STEP_DRAW:
         ENTITY_FLAG_BITS(entity)->attacking = TRUE;
         EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
         if (entity->model->level_tables->frame > 0 && unk3D8->attack_end_frame >= entity->model->level_tables->frame) {
@@ -363,7 +368,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case EXPEDITION_ARCHER_RANGED_STEP_TURN_TO_AIM:
         EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
         ENTITY_FLAG_BITS(entity)->attacking = TRUE;
         ENTITY_FLAG_BITS(entity)->animates = FALSE;
@@ -373,7 +378,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 4:
+    case EXPEDITION_ARCHER_RANGED_STEP_SHOOT:
         ENTITY_FLAG_BITS(entity)->animates = TRUE;
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(target, &player_state.position);
@@ -401,7 +406,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
 static void ExpeditionArcher_Death(Entity *entity) {
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
@@ -421,12 +426,12 @@ static void ExpeditionArcher_Death(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->no_floor_lift = FALSE;
         ENTITY_FLAG_BITS(entity)->look_at_target = FALSE;
         entity->action_step++;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
             ENTITY_FLAG_BITS(entity)->animates = FALSE;
             ENTITY_FLAG_BITS(entity)->dying = 2;
@@ -444,7 +449,7 @@ static void ExpeditionArcher_Death(Entity *entity) {
             entity->action_step++;
         }
         break;
-    case 3:
+    case DEATH_STEP_FADE_OUT:
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {

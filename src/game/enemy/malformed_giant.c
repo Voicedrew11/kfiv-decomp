@@ -15,6 +15,9 @@
 #include "model/motion.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
+
+/* MalformedGiant_PlayAnim0ToFrame80: Entity.action_step */
+#define MALFORMED_GIANT_STEP_END 2                  /* ends the action once the animation passes frame 80 */
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void MalformedGiant_Think(Entity *entity, s32 run_now);
@@ -273,18 +276,18 @@ static void MalformedGiant_PlayAnim0ToFrame80(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_1000;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     switch (entity->action_step) {
-    case 0:
+    case ACTION_STEP_START:
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
         ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_MOVE;
         ai_state->turn_rate = 0.0f;
         entity->action_step++;
         break;
-    case 1:
+    case ACTION_STEP_BLEND_IN:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
-    case 2:
+    case MALFORMED_GIANT_STEP_END:
         if (entity->model->level_tables->frame > 0x50) {
             entity->busy_flags = 0;
             entity->move_command = 0;
