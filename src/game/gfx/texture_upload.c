@@ -46,20 +46,20 @@ static void Texture_LoadTm2(TextureHeader *header) {
     height = 1 << TEX0_BITS(header)->height_log2;
     sceGsSetDefLoadImage(&load_image, (u16)TEX0_BITS(header)->base_pointer, buffer_width, image_format, 0, 0, width, height);
     FlushCache(0);
-    sceGsExecLoadImage(&load_image, (char *)header + sizeof(TextureHeader));
+    sceGsExecLoadImage(&load_image, header->image);
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
     pixel_format = TEX0_BITS(header)->pixel_format;
     if (pixel_format == GS_PSM_T8 || pixel_format == GS_PSM_T8H) {
         sceGsSetDefLoadImage(&load_image, (u16)TEX0_BITS(header)->clut_pointer, 1, (u16)TEX0_BITS(header)->clut_format, 0, 0, 16, 16);
         FlushCache(0);
-        sceGsExecLoadImage(&load_image, (char *)header + (header->image_size + sizeof(TextureHeader)));
+        sceGsExecLoadImage(&load_image, header->image + header->image_size);
         while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
         }
     } else if (pixel_format == GS_PSM_T4 || pixel_format == GS_PSM_T4HL || pixel_format == GS_PSM_T4HH) {
         sceGsSetDefLoadImage(&load_image, (u16)TEX0_BITS(header)->clut_pointer, 1, (u16)TEX0_BITS(header)->clut_format, 0, 0, 8, 2);
         FlushCache(0);
-        sceGsExecLoadImage(&load_image, (char *)header + (header->image_size + sizeof(TextureHeader)));
+        sceGsExecLoadImage(&load_image, header->image + header->image_size);
         while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
         }
     }
@@ -219,7 +219,7 @@ static void Texture_BuildPacket(char **texture, char **packet) {
     }
     *((u64 *)cursor)++ = 0;
     bytes = cursor;
-    memcpy(bytes, (char *)header + sizeof(TextureHeader), size);
+    memcpy(bytes, header->image, size);
     bytes += size;
     for (i = 0; i < quadwords * 16 - size; i++) {
         *bytes++ = 0;

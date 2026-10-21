@@ -578,7 +578,7 @@ void ScriptCmd_AddItem(ScriptPairCommand *command) {
     int amount;
     int count;
     int def_offset;
-    u8 *def;
+    ItemCommonDef *def;
     u8 *owned;
 
     amount = command->second.value;
@@ -594,14 +594,14 @@ void ScriptCmd_AddItem(ScriptPairCommand *command) {
             *owned = count;
         }
         if ((int)item < 150) {
-            def_offset = item << 5; // match: the byte offset of the item's ItemCommonDef, kept for both reads
-            def = (u8 *)item_common_defs + def_offset;
-            if (((ItemCommonDef *)def)->flags >> 1 & 1) {
+            def_offset = item << 5; // match: the byte offset of the item's ItemCommonDef, passed on below
+            def = &item_common_defs[item];
+            if (def->flags >> 1 & 1) {
                 if (item_counts.bytes[item] >= 2) {
                     item_counts.bytes[item] = 1;
                 }
             }
-            if (((u8 *)item_common_defs)[def_offset] == 3) {
+            if (item_common_defs[item].type == 3) {
                 // match: three arguments are passed; the definition takes the first alone
                 ((void (*)(u32, u32, int))Menu_AddKeyItem)(item, item, def_offset);
             }
@@ -1089,7 +1089,7 @@ void ScriptCmd_PlaySoundAt(ScriptSoundAtCommand *command) {
 void ScriptCmd_PlaySoundAtPoint(ScriptPointSoundCommand *command) {
     Vector4Arg position = { command->x.value, command->y.value, command->z.value, 1.0f };
 
-    Sound_PlayMapAtRange(command->sound.value, command->mode.value, (f32 *)&position, command->range.value);
+    Sound_PlayMapAtRange(command->sound.value, command->mode.value, &position.x, command->range.value);
     command->active = 0;
 }
 

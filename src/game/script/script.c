@@ -86,15 +86,15 @@ void Script_FillWords(void *dest, int count, int value) {
    freed and set at the top of it, and the shared variables are cleared. */
 void Script_Init(s32 script_data) {
     ScriptThread *thread;
-    u8 *first_command;
-    u8 *end;
+    void *first_command;
+    ScriptThread *end;
 
     script_top = (u32 *)script_data;
     command_count = 0;
     memset(shared_vars, 0, 0x400);
     thread = threads;
-    first_command = (u8 *)thread->commands;
-    end = (u8 *)thread + 24 * sizeof(ScriptThread);
+    first_command = thread->commands;
+    end = thread + 24;
     do {
         thread->cursor = script_top;
         Script_FillWords(first_command, sizeof(ScriptThreadCommand) / 4, 0);
@@ -201,7 +201,7 @@ int Script_IsRunning(int script_id) {
     ScriptThread *end;
 
     thread = threads;
-    end = (ScriptThread *)((u8 *)thread + 24 * sizeof(ScriptThread));
+    end = thread + 24;
     do {
         if (thread->script_id == script_id) {
             return TRUE;

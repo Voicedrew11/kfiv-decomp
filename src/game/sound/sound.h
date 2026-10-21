@@ -125,7 +125,8 @@ typedef struct {
     int dma_src;                    /* 0x4C4 */
     int iop_buffer;                 /* 0x4C8 the IOP buffer the streams are read into */
     int dma_dest;                   /* 0x4CC */
-    char volume_and_stereo[0x06];   /* 0x4D0 six bytes: a volume int and a stereo u16 */
+    s32 volume;                     /* 0x4D0 the volume the driver was last given */
+    u16 stereo;                     /* 0x4D4 1 when stereo output is on (0 mutes the voices) */
     u16 active;                     /* 0x4D6 */
     char pad4D8[0x08];              /* the block in .bss is 0x4E0 bytes */
 } SoundState;

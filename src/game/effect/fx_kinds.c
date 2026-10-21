@@ -222,9 +222,12 @@ void EffectGroundFan_Update(EffectActor *actor) {
 
 /* Kind 36 start: keeps how many levels the spawner is below def->max_level. */
 void EffectLevelHeight_Start(EffectActor *actor, EffectSlot *spawn_slot) {
+    ProgressMotion *motion;
+
     EffectStart_TurnModel(actor, spawn_slot);
     EffectStart_PlaceModel(actor, spawn_slot);
-    *(int *)&actor->motion = actor->def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level;
+    motion = (ProgressMotion *)&actor->motion;
+    motion->progress = actor->def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level;
 }
 
 /* Kind 36 update: sets the model's y scale to def->unkDC plus the keyed y scale times that share of
@@ -1540,7 +1543,10 @@ void EffectOwnerFloor_Start(EffectActor *actor, EffectSlot *spawn_slot) {
 
 /* Kind 77 update: ends when no floor was found, else runs its keys. */
 void EffectOwnerFloor_Update(EffectActor *effect) {
-    if (*(s8 *)&effect->motion != 0) { // match: velocity.x's first byte is read as a signed byte
+    GroundedMotion *motion;
+
+    motion = (GroundedMotion *)&effect->motion;
+    if (motion->no_floor != 0) {
         return Effect_Free(effect);
     }
     EffectKeys_ApplyScale(effect);
@@ -1945,7 +1951,7 @@ void EffectDrop_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     Collision_CastRayAtMap(1.0f, &actor->model->position, &probe);
     if (COLLISION_RESULT->hit != 0) {
         Vector_Copy(&actor->motion, COLLISION_RESULT);
-        motion->floor_material = *(u8 *)&COLLISION_RESULT->floor_material; // match: a byte load of the word's low byte
+        motion->floor_material = (u8)COLLISION_RESULT->floor_material;
         distance = Effect_Distance(&actor->motion, &actor->model->position);
         velocity = 0.0f;
         fallen = 0.0f;
@@ -2271,10 +2277,13 @@ void EffectSeekPoint_Update(EffectActor *effect) {
 
 /* Kind 107 start: drops the target and clears the stop flag. */
 void EffectLoopUntilFlag_Start(EffectActor *effect, EffectSlot *spawn_slot) {
+    LoopMotion *motion;
+
     EffectStart_TurnModel(effect, spawn_slot);
     EffectStart_PlaceModel(effect, spawn_slot);
     effect->target = NULL;
-    *(int *)&effect->motion = 0; // match: an int store of the velocity's first word (sw $0)
+    motion = (LoopMotion *)&effect->motion;
+    motion->stopped = 0;
 }
 
 /* Kind 107 update: loops its first def->radius_half frames until loop_effect_stop_state is 3. */

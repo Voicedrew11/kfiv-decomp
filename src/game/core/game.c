@@ -246,20 +246,20 @@ void Game_CountSpawnDeath(u32 map, int entry) {
     int merged;
 
     if (map < 0x80 && entry >= 0 && entry < 0x80) {
-        count = (old_byte = ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)]);
+        count = (old_byte = map_entry_counters[map][entry / 2]);
         if (entry & 1) {
             count >>= SPAWN_COUNTER_HIGH_SHIFT;
             count++;
             shifted = count << 4;
-            ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)] = (low_nibble = old_byte & SPAWN_COUNTER_LOW_MASK);
+            map_entry_counters[map][entry / 2] = (low_nibble = old_byte & SPAWN_COUNTER_LOW_MASK);
             count = shifted & 0xFF;
         } else {
             count &= SPAWN_COUNTER_LOW_MASK;
             count++;
-            ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)] = old_byte & SPAWN_COUNTER_HIGH_MASK;
+            map_entry_counters[map][entry / 2] = old_byte & SPAWN_COUNTER_HIGH_MASK;
         }
-        merged = count | ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)]; // match: merged in an int
-        ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)] = merged;
+        merged = count | map_entry_counters[map][entry / 2]; // match: merged in an int
+        map_entry_counters[map][entry / 2] = merged;
     }
 }
 

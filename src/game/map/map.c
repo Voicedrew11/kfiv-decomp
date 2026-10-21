@@ -432,7 +432,7 @@ void Map_BuildModels(int map) {
         object->model = model;
         object->source = info;
         object->definition = (MapObjectUnk04 *)&map_object_defs[info->def_index * 0x80];
-        object->map_record = (s32)Map_FindRecordAtInSlot((f32 *)info, 0.0f, map);
+        object->map_record = (s32)Map_FindRecordAtInSlot(&info->position.x, 0.0f, map);
         MAP_OBJECT_BITS(object)->map = (u8)map;
     }
     cursor = (int)header + header->object_model_offset;

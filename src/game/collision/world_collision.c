@@ -21,8 +21,8 @@ typedef void (*MapObjectCircleTest)(MapObject *, f32 *, f32, f32);
    notes the object when the point tested is the player's position */
 #define NOTE_FOUND(object) \
     result = TRUE; \
-    if (centre == (f32 *)&player_state) { \
-        ((PlayerState *)centre)->floor_map_object = (object); \
+    if (centre == &player_state.position.x) { \
+        player_state.floor_map_object = (object); \
     }
 // match: the last test is called for its value, which keeps it an ordinary call
 typedef int (*WallTest)(void *, void *, f32, void *, f32);
@@ -1957,10 +1957,10 @@ void Collision_HitFanMeshObj(MapObject *object, Vector4 *origin, f32 radius, f32
             if (j > 0) {
                 second_sides = 0;
                 first_sides = 0;
-                TEST_SIDES((f32 *)strip->points[0].position);
+                TEST_SIDES(strip->points[0].position);
                 first_sides <<= 1;
                 second_sides <<= 1;
-                TEST_SIDES((f32 *)strip->points[1].position);
+                TEST_SIDES(strip->points[1].position);
                 first_sides <<= 1;
                 second_sides <<= 1;
                 point += 2;
@@ -2404,7 +2404,7 @@ void Collision_PushOutOfBoxObj(MapObject *object, f32 *centre, f32 radius, f32 p
 static inline s32 gap_is_closed(MapObject *object, f32 *centre, f32 push, f32 first_gap, f32 second_gap) {
     s32 closed = FALSE;
 
-    if (centre == (f32 *)&player_state) {
+    if (centre == &player_state.position.x) {
         closed = -(object->door_open_flags & 1);
     } else if (first_gap <= push * 2.25f || second_gap <= push * 2.25f) {
         closed = TRUE;

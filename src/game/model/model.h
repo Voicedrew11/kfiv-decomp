@@ -382,8 +382,8 @@ typedef struct ModelWaveUv {
 
 typedef struct ModelInstance {
     char pad00[0x40];
-    char model_matrix[0x40];        /* 0x40 a matrix, passed by address */
-    char collision_matrix[0x40];    /* 0x80 a copy of unk40 */
+    f32 model_matrix[16];           /* 0x40 a matrix, passed by address */
+    char collision_matrix[0x40];    /* 0x80 a copy of model_matrix */
     Vector4 position;               /* 0xC0 */
     Vector4 rotation;               /* 0xD0 x, y (heading), z in radians */
     f32 scale_x;                    /* 0xE0 its sign picks the turn direction; the x scale */
@@ -712,6 +712,17 @@ typedef struct {
 } MapObjectWork;
 
 #define MAP_OBJECT_WORK(object) ((MapObjectWork *)(object)->work)
+
+/* MapObject.work of the light kind: the linked point handle its hit test excludes, and the two flicker phases and periods */
+typedef struct {
+    s16 linked_point_handle;        /* 0x00 -1 when none */
+    s16 flicker_phase_a;            /* 0x02 where the first flicker period is */
+    s16 flicker_period_a;           /* 0x04 the first flicker period */
+    s16 flicker_phase_b;            /* 0x06 where the second flicker period is */
+    s16 flicker_period_b;           /* 0x08 the second flicker period */
+} MapObjectWorkLight;
+
+#define MAP_OBJECT_WORK_LIGHT(object) ((MapObjectWorkLight *)(object)->work)
 
 /* MapObject.work of the kind that fades with the distance to the player (MapObject_StartDistanceFade) */
 typedef struct {

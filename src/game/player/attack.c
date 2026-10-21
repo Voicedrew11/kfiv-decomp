@@ -363,7 +363,7 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                 Vector_Subtract(direction, &held_item_arm_points.points[1], &held_item_arm_points.points[0]);
                 length = sqrtf(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);
                 Vector_Scale(direction, direction, 1.0f / length);
-                Collision_HitRayObj(object, (f32 *)&held_item_arm_points.points[0], direction, length);
+                Collision_HitRayObj(object, &held_item_arm_points.points[0].x, direction, length);
                 if (COLLISION_RESULT->hit != 0) {
                     Attack_HitMapObject(request, extra, object);
                     return 4;
@@ -371,7 +371,7 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                 Vector_Subtract(direction, &held_item_arm_points.points[1], &held_item_arm_points_prev.points[1]);
                 length = sqrtf(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);
                 Vector_Scale(direction, direction, 1.0f / length);
-                Collision_HitRayObj(object, (f32 *)&held_item_arm_points_prev.points[1], direction, length);
+                Collision_HitRayObj(object, &held_item_arm_points_prev.points[1].x, direction, length);
                 if (COLLISION_RESULT->hit != 0) {
                     Attack_HitMapObject(request, extra, object);
                     return 4;
@@ -382,12 +382,12 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     if (!IS_PLAYER(request->owner)) {
         return 0;
     }
-    Collision_CastSegmentAtMap((f32 *)&held_item_arm_points.points[0], (f32 *)&held_item_arm_points.points[1]);
+    Collision_CastSegmentAtMap(&held_item_arm_points.points[0].x, &held_item_arm_points.points[1].x);
     if (COLLISION_RESULT->hit != 0) {
         Attack_HitMap(request, extra);
         return 0x10;
     }
-    Collision_CastSegmentAtMap((f32 *)&held_item_arm_points.points[1], (f32 *)&held_item_arm_points_prev.points[1]);
+    Collision_CastSegmentAtMap(&held_item_arm_points.points[1].x, &held_item_arm_points_prev.points[1].x);
     if (COLLISION_RESULT->hit != 0) {
         Attack_HitMap(request, extra);
         return 0x10;

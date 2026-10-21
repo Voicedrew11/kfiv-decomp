@@ -130,7 +130,7 @@ static s32 SaveCard_Fail(void);
 static void SaveCard_SetFailureMessage(void);
 static int SaveCard_FindFile(char *name, int size);
 static int SaveCard_VerifySaves(void);
-static void SaveCard_FillSaveInfo(void *unused_arg0, s32 index);
+static void SaveCard_FillSaveInfo(s32 unused_arg0, s32 index);
 
 /* Starts the memory card library and clears both task records. Returns -1 when the library does not start. */
 s32 SaveCard_Init(void) {
@@ -715,7 +715,7 @@ static s32 SaveCard_StepSave(void) {
         }
         break;
     case CARD_SAVE_STEP_FILL_LIST:
-        SaveCard_FillSaveInfo((void *)task->card_index, file);
+        SaveCard_FillSaveInfo(task->card_index, file);
         sprintf(save_path, "%s%s%s%s", "/BASLUS-20318", "S", "/BASLUS-20318", "S");
         task->step++;
     case CARD_SAVE_STEP_WRITE_LIST:
@@ -1430,7 +1430,7 @@ static int SaveCard_VerifySaves(void) {
 /* Writes what the save list shows of the game being saved into the list record of save number index:
    save_area_name_id[0], then the player's experience, level, hit and magic points with their maximums, two more
    words and gold, and the play time. */
-static void SaveCard_FillSaveInfo(void *unused_arg0, s32 index) {
+static void SaveCard_FillSaveInfo(s32 unused_arg0, s32 index) {
     SaveInfo *info;
 
     if (save_infos == NULL) {

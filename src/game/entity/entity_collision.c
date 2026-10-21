@@ -2377,9 +2377,8 @@ f32 EntityCollision_DistanceToPropFloor(void *prop_arg, void *position_arg) {
 
 /* Finds the nearest triangle of the prop's mesh a ray hits. Returns which of the four strip lists it is in
    (1-4, 0: none), leaves the distance in the result and copies the point to `out_point`. */
-s32 EntityCollision_RayProp(void *prop_arg, f32 *origin, f32 *direction, f32 length, s32 out_point_arg) {
+s32 EntityCollision_RayProp(void *prop_arg, f32 *origin, f32 *direction, f32 length, void *out_point) {
     MapProp *prop = prop_arg;
-    void *out_point = (void *)out_point_arg;
     CollisionMesh *mesh;
     CollisionStrip *strip;
     CollisionStripPoint *point;
@@ -2537,7 +2536,7 @@ s32 EntityCollision_RayProps(f32 *origin, f32 *direction, void *out_point, f32 l
                 if (highest[2] < record->lowest[2] || record->highest[2] < lowest[2]) {
                     continue;
                 }
-                kind = EntityCollision_RayProp(record, origin, direction, length, (s32)point);
+                kind = EntityCollision_RayProp(record, origin, direction, length, point);
                 // match: retail never lowers `nearest`, so every hit passes and the last one wins
                 if (kind != 0 && COLLISION_RESULT->distance < nearest) {
                     result = kind;

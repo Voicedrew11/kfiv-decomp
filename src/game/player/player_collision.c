@@ -133,7 +133,7 @@ int Player_CollideWithMap(void) {
                     points_left = strip->point_count - 2;
                     do {
                         Collision_CapsuleTriangle(strip_point[0].position, strip_point[1].position,
-                                      (f32 *)strip_point[2].position, (f32 *)&COLLISION_SCRATCH->wall_point, 100.0f, 230.0f);
+                                      strip_point[2].position, (f32 *)&COLLISION_SCRATCH->wall_point, 100.0f, 230.0f);
                         if (COLLISION_RESULT->hit != 0) {
                             COLLISION_SCRATCH->push.x = COLLISION_SCRATCH->wall_point.x - COLLISION_RESULT->point[0];
                             COLLISION_SCRATCH->push.y = 0.0f;
@@ -288,7 +288,7 @@ void Player_PushOutOfWalls(void) {
                     points_left = strip->point_count - 2;
                     do {
                         Collision_CapsuleTriangle(strip_point[0].position, strip_point[1].position,
-                                      (f32 *)strip_point[2].position, (f32 *)&COLLISION_SCRATCH->point, 100.0f, 230.0f);
+                                      strip_point[2].position, (f32 *)&COLLISION_SCRATCH->point, 100.0f, 230.0f);
                         if (COLLISION_RESULT->hit != 0) {
                             COLLISION_SCRATCH->push.x = COLLISION_SCRATCH->point.x - COLLISION_RESULT->point[0];
                             COLLISION_SCRATCH->push.y = 0.0f;
