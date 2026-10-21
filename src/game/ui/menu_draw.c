@@ -582,38 +582,38 @@ void *MenuDraw_NextPacket(void) {
 /* Sends a seven-quadword packet that draws a textured rectangle as a four-corner strip. */
 void MenuDraw_Sprite(KindObject *object) {
     TexturedRectDef *rect = (TexturedRectDef *)object;
-    u32 *packet;
+    PacketCursor packet;
 
     if (rect != NULL) {
-        packet = MenuDraw_NextPacket();
-        packet[0] = 0x8001;
-        packet[1] = 0xC4000000;
-        packet[2] = 0x25252106;
-        packet[3] = 0xFFFFF525;
-        *(s64 *)&packet[4] = rect->tex0;
-        packet[6] = 0x54;
-        packet[7] = 0;
-        packet[8] = rect->red | (rect->green << 8) | (rect->blue << 16) | (rect->alpha << 24);
-        *(f32 *)&packet[9] = rect->scale;
-        *(f32 *)&packet[10] = rect->first_s;
-        *(f32 *)&packet[11] = rect->second_t;
-        packet[12] = rect->first.pos_x | ((s32)rect->second.pos_y << 16);
-        packet[13] = rect->first.depth;
-        *(f32 *)&packet[14] = rect->first_s;
-        *(f32 *)&packet[15] = rect->first_t;
-        packet[16] = rect->first.pos_x | ((s32)rect->first.pos_y << 16);
-        packet[17] = rect->first.depth;
-        *(f32 *)&packet[18] = rect->second_s;
-        *(f32 *)&packet[19] = rect->second_t;
-        packet[20] = rect->second.pos_x | ((s32)rect->second.pos_y << 16);
-        packet[21] = rect->first.depth;
-        *(f32 *)&packet[22] = rect->second_s;
-        *(f32 *)&packet[23] = rect->first_t;
-        packet[24] = rect->second.pos_x | ((s32)rect->first.pos_y << 16);
-        packet[25] = rect->first.depth;
+        packet.word = MenuDraw_NextPacket();
+        packet.word[0] = 0x8001;
+        packet.word[1] = 0xC4000000;
+        packet.word[2] = 0x25252106;
+        packet.word[3] = 0xFFFFF525;
+        packet.dword[2] = rect->tex0;
+        packet.word[6] = 0x54;
+        packet.word[7] = 0;
+        packet.word[8] = rect->red | (rect->green << 8) | (rect->blue << 16) | (rect->alpha << 24);
+        packet.real[9] = rect->scale;
+        packet.real[10] = rect->first_s;
+        packet.real[11] = rect->second_t;
+        packet.word[12] = rect->first.pos_x | ((s32)rect->second.pos_y << 16);
+        packet.word[13] = rect->first.depth;
+        packet.real[14] = rect->first_s;
+        packet.real[15] = rect->first_t;
+        packet.word[16] = rect->first.pos_x | ((s32)rect->first.pos_y << 16);
+        packet.word[17] = rect->first.depth;
+        packet.real[18] = rect->second_s;
+        packet.real[19] = rect->second_t;
+        packet.word[20] = rect->second.pos_x | ((s32)rect->second.pos_y << 16);
+        packet.word[21] = rect->first.depth;
+        packet.real[22] = rect->second_s;
+        packet.real[23] = rect->first_t;
+        packet.word[24] = rect->second.pos_x | ((s32)rect->first.pos_y << 16);
+        packet.word[25] = rect->first.depth;
         while (*D2_CHCR & D_CHCR_STR);
         *D2_QWC = 7;
-        *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
+        *D2_MADR = ((u32)packet.word & 0x7FFFFFFF) | D_MADR_SPR;
         *D2_CHCR = D_CHCR_STR;
     }
 }
@@ -702,35 +702,35 @@ void MenuDraw_Bar(MenuCursorBar *bar) {
     FlatRectDef *rect = (FlatRectDef *)bar;
     GsCornerBits first;
     GsCornerBits second;
-    u32 *packet;
+    PacketCursor packet;
 
     if (rect != NULL) {
-        packet = MenuDraw_NextPacket();
+        packet.word = MenuDraw_NextPacket();
         first.pos_x = rect->first.pos_x;
         first.pos_y = rect->first.pos_y;
         first.depth = rect->first.depth;
         second.pos_x = rect->second.pos_x;
         second.pos_y = rect->second.pos_y;
         second.depth = rect->first.depth; // match: the first corner's depth, and neither copy is read again
-        packet[0] = 0x8001;
-        packet[1] = 0x64000000;
-        packet[2] = 0xFF555510;
-        packet[3] = 0;
-        packet[4] = 0x44;
-        packet[5] = 0;
-        packet[6] = rect->red | (rect->green << 8) | (rect->blue << 16) | (rect->alpha << 24);
-        *(f32 *)&packet[7] = rect->scale;
-        packet[8] = (s32)first.pos_x | ((s32)second.pos_y << 16);
-        packet[9] = rect->first.depth;
-        packet[10] = (s32)first.pos_x | ((s32)first.pos_y << 16);
-        packet[11] = rect->first.depth;
-        packet[12] = (s32)second.pos_x | ((s32)second.pos_y << 16);
-        packet[13] = rect->first.depth;
-        packet[14] = (s32)second.pos_x | ((s32)first.pos_y << 16);
-        packet[15] = rect->first.depth;
+        packet.word[0] = 0x8001;
+        packet.word[1] = 0x64000000;
+        packet.word[2] = 0xFF555510;
+        packet.word[3] = 0;
+        packet.word[4] = 0x44;
+        packet.word[5] = 0;
+        packet.word[6] = rect->red | (rect->green << 8) | (rect->blue << 16) | (rect->alpha << 24);
+        packet.real[7] = rect->scale;
+        packet.word[8] = (s32)first.pos_x | ((s32)second.pos_y << 16);
+        packet.word[9] = rect->first.depth;
+        packet.word[10] = (s32)first.pos_x | ((s32)first.pos_y << 16);
+        packet.word[11] = rect->first.depth;
+        packet.word[12] = (s32)second.pos_x | ((s32)second.pos_y << 16);
+        packet.word[13] = rect->first.depth;
+        packet.word[14] = (s32)second.pos_x | ((s32)first.pos_y << 16);
+        packet.word[15] = rect->first.depth;
         while (*D2_CHCR & D_CHCR_STR);
         *D2_QWC = 4;
-        *D2_MADR = ((u32)packet & 0x7FFFFFFF) | D_MADR_SPR;
+        *D2_MADR = ((u32)packet.word & 0x7FFFFFFF) | D_MADR_SPR;
         *D2_CHCR = D_CHCR_STR;
     }
 }
@@ -3174,7 +3174,7 @@ void PoolNode_Pose(RelocEntry *node, PoolSlot *slots, f32 *parent_matrix, s32 fr
     }
     sceVu0MulMatrix(slot, parent_matrix, local);
     if (node->child != NULL) {
-        PoolNode_Pose(node->child, slots, (f32 *)slot, frame);
+        PoolNode_Pose(node->child, slots, slot->matrix, frame);
     }
     if (node->sibling != NULL) {
         PoolNode_Pose(node->sibling, slots, parent_matrix, frame);

@@ -783,16 +783,15 @@ static void EntityPool_RemoveUser(int slot_index) {
 /* Copies the loaded type file into the slot's block; hangs if it is empty or too big for the block. */
 static void EntityPool_CopyLoadedFile(EntityPoolSlot *slot) {
     EntityController *controller;
-    int *file;
+    EntityTypeFileHeader *file;
     int table_offset;
     int size;
 
     controller = (EntityController *)(entity_params + slot->head.fields.type_id * 0x450);
-    file = (int *)file_load_buffer;
+    file = (EntityTypeFileHeader *)file_load_buffer;
     size = 0;
-    // match: header words of the loaded file, no named struct yet
-    if ((table_offset = file[4]) != 0 || (table_offset = file[3]) != 0) {
-        size = table_offset + *(int *)(table_offset + (char *)file);
+    if ((table_offset = file->unk10) != 0 || (table_offset = file->unk0C) != 0) {
+        size = table_offset + *(int *)(file_load_buffer + table_offset);
     }
     // match: retail shares one hang loop at the end for all three checks; only gotos give that layout
     if (size == 0) {

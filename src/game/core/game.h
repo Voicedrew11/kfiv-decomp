@@ -306,7 +306,7 @@ typedef struct ListNode {
 /* pool_slots[32]: a pool of 0x70-byte slots chained into a free list through `next`;
    pool_slot_free_list holds the head */
 typedef struct PoolSlot {
-    char pad00[0x40];
+    f32 matrix[16];                 /* 0x00 the slot's world matrix (PoolNode_Pose and PoolSlot_Draw fill it) */
     struct PoolSlot *parent;        /* 0x40 the parent slot, whose matrix this slot's model follows */
     struct PoolPart *part;          /* 0x44 the 0x50-byte part this slot shows, NULL: none */
     struct PoolPartRecord *part_record; /* 0x48 the record of the part this slot shows; NULL: no parent */

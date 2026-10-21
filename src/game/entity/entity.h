@@ -1284,7 +1284,9 @@ extern EntityPoolSlot entity_pool_slots[ENTITY_POOL_SLOT_COUNT];
 /* the first 0x20 bytes of a loaded type file (file_load_buffer), kept in entity_type_file_header while the file's
    sound part is handed to the sound loader */
 typedef struct {
-    char pad00[0x14];
+    char pad00[0x0C];
+    int unk0C;                      /* 0x0C file offset of a table, its role not known */
+    int unk10;                      /* 0x10 file offset of a table, its role not known */
     int sound_buffer_b_offset;      /* 0x14 file offset of sound buffer b, made an address */
     int sound_buffer_a_offset;      /* 0x18 file offset of sound buffer a, made an address */
     char pad1C[0x04];

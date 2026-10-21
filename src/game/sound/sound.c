@@ -29,8 +29,8 @@ typedef char *va_list;
 #define va_arg(ap, type) (*(type *)((ap += 8) - 8))
 
 static void SoundDriver_DisableOutput(void);
-static int SoundDriver_GetFileSize(char *);
-static int SoundDriver_LoadIopFile(char *, void *);
+static int SoundDriver_GetFileSize(char *name);
+static int SoundDriver_LoadIopFile(char *name, void *addr);
 extern int (*const voice_load_steps[])(int *, int *);
 
 
@@ -1844,7 +1844,7 @@ int SoundDriver_NoteOff(u32 key_index) {
     key = (SoundKey *)sound_state->note_keys[key_index];
     *write_ptr++ = 0xFF;
     // match: byte 0x18 of the voice (low byte of driver_voice_id), read as a byte
-    *write_ptr++ = ((u8 *)sound_state + (key->voice << 5))[0x18];
+    *write_ptr++ = (u8)sound_state->voices[key->voice].driver_voice_id;
     *write_ptr++ = 7;
     *write_ptr++ = 0xFD;
     *write_ptr++ = 0x10;

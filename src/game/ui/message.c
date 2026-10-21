@@ -65,7 +65,7 @@ static int debug_line_count;        /* 0x4471EC */
 
 static void Message_Draw(void);
 static void Message_DrawDebugLog(void);
-static int Message_Format(u16 *format, u16 *out, va_list args);
+static int Message_Format(u16 *format, s16 *out, va_list args);
 static void Message_DrawGlyphs(char kind, int font, int left, int top, s16 *text, int count);
 static void Message_DrawGlyph(int pos_x, int pos_y, int glyph, int colour, int alpha, int kind, int font);
 static s32 Message_GetGlyphWidth(u16 *glyph, s32 font);
@@ -276,7 +276,7 @@ void Message_OpenBox(int x, int y, int font, int centred, int delay, int message
     VA_START(args, message_id, 6);
     if (box_open == 0) {
         box_open = 1;
-        Message_Format((u16 *)format, (u16 *)box_text, args);
+        Message_Format((u16 *)format, box_text, args);
         message_box.reveal_frames = 0;
         message_box.delay = delay;
         message_box.timer = delay;
@@ -308,7 +308,7 @@ void Message_ShowNotice(int x, int y, int font, int kind, int frames, int messag
         int top;
 
         VA_START(args, message_id, 6);
-        notice_shown->length = Message_Format((u16 *)format, (u16 *)notice_shown->text, args);
+        notice_shown->length = Message_Format((u16 *)format, notice_shown->text, args);
         width = Message_GetTextWidth(notice_shown->text, font);
         left = x + 0x140;
         top = y + 0x190;
@@ -326,7 +326,7 @@ void Message_ShowNotice(int x, int y, int font, int kind, int frames, int messag
             return;
         }
         VA_START(args, message_id, 6);
-        notice_free->length = Message_Format((u16 *)format, (u16 *)notice_free->text, args);
+        notice_free->length = Message_Format((u16 *)format, notice_free->text, args);
         width = Message_GetTextWidth(notice_free->text, font);
         left = x + 0x140;
         top = y + 0x190;
@@ -421,7 +421,7 @@ static void Message_DrawDebugLog(void) {
 /* Expands a message's glyph stream: copies it to `out` up to the 0xFFFF end mark, replacing each number code
    by the next argument printed in the width the code gives. Returns the number of glyphs written, not counting
    control codes. */
-static int Message_Format(u16 *format, u16 *out, va_list args) {
+static int Message_Format(u16 *format, s16 *out, va_list args) {
     u8 digits[0x20];
     int count;
     int width;
