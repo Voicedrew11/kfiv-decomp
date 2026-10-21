@@ -1536,8 +1536,8 @@ void Player_UpdateBreath(void) {
     int filled;
 
     player = &player_state;
-    was_set = (player_status_bits[0] >> 39) & 1;
-    is_set = (player->status_bits >> 39) & 1;
+    was_set = (player_status_bits[0] >> PLAYER_STATUS_UNDERWATER_BIT) & 1;
+    is_set = PLAYER_IS_UNDERWATER(player);
     if (is_set != was_set) {
         if (is_set != 0) {
             start_full = (player->power * 9) + 0x78;

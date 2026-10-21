@@ -374,7 +374,7 @@ s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f3
     Vector_Copy(&node->model->position, position);
     Vector_Copy(&node->model->rotation, rotation);
     Vector_Copy(&node->model->scale_x, scale);
-    ITEM_NODE_BITS(node)->bit2 = TRUE;
+    ITEM_NODE_BITS(node)->falling = TRUE;
     node->position_y = position[1];
     node->floor_y = floor_y;
     node->fall_speed = 0.0f;
@@ -485,7 +485,7 @@ void MapItem_UpdateFalling(void) {
         do {
             if (node->record != 0) {
                 flags = node->flags;
-                if (((u32)flags >> 2) & 1) {
+                if (((u32)flags >> ITEM_NODE_FALLING_BIT) & 1) {
                     height = node->position_y + node->fall_speed;
                     node->position_y = height;
                     if (node->floor_y <= height) {

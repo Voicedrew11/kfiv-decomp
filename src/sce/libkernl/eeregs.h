@@ -154,5 +154,6 @@
 #define GS_BUSDIR ((volatile unsigned long *)0x12001040)
 #define GS_CSR_FINISH 0x2       /* bit1: FINISH, the GS finished a drawing; written 1 to clear */
 #define GS_CSR_FIELD 0x2000     /* bit13: FIELD, the field the GS is on */
+#define GS_CSR_FIELD_SHIFT 13
 
 #endif /* SCE_LIBKERNL_EEREGS_H */

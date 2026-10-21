@@ -173,7 +173,7 @@ static void Slasher_AlertSameKind(Entity *entity) {
         if (entity->params == other_entity->params) {
             if (ENTITY_FLAG_BITS(other_entity)->active_list) {
                 u64 other_flags = other_entity->flags;
-                if (((int)(other_flags >> 1) & 1) && !ENTITY_FLAG_BITS(other_entity)->dying &&
+                if (((int)(other_flags >> ENTITY_FLAG_LIVE_BIT) & 1) && !ENTITY_FLAG_BITS(other_entity)->dying &&
                     other_entity != entity) {
                     EntityAiState *other_unkE0 = &other_entity->ai_state;
                     if (other_unkE0->step_index == 0 &&

@@ -211,7 +211,7 @@ s32 EntityAi_SendMeleeHit(Entity *entity, EntityParamsUnk240 *record, s32 index,
     request.ailment_chances = record->hit_parts[index].ailment_chances;
     request.hit_armor_part = record->wear_armour_part;
     request.knockback = record->hit_parts[index].hit_flags & 1;
-    if ((ENTITY_PART_FLAGS(&record->hit_parts[index])->flags >> 1) & 1) {
+    if ((ENTITY_PART_FLAGS(&record->hit_parts[index])->flags >> ENTITY_PART_MP_DAMAGE_BIT) & 1) {
         request.mp_damage = record->hit_parts[index].mp_damage;
     }
     extra.is_magic_shot = 0;

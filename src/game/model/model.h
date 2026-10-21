@@ -245,9 +245,12 @@ typedef struct {
     char pad00[0x68];
     u64 pad68_0 : 40;
     u64 bit40 : 1;                  /* 0x6D bit 0, set: Model_DrawPosedWithAlpha does not draw the part */
-    u64 bit41 : 1;                  /* 0x6D bit 1, set by Model_SetUpSkinned */
+    u64 opaque : 1;                 /* 0x6D bit 1, MODEL_PART_OPAQUE_BIT: the part is drawn in the opaque pass */
     u64 pad68_42 : 22;
 } ModelPartFlagBits;
+
+#define ITEM_NODE_FALLING_BIT 2  /* ItemNode.flags: ItemNodeBits.falling */
+#define MODEL_PART_OPAQUE_BIT 41
 
 #define MODEL_PART_FLAG_BITS(part) ((ModelPartFlagBits *)(part))
 
@@ -914,7 +917,7 @@ typedef struct {
     char pad00[0x0C];
     u32 map : 1;                    /* 0x0C which of the two loaded maps it lies in */
     u32 bit1 : 1;
-    u32 bit2 : 1;                   /* set on a dropped item */
+    u32 falling : 1;                /* a dropped item still falling to the floor (MapItem_UpdateFalling) */
     u32 priority : 4;               /* a dropped item is only replaced by one whose priority is not lower */
     u32 bits7 : 25;
 } ItemNodeBits;

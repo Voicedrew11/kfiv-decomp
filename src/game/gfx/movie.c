@@ -1897,7 +1897,7 @@ static int Movie_VblankHandler(int cause) {
     MovieOutTag *tag;
     s32 unused[4]; // match: retail keeps 0x10 bytes of stack it never touches
 
-    movie_start_field = (*GS_CSR >> 13) & 1;
+    movie_start_field = (*GS_CSR >> GS_CSR_FIELD_SHIFT) & 1;
     if (movie_pictures_enabled != 0) {
         movie_picture_vblanks++;
         movie_path3_busy = sceGsSyncPath(1, 0);

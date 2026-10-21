@@ -92,7 +92,7 @@ static void ExpeditionArcher_Animate(Entity *entity) {
 
     flags = entity->flags;
     ai_state = &entity->ai_state;
-    if ((s32)((s64)(flags << 18) >> 32) & 1) {
+    if ((s32)(flags >> ENTITY_FLAG_ANIMATES_BIT) & 1) {
         blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
             ENTITY_FLAG_BITS(entity)->motion_ended = Motion_BlendToPose(ENTITY_MODEL(entity), (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
@@ -102,15 +102,15 @@ static void ExpeditionArcher_Animate(Entity *entity) {
             flags = entity->flags;
         }
     }
-    if ((s32)((s64)(flags << 22) >> 32) & 1) {
+    if ((s32)(flags >> ENTITY_FLAG_ATTACKING_BIT) & 1) {
         ExpeditionArcher_PitchPartToPlayer(entity);
     } else {
         ai_state->part_angle_x = 0.0f;
     }
     flags_now = entity->flags;
-    if ((s32)((s64)(flags_now << 18) >> 32) & 1) {
+    if ((s32)(flags_now >> ENTITY_FLAG_ANIMATES_BIT) & 1) {
         params = entity->params;
-        look_at_target = (s32)(flags_now >> 9) & 1;
+        look_at_target = (flags_now & ENTITY_FLAG_LOOK_AT_TARGET) != 0;
         limits[1] = DEG_TO_RAD(params->pitch_limit_deg);
         limits[0] = DEG_TO_RAD(-params->pitch_limit_deg);
         limits[3] = DEG_TO_RAD(params->yaw_limit_deg);

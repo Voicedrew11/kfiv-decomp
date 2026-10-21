@@ -381,8 +381,8 @@ typedef struct {
         u64 raw;
         struct {
             u64 bit0 : 1;
-            u64 bit1 : 1;
-            u64 bit2 : 1;
+            u64 held : 1;           /* MAP_LOAD_HELD */
+            u64 hold_requested : 1; /* MAP_LOAD_HOLD_REQUESTED */
         } f;
     } flags;                        /* 0x20 */
     s32 timer;                      /* 0x28 frames to wait */
@@ -400,6 +400,7 @@ typedef struct {
 /* MapLoadState.flags.raw bits: the background load is held off at a safe step; a hold has been asked for */
 #define MAP_LOAD_HELD           0x2
 #define MAP_LOAD_HOLD_REQUESTED 0x4
+#define MAP_LOAD_HELD_BIT       1
 #define MAP_LOAD_HOLD_MASK      (MAP_LOAD_HELD | MAP_LOAD_HOLD_REQUESTED)
 
 /* map_slot_memory[2]: the memory each map slot is loaded into */

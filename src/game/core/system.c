@@ -68,13 +68,13 @@ void Movie_PlayOpening(void) {
     Sound_Init();
 }
 
-/* Plays the ending movie KF4ED.PSS when bit 11 of game_status_flags is set, the staff roll KF4STAFF.PSS otherwise;
+/* Plays the ending movie KF4ED.PSS when the game was won (play_ending_movie), the staff roll KF4STAFF.PSS otherwise;
    neither can be skipped. */
 void Movie_PlayEnding(void) {
     char buf[0x40]; /* unused, but retail reserves the 0x40 bytes */
 
     opening_movie_skipped = 0;
-    if ((game_status_flags[0] >> 11) & 1) {
+    if ((game_status_flags[0] >> GAME_STATUS_ENDING_MOVIE_SHIFT) & 1) {
         Movie_Play(ending_movie_path, (u32)map_file_area, map_file_area_size, 0, 0x3FFF, 2, 0, 0);
     } else {
         Movie_Play(staff_roll_movie_path, (u32)map_file_area, map_file_area_size, 0, 0x3FFF, 2, 0, 0);

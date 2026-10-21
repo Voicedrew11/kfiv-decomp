@@ -86,7 +86,7 @@ void Onyx_Init(Entity *entity) {
     for (part_index = 0; part_index < 25; part_index++) {
         part = &((EntityModelPart80 *)entity->model->parts)[part_index + 8];
         ENTITY_MODEL_PART_FLAG_BITS(part)->bit40 = TRUE;
-        ENTITY_MODEL_PART_FLAG_BITS(part)->bit41 = TRUE;
+        ENTITY_MODEL_PART_FLAG_BITS(part)->opaque = TRUE;
         ai_state->pause_timer = 0;
         ai_state->sub_timer = 0;
         ai_state->mode_timer = 0;
@@ -118,7 +118,7 @@ void Onyx_Init(Entity *entity) {
     for (part_index = 0; part_index < part_count; part_index++) {
         part = &((EntityModelPart80 *)entity->model->parts)[first_part + part_index];
         ENTITY_MODEL_PART_FLAG_BITS(part)->bit40 = FALSE;
-        ENTITY_MODEL_PART_FLAG_BITS(part)->bit41 = FALSE;
+        ENTITY_MODEL_PART_FLAG_BITS(part)->opaque = FALSE;
     }
     ai_state->reload_timer = entity->params->action_frames;
     Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
@@ -357,7 +357,7 @@ static void Onyx_SwitchAttack(Entity *entity) {
             for (part_index = 0; part_index < 25; part_index++) {
                 part = &((EntityModelPart80 *)entity->model->parts)[part_index + 8];
                 ENTITY_MODEL_PART_FLAG_BITS(part)->bit40 = TRUE;
-                ENTITY_MODEL_PART_FLAG_BITS(part)->bit41 = TRUE;
+                ENTITY_MODEL_PART_FLAG_BITS(part)->opaque = TRUE;
                 ai_state->pause_timer = 0;
                 ai_state->sub_timer = 0;
                 ai_state->mode_timer = 0;
@@ -386,7 +386,7 @@ static void Onyx_SwitchAttack(Entity *entity) {
             for (part_index = 0; part_index < part_count; part_index++) {
                 part = &((EntityModelPart80 *)entity->model->parts)[first_part + part_index];
                 ENTITY_MODEL_PART_FLAG_BITS(part)->bit40 = FALSE;
-                ENTITY_MODEL_PART_FLAG_BITS(part)->bit41 = FALSE;
+                ENTITY_MODEL_PART_FLAG_BITS(part)->opaque = FALSE;
             }
             entity->action_step++;
         }
