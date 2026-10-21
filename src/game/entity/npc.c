@@ -87,8 +87,8 @@ void Npc_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->not_targetable = TRUE;
 }
 
-/* The animate handler of types 15 and 81: as EntityAi_Animate, but the blend runs at ai_state->unk40 only in a
-   busy-bit-2 reaction, and the head turns at the rates EntityParams.action_frames (towards the target) and unk436. */
+/* The animate handler of types 15 and 81: as EntityAi_Animate, but the blend runs at ai_state->pose_blend_weight only in a
+   busy-bit-2 reaction, and the head turns at the rates EntityParams.action_frames (towards the target) and near_distance. */
 static void Npc_Animate(Entity *entity) {
     f32 limits[4];
     s32 look_at_target;
@@ -118,7 +118,7 @@ static void Npc_Animate(Entity *entity) {
 
 /* The on_hit handler of type 15: lowers the weights of the last choice (EntityAi_LowerWeightsAfterHit),
    forgets the target, stops the head following it, starts Npc_ReactionHeavy and marks its group record
-   (entity_group_state[EntityParams.type_param_0].unk02). */
+   (entity_group_state[EntityParams.type_param_0].member_died). */
 static void Npc_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit(entity);
     entity->flags &= ~ENTITY_FLAG_ATTACKING;

@@ -80,7 +80,7 @@ void ExpeditionArcher_Init(Entity *entity) {
 }
 
 /* The animate handler: as EntityAi_Animate; while flag bit 10 is set ExpeditionArcher_PitchPartToPlayer
-   pitches a model part, and otherwise work float unk48 is cleared. */
+   pitches a model part, and otherwise ai_state.part_angle_x is cleared. */
 static void ExpeditionArcher_Animate(Entity *entity) {
     f32 limits[4];
     u32 blend_frames; // match: converted to float as unsigned
@@ -124,7 +124,7 @@ static void ExpeditionArcher_Animate(Entity *entity) {
 }
 
 /* Helper of ExpeditionArcher_Animate: pitches the model part EntityParams.action_frames names towards the
-   player, at most 50 degrees either way (work float unk48, rate 10). */
+   player, at most 50 degrees either way (ai_state.part_angle_x, rate 10). */
 static void ExpeditionArcher_PitchPartToPlayer(Entity *actor) {
     ModelInstance *model = ENTITY_MODEL(actor);
     ModelPart *part = &model->parts[ENTITY_CONTROLLER(actor)->action_frames];
@@ -144,7 +144,7 @@ static void ExpeditionArcher_PitchPartToPlayer(Entity *actor) {
 }
 
 /* The think handler: as EntityAi_Think, with ExpeditionArcher_ThinkCombat for state 2. Before that it
-   clears bit 40 of model part 5's unk68 during frames 9 to 46 of animations 23 and 24 and sets it
+   clears bit 40 of model part 5's part_flags during frames 9 to 46 of animations 23 and 24 and sets it
    otherwise. */
 static void ExpeditionArcher_Think(Entity *entity, s32 run_now) {
     if (((u8)entity->animation_index == ENTITY_MOTION_RANGED_ATTACK || (u8)entity->animation_index == ENTITY_MOTION_RANGED_ATTACK + 1) && entity->model->level_tables->blend_left == 0 &&

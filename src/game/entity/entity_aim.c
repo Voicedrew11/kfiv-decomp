@@ -145,7 +145,7 @@ void EntityPoint_PickNearFromDistance(f32 *point, f32 *centre, f32 distance, f32
 }
 
 /* Where the player will be after `frames` frames at his present speed: his position plus his sideways,
-   falling and walking speeds (unk1B0, unk1AC, unk1B4), turned by his heading, times frames. Nothing calls it. */
+   falling and walking speeds (PlayerState.strafe_speed, fall_speed, walk_speed), turned by his heading, times frames. Nothing calls it. */
 void EntityAim_PredictPlayerPosition(f32 *point, s32 frames) {
     f32 offset[4];
 

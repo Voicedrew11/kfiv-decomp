@@ -94,7 +94,7 @@ void LavaBird_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with the type's own functions for the three states. It
    keeps flag bit 28 set except in the death action, and animation 3 on the second motion slot
-   outside heavy-hit reactions and the death; every 60th frame it draws work float unk54 (0 to 9).
+   outside heavy-hit reactions and the death; every 60th frame it draws ai_state.pitch_speed (0 to 9).
    After the state's function, every frame outside the death, it gives the command of LavaBird_SteerToTargetCommand
    (or the turn away from a push) and calls LavaBird_ApplyMoveCommand. */
 static void LavaBird_Think(Entity *entity, s32 run_now) {
@@ -156,9 +156,9 @@ static void LavaBird_Think(Entity *entity, s32 run_now) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat without the guard and the dodge, with the
-   command of LavaBird_SteerToTargetCommand. It also picks the pitch command, work byte unk79: 1 or -1 at random
+   command of LavaBird_SteerToTargetCommand. It also picks the pitch command, ai_state.turn_in_place: 1 or -1 at random
    (EntityParams.far_distance times in 100), 2 while the player's y less its own is below
-   EntityParams.near_distance, -2 while it is above unk434. Its only attack is LavaBird_RangedAttack,
+   EntityParams.near_distance, -2 while it is above EntityParams.action_frames. Its only attack is LavaBird_RangedAttack,
    when EntityAi_PickAttack draws a ranged one. */
 static void LavaBird_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -270,7 +270,7 @@ static void LavaBird_ThinkPursue(Entity *entity, s32 run_now) {
 }
 
 /* The think function of state 0: as EntityAi_ThinkIdle, always with a point to go to, the head
-   following, the command of LavaBird_SteerToTargetCommand, and the pitch command (work byte unk79) picked as in
+   following, the command of LavaBird_SteerToTargetCommand, and the pitch command (ai_state.turn_in_place) picked as in
    LavaBird_ThinkCombat. */
 static void LavaBird_ThinkIdle(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -337,9 +337,9 @@ static void LavaBird_Move(Entity *entity) {
 
 /* Carries out the movement command in Entity.move_command; LavaBird_Think and LavaBird_Dormant
    call it (the move handler only keeps the animation). It turns the entity, rolls it to one side or
-   the other with the turn bits, eases its pitch towards 10 degrees for each unit of work byte unk79
+   the other with the turn bits, eases its pitch towards 10 degrees for each unit of ai_state.turn_in_place
    (back to level at 0), and speeds up or slows down along its axes by EntityParams.speed_step_per_frame a frame up
-   to unk54. */
+   to EntityParams.max_speed. */
 static void LavaBird_ApplyMoveCommand(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 roll;
@@ -806,7 +806,7 @@ static void LavaBird_Death(Entity *entity) {
 }
 
 /* The animate handler: puts flag bits 11 to 13 to 0, then plays the two motion slots of the work
-   area (unk80 and unk88) where EntityAi_Animate plays the model's one motion, then turns the head
+   area (ai_state.motion_slot_0 and ai_state.motion_slot_1) where EntityAi_Animate plays the model's one motion, then turns the head
    (EntityAi_LookAtPoint with the target while flag bit 9 is set and there is one). */
 static void LavaBird_Animate(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;

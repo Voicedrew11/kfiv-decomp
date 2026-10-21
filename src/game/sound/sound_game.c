@@ -1358,7 +1358,7 @@ int Sound_BgmApplyReverb(void *actor, int mode) {
 }
 
 /* Reads the file job->name formats with index into the start of the sound heap, a step a call, then frees
-   the voice job->unk10 (SoundDriver_FreeVoice); 1 when done. Nothing calls it. */
+   the voice job->voice_index (SoundDriver_FreeVoice); 1 when done. Nothing calls it. */
 static int Sound_ReadHeapFileStep(LoadJob *job, int index) {
     int heap_start;
     int file;
@@ -1389,7 +1389,7 @@ static int Sound_ReadHeapFileStep(LoadJob *job, int index) {
     return -1;
 }
 
-/* Reads the file request->name formats with the unk70 of map slot 0's header into a new buffer of the sound heap
+/* Reads the file request->name formats with the file_index of map slot 0's header into a new buffer of the sound heap
    (its name in map_bank_file_path), a step a call; 1 when done. Nothing calls it. */
 s32 Sound_ReadMapBankFileStep(LoadRequest *request) {
     u32 buffer;

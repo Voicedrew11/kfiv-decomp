@@ -71,7 +71,7 @@ void MasterFadin_Init(Entity *entity) {
    In mode 1 it calls EntityEvent_Respawn for every other entity with the same params whose flag bit 1 is
    clear or whose bits 2-3 are 3. While the entity is not busy it calls MasterFadin_ThinkShootAtPlayer in states 1
    and 2, and in state 0 starts what the move slot holds (the set-up function leaves it NULL). Keeps
-   animation 0; once work word unk68 has run out it puts the state back to 0. */
+   animation 0; once ai_state.pause_timer has run out it puts the state back to 0. */
 static void MasterFadin_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     Entity *leader;
@@ -118,9 +118,9 @@ static void MasterFadin_Think(Entity *entity, s32 run_now) {
 }
 
 /* The think function of states 1 and 2: each time Entity.action_timer has run out it launches shot EntityParams.pitch_limit_deg
-   from model point unk432 (along the line to the next point; point 0xFF: along the heading turned round),
-   turned towards the player 190 above his feet by at most unk436 in pitch and unk438 in yaw, starts cue 0 and
-   sets unkA0 to unk434. Keeps animation 0 and starts the move action. */
+   from model point EntityParams.yaw_limit_deg (along the line to the next point; point 0xFF: along the heading turned round),
+   turned towards the player 190 above his feet by at most EntityParams.near_distance in pitch and EntityParams.far_distance in yaw, starts cue 0 and
+   sets Entity.action_timer to EntityParams.action_frames. Keeps animation 0 and starts the move action. */
 static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 angles[4];
@@ -262,7 +262,7 @@ static void MasterFadin_Death(Entity *entity) {
 }
 
 /* Helper of MasterFadin_Death: when the dying entity's partner (spawn id EntitySpawnInfo.variant)
-   has flag bit 1 set and bits 2-3 at 0, puts it in state 2 and reloads its work word unk68 from
+   has flag bit 1 set and bits 2-3 at 0, puts it in state 2 and reloads its ai_state.pause_timer from
    EntityParams.type_param_0. */
 static void MasterFadin_AlertPartner(Entity *entity) {
     Entity *partner;

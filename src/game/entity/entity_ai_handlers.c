@@ -336,7 +336,7 @@ void EntityAi_Death(Entity *entity) {
    (flag bits 11 to 13 at 1 or 2); and nearly every place that starts it or a type's own dodge does
    so on EntityAi_ShouldDodge (the player is early in a swing, near and in front; chance EntityParams.dodge_chance
    / 5 in 100), the test that stands next to the guard's EntityAi_ShouldGuard, or on a type's test that the
-   player faces the entity from 200 or more away (types 48 to 51, chance unkCA / 10). The types' own
+   player faces the entity from 200 or more away (types 48 to 51, chance EntityParams.dodge_chance / 10). The types' own
    dodges play the sideways animations 6 and 7 instead (44, 60), draw among 10, 6 and 7 (50), or
    play 29 or 30 (54). */
 void EntityAi_Dodge(Entity *entity) {
@@ -537,8 +537,8 @@ void EntityAi_RangedAttack(Entity *entity) {
 }
 
 /* The per-frame update of 82 entity types (entity_type_handlers): runs the death action, the on_hit or the think
-   handler, then the reaction or the action, counts unkA0 and unkA2 down, animates, and applies this frame's
-   move (three quarters of it while the unk28 timer runs). */
+   handler, then the reaction or the action, counts action_timer and attack_delay_frames down, animates, and applies this frame's
+   move (three quarters of it while the ailment_3_frames timer runs). */
 void EntityAi_Update(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -604,7 +604,7 @@ void EntityAi_Update(Entity *entity) {
 
 /* The set-up function of entity type 0 (entity_type_handlers[0]): clears the work area, installs the default handlers
    (EntityAi_Think, EntityAi_Animate, EntityAi_OnHit, EntityAi_Move, EntityAi_Dormant, EntityAi_Death), sets
-   the choice weights choice_weights and attack_weights to 0x80, and starts the dormant action (spawn flag bit 58) or the move
+   choice_weights and attack_weights to 0x80, and starts the dormant action (spawn flag bit 58) or the move
    action. */
 void EntityAi_InitDefaults(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;

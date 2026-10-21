@@ -94,7 +94,7 @@ static void MutantCeiling_Think(Entity *entity, s32 run_now) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat with the type's own two attacks; it calls
-   EntityAi_PickCombatChoice with 1, sets work byte unk79 to 1, and closing in does not use EntityAi_ClearTurnInPlace. The
+   EntityAi_PickCombatChoice with 1, sets ai_state.turn_in_place to 1, and closing in does not use EntityAi_ClearTurnInPlace. The
    same as MutantWall_ThinkCombat. */
 static void MutantCeiling_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -177,7 +177,7 @@ static void MutantCeiling_ThinkCombat(Entity *entity, s32 run_now) {
 }
 
 /* The melee attack (busy bit 1): as EntityAi_MeleeAttack, but flag bit 9 stays set, and work byte
-   unk79 is 1 while it turns to the player and 2 afterwards. */
+   turn_in_place is 1 while it turns to the player and 2 afterwards. */
 static void MutantCeiling_MeleeAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ENTITY_FLAG_BITS(entity)->attack_index];
@@ -245,7 +245,7 @@ static void MutantCeiling_MeleeAttack(Entity *entity) {
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, but flag bit 9 stays set, and work byte
-   unk79 is 1 while it turns to the player and 2 afterwards. */
+   turn_in_place is 1 while it turns to the player and 2 afterwards. */
 static void MutantCeiling_RangedAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 kind = (s32)(ENTITY_FLAG_WORD(entity->flags) >> 58) & 3;

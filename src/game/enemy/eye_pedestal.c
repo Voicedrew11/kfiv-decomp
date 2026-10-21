@@ -60,7 +60,7 @@ void EyePedestal_Init(Entity *entity) {
 }
 
 /* The animate handler: as EntityAi_Animate, but the motion never moves the entity, and with flag
-   bit 9 set the head follows the point in work floats unk48 to unk50 (EntityAi_LookAtPoint, at the rate
+   bit 9 set the head follows the point in ai_state.part_angle_x to part_angle_z (EntityAi_LookAtPoint, at the rate
    EntityParams.action_frames) instead of the target. */
 static void EyePedestal_Animate(Entity *entity) {
     f32 limits[4];
@@ -97,8 +97,8 @@ static void EyePedestal_Animate(Entity *entity) {
 }
 
 /* The think handler (it takes the entity only): no states and no actions. Every EntityParams.near_distance
-   frames (counted in work byte unk7A) it puts the player's position, 220 less in y, in work floats
-   unk48 to unk50. It keeps flag bits 16, 18 and 21 set, flag bit 9 set unless EntitySpawnInfo.spawn_mode
+   frames (counted in ai_state.step_index) it puts the player's position, 220 less in y, in work floats
+   part_angle_x to part_angle_z. It keeps flag bits 16, 18 and 21 set, flag bit 9 set unless EntitySpawnInfo.spawn_mode
    is, and plays animation 0 while flag bit 29 is set and animation 1 otherwise. */
 static void EyePedestal_Think(Entity *entity, s32 run_now) {
     EntityAiStateKind1740A8 *ai_state = (EntityAiStateKind1740A8 *)&entity->ai_state;

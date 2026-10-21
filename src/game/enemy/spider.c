@@ -83,7 +83,7 @@ void Spider_Init(Entity *entity) {
 }
 
 /* The animate handler (installed in both branches of the set-up function): as EntityAi_Animate
-   without the test of the EntityParams kind bits and without the head turn; while work byte unk7A
+   without the test of the EntityParams kind bits and without the head turn; while ai_state.step_index
    and flag bit 53 are both set it reverses this frame's turn, Entity.turn_delta_yaw. */
 static void Spider_Animate(Entity *entity) {
     u32 blend_frames; // match: converted to float as unsigned
@@ -107,7 +107,7 @@ static void Spider_Animate(Entity *entity) {
 
 /* The think handler (installed in both branches of the set-up function): as EntityAi_Think, with an
    if in place of the switch: Spider_ThinkCombat in state 2, Spider_ThinkWander in the other states.
-   Before that, while work byte unk7A is set (Spider_DropToFloor sets it), it clears it and starts
+   Before that, while ai_state.step_index is set (Spider_DropToFloor sets it), it clears it and starts
    Spider_LevelOut once the player is within EntityParams.yaw_limit_deg. */
 static void Spider_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -432,7 +432,7 @@ static void Spider_Death(Entity *entity) {
 
 /* An action (busy bit 0x1000): drops 20 a frame along its own up axis until a prop is hit within 200
    (EntityCollision_RayProps). On result 1 it stands there with the shared on_hit and death; on result 2 or 3 it
-   clings there (work byte unk7A, Spider_OnHit and Spider_Death installed). Then it thinks. */
+   clings there (ai_state.step_index, Spider_OnHit and Spider_Death installed). Then it thinks. */
 static void Spider_DropToFloor(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 landing[4];

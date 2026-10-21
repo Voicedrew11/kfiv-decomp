@@ -220,9 +220,9 @@ typedef struct {
     u16 spawn_count;                /* 0x00 */
     u16 spawn_effect_id;            /* 0x02 copied from def->radius_half */
     u16 spawn_limit;                /* 0x04 copied from def->interval */
-    u16 spawn_frames_base;          /* 0x06 copied from def->unkF0 */
+    u16 spawn_frames_base;          /* 0x06 copied from def->sub_effect_id */
     u16 next_spawn_frame;           /* 0x08 */
-    u16 spawn_frames_span;          /* 0x0A copied from def->unkF2 */
+    u16 spawn_frames_span;          /* 0x0A copied from def->child_effect_id */
 } SpawnerMotion;
 
 /* EffectMotion as EffectTrailHoming_Start, EffectTrailHoming_Update, EffectHomingChain_Start and others use it */
@@ -283,10 +283,10 @@ typedef struct {
 /* EffectMotion as EffectGroundRun_Start sets it up and EffectGroundRun_Update uses it: runs along the ground */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    Vector4 probe;                  /* 0x10 passed to Collision_CastRayAtMap; y is def->unkDC */
-    f32 height;                     /* 0x20 def->unkDC: the ground is looked for from half of it down */
+    Vector4 probe;                  /* 0x10 passed to Collision_CastRayAtMap; y is def->turn_rate */
+    f32 height;                     /* 0x20 def->turn_rate: the ground is looked for from half of it down */
     f32 fall_speed;                 /* 0x24 */
-    f32 hit_offset;                 /* 0x28 def->unkE0: how far below itself it checks for hits */
+    f32 hit_offset;                 /* 0x28 def->ground_height: how far below itself it checks for hits */
     s8 ended;                       /* 0x2C set when it starts with no ground under it; also passed by address */
     char pad2D[0x03];
 } GroundRunMotion;
@@ -297,7 +297,7 @@ typedef struct {
     f32 height;                     /* 0x10 EffectDef.turn_rate: the floor is looked for within it */
     f32 fall_speed;                 /* 0x14 */
     f32 sway_rate;                  /* 0x18 EffectDef.ground_height: the sway is the sine of this times angle */
-    f32 angle_speed;                /* 0x1C EffectDef.spread_angle, grows by unkE8 each frame */
+    f32 angle_speed;                /* 0x1C EffectDef.spread_angle, grows by spin_rate each frame */
     f32 angle;                      /* 0x20 */
     s8 ended;                       /* 0x24 set when it starts with no floor under it */
 } GroundSwayMotion;
@@ -1032,7 +1032,7 @@ typedef struct {
 
 /* FxTableEntry+0x34: one of the three hit checks of an effect, EffectDef.hit_check_index picks it (Attack_RunEffectHitCheck) */
 typedef struct {
-    EntityParamsUnk240PartUnk00 strengths; /* 0x00 goes to Unk1B1470Request.unk50 */
+    EntityParamsUnk240PartUnk00 strengths; /* 0x00 goes to Unk1B1470Request.strengths */
     EntityParamsUnk240PartUnk12 secondary_strengths; /* 0x12 Second strength block, copied to the attack request */
     s16 radius;                     /* 0x1E the hit's radius (shape 0 and 1) */
     s16 height;                     /* 0x20 the hit's height (shape 1) */

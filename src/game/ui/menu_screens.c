@@ -958,7 +958,7 @@ void Menu_StepModelLoad(LinkNode *node) {
     }
 }
 
-/* Stage 0 of the worn models' load: opens the file of the node waiting (node->unk10) and starts reading it into
+/* Stage 0 of the worn models' load: opens the file of the node waiting (node->target_node) and starts reading it into
    the loader's buffer; a file that cannot be opened is skipped. */
 static void Menu_OpenWornModelFile(LinkNode *node) {
     s32 file_handle;
@@ -1844,7 +1844,7 @@ static const MenuWeekdayNames weekday_names_table = { {
 
 /* Runs the menu from opening to closing: sets up, calls the handler menu_run_step names every frame until it gives 0,
    then shows the last frames. `mode` (menu_mode) is which menu; with mode 1 the result is 1 when
-   card_screen_state.unk16 was set. */
+   card_screen_state.save_loaded was set. */
 int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign-extends a byte here
     ClockTime clock;
     struct tm calendar;
@@ -2758,7 +2758,7 @@ static void Menu_UpdateMain(HandlerContext *context) {
     }
 }
 
-/* Makes the screen of the main menu line chosen (context->unk04) the current handler and clears the line. */
+/* Makes the screen of the main menu line chosen (context->active_list) the current handler and clears the line. */
 static void Menu_OpenChosenScreen(HandlerContext *context) {
     int *line = &context->active_list;
 
@@ -4113,7 +4113,7 @@ static void Menu_UpdateKeyItems(void) {
 }
 
 /* The Recollection screen (main menu line 4): 50 pages of up to 46 entries, seven shown at a time under a cursor
-   bar; picking one opens Menu_UpdateRecollectionPage with its text number in context->unk04. */
+   bar; picking one opens Menu_UpdateRecollectionPage with its text number in context->active_list. */
 static void Menu_UpdateRecollection(HandlerContext *context) {
     GsPackedWord bar_origin;
     MenuCursorBar bar;
@@ -4399,7 +4399,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
     }
 }
 
-/* The page of one entry (context->unk04, 3000 and up, 50 to a page): its parts, its model once loaded, and three texts. */
+/* The page of one entry (context->active_list, 3000 and up, 50 to a page): its parts, its model once loaded, and three texts. */
 static void Menu_UpdateRecollectionPage(HandlerContext *context) {
     f32 view[16];
     f32 local[16];

@@ -237,7 +237,7 @@ static void EarthKing_MeleeAttack2(Entity *entity) {
 }
 
 /* The ranged attack with record 0 (busy bit 1): animation 23; from frame EntityParams.action_frames to
-   unk436 it sets flag bit 9 and launches the record's shots every other frame. */
+   EntityParams.near_distance it sets flag bit 9 and launches the record's shots every other frame. */
 static void EarthKing_RangedAttack0(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;

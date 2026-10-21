@@ -190,8 +190,8 @@ static void LivingArmor_ThinkCombat(Entity *entity, s32 run_now) {
 }
 
 /* Helper of LivingArmor_Animate: in animation 17 turns model part 3 to look at the player
-   (Bone_TurnPartToLook, the angles kept in work area unk30) and then takes 120 degrees off the part's
-   angle unk50. */
+   (Bone_TurnPartToLook, the angles kept in work area target_point) and then takes 120 degrees off the part's
+   angle rotation_x. */
 static void LivingArmor_AimPart3AtPlayer(Entity *actor) {
     char pad[0x10]; /* unused, but retail reserves the 0x10 bytes */
     Qword pair_copy;
@@ -211,7 +211,7 @@ static void LivingArmor_AimPart3AtPlayer(Entity *actor) {
 }
 
 /* The animate handler: as EntityAi_Animate without the head turn; during an attack (busy bit 1) in
-   animation 17 LivingArmor_AimPart3AtPlayer turns model part 3, otherwise work float unk48 is put to
+   animation 17 LivingArmor_AimPart3AtPlayer turns model part 3, otherwise ai_state.part_angle_x is put to
    0. */
 static void LivingArmor_Animate(Entity *entity) {
     u32 blend_frames; // match: converted to float as unsigned
@@ -240,8 +240,8 @@ static void LivingArmor_Animate(Entity *entity) {
 }
 
 /* The on_hit handler: every hit starts LivingArmor_ReactionHeavy, whatever its strength. Sets flag
-   bits 18, 20 and 21, and work word unk68 to half of EntityParams.pitch_limit_deg plus a random number below
-   unk430. */
+   bits 18, 20 and 21, and ai_state.pause_timer to half of EntityParams.pitch_limit_deg plus a random number below
+   EntityParams.pitch_limit_deg. */
 static void LivingArmor_OnHit(Entity *entity) {
     EntityAiState *sub = &entity->ai_state;
     int rnd = rand();
@@ -296,7 +296,7 @@ static void LivingArmor_ReactionHeavy(Entity *entity) {
 
 /* An action (busy bit 0x1000) that LivingArmor_ReactionHeavy and LivingArmor_MeleeAttack1 start with animation
    1 playing: it starts LivingArmor_MeleeAttack1 when the player comes within EntityParams.action_frames (plus the
-   radius and 100) with nothing in the way, and goes back to LivingArmor_Dormant once work word unk68 has
+   radius and 100) with nothing in the way, and goes back to LivingArmor_Dormant once ai_state.pause_timer has
    counted down. */
 static void LivingArmor_WaitToStrike(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -319,7 +319,7 @@ static void LivingArmor_WaitToStrike(Entity *entity) {
 /* The melee attack with record 1 (busy bit 1), which LivingArmor_WaitToStrike starts: animation 17, its hits
    checked at the angle Entity.heading_to_player (EntityAi_CheckMeleeHitAt); on frames 10 to 22 it starts effect 0x222
    along the path of the point Model_GetSkinnedBonePoint gives for 9. At its end, EntityParams.yaw_limit_deg times in
-   100, it goes back to animation 1 and LivingArmor_WaitToStrike with a new count in work word unk68; else it
+   100, it goes back to animation 1 and LivingArmor_WaitToStrike with a new count in ai_state.pause_timer; else it
    starts LivingArmor_Dormant. */
 static void LivingArmor_MeleeAttack1(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;

@@ -228,8 +228,8 @@ void EffectLoop_Update(EffectActor *effect) {
     }
 }
 
-/* Starts an emitter (kind 5): it spawns effect radius_half up to interval times, each unkF0 plus a
-   random part of unkF2 frames after the last. */
+/* Starts an emitter (kind 5): it spawns effect radius_half up to interval times, each sub_effect_id plus a
+   random part of child_effect_id frames after the last. */
 void EffectEmitter_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     SpawnerMotion *motion = (SpawnerMotion *)&effect->motion;
     EffectDef *def;
@@ -284,7 +284,7 @@ void EffectTrailHoming_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     ENTITY_FLAG_WORD(effect->flags) |= EFFECT_FLAG_HAS_TARGETERS;
 }
 
-/* Homes on its entity with a turn that grows by EffectDef.ground_height and leaves effect unkF2 behind each
+/* Homes on its entity with a turn that grows by EffectDef.ground_height and leaves effect child_effect_id behind each
    frame. A hit with bit 2 spawns effect radius_half and makes it circle the entity, hittable again
    after 15 frames; any other hit spawns the end effect (0x14 on surface kinds 3 and 5) and it ends
    the next frame (kind 70). */
@@ -375,7 +375,7 @@ void EffectAimedHoming_Start(EffectActor *effect, EffectSlot *spawn_slot) {
 
 /* Homes on its entity with a turn that grows by EffectDef.ground_height, while the entity can be hit. On a
    hit frees its spawners and ends; a hit with bit 2 first spawns the end effect on the floor within
-   350 (effect unkF0 if there is none) (kind 71). */
+   350 (effect sub_effect_id if there is none) (kind 71). */
 void EffectAimedHoming_Update(EffectActor *actor) {
     ScaledFallMotion *motion;
     Vector4 vec;
@@ -497,7 +497,7 @@ void EffectLob_Update(EffectActor *effect) {
 }
 
 /* Starts a link of an effect that runs along the floor at an entity (kind 8). The first link (its
-   parent's EffectDef.child_effect_id is not 0) aims at the entity the player faces and has unkF2 links to go;
+   parent's EffectDef.child_effect_id is not 0) aims at the entity the player faces and has child_effect_id links to go;
    later links take their parent's velocity and entity and one link less. Without a floor within
    EffectDef.ground_height it ends at once. */
 void EffectGroundChase_Start(EffectActor *actor, EffectSlot *spawn_slot) {
@@ -643,7 +643,7 @@ void EffectFall_Update(EffectActor *effect) {
 }
 
 /* Starts a chaser (kind 13): raised 220 units, aimed at the entity in front of it, with a starting
-   turn that is larger the nearer the entity is (EffectDef.interval is the range, unkDC the
+   turn that is larger the nearer the entity is (EffectDef.interval is the range, turn_rate the
    most). */
 void EffectChase_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     ChaseMotion *motion;
@@ -708,7 +708,7 @@ void EffectChase_Update(EffectActor *actor) {
 }
 
 /* Starts an effect that runs along the floor (kind 14): flies at EffectDef.speed and stands on the
-   floor it finds below within unkDC, or ends next frame without one. With EffectDef.child_effect_id set it
+   floor it finds below within turn_rate, or ends next frame without one. With EffectDef.child_effect_id set it
    skips all that and only waits for a hit. */
 void EffectGroundRun_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     GroundRunMotion *motion = (GroundRunMotion *)&effect->motion;
@@ -746,7 +746,7 @@ void EffectGroundRun_Start(EffectActor *effect, EffectSlot *spawn_slot) {
 
 /* Runs along the ground: moves level, follows the ground up at once and down by falling, and
    between frames radius_half and interval checks for hits hit_offset below itself. On a surface of
-   kind 3 or 5 and on a hit it ends, on such a surface in effect unkF0 and effect 0x123
+   kind 3 or 5 and on a hit it ends, on such a surface in effect sub_effect_id and effect 0x123
    (kind 14). */
 void EffectGroundRun_Update(EffectActor *effect) {
     Vector4 unused; /* unused, but retail reserves the bytes */
@@ -863,7 +863,7 @@ void EffectFloorSkim_Update(EffectActor *effect) {
     EffectKeys_ApplySpin(effect);
     EffectKeys_ApplyColour(effect);
     sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
-    if ((s8)motion->ends_next_frame != 0) { // match: retail loads unk25 as a signed byte
+    if ((s8)motion->ends_next_frame != 0) { // match: retail loads ends_next_frame as a signed byte
         Effect_Free(effect);
     } else {
         motion->frames_to_impact -= 1;
@@ -909,7 +909,7 @@ void EffectFloorSkim_Update(EffectActor *effect) {
 }
 
 /* Starts an effect that winds along the floor (kind 16): flies at EffectDef.speed and stands on the
-   floor within 1.5 unkDC below, or ends next frame without one. */
+   floor within 1.5 turn_rate below, or ends next frame without one. */
 void EffectGroundSway_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     GroundSwayMotion *motion;
     float point[3];
@@ -1002,7 +1002,7 @@ void EffectGroundSway_Update(EffectActor *effect) {
 }
 
 /* Starts an effect that runs along the floor leaving effects (kind 12): flies at EffectDef.speed
-   and stands on the floor within 1.5 unkDC below, or ends next frame without one. */
+   and stands on the floor within 1.5 turn_rate below, or ends next frame without one. */
 void EffectGroundTrail_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     GroundTrailMotion *motion;
     float point[3];
@@ -1040,7 +1040,7 @@ static void EffectGroundTrail_SpawnAhead(EffectActor *effect, int effect_id, flo
 }
 
 /* Moves along the floor, falling to it under gravity; every other frame spawns effect radius_half
-   unkF0 ahead and effect interval unkF2 behind. Ends where there is no floor or on a hit with bit 2
+   sub_effect_id ahead and effect interval child_effect_id behind. Ends where there is no floor or on a hit with bit 2
    or 4 (checked 110 above itself); starts its sound on the first frame (kind 12). */
 void EffectGroundTrail_Update(EffectActor *effect) {
     f32 unused_matrix[16]; // match: retail reserves 0x60 bytes of stack it never uses
@@ -1122,8 +1122,8 @@ void EffectOnFloor_Update(EffectActor *effect) {
     effect->frame++;
 }
 
-/* Starts a thrown effect (kind 18): level, EffectDef.speed forward and unkDC vertical; spawns
-   effect unkF2 from it if set; the effects aimed at it are freed with it. */
+/* Starts a thrown effect (kind 18): level, EffectDef.speed forward and turn_rate vertical; spawns
+   effect child_effect_id from it if set; the effects aimed at it are freed with it. */
 void EffectArc_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     SpawnMotion *motion;
     char stack_reserve[0x10]; /* match: retail reserves 0x10 bytes of stack here */
@@ -1142,7 +1142,7 @@ void EffectArc_Start(EffectActor *effect, EffectSlot *spawn_slot) {
 }
 
 /* Flies under gravity, turned along its path; in its first 20 frames a hit spawns the end effect
-   (effect unkF0 and 0x122 on surface kinds 3 and 5) and it ends the next frame (kind 18). */
+   (effect sub_effect_id and 0x122 on surface kinds 3 and 5) and it ends the next frame (kind 18). */
 void EffectArc_Update(EffectActor *actor) {
     LiftedMotion *motion;
     u16 end_effect;
@@ -1432,7 +1432,7 @@ void EffectBeam_Update(EffectActor *effect) {
 }
 
 /* Starts a link of a chain that steps toward an entity (kind 22). The first link (its parent's
-   EffectDef.child_effect_id is not 0) aims at the entity the player faces and has unkF2 links to go, ending
+   EffectDef.child_effect_id is not 0) aims at the entity the player faces and has child_effect_id links to go, ending
    at once on a hit; later links take their parent's entity and one link less. Turns its velocity
    toward the entity and finds where its step meets the scenery. */
 void EffectHomingChain_Start(EffectActor *actor, EffectSlot *spawn_slot) {
@@ -1471,7 +1471,7 @@ void EffectHomingChain_Start(EffectActor *actor, EffectSlot *spawn_slot) {
 }
 
 /* On its first frame takes its step; then spawns the end effect on a hit, or where the step met the
-   scenery, or else the next link (effect radius_half while links are left, unkF0 for the last)
+   scenery, or else the next link (effect radius_half while links are left, sub_effect_id for the last)
    (kind 22). */
 void EffectHomingChain_Update(EffectActor *effect) {
     SelectMotion *motion;
@@ -1503,8 +1503,8 @@ void EffectHomingChain_Update(EffectActor *effect) {
     effect->frame++;
 }
 
-/* Starts one effect of a fan (kind 23): EffectDef.speed pitched by unkE0 and rolled by unkDC per
-   firing round the spawner's heading, drifting by unkE8 along that heading. */
+/* Starts one effect of a fan (kind 23): EffectDef.speed pitched by ground_height and rolled by turn_rate per
+   firing round the spawner's heading, drifting by spin_rate along that heading. */
 void EffectFan_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     ScalingEndMotion *motion;
     f32 matrix[16];
@@ -1556,7 +1556,7 @@ void EffectFan_Update(EffectActor *effect) {
 }
 
 /* Starts one effect of a fan of bobbing homers (kind 24): EffectDef.speed along the heading turned
-   by unkDC per firing, a random bob; it, not its parent, frees the effects aimed at it. */
+   by turn_rate per firing, a random bob; it, not its parent, frees the effects aimed at it. */
 void EffectBobHoming_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     HomingBobMotion *motion;
     f32 rotation[16];
@@ -1786,7 +1786,7 @@ void EffectHoverShot_Start(EffectActor *actor, EffectSlot *spawn_slot) {
 
 /* Until frame radius_half hovers at its point turned with the player's view, facing where the
    player faces; then flies on, homing on its entity. A hit with result 1 (EffectDef.interval set)
-   makes it pick a new entity unkF0 frames later (kind 25). */
+   makes it pick a new entity sub_effect_id frames later (kind 25). */
 void EffectHoverShot_Update(EffectActor *effect) {
     TimerMotion *motion;
     f32 rotation_matrix[16];
@@ -1968,7 +1968,7 @@ static void EffectSplitShot_SpawnSharedBurst(EffectActor *effect) {
 
 /* Flies on and ends at the frame it reaches the scenery, spawning the end effect there. A hit
    spawns the shared burst; a hit with result 1 (EffectDef.interval set) makes it split interval
-   frames later into radius_half effects unkF0, fanned out from unkDC by unkE0 (kind 27). */
+   frames later into radius_half effects sub_effect_id, fanned out from turn_rate by ground_height (kind 27). */
 void EffectSplitShot_Update(EffectActor *effect) {
     CooldownTimerMotion *motion;
     f32 rotation_matrix[16];
@@ -2031,7 +2031,7 @@ void EffectSplitShot_Update(EffectActor *effect) {
 }
 
 /* Starts a chaser aimed at the entity the player faces (kind 32), with a starting turn that is
-   larger the nearer the entity is (EffectDef.interval is the range, unkDC the most). */
+   larger the nearer the entity is (EffectDef.interval is the range, turn_rate the most). */
 void EffectAimedChase_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     ChaseMotion *motion;
     Vector4 offset;

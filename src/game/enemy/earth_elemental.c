@@ -76,9 +76,9 @@ void EarthElemental_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with EarthElemental_ThinkCombat for state 2; walking back to
-   the spawn point (flag bit 53) gets command bits 0x440 added. Work byte unk7B is put to 25 to 34
-   while player_state.unk259 is set and counts down; work word unk6C is EntityParams.far_distance while work
-   word unk6E counts down and EntityParams.guard_chance otherwise. While work word unk68 is 1
+   the spawn point (flag bit 53) gets command bits 0x440 added. ai_state.action_flags is put to 25 to 34
+   while player_state.cast_launched_shot is set and counts down; ai_state.mode_timer is EntityParams.far_distance while
+   ai_state.reload_timer counts down and EntityParams.guard_chance otherwise. While ai_state.pause_timer is 1
    (EarthElemental_AlertSameKind of another entity sets it) it only starts EarthElemental_BackAwayOrRunAtPlayer. */
 static void EarthElemental_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state;
@@ -131,11 +131,11 @@ static void EarthElemental_Think(Entity *entity, s32 run_now) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but it first starts EntityAi_Dodge when
-   EarthElemental_ShouldDodgeMagic says so and guards when EarthElemental_ShouldGuard says so; an attack sets work word unk6E to
+   EarthElemental_ShouldDodgeMagic says so and guards when EarthElemental_ShouldGuard says so; an attack sets ai_state.reload_timer to
    EntityParams.near_distance. Closing in is one of three things: with the entity more than 35 degrees off
-   the player's facing it goes backwards for 60 to 89 frames (work byte unk78 is 1, command from
-   EarthElemental_BackwardsCommand); else it runs at the player for 60 to 119 frames (unk78 is 0); with the player
-   more than 90 degrees off its heading it starts EarthElemental_PlayTurnAnim. Work word unk6A counts
+   the player's facing it goes backwards for 60 to 89 frames (ai_state.move_choice is 1, command from
+   EarthElemental_BackwardsCommand); else it runs at the player for 60 to 119 frames (ai_state.move_choice is 0); with the player
+   more than 90 degrees off its heading it starts EarthElemental_PlayTurnAnim. ai_state.sub_timer counts
    the frames it is not going for the player; above EntityParams.type_param_0, with the player within 30
    degrees ahead and nearer than 1000, it starts EarthElemental_RangedAttack0. */
 static void EarthElemental_ThinkCombat(Entity *entity, s32 run_now) {
@@ -274,7 +274,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
-/* An action (busy bit 0x2000): plays animation 12 or, with work byte unk7A below 1, animation 11 to
+/* An action (busy bit 0x2000): plays animation 12 or, with ai_state.step_index below 1, animation 11 to
    its end. EarthElemental_ThinkCombat starts it when the player is more than 90 degrees off the
    heading. */
 static void EarthElemental_PlayTurnAnim(Entity *entity) {
@@ -311,8 +311,8 @@ static void EarthElemental_PlayTurnAnim(Entity *entity) {
     }
 }
 
-/* Whether to dodge a magic: only while work byte unk7B is 1 to 15 (EarthElemental_Think puts it to 25 to 34
-   when the player casts one, player_state.unk259), with the player at least min_distance away (less the radius
+/* Whether to dodge a magic: only while ai_state.action_flags is 1 to 15 (EarthElemental_Think puts it to 25 to 34
+   when the player casts one, player_state.cast_launched_shot), with the player at least min_distance away (less the radius
    and 100), Entity.heading_to_player within max_angle of the heading and the entity within 30 degrees of the player's
    facing; then EntityParams.dodge_chance / 10 times in 100. */
 static s32 EarthElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 max_angle) {
@@ -338,7 +338,7 @@ static s32 EarthElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32
     return rand() % 100 < entity->params->dodge_chance / 10;
 }
 
-/* As EntityAi_ShouldGuard, but by a chance of work word unk6C / 5 percent (EntityParams.far_distance for a while
+/* As EntityAi_ShouldGuard, but by a chance of ai_state.mode_timer / 5 percent (EntityParams.far_distance for a while
    after an attack, EntityParams.guard_chance otherwise; EarthElemental_Think sets it). */
 static s32 EarthElemental_ShouldGuard(Entity *entity, f32 max_distance, f32 max_angle) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -441,8 +441,8 @@ static s32 EarthElemental_BackwardsCommand(Entity *entity, s32 unused, f32 reach
     return command;
 }
 
-/* Helper of EarthElemental_OnHit: sets work word unk68 to 1 in every other live entity with the same
-   EntityParams that is within EntityParams.action_frames of this one, has unk68 at 0 and has the player
+/* Helper of EarthElemental_OnHit: sets ai_state.pause_timer to 1 in every other live entity with the same
+   EntityParams that is within EntityParams.action_frames of this one, has ai_state.pause_timer at 0 and has the player
    within EntitySpawnInfo.wander_radius of its spawn point. */
 static void EarthElemental_AlertSameKind(Entity *entity) {
     Entity *other;
@@ -481,13 +481,13 @@ static void EarthElemental_OnHit(Entity *entity) {
     EarthElemental_AlertSameKind(entity);
 }
 
-/* An action (busy bit 0x3000) that EarthElemental_Think starts while work word unk68 is 1
+/* An action (busy bit 0x3000) that EarthElemental_Think starts while ai_state.pause_timer is 1
    (EarthElemental_AlertSameKind of another entity sets it). It starts no animation of its own. Each
    frame it dodges or guards (EarthElemental_ShouldDodgeMagic, EarthElemental_ShouldGuard, EntityAi_ShouldDodge), starts the attack
-   EntityAi_PickAttack picks once EntityAi_PickCombatChoice chooses attacking (unk68 becomes 2), and else gives a
+   EntityAi_PickAttack picks once EntityAi_PickCombatChoice chooses attacking (ai_state.pause_timer becomes 2), and else gives a
    command with the player as target and calls the move handler itself: backwards (bit 2) while the
    entity is more than 45 degrees off the player's facing, forwards at the run (0x41) while it is
-   within. Flag bit 53 ends it with unk68 at 2. */
+   within. Flag bit 53 ends it with ai_state.pause_timer at 2. */
 static void EarthElemental_BackAwayOrRunAtPlayer(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];

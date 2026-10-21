@@ -345,8 +345,8 @@ void ScriptCmd_IsMapObjectMotionDone(ScriptCallCommand *command) {
     command->active = 0;
 }
 
-/* Command 180: sets the colour of the model of the map object `target_id` (ModelInstance.colour_red, unk154,
-   unk158 and alpha), then finishes. */
+/* Command 180: sets the colour of the model of the map object `target_id` (ModelInstance.colour_red, colour_green,
+   colour_blue and alpha), then finishes. */
 void ScriptCmd_SetMapObjectColor(ScriptObjectValuesCommand *command) {
     MapObject *object;
 
@@ -1172,7 +1172,7 @@ void ScriptCmd_OpenMenu(ScriptThreadCommand *command) {
 }
 
 /* Command 171: has the main loop open the trade screen `value` between frames (GameStatus.bit3 and
-   unk2C, Trade_Run) and waits until it has. */
+   trade_screen_id, Trade_Run) and waits until it has. */
 void ScriptCmd_OpenTrade(ScriptValueCommand *command) {
     if (waiting_for_trade == 0) {
         GameStatus *status = &game_status;

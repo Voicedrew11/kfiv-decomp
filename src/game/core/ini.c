@@ -269,7 +269,7 @@ void Ini_SetShortcut(char *text) {
 }
 
 /* ini/NNNN.ini, key "item_NNN=count,level,time": how many of item NNN the player has; for a weapon (150 to 219)
-   also its level (50 to 100) and unk16/unk14, for 220 and up its level. */
+   also its level (50 to 100) and use_count/level_index, for 220 and up its level. */
 void Ini_SetItem(char *text) {
     int item;
     int index;

@@ -35,9 +35,9 @@ void MapObject_StartSinkingPlatform(MapTrigger *trigger) {
     trigger->type = 1;
 }
 
-/* Step 1 of kind 0xE: while the player stands on it (after a wait of unk4E frames) it sinks, at most unk44
-   below where it started (y grows downward), and when he does not it rises back; unk46 and unk48 are the
-   speeds down and up, or accelerations when unk4A and unk4C are set. */
+/* Step 1 of kind 0xE: while the player stands on it (after a wait of kind_param_5 frames) it sinks, at most kind_param_0
+   below where it started (y grows downward), and when he does not it rises back; kind_param_1 and kind_param_2 are the
+   speeds down and up, or accelerations when kind_param_3 and kind_param_4 are set. */
 void MapObject_UpdateSinkingPlatform(MapObject *object) {
     MapTriggerShotKind121660 *shot = (MapTriggerShotKind121660 *)object->work;
     MapObjectUnk08Words *source;
@@ -188,7 +188,7 @@ void MapObject_StartPitfall(MapObject *object) {
     }
 }
 
-/* Step 1 of a pitfall: stepped on by the player, it opens (step 2) unless its first wait (unk44) is negative. */
+/* Step 1 of a pitfall: stepped on by the player, it opens (step 2) unless its first wait (kind_param_0) is negative. */
 void MapObject_UpdateClosedPitfall(MapObject *object) {
     MapObject *stood_on = object_under_player[0];
 
@@ -198,8 +198,8 @@ void MapObject_UpdateClosedPitfall(MapObject *object) {
     }
 }
 
-/* Step 2 of a pitfall: waits out its delay (counted down only while unk44 is positive), then runs the opening
-   animation; at its end it is open (animation 5, step 3) with the delay reloaded from unk46. */
+/* Step 2 of a pitfall: waits out its delay (counted down only while kind_param_0 is positive), then runs the opening
+   animation; at its end it is open (animation 5, step 3) with the delay reloaded from kind_param_1. */
 void MapObject_UpdateOpeningPitfall(MapObject *object) {
     int delay = object->work[0];
     char reserved[0x10]; // match: unused, but retail reserves the 0x10 bytes
@@ -219,7 +219,7 @@ void MapObject_UpdateOpeningPitfall(MapObject *object) {
     }
 }
 
-/* Step 3 of a pitfall: closes again (step 4) unless its second wait (unk46) is negative. */
+/* Step 3 of a pitfall: closes again (step 4) unless its second wait (kind_param_1) is negative. */
 void MapObject_UpdateOpenPitfall(MapObject *object) {
     if (MAP_OBJECT_WORDS(object)->kind_param_1 >= 0) {
         object->state_flags &= ~MAP_OBJECT_ON;

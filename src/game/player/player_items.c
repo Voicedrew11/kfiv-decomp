@@ -202,7 +202,7 @@ void Player_UseItem(void) {
 }
 
 /* What using item `kind` does to the player itself: the Power Seed and the Widda Needle start a timer, the
-   fruits raise unk2C ("Magic Power UP") or unk28 ("Physical UP"), the crystals raise unk24 and teach a magic. */
+   fruits raise magic_base ("Magic Power UP") or power_base ("Physical UP"), the crystals raise mp_base and teach a magic. */
 void Player_ApplyItem(int kind) {
     int marked;
 

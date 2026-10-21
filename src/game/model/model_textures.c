@@ -5,11 +5,11 @@
 #include "gfx/gs_draw.h"
 #include "map/map.h"
 
-static int sent_texture_19C;        /* 0x447048 last model texture sent from unk19C */
-static int sent_texture_1A0;        /* 0x44704C last model texture sent from unk1A0 */
-/* 0x447050 the model texture taken as sent from unk198, by unk192; only [0] is read, and nothing but the reset
+static int sent_texture_19C;        /* 0x447048 last model texture sent from texture_packet_3 */
+static int sent_texture_1A0;        /* 0x44704C last model texture sent from texture_packet_5 */
+/* 0x447050 the model texture taken as sent from shared_texture_packet, by shared_texture_slot; only [0] is read, and nothing but the reset
    writes it. A 4-byte object: [1] would be screen_uv_frame_copy (model/model_screen.c), so it stays extern. */
-static int texture_slots[4];        /* 0x468190 chunk table last sent for each unk190 slot */
+static int texture_slots[4];        /* 0x468190 chunk table last sent for each texture_slot */
 
 /* Forgets every texture slot. */
 void ModelTexture_ResetSlots(void) {

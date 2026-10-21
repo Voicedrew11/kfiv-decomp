@@ -87,7 +87,7 @@ float EntityAi_RandomAngle(void) {
 }
 
 /* Starts the second camera shake (GameLoop_UpdateCameraShake plays it): its reach (CameraState.entity_shake_reach) and its frames
-   (unk7C). The Giant Beetle's ranged attack uses it. */
+   (CameraState.entity_shake_frames). The Giant Beetle's ranged attack uses it. */
 void EntityAi_ShakeCamera(int float_value, int int_value) {
     camera_state.entity_shake_reach = float_value;
     camera_state.entity_shake_frames = int_value;
@@ -221,7 +221,7 @@ s32 EntityAi_SendMeleeHit(Entity *entity, EntityParamsUnk240 *record, s32 index,
     return Attack_Run(&request, &extra);
 }
 
-/* Allocates a shot carrying EntityParams.unk238 and launches effect effect_id from origin along angles
+/* Allocates a shot carrying EntityParams.shot_params and launches effect effect_id from origin along angles
    (Attack_LaunchMagicEffect) for the entity. */
 int EntityAi_LaunchShot(Entity *entity, int effect_id, void *origin, void *angles) {
     EntityUnk1B1390 *shot;
@@ -317,7 +317,7 @@ int EntityAi_LookAtPlayer(Entity *entity, void *target, s32 mode, void *out, f32
     return result;
 }
 
-/* Bone_TurnPart for the model part at EntityModel.aim_part (the one the model file marks with ModelFilePart.unk06
+/* Bone_TurnPart for the model part at EntityModel.aim_part (the one the model file marks with ModelFilePart.slot
    2); FALSE without it. Nothing calls it, and no code that runs uses that part, so its role is not known. */
 static int EntityAi_TurnAimPart(Entity *entity, f32 *angles, int mode, f32 *goal, f32 *limits) {
     int part = entity->model->aim_part;

@@ -76,7 +76,7 @@ void SkeletonSoldier_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think; in state 2 with flag bit 32 set it first plays
-   SkeletonSoldier_PlayAnim17 once (work word unk6C says whether it has; state 0 clears it). */
+   SkeletonSoldier_PlayAnim17 once (ai_state.mode_timer says whether it has; state 0 clears it). */
 static void SkeletonSoldier_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -230,7 +230,7 @@ static void SkeletonSoldier_PlayAnim17(Entity *entity) {
 }
 
 /* The think handler the set-up function installs for EntitySpawnInfo.spawn_mode 2 and 3: as
-   SkeletonSoldier_Think; with unk40 3 it also clears flag bit 25 once the entity is more than 180 from
+   SkeletonSoldier_Think; with EntitySpawnInfo.spawn_mode 3 it also clears flag bit 25 once the entity is more than 180 from
    its spawn point (SkeletonSoldier_DormantAnim18Then19 leaves the bit set in that mode). What flag bit
    25 does is not known; scripts read and set it (ScriptCmd_SetEntityFlags, ScriptCmd_GetEntityFlags). */
 static void SkeletonSoldier_ThinkClearFlag25Away(Entity *entity, s32 run_now) {
@@ -274,7 +274,7 @@ static void SkeletonSoldier_ThinkClearFlag25Away(Entity *entity, s32 run_now) {
 
 /* The dormant action (busy bit 0x20) the set-up function installs for EntitySpawnInfo.spawn_mode 2 and
    3: as SkeletonSoldier_Dormant with animations 18 and 19; it also sets flag bit 25, and clears it at
-   the end only when unk40 is 2. */
+   the end only when EntitySpawnInfo.spawn_mode is 2. */
 static void SkeletonSoldier_DormantAnim18Then19(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 

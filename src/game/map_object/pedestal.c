@@ -103,7 +103,7 @@ void MapObject_MoveMarkerStoneIn(MapObject *object) {
 }
 
 /* Step 3 of a marker: runs the animation; at its end the marker holds the stone (animation 5, step 4) and
-   game_status.unk30 bit 0 is cleared. */
+   game_status.update_hold_flags bit 0 is cleared. */
 void MapObject_SettleMarkerStone(MapObject *object) {
     MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;
 
@@ -180,7 +180,7 @@ void MapObject_LiftMarkerStone(MapObject *object) {
 }
 
 /* Step 6 of a marker: moves the stone's part one step; after the last one the stone is hidden
-   (MapObject_ShowMarkerStone), the marker is empty again (animation 4, step 1) and game_status.unk30 bit 0 is
+   (MapObject_ShowMarkerStone), the marker is empty again (animation 4, step 1) and game_status.update_hold_flags bit 0 is
    cleared. */
 void MapObject_MoveMarkerStoneOut(MapObject *object) {
     MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;

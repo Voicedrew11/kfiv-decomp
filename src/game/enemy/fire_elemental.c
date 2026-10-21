@@ -76,9 +76,9 @@ void FireElemental_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with FireElemental_ThinkReturn for flag bit 53 and its own
-   state 2: FireElemental_StandAndAttack while work byte unk7A is 0 (states 0 and others clear it),
-   then FireElemental_ThinkCombat. Work byte unk7C is put to 30 while player_state.unk259 is set and
-   counts down. While work word unk68 is 1 (FireElemental_AlertSameKind of another entity sets it) it
+   state 2: FireElemental_StandAndAttack while ai_state.step_index is 0 (states 0 and others clear it),
+   then FireElemental_ThinkCombat. ai_state.action_counter is put to 30 while player_state.cast_launched_shot is set and
+   counts down. While ai_state.pause_timer is 1 (FireElemental_AlertSameKind of another entity sets it) it
    starts FireElemental_BackAwayFromPlayer instead of all that. */
 static void FireElemental_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -216,12 +216,12 @@ static void FireElemental_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
-/* An action (busy bit 0x1000) that FireElemental_Think starts in state 2 while work byte unk7A is 0:
+/* An action (busy bit 0x1000) that FireElemental_Think starts in state 2 while ai_state.step_index is 0:
    plays animation 17 turning to the player, then stays in its last step and decides each frame. It
-   sets unk7A and starts FireElemental_Dodge when FireElemental_ShouldDodgeMagic or FireElemental_ShouldDodge
+   sets step_index and starts FireElemental_Dodge when FireElemental_ShouldDodgeMagic or FireElemental_ShouldDodge
    says so, or EntityAi_MeleeAttack with record 1 when the player is within EntityParams.near_distance plus
    100 plus the radius and 20 degrees ahead. Each time the timer runs out it starts
-   FireElemental_RangedAttack0 (and sets unk7A) when the pause in work word unk6A is over and the
+   FireElemental_RangedAttack0 (and sets step_index) when the pause in ai_state.sub_timer is over and the
    player is within 20 degrees ahead, starts FireElemental_PlayTurnAnim when the player is more than
    90 degrees off, and else turns towards the player in animation 4 or stands in animation 0 for 30
    to 59 frames. */
@@ -336,7 +336,7 @@ static void FireElemental_StandAndAttack(Entity *entity) {
     }
 }
 
-/* An action (busy bit 0x2000): plays animation 12 or, with work byte unk7B below 1, animation 11 to
+/* An action (busy bit 0x2000): plays animation 12 or, with ai_state.action_flags below 1, animation 11 to
    its end. FireElemental_StandAndAttack starts it when the player is more than 90 degrees off the
    heading. */
 static void FireElemental_PlayTurnAnim(Entity *entity) {
@@ -411,8 +411,8 @@ static void FireElemental_Dodge(Entity *entity) {
     }
 }
 
-/* Whether to dodge a magic: only while work byte unk7C runs (FireElemental_Think puts it to 30 when the player
-   casts one, player_state.unk259), with the player at least min_distance away (less the radius and 100),
+/* Whether to dodge a magic: only while ai_state.action_counter runs (FireElemental_Think puts it to 30 when the player
+   casts one, player_state.cast_launched_shot), with the player at least min_distance away (less the radius and 100),
    Entity.heading_to_player within max_angle of the heading and the entity within 30 degrees of the player's facing; then
    EntityParams.dodge_chance / 10 times in 100. */
 static s32 FireElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 max_angle) {
@@ -517,8 +517,8 @@ static void FireElemental_RangedAttack1(Entity *entity) {
     }
 }
 
-/* Helper of FireElemental_OnHit: sets work bytes unk7A and unk68 to 1 in every other live entity
-   with the same EntityParams that is within EntityParams.action_frames of this one, has unk68 at 0 and has
+/* Helper of FireElemental_OnHit: sets ai_state.step_index and pause_timer to 1 in every other live entity
+   with the same EntityParams that is within EntityParams.action_frames of this one, has pause_timer at 0 and has
    the player within EntitySpawnInfo.wander_radius of its spawn point. */
 static void FireElemental_AlertSameKind(Entity *entity) {
     Entity *other;
@@ -556,11 +556,11 @@ static void FireElemental_OnHit(Entity *entity) {
     FireElemental_AlertSameKind(entity);
 }
 
-/* An action (busy bit 0x3000) that FireElemental_Think starts while work word unk68 is 1: plays
+/* An action (busy bit 0x3000) that FireElemental_Think starts while ai_state.pause_timer is 1: plays
    animation 5, then each frame guards or dodges the player's swing as FireElemental_ThinkCombat
-   does, starts the attack EntityAi_PickAttack picks once EntityAi_PickCombatChoice chooses attacking (unk68 becomes
+   does, starts the attack EntityAi_PickAttack picks once EntityAi_PickCombatChoice chooses attacking (pause_timer becomes
    2; ranged record 1 is FireElemental_RangedAttack1), and else gives the backwards command towards
-   the player and calls the move handler itself. Flag bit 53 ends it with unk68 at 2. */
+   the player and calls the move handler itself. Flag bit 53 ends it with pause_timer at 2. */
 static void FireElemental_BackAwayFromPlayer(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];

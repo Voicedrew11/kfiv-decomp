@@ -65,7 +65,7 @@ void Giant_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with Giant_ThinkCombat for state 2. Back in state 0
-   after state 1 it plays Giant_PlayAnim17 once (work word unk6C says whether it has). */
+   after state 1 it plays Giant_PlayAnim17 once (ai_state.mode_timer says whether it has). */
 static void Giant_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 

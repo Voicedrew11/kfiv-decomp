@@ -66,8 +66,8 @@ void Makara_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with Makara_ThinkCombat for state 2. Every fifth
-   frame reads EntityCollision_DistanceToGround at the entity's position into work float unk48; counts down work word
-   unk68, the pause before the next Makara_RangedAttack0. */
+   frame reads EntityCollision_DistanceToGround at the entity's position into ai_state.part_angle_x; counts down work word
+   pause_timer, the pause before the next Makara_RangedAttack0. */
 static void Makara_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -105,9 +105,9 @@ static void Makara_Think(Entity *entity, s32 run_now) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but first starts
-   Makara_RangedAttack0 when work float unk48 is not makara_no_floor_height[0] and is above -Entity.collision_height
+   Makara_RangedAttack0 when ai_state.part_angle_x is not makara_no_floor_height[0] and is above -Entity.collision_height
    / 2, the pause is over, and the player is within EntityParams.near_distance degrees ahead and farther
-   than unk438; the pause is then unk434 plus 0 to 29 frames. Closing in never runs. */
+   than far_distance; the pause is then action_frames plus 0 to 29 frames. Closing in never runs. */
 static void Makara_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];

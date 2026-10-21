@@ -634,7 +634,7 @@ s8 MenuDraw_GetWordStart(s32 index) {
     return ((s8 *)menu_word_starts)[index * 2]; // match: only the low byte of the 16-bit start is read
 }
 
-/* Draws a sprite of kind 1, a word: the glyph codes menu_word_glyphs holds from menu_word_starts[unk32] up to the next
+/* Draws a sprite of kind 1, a word: the glyph codes menu_word_glyphs holds from menu_word_starts[SpritePacket.word_index] up to the next
    entry (less one), one textured quad per glyph, spread evenly between the sprite's two corners, in the
    sprite's colour; then sends the packet to the GS over DMA channel 2. */
 void MenuDraw_Word(KindObject *object) {
@@ -933,8 +933,8 @@ int MenuDraw_GetNumber(int number) {
     }
 }
 
-/* Draws a sprite of kind 2 or 3, a number: unk34 (kind 2: what MenuDraw_GetNumber makes of it) in decimal,
-   right-aligned in unk33 glyphs and filled with blanks (glyph 0x49), or, when unk33 is 0, as three digits,
+/* Draws a sprite of kind 2 or 3, a number: SpritePacket.number_id (kind 2: what MenuDraw_GetNumber makes of it) in decimal,
+   right-aligned in digit_count glyphs and filled with blanks (glyph 0x49), or, when digit_count is 0, as three digits,
    glyph 0xD and one more digit; one textured quad per glyph between the sprite's two corners, each 6 pixels
    narrower than its share. Nothing is drawn for a negative number. */
 int MenuDraw_Number(KindObject *object) { // match: returns int, though no path sets a value
@@ -2192,7 +2192,7 @@ s32 PoolNodeFile_Relocate(RelocFile *file) {
 
 /* Draws a part in one flat colour (the four bytes of the third argument): turns its points into screen
    points, then sends each strip to the GS as it stands, its registers first, with the colour on every
-   point, and, when the strip has a second texture (unk10), the same strip again with that texture and the
+   point, and, when the strip has a second texture (PoolPartMaterial.second_tex0), the same strip again with that texture and the
    points' normals as texture coordinates. Last a packet that sets ALPHA_1. */
 void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
     PoolDrawScratch *scratch = POOL_DRAW_SCRATCH;
@@ -3620,7 +3620,7 @@ static SpritePacket *MenuSprite_ExceptSlotNudged(SpritePacket *packet, int slot)
     return NULL;
 }
 
-/* Sprite handler: a copy of the sprite moved left by amount / unk41 of the screen's width. */
+/* Sprite handler: a copy of the sprite moved left by amount / slide_range of the screen's width. */
 static SpritePacket *MenuSprite_SlideLeft(SpritePacket *packet, int amount) {
     static SpritePacket copy; /* 0x5DD580 */
     float ratio = (float)amount / (float)packet->slide_range;
@@ -3633,7 +3633,7 @@ static SpritePacket *MenuSprite_SlideLeft(SpritePacket *packet, int amount) {
     return &copy;
 }
 
-/* Sprite handler: a copy of the sprite moved right by amount / unk41 of the screen's width. */
+/* Sprite handler: a copy of the sprite moved right by amount / slide_range of the screen's width. */
 static SpritePacket *MenuSprite_SlideRight(SpritePacket *src_packet, int amount) {
     static SpritePacket copy; /* 0x5DD5E0 */
     float ratio = (float)amount / (float)src_packet->slide_range;
@@ -3646,7 +3646,7 @@ static SpritePacket *MenuSprite_SlideRight(SpritePacket *src_packet, int amount)
     return &copy;
 }
 
-/* Sprite handler: a copy of the sprite moved up by amount / unk41 of the screen's height. */
+/* Sprite handler: a copy of the sprite moved up by amount / slide_range of the screen's height. */
 static SpritePacket *MenuSprite_SlideUp(SpritePacket *src_packet, int amount) {
     static SpritePacket copy; /* 0x5DD640 */
     float ratio = (float)amount / (float)src_packet->slide_range;
@@ -3666,7 +3666,7 @@ static SpritePacket *MenuSprite_SlideUp(SpritePacket *src_packet, int amount) {
     return &copy;
 }
 
-/* Sprite handler: a copy of the sprite moved down by amount / unk41 of the screen's height, no further than 0xFFF0. */
+/* Sprite handler: a copy of the sprite moved down by amount / slide_range of the screen's height, no further than 0xFFF0. */
 static SpritePacket *MenuSprite_SlideDown(SpritePacket *packet, int amount) {
     static SpritePacket copy; /* 0x5DD6A0 */
     float ratio = (float)amount / (float)packet->slide_range;
@@ -4204,7 +4204,7 @@ static SpritePacket *MenuSprite_TintWornStatAlt(SpritePacket *packet, int index)
     return &copy;
 }
 
-/* Sprite handler: a copy of the sprite, red while the player's unkA8 is below unkA4 (numbers 67 and 66). */
+/* Sprite handler: a copy of the sprite, red while the player's max_weight is below weight (numbers 67 and 66). */
 static SpritePacket *MenuSprite_TintShortfall(SpritePacket *packet) {
     static SpritePacket copy; /* 0x5DDD60 */
     copy = *packet;

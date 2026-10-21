@@ -95,7 +95,7 @@ void MapObject_UpdateClosedDoor(MapObject *object) {
 }
 
 /* Update handler of an opening door-like object: runs the animation (kind 6
-   moves with its second part; kind 2 clears unk60 bit 0 once both pairs of its
+   moves with its second part; kind 2 clears door_open_flags bit 0 once both pairs of its
    points are more than 225 apart); at its end the object is open. */
 void MapObject_UpdateOpeningDoor(MapObject *object) {
     MapObjectWork *work = MAP_OBJECT_WORK(object);

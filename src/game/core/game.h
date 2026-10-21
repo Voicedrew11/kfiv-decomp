@@ -38,7 +38,7 @@ typedef struct {
     int update_hold_flags;          /* 0x30 bits hold off subsystems; bit 0 takes the player's control */
     int save_area;                  /* 0x34 the message id of the area name the save list shows (MapObject_UpdateSavePoint) */
     char pad38[0x08];
-    void *effect_owner;             /* 0x40 the model of the item effect that asked for unk30 = 0xC5F (ItemEffect_StepRequestGameStatus) */
+    void *effect_owner;             /* 0x40 the model of the item effect that asked for update_hold_flags = 0xC5F (ItemEffect_StepRequestGameStatus) */
     int item_use_cooldown;          /* 0x44 counts down to 0; 1 when an item was just used (Player_UseItem) */
 } GameStatus;
 
@@ -123,12 +123,12 @@ typedef struct {
 typedef struct {
     f32 view_origin[4];             /* 0x00 a position the camera is put in front of (GameLoop_UpdateCamera) */
     f32 view_direction[4];          /* 0x10 a direction from it */
-    f32 prev_view_origin[4];        /* 0x20 unk00 as it was the frame before (Interact_UpdateViewRay) */
-    f32 prev_view_direction[4];     /* 0x30 unk10 as it was the frame before */
-    f32 view_distance;              /* 0x40 how far along unk10 */
-    f32 prev_view_distance;         /* 0x44 unk40 as it was the frame before */
+    f32 prev_view_origin[4];        /* 0x20 view_origin as it was the frame before (Interact_UpdateViewRay) */
+    f32 prev_view_direction[4];     /* 0x30 view_direction as it was the frame before */
+    f32 view_distance;              /* 0x40 how far along view_direction */
+    f32 prev_view_distance;         /* 0x44 view_distance as it was the frame before */
     f32 nearest_entity_distance;    /* 0x48 distance to the nearest entity around the player (Interact_FindTarget) */
-    f32 target_distance;            /* 0x4C distance to what `current`, unk54 or unk58 names */
+    f32 target_distance;            /* 0x4C distance to what `current`, facing_entity or facing_item names */
     void *current;                  /* 0x50 the event being run */
     void *facing_entity;            /* 0x54 an Entity whose spawn info can answer the use of an item (Player_UseItem) */
     void *facing_item;              /* 0x58 the ItemNode (model/model.h) in front of the player, NULL: none (Interact_FindTarget) */
@@ -238,7 +238,7 @@ typedef struct {
     u32 unk38;                      /* 0x38 */
     u8 starting_level_percent;      /* 0x3C the percent a level record's level starts at for it */
     char pad3D[0x01];
-    u16 weight_tenths_of_pound;     /* 0x3E unk33 scaled by kilograms_to_pounds_factor, worked out after loading */
+    u16 weight_tenths_of_pound;     /* 0x3E weight_tenths_of_kilogram scaled by kilograms_to_pounds_factor, worked out after loading */
 } GameDefinition;
 
 /* a GameDefinition as the menu code reads it: the record is word-aligned (LevelDef in player/player.h
@@ -250,7 +250,7 @@ typedef struct {
     char pad34[0x0C];
 } GameDefinitionWords;
 
-/* a GameDefinition as the save code reads it (Game_WriteSaveImage, Game_ReadSaveImage): unk33 is the top byte of flags */
+/* a GameDefinition as the save code reads it (Game_WriteSaveImage, Game_ReadSaveImage): GameDefinition.weight_tenths_of_kilogram is the top byte of flags */
 typedef struct {
     char pad00[0x30];
     u32 flags;                      /* 0x30 bits 18 and 19 are a state; below 2 it is saved as one bit */
@@ -325,7 +325,7 @@ typedef struct {
     u64 pad08;                      /* 0x08 */
 } PoolSlotRegisters;
 
-/* a PoolSlot with tex0 and unk60 as the one member they are copied as */
+/* a PoolSlot with tex0 and tex1 as the one member they are copied as */
 typedef struct {
     char pad00[0x58];
     PoolSlotRegisters registers;    /* 0x58 */

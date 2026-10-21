@@ -80,9 +80,9 @@ void Malice_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with Malice_ThinkCombat for state 2. It also keeps
-   flag bits 18, 20, 21, 26 and 27 set while work byte unk7B is set or work word unk68 is 1, counts
-   down work word unk6A, adds command bit 0x10 or 0x20 by what EntityCollision_DistanceToPropFloor reads at the entity's
-   position against EntityParams.type_param_1 and type_param_2 (work byte unk7A), and calls
+   flag bits 18, 20, 21, 26 and 27 set while ai_state.action_flags is set or ai_state.pause_timer is 1, counts
+   down ai_state.sub_timer, adds command bit 0x10 or 0x20 by what EntityCollision_DistanceToPropFloor reads at the entity's
+   position against EntityParams.type_param_1 and type_param_2 (ai_state.step_index), and calls
    Malice_ApplyMoveCommand while the entity is not busy or has one of the busy bits 0x3006. */
 static void Malice_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -154,9 +154,9 @@ static void Malice_Think(Entity *entity, s32 run_now) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but first it starts
-   Malice_ToggleFadeLevel (when work byte unk7B is 1 and work word unk6A has run out, or with a
+   Malice_ToggleFadeLevel (when ai_state.action_flags is 1 and ai_state.sub_timer has run out, or with a
    chance of EntityParams.type_param_0 in 100 when the timer is at 0) or Malice_FadeOutAndRelocate (a
-   chance of unk438 in 100). It attacks only with unk7B at 0 and the player within 200 in y, and
+   chance of EntityParams.far_distance in 100). It attacks only with action_flags at 0 and the player within 200 in y, and
    else goes to a point EntityPoint_PickNearFromDistance picks; ranged record 0 is Malice_RangedAttack0. Closing
    in never runs. */
 static void Malice_ThinkCombat(Entity *entity, s32 run_now) {
@@ -290,8 +290,8 @@ static void Malice_Move(Entity *entity) {
 }
 
 /* Helper of Malice_Think: carries out the command in Entity.move_command. It turns the entity and
-   speeds up or slows down along its three axes by EntityParams.speed_step_per_frame a frame up to unk54 (work
-   floats unk44, unk48 and unk4C; in y half the step and a fifth of the limit), twice as fast for
+   speeds up or slows down along its three axes by EntityParams.speed_step_per_frame a frame up to EntityParams.max_speed (work
+   floats move_speed, part_angle_x and part_angle_y; in y half the step and a fifth of the limit), twice as fast for
    command bit 0x40. */
 static void Malice_ApplyMoveCommand(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -392,7 +392,7 @@ static void Malice_ApplyMoveCommand(Entity *entity) {
 }
 
 /* An action (busy bit 0x1000): plays animation 1 while Entity.model_alpha goes by 1 a frame up to 0x30
-   (work byte unk7B set) or down to 0x10 (clear), then flips unk7B, sets work word unk6A to
+   (ai_state.action_flags set) or down to 0x10 (clear), then flips action_flags, sets ai_state.sub_timer to
    EntityParams.near_distance and thinks. */
 static void Malice_ToggleFadeLevel(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -432,7 +432,7 @@ static void Malice_ToggleFadeLevel(Entity *entity) {
     }
 }
 
-/* A second action that plays animation 1 (busy bit 0x2000): sets work word unk68 to 1 and flag bits
+/* A second action that plays animation 1 (busy bit 0x2000): sets ai_state.pause_timer to 1 and flag bits
    18, 20, 21 and 27, calls EntityEvent_StartEffectAtPoint with 0x234 and takes Entity.model_alpha down to 0; meanwhile it
    looks for a point round the spawn point (EntityPoint_PickNearFromDistance, EntityCollision_DistanceToPropFloor) more than 45 degrees off
    the player's facing. Then it puts the entity there if it found one and starts
@@ -497,8 +497,8 @@ static void Malice_FadeOutAndRelocate(Entity *entity) {
 
 /* A third action that plays animation 1 (busy bit 0x3000), started by Malice_FadeOutAndRelocate:
    waits EntityParams.action_frames frames, turns the entity to the player, calls EntityEvent_StartEffectAtPoint with 0x235
-   and takes Entity.model_alpha back up to 0x30 (0x10 with work byte unk7B set), then clears work word
-   unk68 and thinks. */
+   and takes Entity.model_alpha back up to 0x30 (0x10 with ai_state.action_flags set), then clears work word
+   pause_timer and thinks. */
 static void Malice_FadeBackIn(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 

@@ -149,9 +149,9 @@ static void Snake_DormantHoldAnim2(Entity *entity) {
 
 /* The dormant action of a spawn in mode 1 (busy bit 0x20): holds animation 8 until the player is
    within EntitySpawnInfo.wake_distance, plays it past frame 30, then moves the entity along its heading by
-   EntityParams.near_distance a frame (unk438 in y) until flag bit 44 is set or EntityCollision_DistanceToPropFloor reads below
+   EntityParams.near_distance a frame (far_distance in y) until flag bit 44 is set or EntityCollision_DistanceToPropFloor reads below
    100, plays the rest, goes to state 2 and thinks. While it waits it removes the entity once
-   EntitySpawnInfo.variant is set and map_script_flags[unk43 + unk42 * 64] is not 0. */
+   EntitySpawnInfo.variant is set and map_script_flags[second_map_object_id + map_object_id * 64] is not 0. */
 static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
@@ -278,7 +278,7 @@ static void Snake_Dormant(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, but first, for a spawn in mode 1 whose
-   EntitySpawnInfo.variant is 1, it starts Snake_Death once map_script_flags[unk43 + unk42 * 64] is
+   EntitySpawnInfo.variant is 1, it starts Snake_Death once map_script_flags[second_map_object_id + map_object_id * 64] is
    not 0. */
 static void Snake_Think(Entity *entity, s32 run_now) {
     s32 index;

@@ -110,7 +110,7 @@ static void WiddaQueen_Animate(Entity *entity) {
 
 /* Helper of WiddaQueen_Animate: in mode 1 turns model part 9 towards the player, at most 90
    degrees to either side, at the rate EntityParams.near_distance; in mode 2 holds it; else puts the angle
-   (work float unk48) back to 0. The mode is work byte unk7A. */
+   (ai_state.part_angle_x) back to 0. The mode is ai_state.step_index. */
 static void WiddaQueen_TurnPart9ToPlayer(Entity *entity, s32 mode) {
     EntityAiState *ai_state;
     EntityModelPart80 *part;
@@ -190,7 +190,7 @@ static void WiddaQueen_ThinkDecide(Entity *entity, s32 run_now) {
 }
 
 /* The melee attack with record 0 (busy bit 1): animation 20, its hits checked along the heading of
-   the turned part (work float unk48). */
+   the turned part (ai_state.part_angle_x). */
 static void WiddaQueen_MeleeAttack0(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[0];

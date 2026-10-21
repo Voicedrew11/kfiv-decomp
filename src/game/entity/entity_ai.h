@@ -23,7 +23,7 @@ typedef struct {
 
 /* A random whole number of degrees as an angle in radians, wrapped to -pi..pi */
 float EntityAi_RandomAngle(void);
-/* Starts the second camera shake: its reach (CameraState.entity_shake_reach) and its frames (unk7C) */
+/* Starts the second camera shake: its reach (CameraState.entity_shake_reach) and its frames (CameraState.entity_shake_frames) */
 void EntityAi_ShakeCamera(int float_value, int int_value);
 /* Sets Entity.state and keeps the old value in prev_state */
 void EntityAi_SetState(Entity *entity, u8 state);
@@ -43,7 +43,7 @@ s32 EntityAi_CheckMeleeHitAt(Entity *entity, EntityParamsUnk240 *unk240, s32 par
 /* Builds the attack request of one part of a melee record (reach, height, angle, power) and runs it with
    Attack_Run; returns its result */
 s32 EntityAi_SendMeleeHit(Entity *entity, EntityParamsUnk240 *record, s32 index, f32 angle);
-/* Allocates a shot carrying EntityParams.unk238 and launches effect effect_id from origin along angles
+/* Allocates a shot carrying EntityParams.shot_params and launches effect effect_id from origin along angles
    (Attack_LaunchMagicEffect) for the entity */
 int EntityAi_LaunchShot(Entity *entity, int effect_id, void *origin, void *angles);
 /* EntityShot_LaunchAimed with no target: launches the shots of a ranged record whose frame lies in (frame_from,

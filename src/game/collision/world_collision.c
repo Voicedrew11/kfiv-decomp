@@ -842,7 +842,7 @@ static inline s32 map_object_count(s32 map) {
 }
 
 /* Collides a circle with every map object of both loaded maps that is near enough. With
-   `measure` set the distance to each object is worked out and kept in the object (unk18);
+   `measure` set the distance to each object is worked out and kept in the object (tested_point_distance);
    otherwise the distances kept by an earlier call are used. */
 void Collision_PushOutOfObjects(f32 *centre, s32 measure, f32 radius, f32 push) {
     MapObject *object;
@@ -1038,7 +1038,7 @@ int Collision_TransformMeshPoints(void *target) {
 }
 
 /* Tests a ray (from `origin` along `direction`, no further than `reach` times it) against every triangle of
-   the strips of the object's model, if the object has MAP_OBJECT_IN_USE and the mesh unk0C is 4 or more; stops at
+   the strips of the object's model, if the object has MAP_OBJECT_IN_USE and the mesh point_count is 4 or more; stops at
    the first hit. */
 void Collision_HitRayMeshObj(MapObject *object, f32 *origin, f32 *direction, f32 reach) {
     CollisionMesh *mesh;
@@ -1694,7 +1694,7 @@ void Collision_HitSpherePitfallObj(MapObject *object, f32 *point, f32 reach) {
 }
 
 /* Tests an upright capsule (`centre`, `radius`, `height`) against every triangle of the strips of the object's
-   model, if the object has MAP_OBJECT_IN_USE and the mesh unk0C is 4 or more. At the first hit it stops and puts
+   model, if the object has MAP_OBJECT_IN_USE and the mesh point_count is 4 or more. At the first hit it stops and puts
    Collision_GetFloorMaterial of the hit point's three words in COLLISION_RESULT->floor_material. */
 void Collision_HitCapsuleMeshObj(MapObject *object, f32 *centre, f32 height, f32 radius) {
     CollisionMesh *mesh;

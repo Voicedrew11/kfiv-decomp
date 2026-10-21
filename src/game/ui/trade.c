@@ -5363,7 +5363,7 @@ static int SaveScreen_Start(HandlerContext *context) {
     screen->dialog_id = -1;
     screen->card_update_result = 0;
     save_screen_handler = next_handler;
-    // match: this store order schedules into retail's unk18, unk11, unk14, ... order
+    // match: this store order schedules into retail's input_locked, is_leaving, card_op_running, ... order
     screen->card_op_running = 0;
     screen->selected_card = 0;
     screen->selected_save = 1;

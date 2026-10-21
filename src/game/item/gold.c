@@ -413,7 +413,7 @@ void Gold_ClearMark(MapActor *actor) {
 }
 
 /* Gold pile model's ModelInstance.draw, which DrawList_Draw runs before the model is drawn: sets the blend to
-   its fade alpha (unk146) and the tests, then sends its textures. */
+   its fade alpha (ModelInstance.fade_alpha) and the tests, then sends its textures. */
 void Gold_PrepareFadedDraw(OverlaySprite *sprite) {
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(GS_REG_ALPHA_1, ((s64)sprite->fade_alpha << 32) | GS_ALPHA_LERP_CS_CD_FIX);

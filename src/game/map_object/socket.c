@@ -92,7 +92,7 @@ void MapObject_MovePedestalItemIn(MapObject *object) {
 }
 
 /* Step 3 of a pedestal: runs the animation; at its end the pedestal holds the item (animation 5, step 4) and
-   game_status.unk30 bit 0 is cleared. */
+   game_status.update_hold_flags bit 0 is cleared. */
 void MapObject_SettlePedestalItem(MapObject *object) {
     MapObjectWork *work = MAP_OBJECT_WORK(object);
 
@@ -172,7 +172,7 @@ void MapObject_LiftPedestalItem(MapObject *object) {
 }
 
 /* Step 6 of a pedestal: moves the item's part one step toward the player; after the last one the pedestal is
-   empty again (animation 4, step 1) and game_status.unk30 bit 0 is cleared. */
+   empty again (animation 4, step 1) and game_status.update_hold_flags bit 0 is cleared. */
 void MapObject_MovePedestalItemOut(MapObject *object) {
     MapObjectWorkSlide *work = (MapObjectWorkSlide *)object->work;
     ModelPart *part = &object->model->parts[work->part];
@@ -194,7 +194,7 @@ void MapObject_RebuildPedestalMatrices(MapObject *object) {
 }
 
 /* Item hook of the pedestals: an empty pedestal (step 1) that has taken nothing yet takes the item it waits
-   for (its source's unk44); returns whether it took it. */
+   for (its source's kind_param_0); returns whether it took it. */
 int MapObject_PlaceItemOnPedestal(MapObject *object, int item) {
     MapObjectWorkSlide *work = (MapObjectWorkSlide *)object->work;
     u8 step = MAP_OBJECT_BYTES(object)->step;

@@ -59,8 +59,8 @@ void LavaFace_Init(Entity *entity) {
 }
 
 /* The think handler: each time the timer Entity.action_timer runs out (and EntityParams.action_frames is not 0)
-   launches shot EntityParams.pitch_limit_deg from model point unk432, aimed at the player, and sets the
-   timer to unk434 plus 0 to 2 frames; keeps animation 0. */
+   launches shot EntityParams.pitch_limit_deg from model point EntityParams.yaw_limit_deg, aimed at the player, and sets the
+   timer to EntityParams.action_frames plus 0 to 2 frames; keeps animation 0. */
 static void LavaFace_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 angles[4];

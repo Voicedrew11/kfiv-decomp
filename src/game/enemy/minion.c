@@ -89,7 +89,7 @@ void Minion_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with Minion_ThinkCombat for state 2. Once
-   Entity.hit_points is below half of EntityParams.hit_points it sets work byte unk79 to 1 and keeps animation
+   Entity.hit_points is below half of EntityParams.hit_points it sets ai_state.turn_in_place to 1 and keeps animation
    18 on the second motion slot. */
 static void Minion_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -192,7 +192,7 @@ static void Minion_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
-/* The animate handler: plays the two motion slots of the work area (unk80 and unk88) where
+/* The animate handler: plays the two motion slots of the work area (motion_slot_0 and motion_slot_1) where
    EntityAi_Animate plays the model's one motion, then turns the head. */
 static void Minion_Animate(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -686,8 +686,8 @@ static void Minion_Dodge(Entity *entity) {
 }
 
 /* Helper of Minion_RangedAttack: launches the record's shots whose frame has come, as
-   EntityShot_LaunchAimed does, from both launch points while work byte unk79 is 0 and afterwards only from
-   the one work byte unk7B picks. */
+   EntityShot_LaunchAimed does, from both launch points while ai_state.turn_in_place is 0 and afterwards only from
+   the one ai_state.action_flags picks. */
 static s32 Minion_LaunchShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame_from, s32 frame_to, f32 *target, f32 pitch_rate, f32 yaw_rate) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk3D8Full *record = (EntityParamsUnk3D8Full *)unk3D8;

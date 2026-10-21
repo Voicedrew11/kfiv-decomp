@@ -101,7 +101,7 @@ static void Phagos_Think(Entity *entity, s32 run_now) {
 }
 
 /* An action (busy bit 0x1000), the only one Phagos_Think starts: plays animation 4 and turns
-   the entity to a heading drawn between 90 and 269 degrees from Entity.heading_to_player (work float unk48).
+   the entity to a heading drawn between 90 and 269 degrees from Entity.heading_to_player (ai_state.part_angle_x).
    When flag bit 52 is set it starts effect EntityParams.pitch_limit_deg at model point 0xFF, fades the model
    out over 20 frames and removes the entity. When EntityCollision_RayHitsPropWall finds a wall ahead within the
    radius it starts the same effect, sets flag bit 28, and removes the entity once it is more than

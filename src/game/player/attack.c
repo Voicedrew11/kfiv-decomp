@@ -24,7 +24,7 @@
 /* a chance is never under 5 percent */
 #define AT_LEAST_5(chance) ((chance) < 5 ? 5 : (chance))
 #define ENTITY_TYPE_LAST_BOSS 99
-/* EntityParams.unk238 as six signed bytes: tenths the six magic strengths of an entity's hit are scaled by */
+/* EntityParams.shot_params as six signed bytes: tenths the six magic strengths of an entity's hit are scaled by */
 #define ENTITY_HIT_SCALES(entity) ((entity)->params->shot_params.bytes)
 /* store a strength as a whole number, rounded up when more than a thousandth is left over */
 #define STORE_ROUNDED_UP(dest, value) \
@@ -714,7 +714,7 @@ void Attack_HitPlayer(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     if ((u8)(player_state.equipment[EQUIP_BOOT] - 0x6A) <= 1) {
         percent += 20;
     }
-    Attack_GetEffectiveStrengths(&attack, request, extra); // match: attack is filled here and never read; the terms below use request->unk50
+    Attack_GetEffectiveStrengths(&attack, request, extra); // match: attack is filled here and never read; the terms below use request->strengths
     damage = Attack_StrengthDamageToPlayer(request->strengths.element_strengths[0], player_state.defence_stats.values[1], player_state.power); // match: values[1] here and on the next line; values[0] is never used
     damage += Attack_StrengthDamageToPlayer(request->strengths.element_strengths[1], player_state.defence_stats.values[1], player_state.power); // match: values[1] a second time
     damage += Attack_StrengthDamageToPlayer(request->strengths.element_strengths[2], player_state.defence_stats.values[2], player_state.power);
@@ -725,7 +725,7 @@ void Attack_HitPlayer(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     damage += Attack_StrengthDamageToPlayer(request->strengths.element_strengths[7], player_state.defence_stats.values[7], player_state.magic);
     damage += Attack_StrengthDamageToPlayer(request->strengths.element_strengths[8], player_state.defence_stats.values[8], player_state.magic);
     request->landed_on_player = 1;
-    if (damage <= blocked) { // match: blocked is request->unk72, which is known to be 0 here
+    if (damage <= blocked) { // match: blocked is request->player_hit_cooldown, which is known to be 0 here
         damage = 1;
     }
     Player_TakeDamage(damage);
@@ -981,7 +981,7 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
     ENTITY_FLAG_HIT_BITS(entity)->hit_strength = percent < HIT_STRENGTH_LIGHT_MAX_PERCENT ? 1 : 2;
     ENTITY_FLAG_HIT_BITS(entity)->hit_source = by_weapon ? 1 : by_magic ? 2 : 0; // match: a shift of by_magic in retail too
 
-    // match: three stores to unk6C, one per arm, give retail's single shared call and store
+    // match: three stores to knockback_heading, one per arm, give retail's single shared call and store
     if (by_weapon && extra->attack_request == 0) {
         entity->knockback_heading = request->facing;
     } else if (request->position[0] != request->previous_position[0] || request->position[1] != request->previous_position[1] ||
@@ -1163,9 +1163,9 @@ int Attack_HitMap(Unk1B1470Request *request, Unk1B1470Extra *extra) {
 }
 
 /* The nine strengths of a hit as they count against the target (Attack_HitEntity). The player's are
-   raised by the weapon bonus (extra->unk20) or the magic bonus (unk22, plus unk0E[] per kind) in
+   raised by the weapon bonus (extra->player_power) or the magic bonus (player_magic, plus worn_magic_bonus[] per kind) in
    fiftieths. A hit of kind 0 from anything else counts as it is; otherwise the three physical
-   strengths are dropped and the six magic ones scaled, by EntityParams.unk238 for an entity.
+   strengths are dropped and the six magic ones scaled, by EntityParams.shot_params for an entity.
    The rows are spelled out as retail has them. */
 void Attack_GetEffectiveStrengths(EntityParamsUnk240PartUnk00 *out, Unk1B1470Request *request, Unk1B1470Extra *extra) {
     f32 strength;
@@ -1258,7 +1258,7 @@ int Attack_StrengthDamageToPlayer(int strength, int resistance, int stat) {
 }
 
 /* Wears a weapon: amount is added to its wear, and every exp_per_level of it takes one off its level, the
-   percent its values count at (down to 50). Weapons whose unk63 is 2 or more do not wear. */
+   percent its values count at (down to 50). Weapons whose action_handler_index is 2 or more do not wear. */
 void Attack_WearWeapon(int idx, int amount) {
     PlayerItemDef *item;
     LevelRecord *rec;
@@ -1388,8 +1388,8 @@ void Attack_LoadMagicTable(void) {
     File_Close(file_handle);
 }
 
-/* Launches the effect of a magic table row (its unk100) from `from` along `angles`; returns Effect_Spawn's
-   result, 0 for an id past the table or a row that cannot be launched (unk102). */
+/* Launches the effect of a magic table row (its effect_id) from `from` along `angles`; returns Effect_Spawn's
+   result, 0 for an id past the table or a row that cannot be launched (item_menu_magic). */
 int Attack_LaunchMagicEffect(u16 effect_id, void *shot, void *from, void *angles, void *entity) {
     FxTableEntry *entry;
 

@@ -30,11 +30,11 @@ u8 map_draw_state_pad_140[0x140] = { 0 };
 /* 0x38A430 MapDrawState.current_fog_color: the current map's fog colour */
 MapFogColor current_map_fog_color = { 0 };
 
-/* 0x38A440 MapDrawState.fog_blocks: each map slot's 0x20 blocks (a model's unk14C points at one) */
+/* 0x38A440 MapDrawState.fog_blocks: each map slot's 0x20 blocks (a model's fog_block points at one) */
 MapFogBlock map_draw_slot_blocks[2][0x20] = { 0 };
 
-/* 0x38AC40 MapDrawState.light_blocks: each map slot's 0x20 0x80-byte blocks (a model's unk148) */
+/* 0x38AC40 MapDrawState.light_blocks: each map slot's 0x20 0x80-byte blocks (a model's light_block) */
 MapLightBlock map_draw_slot_draw_blocks[2][0x20] = { 0 };
 
-/* 0x38CC40 MapDrawState.screen_tint_amount to unk2A98: the screen tint, 0 to 0.25, and its padding */
+/* 0x38CC40 MapDrawState.screen_tint_amount to screen_tint_amount_copy2: the screen tint, 0 to 0.25, and its padding */
 f32 map_draw_screen_tint[4] = { 0 };

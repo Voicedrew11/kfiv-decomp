@@ -13,8 +13,8 @@ typedef struct {
     char pad1C[0x04];
     f32 look_at_point[4];           /* 0x20 the point to look at (GameStatus.camera_look_mode) */
     f32 move_to_point[4];           /* 0x30 the point to move to (GameStatus.camera_move_enabled) */
-    f32 turn_speed;                 /* 0x40 how fast it turns to unk20 */
-    f32 move_speed;                 /* 0x44 how far it moves to unk30 in a frame */
+    f32 turn_speed;                 /* 0x40 how fast it turns to look_at_point */
+    f32 move_speed;                 /* 0x44 how far it moves to move_to_point in a frame */
     f32 screen_scale;               /* 0x48 512.0 after Map_ResetGameState */
     f32 height_offset;              /* 0x4C added to the height above the player */
     f32 script_shake_offset[4];     /* 0x50 the first shake's offset (GameLoop_UpdateCameraShake) */

@@ -104,7 +104,7 @@ void DarkBird_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with DarkBird_ThinkIdle for state 0 and
-   DarkBird_ThinkCombat for state 2; the first time in state 2 (work byte unk7A) it starts
+   DarkBird_ThinkCombat for state 2; the first time in state 2 (ai_state.step_index) it starts
    DarkBird_ApproachForMelee instead. It keeps flag bit 28 set except in the death action, keeps
    animation 3 on the second motion slot outside attacks, heavy-hit reactions and the death, and
    calls DarkBird_ApplyMoveCommand while the entity is not busy or is in a hit reaction. */
@@ -156,9 +156,9 @@ static void DarkBird_Think(Entity *entity, s32 run_now) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat without the guard and the dodge, and with
-   the command of DarkBird_SteerToTargetCommand. It also picks the pitch command, work byte unk79: 1 or -1 at random
+   the command of DarkBird_SteerToTargetCommand. It also picks the pitch command, ai_state.turn_in_place: 1 or -1 at random
    (EntityParams.far_distance times in 100), 2 or -2 to keep the height in bounds (in mode 0 EntityCollision_DistanceToPropFloor
-   between EntityParams.near_distance and unk434, in modes 1 and 2 the y against the spawn point's). A
+   between EntityParams.near_distance and EntityParams.action_frames, in modes 1 and 2 the y against the spawn point's). A
    ranged attack is DarkBird_RangedAttack, but only when the player's y less its own is 200 or
    more; a melee one is DarkBird_MeleeAttack when that difference is between 100 and 400, else
    DarkBird_ApproachForMelee. */
@@ -290,7 +290,7 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 run_now) {
 }
 
 /* The think function of state 0: as EntityAi_ThinkIdle, always with a point to go to, the head
-   following, the command of DarkBird_SteerToTargetCommand, and the pitch command (work byte unk79) picked as in
+   following, the command of DarkBird_SteerToTargetCommand, and the pitch command (ai_state.turn_in_place) picked as in
    DarkBird_ThinkCombat. */
 static void DarkBird_ThinkIdle(Entity *entity, s32 run_now) {
     EntityAiStateKind1740A8 *ai_state = (EntityAiStateKind1740A8 *)&entity->ai_state;
@@ -379,8 +379,8 @@ static void DarkBird_Move(Entity *entity) {
 
 /* Carries out the movement command in Entity.move_command; DarkBird_Think and
    DarkBird_ApproachForMelee call it (the move handler only keeps the animation). It turns the
-   entity, eases its pitch towards 10 degrees for each unit of work byte unk79 (back to level at 0),
-   and speeds up or slows down along its axes by EntityParams.speed_step_per_frame a frame up to unk54. */
+   entity, eases its pitch towards 10 degrees for each unit of ai_state.turn_in_place (back to level at 0),
+   and speeds up or slows down along its axes by EntityParams.speed_step_per_frame a frame up to EntityParams.max_speed. */
 static void DarkBird_ApplyMoveCommand(Entity *entity) {
     EntityAiStateKind1719F8 *ai_state = (EntityAiStateKind1719F8 *)&entity->ai_state;
 
@@ -692,7 +692,7 @@ static void DarkBird_MeleeAttack(Entity *entity) {
    type_param_1, DarkBird_LaunchThreeShots launches, pitched at the player and up to 14 degrees to
    either side of the reverse of the heading. The other records: on the frame of the first shot
    DarkBird_LaunchBothShots launches at a point 200 below the player. The pause Entity.attack_delay_frames
-   is the record's unk02 as it is. */
+   is the record's attack_delay as it is. */
 static void DarkBird_RangedAttack(Entity *entity) {
     EntityAiStateKind1719F8 *ai_state = (EntityAiStateKind1719F8 *)&entity->ai_state;
     s32 kind = (s32)(ENTITY_FLAG_WORD(entity->flags) >> 58) & 3;
@@ -1025,7 +1025,7 @@ static void DarkBird_Death(Entity *entity) {
     }
 }
 
-/* The animate handler: plays the two motion slots of the work area (unk80 and unk88) where
+/* The animate handler: plays the two motion slots of the work area (motion_slot_0 and motion_slot_1) where
    EntityAi_Animate plays the model's one motion, then turns the head (EntityAi_LookAtPoint with the target
    while flag bit 9 is set and there is one). */
 static void DarkBird_Animate(Entity *entity) {

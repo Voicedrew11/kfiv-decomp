@@ -231,8 +231,8 @@ static void GiantBeetle_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
-/* Helper of GiantBeetle_Animate: eases work float unk48 towards 20 degrees on the side the command
-   turns to (0 with no turn bit) and puts half of it in angle unk50[1] of model parts 7 and 12. */
+/* Helper of GiantBeetle_Animate: eases ai_state.part_angle_x towards 20 degrees on the side the command
+   turns to (0 with no turn bit) and puts half of it in angle part_angles[1] of model parts 7 and 12. */
 static void GiantBeetle_TurnParts7And12(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityModelPart80 *part;
@@ -264,8 +264,8 @@ static void GiantBeetle_TurnParts7And12(Entity *entity) {
     }
 }
 
-/* Helper of GiantBeetle_Animate: eases work float unk4C towards 20 degrees on the side the command
-   turns to (0 with no turn bit) and puts minus half of it in angle unk54 of model parts 23, 28, 31
+/* Helper of GiantBeetle_Animate: eases ai_state.part_angle_y towards 20 degrees on the side the command
+   turns to (0 with no turn bit) and puts minus half of it in angle rotation_y of model parts 23, 28, 31
    and 32 (the name gives the first and the last of the four). */
 static void GiantBeetle_TurnParts23To32(Entity *entity) {
     f32 limit;

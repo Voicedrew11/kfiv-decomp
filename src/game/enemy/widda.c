@@ -100,9 +100,9 @@ static void Widda_Animate(Entity *entity) {
     }
 }
 
-/* Helper of Widda_Animate: turns the two model parts EntityParams.near_distance and unk438 name
+/* Helper of Widda_Animate: turns the two model parts EntityParams.near_distance and EntityParams.far_distance name
    towards the target, pitch from the player's height (at most 30 degrees) and yaw from the bearing
-   (at most 40), each part by half of it; the angles are work floats unk48 to unk54. Without a
+   (at most 40), each part by half of it; the angles are ai_state.part_angle_x to pitch_speed. Without a
    target or while the entity is busy it only reads the parts' angles into them. */
 static void Widda_AimPartsAtTarget(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -146,7 +146,7 @@ static void Widda_AimPartsAtTarget(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with Widda_ThinkCombat for state 2. Sets work byte
-   unk7A when flag bit 45, 47 or 48 is set during a dodge (busy bit 8). */
+   step_index when flag bit 45, 47 or 48 is set during a dodge (busy bit 8). */
 static void Widda_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -179,11 +179,11 @@ static void Widda_Think(Entity *entity, s32 run_now) {
     EntityAi_ThinkIdle(entity, run_now);
 }
 
-/* The think function of state 2: as EntityAi_ThinkCombat, but closing in runs (work byte unk78 is
+/* The think function of state 2: as EntityAi_ThinkCombat, but closing in runs (ai_state.move_choice is
    1) once the player is farther than 900 and within 40 degrees ahead. Every tenth frame, with the
    player near and the entity within 40 degrees of the player's facing, a chance of
    EntityParams.action_frames in 100 makes it start EntityAi_Dodge when the player is 40 to 90 degrees off
-   its heading, or close in at the run when the player is farther off or work byte unk7A is set. */
+   its heading, or close in at the run when the player is farther off or ai_state.step_index is set. */
 static void Widda_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];

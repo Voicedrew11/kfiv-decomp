@@ -612,7 +612,7 @@ int Player_KnowsAnyMagic(void) {
     return 0;
 }
 
-/* Whether the player has learned a magic whose first level launches a shot (fx_table unk102 0: the magics
+/* Whether the player has learned a magic whose first level launches a shot (fx_table item_menu_magic 0: the magics
    that are equipped and cast from the gauge). */
 int Player_KnowsShotMagic(void) {
     int i;
@@ -630,7 +630,7 @@ int Player_KnowsShotMagic(void) {
     return 0;
 }
 
-/* Whether the player has learned a magic whose first level is used from the item menu (fx_table unk102 1, the
+/* Whether the player has learned a magic whose first level is used from the item menu (fx_table item_menu_magic 1, the
    magics listed with the items); with none of those, no equipped magic and no weapon magic the magic gauge is
    kept empty. */
 int Player_KnowsItemMenuMagic(void) {

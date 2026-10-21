@@ -71,7 +71,7 @@ void GiantSpider_Init(Entity *entity) {
 
 /* The animate handler: as EntityAi_Animate, but in place of the head turn it turns the part
    EntityModel.look_at_part itself: towards Entity.heading_to_player, at most 30 degrees to either side, eased in work
-   float unk20[1]; in animations 14 to 16 it takes the part's own angle instead. */
+   float look_part_angles[1]; in animations 14 to 16 it takes the part's own angle instead. */
 static void GiantSpider_Animate(Entity *entity) {
     u32 blend_frames; // match: converted to float as unsigned
     EntityAiState *ai_state;
@@ -105,8 +105,8 @@ static void GiantSpider_Animate(Entity *entity) {
     }
 }
 
-/* The on_hit handler: every hit starts EntityAi_ReactionHeavy, whatever its strength; sets work
-   byte unk7A. */
+/* The on_hit handler: every hit starts EntityAi_ReactionHeavy, whatever its strength; sets
+   step_index. */
 static void GiantSpider_OnHit(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -141,7 +141,7 @@ static void GiantSpider_Think(Entity *entity, s32 run_now) {
 }
 
 /* The think function of every state but 2 (GiantSpider_Think calls it): turns the entity to
-   Entity.heading_to_player, the bearing the shared code turns to when it turns to the player. When unk68 is
+   Entity.heading_to_player, the bearing the shared code turns to when it turns to the player. When heading_to_player is
    more than 25 degrees off the heading it starts GiantSpider_PlayTurnAnim7Or12 (positive side) or
    GiantSpider_PlayTurnAnim6Or11; else it starts the move action with no command. */
 static void GiantSpider_ThinkTurnToPlayer(Entity *entity, s32 run_now) {
@@ -165,7 +165,7 @@ static void GiantSpider_ThinkTurnToPlayer(Entity *entity, s32 run_now) {
    and waiting as EntityAi_ThinkCombat does; it has no dodge, and its ranged attack is
    GiantSpider_RangedAttack. It gives no command: where that one closes in, this one starts
    GiantSpider_PlayTurnAnim7Or12 or GiantSpider_PlayTurnAnim6Or11 (by the side) when Entity.heading_to_player is more than
-   25 degrees off the heading. An attack clears work byte unk7A. */
+   25 degrees off the heading. An attack clears ai_state.step_index. */
 static void GiantSpider_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 side;
@@ -245,7 +245,7 @@ static void GiantSpider_Move(Entity *entity) {
 
 /* An action (busy bit 0x1000), which GiantSpider_ThinkCombat and GiantSpider_ThinkTurnToPlayer start when
    Entity.heading_to_player is more than 25 degrees off the heading on the negative side: plays animation 6 when
-   work byte unk7A is set (GiantSpider_OnHit sets it), else animation 11, to its end, with flag bits
+   ai_state.step_index is set (GiantSpider_OnHit sets it), else animation 11, to its end, with flag bits
    11 to 13 at 3. */
 static void GiantSpider_PlayTurnAnim6Or11(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -283,7 +283,7 @@ static void GiantSpider_PlayTurnAnim6Or11(Entity *entity) {
 }
 
 /* An action (busy bit 0x2000), the same as GiantSpider_PlayTurnAnim6Or11 for the positive side: plays
-   animation 7 when work byte unk7A is set, else animation 12, to its end. */
+   animation 7 when ai_state.step_index is set, else animation 12, to its end. */
 static void GiantSpider_PlayTurnAnim7Or12(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 

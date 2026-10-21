@@ -4,10 +4,10 @@
 
 GameStatus game_status = { 0 }; /* 0x38CC50 the status of the running game */
 /* Field aliases other files still use by their own names. */
-/* 0x38CC57 unk07: 0 holds back the walk and step buttons; Player_Update sets it to 1 again */
+/* 0x38CC57 movement_input_enabled: 0 holds back the walk and step buttons; Player_Update sets it to 1 again */
 asm(".globl player_can_walk\nplayer_can_walk = game_status + 0x7");
 asm(".globl game_status_flags\ngame_status_flags = game_status + 0x24");  /* 0x38CC74 the flag word */
-/* 0x38CC80 unk30: the updates held back (0x1 the player, 0x4 the entities, 0x8 the map objects' sway,
+/* 0x38CC80 update_hold_flags: the updates held back (0x1 the player, 0x4 the entities, 0x8 the map objects' sway,
    0x10 falling items, ...) */
 asm(".globl suspended_updates\nsuspended_updates = game_status + 0x30");
 /* 0x38CC84 save_area: the message id of the area name the save list shows */

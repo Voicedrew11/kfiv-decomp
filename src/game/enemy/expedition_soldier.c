@@ -324,7 +324,7 @@ static void ExpeditionSoldier_Death(Entity *entity) {
 }
 
 /* An action (busy bit 0x1000): plays animation 17 to its end; on frame 20 it calls MapObject_Signal
-   with 1 for the map object work byte unk7C names. ExpeditionSoldier_WalkToMapObjectPosX and
+   with 1 for the map object ai_state.action_counter names. ExpeditionSoldier_WalkToMapObjectPosX and
    ExpeditionSoldier_WalkToMapObjectNegX start it. */
 static void ExpeditionSoldier_SignalMapObject(Entity *entity) {
     EntityAiStateKind178358 *ai_state = (EntityAiStateKind178358 *)&entity->ai_state;
@@ -366,7 +366,7 @@ static void ExpeditionSoldier_SignalMapObject(Entity *entity) {
 
 /* The think handler the set-up function installs for EntitySpawnInfo.variant 3: as
    ExpeditionSoldier_Think (with ExpeditionSoldier_ThinkCombat for state 1 too), but it first reads bit 17 of the two map
-   objects EntitySpawnInfo.map_object_id and unk43 name into work bytes unk7A and unk7B, and while either is
+   objects EntitySpawnInfo.map_object_id and EntitySpawnInfo.second_map_object_id name into ai_state.step_index and action_flags, and while either is
    clear it calls ExpeditionSoldier_WalkToMapObjectPosX instead of stepping the states. PosX: its points
    are at x 950 and 900; ExpeditionSoldier_ThinkUseMapObjectsNegX has them at -950 and -900. */
 static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 run_now) {

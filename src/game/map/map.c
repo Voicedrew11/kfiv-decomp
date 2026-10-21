@@ -239,7 +239,7 @@ static inline u32 align_16(u32 address) {
 void Map_ParseFile(int map) {
     MapSlotMemory *memory = &map_slot_memory[map];
     // match: set twice, the compiler no longer knows the slot is not the memory block, so the store
-    // in the loop below makes it read memory->unk1C again afterwards
+    // in the loop below makes it read memory->file_base again afterwards
     MapSlot *slot = NULL;
     MapSlotUnk08 *header;
     char *cursor;
@@ -270,7 +270,7 @@ void Map_ParseFile(int map) {
     work += header->record_model_count * 4;
     slot->record_model_spare_bytes = work;
     work += header->record_model_count;
-    // match: stored as a u8 *; as a char * the read of header->unk4C below comes one instruction late
+    // match: stored as a u8 *; as a char * the read of header->script_offset below comes one instruction late
     *(u8 **)&memory->work_cursor = work;
 
     /* the file: its fixed parts, then the tables whose sizes the header gives */
@@ -312,7 +312,7 @@ void Map_ParseFile(int map) {
     size = header->file_size;
     packet = (u32 *)cursor;
     for (i = 0; i < 6; i++) {
-        // match: stored as a char *, the type memory->unk1C has (see the note on slot)
+        // match: stored as a char *, the type memory->file_base has (see the note on slot)
         ((char **)slot->packets.items)[i] = (char *)packet;
         packet += (*packet + 1) * 4;
     }

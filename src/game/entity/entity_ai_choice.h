@@ -37,7 +37,7 @@ s32 EntityAi_PickCombatChoice(Entity *entity, s32 mode);
 /* After a hit in state 2, makes the choice (and attack) the entity was on less likely. */
 void EntityAi_LowerWeightsAfterHit(Entity *entity);
 
-/* Lowers the weight (unkC0) of the attack flag bits 57-59 name by 10, kept between 0x40 and 0xC0. */
+/* Lowers the weight (attack_weights) of the attack flag bits 57-59 name by 10, kept between 0x40 and 0xC0. */
 void EntityAi_LowerAttackWeight(Entity *entity);
 
 /* Makes the chosen of the first two combat choices less likely and the other more. */

@@ -106,7 +106,7 @@ void DarkSuccubus_Init(Entity *entity) {
 }
 
 /* The on_hit handler: as EntityAi_OnHit with the type's own reactions to a light and a heavy hit;
-   it keeps the target, clears work word unk68, sets work word unk6A to EntityParams.far_distance and
+   it keeps the target, clears ai_state.pause_timer, sets ai_state.sub_timer to EntityParams.far_distance and
    Entity.model_alpha to 0x80. */
 static void DarkSuccubus_OnHit(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -160,15 +160,15 @@ static void DarkSuccubus_Animate(Entity *entity) {
     }
 }
 
-/* The think handler: as EntityAi_Think, with three functions for state 2, picked by work byte unk7C
+/* The think handler: as EntityAi_Think, with three functions for state 2, picked by ai_state.action_counter
    (DarkSuccubus_CountLiveSpawns sets it): DarkSuccubus_ThinkCombat at 0, DarkSuccubus_ThinkCombatCircleNear at 1,
    DarkSuccubus_ThinkCombatKeepAwayWhenFaced above. Until the map script sets dark_succubus_fight_started it
    does nothing but set model flag 0x800, flag bits 18 and 21 and Entity.model_alpha to 0x80. With the player's x at 6600 or more it goes back to its spawn
    point instead of thinking. It adds command bit 0x10 or 0x20 by what EntityCollision_DistanceToPropFloor reads at the
-   entity's position (work byte unk7A). While work word unk68 counts down, model flag 0x800 and flag
-   bit 21 are set and Entity.model_alpha is 0x80; work word unk6A is the pause after it. With unk7C at 0
-   the handler starts that time itself now and then, taking unkD6 down over 20 frames first. Work
-   word unk6C is put to EntityParams.type_param_0 while player_state.unk259 is set and counts down. */
+   entity's position (ai_state.step_index). While ai_state.pause_timer counts down, model flag 0x800 and flag
+   bit 21 are set and Entity.model_alpha is 0x80; ai_state.sub_timer is the pause after it. With combat_mode at 0
+   the handler starts that time itself now and then, taking Entity.model_alpha down over 20 frames first. Work
+   word think_timer is put to EntityParams.type_param_0 while player_state.cast_launched_shot is set and counts down. */
 static void DarkSuccubus_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityAiStateKind15F8C0 *timers = (EntityAiStateKind15F8C0 *)ai_state;
@@ -277,12 +277,12 @@ static void DarkSuccubus_Think(Entity *entity, s32 run_now) {
     }
 }
 
-/* The think function of state 2 while work byte unk7C is 0 (DarkSuccubus_ThinkCombatCircleNear and DarkSuccubus_ThinkCombatKeepAwayWhenFaced are the
+/* The think function of state 2 while ai_state.action_counter is 0 (DarkSuccubus_ThinkCombatCircleNear and DarkSuccubus_ThinkCombatKeepAwayWhenFaced are the
    other two): starts DarkSuccubus_DodgeAnim29Or30 when DarkSuccubus_ShouldDodgeAnim29Or30 says so and DarkSuccubus_Dodge for
    the player's swing; starts DarkSuccubus_MeleeAttack when EntityAi_CanMelee finds a melee record in
    reach (EntityAi_PickMeleeAttack picks it); else, each time the timer runs out, starts
    DarkSuccubus_MoveAlongArc with the player nearer than 350 and Entity.heading_to_player within 40 degrees of
-   the player's facing, or goes sideways round the player for 30 frames (work byte unk78: 2 or 3 the
+   the player's facing, or goes sideways round the player for 30 frames (ai_state.move_choice: 2 or 3 the
    side, 1 backwards, 0 towards, 4 turning only). */
 static void DarkSuccubus_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -387,11 +387,11 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 run_now) {
 }
 
 /* The think function of state 2 while one to three of the six entities DarkSuccubus_CountLiveSpawns counts are
-   alive (work byte unk7C 1). It dodges as DarkSuccubus_ThinkCombat and attacks (DarkSuccubus_RangedAttack,
+   alive (ai_state.action_counter 1). It dodges as DarkSuccubus_ThinkCombat and attacks (DarkSuccubus_RangedAttack,
    DarkSuccubus_MeleeAttack) when EntityAi_PickCombatChoice chooses to; closing in it starts
    DarkSuccubus_MoveAlongArc with the player nearer than 350 and Entity.heading_to_player within 40 degrees of his facing,
    else now and then DarkSuccubus_FadeOut, else goes sideways round the player for 30 frames, keeping 100 to 250
-   from him (work byte unk78). */
+   from him (ai_state.move_choice). */
 static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityAiStateKind15F8C0 *timers = (EntityAiStateKind15F8C0 *)ai_state;
@@ -511,9 +511,9 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 run_now) {
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
-/* The think function of state 2 while four to six of them are alive (work byte unk7C 2): as
+/* The think function of state 2 while four to six of them are alive (ai_state.action_counter 2): as
    DarkSuccubus_ThinkCombatCircleNear, but while the entity is within 50 degrees of the player's facing and not
-   faded out (work word unk68 0) it keeps 500 to 800 from him, closing in or going backwards before it goes
+   faded out (ai_state.pause_timer 0) it keeps 500 to 800 from him, closing in or going backwards before it goes
    sideways, and only then may start DarkSuccubus_MoveAlongArc. */
 static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -674,8 +674,8 @@ static void DarkSuccubus_Move(Entity *entity) {
 }
 
 /* Helper of DarkSuccubus_Animate: carries out the command in Entity.move_command. It turns the entity and
-   speeds up or slows down along its three axes by EntityParams.speed_step_per_frame a frame up to unk54 (work
-   floats unk44, unk48 and unk4C; in y half the step and half the limit), twice as fast for command
+   speeds up or slows down along its three axes by EntityParams.speed_step_per_frame a frame up to max_speed (work
+   floats move_speed, part_angle_x and part_angle_y; in y half the step and half the limit), twice as fast for command
    bit 0x40. */
 static void DarkSuccubus_ApplyMoveCommand(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -854,7 +854,7 @@ static void DarkSuccubus_ReactionHeavy(Entity *entity) {
 }
 
 /* The death action (busy bit 0x40): as EntityAi_Death with other flag settings; it first clears
-   model flag 0x800 and work word unk68 and puts Entity.model_alpha back to 0x80. */
+   model flag 0x800 and ai_state.pause_timer and puts Entity.model_alpha back to 0x80. */
 static void DarkSuccubus_Death(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -1206,8 +1206,8 @@ static void DarkSuccubus_PlayAnim18Turning(Entity *entity) {
 
 /* An action (busy bit 0x4000) that DarkSuccubus_ThinkCombatCircleNear and DarkSuccubus_ThinkCombatKeepAwayWhenFaced start: plays animation 17 to its
    end with the turn command of EntityAi_TurnCommand; up to frame EntityParams.near_distance it takes Entity.model_alpha
-   from 0x80 down to 0 (unkD6 is what EntityAi_Death's fade scales), after that it keeps work word
-   unk68 at EntityParams.action_frames. */
+   from 0x80 down to 0 (Entity.model_alpha is what EntityAi_Death's fade scales), after that it keeps work word
+   vanish_frames at EntityParams.action_frames. */
 static void DarkSuccubus_FadeOut(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -1246,7 +1246,7 @@ static void DarkSuccubus_FadeOut(Entity *entity) {
 }
 
 /* Whether to start DarkSuccubus_DodgeAnim29Or30 (the three think functions of state 2 ask): only
-   while the counter in work word unk6C runs, the entity is not busy, the player is within reach
+   while the counter in ai_state.mode_timer runs, the entity is not busy, the player is within reach
    (less the radius and 100) and Entity.heading_to_player within angle_limit of the heading; then
    EntityParams.dodge_chance / 5 times in 100. */
 static s32 DarkSuccubus_ShouldDodgeAnim29Or30(Entity *entity, f32 reach, f32 angle_limit) {
@@ -1271,7 +1271,7 @@ static s32 DarkSuccubus_ShouldDodgeAnim29Or30(Entity *entity, f32 reach, f32 ang
 }
 
 /* Helper of DarkSuccubus_Think: counts those of the entities with spawn ids 0x65 to 0x6A whose
-   flags' low nibble is 3 and stores (count + 2) / 3 in work byte unk7C, which picks the think
+   flags' low nibble is 3 and stores (count + 2) / 3 in ai_state.action_counter, which picks the think
    function of state 2. */
 static void DarkSuccubus_CountLiveSpawns(Entity *entity) {
     EntityAiState *sub;

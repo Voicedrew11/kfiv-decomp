@@ -404,9 +404,9 @@ static void EntityCollision_SphereSphere(f32 *center_a, f32 *center_b, f32 radiu
 }
 
 /* Applies the effect of a surface the entity touches; Collision_GetSurfaceEffect picks it from the triangle: 1 and 2 start
-   the unk20 timer (1800 frames) by a chance EntityParams.ailment_defence_1 lowers, 3 starts it outright, 4 takes up to 50
-   less a resistance term (EntityParams.magic_defence + unkDA) of Entity.hit_points (its health), 5 takes 30; 4 and 5 also
-   clear flag bits 38-39 and set unkA3 to 3. */
+   the ailment_1_frames timer (1800 frames) by a chance EntityParams.ailment_defence_1 lowers, 3 starts it outright, 4 takes up to 50
+   less a resistance term (EntityParams.magic_defence + EntityParams.resist_fire) of Entity.hit_points (its health), 5 takes 30; 4 and 5 also
+   clear flag bits 38-39 and set hit_flash_frames to 3. */
 void EntityCollision_ApplySurfaceEffect(Entity *entity, s32 material_first, s32 material_second, s32 material_third) {
     s32 chance;
     s32 amount;
@@ -460,7 +460,7 @@ void EntityCollision_ApplySurfaceEffect(Entity *entity, s32 material_first, s32 
     }
 }
 
-/* Collides a walking entity with a model's collision mesh: applies the surface effect of the unk28 strips
+/* Collides a walking entity with a model's collision mesh: applies the surface effect of the hazard_strips
    every 30 frames, pushes `position` out of the walls (adding their normals to `normal_sum`) and lowers
    `*floor_y` to the highest floor under it. Returns TRUE if it found a floor. */
 s32 EntityCollision_WalkAgainstMesh(Entity *entity, ModelInstance *model, f32 *position, f32 *normal_sum, f32 *floor_y) {
@@ -577,7 +577,7 @@ walls:
 }
 
 /* Collides a walking entity with the map pieces whose box it is in (its own map's, then the other loaded
-   map's): pushes it out of walls, updates its push (unkA4), and puts it on the floor, lets it fall, or stops
+   map's): pushes it out of walls, updates its push (wall_push), and puts it on the floor, lets it fall, or stops
    it at a ledge. */
 void EntityCollision_WalkAgainstMap(Entity *entity) {
     f32 normal_sum[4];
@@ -928,7 +928,7 @@ void EntityCollision_CapsuleTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c
     }
 }
 
-/* Pushes the entity's sphere (at `position`, radius unk30) out of every triangle of a model's collision mesh
+/* Pushes the entity's sphere (at `position`, radius collision_radius) out of every triangle of a model's collision mesh
    it touches, adding the wall normals to `normal_sum`. Returns TRUE if it touched the floor strips. */
 s32 EntityCollision_SphereAgainstMesh(Entity *entity, ModelInstance *model, f32 *position, f32 *normal_sum) {
     f32 offset[4];
@@ -1032,7 +1032,7 @@ s32 EntityCollision_SphereAgainstMesh(Entity *entity, ModelInstance *model, f32 
 }
 
 /* Pushes the entity out of the map pieces whose box it is in (its own map's, then the other loaded map's),
-   remembers the piece it stands on in unk14 and updates its push (unkA4). */
+   remembers the piece it stands on in map_record and updates its push (wall_push). */
 void EntityCollision_SphereAgainstMap(Entity *entity) {
     f32 normal_sum[4];
     f32 position[4];
@@ -1474,7 +1474,7 @@ static void EntityCollision_RayTriangle(void *corner_a, void *corner_b, void *co
 }
 
 /* Pushes a walking entity out of the map objects it touches (by object kind: a box, a box pair, a quad, or
-   the object's mesh) and adds their normals to its push (unkA4). */
+   the object's mesh) and adds their normals to its push (wall_push). */
 void EntityCollision_WalkAgainstObjects(Entity *entity) {
     f32 position[4];
     f32 normal_sum[4];
@@ -1546,8 +1546,8 @@ void EntityCollision_WalkAgainstObjects(Entity *entity) {
     entity->model->position[2] = position[2];
 }
 
-/* Pushes the entity (as a sphere of radius unk30) out of the map objects it touches and adds their normals to
-   its push (unkA4). */
+/* Pushes the entity (as a sphere of radius collision_radius) out of the map objects it touches and adds their normals to
+   its push (wall_push). */
 void EntityCollision_SphereAgainstObjects(Entity *entity) {
     f32 position[4];
     f32 normal_sum[4];
@@ -2553,7 +2553,7 @@ s32 EntityCollision_RayProps(f32 *origin, f32 *direction, void *out_point, f32 l
     return result;
 }
 
-/* TRUE when the ray (origin, unit direction, length) hits a wall (strip list unk18) of any prop of the loaded
+/* TRUE when the ray (origin, unit direction, length) hits a wall (strip list wall_strips) of any prop of the loaded
    maps. */
 s32 EntityCollision_RayHitsPropWall(f32 *origin, f32 *direction, f32 length, f32 *unused) {
     f32 end[4];
@@ -2649,7 +2649,7 @@ int EntityCollision_PointNearSegment(float radius, int *start_arg, int end_arg, 
     return FALSE;
 }
 
-/* The height of the ground of the loaded maps (strip lists unk2C) at `point` less the point's own (positive
+/* The height of the ground of the loaded maps (strip lists water_strips) at `point` less the point's own (positive
    when the ground is below, y growing downwards), from the first triangle found; FLT_MAX when none is under
    or over it. */
 f32 EntityCollision_DistanceToGround(f32 *point) {

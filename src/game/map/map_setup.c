@@ -504,7 +504,7 @@ void MapSetup_CentralTowerLevel3(int map_slot) {
 }
 
 /* Set-up of the Craftsman's Room (map 104): until craftsmans_room_door_unlocked is set, takes map objects 0x77
-   and 0x76 out of use, giving 0x77 (when it is a light, kind 9) the colour 0xFF, 0x80, 0x18 in its source (unk4A
+   and 0x76 out of use, giving 0x77 (when it is a light, kind 9) the colour 0xFF, 0x80, 0x18 in its source (kind_param_3
    0); the map script turns 0x77 on when it sets the flag. */
 void MapSetup_CraftsmansRoom(int map) {
     MapObject *object;

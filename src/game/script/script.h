@@ -250,7 +250,7 @@ typedef struct {
     ScriptFloatArg to_z;            /* 0x34 value at 0x38 */
 } ScriptPointCommand;
 
-/* shakes the camera: CameraState.script_shake_reach and unk74 (ScriptCmd_ShakeCamera) */
+/* shakes the camera: CameraState.script_shake_reach and script_shake_frames (ScriptCmd_ShakeCamera) */
 typedef struct {
     int active;                     /* 0x00 */
     ScriptFloatArg reach;           /* 0x04 value at 0x08 */
@@ -373,7 +373,7 @@ typedef union {
     s64 halves[2];
 } ScriptPosition;
 
-/* sets the colour the screen is covered with: MapDrawStateOverlays.screen_fill_red to unk80 (ScriptCmd_SetScreenColor) */
+/* sets the colour the screen is covered with: MapDrawStateOverlays.screen_fill_red to screen_fill_blend (ScriptCmd_SetScreenColor) */
 typedef struct {
     int active;                     /* 0x00 */
     ScriptArg red;                  /* 0x04 value at 0x08 */
