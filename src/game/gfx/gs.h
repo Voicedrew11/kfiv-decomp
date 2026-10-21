@@ -4,6 +4,14 @@
 
 #include "common.h"
 
+/* a pointer into a packet being written, which steps by the size of what each store writes */
+typedef union {
+    u32 *word;
+    f32 *real;
+    u64 *dword;
+    char *byte;
+} PacketCursor;
+
 #define GS_REG_PRIM         0x00
 #define GS_REG_RGBAQ        0x01
 #define GS_REG_UV           0x03
@@ -45,6 +53,9 @@
 #define GS_ALPHA_C_FIX      0x20    /* ALPHA field C set to FIX: the alpha is the FIX field, bits 32-39 */
 #define GS_ALPHA_CS_FIX_CD  0x68    /* ALPHA (Cs * FIX) + Cd: the blend that sets a frame's alpha */
 #define GS_ALPHA_LERP_CS_CD_FIX 0x64 /* ALPHA ((Cs - Cd) * FIX) + Cd: a fade from the frame toward the source, by FIX */
+#define GS_ALPHA_BLEND_NORMAL 0x44  /* ALPHA ((Cs - Cd) * As) + Cd: ordinary alpha blending */
+#define GS_ALPHA_BLEND_ADD 0x48     /* ALPHA (Cs * As) + Cd: additive */
+#define GS_ALPHA_BLEND_SUBTRACT 0x42 /* ALPHA Cd - (Cs * As): subtractive */
 #define GS_FRAME_FBW_640    0xA0000 /* FRAME FBW field (bits 16-21) of the 640-pixel-wide frame */
 #define GS_ZBUF_CT16S_118   0xA000118 /* ZBUF: Z base block 0x118 with PSM CT16S (0x0A at bit 24); the ZMSK bit 32 is OR'd in */
 #define GS_DISPFB_FBW_MASK  0x7E00  /* DISPFB FBW field, bits 9-14 */

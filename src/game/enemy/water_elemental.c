@@ -20,7 +20,6 @@
 
 /* WaterElemental_RunAtPlayer: Entity.action_step (steps 0 and 1 are the shared ones) */
 #define WATER_ELEMENTAL_RUN_STEP_CHASE 2       /* each frame guards, dodges or runs at the player */
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void WaterElemental_Think(Entity *entity, s32 run_now);
 static void WaterElemental_ThinkCombat(Entity *entity, s32 run_now);

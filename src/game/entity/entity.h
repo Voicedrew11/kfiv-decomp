@@ -227,13 +227,13 @@ typedef struct {
     char pad28[0x08];
 } Unk1B1470Extra;
 
-/* Unk1B1470Request with the bits at 0x4C as byte-sized fields: Attack_HitEntity reads unk4C_3 as a u8 */
+/* Unk1B1470Request with the bits at 0x4C as byte-sized fields: Attack_HitEntity reads knockback as a u8 */
 typedef struct {
     char pad00[0x4C];
     u8 shape : 2;                   /* 0x4C the request shape 0 to 3 (Attack_Run) */
-    u8 unk4C_2 : 1;
-    u8 unk4C_3 : 1;
-    u8 unk4C_4 : 4;
+    u8 cleared_on_effect_check : 1;
+    u8 knockback : 1;               /* Unk1B1470Request.knockback */
+    u8 pad4C_4 : 4;
     char pad4D[0x33];
 } __attribute__((aligned(8))) Unk1B1470RequestBits;
 
@@ -245,8 +245,8 @@ typedef struct {
 } Unk1B1470RequestUnit;
 
 #define UNK1B1470_REQUEST_UNIT(request) (((Unk1B1470RequestUnit *)(request))->owner_and_flags)
-/* unk4C_3 as a bit of the 64-bit word */
-#define UNK1B1470_UNIT_UNK4C_3 (0x8000L << 20)
+/* knockback as a bit of the 64-bit word */
+#define UNK1B1470_UNIT_KNOCKBACK (0x8000L << 20)
 
 /* eight bytes the game copies with unaligned loads and stores */
 typedef union {
@@ -641,7 +641,7 @@ typedef struct {
     f32 unk20[4];                   /* 0x20 */
     char pad30[0x10];
     f32 unk40;                      /* 0x40 */
-    f32 unk44;                      /* 0x44 */
+    f32 move_speed;                 /* 0x44 speed along its heading (GreaterDemon_DescendAtPlayer, GreaterDemon_SlideToStop) */
     char pad48[0x22];
     s16 climb_point_index;          /* 0x6A which of the 5 climb_points it heads for next */
     s16 unk6C;                      /* 0x6C */
@@ -1285,8 +1285,8 @@ extern EntityPoolSlot entity_pool_slots[ENTITY_POOL_SLOT_COUNT];
    sound part is handed to the sound loader */
 typedef struct {
     char pad00[0x0C];
-    int unk0C;                      /* 0x0C file offset of a table, its role not known */
-    int unk10;                      /* 0x10 file offset of a table, its role not known */
+    int texture_offset;             /* 0x0C file offset of the textures (EntityPoolData.texture_data) */
+    int pool_model_offset;          /* 0x10 file offset of the slot's own model, 0: none (EntityPoolData) */
     int sound_buffer_b_offset;      /* 0x14 file offset of sound buffer b, made an address */
     int sound_buffer_a_offset;      /* 0x18 file offset of sound buffer a, made an address */
     char pad1C[0x04];

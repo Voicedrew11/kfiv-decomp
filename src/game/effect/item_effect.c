@@ -186,12 +186,12 @@ void ItemEffect_Start(int kind, int marked) {
     item_effect_step = 0;
     if (kind >= 0x4D) {
         model = item_effect_model_b;
-        model->texture_slot = 2;
+        model->texture_slot = TEXTURE_SLOT_ITEM;
         model->texture_data = (int)item_effect_textures[kind - 0x4C];
         item_effect_model = model;
     } else {
         model = item_effect_model_a;
-        model->texture_slot = 2;
+        model->texture_slot = TEXTURE_SLOT_ITEM;
         model->texture_data = (int)item_effect_textures[kind - 0x46];
         item_effect_model = model;
     }

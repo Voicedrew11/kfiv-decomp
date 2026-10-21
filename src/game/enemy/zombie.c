@@ -13,7 +13,6 @@
 #include "entity/entity_ai_choice.h"
 #include "player/player.h"
 
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void Zombie_OnHit(Entity *entity);
 static void Zombie_Think(Entity *entity, s32 run_now);

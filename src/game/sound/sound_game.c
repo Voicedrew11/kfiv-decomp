@@ -144,7 +144,7 @@ static void Sound_StartStopTrackedVoices(void) {
     s32 i;
 
     for (i = 0x64; i < 0x7E; i++) {
-        SoundDriver_NoteOn(i, sfx_com_job.job.result, 0, 0, 0x3C, game_options[2], 0, 0x3F);
+        SoundDriver_NoteOn(i, sfx_com_job.job.result, 0, 0, 0x3C, game_options[GAME_OPTION_SOUND_VOLUME], 0, 0x3F);
         SoundDriver_NoteOff(i);
     }
 }
@@ -152,7 +152,7 @@ static void Sound_StartStopTrackedVoices(void) {
 /* Applies the stereo option (game_options[0]) to the driver: SoundDriver_SetStereo when it is set,
    SoundDriver_SetMono when not. */
 void Sound_ApplyStereoOption(void) {
-    if (game_options[0] != 0) {
+    if (game_options[GAME_OPTION_STEREO] != 0) {
         SoundDriver_SetStereo();
         return;
     }
@@ -373,9 +373,9 @@ int Sound_PlayTracked(int sound, int unused, float *position) {
             return -1;
         }
     }
-    SoundDriver_NoteOn(slot, bank->result, 0, sound, 0x3C, game_options[2], 0, 0x3F);
+    SoundDriver_NoteOn(slot, bank->result, 0, sound, 0x3C, game_options[GAME_OPTION_SOUND_VOLUME], 0, 0x3F);
     tracked_voices[slot - 100][0] = 1;
-    tracked_voices[slot - 100][1] = (u8)game_options[2];
+    tracked_voices[slot - 100][1] = (u8)game_options[GAME_OPTION_SOUND_VOLUME];
     return slot;
 }
 
@@ -855,7 +855,7 @@ void Sound_UpdateTagged(void) {
                         }
                         continue;
                     } else {
-                        volume = (float) volume * (float) game_options[2] * (1.0f / SOUND_VOLUME_LEVELS);
+                        volume = (float) volume * (float) game_options[GAME_OPTION_SOUND_VOLUME] * (1.0f / SOUND_VOLUME_LEVELS);
                         if (volume >= 0x80) {
                             volume = 0x7F;
                         }
@@ -1054,7 +1054,7 @@ void Sound_UnmuteTagged(void) {
     do {
         n--;
         if (channel->sound_id >= 0 && channel->kind == SOUND_KIND_CUE) {
-            volume = (int)((float)channel->volume_level * (float)game_options[2] * (1.0f / SOUND_VOLUME_LEVELS));
+            volume = (int)((float)channel->volume_level * (float)game_options[GAME_OPTION_SOUND_VOLUME] * (1.0f / SOUND_VOLUME_LEVELS));
             SoundDriver_SetNoteControl(0, channel->note_slot, (volume >= 0x80) ? 0x7F : volume);
         }
         channel++;

@@ -10,7 +10,6 @@
 #include "entity/entity_ai_choice.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void Stool_OnHit(Entity *entity);
 static void Stool_Think(Entity *entity, s32 run_now);

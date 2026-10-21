@@ -23,7 +23,6 @@
 
 /* Entity.action_step of WindElemental_RunAtPlayer past the shared ones */
 #define WIND_ELEMENTAL_RUN_STEP_CHASE 2   /* runs at the player, dodging, guarding or attacking as it comes */
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void WindElemental_Think(Entity *entity, s32 run_now);
 static void WindElemental_ThinkCombat(Entity *entity, s32 run_now);

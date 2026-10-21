@@ -357,7 +357,7 @@ typedef struct {
     u8 needs_neighbour_map;         /* 0x39 nonzero: the neighbouring map must be loaded before going on */
     u8 neighbour_origin_index;      /* 0x3A which of MapSlot.origins leads to the neighbouring map, 0xFF: none */
     char pad3B[0x01];
-    s32 unk3C;                      /* 0x3C flags */
+    s32 flags;                      /* 0x3C */
     char pad40[0x3C];
     ModelInstance *model;           /* 0x7C */
 } MapRecordInfo;

@@ -697,7 +697,7 @@ static void Effect_SetupModel(int index) {
         } else {
             map = current_map_slot;
         }
-        effect->model->texture_slot = 3;
+        effect->model->texture_slot = TEXTURE_SLOT_ALWAYS_SENT;
         effect->model->texture_data = (int)Map_GetSlotPacket(map, 4);
         effect->model->shared_texture_slot = 0;
         effect->model->shared_texture_packet = (int)Map_GetSlotPacket(map, 5);

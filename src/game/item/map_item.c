@@ -125,7 +125,7 @@ void MapItem_InitMap(int map) {
             Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
             node->model->draw = MapItem_PrepareDraw;
             node->model->texture_data = (int)source->texture;
-            node->model->texture_slot = 2;
+            node->model->texture_slot = TEXTURE_SLOT_ITEM;
             TextureTable_SetBasePointers((TextureTableHeader *)source->texture, 0x3B40, 0x3EC0);
         }
     }
@@ -383,7 +383,7 @@ s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f3
     Model_SetUpPosed(node->model, &model_data, &buffer);
     Model_SetTextureBase(node->model, 0x3B40, 0x3EC0);
     Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
-    node->model->texture_slot = 2;
+    node->model->texture_slot = TEXTURE_SLOT_ITEM;
     node->model->texture_data = (int)source->texture;
     TextureTable_SetBasePointers((TextureTableHeader *)source->texture, 0x3B40, 0x3EC0);
     if (order == 0xFFFFFFFF) {
@@ -454,7 +454,7 @@ ItemNode *MapItem_PutOutForObject(int map, int item, void *position, void *rotat
     Model_SetUpPosed(node->model, &sources[0], &sources[1]);
     Model_SetTextureBase(node->model, 0x3B40, 0x3EC0);
     Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
-    node->model->texture_slot = 2;
+    node->model->texture_slot = TEXTURE_SLOT_ITEM;
     node->model->texture_data = (int)source->texture;
     TextureTable_SetBasePointers((TextureTableHeader *)source->texture, 0x3B40, 0x3EC0);
     MapItem_Link((ListNode *)node);

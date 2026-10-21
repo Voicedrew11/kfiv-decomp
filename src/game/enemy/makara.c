@@ -15,7 +15,6 @@
 #include "player/player.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void Makara_Think(Entity *entity, s32 run_now);
 static void Makara_ThinkCombat(Entity *entity, s32 run_now);

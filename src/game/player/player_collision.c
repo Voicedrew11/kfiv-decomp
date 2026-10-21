@@ -10,8 +10,13 @@
 
 #define PLAYER_STEP_HEIGHT 16.666666f
 
-/* map_object.touch_status_flag: 1 starts the poison (timed_flags[0]) */
-#define TOUCH_STATUS_POISON 1
+/* map_object.touch_status_flag: which of PlayerState.timed_flags[0] to [5] touching the object starts */
+#define TOUCH_STATUS_POISON     1
+#define TOUCH_STATUS_PARALYSIS  2 /* no moves, a yellow tint */
+#define TOUCH_STATUS_AILMENT_2  3 /* timed_flags[2]: no effect found yet */
+#define TOUCH_STATUS_WEAKNESS   4 /* power and magic halved, a purple tint */
+#define TOUCH_STATUS_SLOW       5 /* half speed, a white tint */
+#define TOUCH_STATUS_MAGIC_SEAL 6 /* the magic gauge stays empty */
 
 /* moves the player out of the body just hit: to `push` from it, but by no more than 50 a frame */
 #define PUSH_PLAYER_OUT()                                                                          \
@@ -564,23 +569,23 @@ void Player_CollideWithMapObjects(s32 climb) {
             player_state.timed_flags[0] = 1800;
             player_state.ailment0_start_frame = frame_counter;
             break;
-        case 2:
+        case TOUCH_STATUS_PARALYSIS:
             player_state.timed_flags[1] = 150;
             player_state.ailment1_start_frame = frame_counter;
             break;
-        case 3:
+        case TOUCH_STATUS_AILMENT_2:
             player_state.timed_flags[2] = 3600;
             player_state.ailment2_start_frame = frame_counter;
             break;
-        case 4:
+        case TOUCH_STATUS_WEAKNESS:
             player_state.timed_flags[3] = 5400;
             player_state.ailment3_start_frame = frame_counter;
             break;
-        case 5:
+        case TOUCH_STATUS_SLOW:
             player_state.timed_flags[4] = 1800;
             player_state.ailment4_start_frame = frame_counter;
             break;
-        case 6:
+        case TOUCH_STATUS_MAGIC_SEAL:
             player_state.timed_flags[5] = 18000;
             player_state.ailment5_start_frame = frame_counter;
             break;

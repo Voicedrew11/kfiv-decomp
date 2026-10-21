@@ -30,6 +30,11 @@
 #include "sound/sound_game.h"
 #include <stdio.h>
 
+/* viewer_picture on Zastari's Map: one picture per level of the Ancient City */
+#define ZASTARI_PICTURE_LEVEL_1 0
+#define ZASTARI_PICTURE_LEVEL_2 1
+#define ZASTARI_PICTURE_LEVEL_3 2
+
 /* Picture pixels per 1000 world units on each map picture of the viewer. */
 #define CARETAKERS_MAP_X_SCALE 24.615385f
 #define CARETAKERS_MAP_Z_SCALE 24.88889f
@@ -381,7 +386,7 @@ void MapViewer_DrawPictureMap(void) {
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
     Packet_EndGsRegisters();
-    Game_ApplyBrightness(game_options[10]);
+    Game_ApplyBrightness(game_options[GAME_OPTION_BRIGHTNESS]);
 }
 
 /* Where the player's marker goes on picture viewer_picture of the Caretaker's Map: -1 for a fixed spot on the
@@ -464,7 +469,7 @@ int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y) {
    out from the player's position when the current map is on that picture, FALSE when it is not. */
 int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y) {
     switch (viewer_picture) {
-    case 0:
+    case ZASTARI_PICTURE_LEVEL_1:
         switch (map_slots[current_map_slot].tag) {
         case MAP_TAG_ANCIENT_CITY_L1_CENTRAL_TOWER:
         case MAP_TAG_ANCIENT_CITY_L1_WEST:
@@ -481,7 +486,7 @@ int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y) {
             return TRUE;
         }
         break;
-    case 1:
+    case ZASTARI_PICTURE_LEVEL_2:
         switch (map_slots[current_map_slot].tag) {
         case MAP_TAG_NORTH_CLIFFS:
             *screen_x = (player_state.position.x - 0.0f) * ZASTARI_PICTURE1_X_SCALE / 1000.0f + 348.0f;
@@ -501,7 +506,7 @@ int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y) {
             return TRUE;
         }
         break;
-    case 2:
+    case ZASTARI_PICTURE_LEVEL_3:
         switch (map_slots[current_map_slot].tag) {
         case MAP_TAG_ANCIENT_CITY_L3_WEST:
             *screen_x = (player_state.position.x - 9300.0f) * ZASTARI_PICTURE2_X_SCALE / 1000.0f + 194.0f;
@@ -817,7 +822,7 @@ static void MapViewer_DrawKingsMap(void) {
     Packet_EndGsRegisters();
     GsDraw_QueueFlush();
     GsDraw_QueueTexturedSprite(&kings_map_corner_rect);
-    Game_ApplyBrightness(game_options[10]);
+    Game_ApplyBrightness(game_options[GAME_OPTION_BRIGHTNESS]);
 }
 
 /* Whether the King's Map works on the map with this tag: not on the maps the Caretaker's Map shows (000,

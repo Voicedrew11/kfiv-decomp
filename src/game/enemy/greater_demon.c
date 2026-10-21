@@ -31,7 +31,6 @@
 
 static KfVector climb_points[3]; /* 0x4FF390 the points GreaterDemon_Think climbs over (it indexes up to 5) */
 
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 static void GreaterDemon_Think(Entity *entity, s32 run_now);
 static void GreaterDemon_Move(Entity *entity);
 static void GreaterDemon_OnHit(Entity *entity);
@@ -563,11 +562,11 @@ static void GreaterDemon_SlideToStop(Entity *entity) {
                 EntityAi_StartAction(entity, ai_state->move, 1);
             }
         }
-        entity->move_delta_x = -sinf(EntityMath_WrapAngle(entity->model->rotation[1])) * ai_state->unk44;
-        entity->move_delta_z = -cosf(EntityMath_WrapAngle(entity->model->rotation[1])) * ai_state->unk44;
-        ai_state->unk44 -= 2.0f;
-        if (ai_state->unk44 < 0.0f) {
-            ai_state->unk44 = 0.0f;
+        entity->move_delta_x = -sinf(EntityMath_WrapAngle(entity->model->rotation[1])) * ai_state->move_speed;
+        entity->move_delta_z = -cosf(EntityMath_WrapAngle(entity->model->rotation[1])) * ai_state->move_speed;
+        ai_state->move_speed -= 2.0f;
+        if (ai_state->move_speed < 0.0f) {
+            ai_state->move_speed = 0.0f;
         }
         break;
     }

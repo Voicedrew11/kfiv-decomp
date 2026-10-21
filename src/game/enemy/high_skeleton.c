@@ -21,7 +21,6 @@
 #define HIGH_SKELETON_SCALE_UP_STEP_EFFECT 1        /* starts the rising effect */
 #define HIGH_SKELETON_SCALE_UP_STEP_GROW 2          /* grows the model over near_distance frames, then restores its scale */
 
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void HighSkeleton_Think(Entity *entity, s32 run_now);
 static void HighSkeleton_Dormant(Entity *entity);

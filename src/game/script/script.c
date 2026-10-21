@@ -1130,8 +1130,8 @@ void ScriptCmd_ShowSplash(ScriptWaitCommand *command) {
    Sound_SetBankVolumes) to `value` 64ths (0 to 64) of what the options say, then finishes. */
 void ScriptCmd_SetVolumes(ScriptValueCommand *command) {
     if (command->value.value >= 0 && command->value.value <= 64) {
-        Sound_SetBgmVolume(game_options[1] * command->value.value / 64);
-        Sound_SetBankVolumes(game_options[2] * command->value.value / 64);
+        Sound_SetBgmVolume(game_options[GAME_OPTION_MUSIC_VOLUME] * command->value.value / 64);
+        Sound_SetBankVolumes(game_options[GAME_OPTION_SOUND_VOLUME] * command->value.value / 64);
     }
     command->active = 0;
 }
@@ -1140,7 +1140,7 @@ void ScriptCmd_SetVolumes(ScriptValueCommand *command) {
    `value` 64ths of it, then finishes. */
 void ScriptCmd_SetSeVolume(ScriptValueCommand *command) {
     if (command->value.value >= 0 && command->value.value <= 64) {
-        Sound_SetBankVolumes(game_options[2] * command->value.value / 64);
+        Sound_SetBankVolumes(game_options[GAME_OPTION_SOUND_VOLUME] * command->value.value / 64);
     }
     command->active = 0;
 }
@@ -1174,7 +1174,7 @@ void ScriptCmd_SetBgmVolume(ScriptValueCommand *command) {
 
     value = command->value.value;
     if (value < 65) {
-        Sound_SetBgmVolume((int)(game_options[1] * value) / 64);
+        Sound_SetBgmVolume((int)(game_options[GAME_OPTION_MUSIC_VOLUME] * value) / 64);
     }
     command->active = 0;
 }

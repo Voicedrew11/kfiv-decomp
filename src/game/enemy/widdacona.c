@@ -24,7 +24,6 @@
 /* Widdacona_Death: Entity.action_step (steps 0 to 2 are the shared ones) */
 #define WIDDACONA_DEATH_STEP_FOLLOW_PARTNER 3       /* waits for the partner's death, then dies too */
 #define WIDDACONA_DEATH_STEP_FADE_OUT       4       /* fades the model out over action_timer, then removes it */
-// match: the definition takes an Actor, a struct local to its file
 
 static void Widdacona_Animate(Entity *entity);
 static void Widdacona_OnHit(Entity *entity);

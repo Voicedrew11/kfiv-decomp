@@ -36,9 +36,11 @@
     }
 #define SHOT_REQUEST ((Unk1B1470Request *)shot->attack_request)
 
-/* Unk1B1470Request.shape (entity.h): the hit's shape; shapes 1 and 2 do nothing */
-#define ATTACK_SHAPE_SPHERE 0
-#define ATTACK_SHAPE_SWEPT  3
+/* Unk1B1470Request.shape (entity.h): the hit's shape; cylinder and segment do nothing */
+#define ATTACK_SHAPE_SPHERE   0
+#define ATTACK_SHAPE_CYLINDER 1 /* radius and height */
+#define ATTACK_SHAPE_SEGMENT  2 /* from the position to second_point */
+#define ATTACK_SHAPE_SWEPT    3
 /* the strip list of a map model that Attack_TestMapModel touched: a floor (list 1) */
 #define ATTACK_LIST_FLOOR   1
 
@@ -56,9 +58,9 @@ s32 Attack_Run(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     switch (((Unk1B1470RequestBits *)request)->shape) {
     case ATTACK_SHAPE_SPHERE:
         return Attack_RunSphere(request, extra);
-    case 1:
+    case ATTACK_SHAPE_CYLINDER:
         return Attack_RunShape1Stub();
-    case 2:
+    case ATTACK_SHAPE_SEGMENT:
         return Attack_RunShape2Stub();
     case ATTACK_SHAPE_SWEPT:
         return Attack_RunSwept(request, extra);
@@ -735,7 +737,7 @@ void Attack_HitPlayer(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             player_state.mp_now = 0;
         }
     }
-    if (UNK1B1470_REQUEST_UNIT(request) & UNK1B1470_UNIT_UNK4C_3) {
+    if (UNK1B1470_REQUEST_UNIT(request) & UNK1B1470_UNIT_KNOCKBACK) {
         Player_KnockBackFromHit(request, damage);
     }
     Player_TiltViewFromHit(damage);
@@ -1006,7 +1008,7 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
 
     Attack_RollEntityAilments(entity, &request->ailment_chances);
     // match: flag bit 40 (still named pad40); the source bit is read as a u8 field
-    ENTITY_FLAG_BITS(entity)->last_hit_knockback = ((Unk1B1470RequestBits *)request)->unk4C_3;
+    ENTITY_FLAG_BITS(entity)->last_hit_knockback = ((Unk1B1470RequestBits *)request)->knockback;
 
     if (by_magic && request->instant_kill_chance_percent != 0 && damage > 0) {
         chance = request->instant_kill_chance_percent - entity->params->critical_defence;
@@ -1424,15 +1426,15 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
             request.radius = check->radius;
             request.shape = ATTACK_SHAPE_SPHERE;
             break;
-        case 1:
+        case ATTACK_SHAPE_CYLINDER:
             position = &effect->saved_position;
             request.radius = check->radius;
-            request.shape = 1;
+            request.shape = ATTACK_SHAPE_CYLINDER;
             request.height = check->height;
             break;
-        case 2:
+        case ATTACK_SHAPE_SEGMENT:
             position = &effect->saved_position;
-            request.shape = 2;
+            request.shape = ATTACK_SHAPE_SEGMENT;
             Vector_Copy(request.second_point, position);
             break;
         default:
@@ -1483,7 +1485,7 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
     } else {
         request.strengths = SHOT_REQUEST->strengths;
         request.ailment_chances = SHOT_REQUEST->ailment_chances;
-        request.knockback = ((Unk1B1470RequestBits *)SHOT_REQUEST)->unk4C_3;
+        request.knockback = ((Unk1B1470RequestBits *)SHOT_REQUEST)->knockback;
         request.instant_kill_chance_percent = 0;
         request.stun_frames = 0;
         request.double_hit_chance_percent = SHOT_REQUEST->double_hit_chance_percent;

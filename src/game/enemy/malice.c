@@ -27,7 +27,6 @@
 #define MALICE_FADE_BACK_IN_STEP_FADE_IN        2   /* fades the model back in, then ends */
 #define MALICE_DORMANT_STEP_FADE_IN             2   /* fades the model in, then sets it to the live state */
 
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void Malice_Think(Entity *entity, s32 run_now);
 static void Malice_ThinkCombat(Entity *entity, s32 run_now);

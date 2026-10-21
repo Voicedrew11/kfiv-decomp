@@ -1285,8 +1285,13 @@ void ScriptCmd_SetHudShown(ScriptValueCommand *command) {
     command->active = 0;
 }
 
+/* ScriptScreenColorCommand.blend: how the screen fill is meant to blend */
+#define SCREEN_FILL_BLEND_NORMAL   0
+#define SCREEN_FILL_BLEND_ADD      1
+#define SCREEN_FILL_BLEND_SUBTRACT 2
+
 /* Command 197: sets the colour and alpha the screen is covered with (GsDraw_FillScreen), then finishes. The
-   blend mode is meant to come from `blend`, but the switch has no breaks and it always ends as 0x44. */
+   blend mode is meant to come from `blend`, but the switch has no breaks and it always ends as normal blending. */
 void ScriptCmd_SetScreenColor(ScriptScreenColorCommand *command) {
     MapDrawStateOverlays *overlays = MAP_DRAW_OVERLAYS;
 
@@ -1295,14 +1300,14 @@ void ScriptCmd_SetScreenColor(ScriptScreenColorCommand *command) {
     overlays->screen_fill_blue = command->blue.value;
     overlays->screen_fill_alpha = command->alpha.value;
     switch (command->blend.value) {
-    case 0:
-        overlays->screen_fill_blend = 0x44;
-    case 1: // match: no break in any case, so the blend mode always ends as 0x44
-        map_draw_state.screen_fill_blend = 0x48;
-    case 2:
-        map_draw_state.screen_fill_blend = 0x42;
+    case SCREEN_FILL_BLEND_NORMAL:
+        overlays->screen_fill_blend = GS_ALPHA_BLEND_NORMAL;
+    case SCREEN_FILL_BLEND_ADD: // match: no break in any case, so the blend mode always ends as normal
+        map_draw_state.screen_fill_blend = GS_ALPHA_BLEND_ADD;
+    case SCREEN_FILL_BLEND_SUBTRACT:
+        map_draw_state.screen_fill_blend = GS_ALPHA_BLEND_SUBTRACT;
     default:
-        map_draw_state.screen_fill_blend = 0x44;
+        map_draw_state.screen_fill_blend = GS_ALPHA_BLEND_NORMAL;
     }
     command->active = 0;
 }
