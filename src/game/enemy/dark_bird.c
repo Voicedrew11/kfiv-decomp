@@ -747,7 +747,7 @@ static void DarkBird_RangedAttack(Entity *entity) {
                     break;
                 }
                 if (launch_frame != 0 && elapsed < launch_frame && frame >= launch_frame) {
-                    point = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0);
+                    point = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0);
                     angles[0] = EntityMath_WrapAngle(-atan2(player_state.position.y - point[1], EntityMath_DistanceXZ(point, &player_state.position.x)));
                     if (!(rand() & 1)) {
                         angles[1] = EntityMath_WrapAngle(entity->model->rotation[1] + PI + DEG_TO_RAD((f32)(rand() % 15)));
@@ -808,8 +808,8 @@ static s32 DarkBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
         shot->player_magic = shot->player_power = 0;
         shot->is_magic_shot = 1;
         shot->shot_params = entity->params->shot_params;
-        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone);
-        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone + 1);
+        from = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), record->launches[i].bone);
+        tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), record->launches[i].bone + 1);
         if (from != NULL && tip != NULL) {
             if (record->launches[i].bone != 0xFF) {
                 delta_x = tip[0] - from[0];
@@ -838,7 +838,7 @@ static s32 DarkBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
    animation frame, each from its point, all at the given angles. */
 static s32 DarkBird_LaunchThreeShots(Entity *entity, EntityParamsUnk3D8Full *record, s32 frame_from, s32 frame_to, f32 *angles) {
     EntityUnk1B1390 *shot;
-    char *point;
+    f32 *point;
     s32 i;
 
     if (entity->ailment_4_frames != 0 && record->ignores_ailment_4 == 0) {
@@ -850,7 +850,7 @@ static s32 DarkBird_LaunchThreeShots(Entity *entity, EntityParamsUnk3D8Full *rec
         shot->player_power = 0;
         shot->player_magic = 0;
         shot->shot_params = entity->params->shot_params;
-        point = Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone);
+        point = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), record->launches[i].bone);
         if (point != NULL) {
             Attack_LaunchMagicEffect(record->launches[i].magic_effect, shot, point, angles, entity);
         }

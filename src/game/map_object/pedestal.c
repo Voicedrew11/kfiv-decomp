@@ -165,7 +165,7 @@ void MapObject_LiftMarkerStone(MapObject *object) {
     MAP_OBJECT_BYTES(object)->step = MARKER_STEP_MOVE_OUT;
     MapObject_RebuildMarkerMatrices(object);
     object->model->update_bone_points(object->model);
-    point = (void *)object->model->get_point(object->model, 0);
+    point = object->model->get_point(object->model, 0);
     Vector_Copy(&origin, point);
     Vector_Copy(&target, &player_state.position);
     target.y -= 115.0f;

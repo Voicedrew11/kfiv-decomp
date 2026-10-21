@@ -117,7 +117,7 @@ static void Widdacona_OnHit(Entity *entity) {
 static void Widdacona_Death(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     Entity *other;
-    char *part;
+    f32 *part;
 
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
@@ -140,15 +140,15 @@ static void Widdacona_Death(Entity *entity) {
         break;
     case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
-            part = Model_GetSkinnedBonePoint((char *)entity->model, 0x14);
+            part = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0x14);
             if (part != NULL) {
                 Effect_StartSpawner(0x3BC, part, entity->model->rotation, &player_state.position);
             }
-            part = Model_GetSkinnedBonePoint((char *)entity->model, 0x15);
+            part = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0x15);
             if (part != NULL) {
                 Effect_StartSpawner(0x3BC, part, entity->model->rotation, &player_state.position);
             }
-            part = Model_GetSkinnedBonePoint((char *)entity->model, 0x16);
+            part = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0x16);
             if (part != NULL) {
                 Effect_StartSpawner(0x3BC, part, entity->model->rotation, &player_state.position);
             }

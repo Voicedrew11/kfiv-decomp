@@ -635,14 +635,14 @@ void EffectBoneFade_Update(EffectActor *actor) {
     float distance;
     float fade;
     FadingMotion *motion;
-    char *bone;
+    f32 *bone;
 
     EffectKeys_ApplyScale(actor);
     motion = (FadingMotion *)&actor->motion;
     EffectKeys_ApplySpin(actor);
     EffectKeys_ApplyColour(actor);
     Model_UpdateSkinnedBonePoints(ENTITY_MODEL(actor->owner_entity));
-    bone = Model_GetSkinnedBonePoint((char *)actor->owner_entity->model, ENTITY_CONTROLLER(actor->owner_entity)->respawn_effect_bone);
+    bone = Model_GetSkinnedBonePoint(ENTITY_MODEL(actor->owner_entity), ENTITY_CONTROLLER(actor->owner_entity)->respawn_effect_bone);
     Vector_Copy(&actor->model->position, bone);
     Vector_Copy(&actor->model->rotation, &ENTITY_MODEL(actor->owner_entity)->rotation);
     distance = Effect_Distance(&player_state.position, &actor->model->position);

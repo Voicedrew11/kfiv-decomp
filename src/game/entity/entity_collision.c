@@ -1633,23 +1633,23 @@ static void EntityCollision_PushOutOfBox(CollisionOwner *owner, f32 *centre, f32
     f32 height;
 
     COLLISION_RESULT->hit = 0;
-    corner_a = (f32 *)owner->model->get_point(owner->model, 0);
+    corner_a = owner->model->get_point(owner->model, 0);
     if (corner_a == NULL) {
         return;
     }
-    corner_b = (f32 *)owner->model->get_point(owner->model, 1);
+    corner_b = owner->model->get_point(owner->model, 1);
     if (corner_b == NULL) {
         return;
     }
-    corner_c = (f32 *)owner->model->get_point(owner->model, 2);
+    corner_c = owner->model->get_point(owner->model, 2);
     if (corner_c == NULL) {
         return;
     }
-    corner_d = (f32 *)owner->model->get_point(owner->model, 3);
+    corner_d = owner->model->get_point(owner->model, 3);
     if (corner_d == NULL) {
         return;
     }
-    top = (f32 *)owner->model->get_point(owner->model, 0x1F);
+    top = owner->model->get_point(owner->model, 0x1F);
     if (top != NULL) {
         height = corner_a[1] - top[1];
         Collision_CylinderEdge(corner_a, corner_b, height, centre, radius, push);
@@ -1713,23 +1713,23 @@ static void EntityCollision_PushOutOfBoxPair(CollisionOwner *owner, f32 *centre,
 
     COLLISION_RESULT->hit = 0;
     if (((EntityModel *)owner->model)->level_tables->motion_index == BOX_PAIR_ONE_RING_MOTION && ((EntityModel *)owner->model)->level_tables->frame < 2) {
-        corner_a = (f32 *)owner->model->get_point(owner->model, 0);
+        corner_a = owner->model->get_point(owner->model, 0);
         if (corner_a == NULL) {
             return;
         }
-        corner_b = (f32 *)owner->model->get_point(owner->model, 5);
+        corner_b = owner->model->get_point(owner->model, 5);
         if (corner_b == NULL) {
             return;
         }
-        corner_c = (f32 *)owner->model->get_point(owner->model, 6);
+        corner_c = owner->model->get_point(owner->model, 6);
         if (corner_c == NULL) {
             return;
         }
-        corner_d = (f32 *)owner->model->get_point(owner->model, 3);
+        corner_d = owner->model->get_point(owner->model, 3);
         if (corner_d == NULL) {
             return;
         }
-        top = (f32 *)owner->model->get_point(owner->model, 0x1F);
+        top = owner->model->get_point(owner->model, 0x1F);
         if (top != NULL) {
             height = corner_a[1] - top[1];
             Collision_CylinderEdge(corner_a, corner_b, height, centre, radius, push);
@@ -1774,39 +1774,39 @@ static void EntityCollision_PushOutOfBoxPair(CollisionOwner *owner, f32 *centre,
             }
         }
     } else {
-        corner_a = (f32 *)owner->model->get_point(owner->model, 0);
+        corner_a = owner->model->get_point(owner->model, 0);
         if (corner_a == NULL) {
             return;
         }
-        corner_b = (f32 *)owner->model->get_point(owner->model, 1);
+        corner_b = owner->model->get_point(owner->model, 1);
         if (corner_b == NULL) {
             return;
         }
-        corner_c = (f32 *)owner->model->get_point(owner->model, 2);
+        corner_c = owner->model->get_point(owner->model, 2);
         if (corner_c == NULL) {
             return;
         }
-        corner_d = (f32 *)owner->model->get_point(owner->model, 3);
+        corner_d = owner->model->get_point(owner->model, 3);
         if (corner_d == NULL) {
             return;
         }
-        corner_e = (f32 *)owner->model->get_point(owner->model, 4);
+        corner_e = owner->model->get_point(owner->model, 4);
         if (corner_e == NULL) {
             return;
         }
-        corner_f = (f32 *)owner->model->get_point(owner->model, 5);
+        corner_f = owner->model->get_point(owner->model, 5);
         if (corner_f == NULL) {
             return;
         }
-        corner_g = (f32 *)owner->model->get_point(owner->model, 6);
+        corner_g = owner->model->get_point(owner->model, 6);
         if (corner_g == NULL) {
             return;
         }
-        corner_h = (f32 *)owner->model->get_point(owner->model, 7);
+        corner_h = owner->model->get_point(owner->model, 7);
         if (corner_h == NULL) {
             return;
         }
-        top = (f32 *)owner->model->get_point(owner->model, 0x1F);
+        top = owner->model->get_point(owner->model, 0x1F);
         if (top != NULL) {
             height = corner_a[1] - top[1];
             if (EntityMath_DistanceXZ(corner_b, corner_e) <= push * 2.5f) {
@@ -1912,10 +1912,10 @@ static void EntityCollision_PushOutOfQuad(CollisionOwner *owner, f32 *centre, f3
 
     COLLISION_RESULT->hit = 0;
     if (owner->flags & 0x10000) {
-        point_a = (f32 *)owner->model->get_point(owner->model, 0);
-        point_b = (f32 *)owner->model->get_point(owner->model, 1);
-        point_c = (f32 *)owner->model->get_point(owner->model, 2);
-        point_d = (f32 *)owner->model->get_point(owner->model, 3);
+        point_a = owner->model->get_point(owner->model, 0);
+        point_b = owner->model->get_point(owner->model, 1);
+        point_c = owner->model->get_point(owner->model, 2);
+        point_d = owner->model->get_point(owner->model, 3);
         Collision_CapsuleTriangle(point_a, point_b, point_c, centre, push, radius);
         if (COLLISION_RESULT->hit == 0) {
             Collision_CapsuleTriangle(point_a, point_c, point_d, centre, push, radius);
@@ -2018,23 +2018,23 @@ static void EntityCollision_SphereBox(CollisionOwner *owner, void *centre, f32 r
     if (owner->model->get_point(owner->model, 0x1F) == 0) {
         return;
     }
-    corner_a = (f32 *)owner->model->get_point(owner->model, 0);
+    corner_a = owner->model->get_point(owner->model, 0);
     if (corner_a == NULL) {
         return;
     }
-    corner_b = (f32 *)owner->model->get_point(owner->model, 1);
+    corner_b = owner->model->get_point(owner->model, 1);
     if (corner_b == NULL) {
         return;
     }
-    corner_c = (f32 *)owner->model->get_point(owner->model, 2);
+    corner_c = owner->model->get_point(owner->model, 2);
     if (corner_c == NULL) {
         return;
     }
-    corner_d = (f32 *)owner->model->get_point(owner->model, 3);
+    corner_d = owner->model->get_point(owner->model, 3);
     if (corner_d == NULL) {
         return;
     }
-    top = (f32 *)owner->model->get_point(owner->model, 0x1F);
+    top = owner->model->get_point(owner->model, 0x1F);
     if (top != NULL) {
         height = corner_a[1] - top[1];
         Collision_BallEdge(corner_a, corner_b, height, centre, radius);
@@ -2063,23 +2063,23 @@ static void EntityCollision_SphereBoxPair(CollisionOwner *owner, void *centre, f
 
     COLLISION_RESULT->hit = 0;
     if (((EntityModel *)owner->model)->level_tables->motion_index == BOX_PAIR_ONE_RING_MOTION && ((EntityModel *)owner->model)->level_tables->frame < 2) {
-        corner_a = (f32 *)owner->model->get_point(owner->model, 0);
+        corner_a = owner->model->get_point(owner->model, 0);
         if (corner_a == NULL) {
             return;
         }
-        corner_b = (f32 *)owner->model->get_point(owner->model, 0);
+        corner_b = owner->model->get_point(owner->model, 0);
         if (corner_b == NULL) {
             return;
         }
-        corner_c = (f32 *)owner->model->get_point(owner->model, 6);
+        corner_c = owner->model->get_point(owner->model, 6);
         if (corner_c == NULL) {
             return;
         }
-        corner_d = (f32 *)owner->model->get_point(owner->model, 3);
+        corner_d = owner->model->get_point(owner->model, 3);
         if (corner_d == NULL) {
             return;
         }
-        top = (f32 *)owner->model->get_point(owner->model, 0x1F);
+        top = owner->model->get_point(owner->model, 0x1F);
         if (top != NULL) {
             height = corner_a[1] - top[1];
             Collision_BallEdge(corner_a, corner_b, height, centre, radius);
@@ -2097,39 +2097,39 @@ static void EntityCollision_SphereBoxPair(CollisionOwner *owner, void *centre, f
             Collision_BallEdge(corner_d, corner_a, height, centre, radius);
         }
     } else {
-        corner_a = (f32 *)owner->model->get_point(owner->model, 0);
+        corner_a = owner->model->get_point(owner->model, 0);
         if (corner_a == NULL) {
             return;
         }
-        corner_b = (f32 *)owner->model->get_point(owner->model, 1);
+        corner_b = owner->model->get_point(owner->model, 1);
         if (corner_b == NULL) {
             return;
         }
-        corner_c = (f32 *)owner->model->get_point(owner->model, 2);
+        corner_c = owner->model->get_point(owner->model, 2);
         if (corner_c == NULL) {
             return;
         }
-        corner_d = (f32 *)owner->model->get_point(owner->model, 3);
+        corner_d = owner->model->get_point(owner->model, 3);
         if (corner_d == NULL) {
             return;
         }
-        corner_e = (f32 *)owner->model->get_point(owner->model, 4);
+        corner_e = owner->model->get_point(owner->model, 4);
         if (corner_e == NULL) {
             return;
         }
-        corner_f = (f32 *)owner->model->get_point(owner->model, 5);
+        corner_f = owner->model->get_point(owner->model, 5);
         if (corner_f == NULL) {
             return;
         }
-        corner_g = (f32 *)owner->model->get_point(owner->model, 6);
+        corner_g = owner->model->get_point(owner->model, 6);
         if (corner_g == NULL) {
             return;
         }
-        corner_h = (f32 *)owner->model->get_point(owner->model, 7);
+        corner_h = owner->model->get_point(owner->model, 7);
         if (corner_h == NULL) {
             return;
         }
-        top = (f32 *)owner->model->get_point(owner->model, 0x1F);
+        top = owner->model->get_point(owner->model, 0x1F);
         if (top != NULL) {
             height = corner_a[1] - top[1];
             Collision_BallEdge(corner_a, corner_b, height, centre, radius);
@@ -2171,10 +2171,10 @@ static void EntityCollision_SphereQuad(CollisionOwner *owner, void *centre, f32 
 
     COLLISION_RESULT->hit = 0;
     if (owner->flags & 0x10000) {
-        point_a = (void *)owner->model->get_point(owner->model, 0);
-        point_b = (void *)owner->model->get_point(owner->model, 1);
-        point_c = (void *)owner->model->get_point(owner->model, 2);
-        point_d = (void *)owner->model->get_point(owner->model, 3);
+        point_a = owner->model->get_point(owner->model, 0);
+        point_b = owner->model->get_point(owner->model, 1);
+        point_c = owner->model->get_point(owner->model, 2);
+        point_d = owner->model->get_point(owner->model, 3);
         EntityCollision_SphereTriangle(point_a, point_b, point_c, centre, radius);
         if (COLLISION_RESULT->hit != 0) {
             return;
@@ -2196,10 +2196,10 @@ static void EntityCollision_SphereQuads(CollisionOwner *owner, void *centre, f32
             return;
         }
         for (i = 0; i < 0x20; i += 4) {
-            corner_a = (f32 *)owner->model->get_point(owner->model, i);
-            corner_b = (f32 *)owner->model->get_point(owner->model, i + 1);
-            corner_c = (f32 *)owner->model->get_point(owner->model, i + 2);
-            corner_d = (f32 *)owner->model->get_point(owner->model, i + 3);
+            corner_a = owner->model->get_point(owner->model, i);
+            corner_b = owner->model->get_point(owner->model, i + 1);
+            corner_c = owner->model->get_point(owner->model, i + 2);
+            corner_d = owner->model->get_point(owner->model, i + 3);
             if (corner_a[0] == owner->model->position.x && corner_a[1] == owner->model->position.y
                 && corner_a[2] == owner->model->position.z) {
                 return;

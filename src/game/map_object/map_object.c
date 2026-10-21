@@ -370,8 +370,8 @@ void MapObject_UpdateAll(void) {
                 shown = object->model;
                 if (shown->parts != NULL) {
                     shown->update_bone_points(shown);
-                    from = (f32 *)object->model->get_point(object->model, object->source->effect_start_point);
-                    next = (f32 *)object->model->get_point(object->model, object->source->effect_start_point + 1);
+                    from = object->model->get_point(object->model, object->source->effect_start_point);
+                    next = object->model->get_point(object->model, object->source->effect_start_point + 1);
                     delta_x = next[0] - from[0];
                     delta_y = next[1] - from[1];
                     delta_z = next[2] - from[2];
@@ -867,8 +867,8 @@ void MapObject_UpdateNoBonePoints(ModelInstance *model) {
 }
 
 /* get_point hook of a map object model without points: returns the model's position, whatever the index. */
-void *MapObject_GetPositionAsPoint(void *model, int index) {
-    return &((ModelInstance *)model)->position;
+f32 *MapObject_GetPositionAsPoint(ModelInstance *model, int index) {
+    return &model->position.x;
 }
 
 /* Stops the sound a map object is playing, if any. */

@@ -198,7 +198,7 @@ static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg) {
    work word unk6A (chance unk438, pause type_param_0). */
 static void AcidCrawler_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
-    char *part = Model_GetSkinnedBonePoint((char *)entity->model, 0);
+    f32 *part = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0);
     f32 target[4];
     f32 direction[4];
     f32 offset;

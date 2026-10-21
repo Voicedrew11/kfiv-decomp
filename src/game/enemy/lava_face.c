@@ -75,8 +75,8 @@ static void LavaFace_Think(Entity *entity, s32 run_now) {
     f32 yaw;
 
     if (entity->action_timer == 0 && (s16)entity->params->action_frames != 0) {
-        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->yaw_limit_deg);
-        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->yaw_limit_deg + 1);
+        from = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), entity->params->yaw_limit_deg);
+        tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), entity->params->yaw_limit_deg + 1);
         if (from == NULL || tip == NULL) {
             return;
         }

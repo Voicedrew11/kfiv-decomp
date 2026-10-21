@@ -169,7 +169,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
     model->draw_parts = Model_DrawSkinned;
     *file_cursor += file->size;
     model->update_bone_points = Model_UpdateSkinnedBonePoints;
-    model->get_point = (void *(*)(void *, int))Model_GetSkinnedBonePoint;
+    model->get_point = Model_GetSkinnedBonePoint;
     first = TRUE;
     model->draw_header_vector[0] = 0;
     model->draw_header_vector[1] = 0;
@@ -520,12 +520,12 @@ void Model_UpdateSkinnedBonePoints(ModelInstance *actor) {
 }
 
 /* Where point `index` of a model is: one of its 32 bone points, or its position for any other index. */
-char *Model_GetSkinnedBonePoint(char *model, u32 index) {
+f32 *Model_GetSkinnedBonePoint(ModelInstance *model, int index) {
     if (model != NULL) {
-        if (index < 0x20U) {
-            return (char *)&((ModelInstance *)model)->bone_positions[index];
+        if ((u32)index < 32) {
+            return &model->bone_positions[index].x;
         }
-        return (char *)&((ModelInstance *)model)->position;
+        return &model->position.x;
     }
     return NULL;
 }
@@ -807,7 +807,7 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
     model->draw_parts = Model_DrawPosed;
     *file_cursor += file->size;
     model->update_bone_points = Model_UpdateBonePoints;
-    model->get_point = (void *(*)(void *, int))Model_GetBonePoint;
+    model->get_point = Model_GetBonePoint;
 }
 
 /* Draws a model (ModelInstance.draw_parts of the models Model_SetUpPosed sets up): queues a packet with
@@ -1275,11 +1275,11 @@ void Model_UpdateBonePoints(ModelInstance *model) {
 }
 
 /* Where bone `index` of a model is; the model's own position when it has no bones or there is no such bone. */
-Vector4 *Model_GetBonePoint(ModelInstance *model, s32 index) {
+f32 *Model_GetBonePoint(ModelInstance *model, int index) {
     if (model->bone_anchors != NULL && index >= 0 && index < 32) {
-        return &model->bone_positions[index];
+        return &model->bone_positions[index].x;
     }
-    return &model->position;
+    return &model->position.x;
 }
 
 /* Rewrites the PRIM field (bits 15-25 of the GIF tag's high word at +0x74) of every data block of every part:

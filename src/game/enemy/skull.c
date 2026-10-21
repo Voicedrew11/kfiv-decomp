@@ -495,9 +495,9 @@ static void Skull_Animate(Entity *entity) {
             shot->player_power = 0;
             shot->player_magic = 0;
             shot->shot_params = entity->params->shot_params;
-            Attack_LaunchMagicEffect(0xD0, shot, Model_GetSkinnedBonePoint((char *)entity->model, 0xFF), entity->model->rotation, entity);
+            Attack_LaunchMagicEffect(0xD0, shot, Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0xFF), entity->model->rotation, entity);
         } else {
-            EntityEvent_StartEffectAtPoint((char **)entity, 0x39D, 0xFF, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, 0x39D, 0xFF, entity->model->rotation);
         }
     }
 }

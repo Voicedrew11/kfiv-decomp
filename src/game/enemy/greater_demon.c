@@ -699,7 +699,7 @@ static void GreaterDemon_Guard(Entity *entity) {
             entity->flags &= ~ENTITY_FLAG_HIT_BY_PLAYER;
             entity->action_timer = entity->params->guard_frames;
         }
-        EntityEvent_StartEffectAtPoint((char **)entity, 0x32F, 0, (int)entity->model->rotation);
+        EntityEvent_StartEffectAtPoint(entity, 0x32F, 0, entity->model->rotation);
         if (entity->action_timer == 0) {
             ENTITY_FLAG_BITS(entity)->guarding = 0;
             ENTITY_FLAG_BITS(entity)->animates = TRUE;

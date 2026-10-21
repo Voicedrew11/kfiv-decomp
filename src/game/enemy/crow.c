@@ -144,7 +144,7 @@ static void Crow_MoveOffAndRemove(Entity *entity, s32 run_now) {
     ENTITY_FLAG_BITS(entity)->motion_step_mode = MOTION_STEP_IN_PLACE;
     entity->move_command |= MOVE_COMMAND_FORWARD;
     if (ai_state->pause_timer < entity->params->type_param_0) {
-        EntityEvent_StartEffectAtPoint((char **)entity, entity->params->far_distance, 0xFF, (int)entity->model->rotation);
+        EntityEvent_StartEffectAtPoint(entity, entity->params->far_distance, 0xFF, entity->model->rotation);
         ai_state->pause_timer++;
     }
     // match: the whole step is written out in both arms (only the call is shared in retail)

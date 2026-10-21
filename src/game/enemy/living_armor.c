@@ -359,8 +359,8 @@ static void LivingArmor_MeleeAttack1(Entity *entity) {
         } else {
             ai_state->turn_rate = 0.0f;
         }
-        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 9);
-        base = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 8);
+        tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 9);
+        base = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 8);
         if (tip != NULL && base != NULL) {
             if (entity->model->level_tables->frame >= 10 && entity->model->level_tables->frame <= 22) {
                 delta_x = base[0] - tip[0];
@@ -520,8 +520,8 @@ static void LivingArmor_MeleeAttack0(Entity *entity) {
         } else {
             ai_state->turn_rate = 0.0f;
         }
-        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 9);
-        base = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 8);
+        tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 9);
+        base = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 8);
         if (tip != NULL && base != NULL) {
             if (entity->model->level_tables->frame >= 10 && entity->model->level_tables->frame <= 22) {
                 delta_x = base[0] - tip[0];

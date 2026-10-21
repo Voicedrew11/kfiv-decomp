@@ -246,8 +246,8 @@ void Player_UpdateArmModels(void) {
             *(ModelMatrix *)arm_part->matrix = *(ModelMatrix *)part->matrix;
         }
         held_item_model.update_bone_points(&held_item_model);
-        Vector_Copy(&held_item_arm_points.points[0], (void *)held_item_model.get_point(&held_item_model, 30));
-        Vector_Copy(&held_item_arm_points.points[1], (void *)held_item_model.get_point(&held_item_model, 31));
+        Vector_Copy(&held_item_arm_points.points[0], held_item_model.get_point(&held_item_model, 30));
+        Vector_Copy(&held_item_arm_points.points[1], held_item_model.get_point(&held_item_model, 31));
     }
     held_item_light_blocks[0] = current_light_block;
 }
@@ -276,8 +276,8 @@ void WeaponTrail_Update(void) {
         if (item == 0x98) {
             return;
         }
-        blade_base = (void *)weapon->get_point(weapon, 0);
-        blade_tip = (void *)weapon->get_point(weapon, 1);
+        blade_base = weapon->get_point(weapon, 0);
+        blade_tip = weapon->get_point(weapon, 1);
         sceVu0MulMatrix(world_screen, world_screen_matrix, identity_matrix);
         Vu0_LoadMatrix(world_screen);
         Vu0_ProjectToScreen((int *)&point, blade_base);

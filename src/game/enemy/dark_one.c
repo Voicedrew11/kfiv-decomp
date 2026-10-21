@@ -83,18 +83,18 @@ static void DarkOne_Think(Entity *entity, s32 run_now) {
     if (frame_counter % 3U == 0) {
         switch (dark_one_hits_left) {
         case 3:
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->pitch_limit_deg, 0xFF, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, entity->params->pitch_limit_deg, 0xFF, entity->model->rotation);
             break;
         case 2:
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->yaw_limit_deg, 0xFF, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, entity->params->yaw_limit_deg, 0xFF, entity->model->rotation);
             break;
         default:
-            EntityEvent_StartEffectAtPoint((char **)entity, (s16)entity->params->action_frames, 0xFF, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, (s16)entity->params->action_frames, 0xFF, entity->model->rotation);
             break;
         }
     }
     if (ENTITY_FLAG_BITS(entity)->hit_by_player) {
-        EntityEvent_StartEffectAtPoint((char **)entity, 0x13D, 0xFF, (int)entity->model->rotation);
+        EntityEvent_StartEffectAtPoint(entity, 0x13D, 0xFF, entity->model->rotation);
         ENTITY_FLAG_BITS(entity)->hit_by_player = FALSE;
         if (dark_one_hits_left <= 0) {
             entity->hit_flash_frames = 6;

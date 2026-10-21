@@ -209,7 +209,7 @@ static void HighSkeleton_DormantScaleUp(Entity *entity) {
         entity->action_step++;
         break;
     case HIGH_SKELETON_SCALE_UP_STEP_EFFECT:
-        EntityEvent_StartEffectAtPoint((char **)entity, 0x22F, 0xFF, (int)entity->model->rotation);
+        EntityEvent_StartEffectAtPoint(entity, 0x22F, 0xFF, entity->model->rotation);
         entity->action_step++;
         break;
     case HIGH_SKELETON_SCALE_UP_STEP_GROW:

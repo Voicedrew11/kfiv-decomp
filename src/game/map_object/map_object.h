@@ -101,7 +101,7 @@ void MapObject_DrawModel(ModelInstance *model);
 void MapObject_DrawModelWithAlpha(ModelInstance *model);
 void MapObject_DrawModelNoDepthWrite(ModelInstance *model);
 void MapObject_UpdateNoBonePoints(ModelInstance *model);
-void *MapObject_GetPositionAsPoint(void *model, int index);
+f32 *MapObject_GetPositionAsPoint(ModelInstance *model, int index);
 void MapObject_StopSound(MapObject *object);
 
 /* map_object/map_object_common.c */

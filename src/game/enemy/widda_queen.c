@@ -331,8 +331,8 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
             ai_state->step_index = 2;
         }
         if (entity->model->level_tables->frame == 0x16 && (entity->ailment_4_frames == 0 || unk3D8->ignores_ailment_4 != 0)) {
-            EntityEvent_StartEffectAtPoint((char **)entity, 0x373, 4, (int)entity->model->rotation);
-            EntityEvent_StartEffectAtPoint((char **)entity, 0x373, 8, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, 0x373, 4, entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, 0x373, 8, entity->model->rotation);
         }
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(target, &player_state.position);

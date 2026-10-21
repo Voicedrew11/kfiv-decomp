@@ -100,7 +100,7 @@ static void Slasher_OnHit(Entity *entity) {
    EntityParams.type_param_0 at the points Model_GetSkinnedBonePoint gives for 30 and 31. */
 static void Slasher_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
-    char *part;
+    f32 *part;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
@@ -124,9 +124,9 @@ static void Slasher_Think(Entity *entity, s32 run_now) {
             }
         }
     }
-    part = Model_GetSkinnedBonePoint((char *)entity->model, 0x1E);
+    part = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0x1E);
     Effect_StartSpawner(entity->params->type_param_0, part, entity->model->rotation, entity);
-    part = Model_GetSkinnedBonePoint((char *)entity->model, 0x1F);
+    part = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0x1F);
     Effect_StartSpawner(entity->params->type_param_0, part, entity->model->rotation, entity);
 }
 

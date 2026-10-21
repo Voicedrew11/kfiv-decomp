@@ -250,8 +250,8 @@ void EntityAi_SpawnBoneEffect(Entity *entity, int effect_id, int point) {
     f32 yaw;
     f32 turns;
 
-    from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, point);
-    tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, point + 1);
+    from = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), point);
+    tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), point + 1);
     if (from != NULL && tip != NULL) {
         delta_x = tip[0] - from[0];
         delta_y = tip[1] - from[1];

@@ -338,10 +338,10 @@ static void AncientKing_RespawnOthers(Entity *entity) {
         break;
     case ACTION_STEP_PLAY:
         if (((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame == entity->params->far_distance) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->near_distance, entity->params->type_param_2, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, entity->params->near_distance, entity->params->type_param_2, entity->model->rotation);
         }
         if (entity->params->type_param_1 < ((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->type_param_0, entity->params->type_param_2, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, entity->params->type_param_0, entity->params->type_param_2, entity->model->rotation);
             AncientKing_RespawnTwoOthers(entity);
             entity->action_step++;
         }
@@ -666,7 +666,7 @@ static void AncientKing_RangedAttack1(Entity *entity) {
         for (i = 0; i < 4; i++) {
             if (entity->ailment_4_frames == 0 || unk3D8->ignores_ailment_4 != 0) {
                 if (elapsed < launch_frames.frames[i] && entity->model->level_tables->frame >= launch_frames.frames[i]) {
-                    source = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->type_param_2);
+                    source = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), entity->params->type_param_2);
                     if (source != NULL) {
                         delta_x = source[0] - entity->model->position[0];
                         delta_z = source[2] - entity->model->position[2];
@@ -714,10 +714,10 @@ static void AncientKing_RespawnOthersAfterSwitch(Entity *entity) {
         break;
     case ACTION_STEP_PLAY:
         if (((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame == entity->params->far_distance) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->near_distance, entity->params->type_param_2, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, entity->params->near_distance, entity->params->type_param_2, entity->model->rotation);
         }
         if (entity->params->type_param_1 < entity->model->level_tables->frame) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->type_param_0, entity->params->type_param_2, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, entity->params->type_param_0, entity->params->type_param_2, entity->model->rotation);
             AncientKing_RespawnTwoOthers(entity);
             entity->action_step++;
         }
