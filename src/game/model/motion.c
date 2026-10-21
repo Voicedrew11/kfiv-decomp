@@ -61,7 +61,7 @@ void Motion_SetPartSlots(EntityModel *model, s32 first, s32 last, s32 value) {
 /* As Motion_SeekKeys, for the parts in motion slot `slot` only. */
 int Motion_SeekSlotKeys(ModelInstance *model, int slot, int table_index, int value) {
     // match: indexing level_tables as an array swaps the addu operands
-    ModelPartLevels **table = (ModelPartLevels **)((char *)model->level_tables + (table_index << 2));
+    ModelPartLevels **table = &model->level_tables[table_index];
     ModelPartLevels *levels;
     ModelPart *part;
     u16 *threshold;
@@ -201,7 +201,7 @@ static s32 Motion_PoseSlot(ModelInstance *model, s32 type, s32 table, s32 frame_
     // match: indexing level_tables as an array swaps the addu operands
     motion = *(MotionData **)((char *)model->level_tables + (table << 2));
     motion = (MotionData *)((ModelPartLevels *)motion - 1);
-    record = *(ModelPartLevels **)((char *)model->level_tables + (table << 2));
+    record = model->level_tables[table];
     vectors = motion->vectors;
     if (backwards != 0) {
         frame_fixed -= step;
@@ -334,7 +334,7 @@ s32 Motion_BlendSlotToPose(ModelInstance *model, s32 type, s32 table, s16 frame,
     // match: indexing level_tables as an array swaps the addu operands
     motion = *(MotionData **)((char *)model->level_tables + (table << 2));
     motion = (MotionData *)((ModelPartLevels *)motion - 1);
-    record = *(ModelPartLevels **)((char *)model->level_tables + (table << 2));
+    record = model->level_tables[table];
     vectors = motion->vectors;
     for (i = 0; i < model->part_count; i++, record++) {
         part = &model->parts[i];
@@ -459,8 +459,8 @@ s32 Motion_MixSlotFirstKeys(ModelInstance *model, s32 type, s32 table_a, s32 tab
     motion_a = (MotionData *)((ModelPartLevels *)motion_a - 1);
     motion_b = *(MotionData **)((char *)model->level_tables + (table_b << 2));
     motion_b = (MotionData *)((ModelPartLevels *)motion_b - 1);
-    record_a = *(ModelPartLevels **)((char *)model->level_tables + (table_a << 2));
-    record_b = *(ModelPartLevels **)((char *)model->level_tables + (table_b << 2));
+    record_a = model->level_tables[table_a];
+    record_b = model->level_tables[table_b];
     vectors_a = motion_a->vectors;
     vectors_b = motion_b->vectors;
     part = model->parts;
@@ -1140,8 +1140,8 @@ s32 Motion_MixFirstKeys(ModelInstance *model, s32 table_a, s32 table_b, f32 rati
     motion_a = (MotionData *)((ModelPartLevels *)motion_a - 1);
     motion_b = *(MotionData **)((char *)model->level_tables + (table_b << 2));
     motion_b = (MotionData *)((ModelPartLevels *)motion_b - 1);
-    record_a = *(ModelPartLevels **)((char *)model->level_tables + (table_a << 2));
-    record_b = *(ModelPartLevels **)((char *)model->level_tables + (table_b << 2));
+    record_a = model->level_tables[table_a];
+    record_b = model->level_tables[table_b];
     vectors_a = motion_a->vectors;
     vectors_b = motion_b->vectors;
     part = model->parts;

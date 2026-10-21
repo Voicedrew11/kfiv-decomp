@@ -149,6 +149,9 @@ typedef struct {
     ModelPartVertex vertices[1];    /* 0x90 */
 } ModelPartData;
 
+/* the data block `qwords` quadwords on from `data` */
+#define MODEL_PART_DATA_SKIP(data, qwords) ((ModelPartData *)((char *)(data) + (qwords) * 16))
+
 #define MODEL_RECORD_ID_MASK 0x3FFF          /* ModelPartRecord.id_word: the record id, low 14 bits */
 #define MODEL_RECORD_PAYLOAD_MASK 0x7FFF     /* ModelPartRecord.payload_size: low 15 bits */
 

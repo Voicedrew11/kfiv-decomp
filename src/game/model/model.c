@@ -155,7 +155,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
         data = (ModelPartData *)(u32)part->data_addr;
         for (j = 0; j < file_part->data_count; j++) {
             length = data->length;
-            data = (ModelPartData *)((char *)data + length * 16);
+            data = MODEL_PART_DATA_SKIP(data, length);
         }
         part->position[0] = part->position[1] = part->position[2] = 0.0f;
         part->position[3] = 1.0f;
@@ -188,7 +188,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
                 first = FALSE;
                 data->texture_word.clut_load_mode = GS_TEX0_CLD_LOAD_TO_CBP0;
             }
-            data = (ModelPartData *)((char *)data + length * 16);
+            data = MODEL_PART_DATA_SKIP(data, length);
         }
     }
 }
@@ -331,7 +331,7 @@ void Model_DrawSkinned(ModelInstance *model) {
             *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
             *packet = (u32)data + 0x10;
             packet += 3;
-            data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+            data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
         }
     }
     packet = Packet_Alloc(1); // match: packet named after packet_start's last use, or the stores go through packet_start
@@ -483,7 +483,7 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
                 *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
-                data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+                data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
             }
             packet = Packet_Alloc(1); // match: packet named after packet_start's last use, or the stores go through packet_start
             Packet_AppendToChain(packet_start, packet);
@@ -777,7 +777,7 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
                         first = FALSE;
                         break;
                     }
-                    data = (ModelPartData *)((char *)data + (length + 1) * 16);
+                    data = MODEL_PART_DATA_SKIP(data, length + 1);
                 }
             }
             part->position[0] = file_part->position[0];
@@ -905,7 +905,7 @@ void Model_DrawPosed(ModelInstance *model) {
                 *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
-                data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+                data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
             }
         }
         packet = Packet_Alloc(1);
@@ -1009,7 +1009,7 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
                 *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
-                data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+                data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
             }
         }
         packet = Packet_Alloc(1);
@@ -1122,7 +1122,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
                 *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
-                data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+                data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
             }
             Packet_AppendToChain(packet_start, packet);
         }
@@ -1238,7 +1238,7 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
                 *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
-                data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+                data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
             }
             Packet_AppendToChain(packet_start, packet);
         }
@@ -1347,7 +1347,7 @@ void Model_SetTexture(ModelInstance *model, u64 unk40, s64 unk30) {
                 ((ModelPartDataBits30 *)&block->tex0)->clut_load_mode = GS_TEX0_CLD_LOAD_TO_CBP0;
                 first = FALSE;
             }
-            data = (ModelPartData *)((char *)block + (length + 1) * 16);
+            data = MODEL_PART_DATA_SKIP(block, length + 1);
         }
     }
 }
