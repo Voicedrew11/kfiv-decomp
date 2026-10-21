@@ -17,7 +17,7 @@ void EntityType72_Init(Entity *entity) {
 
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         // match: the pointer has to be formed inside the loop
-        u8 *dest = (u8 *)&entity->ai_state;
+        u8 *dest = ENTITY_WORK_BYTES(entity);
 
         dest[i] = 0;
     }

@@ -41,8 +41,8 @@ static int Npc_ThinkType81Stand(void *entity_ptr, int run_now);
    Npc_ handlers, its look part from EntityParams.type_param_1, and flag bit 16 set. */
 void Npc_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     EntityModelPart80 *part;
     s32 i;
 
@@ -50,7 +50,7 @@ void Npc_Init(Entity *entity) {
     entity->model->look_at_part = part;
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->ai_state;
+        u8 *dest = ENTITY_WORK_BYTES(entity);
 
         dest[i] = 0;
     }
@@ -570,8 +570,8 @@ static void Npc_Move(Entity *entity) {
 /* The set-up function of entity type 81: as Npc_Init, with Npc_ThinkType81 and Npc_OnHitType81. */
 void Npc_InitType81(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     EntityModelPart80 *part;
     s32 i;
 
@@ -579,7 +579,7 @@ void Npc_InitType81(Entity *entity) {
     entity->model->look_at_part = part;
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->ai_state;
+        u8 *dest = ENTITY_WORK_BYTES(entity);
 
         dest[i] = 0;
     }

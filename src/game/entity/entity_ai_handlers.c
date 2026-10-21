@@ -604,18 +604,18 @@ void EntityAi_Update(Entity *entity) {
 
 /* The set-up function of entity type 0 (entity_type_handlers[0]): clears the work area, installs the default handlers
    (EntityAi_Think, EntityAi_Animate, EntityAi_OnHit, EntityAi_Move, EntityAi_Dormant, EntityAi_Death), sets
-   the choice weights unkBC and unkC0 to 0x80, and starts the dormant action (spawn flag bit 58) or the move
+   the choice weights choice_weights and attack_weights to 0x80, and starts the dormant action (spawn flag bit 58) or the move
    action. */
 void EntityAi_InitDefaults(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->ai_state;
+        u8 *dest = ENTITY_WORK_BYTES(entity);
 
         dest[i] = 0;
     }
