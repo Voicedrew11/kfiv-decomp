@@ -124,8 +124,8 @@ void Onyx_Init(Entity *entity) {
     Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
-/* The think handler: as EntityAi_Think, with Onyx_ThinkCombat for state 2. Counts down work
-   word unk6E; once it is 0 (and Onyx_SwitchAttack is not running) it puts the weights of
+/* The think handler: as EntityAi_Think, with Onyx_ThinkCombat for state 2. Counts down
+   reload_timer; once it is 0 (and Onyx_SwitchAttack is not running) it puts the weights of
    ranged record 0 and melee records 1 and 2 back in ai_state.pause_timer, sub_timer and mode_timer. */
 static void Onyx_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -168,7 +168,7 @@ static void Onyx_Think(Entity *entity, s32 run_now) {
    Onyx_PickAttack draws the attack. When the draw is not the attack ai_state.step_index holds,
    it stores it and starts Onyx_SwitchAttack first; else it starts
    Onyx_RangedAttack0 or EntityAi_MeleeAttack; a draw of melee record 0 makes it close in
-   for 30 to 89 frames instead. Closing in with unk7A at 0 keeps a distance
+   for 30 to 89 frames instead. Closing in with step_index at 0 keeps a distance
    (Onyx_GetKeepRangeCommand); it never runs. */
 static void Onyx_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -279,7 +279,7 @@ static void Onyx_ThinkCombat(Entity *entity, s32 run_now) {
 }
 
 /* The ranged attack with record 0 (busy bit 1): animation 23, turning to the player throughout;
-   from frame EntityParams.near_distance to unk438 it sets flag bit 9 and launches the record's shots on
+   from frame EntityParams.near_distance to EntityParams.far_distance it sets flag bit 9 and launches the record's shots on
    two frames in three. */
 static void Onyx_RangedAttack0(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -330,8 +330,8 @@ static void Onyx_RangedAttack0(Entity *entity) {
 /* An action (busy bit 0x1000): plays animation 17 and then animation 18 to their ends. Between the
    two it sets bits 40 and 41 of model parts 8 to 32 and clears them for the parts that go with the
    attack in ai_state.step_index (0: parts 22 to 31, 1: 11 and 12, 2: 13 to 21, else 8 to 10), and
-   leaves only that attack its weight in ai_state.pause_timer to mode_timer. At the end it sets work word
-   unk6E to EntityParams.action_frames. */
+   leaves only that attack its weight in ai_state.pause_timer to mode_timer. At the end it sets reload_timer
+   to EntityParams.action_frames. */
 static void Onyx_SwitchAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityModelPart80 *part;

@@ -144,7 +144,7 @@ static void ExpeditionArcher_PitchPartToPlayer(Entity *actor) {
 }
 
 /* The think handler: as EntityAi_Think, with ExpeditionArcher_ThinkCombat for state 2. Before that it
-   clears bit 40 of model part 5's unk68 during frames 9 to 46 of animations 23 and 24 and sets it
+   clears bit 40 of model part 5's part_flags during frames 9 to 46 of animations 23 and 24 and sets it
    otherwise. */
 static void ExpeditionArcher_Think(Entity *entity, s32 run_now) {
     if (((u8)entity->animation_index == ENTITY_MOTION_RANGED_ATTACK || (u8)entity->animation_index == ENTITY_MOTION_RANGED_ATTACK + 1) && entity->model->level_tables->blend_left == 0 &&

@@ -293,7 +293,7 @@ typedef struct {
     f32 height;                     /* 0x10 EffectDef.turn_rate: the floor is looked for within it */
     f32 fall_speed;                 /* 0x14 */
     f32 sway_rate;                  /* 0x18 EffectDef.ground_height: the sway is the sine of this times angle */
-    f32 angle_speed;                /* 0x1C EffectDef.spread_angle, grows by unkE8 each frame */
+    f32 angle_speed;                /* 0x1C EffectDef.spread_angle, grows by spin_rate each frame */
     f32 angle;                      /* 0x20 */
     s8 ended;                       /* 0x24 set when it starts with no floor under it */
 } GroundSwayMotion;

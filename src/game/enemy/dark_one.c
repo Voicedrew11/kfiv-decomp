@@ -73,10 +73,10 @@ void DarkOne_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think without the walk back to the spawn point, with
    EntityAi_ThinkCombat for states 1 and 2. Every third frame it calls EntityEvent_StartEffectAtPoint with
-   EntityParams.pitch_limit_deg, unk432 or unk434, by dark_one_hits_left (3, 2, other). In a frame with flag bit 43
+   EntityParams.pitch_limit_deg, yaw_limit_deg or action_frames, by dark_one_hits_left (3, 2, other). In a frame with flag bit 43
    set it calls EntityEvent_StartEffectAtPoint with 0x13D and clears the bit; then, with dark_one_hits_left at 0 or less, it
-   sets Entity.hit_flash_frames to 6 and starts DarkOne_Death, and else, when dark_one_hits_left has changed (work
-   byte unk7A keeps it), calls EntityEvent_StartCue and Sound_PlayMapAtRange. */
+   sets Entity.hit_flash_frames to 6 and starts DarkOne_Death, and else, when dark_one_hits_left has changed (ai_state.step_index
+   keeps it), calls EntityEvent_StartCue and Sound_PlayMapAtRange. */
 static void DarkOne_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 

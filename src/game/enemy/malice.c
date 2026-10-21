@@ -157,7 +157,7 @@ static void Malice_Think(Entity *entity, s32 run_now) {
 /* The think function of state 2: as EntityAi_ThinkCombat, but first it starts
    Malice_ToggleFadeLevel (when ai_state.action_flags is 1 and ai_state.sub_timer has run out, or with a
    chance of EntityParams.type_param_0 in 100 when the timer is at 0) or Malice_FadeOutAndRelocate (a
-   chance of unk438 in 100). It attacks only with unk7B at 0 and the player within 200 in y, and
+   chance of EntityParams.far_distance in 100). It attacks only with action_flags at 0 and the player within 200 in y, and
    else goes to a point EntityPoint_PickNearFromDistance picks; ranged record 0 is Malice_RangedAttack0. Closing
    in never runs. */
 static void Malice_ThinkCombat(Entity *entity, s32 run_now) {
@@ -291,8 +291,8 @@ static void Malice_Move(Entity *entity) {
 }
 
 /* Helper of Malice_Think: carries out the command in Entity.move_command. It turns the entity and
-   speeds up or slows down along its three axes by EntityParams.speed_step_per_frame a frame up to unk54 (work
-   floats unk44, unk48 and unk4C; in y half the step and a fifth of the limit), twice as fast for
+   speeds up or slows down along its three axes by EntityParams.speed_step_per_frame a frame up to EntityParams.max_speed (work
+   floats move_speed, part_angle_x and part_angle_y; in y half the step and a fifth of the limit), twice as fast for
    command bit 0x40. */
 static void Malice_ApplyMoveCommand(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -393,7 +393,7 @@ static void Malice_ApplyMoveCommand(Entity *entity) {
 }
 
 /* An action (busy bit 0x1000): plays animation 1 while Entity.model_alpha goes by 1 a frame up to 0x30
-   (ai_state.action_flags set) or down to 0x10 (clear), then flips unk7B, sets ai_state.sub_timer to
+   (ai_state.action_flags set) or down to 0x10 (clear), then flips action_flags, sets ai_state.sub_timer to
    EntityParams.near_distance and thinks. */
 static void Malice_ToggleFadeLevel(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -499,7 +499,7 @@ static void Malice_FadeOutAndRelocate(Entity *entity) {
 /* A third action that plays animation 1 (busy bit 0x3000), started by Malice_FadeOutAndRelocate:
    waits EntityParams.action_frames frames, turns the entity to the player, calls EntityEvent_StartEffectAtPoint with 0x235
    and takes Entity.model_alpha back up to 0x30 (0x10 with ai_state.action_flags set), then clears work word
-   unk68 and thinks. */
+   pause_timer and thinks. */
 static void Malice_FadeBackIn(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 

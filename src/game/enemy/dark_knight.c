@@ -101,7 +101,7 @@ static void DarkKnight_OnHit(Entity *entity) {
    every frame: it starts effect 0x3D7 at model points 30 and 31, pointing to points 28 and 29;
    while ai_state.pause_timer counts down (DarkKnight_RangedAttack0 sets it), for the first
    EntityParams.near_distance frames it starts one of effects 0x21F to 0x221 at point 4 and writes
-   EntityParams.far_distance into unk10[n].unk00.unk00[8] of the three melee records, and 0 once the count
+   EntityParams.far_distance into hit_parts[n].strengths.element_strengths[8] of the three melee records, and 0 once the count
    is over; it counts down ai_state.mode_timer, set to EntityParams.type_param_0 while player_state.cast_launched_shot is
    not 0; and while ai_state.sub_timer counts down it keeps flag bit 35 set, with effect 0x25C every
    third frame. */
@@ -367,8 +367,8 @@ static void DarkKnight_PlayTurnAnim(Entity *entity) {
 
 /* An action (busy bit 0x10) that DarkKnight_ThinkCombat starts when DarkKnight_ShouldHoldAnim13 says so: as
    EntityAi_Guard (animation 13 held for EntityParams.guard_frames frames with the motion stopped), but without flag
-   35, so it adds no defence and a hit still starts a reaction; once the motion has blended in it puts work word
-   unk6A to EntityParams.type_param_1, the pause before the next. */
+   35, so it adds no defence and a hit still starts a reaction; once the motion has blended in it puts
+   ai_state.sub_timer to EntityParams.type_param_1, the pause before the next. */
 static void DarkKnight_HoldGuardPose(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -675,8 +675,8 @@ static s32 DarkKnight_ShouldRangedAttack0(Entity *entity) {
 }
 
 /* Helper of DarkKnight_ThinkCombat: whether to start DarkKnight_HoldGuardPose, the action (busy bit 0x10)
-   that starts animation 13 and stops the motion for EntityParams.guard_frames frames. Only while work word
-   unk6C runs and unk6A does not, the entity is not busy, the player is at least min_distance away
+   that starts animation 13 and stops the motion for EntityParams.guard_frames frames. Only while
+   ai_state.mode_timer runs and ai_state.sub_timer does not, the entity is not busy, the player is at least min_distance away
    (less the radius and 100) and Entity.heading_to_player is within max_angle of the heading; then
    EntityParams.guard_chance / 5 times in 100. */
 static s32 DarkKnight_ShouldHoldAnim13(Entity *entity, f32 min_distance, f32 max_angle) {
@@ -705,7 +705,7 @@ static s32 DarkKnight_ShouldHoldAnim13(Entity *entity, f32 min_distance, f32 max
 }
 
 /* As EntityAi_PickCombatChoice, but the attack is left out only when EntityAi_CanMelee finds no melee record in
-   reach and either unkA2 runs or EntityAi_CanShoot finds no ranged one. Returns the choice, -1 when none can be
+   reach and either Entity.attack_delay_frames runs or EntityAi_CanShoot finds no ranged one. Returns the choice, -1 when none can be
    chosen. Nothing calls it. */
 static s32 DarkKnight_PickCombatChoice(Entity *entity, s32 mode) {
     s32 chances[4];
@@ -772,7 +772,7 @@ static s32 DarkKnight_PickCombatChoice(Entity *entity, s32 mode) {
 }
 
 /* As EntityAi_PickAttack, with the reach tests of EntityAi_CanUseMelee and EntityAi_CanUseRanged, and no ranged
-   attack while unkA2 runs: a weighted draw among the six attacks, the choice in flag bits 57-59; returns bit
+   attack while Entity.attack_delay_frames runs: a weighted draw among the six attacks, the choice in flag bits 57-59; returns bit
    57. Nothing calls it. */
 static s32 DarkKnight_PickAttack(Entity *entity) {
     s32 chances[6];

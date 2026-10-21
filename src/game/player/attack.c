@@ -979,7 +979,7 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
     ENTITY_FLAG_HIT_BITS(entity)->hit_strength = percent < HIT_STRENGTH_LIGHT_MAX_PERCENT ? 1 : 2;
     ENTITY_FLAG_HIT_BITS(entity)->hit_source = by_weapon ? 1 : by_magic ? 2 : 0; // match: a shift of by_magic in retail too
 
-    // match: three stores to unk6C, one per arm, give retail's single shared call and store
+    // match: three stores to knockback_heading, one per arm, give retail's single shared call and store
     if (by_weapon && extra->attack_request == 0) {
         entity->knockback_heading = request->facing;
     } else if (request->position[0] != request->previous_position[0] || request->position[1] != request->previous_position[1] ||
@@ -1161,7 +1161,7 @@ int Attack_HitMap(Unk1B1470Request *request, Unk1B1470Extra *extra) {
 }
 
 /* The nine strengths of a hit as they count against the target (Attack_HitEntity). The player's are
-   raised by the weapon bonus (extra->player_power) or the magic bonus (unk22, plus unk0E[] per kind) in
+   raised by the weapon bonus (extra->player_power) or the magic bonus (player_magic, plus worn_magic_bonus[] per kind) in
    fiftieths. A hit of kind 0 from anything else counts as it is; otherwise the three physical
    strengths are dropped and the six magic ones scaled, by EntityParams.shot_params for an entity.
    The rows are spelled out as retail has them. */
@@ -1256,7 +1256,7 @@ int Attack_StrengthDamageToPlayer(int strength, int resistance, int stat) {
 }
 
 /* Wears a weapon: amount is added to its wear, and every exp_per_level of it takes one off its level, the
-   percent its values count at (down to 50). Weapons whose unk63 is 2 or more do not wear. */
+   percent its values count at (down to 50). Weapons whose action_handler_index is 2 or more do not wear. */
 void Attack_WearWeapon(int idx, int amount) {
     PlayerItemDef *item;
     LevelRecord *rec;
@@ -1386,8 +1386,8 @@ void Attack_LoadMagicTable(void) {
     File_Close(file_handle);
 }
 
-/* Launches the effect of a magic table row (its unk100) from `from` along `angles`; returns Effect_Spawn's
-   result, 0 for an id past the table or a row that cannot be launched (unk102). */
+/* Launches the effect of a magic table row (its effect_id) from `from` along `angles`; returns Effect_Spawn's
+   result, 0 for an id past the table or a row that cannot be launched (item_menu_magic). */
 int Attack_LaunchMagicEffect(u16 effect_id, void *shot, void *from, void *angles, void *entity) {
     FxTableEntry *entry;
 

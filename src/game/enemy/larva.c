@@ -93,7 +93,7 @@ void Larva_Init(Entity *entity) {
    states 1 and 2 both have EntityAi_ThinkCombat. Every 20th frame it starts effect
    EntityParams.type_param_0 at model point 0xFF. While ai_state.sub_timer counts down
    (Larva_DormantMoveAlongArc sets it to 600) it shrinks the model's scale (EntityModel.scale) from
-   the one kept in ai_state.pitch_speed to keep_min_distance towards half of it and lowers unk70 and unk74 of the
+   the one kept in ai_state.pitch_speed to keep_min_distance towards half of it and lowers ambient_red and ambient_green of the
    entity's map record; at 0 it starts Larva_Death. */
 static void Larva_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -290,7 +290,7 @@ static void Larva_DormantHeldAtModelPoint(Entity *entity) {
 /* A second dormant action (busy bit 0x20), which Larva_DormantHeldAtModelPoint starts: animation 18. It
    turns the entity to Entity.heading_to_player, give or take half of EntityParams.action_frames degrees, and sends it
    off at 40 degrees with a speed of 24 to 48 by the distance to the player, the y speed growing by
-   EntityParams.pitch_limit_deg (limit unk432); it checks part 0 of melee record 0 for a hit (EntityAi_CheckMeleeHit)
+   EntityParams.pitch_limit_deg (limit yaw_limit_deg); it checks part 0 of melee record 0 for a hit (EntityAi_CheckMeleeHit)
    and starts effect type_param_1 every third frame. When flag bit 44 is set it puts the model's scale
    back, sets ai_state.sub_timer to 600, goes to state 2 and starts Larva_Dormant. */
 static void Larva_DormantMoveAlongArc(Entity *entity) {
@@ -397,7 +397,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
 /* A second death action (busy bit 0x40), which Larva_DormantHeldAtModelPoint starts when
    ai_state.step_index is below 0: animation 17; fades the model out over 20 frames while the entity
    moves down (y grows downward, EntityCollision_DistanceToPropFloor) with a speed that grows by EntityParams.pitch_limit_deg
-   (limit unk432), then frees its effects and removes it. */
+   (limit yaw_limit_deg), then frees its effects and removes it. */
 static void Larva_DeathFallAndFade(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 

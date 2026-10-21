@@ -166,9 +166,9 @@ static void DarkSuccubus_Animate(Entity *entity) {
    does nothing but set model flag 0x800, flag bits 18 and 21 and Entity.model_alpha to 0x80. With the player's x at 6600 or more it goes back to its spawn
    point instead of thinking. It adds command bit 0x10 or 0x20 by what EntityCollision_DistanceToPropFloor reads at the
    entity's position (ai_state.step_index). While ai_state.pause_timer counts down, model flag 0x800 and flag
-   bit 21 are set and Entity.model_alpha is 0x80; ai_state.sub_timer is the pause after it. With unk7C at 0
-   the handler starts that time itself now and then, taking unkD6 down over 20 frames first. Work
-   word unk6C is put to EntityParams.type_param_0 while player_state.cast_launched_shot is set and counts down. */
+   bit 21 are set and Entity.model_alpha is 0x80; ai_state.sub_timer is the pause after it. With combat_mode at 0
+   the handler starts that time itself now and then, taking Entity.model_alpha down over 20 frames first. Work
+   word think_timer is put to EntityParams.type_param_0 while player_state.cast_launched_shot is set and counts down. */
 static void DarkSuccubus_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityAiStateKind15F8C0 *timers = (EntityAiStateKind15F8C0 *)ai_state;
@@ -674,8 +674,8 @@ static void DarkSuccubus_Move(Entity *entity) {
 }
 
 /* Helper of DarkSuccubus_Animate: carries out the command in Entity.move_command. It turns the entity and
-   speeds up or slows down along its three axes by EntityParams.speed_step_per_frame a frame up to unk54 (work
-   floats unk44, unk48 and unk4C; in y half the step and half the limit), twice as fast for command
+   speeds up or slows down along its three axes by EntityParams.speed_step_per_frame a frame up to max_speed (work
+   floats move_speed, part_angle_x and part_angle_y; in y half the step and half the limit), twice as fast for command
    bit 0x40. */
 static void DarkSuccubus_ApplyMoveCommand(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -1206,8 +1206,8 @@ static void DarkSuccubus_PlayAnim18Turning(Entity *entity) {
 
 /* An action (busy bit 0x4000) that DarkSuccubus_ThinkCombatCircleNear and DarkSuccubus_ThinkCombatKeepAwayWhenFaced start: plays animation 17 to its
    end with the turn command of EntityAi_TurnCommand; up to frame EntityParams.near_distance it takes Entity.model_alpha
-   from 0x80 down to 0 (unkD6 is what EntityAi_Death's fade scales), after that it keeps work word
-   unk68 at EntityParams.action_frames. */
+   from 0x80 down to 0 (Entity.model_alpha is what EntityAi_Death's fade scales), after that it keeps work word
+   vanish_frames at EntityParams.action_frames. */
 static void DarkSuccubus_FadeOut(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 

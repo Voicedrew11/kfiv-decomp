@@ -196,7 +196,7 @@ static void Entity_StartLoadsInRange(void) {
              (entity->spawn_info->vertical_despawn_range == 0 ||
               height_difference < (float)entity->spawn_info->vertical_despawn_range))) {
             entity->pool_slot_index = EntityPool_FindType(entity->spawn_info->type_id);
-            // match: the slot is tested as a signed byte, as unkD3 is stored
+            // match: the slot is tested as a signed byte, as pool_slot_index is stored
             if ((char)entity->pool_slot_index >= 0) {
                 queued = entity;
                 entity = entity->next;

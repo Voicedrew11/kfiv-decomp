@@ -52,7 +52,7 @@ void MapObject_SetupItemHolder(MapObject *object) {
 }
 
 /* Spawns the item a map object holds (MapObjectUnk08.kind_param_0) at its point 0 (MapItem_PutOutForObject), unless it was
-   handed out already (unk10 bit 0x40000); the kind's every-frame hook runs first, so the point is current. */
+   handed out already (state_flags bit 0x40000); the kind's every-frame hook runs first, so the point is current. */
 void MapObject_SpawnHeldItem(MapObject *object) {
     s64 drop_params[2];
 

@@ -100,7 +100,7 @@ static void Widda_Animate(Entity *entity) {
     }
 }
 
-/* Helper of Widda_Animate: turns the two model parts EntityParams.near_distance and unk438 name
+/* Helper of Widda_Animate: turns the two model parts EntityParams.near_distance and EntityParams.far_distance name
    towards the target, pitch from the player's height (at most 30 degrees) and yaw from the bearing
    (at most 40), each part by half of it; the angles are ai_state.part_angle_x to pitch_speed. Without a
    target or while the entity is busy it only reads the parts' angles into them. */
@@ -146,7 +146,7 @@ static void Widda_AimPartsAtTarget(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with Widda_ThinkCombat for state 2. Sets work byte
-   unk7A when flag bit 45, 47 or 48 is set during a dodge (busy bit 8). */
+   step_index when flag bit 45, 47 or 48 is set during a dodge (busy bit 8). */
 static void Widda_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 

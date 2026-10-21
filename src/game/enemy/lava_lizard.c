@@ -72,8 +72,8 @@ void LavaLizard_Init(Entity *entity) {
     Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
-/* The think handler: as EntityAi_Think, with LavaLizard_ThinkCombat for state 2. Counts down work
-   byte unk7A, the pause before the next LavaLizard_RunAtPlayer (set from EntityParams.far_distance
+/* The think handler: as EntityAi_Think, with LavaLizard_ThinkCombat for state 2. Counts down
+   step_index, the pause before the next LavaLizard_RunAtPlayer (set from EntityParams.far_distance
    while flag bit 45, 47 or 48 is set). */
 static void LavaLizard_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;

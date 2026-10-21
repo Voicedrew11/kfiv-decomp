@@ -71,7 +71,7 @@ void GiantSpider_Init(Entity *entity) {
 
 /* The animate handler: as EntityAi_Animate, but in place of the head turn it turns the part
    EntityModel.look_at_part itself: towards Entity.heading_to_player, at most 30 degrees to either side, eased in work
-   float unk20[1]; in animations 14 to 16 it takes the part's own angle instead. */
+   float look_part_angles[1]; in animations 14 to 16 it takes the part's own angle instead. */
 static void GiantSpider_Animate(Entity *entity) {
     u32 blend_frames; // match: converted to float as unsigned
     EntityAiState *ai_state;
@@ -105,8 +105,8 @@ static void GiantSpider_Animate(Entity *entity) {
     }
 }
 
-/* The on_hit handler: every hit starts EntityAi_ReactionHeavy, whatever its strength; sets work
-   byte unk7A. */
+/* The on_hit handler: every hit starts EntityAi_ReactionHeavy, whatever its strength; sets
+   step_index. */
 static void GiantSpider_OnHit(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -141,7 +141,7 @@ static void GiantSpider_Think(Entity *entity, s32 run_now) {
 }
 
 /* The think function of every state but 2 (GiantSpider_Think calls it): turns the entity to
-   Entity.heading_to_player, the bearing the shared code turns to when it turns to the player. When unk68 is
+   Entity.heading_to_player, the bearing the shared code turns to when it turns to the player. When heading_to_player is
    more than 25 degrees off the heading it starts GiantSpider_PlayTurnAnim7Or12 (positive side) or
    GiantSpider_PlayTurnAnim6Or11; else it starts the move action with no command. */
 static void GiantSpider_ThinkTurnToPlayer(Entity *entity, s32 run_now) {

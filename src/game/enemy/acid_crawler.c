@@ -194,8 +194,8 @@ static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg) {
 /* The think handler: as EntityAi_Think, with AcidCrawler_ThinkCombat for states 1 and 2; after
    EntityAi_ThinkIdle it sets ai_state.step_index to 1. Before that, while Entity.ailment_4_frames is 0, it
    launches shot EntityParams.type_param_1 from near the point Model_GetSkinnedBonePoint gives for 0, on two timers:
-   ai_state.pause_timer (chance EntityParams.action_frames in 100 a frame, then a pause of unk436 frames) and
-   ai_state.sub_timer (chance unk438, pause type_param_0). */
+   ai_state.pause_timer (chance EntityParams.action_frames in 100 a frame, then a pause of EntityParams.near_distance frames) and
+   ai_state.sub_timer (chance EntityParams.far_distance, pause type_param_0). */
 static void AcidCrawler_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     char *part = Model_GetSkinnedBonePoint((char *)entity->model, 0);

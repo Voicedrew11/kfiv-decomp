@@ -274,8 +274,8 @@ static void IceGolem_Dormant(Entity *entity) {
 }
 
 /* The ranged attack with record 0 (busy bit 1): animation 23, the head following the target. On
-   each frame from EntityParams.action_frames up to unk436, in steps of unk438, it launches the record's
-   shot unk10 from the point Model_GetSkinnedBonePoint gives for the record's unk11, towards the next point,
+   each frame from EntityParams.action_frames up to near_distance, in steps of far_distance, it launches the record's
+   shot magic_effect from the point Model_GetSkinnedBonePoint gives for the record's bone_index, towards the next point,
    with a pitch of -5 degrees (EntityAi_LaunchShot). */
 static void IceGolem_RangedAttack0(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;

@@ -65,7 +65,7 @@ void Watcher_Init(Entity *entity) {
    the player; while it is not busy and EntityAi_CanUseRanged finds the player in reach of ranged record 0
    (and flag bit 63 is clear) it calls Attack_DrainPlayerMp with EntityParams.action_frames, sets ai_state.step_index
    and flag bit 9 and plays animation 2, else clears them and plays animation 0. Calls EntityEvent_StartCueAlways
-   with 1 when unk7A changes. */
+   with 1 when ai_state.step_index changes. */
 static void Watcher_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     s8 previous;

@@ -105,7 +105,7 @@ static void GoldenStatue_OnHit(Entity *entity) {
    Entity_GetBySpawnIdForMap finds for spawn 0x29 has flag bit 0 set and its flags & 0xE are not 2,
    it puts GoldenStatue_ThinkNoStates in the think slot and calls it. Until then, while it is not busy,
    it calls GoldenStatue_WalkToPost, GoldenStatue_TurnAtPost or GoldenStatue_StandAtPost, picked by work
-   bytes unk78 and unk79. */
+   bytes move_choice and turn_in_place. */
 static void GoldenStatue_ThinkWaitAtPost(Entity *entity, s32 run_now) {
     Entity *other;
     EntityAiState *ai_state = &entity->ai_state;
@@ -139,7 +139,7 @@ static void GoldenStatue_ThinkWaitAtPost(Entity *entity, s32 run_now) {
 }
 
 /* Helper of GoldenStatue_ThinkWaitAtPost, called while ai_state.move_choice is 0: walks to the point (-7900,
-   spawn y, 3050), sets unk78 within 50 of it, and starts the move action. */
+   spawn y, 3050), sets move_choice within 50 of it, and starts the move action. */
 static void GoldenStatue_WalkToPost(Entity *entity, s32 run_now) {
     f32 point[4];
     f32 limit;
@@ -163,10 +163,10 @@ static void GoldenStatue_WalkToPost(Entity *entity, s32 run_now) {
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
-/* Helper of GoldenStatue_ThinkWaitAtPost, called while ai_state.move_choice and turn_in_place are set: clears unk78
+/* Helper of GoldenStatue_ThinkWaitAtPost, called while ai_state.move_choice and turn_in_place are set: clears move_choice
    when the entity is more than 100 from the point (-7900, spawn y, 3050); starts the attack
    EntityAi_PickAttack picks when EntityAi_CanAttack says so and EntitySight_EntityInWay does not; else turns on the spot
-   to the heading in ai_state.part_angle_x, clears unk79 once it is within the turn limit of it, and
+   to the heading in ai_state.part_angle_x, clears turn_in_place once it is within the turn limit of it, and
    starts the move action. */
 static void GoldenStatue_TurnAtPost(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -203,9 +203,9 @@ static void GoldenStatue_TurnAtPost(Entity *entity, s32 run_now) {
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
-/* Helper of GoldenStatue_ThinkWaitAtPost, called while ai_state.move_choice is set and unk79 is 0: attacks as
+/* Helper of GoldenStatue_ThinkWaitAtPost, called while ai_state.move_choice is set and turn_in_place is 0: attacks as
    GoldenStatue_TurnAtPost does; else, when Entity.heading_to_player is more than 30 degrees off its
-   heading, keeps it in ai_state.part_angle_x and sets unk79; starts the move action. */
+   heading, keeps it in ai_state.part_angle_x and sets turn_in_place; starts the move action. */
 static void GoldenStatue_StandAtPost(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 angle;
@@ -419,7 +419,7 @@ static void GoldenStatue_Move(Entity *entity) {
 }
 
 /* Helper of GoldenStatue_Animate: adds ai_state.part_angle_y to the x rotation of model part 15. Before
-   frame 43 unk4C goes towards the pitch to a point 400 above the player (EntityMath_EaseAngleToward, rate 10);
+   frame 43 part_angle_y goes towards the pitch to a point 400 above the player (EntityMath_EaseAngleToward, rate 10);
    from frame 54 it is scaled by (67 - frame) / 14. */
 static void GoldenStatue_AimPart15AbovePlayer(Entity *entity) {
     EntityModel *model;

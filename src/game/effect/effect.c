@@ -465,7 +465,7 @@ void Effect_DrawAll(int pass) {
             ModelMatrix_BuildPartLocal(model, part, part);
         }
         model->fog_block = map_draw_slot_blocks[current_map_slot];
-        // match: the flag is read through the union so the test stays behind the unk14C store
+        // match: the flag is read through the union so the test stays behind the ModelInstance.fog_block store
         if (!(((EntityFlagWord *)&effect->def->sub_effect_id)->word & (0x8000L << 25))) {
             model->light_block = (s32)effect_light_block;
         } else {
@@ -481,7 +481,7 @@ void Effect_DrawAll(int pass) {
     }
 }
 
-/* Runs a spawner slot for one frame: after its start delay, every unkA7 frames, it makes unkA5
+/* Runs a spawner slot for one frame: after its start delay, every EffectDef.spawn_interval frames, it makes EffectDef.spawn_batch_count
    effects of its definition and counts its level down, freeing itself at 0. */
 static void Effect_RunSpawner(EffectSlot *slot) {
     EffectDef *def;

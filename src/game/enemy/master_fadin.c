@@ -119,9 +119,9 @@ static void MasterFadin_Think(Entity *entity, s32 run_now) {
 }
 
 /* The think function of states 1 and 2: each time Entity.action_timer has run out it launches shot EntityParams.pitch_limit_deg
-   from model point unk432 (along the line to the next point; point 0xFF: along the heading turned round),
-   turned towards the player 190 above his feet by at most unk436 in pitch and unk438 in yaw, starts cue 0 and
-   sets unkA0 to unk434. Keeps animation 0 and starts the move action. */
+   from model point EntityParams.yaw_limit_deg (along the line to the next point; point 0xFF: along the heading turned round),
+   turned towards the player 190 above his feet by at most EntityParams.near_distance in pitch and EntityParams.far_distance in yaw, starts cue 0 and
+   sets Entity.action_timer to EntityParams.action_frames. Keeps animation 0 and starts the move action. */
 static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 angles[4];

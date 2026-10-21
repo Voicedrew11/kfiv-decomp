@@ -32,7 +32,7 @@ static ModelInstance *item_effect_model;    /* 0x44739C the model shown this tim
 static int item_effect_load_pad;            /* 0x4473A0 cleared in ItemEffect_Load */
 static ItemUseEffectDef *item_effect_def;   /* 0x4473A4 item_effect_defs_by_kind[kind] */
 static int item_effect_brightness;          /* 0x4473A8 model colour alpha while fading */
-static int item_effect_pending_effects;     /* 0x4473AC set until motion reaches def->unk08 */
+static int item_effect_pending_effects;     /* 0x4473AC set until motion reaches def->spawn_frame */
 static int item_effect_marked;              /* 0x4473B0 spell slot marked by Player_LearnSpellInRow */
 
 static TextureTableHeader *item_effect_textures[7];       /* 0x5F9B40 loaded i0040..i0046.tx2 */
@@ -297,8 +297,8 @@ void ItemEffect_StepFadeOut(void) {
 
         item_effect_active = 0;
         item_effect_step = 0;
-        status_words[0x30 / 4] = 0; /* unk30 */
-        status_words[0x40 / 4] = 0; /* unk40 */
+        status_words[0x30 / 4] = 0; /* GameStatus.update_hold_flags */
+        status_words[0x40 / 4] = 0; /* GameStatus.effect_owner */
         item_effect_model = NULL;
         item_effect_load_pad = 0;
         item_effect_def = NULL;

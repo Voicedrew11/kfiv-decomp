@@ -15,7 +15,7 @@
 #define MIDI_DATA_MASK             0x7F
 
 /* one of the 16 voices, SoundState.voices[n]: a header (two copies on the IOP) and its sample data
-   (an IOP copy at iop_heap, sent on to sound memory at unk0C) */
+   (an IOP copy at iop_heap, sent on to sound memory at sample_spu_addr) */
 typedef struct {
     int stereo_header_block;        /* 0x00 IOP block of the header, the stereo copy; 0 when the voice is free */
     int mono_header_block;          /* 0x04 IOP block of the mono copy (driver command 0x1070 makes it) */

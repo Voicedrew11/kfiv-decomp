@@ -294,7 +294,7 @@ static void SoundDriver_DisableOutput(void) {
 }
 
 /* Mono output (the sound option): tells the driver (command 0xC0, 0) and switches every loaded voice
-   and sequence to its mono header copy (unk04); SoundDriver_NoteOn then centres every pan. */
+   and sequence to its mono header copy (mono_header_block); SoundDriver_NoteOn then centres every pan. */
 void SoundDriver_SetMono(void) {
     SoundVoice *voice;
     SoundBank *bank;
@@ -338,7 +338,7 @@ void SoundDriver_SetMono(void) {
 }
 
 /* Stereo output (the sound option): tells the driver (command 0xC0, 1) and switches every loaded voice
-   and sequence to its stereo header copy (unk00). */
+   and sequence to its stereo header copy (stereo_header_block). */
 void SoundDriver_SetStereo(void) {
     SoundVoice *voice;
     SoundBank *bank;

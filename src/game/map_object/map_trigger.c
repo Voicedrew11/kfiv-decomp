@@ -293,8 +293,8 @@ void MapObject_StartPulse(MapTrigger *trigger) {
 }
 
 /* Update handler of the pulsing kind: steps the phase through the period and sets
-   the model's unk146 on a triangle wave that peaks at 32 half-way through (with unk145 set, as the start
-   handler leaves it, Model_DrawPosedWithAlpha draws the model with unk146 as its fixed alpha). */
+   the model's fade_alpha on a triangle wave that peaks at 32 half-way through (with fade_enabled set, as the start
+   handler leaves it, Model_DrawPosedWithAlpha draws the model with fade_alpha as its fixed alpha). */
 int MapObject_UpdatePulse(MapTrigger *trigger) {
     MapTriggerShotKind122E88 *shot;
     int phase;

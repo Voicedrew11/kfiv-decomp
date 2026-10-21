@@ -44,7 +44,7 @@
 /* 0x414580 the tint the damage and the statuses fade the screen with (Player_DrawScreenTints draws it) */
 PlayerScreenTint player_screen_tint = { 0 };
 
-/* Works out what the worn items add: clears unkDC to unk10C, lets every worn item add its part, then
+/* Works out what the worn items add: clears ailment_defence to ring_of_sight_active, lets every worn item add its part, then
    turns the four rates into frame counts. */
 void Player_SumWornBonuses(void) {
     player_state.item_bonus_kind1_active = 0;
@@ -189,7 +189,7 @@ void Player_TakeDamageNoRumble(int value) {
 }
 
 /* Takes amount off HP, not below zero; FALSE for a non-positive amount or while the game is not being played
-   (GameStatus.player_control clear or bit 0 of unk30 set). */
+   (GameStatus.player_control clear or bit 0 of update_hold_flags set). */
 int Player_LoseHp(int amount) {
     if (amount > 0 && game_status.player_control != 0 && !(game_status.update_hold_flags & 1)) {
         if (amount < player_state.hp_now) {
@@ -282,7 +282,7 @@ void Player_Kill(void) {
 }
 
 /* Picks the magic the magic gauge charges for (PlayerState.charging_magic): the equipped magic, else a magic shortcut,
-   else the weapon's magic, else the first learned magic cast from the menu (fx_table unk102 == 1). */
+   else the weapon's magic, else the first learned magic cast from the menu (fx_table item_menu_magic == 1). */
 void Player_PickChargingMagic(void) {
     PlayerItemDef *def;
     int i;
@@ -353,7 +353,7 @@ void Player_FindMapRecord(void) {
     }
 }
 
-/* Steps the screen fade amount (unk2A8): stepping onto a map record whose byte 0x4C is lower than the last one
+/* Steps the screen fade amount (screen_fade): stepping onto a map record whose byte 0x4C is lower than the last one
    starts a quick dip toward black; the amount then eases back to 0. */
 void Player_UpdateScreenFade(void) {
     PlayerState *player;
@@ -512,7 +512,7 @@ void Player_CountWeaponUse(int weapon) {
 }
 
 /* The weapon bounces off: unless it already did this swing, its sound stops, sound 1 plays and the weapon
-   model goes back to motion 0; the swing hits nothing more (unk261). */
+   model goes back to motion 0; the swing hits nothing more (weapon_bounced). */
 void Player_BounceWeapon(void) {
     if (player_state.weapon_bounced == 0 && weapon_defs[player_state.weapon].action_handler_index != 2) {
         SOUND_STOP_VOICE(2);
@@ -534,7 +534,7 @@ void Player_BounceWeaponQuietly(void) {
     }
 }
 
-/* The swing struck a map object it cannot break: notes it for the swing (unk262), with sound 0x23 when asked. */
+/* The swing struck a map object it cannot break: notes it for the swing (struck_solid_object), with sound 0x23 when asked. */
 void Player_StrikeSolidObject(int with_sound) {
     PlayerState *player = &player_state;
 
@@ -546,7 +546,7 @@ void Player_StrikeSolidObject(int with_sound) {
     }
 }
 
-/* While a swing runs, keeps it from hitting anything more (unk263; a map change). */
+/* While a swing runs, keeps it from hitting anything more (swing_ended; a map change). */
 void Player_EndSwingHits(void) {
     if (player_state.item_action_step != PLAYER_ITEM_ACTION_IDLE) {
         player_state.swing_ended = 1;

@@ -298,7 +298,7 @@ static void DarkSorcerer_Move(Entity *entity) {
 
 /* Carries out the movement command in Entity.move_command; DarkSorcerer_Think, the attacks and the three
    PlayAnim actions call it. It turns the entity and speeds up or slows down along its three axes by
-   EntityParams.speed_step_per_frame a frame up to unk54 (ai_state.move_speed, part_angle_x and part_angle_y; in y half the step
+   EntityParams.speed_step_per_frame a frame up to max_speed (ai_state.move_speed, part_angle_x and part_angle_y; in y half the step
    and four fifths of the limit), twice as fast for command bit 0x40. */
 static void DarkSorcerer_ApplyMoveCommand(Entity *entity) {
     EntityAiStateKind16BF98 *ai_state = (EntityAiStateKind16BF98 *)&entity->ai_state;
@@ -399,7 +399,7 @@ static void DarkSorcerer_ApplyMoveCommand(Entity *entity) {
 
 /* The dormant action (busy bit 0x20), which the set-up function always starts: animation 0 with
    flag bits 18, 20 and 21 set and Entity.model_alpha at 0x20 until dark_sorcerer_fight_started[0] is not 0; then it brings
-   unkD6 up to 0x80 over 20 frames (counted in ai_state.action_flags), clears the three bits and thinks.
+   model_alpha up to 0x80 over 20 frames (counted in ai_state.action_flags), clears the three bits and thinks.
    */
 static void DarkSorcerer_Dormant(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -865,7 +865,7 @@ static void DarkSorcerer_PlayAnim19StartScripts(Entity *entity) {
 }
 
 /* Helper of DarkSorcerer_PlayAnim19StartScripts: when the entity's map is the current one, starts script
-   unk4E + 10000 of the map record player_state.map_index picks, and of up to two of the records
+   prop_id + 10000 of the map record player_state.map_index picks, and of up to two of the records
    Map_GetRecordById gives for 0x6B to 0x88, drawn at random. */
 static void DarkSorcerer_StartMapScripts(Entity *entity) {
     MapSlot *slot = &map_slots[current_map_slot];

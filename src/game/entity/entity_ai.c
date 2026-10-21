@@ -87,7 +87,7 @@ float EntityAi_RandomAngle(void) {
 }
 
 /* Starts the second camera shake (GameLoop_UpdateCameraShake plays it): its reach (CameraState.entity_shake_reach) and its frames
-   (unk7C). The Giant Beetle's ranged attack uses it. */
+   (CameraState.entity_shake_frames). The Giant Beetle's ranged attack uses it. */
 void EntityAi_ShakeCamera(int float_value, int int_value) {
     camera_state.entity_shake_reach = float_value;
     camera_state.entity_shake_frames = int_value;

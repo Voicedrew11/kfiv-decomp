@@ -142,9 +142,9 @@ static void Critter_Think(Entity *entity, s32 run_now) {
 
 /* The think function of state 0 (called after the switch, which `case 0:` leaves): gives command
    0x41 and, once in each such run, checks part 0 of melee record 1 for a hit (EntityAi_CheckMeleeHit, work
-   byte unk7C). When the entity is pushed and the pause in ai_state.action_flags is over, it picks a
+   byte action_counter). When the entity is pushed and the pause in ai_state.action_flags is over, it picks a
    heading 90 degrees to the side of the one EntityAi_TurnFromPush gives, give or take 70 degrees (work
-   float unk48), turns to it with command bit 0x400 and no movement (ai_state.step_index set), then sets
+   float part_angle_x), turns to it with command bit 0x400 and no movement (ai_state.step_index set), then sets
    the pause to EntityParams.action_frames. */
 static void Critter_ThinkIdle(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;

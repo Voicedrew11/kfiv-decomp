@@ -366,8 +366,8 @@ static void DarkArcher_DeathWithoutReward(Entity *entity) {
     }
 }
 
-/* The think handler: as EntityAi_Think, with DarkArcher_ThinkCombat for state 2. Sets work byte
-   unk7A to whether EntityParams.action_frames is not 0 and flag bit 44 or 50 is set. */
+/* The think handler: as EntityAi_Think, with DarkArcher_ThinkCombat for state 2. Sets
+   ai_state.step_index to whether EntityParams.action_frames is not 0 and flag bit 44 or 50 is set. */
 static void DarkArcher_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -561,7 +561,7 @@ static void DarkArcher_RangedAttack(Entity *entity) {
    in an arc: plays animation 8 to frame 17, then animation 4 while it moves the entity forwards
    along the heading it had (ai_state.pitch_speed holds that heading plus 180 degrees, and the speed is
    put on the other end of the axis, which gives the same direction as the forward command), the
-   speeds eased in ai_state.heading_speed (y) and unk5C. The speed in y goes to minus EntityParams.type_param_1
+   speeds eased in ai_state.heading_speed (y) and keep_min_distance. The speed in y goes to minus EntityParams.type_param_1
    (up) until EntityCollision_DistanceToPropFloor, the distance to the floor below, reads EntityParams.type_param_2 or more,
    then to plus type_param_1 until flag bit 44 or 50 is set; then it plays animation 9 to its end. */
 static void DarkArcher_MoveAlongArc(Entity *entity) {

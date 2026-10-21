@@ -319,7 +319,7 @@ typedef struct {
     u64 pad08;                      /* 0x08 */
 } PoolSlotRegisters;
 
-/* a PoolSlot with tex0 and unk60 as the one member they are copied as */
+/* a PoolSlot with tex0 and tex1 as the one member they are copied as */
 typedef struct {
     char pad00[0x58];
     PoolSlotRegisters registers;    /* 0x58 */

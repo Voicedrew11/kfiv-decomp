@@ -118,9 +118,9 @@ static void FireLord_Animate(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with FireLord_ThinkIdle for state 0 and
    FireLord_ThinkCombat for states 1 and 2. Before that it keeps the model's last two frames in
-   fire_lord_model, each at half the alpha of the one before, clears work byte unk7E, and counts down
+   fire_lord_model, each at half the alpha of the one before, clears ai_state.afterimage_active, and counts down
    ai_state.sub_timer, which it sets to EntityParams.action_frames while player_state.cast_launched_shot is not 0. Counts
-   down work byte unk7D. */
+   down ai_state.distance_band_timer. */
 static void FireLord_Think(Entity *entity, s32 run_now) {
     EntityAiStateKind131390 *ai_state = (EntityAiStateKind131390 *)&entity->ai_state;
     ModelInstanceBlock *block;
@@ -173,7 +173,7 @@ static void FireLord_ThinkIdle(Entity *entity, s32 run_now) {
     EntityAi_StartAction(entity, entity->ai_state.move, run_now);
 }
 
-/* The think function of states 1 and 2: every 10 frames (work byte unk7D) sorts the distance to the
+/* The think function of states 1 and 2: every 10 frames (ai_state.distance_band_timer) sorts the distance to the
    player, less the radius and 100, into a band kept in ai_state.action_counter (0: above 1200, 1: above
    800, 2: above 500, 3: above 100, 4: nearer), and calls the function of the band:
    FireLord_ThinkCombatApproach, FireLord_ThinkCombatShootOrApproach,
@@ -446,7 +446,7 @@ static void FireLord_ThinkCombatBackAway(Entity *entity, s32 run_now) {
 }
 
 /* An action (busy bit 0x1000) that FireLord_ThinkCombatSideAnimOrApproach starts: plays animation 6 or 7
-   (ai_state.action_flags picks) to its end, turning to Entity.heading_to_player. Sets work byte unk7E. */
+   (ai_state.action_flags picks) to its end, turning to Entity.heading_to_player. Sets ai_state.afterimage_active. */
 static void FireLord_PlayAnim6Or7Alternately(Entity *entity) {
     EntityAiStateKind131390 *ai_state = (EntityAiStateKind131390 *)&entity->ai_state;
 
@@ -703,7 +703,7 @@ static void FireLord_MeleeAttack1(Entity *entity) {
 /* A second action with animations 6 and 7 (busy bit 0x1000), which bands 3 and 4 start in place of
    the guard: plays 6 or 7, by the side of the player's facing the entity is on, to its end, turning
    to Entity.heading_to_player; then starts FireLord_MeleeAttack0 when EntityAi_CanUseMelee finds the player in
-   reach of record 0. Sets work byte unk7E. */
+   reach of record 0. Sets ai_state.afterimage_active. */
 static void FireLord_PlayAnim6Or7ThenMelee0(Entity *entity) {
     EntityAiStateKind131390 *ai_state = (EntityAiStateKind131390 *)&entity->ai_state;
     PlayerState *player;
@@ -826,7 +826,7 @@ static s32 FireLord_ShouldEvadeSwingOrMagic(Entity *entity, f32 max_distance, f3
 }
 
 /* Puts the two older copies of the model that FireLord_Think keeps in fire_lord_model (each at half the alpha
-   of the one before) in draw list `list`, while work byte unk7E is set (an action with animation 6 or 7 ran
+   of the one before) in draw list `list`, while ai_state.afterimage_active is set (an action with animation 6 or 7 ran
    this frame) and the entity is not dying. Entity_DrawAll calls it for spawn type 0xF. */
 void FireLord_DrawAfterimages(Entity *entity, s32 list) {
     EntityAiStateKind131390 *ai_state = (EntityAiStateKind131390 *)&entity->ai_state;

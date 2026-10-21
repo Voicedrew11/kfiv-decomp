@@ -23,7 +23,7 @@ typedef struct {
 
 /* A random whole number of degrees as an angle in radians, wrapped to -pi..pi */
 float EntityAi_RandomAngle(void);
-/* Starts the second camera shake: its reach (CameraState.entity_shake_reach) and its frames (unk7C) */
+/* Starts the second camera shake: its reach (CameraState.entity_shake_reach) and its frames (CameraState.entity_shake_frames) */
 void EntityAi_ShakeCamera(int float_value, int int_value);
 /* Sets Entity.state and keeps the old value in prev_state */
 void EntityAi_SetState(Entity *entity, u8 state);

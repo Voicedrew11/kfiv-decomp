@@ -88,7 +88,7 @@ void HeldWeapon_Init(void) {
 }
 
 /* Loads the model of the item the player holds (PlayerState.weapon) and of the arm that holds it
-   (unk41) when either changed: reads the item_arm file, copies it to its own buffer and sets up
+   (PlayerState.equipment[EQUIP_GAUNTLET]) when either changed: reads the item_arm file, copies it to its own buffer and sets up
    the model, its motions and its textures from the parts the file has. */
 void Player_LoadArmModels(void) {
     char path[0x100];
@@ -388,7 +388,7 @@ void Player_DrawArm(void) {
     }
 }
 
-/* picks the weapon trail kind: the strongest of six values, else by unk43 */
+/* picks the weapon trail kind: the strongest of six values, else by PlayerState.equipment[EQUIP_RING] */
 void WeaponTrail_PickKind(void) {
     s32 best = 0;
 

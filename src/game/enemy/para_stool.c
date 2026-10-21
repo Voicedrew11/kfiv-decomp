@@ -66,8 +66,8 @@ void ParaStool_Init(Entity *entity) {
     Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
-/* The think handler: as EntityAi_Think, with ParaStool_ThinkCombat for state 2. Counts down work
-   word unk68, the pause before the next ParaStool_MeleeAttack0. */
+/* The think handler: as EntityAi_Think, with ParaStool_ThinkCombat for state 2. Counts down
+   ai_state.pause_timer, the pause before the next ParaStool_MeleeAttack0. */
 static void ParaStool_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -239,7 +239,7 @@ static void ParaStool_MeleeAttack0(Entity *entity) {
 
 /* Helper of ParaStool_MeleeAttack0: the hit check of EntityAi_CheckMeleeHitAt and EntityAi_SendMeleeHit for one
    part of the record on the part's frames, written out, with conditions of its own: the entity must
-   be within EntityParams.yaw_limit_deg degrees of the player's facing and unk434 degrees of the player's
+   be within EntityParams.yaw_limit_deg degrees of the player's facing and action_frames degrees of the player's
    pitch, and Entity.heading_to_player within the angle of part 0 of its heading. It then calls Attack_RollPlayerAilments
    before the check (Attack_Run). */
 static s32 ParaStool_CheckPartHitInPlayerView(Entity *entity, EntityParamsUnk240 *record, s32 index, s32 frame, s32 current_frame, f32 angle) {

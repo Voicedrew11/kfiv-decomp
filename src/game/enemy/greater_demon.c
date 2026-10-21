@@ -329,7 +329,7 @@ static void GreaterDemon_Move(Entity *entity) {
 
 /* An action (busy bits 0x3000) that GreaterDemon_ThinkCombat starts: plays animation 8 turning to
    Entity.heading_to_player while it blends in; from frame 41 it moves the entity up, by ai_state.part_angle_x a
-   frame, which grows by 0.8 to 12 (unk88 is given minus unk48; y grows downward, EntityCollision_DistanceToPropFloor).
+   frame, which grows by 0.8 to 12 (move_delta_y is given minus part_angle_x; y grows downward, EntityCollision_DistanceToPropFloor).
    When the motion has ended it sets ai_state.action_flags and starts GreaterDemon_DescendAtPlayer. */
 static void GreaterDemon_Rise(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -371,9 +371,9 @@ static void GreaterDemon_Rise(Entity *entity) {
 
 /* An action (busy bit 0x4000) that GreaterDemon_Rise starts. In animation 17 it goes on moving up
    while EntityCollision_DistanceToPropFloor, the distance to the floor below, reads under 220, and turns to Entity.heading_to_player;
-   once the motion has ended and the heading is within 20 degrees of unk68 it plays animations 18
+   once the motion has ended and the heading is within 20 degrees of heading_to_player it plays animations 18
    and 19 and, from frame 16 of 18, moves the entity along its heading at ai_state.move_speed (12,
-   growing by 9 percent a frame up to 80) and down at unk48 (20, falling by 0.8 to 3). When flag bit
+   growing by 9 percent a frame up to 80) and down at part_angle_x (20, falling by 0.8 to 3). When flag bit
    44, 45, 46, 48 or 49 is set it stops, checks part 0 of the third melee record
    (EntityParams.melee_attack_third) for a hit if it was bit 49, and starts GreaterDemon_SlideToStop. */
 static void GreaterDemon_DescendAtPlayer(Entity *entity) {
@@ -517,7 +517,7 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
    GreaterDemon_ThinkCombat, while ai_state.action_flags is 1): plays animation 29 to its end while the
    entity goes on along its heading at ai_state.move_speed, which falls by 2 a frame to 0. Once, when
    flag bit 49 is set, it checks part 0 of the third melee record (EntityParams.melee_attack_third) for a hit,
-   unless GreaterDemon_DescendAtPlayer did. At the end it clears unk7B and thinks. */
+   unless GreaterDemon_DescendAtPlayer did. At the end it clears sliding and thinks. */
 static void GreaterDemon_SlideToStop(Entity *entity) {
     EntityAiStateKind168160 *ai_state = (EntityAiStateKind168160 *)&entity->ai_state;
     EntityParamsUnk240 *unk350 = (EntityParamsUnk240 *)entity->params->melee_attack_third;
@@ -718,8 +718,8 @@ static void GreaterDemon_Guard(Entity *entity) {
 
 /* Helper of GreaterDemon_ThinkCombat: whether to start GreaterDemon_Guard. Only when the entity is
    not busy, the player is at least min_gap away (less the radius and 100), Entity.heading_to_player is within
-   max_angle of the heading, the entity is within 45 degrees of the player's facing and work byte
-   unk7C is above 0; then EntityParams.guard_chance times in 100. */
+   max_angle of the heading, the entity is within 45 degrees of the player's facing and magic_alert_timer
+   is above 0; then EntityParams.guard_chance times in 100. */
 static s32 GreaterDemon_ShouldGuard(Entity *entity, f32 min_gap, f32 max_angle) {
     EntityAiStateKind168160 *ai_state = (EntityAiStateKind168160 *)&entity->ai_state;
     f32 gap = entity->distance_to_player - (entity->radius + 100.0f);
@@ -837,7 +837,7 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
 
 /* Helper of GreaterDemon_ThinkCombat (spawn mode 1 only): counts those of the entities with spawn
    ids 10 to 17 that have flag bit 0 set, bit 1 clear and flag bits 30-31 at 0 or 3, and gives
-   ranged record 2 the weight kept in work area unk68[2] times that count over 8. Returns 0. */
+   ranged record 2 the weight kept in work area action_weights[2] times that count over 8. Returns 0. */
 static int GreaterDemon_SetRanged2Weight(Entity *entity) {
     EntityAiStateKind17FC60 *work;
     Entity *ally;

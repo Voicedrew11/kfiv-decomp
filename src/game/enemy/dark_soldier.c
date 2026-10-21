@@ -42,8 +42,8 @@
 
 /* EntitySpawnInfo.spawn_mode: the default spawn, the only one that may move along the arc */
 #define DARK_SOLDIER_SPAWN_MODE_DEFAULT 0
-/* one frame of the arc of DarkSoldier_MoveAlongArc: forwards at unk44 along unk30, in y at minus
-   unk48 (up); both wear off */
+/* one frame of the arc of DarkSoldier_MoveAlongArc: forwards at move_speed along target_point, in y at minus
+   part_angle_x (up); both wear off */
 static inline void move_along_arc(Entity *entity, EntityAiState *ai_state) {
     entity->move_delta_x = ai_state->move_speed * ai_state->target_point[0];
     entity->move_delta_y = -ai_state->part_angle_x;
@@ -154,7 +154,7 @@ static void DarkSoldier_Think(Entity *entity, s32 run_now) {
 /* The think function of state 2: as EntityAi_ThinkCombat, but the dodge is DarkSoldier_Dodge, and
    each time the timer is at 0 it may first start DarkSoldier_PlayAnim6Or7BySide (a chance of
    EntityParams.near_distance in 100, the entity within 60 degrees of the player's facing and the player
-   within 60 of its heading) or DarkSoldier_MoveAlongArc (a chance of unk438 in 100, within 90
+   within 60 of its heading) or DarkSoldier_MoveAlongArc (a chance of EntityParams.far_distance in 100, within 90
    degrees of the player's facing, EntitySpawnInfo.spawn_mode at 0 and DarkSoldier_CanMoveAlongArc
    true). A melee attack draws for the same two actions first, with ai_state.action_flags at 1 so that the
    attack follows them. In place of waiting it goes to a point EntityPoint_PickNear picks round the spawn
@@ -386,7 +386,7 @@ static void DarkSoldier_MeleeAttack(Entity *entity) {
 
 /* An action (busy bit 0x1000): plays animation 6 or 7 to its end, turning to the player while it
    blends in. With ai_state.action_flags at 1 the side is the one of the player's facing the entity is on,
-   and DarkSoldier_MeleeAttack follows; with unk7B at 0 the side is drawn, weighted by that angle,
+   and DarkSoldier_MeleeAttack follows; with ai_state.action_flags at 0 the side is drawn, weighted by that angle,
    and it thinks afterwards. */
 static void DarkSoldier_PlayAnim6Or7BySide(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -446,9 +446,9 @@ static void DarkSoldier_PlayAnim6Or7BySide(Entity *entity) {
 
 /* An action (busy bit 0x2000): the move DarkSoldier_CanMoveAlongArc tried out. Plays animation 8
    turning to the player, then from frame 10 moves the entity along the arc (move_along_arc:
-   forwards at ai_state.move_speed along unk30, in y at unk48, both from EntityParams.type_param_0 to type_param_2)
-   through animations 17 and 9, until flag bit 44, 48, 49 or 50 is set. Afterwards, with work byte
-   unk7B set, it calls EntityAi_PickAttack and starts DarkSoldier_MeleeAttack; else it thinks. */
+   forwards at ai_state.move_speed along target_point, in y at part_angle_x, both from EntityParams.type_param_0 to type_param_2)
+   through animations 17 and 9, until flag bit 44, 48, 49 or 50 is set. Afterwards, with
+   ai_state.action_flags set, it calls EntityAi_PickAttack and starts DarkSoldier_MeleeAttack; else it thinks. */
 static void DarkSoldier_MoveAlongArc(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityModel *model;

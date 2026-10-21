@@ -390,7 +390,7 @@ static s32 WindElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 
 }
 
 /* Helper of WindElemental_OnHit: sets ai_state.pause_timer to 1 in every other live entity with the same
-   EntityParams that is within EntityParams.action_frames of this one, has unk68 at 0 and has the player
+   EntityParams that is within EntityParams.action_frames of this one, has ai_state.pause_timer at 0 and has the player
    within EntitySpawnInfo.wander_radius of its spawn point. */
 static void WindElemental_AlertSameKind(Entity *entity) {
     Entity *other;
@@ -432,8 +432,8 @@ static void WindElemental_OnHit(Entity *entity) {
 /* An action (busy bit 0x3000) that WindElemental_Think starts while ai_state.pause_timer is 1: plays
    animation 3, then each frame guards or dodges the player's swing (WindElemental_Dodge when
    WindElemental_ShouldDodgeMagic says so), starts the attack EntityAi_PickAttack picks once EntityAi_PickCombatChoice chooses
-   attacking (unk68 becomes 2), and else gives the command to run at the player and calls the move
-   handler itself. Flag bit 53 ends it with unk68 at 2. */
+   attacking (ai_state.pause_timer becomes 2), and else gives the command to run at the player and calls the move
+   handler itself. Flag bit 53 ends it with ai_state.pause_timer at 2. */
 static void WindElemental_RunAtPlayer(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];

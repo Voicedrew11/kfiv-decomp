@@ -88,7 +88,7 @@ typedef struct {
     char pad70[0x10];
 } EntityModelPart80;
 
-/* EntityModelPart80 with the byte at 0x6C, which lies inside unk68 (reached by cast) */
+/* EntityModelPart80 with the byte at 0x6C, which lies inside part_flags (reached by cast) */
 typedef struct {
     char pad00[0x6C];
     s8 motion_slot;                 /* 0x6C motion slot the part plays in */
@@ -120,7 +120,7 @@ typedef struct {
     char pad104[0x30];
     s32 aim_part;                   /* 0x134 the part the model file marks 2; turned towards a target */
     void *look_at_part;             /* 0x138 the part look-at turns (the third the model file marks) */
-    f32 radius;                     /* 0x13C the larger of Entity.collision_radius and unk34 */
+    f32 radius;                     /* 0x13C the larger of Entity.collision_radius and Entity.collision_height */
     char pad140[0x1C];
     f32 alpha;                      /* 0x15C the model's alpha, 0x80 is opaque */
 } EntityModel;
@@ -147,9 +147,9 @@ typedef struct {
 } EntityParamsUnk240Part;
 
 /* EntityParamsUnk240Part.hit_flags as EntityAi_SendMeleeHit reads it: bit 1 of the halfword at 0x1E
-   says unk1F is copied (reached by cast: a union changes gcc's scheduling) */
+   says mp_damage is copied (reached by cast: a union changes gcc's scheduling) */
 typedef struct {
-    u16 flags;                      /* 0x1E bit 1: unk1F is copied */
+    u16 flags;                      /* 0x1E bit 1: mp_damage is copied */
 } EntityParamsUnk240PartFlags;
 
 #define ENTITY_PART_FLAGS(part) ((EntityParamsUnk240PartFlags *)&(part)->hit_flags)
@@ -466,7 +466,7 @@ typedef struct {
 
 #define ENTITY_PARAMS_RANGED_VIEW(params) ((EntityParamsRangedView *)(params))
 
-/* EntityParams with the float at 0xC0, which lies inside unk80 (Motion_StepSlot) */
+/* EntityParams with the float at 0xC0, which lies inside motion_speeds (Motion_StepSlot) */
 typedef struct {
     char pad00[0xC0];
     f32 motion_scale;               /* 0xC0 how far the root part's movement in a motion carries the entity */
@@ -680,7 +680,7 @@ typedef struct {
 } EntityAiStateKind16BF98;
 
 /* Entity+0xE0 as the kind set up by DarkSuccubus_Init lays it out. The area is
-   8-byte aligned: only then is "unk68 == 0 && unk6A == 0" one lwu. */
+   8-byte aligned: only then is "vanish_frames == 0 && vanish_cooldown == 0" one lwu. */
 typedef struct {
     char pad00[0x68];
     s16 vanish_frames;              /* 0x68 frames left while it is vanished (draw flag 0x800, params.action_frames to start) */

@@ -434,7 +434,7 @@ static void Skull_ApplyMoveCommand(Entity *entity) {
     entity->move_delta_z += ENTITY_SCRATCH_VECTOR[2];
 }
 
-/* Helper of Skull_Animate: swings angle unk50[0] of model part 3 up to ai_state.action_flags
+/* Helper of Skull_Animate: swings angle part_angles[0] of model part 3 up to ai_state.action_flags
    degrees and back to 0 over twice ai_state.action_counter frames, counted down in ai_state.pause_timer; the
    angle is kept in ai_state.part_angle_z. */
 static void Skull_SwingPart3(Entity *entity) {

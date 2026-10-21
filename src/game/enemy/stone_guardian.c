@@ -1231,7 +1231,7 @@ static void StoneGuardian_Mode5ReturnToSpawn(Entity *entity) {
 }
 
 /* The think handler of mode 6: a sequence kept in ai_state.step_index (1 to 7; at 0 it is
-   EntityAi_Think), driven by whether the two map objects EntitySpawnInfo.variant and unk42 name
+   EntityAi_Think), driven by whether the two map objects EntitySpawnInfo.variant and map_object_id name
    both have bit 17 set. While both are set the entity is kept unseen at a fixed point (steps 1 and
    2); when one clears it comes out, one entity of the five in stone_guardian_spawn_ids at a time (step 3,
    StoneGuardian_PlayAnim9, then 0); when both are set again it goes back the same way (steps 4 to 7,
@@ -1640,7 +1640,7 @@ static s32 StoneGuardian_Mode6IsStepFree(Entity *entity, s32 value) {
 }
 
 /* Helper of StoneGuardian_ThinkMode6HideSequence: whether none of the other live entities among the
-   five in stone_guardian_spawn_ids is at step 5 with its ai_state.pitch_speed below `limit`. unk54 is the distance to
+   five in stone_guardian_spawn_ids is at step 5 with its ai_state.pitch_speed below `limit`. pitch_speed is the distance to
    the post of step 6 that step 4 stored, and the caller passes its own, so TRUE means this entity
    is the nearest of those waiting. */
 static s32 StoneGuardian_Mode6IsNearestWaiting(Entity *entity, f32 limit) {

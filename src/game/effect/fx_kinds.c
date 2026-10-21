@@ -469,7 +469,7 @@ void EffectHitWindow_Update(EffectActor *effect) {
 }
 
 /* Kind 41 start: launches along the heading and takes the frame it reaches what lies ahead (within
-   def->radius_half); def->end_effect is spawned there. Def->unkF2 set: the effects aimed at it go with it. */
+   def->radius_half); def->end_effect is spawned there. Def->child_effect_id set: the effects aimed at it go with it. */
 void EffectBolt_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     TurningMotion *motion;
     EffectDef *def;
@@ -629,7 +629,7 @@ void EffectBoneFade_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     velocity->y = effect->def->ground_height;
 }
 
-/* Kind 50 update: sits on a bone of the owner entity (its controller's unkC5), turned like it; fades in as
+/* Kind 50 update: sits on a bone of the owner entity (its controller's respawn_effect_bone), turned like it; fades in as
    the player's distance goes from the first fade distance to the second; loops. */
 void EffectBoneFade_Update(EffectActor *actor) {
     float distance;
@@ -1326,7 +1326,7 @@ void EffectSeekPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot) {
 }
 
 /* Kind 73 update: for def->interval frames steers toward 110 above the player; on a hit spawns
-   def->end_effect (not when the collision result's unk18 is 5) and ends. */
+   def->end_effect (not when the collision result's floor_material is 5) and ends. */
 void EffectSeekPlayer_Update(EffectActor *actor) {
     Vector4 to_player;
     Vector4 *velocity;

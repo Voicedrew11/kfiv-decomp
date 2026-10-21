@@ -112,7 +112,7 @@ int Sound_BgmStartCue(void *context, int cue_index);
 /* BGM load step: unless the bgm is 0x12, waits for the driver and sends the BGM's reverb settings, flagging
    the change (reverb_change_pending) */
 int Sound_BgmApplyReverb(void *actor, int mode);
-/* Reads the file request->name formats with the current map's unk70 into a new buffer of the sound heap, a
+/* Reads the file request->name formats with the current map's file_index into a new buffer of the sound heap, a
    step a call; 1 when done. Nothing calls it */
 s32 Sound_ReadMapBankFileStep(LoadRequest *request);
 /* BGM load step: loads the BGM's voice (SoundDriver_LoadVoiceStep) and keeps it in the job */

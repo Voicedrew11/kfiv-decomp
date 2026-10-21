@@ -316,7 +316,7 @@ void EntityEvent_StartCueAlways(Entity *entity, s32 sound_index, s32 falloff_kin
 }
 
 /* Puts the entity back at its spawn point (Entity_ResetToSpawn), sets flag bits 1 and 8 and clears bits 2-3,
-   frees its effects and starts the effect EntityParams.respawn_effect_id names at bone unkC5. */
+   frees its effects and starts the effect EntityParams.respawn_effect_id names at bone EntityParams.respawn_effect_bone. */
 void EntityEvent_Respawn(Entity *entity) {
     char *bone;
 

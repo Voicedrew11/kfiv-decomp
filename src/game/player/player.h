@@ -97,7 +97,7 @@ typedef struct {
     PlayerShotStats worn_item_stats; /* 0x7E the worn items' values, copied into the shot a cast magic launches (Player_CastMagic) */
     PlayerShotStats defence_stats;  /* 0x90 defence values: physical then magic, from the worn items and defence bonuses */
     char padA2[0x02];
-    s32 weight;                     /* 0xA4 the weight of what is held and worn (item_name_defs unk3E, in pounds) */
+    s32 weight;                     /* 0xA4 the weight of what is held and worn (item_name_defs weight_tenths_of_pound, in pounds) */
     s32 max_weight;                 /* 0xA8 the most the player may carry; weight above it slows him */
     s32 power;                      /* 0xAC power_base in effect (the Power Seed adds a tenth); how fast power_gauge fills (at least 20 is used) */
     s32 magic;                      /* 0xB0 magic_base in effect (the Widda Needle adds a tenth); how fast magic_gauge fills (at least 20 is used) */
@@ -274,7 +274,7 @@ typedef struct {
     u64 pad40 : 24;
 } PlayerStatusBits;
 
-/* the start of a PlayerState with unk1C8 as a word and bit-fields: accesses through it are based on the
+/* the start of a PlayerState with step_sounded as a word and bit-fields: accesses through it are based on the
    block's address, as retail's are in Player_Update */
 typedef struct {
     char pad000[0x1C8];

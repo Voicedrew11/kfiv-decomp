@@ -214,7 +214,7 @@ static void LivingDead_Think(Entity *entity, s32 run_now) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but with EntitySpawnInfo.spawn_mode at 0, on
-   each frame whose count divides by 120 plus ai_state.step_index, it draws unk7A anew (0 to 59) and
+   each frame whose count divides by 120 plus ai_state.step_index, it draws step_index anew (0 to 59) and
    starts EntityAi_RangedAttack with record 0 with a chance of EntityParams.action_frames in 100. Closing
    in never runs; waiting lasts 60 to 89 frames. */
 static void LivingDead_ThinkCombat(Entity *entity, s32 run_now) {

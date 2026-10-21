@@ -34,7 +34,7 @@ typedef struct {
     s32 unk04[3];                   /* 0x04 */
 } MapFogColor;
 
-/* one of the 32 0x20-byte blocks MapSlot.fog_blocks points at; a model's unk14C points at one */
+/* one of the 32 0x20-byte blocks MapSlot.fog_blocks points at; a model's ModelInstance.fog_block points at one */
 typedef struct {
     u64 unk00[4];                   /* 0x00 */
 } MapFogBlock;
@@ -50,7 +50,7 @@ typedef struct {
 } MapFogBlockValues;
 
 /* one of the 32 0x80-byte blocks MapSlot.light_blocks points at, as whole doublewords (see MapSlotUnk10
-   in entity/entity.h); a model's unk148 points at one */
+   in entity/entity.h); a model's ModelInstance.light_block points at one */
 typedef struct {
     u64 unk00[16];                  /* 0x00 */
 } MapLightBlock;
@@ -103,7 +103,7 @@ typedef struct {
     MapFogColor current_fog_color;  /* 0x280 the current map's fog colour */
     MapFogBlock fog_blocks[2][0x20]; /* 0x290 each map slot's blocks */
     MapLightBlock light_blocks[2][0x20]; /* 0xA90 each map slot's blocks */
-    f32 screen_tint_amount;         /* 0x2A90 0 to 0.25: rises while PlayerState.light_spell_timer or unk10C is set (Player_UpdateScreenTints) */
+    f32 screen_tint_amount;         /* 0x2A90 0 to 0.25: rises while PlayerState.light_spell_timer or PlayerState.ring_of_sight_active is set (Player_UpdateScreenTints) */
     f32 screen_tint_amount_copy;    /* 0x2A94 copy of screen_tint_amount */
     f32 screen_tint_amount_copy2;   /* 0x2A98 copy of screen_tint_amount */
     char pad2A9C[0x04];

@@ -71,7 +71,7 @@ void AncientMummy_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with AncientMummy_ThinkCombat for state 2. Counts down work
-   word unk68, the pause before the next AncientMummy_ShootAndRelocate. */
+   word pause_timer, the pause before the next AncientMummy_ShootAndRelocate. */
 static void AncientMummy_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 

@@ -80,7 +80,7 @@ void GiantLeader_Init(Entity *entity) {
 /* The think handler: as EntityAi_Think, with GiantLeader_ThinkCombat for state 2. Every tenth
    frame, while ai_state.step_index is 0, it also looks whether one of the map objects 0xA0 to 0xA2 lies
    between the entity and the player (EntityCollision_LineHits), with the entity and the player on two given
-   map records and one of them near the object; if so it puts the number of the object in unk7A,
+   map records and one of them near the object; if so it puts the number of the object in ai_state.step_index,
    marks it in ai_state.action_flags (each object is used once) and starts GiantLeader_BreakMapObject. */
 static void GiantLeader_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -341,7 +341,7 @@ static void GiantLeader_MeleeAttack0(Entity *entity) {
 /* An action (busy bit 0x1000): goes past one of three map objects (0xA0-0xA2); ai_state.step_index
    says which. The entity is put at a fixed place next to the object, facing it, and plays
    animation 17, breaks the map object (MapObject_Break) on frame EntityParams.type_param_1, then walks in
-   animation 3 to a point on the far side and clears unk7A. GiantLeader_Think starts it. */
+   animation 3 to a point on the far side and clears ai_state.step_index. GiantLeader_Think starts it. */
 static void GiantLeader_BreakMapObject(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     void *map_object;
@@ -568,7 +568,7 @@ static s32 GiantLeader_CheckPartHit(Entity *entity, EntityParamsUnk240 *unk240, 
             return 0;
         }
     } else if (part == 3) {
-        // match: this kind's unk434 is a signed frame number (lh); the shared header has it u16
+        // match: this kind's EntityParams.action_frames is a signed frame number (lh); the shared header has it u16
         if ((s16)entity->params->action_frames == 0 ||
             (frame_from < (s16)entity->params->action_frames && frame_to < (s16)entity->params->action_frames) || // match: as above
             (entity->params->near_distance - 1 < frame_from && entity->params->near_distance - 1 < frame_to)) {

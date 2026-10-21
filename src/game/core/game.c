@@ -1350,8 +1350,8 @@ void Game_BlendPreviousFrameZoomed(int alpha) {
     Packet_AppendToChain(packet_start, cursor);
 }
 
-/* projects the point 1000 ahead along last frame's view (view_ray_status unk20/unk30) to find how far the view
-   turned, and draws the picture again moved by that much (at most 8 pixels; not up or down while unk40 is under
+/* projects the point 1000 ahead along last frame's view (view_ray_status prev_view_origin/prev_view_direction) to find how far the view
+   turned, and draws the picture again moved by that much (at most 8 pixels; not up or down while view_distance is under
    125) over every other line, in 20 strips */
 void Game_ShiftScreenByViewTurn(void) {
     float view_matrix[16];

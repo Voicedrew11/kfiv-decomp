@@ -190,8 +190,8 @@ static void LivingArmor_ThinkCombat(Entity *entity, s32 run_now) {
 }
 
 /* Helper of LivingArmor_Animate: in animation 17 turns model part 3 to look at the player
-   (Bone_TurnPartToLook, the angles kept in work area unk30) and then takes 120 degrees off the part's
-   angle unk50. */
+   (Bone_TurnPartToLook, the angles kept in work area target_point) and then takes 120 degrees off the part's
+   angle rotation_x. */
 static void LivingArmor_AimPart3AtPlayer(Entity *actor) {
     char pad[0x10]; /* unused, but retail reserves the 0x10 bytes */
     Qword pair_copy;
@@ -241,7 +241,7 @@ static void LivingArmor_Animate(Entity *entity) {
 
 /* The on_hit handler: every hit starts LivingArmor_ReactionHeavy, whatever its strength. Sets flag
    bits 18, 20 and 21, and ai_state.pause_timer to half of EntityParams.pitch_limit_deg plus a random number below
-   unk430. */
+   EntityParams.pitch_limit_deg. */
 static void LivingArmor_OnHit(Entity *entity) {
     EntityAiState *sub = &entity->ai_state;
     int rnd = rand();

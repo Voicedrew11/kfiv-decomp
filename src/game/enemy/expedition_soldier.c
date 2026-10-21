@@ -366,7 +366,7 @@ static void ExpeditionSoldier_SignalMapObject(Entity *entity) {
 
 /* The think handler the set-up function installs for EntitySpawnInfo.variant 3: as
    ExpeditionSoldier_Think (with ExpeditionSoldier_ThinkCombat for state 1 too), but it first reads bit 17 of the two map
-   objects EntitySpawnInfo.map_object_id and unk43 name into ai_state.step_index and action_flags, and while either is
+   objects EntitySpawnInfo.map_object_id and EntitySpawnInfo.second_map_object_id name into ai_state.step_index and action_flags, and while either is
    clear it calls ExpeditionSoldier_WalkToMapObjectPosX instead of stepping the states. PosX: its points
    are at x 950 and 900; ExpeditionSoldier_ThinkUseMapObjectsNegX has them at -950 and -900. */
 static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 run_now) {

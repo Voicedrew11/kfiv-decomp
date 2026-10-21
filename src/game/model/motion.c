@@ -524,8 +524,8 @@ s32 Motion_MixSlotFirstKeys(ModelInstance *model, s32 type, s32 table_a, s32 tab
     return 1;
 }
 
-/* Starts animation `animation` of the entity (EntityParams.motion_ids gives its motion, unk80 its speed) at
-   `frame`, blending in over `blend_frames` (three quarters more while the unk28 timer runs), and clears the
+/* Starts animation `animation` of the entity (EntityParams.motion_ids gives its motion, EntityParams.motion_speeds gives its speed) at
+   `frame`, blending in over `blend_frames` (three quarters more while the ailment_3_frames timer runs), and clears the
    root part's offset; returns 1 without doing anything when the motion is already playing and `force` is 0. */
 int Motion_Start(Entity *entity, int animation, int frame, u32 blend_frames, int force) {
     EntityParams *params;

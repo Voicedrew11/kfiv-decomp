@@ -66,7 +66,7 @@ static void Bell_Animate(Entity *entity) {
 
 /* The think handler (it takes the entity only): no states and no actions. In a frame with flag bit
    43 set and the timer Entity.action_timer at 0 it sets flag bit 29, calls Sound_PlayFalloff with
-   EntityParams.yaw_limit_deg, unk430 and unk42E, Entity.sound_bank, Entity.distance_to_player_3d and the angle of the entity
+   EntityParams.yaw_limit_deg, pitch_limit_deg and sound_id, Entity.sound_bank, Entity.distance_to_player_3d and the angle of the entity
    off the player's facing, and sets the timer to EntityParams.action_frames; otherwise flag bit 29 is
    clear. It always clears flag bit 43. */
 static void Bell_Think(Entity *entity, s32 run_now) {

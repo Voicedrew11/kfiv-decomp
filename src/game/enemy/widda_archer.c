@@ -184,7 +184,7 @@ static void WiddaArcher_AimPartsAtTarget(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with WiddaArcher_ThinkCombat for state 2. Before that it sets bit 40
-   of model part 29's unk68 during frames 7 to 35 of animation 23 and frames 25 to 49 of animation
+   of model part 29's part_flags during frames 7 to 35 of animation 23 and frames 25 to 49 of animation
    24, and clears it otherwise. */
 static void WiddaArcher_Think(Entity *entity, s32 run_now) {
     if (entity->model->level_tables->blend_left == 0 &&

@@ -375,7 +375,7 @@ static inline void entity_draw_set_model_tint(Entity *entity, f32 red, f32 green
 }
 
 /* Draws the entities of both maps, pool block by pool block: red while one is hit, pulsing in the colour of
-   the timer that is running (unk20, unk24, unk28, unk2A), plain otherwise. */
+   the timer that is running (ailment_1_frames, ailment_2_frames, ailment_3_frames, ailment_4_frames), plain otherwise. */
 void Entity_DrawAll(int list) {
     Entity *entity;
     s32 map;

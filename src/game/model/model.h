@@ -221,7 +221,7 @@ typedef struct {
 /* one part of a PosedModelFile */
 typedef struct {
     f32 position[3];                /* 0x00 where the part rests: ModelPart.position */
-    f32 rotation[3];                /* 0x0C ModelPart.rotation_x, unk54, unk58 */
+    f32 rotation[3];                /* 0x0C ModelPart.rotation_x, rotation_y, rotation_z */
     f32 scale[3];                   /* 0x18 ModelPart.scale */
     s32 data_offset;                /* 0x24 from the start of the file to the part's ModelPartData blocks */
     u16 data_count;                 /* 0x28 how many blocks */
@@ -237,7 +237,7 @@ typedef struct {
     PosedModelFilePart parts[1];    /* 0x10 part_count of them */
 } PosedModelFile;
 
-/* ModelPart with the bit-fields that share a doubleword with unk60[2] */
+/* ModelPart with the bit-fields that share a doubleword with scale[2] */
 typedef struct {
     char pad00[0x68];
     u64 pad68_0 : 40;
@@ -892,7 +892,7 @@ typedef struct {
 /* item_model_sources[map][32]: what is loaded for each kind of item a map holds (MapItem_FindModelSource finds one) */
 typedef struct {
     char *model_data;               /* 0x00 handed to Model_SetUpPosed */
-    char *texture;                  /* 0x04 becomes the model's unk194 */
+    char *texture;                  /* 0x04 becomes the model's texture_data */
 } ItemModelSource;
 
 /* the object Collision_HitCapsuleQuadObj tests against a model's points */

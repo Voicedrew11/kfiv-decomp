@@ -141,7 +141,7 @@ static void Slasher_ThinkStandStill(Entity *entity, s32 run_now) {
 
 /* An action (busy bit 0x1000) that the set-up function and state 0 of Slasher_Think start:
    keeps animation 0 until the player is within EntityParams.near_distance or ai_state.step_index is set; then
-   it sets flag bits 32 and 33 and unk7A, calls Slasher_AlertSameKind and thinks. */
+   it sets flag bits 32 and 33 and step_index, calls Slasher_AlertSameKind and thinks. */
 static void Slasher_WaitForPlayerNear(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 

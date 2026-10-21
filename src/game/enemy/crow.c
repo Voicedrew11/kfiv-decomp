@@ -102,7 +102,7 @@ static void Crow_Think(Entity *entity, int frame) {
 
 /* Helper of Crow_Think, called until the state is 3: each time the timer runs out it draws
    among Crow_PlayAnim20, Crow_PlayAnim21 and a wait of 120 to 179 frames,
-   weighted by EntityParams.yaw_limit_deg, unk434 and unk436; else it starts the move action. */
+   weighted by EntityParams.yaw_limit_deg, action_frames and near_distance; else it starts the move action. */
 static void Crow_PickAction(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 roll;

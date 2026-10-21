@@ -194,7 +194,7 @@ void Player_Update(void) {
 
     memset(&zero, 0, sizeof(Vector4));
     check_map_index();
-    /* not playing (unk00 clear, or bit 0 of unk30 set): the walk state is cleared */
+    /* not playing (player_control clear, or bit 0 of update_hold_flags set): the walk state is cleared */
     if (game_status.player_control == 0 || (game_status.update_hold_flags & 1)) {
         Player_StopWalking();
     }
@@ -292,7 +292,7 @@ void Player_Update(void) {
             PLAYER_STATUS(&player_state)->running = FALSE;
         } else if (player_state.landing_slow_timer != 0) {
             PLAYER_STATUS(&player_state)->running = FALSE;
-        // match: unk3E is tested again with the rest of the set
+        // match: equipment is tested again with the rest of the set
         } else if (player_state.equipment[EQUIP_SHIELD] == ITEM_WORN_INDEX(ITEM_ANCIENT_SHIELD) &&
                    !PLAYER_WEARS_ANCIENT_SET(&player_state)) {
             PLAYER_STATUS(&player_state)->running = FALSE;
@@ -304,7 +304,7 @@ void Player_Update(void) {
         game_status.bit2 = TRUE;
     }
 
-    /* what was added to unk2A0 comes off unkB8, and the screen tint builds up while it does */
+    /* what was added to pending_mp_drain comes off mp_now, and the screen tint builds up while it does */
     if (player_state.pending_mp_drain != 0) {
         if (player_state.pending_mp_drain < player_state.mp_now) {
             player_state.mp_now -= player_state.pending_mp_drain;
@@ -336,7 +336,7 @@ void Player_Update(void) {
     }
     check_map_index();
 
-    /* the stride: unk1C0 runs from 0 to STRIDE_LENGTH, faster when running and slower in water */
+    /* the stride: stride_phase runs from 0 to STRIDE_LENGTH, faster when running and slower in water */
     if (game_status.player_control != 0 && !(game_status.update_hold_flags & 1)) {
         stride_speed = 1.0f;
         if ((s32)(player_state.status_bits >> 35) & 1) {
@@ -416,7 +416,7 @@ void Player_Update(void) {
             }
         }
     }
-    /* the warning sound while unkB4 is at a tenth of unk58 or less */
+    /* the warning sound while hp_now is at a tenth of hp_max or less */
     if (player_state.death_timer == 0 && player_state.hp_now > 0 && player_state.hp_now * 100 / player_state.hp_max < 11 &&
         frame_counter % 27 == 0) {
         Sound_PlayCommon(0x29);
@@ -1476,8 +1476,8 @@ void Player_ApplyGroundEffects(void) {
     }
 }
 
-/* A landing at the fall speed given hurts from 66.67 up (less with unk204 set, or into water); a hurt that is
-   not softened by the Absorption Boots slows the player for 60 frames (unk200). */
+/* A landing at the fall speed given hurts from 66.67 up (less with stepped_on_entity set, or into water); a hurt that is
+   not softened by the Absorption Boots slows the player for 60 frames (landing_slow_timer). */
 void Player_TakeFallDamage(float speed) {
     int amount;
 
@@ -1593,7 +1593,7 @@ void Player_UpdateAilmentImmunity(void) {
     }
 }
 
-/* Dying: once HP and the drawn HP bar are empty, starts the 60 frames in which the view tips over (unk1A8 counts
+/* Dying: once HP and the drawn HP bar are empty, starts the 60 frames in which the view tips over (death_timer counts
    them, sound 0x28), then ends the main loop (GameStatus.bit9). */
 void Player_UpdateDying(void)
 {

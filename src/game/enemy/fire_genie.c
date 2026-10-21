@@ -175,7 +175,7 @@ static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode) {
 
 /* The on_hit handler: as EntityAi_OnHit, but only a heavy hit starts a reaction
    (EntityAi_ReactionHeavy); with ai_state.action_counter set that hit also puts -1 in ai_state.step_index of
-   the entity with spawn id ai_state.action_flags, and clears unk7C. */
+   the entity with spawn id ai_state.action_flags, and clears ai_state.action_counter. */
 static void FireGenie_OnHit(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     Entity *other;
@@ -244,7 +244,7 @@ static void FireGenie_ThinkDecide(Entity *entity, s32 run_now) {
 }
 
 /* The ranged attack with record 0 (busy bit 1): animation 23, no turning; from frame
-   EntityParams.action_frames to unk436 it sets flag bit 9 and launches the record's shots on two frames in
+   EntityParams.action_frames to EntityParams.near_distance it sets flag bit 9 and launches the record's shots on two frames in
    three. */
 static void FireGenie_RangedAttack0(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -292,7 +292,7 @@ static void FireGenie_RangedAttack0(Entity *entity) {
 /* An action (busy bit 0x1000) that FireGenie_ThinkDecide starts when
    FireGenie_ShouldRespawnOther says so: plays animation 17 to its end. Past frame
    EntityParams.far_distance it calls FireGenie_RespawnOneOther and sets ai_state.action_counter; past frame
-   type_param_0 it calls FireGenie_SignalRespawned and clears unk7C. */
+   type_param_0 it calls FireGenie_SignalRespawned and clears ai_state.action_counter. */
 static void FireGenie_RespawnOther(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -339,8 +339,8 @@ static void FireGenie_RespawnOther(Entity *entity) {
 }
 
 /* The death action (busy bit 0x40): animation 16, the fade over 20 frames and the removal, as
-   EntityAi_Death with other flag settings; with ai_state.action_counter set it first puts -1 in work byte
-   unk7A of the entity with spawn id ai_state.action_flags. */
+   EntityAi_Death with other flag settings; with ai_state.action_counter set it first puts -1 in
+   ai_state.step_index of the entity with spawn id ai_state.action_flags. */
 static void FireGenie_Death(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -501,8 +501,8 @@ static s32 FireGenie_ShouldRespawnOther(Entity *entity) {
 
 /* Helper of FireGenie_RespawnOther: draws one of the entities FireGenie_ShouldRespawnOther
    did not count, respawns it when it has flag bit 0 set (EntityEvent_Respawn, which calls
-   Entity_ResetToSpawn), keeps its spawn id in ai_state.action_flags, and sets the pause in work word
-   unk68 to EntityParams.type_param_2. */
+   Entity_ResetToSpawn), keeps its spawn id in ai_state.action_flags, and sets the pause in
+   ai_state.pause_timer to EntityParams.type_param_2. */
 static void FireGenie_RespawnOneOther(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 remaining = 1;

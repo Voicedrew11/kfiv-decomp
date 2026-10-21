@@ -200,8 +200,8 @@ static inline f32 wrap_angle(f32 angle) {
 }
 
 /* Draws a model (the draw function Model_SetUpSkinned installs): works out a turn from the block at
-   unk148 and the model's rotation, queues a packet with the model's two matrices, its MapFogBlock
-   block, its lights and the vectors at unk160 and unk150, then for every part that is switched on
+   light_block and the model's rotation, queues a packet with the model's two matrices, its MapFogBlock
+   block, its lights and the vectors at draw_header_vector and colour_red, then for every part that is switched on
    and not scaled to nothing its two matrices, its parent's two and a reference to each of its data
    blocks. */
 void Model_DrawSkinned(ModelInstance *model) {

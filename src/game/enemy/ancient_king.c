@@ -99,7 +99,7 @@ void AncientKing_Init(Entity *entity) {
 }
 
 /* The animate handler until AncientKing_SwitchHandlers puts EntityAi_Animate in its place: plays the
-   two motion slots of the work area (unk80 and unk88), flag bit 34 coming from the second, then
+   two motion slots of the work area (motion_slot_0 and motion_slot_1), flag bit 34 coming from the second, then
    turns the head. */
 static void AncientKing_Animate(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -202,7 +202,7 @@ static void AncientKing_Move(Entity *entity) {
 
 /* The death action (busy bit 0x40) until AncientKing_SwitchHandlers installs AncientKing_DeathLaunchShot:
    on the motion slots, plays animation 2 to its end and then animation 16; as that passes frame 43
-   it launches shot unk10[0].unk00 of ranged record 0 with the player's position as its starting
+   it launches shot launches[0].magic_effect of ranged record 0 with the player's position as its starting
    point (EntityAi_LaunchShot); then the fade and the removal as in EntityAi_Death. */
 static void AncientKing_Death(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -267,7 +267,7 @@ static void AncientKing_Death(Entity *entity) {
 
 /* The ranged attack with record 0 (busy bit 1) of the first set of handlers: animation 23 on the
    second motion slot; on each of the five frames in ancient_king_near_shot_frames it launches the record's shot
-   unk10[0].unk00, its starting point up to 600 from the player's position in x and in z
+   launches[0].magic_effect, its starting point up to 600 from the player's position in x and in z
    (EntityAi_LaunchShot). */
 static void AncientKing_RangedAttack0(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -319,7 +319,7 @@ static void AncientKing_RangedAttack0(Entity *entity) {
 
 /* An action (busy bit 0x1000) that AncientKing_ThinkCombat starts when
    AncientKing_ShouldRespawnOthers says so: animation 17 on the second motion slot; on frame
-   EntityParams.far_distance it starts effect unk436 at model point type_param_2 (EntityEvent_StartEffectAtPoint), past frame
+   EntityParams.far_distance it starts effect near_distance at model point type_param_2 (EntityEvent_StartEffectAtPoint), past frame
    type_param_1 effect type_param_0 there, and calls AncientKing_RespawnTwoOthers; then it plays to the end. */
 static void AncientKing_RespawnOthers(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -405,8 +405,8 @@ static void AncientKing_SwitchHandlers(Entity *entity) {
 
 /* The think handler that AncientKing_SwitchHandlers installs: as EntityAi_Think, with
    AncientKing_ThinkCombatAfterSwitch for state 2 and EntityAi_ThinkIdle for states 0 and 1. Clears flag
-   bit 25 once the entity is more than 160 from its spawn point (EntityMath_DistanceXZ). Counts down work
-   word unk68. */
+   bit 25 once the entity is more than 160 from its spawn point (EntityMath_DistanceXZ). Counts down
+   ai_state.pause_timer. */
 static void AncientKing_ThinkAfterSwitch(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -527,7 +527,7 @@ static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 run_now) {
 }
 
 /* The death action (busy bit 0x40) that AncientKing_SwitchHandlers installs: as EntityAi_Death; as
-   animation 16 passes frame 43 it launches shot unk10[0].unk00 of ranged record 0 with the player's
+   animation 16 passes frame 43 it launches shot launches[0].magic_effect of ranged record 0 with the player's
    position as its starting point (EntityAi_LaunchShot). */
 static void AncientKing_DeathLaunchShot(Entity *entity) {
     f32 target[4];
@@ -635,7 +635,7 @@ static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
 }
 
 /* The ranged attack with record 1 (busy bit 1): animation 24; on each of the four frames in
-   ancient_king_bone_shot_frames it launches the record's shot unk10[0].unk00 from the point Model_GetSkinnedBonePoint gives for
+   ancient_king_bone_shot_frames it launches the record's shot launches[0].magic_effect from the point Model_GetSkinnedBonePoint gives for
    EntityParams.type_param_2, heading away from the entity's own position, with a pitch of -10 degrees
    (EntityAi_LaunchShot). */
 static void AncientKing_RangedAttack1(Entity *entity) {
@@ -739,8 +739,8 @@ static void AncientKing_RespawnOthersAfterSwitch(Entity *entity) {
 
 /* Whether to start AncientKing_RespawnOthers or AncientKing_RespawnOthersAfterSwitch (the two
    think functions of state 2 ask): counts the entities with spawn ids 10 to 15 that have flag bits
-   0 and 1 set and flag bits 2-3 below 3 (the count goes to ai_state.step_index, a bit each to work word
-   unk6A); TRUE when there are fewer than 5 and the pause in ai_state.pause_timer is over. */
+   0 and 1 set and flag bits 2-3 below 3 (the count goes to ai_state.step_index, a bit each to
+   ai_state.sub_timer); TRUE when there are fewer than 5 and the pause in ai_state.pause_timer is over. */
 static s32 AncientKing_ShouldRespawnOthers(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 count = 0;

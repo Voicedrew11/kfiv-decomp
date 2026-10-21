@@ -148,7 +148,7 @@ void ScriptCmd_RandomFloat(ScriptFloatQueryCommand *command) {
 }
 
 /* Command 227: hands the script, through x, y and z, the player's position plus `distance` times the
-   vector (PlayerState.strafe_speed, unk1AC, unk1B4) turned by the player's heading, then finishes. */
+   vector (PlayerState.strafe_speed, PlayerState.fall_speed, PlayerState.walk_speed) turned by the player's heading, then finishes. */
 void ScriptCmd_GetPointFromPlayer(ScriptPointAheadCommand *command) {
     f32 matrix[16];
     f32 vector[4];
@@ -271,7 +271,7 @@ int ScriptCmd_BlendEntityMotion(ScriptMotionBlendCommand *command) {
 /* Command 238: turns the entity `target_id` to face the player (state 4, EntityAi_SetState: on the spot for
    a kind with params flag 0x80, else through Entity.move_command's turn bits), then waits `frames` frames and
    for state 5; done at once if it is in state 5 already, for the 0x80 kind only if it faces the player
-   within params->unk438 degrees. */
+   within params->far_distance degrees. */
 void ScriptCmd_TurnEntityToPlayer(ScriptStateWaitCommand *command) {
     Entity *entity;
     f32 heading;

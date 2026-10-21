@@ -226,7 +226,7 @@ static void Beetle_ThinkCombat(Entity *entity, s32 run_now) {
 }
 
 /* Helper of Beetle_Animate: eases ai_state.part_angle_x towards 20 degrees on the side the command
-   turns to (0 with no turn bit) and puts half of it in angle unk50[1] of model parts 7 and 12. */
+   turns to (0 with no turn bit) and puts half of it in angle part_angles[1] of model parts 7 and 12. */
 static void Beetle_TurnParts7And12(void *entity_arg) {
     Entity *entity = entity_arg;
     EntityAiState *ai_state = &entity->ai_state;
@@ -260,7 +260,7 @@ static void Beetle_TurnParts7And12(void *entity_arg) {
 }
 
 /* Helper of Beetle_Animate: eases ai_state.part_angle_y towards 20 degrees on the side the command
-   turns to (0 with no turn bit) and puts minus half of it in angle unk50[1] of model parts 23, 28,
+   turns to (0 with no turn bit) and puts minus half of it in angle part_angles[1] of model parts 23, 28,
    31 and 32 (the name gives the first and the last of the four). */
 static void Beetle_TurnParts23To32(Entity *entity) {
     f32 limit;
@@ -296,7 +296,7 @@ static void Beetle_TurnParts23To32(Entity *entity) {
 }
 
 /* The ranged attack with record 0 (busy bit 1): animation 23; from frame EntityParams.pitch_limit_deg to
-   unk432 it launches the record's shots on every frame whose number is not a multiple of
+   EntityParams.yaw_limit_deg it launches the record's shots on every frame whose number is not a multiple of
    EntityParams.action_frames. */
 static void Beetle_RangedAttack0(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;

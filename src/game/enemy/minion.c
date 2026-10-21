@@ -192,7 +192,7 @@ static void Minion_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
-/* The animate handler: plays the two motion slots of the work area (unk80 and unk88) where
+/* The animate handler: plays the two motion slots of the work area (motion_slot_0 and motion_slot_1) where
    EntityAi_Animate plays the model's one motion, then turns the head. */
 static void Minion_Animate(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;

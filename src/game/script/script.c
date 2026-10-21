@@ -1218,7 +1218,7 @@ void ScriptCmd_GetEntityCounter(ScriptCallCommand *command) {
     command->active = 0;
 }
 
-/* Command 43: empties the player's two gauges (the weapon's, unkBC, and the magic one, unkC0), then
+/* Command 43: empties the player's two gauges (the weapon's, power_gauge, and the magic one, magic_gauge), then
    finishes. */
 void ScriptCmd_EmptyPlayerGauges(ScriptThreadCommand *command) {
     player_state.magic_gauge = player_state.power_gauge = 0;

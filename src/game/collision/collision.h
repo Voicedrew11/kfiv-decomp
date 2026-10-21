@@ -92,19 +92,19 @@ typedef struct {
     CollisionStrip *hazard_strips;  /* 0x28 hazard_strip_count strips */
     CollisionStrip *water_strips;   /* 0x2C the strips EntityCollision_DistanceToGround drops a point onto */
     char pad30[0x08];
-    u16 wall_strip_count;           /* 0x38 how many strips unk18 has */
+    u16 wall_strip_count;           /* 0x38 how many strips wall_strips has */
     u16 floor_strip_count;          /* 0x3A */
-    u16 second_wall_strip_count;    /* 0x3C how many strips unk20 has */
-    u16 barrier_strip_count;        /* 0x3E how many strips unk24 has */
-    u16 hazard_strip_count;         /* 0x40 how many strips unk28 has */
-    u16 water_strip_count;          /* 0x42 how many strips unk2C has */
+    u16 second_wall_strip_count;    /* 0x3C how many strips second_wall_strips has */
+    u16 barrier_strip_count;        /* 0x3E how many strips barrier_strips has */
+    u16 hazard_strip_count;         /* 0x40 how many strips hazard_strips has */
+    u16 water_strip_count;          /* 0x42 how many strips water_strips has */
 } CollisionMesh;
 
 /* CollisionMesh with its strip lists and their lengths as arrays (Collision_CastRayAtMap picks them by index;
    Collision_CastRayAtMapLists goes through seven, one more than CollisionMesh names) */
 typedef struct {
     char pad00[0x18];
-    CollisionStrip *strip_lists[7]; /* 0x18 strip_lists, floor_strips, unk20, unk24, unk28, unk2C, and one at 0x30 */
+    CollisionStrip *strip_lists[7]; /* 0x18 strip_lists, floor_strips, second_wall_strips, barrier_strips, hazard_strips, water_strips, and one at 0x30 */
     char pad34[0x04];
     u16 strip_counts[7];            /* 0x38 */
 } CollisionMeshLists;

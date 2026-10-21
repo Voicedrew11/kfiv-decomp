@@ -132,7 +132,7 @@ void EffectHit_CheckAndEnd(EffectActor *effect, void *state_arg) {
     }
 }
 
-/* EffectHit_CheckAndEnd that spawns def->unkF2 instead for hit flag 2 (and does not end); returns 1 for
+/* EffectHit_CheckAndEnd that spawns def->child_effect_id instead for hit flag 2 (and does not end); returns 1 for
    flag 2, 2 for another hit, else 0. */
 int EffectHit_CheckAndEndByFlag(EffectActor *effect, s8 *state) {
     int hit_flags;
@@ -172,7 +172,7 @@ void EffectHit_End(EffectActor *effect, s8 *state) {
     *state = 1;
 }
 
-/* 1 when the effect has a hit check (effect_param and def->unk10B set) and it finds something, else 0. */
+/* 1 when the effect has a hit check (effect_param and def->hit_check_index set) and it finds something, else 0. */
 int EffectHit_Check(EffectActor *effect) {
     if (effect->effect_param != 0xFFFF) {
         if (effect->def->hit_check_index != 0xFF) {
@@ -311,7 +311,7 @@ void EffectSteer_Toward(Vector4 *velocity, Vector4 *direction, float speed, floa
 }
 
 /* The entity within def->interval of position that lies most nearly in the direction of the reference
-   angles, inside def->unkE4 of pitch and def->unkE8 of heading; 0 when none. */
+   angles, inside def->spread_angle of pitch and def->spin_rate of heading; 0 when none. */
 int EffectHit_FindAimedEntity(EffectActor *effect, Vector4 *position, Vector4 *reference) {
     Vector4 angles;
     Vector4 offset;

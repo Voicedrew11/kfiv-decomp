@@ -81,7 +81,7 @@ void WaterElemental_Init(Entity *entity) {
    (WaterElemental_AlertSameKind of another entity sets it; states 0 and 1 clear it) it only starts
    WaterElemental_RunAtPlayer. Once the pause in ai_state.mode_timer is over and Entity.hit_points is below
    EntityParams.near_distance percent of EntityParams.hit_points it starts WaterElemental_RecoverHealth with a
-   chance of unk438 in 100. */
+   chance of far_distance in 100. */
 static void WaterElemental_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state;
 
@@ -270,7 +270,7 @@ static void WaterElemental_PlayTurnAnim(Entity *entity) {
 
 /* An action (busy bit 0x1000) that WaterElemental_Think starts when Entity.hit_points is below
    EntityParams.near_distance percent of EntityParams.hit_points: plays animation 18 to its end; on frame
-   EntityParams.type_param_2 it adds EntityParams.type_param_0 percent of unk0A to Entity.hit_points, once, and sets
+   EntityParams.type_param_2 it adds EntityParams.type_param_0 percent of EntityParams.hit_points to Entity.hit_points, once, and sets
    the pause in ai_state.mode_timer to type_param_1. Entity.hit_points is the entity's health: Entity_ResetToSpawn
    loads it from EntityParams.hit_points, Attack_HitEntity takes the damage of a hit off it, and
    EntityAi_Update starts the death action when it is 0. */
@@ -340,7 +340,7 @@ static s32 WaterElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32
 }
 
 /* Helper of WaterElemental_OnHit: sets ai_state.pause_timer to 1 in every other live entity with the same
-   EntityParams that is within EntityParams.action_frames of this one, has unk68 at 0 and has the player
+   EntityParams that is within EntityParams.action_frames of this one, has ai_state.pause_timer at 0 and has the player
    within EntitySpawnInfo.wander_radius of its spawn point. */
 static void WaterElemental_AlertSameKind(Entity *entity) {
     Entity *other;
@@ -381,8 +381,8 @@ static void WaterElemental_OnHit(Entity *entity) {
 
 /* An action (busy bit 0x3000) that WaterElemental_Think starts while ai_state.pause_timer is 1: plays
    animation 3, then each frame guards or dodges the player's swing, starts the attack EntityAi_PickAttack
-   picks once EntityAi_PickCombatChoice chooses attacking (unk68 becomes 2), and else gives the command to run
-   at the player and calls the move handler itself. Flag bit 53 ends it with unk68 at 2. */
+   picks once EntityAi_PickCombatChoice chooses attacking (pause_timer becomes 2), and else gives the command to run
+   at the player and calls the move handler itself. Flag bit 53 ends it with pause_timer at 2. */
 static void WaterElemental_RunAtPlayer(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];

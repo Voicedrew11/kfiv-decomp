@@ -353,8 +353,8 @@ int Player_CastMagic(int magic_id) {
     return TRUE;
 }
 
-/* Keeps a held magic (7 to 9) going: after the first 30 frames it costs one of unkB8 every third frame, and
-   every call launches its shot again from the slot Player_CastMagic set aside. Out of unkB8, it stops. */
+/* Keeps a held magic (7 to 9) going: after the first 30 frames it costs one of mp_now every third frame, and
+   every call launches its shot again from the slot Player_CastMagic set aside. Out of mp_now, it stops. */
 void Player_HoldMagic(int magic_id) {
     Vector4 angles;
     FxTableEntry *entry;

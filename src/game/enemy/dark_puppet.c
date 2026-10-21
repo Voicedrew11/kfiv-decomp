@@ -162,8 +162,8 @@ static void DarkPuppet_Think(Entity *entity, s32 run_now) {
 /* The think function of state 2: as EntityAi_ThinkCombat with the type's own attacks
    (DarkPuppet_MeleeAttack; DarkPuppet_RangedAttack0 for ranged record 0,
    DarkPuppet_RangedAttack for the others). Closing in lasts EntityParams.type_param_0 frames and has
-   four ways, kept in ai_state.move_choice: 0 forward (the player farther than unk438), 1 backwards
-   (nearer than unk436), 2 and 3 sideways (command bits 4 and 8) while keeping between the two
+   four ways, kept in ai_state.move_choice: 0 forward (the player farther than far_distance), 1 backwards
+   (nearer than near_distance), 2 and 3 sideways (command bits 4 and 8) while keeping between the two
    distances; EntityAi_IsPushedFromFront makes it change the way. Waiting (4) it turns to the player. */
 static void DarkPuppet_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -323,7 +323,7 @@ static void DarkPuppet_Move(Entity *entity) {
 
 /* Carries out the movement command in Entity.move_command; DarkPuppet_Think, DarkPuppet_MeleeAttack
    and the ranged attacks call it. It turns the entity and speeds up or slows down along its three
-   axes by EntityParams.speed_step_per_frame a frame up to unk54 (ai_state.move_speed, part_angle_x and part_angle_y), twice as
+   axes by EntityParams.speed_step_per_frame a frame up to max_speed (ai_state.move_speed, part_angle_x and part_angle_y), twice as
    fast for command bit 0x40. No command when the entity is player_state.stepped_on_entity and EntityParams.flags
    has 0x800. */
 static void DarkPuppet_ApplyMoveCommand(Entity *entity) {
@@ -494,8 +494,8 @@ static void DarkPuppet_MeleeAttack(Entity *entity) {
 }
 
 /* The ranged attack with record 0 (busy bit 1; DarkPuppet_ThinkCombat starts it for index 0
-   only): animation 23; on frame 30 it launches the record's shot unk10 from the point Model_GetSkinnedBonePoint
-   gives for the record's unk11, along the model's angles (EntityAi_LaunchShot). Turns and moves as
+   only): animation 23; on frame 30 it launches the record's shot magic_effect from the point Model_GetSkinnedBonePoint
+   gives for the record's bone_index, along the model's angles (EntityAi_LaunchShot). Turns and moves as
    DarkPuppet_MeleeAttack does. */
 static void DarkPuppet_RangedAttack0(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;

@@ -52,7 +52,7 @@ void Interact_UpdateViewRay(void) {
     Vector_ApplyMatrix(view_ray_status.view_direction, rotation, view_ray_status.view_direction);
 }
 
-/* Finds what is in front of the player: how far the view reaches before a wall or a map object (unk40), and the
+/* Finds what is in front of the player: how far the view reaches before a wall or a map object (view_ray_status.view_distance), and the
    entity, map object or item near enough to act on. Then, when an event may start (GameStatus.bit1), starts the
    script of whichever was found. */
 void Interact_FindTarget(void) {

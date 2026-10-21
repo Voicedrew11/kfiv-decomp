@@ -64,7 +64,7 @@ void MapObject_UpdateScenery(MapObject *object) {
 }
 
 /* Step 0xF of most kinds, after MapObject_Break: runs the animation, fading the model out over it when the
-   definition asks for that (unk68 bit 0x20000); once it has ended the object goes out of use and, when it did
+   definition asks for that (definition_flags bit 0x20000); once it has ended the object goes out of use and, when it did
    not fade, the object named by its source comes into use. */
 void MapObject_UpdateBreaking(MapObject *object) {
     int total;

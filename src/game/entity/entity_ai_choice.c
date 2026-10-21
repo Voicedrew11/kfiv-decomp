@@ -149,7 +149,7 @@ static inline void adjust_level(u8 *level, s32 delta, s32 max) {
 }
 
 /* Steps Entity.state from flag bit 33 (the player is noticed): 0 nothing, 2 noticed, 1 was noticed and
-   Entity.timer (EntityController.state_timer_reload frames) still runs; 3 stays. Clears unkA0 when the state changes. */
+   Entity.timer (EntityController.state_timer_reload frames) still runs; 3 stays. Clears Entity.action_timer when the state changes. */
 void EntityAi_StepState(Entity *entity) {
     s64 next;
 
@@ -615,8 +615,8 @@ s32 EntityAi_PickRangedAttack(Entity *entity) {
 }
 
 /* Picks the next of the four combat choices (Entity.combat_choice; 0 attack, 1 close in, 2 wait) by their chances
-   EntityParams.combat_choice_weights and weights unkBC, the current choice counting up to twice for 240 frames after it was
-   taken; -1 when none can be chosen. The attack is left out while unkA2 runs, while the player is in reach of
+   EntityParams.combat_choice_weights and Entity.choice_weights, the current choice counting up to twice for 240 frames after it was
+   taken; -1 when none can be chosen. The attack is left out while Entity.attack_delay_frames runs, while the player is in reach of
    none of the six attacks, and by `mode`. */
 s32 EntityAi_PickCombatChoice(Entity *entity, s32 mode) {
     s32 weights[4];
@@ -686,8 +686,8 @@ s32 EntityAi_PickCombatChoice(Entity *entity, s32 mode) {
     return choice;
 }
 
-/* After a hit in state 2: lowers the weight (unkBC) of the choice the entity was on and raises the other's,
-   and after an attack does the same to the attack weights (unkC0; retail offsets the melee ones by 3, the
+/* After a hit in state 2: lowers the weight (Entity.choice_weights) of the choice the entity was on and raises the other's,
+   and after an attack does the same to the attack weights (Entity.attack_weights; retail offsets the melee ones by 3, the
    other way round from EntityAi_LowerAttackWeight). All kept between 0x40 and 0xC0. */
 void EntityAi_LowerWeightsAfterHit(Entity *entity) {
     s32 i;
@@ -718,7 +718,7 @@ void EntityAi_LowerWeightsAfterHit(Entity *entity) {
     }
 }
 
-/* Lowers the weight (unkC0) of the attack flag bits 57-59 name by 10, kept between 0x40 and 0xC0. */
+/* Lowers the weight (Entity.attack_weights) of the attack flag bits 57-59 name by 10, kept between 0x40 and 0xC0. */
 void EntityAi_LowerAttackWeight(Entity *entity) {
     EntityFlagBits *flags = ENTITY_FLAG_BITS(entity);
     u32 high_bits = entity->flags >> 57;
@@ -735,7 +735,7 @@ void EntityAi_LowerAttackWeight(Entity *entity) {
     adjust_level(level, -10, 0xC0);
 }
 
-/* Lowers the weight (unkBC) of the chosen of the first two combat choices by 10 and raises the other's by 5,
+/* Lowers the weight (Entity.choice_weights) of the chosen of the first two combat choices by 10 and raises the other's by 5,
    each kept between 0x40 and 0xC0. */
 void EntityAi_LowerChoiceWeight(Entity *entity, s32 chosen) {
     s32 i;

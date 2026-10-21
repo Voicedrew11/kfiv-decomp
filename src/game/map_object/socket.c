@@ -194,7 +194,7 @@ void MapObject_RebuildPedestalMatrices(MapObject *object) {
 }
 
 /* Item hook of the pedestals: an empty pedestal (step 1) that has taken nothing yet takes the item it waits
-   for (its source's unk44); returns whether it took it. */
+   for (its source's kind_param_0); returns whether it took it. */
 int MapObject_PlaceItemOnPedestal(MapObject *object, int item) {
     MapObjectWorkSlide *work = (MapObjectWorkSlide *)object->work;
     u8 step = MAP_OBJECT_BYTES(object)->step;

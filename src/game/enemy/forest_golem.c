@@ -102,7 +102,7 @@ void ForestGolem_Init(Entity *entity) {
 }
 
 /* The think handler the set-up function installs when the byte of map_script_flags that
-   EntityParams.pitch_limit_deg and unk432 index is set, and ForestGolem_StartScriptAndRumble when it ends: copies
+   EntityParams.pitch_limit_deg and yaw_limit_deg index is set, and ForestGolem_StartScriptAndRumble when it ends: copies
    the position in ai_state.part_angle_x to part_angle_z to the model, relative to the map origin
    EntityParams.type_param_0 names when the entity is on another map than current_map_slot, sets the heading to
    0 and starts the move action. */
@@ -488,8 +488,8 @@ static void ForestGolem_SignalMapObject(Entity *entity) {
 
 /* A think handler only ForestGolem_InitByVariant installs (for EntitySpawnInfo.variant 1), a set-up function
    nothing refers to: as ForestGolem_ThinkByState (with ForestGolem_ThinkCombat for state 1 too), but it
-   first reads bit 17 of the two map objects EntitySpawnInfo.map_object_id and unk43 name into work bytes
-   unk79 and unk7A, and while either is clear it calls ForestGolem_WalkToMapObjectPosX instead of
+   first reads bit 17 of the two map objects EntitySpawnInfo.map_object_id and second_map_object_id name into work bytes
+   turn_in_place and step_index, and while either is clear it calls ForestGolem_WalkToMapObjectPosX instead of
    stepping the states. The same as ExpeditionSoldier_ThinkUseMapObjectsPosX. */
 static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;

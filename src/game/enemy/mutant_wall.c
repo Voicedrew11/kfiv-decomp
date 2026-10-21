@@ -179,7 +179,7 @@ static void MutantWall_ThinkCombat(Entity *entity, s32 run_now) {
 }
 
 /* The melee attack (busy bit 1): as EntityAi_MeleeAttack, but flag bit 9 stays set, and work byte
-   unk79 is 1 while it turns to the player and 2 afterwards. */
+   turn_in_place is 1 while it turns to the player and 2 afterwards. */
 static void MutantWall_MeleeAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ENTITY_FLAG_BITS(entity)->attack_index];
@@ -247,7 +247,7 @@ static void MutantWall_MeleeAttack(Entity *entity) {
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, but flag bit 9 stays set, and work byte
-   unk79 is 1 while it turns to the player and 2 afterwards. */
+   turn_in_place is 1 while it turns to the player and 2 afterwards. */
 static void MutantWall_RangedAttack(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 kind = (s32)(ENTITY_FLAG_WORD(entity->flags) >> 58) & 3;

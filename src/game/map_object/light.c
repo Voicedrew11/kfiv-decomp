@@ -100,7 +100,7 @@ void MapObject_ReleaseLight(MapObject *object) {
 
 /* Step 0 of kind 10: step 1, where nothing happens. Its effect comes from touching it:
    Collision_PushOutOfMeshObj notes the object the player touches and Player_CollideWithMapObjects starts the
-   timed status its source names (unk52: PlayerState.timed_flags[unk52 - 1], [0] the poison) and the red
+   timed status its source names (touch_status_flag: PlayerState.timed_flags[touch_status_flag - 1], [0] the poison) and the red
    damage flash. */
 void MapObject_StartStatusOnTouch(MapObject *object) {
     MAP_OBJECT_BYTES(object)->step = STATUS_ON_TOUCH_STEP_IDLE;

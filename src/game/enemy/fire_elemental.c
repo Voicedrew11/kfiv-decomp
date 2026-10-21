@@ -218,10 +218,10 @@ static void FireElemental_ThinkCombat(Entity *entity, s32 run_now) {
 
 /* An action (busy bit 0x1000) that FireElemental_Think starts in state 2 while ai_state.step_index is 0:
    plays animation 17 turning to the player, then stays in its last step and decides each frame. It
-   sets unk7A and starts FireElemental_Dodge when FireElemental_ShouldDodgeMagic or FireElemental_ShouldDodge
+   sets step_index and starts FireElemental_Dodge when FireElemental_ShouldDodgeMagic or FireElemental_ShouldDodge
    says so, or EntityAi_MeleeAttack with record 1 when the player is within EntityParams.near_distance plus
    100 plus the radius and 20 degrees ahead. Each time the timer runs out it starts
-   FireElemental_RangedAttack0 (and sets unk7A) when the pause in ai_state.sub_timer is over and the
+   FireElemental_RangedAttack0 (and sets step_index) when the pause in ai_state.sub_timer is over and the
    player is within 20 degrees ahead, starts FireElemental_PlayTurnAnim when the player is more than
    90 degrees off, and else turns towards the player in animation 4 or stands in animation 0 for 30
    to 59 frames. */
@@ -518,7 +518,7 @@ static void FireElemental_RangedAttack1(Entity *entity) {
 }
 
 /* Helper of FireElemental_OnHit: sets ai_state.step_index and pause_timer to 1 in every other live entity
-   with the same EntityParams that is within EntityParams.action_frames of this one, has unk68 at 0 and has
+   with the same EntityParams that is within EntityParams.action_frames of this one, has pause_timer at 0 and has
    the player within EntitySpawnInfo.wander_radius of its spawn point. */
 static void FireElemental_AlertSameKind(Entity *entity) {
     Entity *other;
@@ -558,9 +558,9 @@ static void FireElemental_OnHit(Entity *entity) {
 
 /* An action (busy bit 0x3000) that FireElemental_Think starts while ai_state.pause_timer is 1: plays
    animation 5, then each frame guards or dodges the player's swing as FireElemental_ThinkCombat
-   does, starts the attack EntityAi_PickAttack picks once EntityAi_PickCombatChoice chooses attacking (unk68 becomes
+   does, starts the attack EntityAi_PickAttack picks once EntityAi_PickCombatChoice chooses attacking (pause_timer becomes
    2; ranged record 1 is FireElemental_RangedAttack1), and else gives the backwards command towards
-   the player and calls the move handler itself. Flag bit 53 ends it with unk68 at 2. */
+   the player and calls the move handler itself. Flag bit 53 ends it with pause_timer at 2. */
 static void FireElemental_BackAwayFromPlayer(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
