@@ -131,7 +131,7 @@ void MapLoad_FinishAndEnter(void) {
     player_state.fall_speed = player_state.strafe_speed = player_state.walk_speed = 0.0f;
     player_state.look_speed = player_state.turn_speed = 0.0f;
     map_load_request.x = map_load_request.z = map_load_request.y = 0.0f;
-    PLAYER_STATUS_BITS(&player_state)->bit34 = FALSE;
+    PLAYER_STATUS_BITS(&player_state)->airborne = FALSE;
     map_slots[current_map_slot == 0].loaded = 0;
     Map_UnlinkSlotRecords(current_map_slot == 0);
     Effect_FreeForMap(current_map_slot == 0);

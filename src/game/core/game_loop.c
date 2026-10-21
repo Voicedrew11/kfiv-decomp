@@ -337,7 +337,7 @@ void GameLoop_DrawFrame(int arg) {
     }
     GameLoop_SetCameraMatrices(0, 0);
     GsDraw_QueueVu1Matrix(world_screen_matrix);
-    if ((s32)(player_state.status_bits >> 39) & 1) {
+    if (PLAYER_IS_UNDERWATER(&player_state)) {
         GsDraw_CopyFrame(0x2BC0);
         tinted = TRUE;
         Game_DrawWobblingScreen(0x80, 0x80, 0x80, 0x80, 1.0f);
@@ -380,7 +380,7 @@ void GameLoop_DrawFrame(int arg) {
     DrawList_Draw(3, 0);
     Player_DrawArm();
     Player_DrawScreenTints();
-    if ((s32)(player_state.status_bits >> 39) & 1) {
+    if (PLAYER_IS_UNDERWATER(&player_state)) {
         if (map_slots[current_map_slot].tag == 0x23 && guardians_room_water_purified[0] == 0) {
             GsDraw_FillScreen(0x40, 0x80, 0x40, 0x78, 0x44);
         } else {

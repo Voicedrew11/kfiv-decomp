@@ -777,22 +777,24 @@ typedef struct {
 /* the word at MapObject+0x10 (and MapTrigger+0x10) as bit-fields */
 typedef struct {
     u32 map : 1;                    /* which of the two loaded maps it belongs to */
-    u32 bit1 : 1;
-    u32 bit2 : 1;
+    u32 in_view : 1;
+    u32 in_view_previous : 1;
     u32 bits3 : 5;
     u32 step : 8;                   /* 0x11 step of the kind's state machine, 0: not started */
-    u32 bit16 : 1;                  /* in use */
-    u32 bit17 : 1;
-    u32 bit18 : 1;
+    u32 in_use : 1;
+    u32 on : 1;
+    u32 emptied : 1;
     u32 bit19 : 1;
-    u32 bit20 : 1;                  /* a script drives it (MapObject_SetScripted) */
-    u32 bit21 : 1;
+    u32 scripted : 1;               /* a script drives it (MapObject_SetScripted) */
+    u32 scripted_anim : 1;
     u32 bit22 : 1;
     u32 bit23 : 1;
     u32 anim : 8;                   /* 0x13 the animation MapObject_StartAnim started */
 } MapObjectBits;
 
 #define MAP_OBJECT_BITS(object) ((MapObjectBits *)&(object)->state_flags)
+/* MAP_OBJECT_ON read as a shift of the word, as some callers compile it */
+#define MAP_OBJECT_IS_ON(object) (((object)->state_flags >> 17) & 1)
 
 /* the same word as bytes */
 typedef struct {

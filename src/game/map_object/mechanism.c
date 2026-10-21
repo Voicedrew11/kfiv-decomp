@@ -101,7 +101,7 @@ void MapObject_UpdateLadder(MapObject *object) {
     if (!GAME_STATUS_FLAG_BITS(game_status_flags)->using_faced_object) {
         return;
     }
-    if ((s32)(player_state.status_bits >> 36) & 1) {
+    if (PLAYER_IS_ON_LADDER(&player_state)) {
         return;
     }
     for (i = 0; i < 2; i++) {
@@ -170,7 +170,7 @@ void MapObject_UpdateShooter(MapObject *object) {
 
 /* Signal hook of kind 0x10: turns its shooting on or off (bit 17). */
 void MapObject_SetShooterOn(MapObject *object, int enabled) {
-    MAP_OBJECT_BITS(object)->bit17 = enabled != 0;
+    MAP_OBJECT_BITS(object)->on = enabled != 0;
 }
 
 /* Step 0 of the pitfalls (kind 0x12, the name the game's own debug print gives in

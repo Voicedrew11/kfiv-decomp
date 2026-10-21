@@ -288,7 +288,7 @@ void ScriptCmd_IsMapObjectOpen(ScriptCallCommand *command) {
 
     object = MapObject_GetById(current_map_slot, command->target_id.value);
     if (object != NULL) {
-        Script_StoreResult(&command->first, MAP_OBJECT_BITS(object)->bit17);
+        Script_StoreResult(&command->first, MAP_OBJECT_BITS(object)->on);
     } else {
         Script_StoreResult(&command->first, 0);
     }
