@@ -426,7 +426,7 @@ static int Entity_TryActivate(Entity *entity) {
     ModelMotion_LoadFile(data_address, &work_address, ENTITY_MODEL(entity), 1);
     data_address = slot->base_address + data->texture_data;
     ENTITY_MODEL(entity)->texture_data = data_address;
-    ENTITY_MODEL(entity)->texture_slot = 0;
+    ENTITY_MODEL(entity)->texture_slot = TEXTURE_SLOT_ENTITY;
     ENTITY_MODEL(entity)->texture_packet_3 = (int)Map_GetSlotPacket(entity->group_id, 3);
     ENTITY_MODEL(entity)->texture_packet_5 = (int)Map_GetSlotPacket(entity->group_id, 5);
     entity->sound_bank = slot->sound_bank;

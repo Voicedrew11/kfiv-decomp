@@ -405,16 +405,16 @@ int Game_FindTriggerOfItem(int item, int *map_tag, int *trigger_id) {
             *trigger_id = record->trigger_id;
             tag = record->map_tag;
             *map_tag = tag;
-            if ((u32)(tag - 0x11) < 3) {
+            if ((u32)(tag - MAP_TAG_FORGE_017) < 3) {
                 switch ((u8)story_flags[6]) {
                 case 0:
-                    *map_tag = 0x11;
+                    *map_tag = MAP_TAG_FORGE_017;
                     break;
                 case 1:
-                    *map_tag = 0x12;
+                    *map_tag = MAP_TAG_FORGE_018;
                     break;
                 case 2:
-                    *map_tag = 0x13;
+                    *map_tag = MAP_TAG_FORGE_019;
                     break;
                 }
             }

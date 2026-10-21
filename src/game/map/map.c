@@ -442,7 +442,7 @@ void Map_BuildModels(int map) {
             if (object->definition->model_index != 0xFFFF && !(MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_SKINNED) && object->source->model_index == i) {
                 next = cursor; // match: retail bug, only set when an object uses this model (see cursor = next)
                 Model_SetUpPosed(object->model, (char **)&next, &work);
-                object->model->texture_slot = 1;
+                object->model->texture_slot = TEXTURE_SLOT_MAP_OBJECT;
                 object->model->texture_data = next;
                 next += *(int *)next;
                 object->model->texture_packet_3 = 0;
@@ -458,7 +458,7 @@ void Map_BuildModels(int map) {
             if (object->definition->model_index != 0xFFFF && (MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_SKINNED) && object->source->model_index == i) {
                 next = cursor; // match: retail bug, as in the loop above
                 Model_SetUpSkinned(object->model, &next, (int *)&work);
-                object->model->texture_slot = 1;
+                object->model->texture_slot = TEXTURE_SLOT_MAP_OBJECT;
                 object->model->texture_data = next;
                 next += *(int *)next;
                 object->model->texture_packet_3 = (int)Map_GetSlotPacket(map, 3);

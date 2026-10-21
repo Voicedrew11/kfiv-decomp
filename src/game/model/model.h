@@ -438,7 +438,7 @@ typedef struct ModelInstance {
     int found_record_id;            /* 0x17C the id Effect_FindModelRecord last found; sent after the colour at unk150 by Model_DrawPosed, in its alpha slot */
     VuIntVector found_record;       /* 0x180 a copy of that record, its id bits replaced; a quadword sent after it
                                        (Effect_FindModelRecord clears it with one sq, so it is 16-byte aligned) */
-    u16 texture_slot;               /* 0x190 slot of unk194 in texture_slots (0..2), 3: always sent */
+    u16 texture_slot;               /* 0x190 TEXTURE_SLOT_*: which texture_slots entry texture_data goes in */
     s16 shared_texture_slot;        /* 0x192 which entry of the shared last-sent texture record applies */
     int texture_data;               /* 0x194 the model's texture: a chunk table, or a raw packet */
     int shared_texture_packet;      /* 0x198 map texture packet 5, tracked in the shared record */
@@ -452,6 +452,12 @@ typedef struct ModelInstance {
     f32 *(*get_point)(struct ModelInstance *model, int index); /* 0x1B8 point `index` as x, y, z, w */
     void (*on_textures_sent)(struct ModelInstance *model); /* 0x1BC called when ModelTexture_SendForModel sent new textures */
 } ModelInstance;
+
+/* ModelInstance.texture_slot: the texture_slots entry per kind of model, or none */
+#define TEXTURE_SLOT_ENTITY         0
+#define TEXTURE_SLOT_MAP_OBJECT     1
+#define TEXTURE_SLOT_ITEM           2       /* map items, gold and item effects */
+#define TEXTURE_SLOT_ALWAYS_SENT    3       /* effects: the packet is sent every time, not from a texture slot */
 
 /* a 0x40-byte vertex of four vectors; ModelScreen_StepFloatVertices fills the steps between two of them */
 typedef struct {
