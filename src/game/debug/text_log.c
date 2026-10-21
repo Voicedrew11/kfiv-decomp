@@ -1106,6 +1106,9 @@ void TextLog_SetWindow(int window_x, int window_y, int width, int height, int of
     log->packet = (TextLogGlyph *)&text_log_packet;
 }
 
+/* one texel in the 12.4 fixed-point UV of a font cell's corner */
+#define TEXT_LOG_UV_ONE_TEXEL 0x10
+
 /* Queues one character of the text log's font (16 characters a row, starting at '!') at a GS position.
    Anything up to the space character is drawn as character 0x80. */
 void TextLog_PutChar(char character, int pos_x, int pos_y, int pos_z) {
@@ -1123,8 +1126,8 @@ void TextLog_PutChar(char character, int pos_x, int pos_y, int pos_z) {
     glyph->corners[0].green = log->green;
     glyph->corners[0].blue = log->blue;
     glyph->corners[0].alpha = 0x80;
-    tex_u = (((code - 0x21) & 0xF) << 8) | 0x10;
-    tex_v = (((code - 0x21) / 16) << 8) | 0x10;
+    tex_u = (((code - 0x21) & 0xF) << 8) | TEXT_LOG_UV_ONE_TEXEL;
+    tex_v = (((code - 0x21) / 16) << 8) | TEXT_LOG_UV_ONE_TEXEL;
     glyph->corners[0].tex_u = tex_u;
     glyph->corners[0].tex_v = tex_v;
     glyph->corners[0].pos_x = pos_x << 4;
