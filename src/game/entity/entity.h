@@ -99,7 +99,7 @@ typedef struct {
 typedef struct {
     u64 pad0 : 40;
     u64 bit40 : 1;
-    u64 bit41 : 1;
+    u64 opaque : 1;                 /* ModelPartFlagBits.opaque */
     u64 pad42 : 22;
 } EntityModelPartFlagBits;
 
@@ -152,6 +152,7 @@ typedef struct {
     u16 flags;                      /* 0x1E bit 1: unk1F is copied */
 } EntityParamsUnk240PartFlags;
 
+#define ENTITY_PART_MP_DAMAGE_BIT 1  /* EntityParamsUnk240PartFlags.flags: mp_damage is copied */
 #define ENTITY_PART_FLAGS(part) ((EntityParamsUnk240PartFlags *)&(part)->hit_flags)
 
 /* one of the 0x88-byte records at EntityParams+0x240 (EntityParams.melee_attack_third is the third) */
@@ -948,6 +949,10 @@ typedef struct Entity {
 #define ENTITY_FLAG_MOTION_STEP_MODE_MASK    0x3800                /* the mode (0 to 2) Motion_Step and Motion_StepSlot are given */
 #define ENTITY_FLAG_MOTION_STEP_MODE_1       0x800                 /* that mode at 1, which the start of every action sets */
 #define ENTITY_FLAG_ANIMATES                 0x4000                /* the animate handler blends or steps the motion while set */
+/* bit numbers of three of them, for the code that tests them as (flags >> bit) & 1 */
+#define ENTITY_FLAG_LIVE_BIT                 1
+#define ENTITY_FLAG_ATTACKING_BIT            10
+#define ENTITY_FLAG_ANIMATES_BIT             14
 #define ENTITY_FLAG_8000                     0x8000                /* read by Motion_Step: the motion stands on its first frame */
 #define ENTITY_FLAG_NOT_TARGETABLE           0x10000               /* Effect_IsEntityUntargetable calls it flagged out: an entity holding an animation has it */
 #define ENTITY_FLAG_DRAW_AFTERIMAGE          0x20000               /* Entity_DrawAll draws the pool block's model again for the entities that have it */

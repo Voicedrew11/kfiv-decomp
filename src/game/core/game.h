@@ -58,7 +58,7 @@ typedef struct {
     u32 bits0 : 9;                  /* 0x24 */
     u32 bit9 : 1;
     u32 bit10 : 1;
-    u32 bit11 : 1;
+    u32 play_ending_movie : 1;      /* the game was won: Movie_PlayEnding plays KF4ED.PSS, not the staff roll */
     u32 bits12 : 20;
 } GameStatusSplitBits;
 
@@ -76,6 +76,8 @@ typedef struct {
 #define GAME_STATUS_FLAG_HOLD_ARMED 0x1000
 /* GameStatus bit 13: set by the main loop when START is pressed while held; it then skips drawing and input */
 #define GAME_STATUS_FLAG_HOLDING    0x2000
+/* GameStatus bit 11: play_ending_movie (GameStatusSplitBits) */
+#define GAME_STATUS_ENDING_MOVIE_SHIFT 11
 /* GameStatus.update_hold_flags bits: 0x40 holds the scripts (Script_UpdateAll), 0x400 updates only the effect owned by effect_owner */
 #define UPDATE_HOLD_SCRIPTS            0x40
 #define UPDATE_HOLD_EFFECT_OWNER_ONLY  0x400

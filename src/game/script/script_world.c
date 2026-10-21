@@ -1235,7 +1235,7 @@ void ScriptCmd_ExitMainLoop(ScriptValueCommand *command) {
 
     status->bit9 = TRUE;
     status->bit10 = TRUE;
-    status->bit11 = command->value.value != 0;
+    status->play_ending_movie = command->value.value != 0;
     command->active = 0;
 }
 

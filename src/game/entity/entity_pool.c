@@ -465,8 +465,8 @@ static int EntityPool_ClaimBlock(void) {
     best = -1;
     for (i = 0; i < 5; i++) {
         slot = &entity_pool_slots[i];
-        if ((slot->head.word >> 9) & 1) { continue; }
-        if ((slot->head.word >> 8) & 1) { continue; }
+        if (slot->head.bits.flag_200) { continue; }
+        if (slot->head.bits.flag_100) { continue; }
         if (slot->head.fields.kind == ENTITY_POOL_FREE) { return i; }
         if (slot->head.fields.kind != ENTITY_POOL_READY) { continue; }
         if (slot->entity_count != 0) { continue; }

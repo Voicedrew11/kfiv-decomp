@@ -78,11 +78,11 @@ void MapLoad_Update(void) {
     }
     if ((map_load_state.flags.raw & MAP_LOAD_HOLD_MASK) == MAP_LOAD_HOLD_REQUESTED) {
         if (map_load_state.step == MAP_LOAD_STEP_IDLE || map_load_state.step == MAP_LOAD_STEP_READ_CHUNK || map_load_state.step == MAP_LOAD_STEP_WAIT_FOR_SET_UP) {
-            map_load_state.flags.f.bit1 = TRUE;
-            map_load_state.flags.f.bit2 = FALSE;
+            map_load_state.flags.f.held = TRUE;
+            map_load_state.flags.f.hold_requested = FALSE;
         }
     }
-    if (!((s32)(map_load_state.flags.raw >> 1) & 1)) {
+    if (!((s32)(map_load_state.flags.raw >> MAP_LOAD_HELD_BIT) & 1)) {
         if (record != NULL && record->needs_neighbour_map != 0) {
             if ((u32)(map_load_state.step - 1) < 5) {
                 Input_StopRumble();
@@ -319,12 +319,12 @@ void MapLoad_RequestHold(void) {
 
 /* Lets a held or hold-requested background load go on. */
 void MapLoad_Release(void) {
-    map_load_state.flags.f.bit1 = FALSE;
-    map_load_state.flags.f.bit2 = FALSE;
+    map_load_state.flags.f.held = FALSE;
+    map_load_state.flags.f.hold_requested = FALSE;
 }
 
 /* Whether the background load is held off. */
 int MapLoad_IsHeld(void) {
     // match: bit 1 of the flags taken out with shifts; the bit-field reads it another way
-    return (int)(((s64)map_load_state.flags.raw << 31) >> 32) & 1;
+    return (int)(map_load_state.flags.raw >> MAP_LOAD_HELD_BIT) & 1;
 }

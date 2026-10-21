@@ -304,7 +304,8 @@ typedef struct {
 #define PLAYER_IS_ON_LADDER(player)       PLAYER_STATUS_BIT(player, 36)
 #define PLAYER_IS_LANDING_DIP(player)     PLAYER_STATUS_BIT(player, 37)
 #define PLAYER_IS_IN_WATER(player)        PLAYER_STATUS_BIT(player, 38)
-#define PLAYER_IS_UNDERWATER(player)      PLAYER_STATUS_BIT(player, 39)
+#define PLAYER_STATUS_UNDERWATER_BIT 39  /* also tested in player_status_bits, the frame before */
+#define PLAYER_IS_UNDERWATER(player)      PLAYER_STATUS_BIT(player, PLAYER_STATUS_UNDERWATER_BIT)
 
 /* player_level_steps[100]: the experience a level needs (PlayerState.experience against level) and what reaching it adds */
 typedef struct {

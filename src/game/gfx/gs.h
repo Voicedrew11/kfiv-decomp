@@ -34,6 +34,7 @@
 #define GS_REG_FINISH       0x61
 
 #define GIF_TAG_EOP         0x8000  /* GIF tag bit 15: the last tag of the packet */
+#define GIF_TAG_EOP_BIT     15
 #define GIF_TAG_PRIM_MASK   0x03FF8000 /* the PRIM field of a GIF tag: bits 47-57, bits 15-25 of its second word */
 #define GIF_TAG_NLOOP_MASK  0x7FFF  /* GIF tag bits 0-14, NLOOP: the loop count (a model block's vertex count) */
 #define GS_PRIM_MASK        0x7FF   /* the 11 bits of a PRIM value, which GIF_TAG_PRIM_MASK holds from bit 15 */
@@ -76,6 +77,7 @@
 #define GIF_TAG_FLG_IMAGE   0x800000000000000 /* GIF tag FLG (bits 58-59) at 2, image mode: the qwords after the tag are image data */
 #define GIF_TAG_PRIM_TME    0x80000 /* PRIM's TME bit in a GIF tag's second word (PRIM sits at bit 15): texture mapping */
 #define GIF_TAG_PRIM_ABE    0x200000 /* PRIM's ABE bit in a GIF tag's second word: alpha blending */
+#define GIF_TAG_PRIM_ABE_BIT 21
 #define GIF_TAG_NREG_2      (0x8000L << 46) /* GIF tag NREG (bits 60-63) of 2: two registers per loop */
 #define GIF_TAG_PRE_PRIM_STRIP_SHADED_BLEND (0x9900L << 38) /* GIF tag PRE set, PRIM 0x4C: triangle strip, Gouraud, alpha blend */
 /* PSM: the GS pixel storage formats (TEX0, BITBLTBUF, FRAME, ZBUF) */

@@ -121,7 +121,7 @@ void Gold_UnlinkMap(int slot) {
     MapActor *actor = map_actors_in_use;
 
     while (actor != NULL) {
-        if (((actor->flags >> 2) & 1) == slot) {
+        if (MAP_ACTOR_BITS(actor)->map == slot) {
             actor = Gold_UnlinkFromList(actor);
         } else {
             actor = actor->next;
@@ -385,7 +385,7 @@ void Gold_SaveMark(MapActor *actor) {
     MapSlot *entry;
     ObjectMark *mark;
 
-    map_slot = (actor->flags >> 2) & 1;
+    map_slot = MAP_ACTOR_BITS(actor)->map;
     entry = &map_slots[map_slot];
     mark = &map_object_marks[entry->tag].marks[((char *)actor - (char *)map_actors[map_slot]) / sizeof(MapActor)];
     memset(mark, 0, sizeof(ObjectMark));
@@ -404,7 +404,7 @@ void Gold_ClearMark(MapActor *actor) {
     MapSlot *entry;
     ObjectMark *mark;
 
-    map_slot = (actor->flags >> 2) & 1;
+    map_slot = MAP_ACTOR_BITS(actor)->map;
     entry = &map_slots[map_slot];
     slot = ((char *)actor - (char *)map_actors[map_slot]) / sizeof(MapActor);
     // match: retail adds the tag row and the slot before the table base

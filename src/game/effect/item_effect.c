@@ -210,9 +210,9 @@ void ItemEffect_Start(int kind, int marked) {
     item_effect_model->fog_block = map_draw_slot_blocks[current_map_slot];
     for (i = 0; i < item_effect_model->part_count; i++) {
         if (i == 0) {
-            MODEL_PART_FLAG_BITS(&item_effect_model->parts[0])->bit41 = TRUE;
+            MODEL_PART_FLAG_BITS(&item_effect_model->parts[0])->opaque = TRUE;
         } else {
-            MODEL_PART_FLAG_BITS(&item_effect_model->parts[i])->bit41 = FALSE;
+            MODEL_PART_FLAG_BITS(&item_effect_model->parts[i])->opaque = FALSE;
         }
     }
 }

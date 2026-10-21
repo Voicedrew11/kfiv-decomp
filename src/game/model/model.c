@@ -150,7 +150,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
         part->data_count = file_part->data_count;
         part->data_addr = *file_cursor + file_part->data_offset;
         part->parent_index = file_part->parent;
-        MODEL_PART_FLAG_BITS(part)->bit41 = TRUE;
+        MODEL_PART_FLAG_BITS(part)->opaque = TRUE;
         // match: retail keeps only the empty loop; a walk whose result nothing uses is deleted like this one
         data = (ModelPartData *)(u32)part->data_addr;
         for (j = 0; j < file_part->data_count; j++) {
@@ -437,7 +437,7 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
         Packet_EndGsRegisters();
         part = model->parts;
         for (i = 0; i < model->part_count; i++, part++) {
-            if (((u8)(MODEL_PART_FLAG_WORD(part) >> 41) & 1) == pass) {
+            if (((u8)(MODEL_PART_FLAG_WORD(part) >> MODEL_PART_OPAQUE_BIT) & 1) == pass) {
                 continue;
             }
             if (MODEL_PART_FLAG_WORD(part) & MODEL_PART_BIT40) {
@@ -724,7 +724,7 @@ void Model_RestoreGsWordsAndUvs(ModelInstance *model) {
 
 /* whether the primitive of a GIF tag is alpha blended, from the tag's high word */
 static inline s32 is_blended(u64 tag_high) {
-    return (tag_high >> 21) & 1;
+    return (tag_high >> GIF_TAG_PRIM_ABE_BIT) & 1;
 }
 
 /* Set a model instance up from a model file whose parts come with their pose: the parts are
@@ -766,7 +766,7 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
             if (!blended || ((GsAlphaReg *)&data->blend)->f.a_source != 0 || ((GsAlphaReg *)&data->blend)->f.b_source != 2 || ((GsAlphaReg *)&data->blend)->f.d_source != 1) {
                 opaque = TRUE;
             }
-            MODEL_PART_FLAG_BITS(part)->bit41 = opaque;
+            MODEL_PART_FLAG_BITS(part)->opaque = opaque;
             if (first) {
                 count = file_part->data_count;
                 data = (ModelPartData *)(u32)part->data_addr;

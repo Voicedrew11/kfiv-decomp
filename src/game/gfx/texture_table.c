@@ -115,7 +115,7 @@ void TextureTable_SetBasePointers(TextureTableHeader *table, int texture_base, i
         }
         image_tag = ((AliasedWord *)cursor)[8].value; /* the GIF tag of the image data */
         cursor += 0x50;
-        if ((int)((image_tag >> 15) & 1) == 0) { /* not the end of the packet: a CLUT upload follows */
+        if ((int)((image_tag >> GIF_TAG_EOP_BIT) & 1) == 0) { /* not the end of the packet: a CLUT upload follows */
             cursor += (int)(image_tag & GIF_TAG_NLOOP_MASK) * 16;
             cursor += 0x20;
             if (clut_base != 0) {
