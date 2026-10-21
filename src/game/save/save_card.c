@@ -318,7 +318,7 @@ static s32 SaveCard_StepCheck(void) {
             task->step = CARD_CHECK_STEP_CARD1_PROBE;
             break;
         case MC_STATUS_UNFORMATTED:
-        case 4:
+        case MC_STATUS_NEW_UNFORMATTED:
         case 0x15:
             if (++task->retries == 5) {
                 card->present = 1;
@@ -332,7 +332,7 @@ static s32 SaveCard_StepCheck(void) {
             }
             break;
         case MC_STATUS_OK:
-        case 2:
+        case MC_STATUS_NEW_CARD:
             status = Mc_GetCheckResult(index, 0);
             if (status <= 0) {
                 if (status >= -2) {
@@ -986,7 +986,7 @@ static s32 SaveCard_StepRescan(void) {
             task->step = CARD_RESCAN_STEP_CARD1_PROBE;
             break;
         case MC_STATUS_UNFORMATTED:
-        case 4:
+        case MC_STATUS_NEW_UNFORMATTED:
             if (++task->retries == 5) {
                 card->present = 1;
                 card->message = 3;
@@ -999,7 +999,7 @@ static s32 SaveCard_StepRescan(void) {
             }
             break;
         case MC_STATUS_OK:
-        case 2:
+        case MC_STATUS_NEW_CARD:
             card->formatted = card->present = 1;
             card->has_save_folder = 0;
             task->step++;

@@ -45,6 +45,7 @@ typedef struct {
 /* GameStatus.camera_mode */
 #define CAMERA_MODE_FOLLOW_PLAYER   0       /* the camera follows the player */
 #define CAMERA_MODE_SCRIPTED        1       /* the script places the camera */
+#define CAMERA_MODE_FIXED           2       /* the camera stays where it is; it may still look at a point */
 
 /* GameStatus.camera_look_mode: no look at a point, turn at once to it, or ease toward it */
 #define CAMERA_LOOK_NONE            0

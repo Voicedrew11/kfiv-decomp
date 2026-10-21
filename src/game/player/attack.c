@@ -36,9 +36,11 @@
     }
 #define SHOT_REQUEST ((Unk1B1470Request *)shot->attack_request)
 
-/* Unk1B1470Request.shape (entity.h): the hit's shape; shapes 1 and 2 do nothing */
-#define ATTACK_SHAPE_SPHERE 0
-#define ATTACK_SHAPE_SWEPT  3
+/* Unk1B1470Request.shape (entity.h): the hit's shape; cylinder and segment do nothing */
+#define ATTACK_SHAPE_SPHERE   0
+#define ATTACK_SHAPE_CYLINDER 1 /* radius and height */
+#define ATTACK_SHAPE_SEGMENT  2 /* from the position to second_point */
+#define ATTACK_SHAPE_SWEPT    3
 /* the strip list of a map model that Attack_TestMapModel touched: a floor (list 1) */
 #define ATTACK_LIST_FLOOR   1
 
@@ -56,9 +58,9 @@ s32 Attack_Run(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     switch (((Unk1B1470RequestBits *)request)->shape) {
     case ATTACK_SHAPE_SPHERE:
         return Attack_RunSphere(request, extra);
-    case 1:
+    case ATTACK_SHAPE_CYLINDER:
         return Attack_RunShape1Stub();
-    case 2:
+    case ATTACK_SHAPE_SEGMENT:
         return Attack_RunShape2Stub();
     case ATTACK_SHAPE_SWEPT:
         return Attack_RunSwept(request, extra);
@@ -1424,15 +1426,15 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
             request.radius = check->radius;
             request.shape = ATTACK_SHAPE_SPHERE;
             break;
-        case 1:
+        case ATTACK_SHAPE_CYLINDER:
             position = &effect->saved_position;
             request.radius = check->radius;
-            request.shape = 1;
+            request.shape = ATTACK_SHAPE_CYLINDER;
             request.height = check->height;
             break;
-        case 2:
+        case ATTACK_SHAPE_SEGMENT:
             position = &effect->saved_position;
-            request.shape = 2;
+            request.shape = ATTACK_SHAPE_SEGMENT;
             Vector_Copy(request.second_point, position);
             break;
         default:

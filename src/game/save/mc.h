@@ -24,7 +24,9 @@
 /* McState.status (Mc_GetStatus): how the last request went, or what it is doing */
 #define MC_STATUS_OK 0
 #define MC_STATUS_NO_CARD 1         /* nothing usable in the port: no card, a PS1 card, or the card stopped answering */
+#define MC_STATUS_NEW_CARD 2        /* a formatted card other than the one checked before (sceMcGetInfo -1) */
 #define MC_STATUS_UNFORMATTED 3
+#define MC_STATUS_NEW_UNFORMATTED 4 /* an unformatted card other than the one checked before (sceMcGetInfo -2) */
 #define MC_STATUS_CARD_FULL 0x1E
 #define MC_STATUS_NO_ROOM 0x1F      /* not enough free clusters for the file */
 #define MC_STATUS_NOT_FOUND 0x2D    /* Mc_StartFindFile: no such file */
