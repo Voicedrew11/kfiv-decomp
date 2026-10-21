@@ -88,7 +88,7 @@
 #define MENU_BAR_SLOT_MUSIC_VOLUME      0    /* MenuSprite_SizeToLevel: the option bars (game_option_third_bar is the third) */
 #define MENU_BAR_SLOT_SFX_VOLUME        1
 #define MENU_BAR_SLOT_THIRD_OPTION      2
-#define MENU_OPTION_SLOT_MONO           0    /* MenuSprite_ShowIfOptionChosen: game_options[0] is 0 for mono */
+#define MENU_OPTION_SLOT_MONO           0    /* MenuSprite_ShowIfOptionChosen: game_options[GAME_OPTION_STEREO] is 0 for mono */
 #define MENU_OPTION_SLOT_STEREO         1
 #define MENU_OPTION_SLOT_HEAD_BOB_OFF   2    /* head_bob_option 0 */
 #define MENU_OPTION_SLOT_HEAD_BOB_ON    3
@@ -3896,7 +3896,7 @@ static SpritePacket *MenuSprite_ShowIfOptionChosen(SpritePacket *packet) {
     switch (packet->slot) {
     case MENU_OPTION_SLOT_MONO:
     case MENU_OPTION_SLOT_STEREO:
-        if (packet->slot == game_options[0]) {
+        if (packet->slot == game_options[GAME_OPTION_STEREO]) {
             return packet; // match: the packet itself, not the copy just made
         }
         break;

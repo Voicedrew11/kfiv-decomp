@@ -363,7 +363,7 @@ void Player_Update(void) {
         }
     }
     /* head bob, when the option is on */
-    if ((s8)game_options[5] != 0) { // match: retail reads the head bob option through game_options, as a signed byte
+    if ((s8)game_options[GAME_OPTION_HEAD_BOB] != 0) { // match: retail reads the head bob option through game_options, as a signed byte
         player_state.head_bob_offset = sinf((f32)player_state.stride_phase * TWO_PI / 5120.0f) * 2.75f;
     } else {
         player_state.head_bob_offset = 0.0f;

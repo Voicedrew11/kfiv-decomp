@@ -194,8 +194,8 @@ void GameLoop_Run(int arg) {
     Input_StopRumble();
     Message_CloseBox();
     Message_ClearNotices();
-    saved = game_options[1];
-    game_options[1] = 0;
+    saved = game_options[GAME_OPTION_MUSIC_VOLUME];
+    game_options[GAME_OPTION_MUSIC_VOLUME] = 0;
     Sound_SetBgmVolume(0);
     Sound_SetBankVolumes(0);
     while (sound_load_queue.map_bank_load_pending != 0 ||
@@ -207,7 +207,7 @@ void GameLoop_Run(int arg) {
         GameLoop_RunSoundLoads();
         Sound_Update();
     }
-    game_options[1] = saved;
+    game_options[GAME_OPTION_MUSIC_VOLUME] = saved;
     game_status.bit9 = FALSE;
     File_CloseAll();
     Packet_SwapBuffers();
@@ -419,7 +419,7 @@ void GameLoop_DrawFrame(int arg) {
         GsDraw_FillScreen(0, 0, 0, 0x40, 0x44);
         Hud_DrawPaused();
     }
-    Game_ApplyBrightness(game_options[10]);
+    Game_ApplyBrightness(game_options[GAME_OPTION_BRIGHTNESS]);
     Packet_OnFrameEnd();
 }
 
@@ -645,7 +645,7 @@ void GameLoop_OpenRequestedMenu(void) {
     PlayerState *player = &player_state;
     int menu_ran = FALSE;
     int faded_out = FALSE;
-    u8 brightness = game_options[10];
+    u8 brightness = game_options[GAME_OPTION_BRIGHTNESS];
     int load_held;
     PlayerItemDef *item_def;
 
@@ -820,13 +820,13 @@ void GameLoop_DrawFrameWithoutHud(void) {
 }
 
 /* Draws the grabbed frame (texture page 0x3240, the menus' backdrop) over the whole screen into both frame
-   buffers, its colour game_options[10] * 128 / divisor. */
+   buffers, its colour game_options[GAME_OPTION_BRIGHTNESS] * 128 / divisor. */
 void GameLoop_ShowGrabbedFrame(int divisor) {
     ScreenSprite sprite;
     int brightness;
     int pass;
 
-    brightness = (game_options[10] << 7) / divisor;
+    brightness = (game_options[GAME_OPTION_BRIGHTNESS] << 7) / divisor;
     if (brightness > 0xFF) {
         brightness = 0xFF;
     }

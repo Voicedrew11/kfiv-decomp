@@ -142,6 +142,10 @@
 #define OPTION_LINE_SOUND_MODE         0
 #define OPTION_LINE_MUSIC_VOLUME       1
 #define OPTION_LINE_SOUND_VOLUME       2
+#define OPTION_LINE_HEAD_BOB           3
+#define OPTION_LINE_RUMBLE             4
+#define OPTION_LINE_HUD                5
+#define OPTION_LINE_MENU_BACKDROP      6
 
 /* the sprites of the button screen (keyconf_parts handler_index) */
 #define KEYCONF_PART_PROMPT            2
@@ -2387,7 +2391,7 @@ static int Menu_ReturnTrue(void) {
 s32 Menu_EndFrame(s32 run_handler) {
     s32 even_field;
 
-    Menu_DrawBrightness(game_options[10]);
+    Menu_DrawBrightness(game_options[GAME_OPTION_BRIGHTNESS]);
     SoundDriver_FlushCommands();
     sceGsSyncPath(0, 0);
     menu_frame_ticks = Timer_GetTicks();
@@ -2403,7 +2407,7 @@ s32 Menu_EndFrame(s32 run_handler) {
     sceGsSyncPath(0, 0);
     sceGsSwapDBuffDc(&menu_frame_buffers, context1_buffer_half);
     if (run_handler != 0) {
-        frame_end_drawers[(s8)game_options[8]]();
+        frame_end_drawers[(s8)game_options[GAME_OPTION_MENU_BACKDROP]]();
     }
     context1_buffer_half = context1_buffer_half == 0;
     context2_buffer_half = context2_buffer_half == 0;
@@ -5965,13 +5969,13 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
         if ((menu_buttons & (PAD_LEFT | PAD_RIGHT)) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
             if (sound_mode_change != 1) {
-                sound_mode_before = game_options[0];
+                sound_mode_before = game_options[GAME_OPTION_STEREO];
             }
             sound_mode_change = 1;
-            game_options[0]++;
-            game_options[0] %= 2;
+            game_options[GAME_OPTION_STEREO]++;
+            game_options[GAME_OPTION_STEREO] %= 2;
         } else if (sound_mode_change == 1 && !(menu_buttons & (PAD_LEFT | PAD_RIGHT)) && menu_input_enabled != 0) {
-            if (game_options[0] == 0) {
+            if (game_options[GAME_OPTION_STEREO] == 0) {
                 if (sound_mode_before != 0) {
                     sound_mode_change = 2;
                     SoundDriver_SetMono();
@@ -5989,55 +5993,55 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
         }
         break;
     case OPTION_LINE_MUSIC_VOLUME:
-        if ((menu_buttons & PAD_RIGHT) && game_options[1] < 0x7F && menu_input_enabled != 0) {
-            game_options[1] += 4;
+        if ((menu_buttons & PAD_RIGHT) && game_options[GAME_OPTION_MUSIC_VOLUME] < 0x7F && menu_input_enabled != 0) {
+            game_options[GAME_OPTION_MUSIC_VOLUME] += 4;
             Sound_PlayMenu(1);
-        } else if ((menu_buttons & PAD_LEFT) && game_options[1] != 0 && menu_input_enabled != 0) {
-            game_options[1] -= 4;
+        } else if ((menu_buttons & PAD_LEFT) && game_options[GAME_OPTION_MUSIC_VOLUME] != 0 && menu_input_enabled != 0) {
+            game_options[GAME_OPTION_MUSIC_VOLUME] -= 4;
             Sound_PlayMenu(1);
         }
-        Sound_SetBgmVolume(game_options[1]);
+        Sound_SetBgmVolume(game_options[GAME_OPTION_MUSIC_VOLUME]);
         Sound_SyncBgmLevel();
         break;
     case OPTION_LINE_SOUND_VOLUME:
-        if ((menu_buttons & PAD_RIGHT) && game_options[2] < 0x7F && menu_input_enabled != 0) {
-            game_options[2] += 4;
+        if ((menu_buttons & PAD_RIGHT) && game_options[GAME_OPTION_SOUND_VOLUME] < 0x7F && menu_input_enabled != 0) {
+            game_options[GAME_OPTION_SOUND_VOLUME] += 4;
             Sound_PlayMenu(1);
-        } else if ((menu_buttons & PAD_LEFT) && game_options[2] != 0 && menu_input_enabled != 0) {
-            game_options[2] -= 4;
+        } else if ((menu_buttons & PAD_LEFT) && game_options[GAME_OPTION_SOUND_VOLUME] != 0 && menu_input_enabled != 0) {
+            game_options[GAME_OPTION_SOUND_VOLUME] -= 4;
             Sound_PlayMenu(1);
         }
         break;
-    case 3:
+    case OPTION_LINE_HEAD_BOB:
         if ((menu_buttons & (PAD_LEFT | PAD_RIGHT)) && menu_input_enabled != 0) {
-            game_options[5]++;
+            game_options[GAME_OPTION_HEAD_BOB]++;
             Sound_PlayMenu(1);
         }
-        game_options[5] = (s8)game_options[5] % 2;
+        game_options[GAME_OPTION_HEAD_BOB] = (s8)game_options[GAME_OPTION_HEAD_BOB] % 2;
         break;
-    case 4:
+    case OPTION_LINE_RUMBLE:
         if ((menu_buttons & (PAD_LEFT | PAD_RIGHT)) && menu_input_enabled != 0) {
-            game_options[6]++;
+            game_options[GAME_OPTION_RUMBLE]++;
             Sound_PlayMenu(1);
         }
-        game_options[6] = (s8)game_options[6] % 2;
+        game_options[GAME_OPTION_RUMBLE] = (s8)game_options[GAME_OPTION_RUMBLE] % 2;
         break;
-    case 5:
+    case OPTION_LINE_HUD:
         if ((menu_buttons & (PAD_LEFT | PAD_RIGHT)) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
-            game_options[9]++;
+            game_options[GAME_OPTION_HUD]++;
         }
-        game_options[9] = (s8)game_options[9] % 2;
+        game_options[GAME_OPTION_HUD] = (s8)game_options[GAME_OPTION_HUD] % 2;
         break;
-    case 6:
+    case OPTION_LINE_MENU_BACKDROP:
         if ((menu_buttons & PAD_RIGHT) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
-            game_options[8]++;
+            game_options[GAME_OPTION_MENU_BACKDROP]++;
         } else if ((menu_buttons & PAD_LEFT) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
-            game_options[8]--;
+            game_options[GAME_OPTION_MENU_BACKDROP]--;
         }
-        game_options[8] = (s8)(game_options[8] + 3) % 3;
+        game_options[GAME_OPTION_MENU_BACKDROP] = (s8)(game_options[GAME_OPTION_MENU_BACKDROP] + 3) % 3;
         break;
     }
 
@@ -6093,7 +6097,7 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
                     system_screen_state = SYSTEM_SCREEN_STATE_FADE_IN;
                     context->selection = 0;
                     if (sound_mode_change == 1) {
-                        if (game_options[0] == 0) {
+                        if (game_options[GAME_OPTION_STEREO] == 0) {
                             if (sound_mode_before != 0) {
                                 sound_mode_change = 2;
                                 SoundDriver_SetMono();
@@ -6689,17 +6693,17 @@ static void Menu_UpdateBrightness(void) {
 
     if ((menu_buttons & PAD_RIGHT) && menu_input_enabled != 0) {
         Sound_PlayMenu(1);
-        if (game_options[10] < 0xFC) {
-            game_options[10] += 4;
+        if (game_options[GAME_OPTION_BRIGHTNESS] < 0xFC) {
+            game_options[GAME_OPTION_BRIGHTNESS] += 4;
         } else {
-            game_options[10] = 0x20;
+            game_options[GAME_OPTION_BRIGHTNESS] = 0x20;
         }
     } else if ((menu_buttons & PAD_LEFT) && menu_input_enabled != 0) {
         Sound_PlayMenu(1);
-        if (game_options[10] > 0x20) {
-            game_options[10] -= 4;
+        if (game_options[GAME_OPTION_BRIGHTNESS] > 0x20) {
+            game_options[GAME_OPTION_BRIGHTNESS] -= 4;
         } else {
-            game_options[10] = 0xFC;
+            game_options[GAME_OPTION_BRIGHTNESS] = 0xFC;
         }
     } else if ((menu_buttons & PAD_CROSS) && menu_input_enabled != 0) {
         Sound_PlayMenu(0);
@@ -6707,11 +6711,11 @@ static void Menu_UpdateBrightness(void) {
         system_screen_state = SYSTEM_SCREEN_STATE_FADE_OUT_FORWARD;
     } else if ((menu_buttons & PAD_CIRCLE) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
-        game_options[10] = brightness_before;
+        game_options[GAME_OPTION_BRIGHTNESS] = brightness_before;
         system_screen_state = SYSTEM_SCREEN_STATE_FADE_OUT_BACK;
         menu_input_enabled = 0;
     }
-    brightness_slider = (game_options[10] - 32.0f) * 402.0f / 220.0f;
+    brightness_slider = (game_options[GAME_OPTION_BRIGHTNESS] - 32.0f) * 402.0f / 220.0f;
     for (i = 0; i < bright_part_count; i++) {
         kind = bright_parts[i].handler_index;
         Menu_SetBlendMode(bright_parts[i].blend_mode);
@@ -7248,7 +7252,7 @@ void Menu_ClearEquipSlot(s8 slot) {
             *equipped_item_refs[9] = amulet_entries;
             player_state.equipment[EQUIP_AMULET] = ITEM_WORN_INDEX(ITEM_AMULET_NONE);
             break;
-        case 11:
+        case MENU_ITEM_GROUP_ITEM:
             *equipped_item_refs[10] = shortcut_entries;
             player_state.shortcut_type = SHORTCUT_TYPE_NONE;
             player_state.shortcut = 0;

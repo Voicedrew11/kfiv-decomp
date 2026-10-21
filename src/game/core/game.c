@@ -49,17 +49,17 @@ static void Game_SetObjectBit(int map, int entry, int bit, int value);
 /* sets the options to their defaults */
 void Game_SetDefaultOptions(void) {
     memset(game_options, 0, sizeof(game_options));
-    game_options[0] = 1;
-    game_options[1] = 0x40;
-    game_options[2] = 0x40;
-    game_options[3] = 0x40;
+    game_options[GAME_OPTION_STEREO] = 1;
+    game_options[GAME_OPTION_MUSIC_VOLUME] = 0x40;
+    game_options[GAME_OPTION_SOUND_VOLUME] = 0x40;
+    game_options[GAME_OPTION_THIRD_BAR] = 0x40;
     game_options[4] = 1;
-    game_options[5] = 1;
-    game_options[6] = 1;
+    game_options[GAME_OPTION_HEAD_BOB] = 1;
+    game_options[GAME_OPTION_RUMBLE] = 1;
     game_options[7] = 1;
-    game_options[8] = 0;
-    game_options[9] = 1;
-    game_options[10] = 0x88;
+    game_options[GAME_OPTION_MENU_BACKDROP] = 0;
+    game_options[GAME_OPTION_HUD] = 1;
+    game_options[GAME_OPTION_BRIGHTNESS] = 0x88;
 }
 
 /* clears the state a new game starts from */
@@ -1578,7 +1578,7 @@ void Game_ShiftScreenByFocusTurn(void) {
 }
 
 /* draws the picture over itself in ten strips, its colour multiplied by brightness / 128: the brightness option
-   (game_options[10]) */
+   (game_options[GAME_OPTION_BRIGHTNESS]) */
 void Game_ApplyBrightness(int brightness) {
     char unused_stack[0x60]; // match: retail reserves the 0x60 bytes
     GsSpritePacket sprite;

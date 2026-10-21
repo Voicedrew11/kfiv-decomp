@@ -381,7 +381,7 @@ void MapViewer_DrawPictureMap(void) {
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
     Packet_EndGsRegisters();
-    Game_ApplyBrightness(game_options[10]);
+    Game_ApplyBrightness(game_options[GAME_OPTION_BRIGHTNESS]);
 }
 
 /* Where the player's marker goes on picture viewer_picture of the Caretaker's Map: -1 for a fixed spot on the
@@ -817,7 +817,7 @@ static void MapViewer_DrawKingsMap(void) {
     Packet_EndGsRegisters();
     GsDraw_QueueFlush();
     GsDraw_QueueTexturedSprite(&kings_map_corner_rect);
-    Game_ApplyBrightness(game_options[10]);
+    Game_ApplyBrightness(game_options[GAME_OPTION_BRIGHTNESS]);
 }
 
 /* Whether the King's Map works on the map with this tag: not on the maps the Caretaker's Map shows (000,
