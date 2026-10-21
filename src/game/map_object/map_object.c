@@ -134,8 +134,8 @@ void MapObject_InitMap(int map) {
             object->model->on_textures_sent = ScrollTexture_DrawAll;
             ScrollTexture_Init();
         }
-        MAP_OBJECT_BITS(object)->bit1 = FALSE;
-        MAP_OBJECT_BITS(object)->bit2 = FALSE;
+        MAP_OBJECT_BITS(object)->in_view = FALSE;
+        MAP_OBJECT_BITS(object)->in_view_previous = FALSE;
     }
     plain_draw_list[map] = NULL;
     for (i = ((MapSlotUnk08 *)map_slots[map].header)->plain_object_model_count - 1; i >= 0; i--) {
@@ -193,7 +193,7 @@ void MapObject_StartMap(int map) {
         if (visited) {
             in_use = Game_GetObjectActive(tag, i);
             flag = Game_GetObjectState(tag, i);
-            MAP_OBJECT_BITS(object)->bit18 = Game_GetObjectFlag(tag, i, 0);
+            MAP_OBJECT_BITS(object)->emptied = Game_GetObjectFlag(tag, i, 0);
             MAP_OBJECT_BITS(object)->bit19 = Game_GetObjectFlag(tag, i, 1);
         } else {
             kind = object->definition->kind;
@@ -210,7 +210,7 @@ void MapObject_StartMap(int map) {
         } else {
             map_object_setup_hooks[object->definition->kind](object);
         }
-        MAP_OBJECT_BITS(object)->bit17 = flag;
+        MAP_OBJECT_BITS(object)->on = flag;
     }
 }
 
@@ -223,9 +223,9 @@ void MapObject_UnloadMap(int map) {
     int i;
 
     for (i = 0; i < count; i++, object++) {
-        Game_SetObjectActive(tag, i, MAP_OBJECT_BITS(object)->bit16);
-        Game_SetObjectState(tag, i, MAP_OBJECT_BITS(object)->bit17);
-        Game_SetObjectFlag(tag, i, 0, MAP_OBJECT_BITS(object)->bit18);
+        Game_SetObjectActive(tag, i, MAP_OBJECT_BITS(object)->in_use);
+        Game_SetObjectState(tag, i, MAP_OBJECT_BITS(object)->on);
+        Game_SetObjectFlag(tag, i, 0, MAP_OBJECT_BITS(object)->emptied);
         Game_SetObjectFlag(tag, i, 1, MAP_OBJECT_BITS(object)->bit19);
         MapObject_StopSound(object);
     }
@@ -248,9 +248,9 @@ void MapObject_SaveAllFlags(void) {
             for (i = 0; i < count; i++, object++) {
                 // match: each flag is narrowed to a byte first; without these four conversions the outer loop is
                 // small enough for the compiler to hoist the 0xE000 object-table stride out of it
-                Game_SetObjectActive(tag, i, (u8)MAP_OBJECT_BITS(object)->bit16);
-                Game_SetObjectState(tag, i, (u8)MAP_OBJECT_BITS(object)->bit17);
-                Game_SetObjectFlag(tag, i, 0, (u8)MAP_OBJECT_BITS(object)->bit18);
+                Game_SetObjectActive(tag, i, (u8)MAP_OBJECT_BITS(object)->in_use);
+                Game_SetObjectState(tag, i, (u8)MAP_OBJECT_BITS(object)->on);
+                Game_SetObjectFlag(tag, i, 0, (u8)MAP_OBJECT_BITS(object)->emptied);
                 Game_SetObjectFlag(tag, i, 1, (u8)MAP_OBJECT_BITS(object)->bit19);
             }
         }
@@ -330,8 +330,8 @@ void MapObject_UpdateAll(void) {
             object->last_rotation_x = model->rotation.x;
             object->last_rotation_y = model->rotation.y;
             object->last_rotation_z = model->rotation.z;
-            MAP_OBJECT_BITS(object)->bit2 = MAP_OBJECT_BITS(object)->bit1;
-            MAP_OBJECT_BITS(object)->bit1 = FALSE;
+            MAP_OBJECT_BITS(object)->in_view_previous = MAP_OBJECT_BITS(object)->in_view;
+            MAP_OBJECT_BITS(object)->in_view = FALSE;
             MAP_OBJECT_BITS_LOW(object)->bit3 = FALSE;
             if (MODEL_UNK100_BITS(model)->has_motion) {
                 anim = &object->definition->anims[MAP_OBJECT_BYTES(object)->anim];
@@ -615,8 +615,8 @@ void MapObject_Activate(MapObject *object) {
     if (object != NULL && !(object->state_flags & MAP_OBJECT_IN_USE)) {
         object->state_flags |= MAP_OBJECT_IN_USE;
         MAP_OBJECT_BITS(object)->step = MAP_OBJECT_STEP_NOT_STARTED;
-        MAP_OBJECT_BITS(object)->bit1 = FALSE;
-        MAP_OBJECT_BITS(object)->bit2 = FALSE;
+        MAP_OBJECT_BITS(object)->in_view = FALSE;
+        MAP_OBJECT_BITS(object)->in_view_previous = FALSE;
         MAP_OBJECT_BITS(object)->anim = MAP_OBJECT_ANIM_OFF;
         model = object->model;
         model->fade_enabled = 0;
@@ -635,8 +635,8 @@ void MapObject_Deactivate(MapObject *object) {
         Effect_FreeForOwner((Entity *)object); // match: shared prototype takes an Entity
         object->state_flags &= ~MAP_OBJECT_IN_USE;
         MAP_OBJECT_BITS(object)->step = MAP_OBJECT_STEP_NOT_STARTED;
-        MAP_OBJECT_BITS(object)->bit1 = FALSE;
-        MAP_OBJECT_BITS(object)->bit2 = FALSE;
+        MAP_OBJECT_BITS(object)->in_view = FALSE;
+        MAP_OBJECT_BITS(object)->in_view_previous = FALSE;
         memset(object->work, 0, sizeof(object->work));
     }
 }
@@ -788,9 +788,9 @@ f32 MapObject_GetTurnToward(MapObject *object, Vector4 *point) {
 
 /* Hands a map object to a script (bit 20) or back, restarting its state machine. */
 void MapObject_SetScripted(MapObject *object, int scripted) {
-    if (MAP_OBJECT_BITS(object)->bit20 != scripted) {
-        MAP_OBJECT_BITS(object)->bit20 = scripted;
-        MAP_OBJECT_BITS(object)->bit21 = FALSE;
+    if (MAP_OBJECT_BITS(object)->scripted != scripted) {
+        MAP_OBJECT_BITS(object)->scripted = scripted;
+        MAP_OBJECT_BITS(object)->scripted_anim = FALSE;
         MAP_OBJECT_BITS(object)->bit22 = FALSE;
         MAP_OBJECT_BYTES(object)->anim = MAP_OBJECT_ANIM_FIRST;
         MAP_OBJECT_BYTES(object)->step = MAP_OBJECT_STEP_NOT_STARTED;
@@ -800,7 +800,7 @@ void MapObject_SetScripted(MapObject *object, int scripted) {
 /* Restarts a scripted map object (model flag 1, bit 20) on another animation. */
 void MapObject_PlayScriptedAnim(MapObject *object, int anim, int bit22) {
     if ((object->model->model_flags & 1) && (object->state_flags & MAP_OBJECT_SCRIPTED)) {
-        MAP_OBJECT_BITS(object)->bit21 = FALSE;
+        MAP_OBJECT_BITS(object)->scripted_anim = FALSE;
         MAP_OBJECT_BITS(object)->bit22 = bit22;
         MAP_OBJECT_BITS(object)->anim = anim;
         MAP_OBJECT_BITS(object)->step = MAP_OBJECT_STEP_NOT_STARTED;
@@ -810,7 +810,7 @@ void MapObject_PlayScriptedAnim(MapObject *object, int anim, int bit22) {
 /* Sets bit 21 of a scripted map object (model flag 1, bit 20). */
 void MapObject_SetScriptedBit21(MapObject *object, int bit21) {
     if ((object->model->model_flags & 1) && (object->state_flags & MAP_OBJECT_SCRIPTED)) {
-        MAP_OBJECT_BITS(object)->bit21 = bit21;
+        MAP_OBJECT_BITS(object)->scripted_anim = bit21;
     }
 }
 

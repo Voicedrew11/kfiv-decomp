@@ -503,11 +503,11 @@ static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 run_now) {
     }
     map_object = MapObject_GetById(entity->group_id, entity->spawn_info->map_object_id);
     if (map_object != NULL) {
-        ai_state->turn_in_place = (map_object->state_flags >> 17) & 1;
+        ai_state->turn_in_place = MAP_OBJECT_IS_ON(map_object);
     }
     map_object = MapObject_GetById(entity->group_id, entity->spawn_info->second_map_object_id);
     if (map_object != NULL) {
-        ai_state->step_index = (map_object->state_flags >> 17) & 1;
+        ai_state->step_index = MAP_OBJECT_IS_ON(map_object);
     }
     if (!ai_state->turn_in_place || !ai_state->step_index) {
         ForestGolem_WalkToMapObjectPosX(entity, run_now);
@@ -612,11 +612,11 @@ static void ForestGolem_ThinkUseMapObjectsNegX(Entity *entity, s32 run_now) {
     }
     map_object = MapObject_GetById(entity->group_id, entity->spawn_info->map_object_id);
     if (map_object != NULL) {
-        ai_state->turn_in_place = (map_object->state_flags >> 17) & 1;
+        ai_state->turn_in_place = MAP_OBJECT_IS_ON(map_object);
     }
     map_object = MapObject_GetById(entity->group_id, entity->spawn_info->second_map_object_id);
     if (map_object != NULL) {
-        ai_state->step_index = (map_object->state_flags >> 17) & 1;
+        ai_state->step_index = MAP_OBJECT_IS_ON(map_object);
     }
     if (!ai_state->turn_in_place || !ai_state->step_index) {
         ForestGolem_WalkToMapObjectNegX(entity, run_now);

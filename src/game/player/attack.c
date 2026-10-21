@@ -1307,7 +1307,7 @@ void Attack_WearArmorFromHit(int damage, Unk1B1470Request *request) {
     } else {
         part = (int)(rand() * 4.0f * RAND_SCALE) + 1;
     }
-    if (!((s32)(player_state.status_bits >> 35) & 1) && player_state.equipment[EQUIP_SHIELD] != ITEM_WORN_INDEX(ITEM_SHIELD_NONE)) {
+    if (!(PLAYER_IS_RUNNING(&player_state)) && player_state.equipment[EQUIP_SHIELD] != ITEM_WORN_INDEX(ITEM_SHIELD_NONE)) {
         shield_exp = 1;
         if (!(percent < 5.0f)) {
             shield_exp = amount * 2;

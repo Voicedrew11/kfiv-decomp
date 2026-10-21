@@ -381,11 +381,11 @@ static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 run_now
     }
     map_object = MapObject_GetById(entity->group_id, entity->spawn_info->map_object_id);
     if (map_object != NULL) {
-        ai_state->step_index = (map_object->state_flags >> 17) & 1;
+        ai_state->step_index = MAP_OBJECT_BITS(map_object)->on;
     }
     map_object = MapObject_GetById(entity->group_id, entity->spawn_info->second_map_object_id);
     if (map_object != NULL) {
-        ai_state->action_flags = (map_object->state_flags >> 17) & 1;
+        ai_state->action_flags = MAP_OBJECT_BITS(map_object)->on;
     }
     if (!ai_state->step_index || !ai_state->action_flags) {
         ExpeditionSoldier_WalkToMapObjectPosX(entity, run_now);
@@ -490,11 +490,11 @@ static void ExpeditionSoldier_ThinkUseMapObjectsNegX(Entity *entity, s32 run_now
     }
     map_object = MapObject_GetById(entity->group_id, entity->spawn_info->map_object_id);
     if (map_object != NULL) {
-        ai_state->step_index = (map_object->state_flags >> 17) & 1;
+        ai_state->step_index = MAP_OBJECT_BITS(map_object)->on;
     }
     map_object = MapObject_GetById(entity->group_id, entity->spawn_info->second_map_object_id);
     if (map_object != NULL) {
-        ai_state->action_flags = (map_object->state_flags >> 17) & 1;
+        ai_state->action_flags = MAP_OBJECT_BITS(map_object)->on;
     }
     if (!ai_state->step_index || !ai_state->action_flags) {
         ExpeditionSoldier_WalkToMapObjectNegX(entity, run_now);

@@ -71,10 +71,10 @@ int Player_CastMagic(int magic_id) {
     entry = &fx_table[magic_id];
     stats = &entry->stats;
     if (entry->item_menu_magic == 0) {
-        if ((s32)(player_state.status_bits >> 39) & 1) {
+        if (PLAYER_IS_UNDERWATER(&player_state)) {
             return FALSE;
         }
-        if ((s32)(player_state.status_bits >> 38) & 1) {
+        if (PLAYER_IS_IN_WATER(&player_state)) {
             if (player_state.position.y - entry->effect_depth_below > player_state.water_surface_y) {
                 return FALSE;
             }
@@ -368,11 +368,11 @@ void Player_HoldMagic(int magic_id) {
             return;
         }
         if (entry->item_menu_magic == 0) {
-            if ((s32)(player_state.status_bits >> 39) & 1) {
+            if (PLAYER_IS_UNDERWATER(&player_state)) {
                 channeled_magic_active = 0;
                 return;
             }
-            if ((s32)(player_state.status_bits >> 38) & 1) {
+            if (PLAYER_IS_IN_WATER(&player_state)) {
                 if (player_state.position.y - entry->effect_depth_below > player_state.water_surface_y) {
                     // match: the water check keeps its block order only with this goto
                     goto stop;
@@ -426,17 +426,17 @@ void Ladder_Start(ObjectReference *object, int from_far_end) {
     int step_count;
     ReferencedObject *def;
 
-    if ((s32)(player_state.status_bits >> 36) & 1) {
+    if (PLAYER_IS_ON_LADDER(&player_state)) {
         return;
     }
-    if ((s32)(player_state.status_bits >> 34) & 1) {
+    if (PLAYER_IS_AIRBORNE(&player_state)) {
         return;
     }
     Vector_Copy(&ladder_top_point, object->model->get_point(object->model, 1));
     Vector_Copy(&ladder_bottom_point, object->model->get_point(object->model, 0));
     Vector_Subtract(&ladder_span, &ladder_top_point, &ladder_bottom_point);
     PLAYER_STATUS_BITS(&player_state)->on_ladder = TRUE;
-    PLAYER_STATUS_BITS(&player_state)->bit34 = FALSE;
+    PLAYER_STATUS_BITS(&player_state)->airborne = FALSE;
     PLAYER_STATUS_BITS(&player_state)->step_up_pending = FALSE;
     player_state.fall_speed = 0.0f;
     player_state.strafe_speed = 0.0f;
@@ -480,10 +480,10 @@ void Ladder_CancelApproach(void) {
 int Ladder_DispatchPad(u16 held, u16 pressed) {
     PlayerState *player = &player_state;
 
-    if ((s32)(player->status_bits >> 36) & 1) {
+    if (PLAYER_IS_ON_LADDER(player)) {
         ladder_state_handlers[ladder_state_index](held, pressed);
     }
-    return (s32)(player->status_bits >> 36) & 1;
+    return PLAYER_IS_ON_LADDER(player);
 }
 
 /* Walks the player toward the ladder foot and turns to face it. */

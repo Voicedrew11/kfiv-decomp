@@ -56,7 +56,7 @@ int Player_CollideWithMap(void) {
     u32 surface;
     f32 drop;
 
-    step_bit = (s32)(player_state.status_bits >> 33) & 1;
+    step_bit = PLAYER_IS_STEPPING_UP(&player_state);
     stepping = step_bit; // match: tested as the bit, kept as a byte
     if (step_bit) {
         if (player_state.step_remainder <= player_state.step_per_frame) {
@@ -158,7 +158,7 @@ int Player_CollideWithMap(void) {
                                           &player_state.position);
                             if (COLLISION_RESULT->hit != 0
                                 && COLLISION_RESULT->point[1] <= player_state.position.y + player_state.fall_speed
-                                && (!((s32)(player_state.status_bits >> 38) & 1) || COLLISION_RESULT->point[1] < player_state.water_surface_y)) {
+                                && (!(PLAYER_IS_IN_WATER(&player_state)) || COLLISION_RESULT->point[1] < player_state.water_surface_y)) {
                                 player_state.water_surface_y = COLLISION_RESULT->point[1];
                                 player_state.status_bits |= 0x8000L << 23;
                                 if (COLLISION_RESULT->point[1] <= player_state.position.y - 220.0f) {
@@ -222,10 +222,10 @@ int Player_CollideWithMap(void) {
             player_state.position.y += player_state.fall_speed * (f32)(60 - player_state.death_timer) / 60.0f;
         }
     }
-    if (((s32)(player_state.status_bits >> 33) & 1) || found) {
+    if ((PLAYER_IS_STEPPING_UP(&player_state)) || found) {
         player_state.status_bits &= ~(0x8000L << 19);
     }
-    if (!((s32)(player_previous.status_bits >> 38) & 1) && ((s32)(player_state.status_bits >> 38) & 1)) {
+    if (!(PLAYER_IS_IN_WATER(&player_previous)) && (PLAYER_IS_IN_WATER(&player_state))) {
         player_state.fall_speed = 0.0f;
         player_state.status_bits &= ~(0x8000L << 19);
     }
@@ -393,7 +393,7 @@ void Player_CollideWithEntities(int climb) {
         Vector_Copy(old_position, &player_state);
         player_state.position.y += 1.0f;
         reach = player_state.fall_speed + 75.0f;
-        if (!((s32)(player_state.status_bits >> 33) & 1)) {
+        if (!(PLAYER_IS_STEPPING_UP(&player_state))) {
             for (entity = active_entities_head; entity != NULL; entity = entity->next) {
                 if (!(ENTITY_FLAG_BITS(entity)->live)) {
                     continue;
@@ -537,7 +537,7 @@ void Player_CollideWithMapObjects(s32 climb) {
             player_state.position.y += 30.0f;
             reach += 30.0f;
         }
-        if (!((s32)(player_state.status_bits >> 33) & 1)) {
+        if (!(PLAYER_IS_STEPPING_UP(&player_state))) {
             hit = Collision_StandOnObjects((f32 *)&player_state, 1, reach, 100.0f);
         }
         if (hit) {
@@ -555,7 +555,7 @@ void Player_CollideWithMapObjects(s32 climb) {
             Vector_Copy(&player_state, old_position);
         }
     }
-    if (!((s32)(player_state.status_bits >> 33) & 1)) {
+    if (!(PLAYER_IS_STEPPING_UP(&player_state))) {
         Collision_PushOutOfObjects((f32 *)&player_state, 0, 230.0f, 100.0f);
     }
     if (player_state.touched_map_object != 0 && player_state.touched_map_object != player_previous.touched_map_object) {

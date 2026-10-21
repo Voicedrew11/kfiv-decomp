@@ -263,14 +263,15 @@ typedef struct {
 
 /* PlayerState.status_bits as the bit-fields the game sets */
 typedef struct {
-    u64 pad0 : 33;
+    u64 pad0 : 32;
+    u64 view_levelling : 1;         /* the view is levelling out (Player_UpdateLook) */
     u64 step_up_pending : 1;        /* a step up too high to take at once is being taken (PlayerState.step_remainder) */
-    u64 bit34 : 1;                  /* set: Ladder_Start does nothing */
+    u64 airborne : 1;               /* off the ground: set each frame, cleared by a floor found; Ladder_Start does nothing */
     u64 running : 1;                /* the run button is held while moving (Player_Update) */
     u64 on_ladder : 1;              /* on an object set up by Ladder_Start (a ladder, it seems) */
-    u64 pad37 : 1;
+    u64 landing_dip : 1;            /* the view dips after a landing (landing_dip_*) */
     u64 in_water : 1;               /* a water surface is under the player: the stride is slower (Player_Update) */
-    u64 bit39 : 1;
+    u64 underwater : 1;             /* the water surface is 220 or more above the feet: the breath bar runs */
     u64 pad40 : 24;
 } PlayerStatusBits;
 
@@ -281,18 +282,29 @@ typedef struct {
     s32 step_sounded;               /* 0x1C8 set once the footstep of the current stride (PlayerState.stride_phase) has sounded */
     u64 pad32 : 1;                  /* 0x1CC the bits of PlayerStatusBits */
     u64 step_up_pending : 1;
-    u64 bit34 : 1;
+    u64 airborne : 1;
     u64 running : 1;
     u64 on_ladder : 1;
-    u64 pad37 : 1;
+    u64 landing_dip : 1;
     u64 in_water : 1;
-    u64 bit39 : 1;
+    u64 underwater : 1;
     u64 pad40 : 24;
 } PlayerStatusView;
 
 #define PLAYER_STATUS(player) ((PlayerStatusView *)(player))
 
 #define PLAYER_STATUS_BITS(player) ((PlayerStatusBits *)&(player)->status_bits)
+
+/* status bit `bit` of a PlayerState, read as retail does (the whole doubleword, shifted) */
+#define PLAYER_STATUS_BIT(player, bit) ((s32)((player)->status_bits >> (bit)) & 1)
+#define PLAYER_IS_VIEW_LEVELLING(player)  PLAYER_STATUS_BIT(player, 32)
+#define PLAYER_IS_STEPPING_UP(player)     PLAYER_STATUS_BIT(player, 33)
+#define PLAYER_IS_AIRBORNE(player)        PLAYER_STATUS_BIT(player, 34)
+#define PLAYER_IS_RUNNING(player)         PLAYER_STATUS_BIT(player, 35)
+#define PLAYER_IS_ON_LADDER(player)       PLAYER_STATUS_BIT(player, 36)
+#define PLAYER_IS_LANDING_DIP(player)     PLAYER_STATUS_BIT(player, 37)
+#define PLAYER_IS_IN_WATER(player)        PLAYER_STATUS_BIT(player, 38)
+#define PLAYER_IS_UNDERWATER(player)      PLAYER_STATUS_BIT(player, 39)
 
 /* player_level_steps[100]: the experience a level needs (PlayerState.experience against level) and what reaching it adds */
 typedef struct {
