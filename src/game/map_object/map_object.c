@@ -140,7 +140,7 @@ void MapObject_InitMap(int map) {
     plain_draw_list[map] = NULL;
     for (i = ((MapSlotUnk08 *)map_slots[map].header)->plain_object_model_count - 1; i >= 0; i--) {
         for (object = &map_slot_objects[map][count - 1], j = count - 1; j >= 0; j--, object--) {
-            if (MAP_OBJECT_DEF_WORD(object) & 0x400) {
+            if (MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_UNLISTED) {
                 continue;
             }
             if (MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_SKINNED) {
@@ -156,7 +156,7 @@ void MapObject_InitMap(int map) {
     jointed_draw_list[map] = NULL;
     for (i = ((MapSlotUnk08 *)map_slots[map].header)->skinned_object_model_count - 1; i >= 0; i--) {
         for (object = &map_slot_objects[map][count - 1], j = count - 1; j >= 0; j--, object--) {
-            if (MAP_OBJECT_DEF_WORD(object) & 0x400) {
+            if (MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_UNLISTED) {
                 continue;
             }
             if (!(MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_SKINNED)) {
@@ -357,7 +357,7 @@ void MapObject_UpdateAll(void) {
                     if (Map_TestFlagBlockBit(current_map_slot, player_state.record_flag_block, MAP_OBJECT_BYTES(object)->map_slot & 1, object->source->linked_point_owner)) {
                         object->state_flags |= MAP_OBJECT_IN_VIEW;
                     }
-                } else if (record->record_flags & 0x4000000) {
+                } else if (record->record_flags & MAP_RECORD_FRAME_EFFECTS) {
                     object->state_flags |= MAP_OBJECT_IN_VIEW;
                 }
             }
@@ -493,15 +493,15 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             if (!(object->state_flags & MAP_OBJECT_IN_VIEW)) {
                 continue;
             }
-            if (mode != 0 && !(RECORD_FLAGS(object) & 0x20)) {
+            if (mode != 0 && !(RECORD_FLAGS(object) & MAP_RECORD_ALL_MODES)) {
                 continue;
             }
             if (only_one != 0) {
-                if (!(object->definition->definition_flags & 0x10000)) {
+                if (!(object->definition->definition_flags & MAP_OBJECT_DEF_SEPARATE_PASS)) {
                     continue;
                 }
             } else {
-                if (object->definition->definition_flags & 0x10000) {
+                if (object->definition->definition_flags & MAP_OBJECT_DEF_SEPARATE_PASS) {
                     continue;
                 }
             }
@@ -536,7 +536,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             } else {
                 LinkedPoint_FindHitsForOwner(object->model, ((MapRecordInfo *)object->map_record)->flag_block_bit);
             }
-            if ((object->source->spawn_flags.flags & 0x1000000000000L) || (object->model->alpha < 128.0f && !(object->definition->definition_flags & 0x10000))) {
+            if ((object->source->spawn_flags.flags & MAP_OBJECT_SPAWN_ALWAYS_DRAWN) || (object->model->alpha < 128.0f && !(object->definition->definition_flags & MAP_OBJECT_DEF_SEPARATE_PASS))) {
                 DrawList_Add(object->model, 0, mode);
             } else {
                 ModelTexture_SendForModel(object->model);
@@ -552,15 +552,15 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             if (!(object->state_flags & MAP_OBJECT_IN_VIEW)) {
                 continue;
             }
-            if (mode != 0 && !(RECORD_FLAGS(object) & 0x20)) {
+            if (mode != 0 && !(RECORD_FLAGS(object) & MAP_RECORD_ALL_MODES)) {
                 continue;
             }
             if (only_one != 0) {
-                if (!(object->definition->definition_flags & 0x10000)) {
+                if (!(object->definition->definition_flags & MAP_OBJECT_DEF_SEPARATE_PASS)) {
                     continue;
                 }
             } else {
-                if (object->definition->definition_flags & 0x10000) {
+                if (object->definition->definition_flags & MAP_OBJECT_DEF_SEPARATE_PASS) {
                     continue;
                 }
             }
@@ -597,7 +597,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             } else {
                 LinkedPoint_FindHitsForOwner(object->model, ((MapRecordInfo *)object->map_record)->flag_block_bit);
             }
-            if ((object->source->spawn_flags.flags & 0x1000000000000L) || (object->model->fade_enabled != 0 && (s16)object->model->fade_alpha < 0x80 && !(object->definition->definition_flags & 0x10000))) {
+            if ((object->source->spawn_flags.flags & MAP_OBJECT_SPAWN_ALWAYS_DRAWN) || (object->model->fade_enabled != 0 && (s16)object->model->fade_alpha < 0x80 && !(object->definition->definition_flags & MAP_OBJECT_DEF_SEPARATE_PASS))) {
                 DrawList_Add(object->model, 0, mode);
             } else {
                 ModelTexture_SendForModel(object->model);
@@ -672,7 +672,7 @@ void MapObject_Break(MapObject *object) {
     if (object->source->break_script != 0 && (MAP_OBJECT_BYTES(object)->map_slot & 1) == current_map_slot) {
         Script_Start(object->source->break_script, 0);
     }
-    if (object->definition->definition_flags & 0x20000) {
+    if (object->definition->definition_flags & MAP_OBJECT_DEF_FADE_ON_BREAK) {
         other = MapObject_GetById(MAP_OBJECT_BYTES(object)->map_slot & 1, object->source->spawn_flags.bytes[3]);
         if (other != NULL) {
             MapObject_Activate(other);
@@ -745,7 +745,7 @@ int MapObject_StepAnim(MapObject *object) {
     }
     ModelMotion_Step(object->model);
     object->model->update_bone_points(object->model);
-    object->state_flags |= 8;
+    object->state_flags |= MAP_OBJECT_STEPPED;
     model = object->model;
     if (MODEL_CHANNEL(model)->frame == 0) {
         MapObject_StopSound(object);

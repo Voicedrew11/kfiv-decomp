@@ -86,7 +86,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     s32 kind;
     s32 result;
 
-    if (request->target_mask & 4) {
+    if (request->target_mask & HIT_TARGET_MAP_OBJECT) {
         for (index = 0; index < 2; index++) {
             if (map_slots[index].loaded == 0) {
                 continue;
@@ -127,7 +127,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             }
         }
     }
-    if (request->target_mask & 2) {
+    if (request->target_mask & HIT_TARGET_ENTITY) {
         for (entity = active_entities_head; entity != NULL; entity = entity->next) {
             if (!(ENTITY_FLAG_BITS(entity)->live)) {
                 continue;
@@ -176,7 +176,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     }
     if ((UNK1B1470_REQUEST_UNIT(request) & (0xC000L << 29)) == (0xC000L << 29)) {
         kind = 0;
-    } else if (request->target_mask & 8) {
+    } else if (request->target_mask & HIT_TARGET_MAP_FLOOR) {
         kind = 1;
     } else {
         kind = -1;
@@ -278,7 +278,7 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             }
         }
     }
-    if (request->target_mask & 2) {
+    if (request->target_mask & HIT_TARGET_ENTITY) {
         for (entity = active_entities_head; entity != NULL; entity = entity->next) {
             if (!(ENTITY_FLAG_BITS(entity)->live)) {
                 continue;
@@ -350,7 +350,7 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     if (!IS_PLAYER(request->owner)) {
         return 0;
     }
-    if (request->target_mask & 4) {
+    if (request->target_mask & HIT_TARGET_MAP_OBJECT) {
         Vector_Copy(tip, request);
         tip[1] += request->height;
         for (index = 0; index < 2; index++) {
@@ -1128,7 +1128,7 @@ void Attack_HitMapObject(Unk1B1470Request *request, Unk1B1470Extra *extra, MapOb
     if (by_weapon) {
         damage = damage * extra->strength_gauge / 5000;
     }
-    if ((MAP_OBJECT_DEF_WORD(object) & 0x2000) && by_weapon) {
+    if ((MAP_OBJECT_DEF_WORD(object) & MAP_OBJECT_DEF_WEAPON_DAMAGE_MULTIPLIER) && by_weapon) {
         damage *= request->map_object_damage_multiplier;
     }
     if (damage >= MAP_OBJECT_DEF_TOUGHNESS(object->definition)) {
@@ -1449,20 +1449,20 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
     if (check->target_mask & HIT_TARGET_PLAYER) {
         request.target_mask = HIT_TARGET_PLAYER;
     }
-    if (check->target_mask & 2) {
-        request.target_mask |= 2;
+    if (check->target_mask & HIT_TARGET_ENTITY) {
+        request.target_mask |= HIT_TARGET_ENTITY;
     }
-    if (check->target_mask & 4) {
-        request.target_mask |= 4;
+    if (check->target_mask & HIT_TARGET_MAP_OBJECT) {
+        request.target_mask |= HIT_TARGET_MAP_OBJECT;
     }
-    if (check->target_mask & 8) {
-        request.target_mask |= 8;
+    if (check->target_mask & HIT_TARGET_MAP_FLOOR) {
+        request.target_mask |= HIT_TARGET_MAP_FLOOR;
     }
     if (check->target_mask & HIT_TARGET_MAP_WALL) {
         request.target_mask |= HIT_TARGET_MAP_WALL;
     }
-    if (check->target_mask & 0x20) {
-        request.target_mask |= 0x20;
+    if (check->target_mask & HIT_TARGET_MAP_OTHER) {
+        request.target_mask |= HIT_TARGET_MAP_OTHER;
     }
     if (check->target_mask & HIT_TARGET_SKIP_OWNER) {
         request.target_mask |= HIT_TARGET_SKIP_OWNER;

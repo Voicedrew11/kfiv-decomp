@@ -671,19 +671,19 @@ static void Effect_SetupModel(int index) {
 
     Memory_ClearWords(model, sizeof(ModelInstance) / 4);
     def = effect->def;
-    if (EFFECT_DEF_FLAGS(def) & 0x20000) {
+    if (EFFECT_DEF_FLAGS(def) & EFFECT_DEF_FLAG_FACE_CAMERA) {
         if ((EFFECT_DEF_FLAGS(def) & EFFECT_DEF_PLACEMENT_MASK) == 0 || (EFFECT_DEF_FLAGS(def) & EFFECT_DEF_PLACEMENT_MASK) == EFFECT_DEF_PLACEMENT_MASK) {
             model->draw_flags |= MODEL_DRAW_FACE_CAMERA;
         } else {
             model->draw_flags |= MODEL_DRAW_TURN_Z_ONLY;
         }
     }
-    model->model_flags |= 0x1800;
+    model->model_flags |= MODEL_FLAG_1000 | MODEL_FLAG_RECORD_SENT;
     file_cursor = effect_model_table[def->model_index];
     memory = effect_model_memory + (index << 11);
     Model_SetUpPosed(model, &file_cursor, &memory);
     model->draw = effect_draw_hooks[((EffectTableEntry *)effect->def)->placement][effect->def->draw_hook_index];
-    model->model_flags |= 0x800;
+    model->model_flags |= MODEL_FLAG_RECORD_SENT;
     if (Wobble_ModelUsesTextures(model, 0x3BC0, 0x3C3F) != 0) {
         // match: the owner is read from the effect again for every test (a macro in the game, most likely)
         if (effect->owner_entity == (Entity *)&map_slots[0]) {

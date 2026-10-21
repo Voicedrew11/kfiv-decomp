@@ -358,11 +358,21 @@ typedef union {
 #define POSED_MODEL_FILE_ANY(file) (((ModelFileUnion *)(file))->posed)
 
 #define MODEL_FLAG_FLAT_COLOUR 0x400    /* ModelInstance.model_flags: no directional light, lit flat by its own colour times its alpha */
+#define MODEL_FLAG_1000 0x1000          /* ModelInstance.model_flags bit 12: set with RECORD_SENT on effect models; nothing tests it */
+#define MODEL_FLAG_RECORD_SENT 0x800    /* ModelInstance.model_flags: a record was sent for it, so its draw packet is longer (Model_DrawPosed) */
+#define MODEL_FLAG_ALPHA_DIRECT 0x4000  /* ModelInstance.model_flags: alpha is set straight; clear, it fades through fade_alpha */
+#define MODEL_FLAG_DRAW_LIST    0x200   /* ModelInstance.model_flags: drawn through the draw list (DrawList_Add) when set */
 #define MODEL_DRAW_FACE_CAMERA_X 0x100  /* ModelInstance.draw_flags: turned about x to face the camera */
 #define MODEL_DRAW_FACE_CAMERA_Y 0x200  /* ModelInstance.draw_flags: turned about y to face the camera */
 #define MODEL_DRAW_FACE_CAMERA   0x300  /* either of the two above */
 #define MODEL_DRAW_OWN_TEXTURE   0x800  /* ModelInstance.draw_flags: drawn with its own texture, the frame copied into it first */
 #define MODEL_DRAW_TURN_Z_ONLY   0x400  /* ModelInstance.draw_flags: turned about z alone */
+/* ModelInstance.chunk_skip_mask: bit n set skips texture chunk n */
+#define MODEL_CHUNK_SKIP_0       0x1u
+#define MODEL_CHUNK_SKIP_1       0x2u
+#define MODEL_CHUNK_SKIP_2       0x4u
+#define MODEL_CHUNK_SKIP_3       0x8u
+#define MODEL_CHUNK_SKIP_4       0x10u
 
 /* ModelInstance with the three part slots at 0x130 as the array Model_SetUpSkinned fills
    (ModelInstance.root_part is the first) */
@@ -630,6 +640,9 @@ typedef struct {
 #define MAP_OBJECT_DEF_FLAGS(def) (*(u32 *)(def))
 #define MAP_OBJECT_DEF_CARRIES 0x8000   /* bit15 */
 #define MAP_OBJECT_DEF_FADE_ON_BREAK 0x20000 /* definition_flags: fades out over its breaking animation (MapObject_UpdateBreaking) */
+#define MAP_OBJECT_DEF_UNLISTED 0x400   /* first word: left out of both draw lists (MapObject_BuildDrawLists) */
+#define MAP_OBJECT_DEF_SEPARATE_PASS 0x10000 /* definition_flags: drawn only by the only_one pass of MapObject_DrawAll, not the main one */
+#define MAP_OBJECT_SPAWN_ALWAYS_DRAWN 0x1000000000000L /* spawn_flags bit 48: always drawn through the draw list (DrawList_Add) */
 
 /* MapObjectUnk04.kind read as the byte it is, where retail compares it that way (Collision_PushOutOfMeshObj) */
 #define MAP_OBJECT_DEF_KIND(def) (*(u8 *)(def))
@@ -691,6 +704,8 @@ typedef struct {
 #define MAP_OBJECT_IN_USE           0x10000   /* bit 16: in use (MapObject_Activate sets it, MapObject_Deactivate clears it) */
 #define MAP_OBJECT_ON               0x20000   /* bit 17: open, on or firing (doors, switches, chests, shooters and pitfalls) */
 #define MAP_OBJECT_EMPTIED          0x40000   /* bit 18: it has given out the item or key it held (MapObject_MarkEmptied) */
+#define MAP_OBJECT_STEPPED          0x8       /* bit 3: the animation was stepped this frame (MapObject_StepAnim sets it, MapObject_UpdateAll clears it) */
+#define MAP_OBJECT_SCRIPTED_ANIM    0x200000  /* bit 21: a script-driven object's animation steps (MapObject_UpdateScenery) */
 #define MAP_OBJECT_SCRIPTED         0x100000  /* bit 20: a script drives it (MapObject_SetScripted) */
 #define MAP_OBJECT_FLAG_400000      0x400000  /* bit 22: set from a script; the motion-done script commands treat it as never done */
 
@@ -698,6 +713,7 @@ typedef struct {
 #define MAP_OBJECT_DEF_WORD(object) (*(u32 *)(object)->definition)
 #define MAP_OBJECT_DEF_SKINNED      0x100   /* drawn as a skinned model (from the skinned object models) */
 #define MAP_OBJECT_DEF_HAS_MOTION   0x200   /* has a motion (its motion_index) */
+#define MAP_OBJECT_DEF_WEAPON_DAMAGE_MULTIPLIER 0x2000 /* a weapon hit's damage is scaled by request->map_object_damage_multiplier */
 #define MAP_OBJECT_DEF_GLOW         0x4000  /* lit by the glow lights while the glow item is worn */
 #define MAP_OBJECT_DEF_BREAKABLE    0x800   /* MapObject_Break can break it */
 #define MAP_OBJECT_DEF_BREAK_ANIM   0x1000  /* it has a breaking animation */

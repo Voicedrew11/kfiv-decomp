@@ -1522,13 +1522,13 @@ void EntityCollision_WalkAgainstObjects(Entity *entity) {
                 break;
             }
             hit = COLLISION_RESULT->hit;
-            if (hit & 1) {
+            if (hit & COLLISION_HIT_WALL) {
                 Vector_Add(normal_sum, normal_sum, COLLISION_RESULT->normal);
                 ENTITY_FLAG_BITS(entity)->object_push = TRUE;
                 ENTITY_FLAG_BITS(entity)->wall_push = TRUE;
                 hit = COLLISION_RESULT->hit; // match: read again after the call, into the same register
             }
-            if (hit & 2) {
+            if (hit & COLLISION_HIT_ON_TOP) {
                 ENTITY_FLAG_BITS(entity)->object_push = TRUE;
                 ENTITY_FLAG_BITS(entity)->on_top = TRUE;
             }
@@ -1911,7 +1911,7 @@ static void EntityCollision_PushOutOfQuad(CollisionOwner *owner, f32 *centre, f3
     f32 *point_a, *point_b, *point_c, *point_d;
 
     COLLISION_RESULT->hit = 0;
-    if (owner->flags & 0x10000) {
+    if (owner->flags & OBJECT_FLAG_QUAD_HIT) {
         point_a = owner->model->get_point(owner->model, 0);
         point_b = owner->model->get_point(owner->model, 1);
         point_c = owner->model->get_point(owner->model, 2);
@@ -2170,7 +2170,7 @@ static void EntityCollision_SphereQuad(CollisionOwner *owner, void *centre, f32 
     void *point_a, *point_b, *point_c, *point_d;
 
     COLLISION_RESULT->hit = 0;
-    if (owner->flags & 0x10000) {
+    if (owner->flags & OBJECT_FLAG_QUAD_HIT) {
         point_a = owner->model->get_point(owner->model, 0);
         point_b = owner->model->get_point(owner->model, 1);
         point_c = owner->model->get_point(owner->model, 2);
@@ -2190,8 +2190,8 @@ static void EntityCollision_SphereQuads(CollisionOwner *owner, void *centre, f32
     s32 i;
 
     COLLISION_RESULT->hit = 0;
-    if (owner->flags & 0x10000) {
-        if (!(owner->flags & 0x20000)) {
+    if (owner->flags & OBJECT_FLAG_QUAD_HIT) {
+        if (!(owner->flags & MAP_OBJECT_ON)) {
             EntityCollision_SphereMesh(owner, centre, radius);
             return;
         }
@@ -2518,7 +2518,7 @@ s32 EntityCollision_RayProps(f32 *origin, f32 *direction, void *out_point, f32 l
         if (slots[map]->loaded != 0) {
             record = (MapRecord *)slots[map]->records;
             for (i = 0; i < slots[map]->header->record_count; i++, record++) {
-                if (((EntitySpawnFlags *)&record->record_flags)->halves[1] & 0x40000000) {
+                if (((EntitySpawnFlags *)&record->record_flags)->halves[1] & MAP_RECORD_HIDDEN) {
                     continue;
                 }
                 if (record->collision_mesh_index == 0xFFFF) {

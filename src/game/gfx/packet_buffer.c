@@ -247,7 +247,7 @@ void Packet_EndGsRegisters(void) {
         *packet++ = 0;
         *packet++ = 0;
         *packet++ = 0;
-        *packet++ = ((gs_register_count + 1) << 16) | 0x6C00C000;
+        *packet++ = ((gs_register_count + 1) << 16) | VIF_UNPACK_V4_32_ADDR_C000;
         count = gs_register_count / 16;
         blocks = count;
         count = gs_register_count - blocks * 16;

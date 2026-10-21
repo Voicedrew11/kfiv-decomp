@@ -416,7 +416,7 @@ void Gold_ClearMark(MapActor *actor) {
    its fade alpha (unk146) and the tests, then sends its textures. */
 void Gold_PrepareFadedDraw(OverlaySprite *sprite) {
     Packet_BeginGsRegisters();
-    Packet_AddGsRegister(GS_REG_ALPHA_1, ((s64)sprite->fade_alpha << 32) | 0x64);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, ((s64)sprite->fade_alpha << 32) | GS_ALPHA_LERP_CS_CD_FIX);
     Packet_AddGsRegister(GS_REG_TEST_1, 0x51001);
     Packet_AddGsRegister(0x48, 0x30001);
     Packet_EndGsRegisters();

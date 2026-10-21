@@ -503,7 +503,7 @@ void Ladder_WalkToFoot(void) {
 
 /* Waits on a rung; up/down input starts climbing or leaves the ladder. */
 void Ladder_WaitOnRung(u16 buttons) {
-    if (!(ladder_object->flags & 0x10000)) {
+    if (!(ladder_object->flags & MAP_OBJECT_IN_USE)) {
         player_state.status_bits &= ~(1L << 36);
     }
     if (buttons & (step_right_button | step_left_button)) {
@@ -539,7 +539,7 @@ void Ladder_ClimbRungUp(u16 buttons) {
     f32 angle;
     f32 fraction;
 
-    if (!(ladder_object->flags & 0x10000)) {
+    if (!(ladder_object->flags & MAP_OBJECT_IN_USE)) {
         player_state.status_bits &= ~(1L << 36);
     }
     if (buttons & (step_right_button | step_left_button)) {
@@ -569,7 +569,7 @@ void Ladder_ClimbRungDown(u16 buttons) {
     f32 angle;
     f32 fraction;
 
-    if (!(ladder_object->flags & 0x10000)) {
+    if (!(ladder_object->flags & MAP_OBJECT_IN_USE)) {
         player_state.status_bits &= ~(1L << 36);
     }
     if (buttons & (step_right_button | step_left_button)) {

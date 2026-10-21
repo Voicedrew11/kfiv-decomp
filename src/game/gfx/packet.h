@@ -61,6 +61,8 @@ typedef struct {
 
 #define SPRITE_PACKET_COLOR_VIEW(packet) ((SpritePacketColorView *)(packet))
 
+#define DMA_TAG_CNT         0x10000000 /* DMA tag ID 1 (CNT, bits 28-30): the quadwords that follow the tag */
+
 /* one quadword DMA tag at the head of a packet chain */
 typedef struct {
     s32 id_and_qwc;                 /* 0x00 the DMA tag ID (bits 28-30) and quadword count */

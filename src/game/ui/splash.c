@@ -248,7 +248,7 @@ void Splash_BuildSprite(void) {
     memset(&splash_sprite, 0, sizeof(splash_sprite));
     tex0 = SPLASH_IMAGE->tex0;
     tex0 &= 0xFFFFFFFFFFFFC000UL;
-    tex0 |= 0x2E40;
+    tex0 |= SPLASH_TEX0_TBP0;
     tex0 &= 0xFFF8001FFFFFFFFFUL;
     tex0 |= 0xF500UL << 35;
     splash_sprite.tex0 = tex0;
@@ -337,7 +337,7 @@ static void Splash_BuildImagePacket(int tbp, int cbp) {
     *cursor++ = 0;
     *cursor++ = 0;
     *cursor++ = 0;
-    *cursor++ = total | 0x51000000;
+    *cursor++ = total | VIF_CODE_DIRECTHL;
     *((u64 *)cursor)++ = 0x1000000000000005;
     *cursor++ = 0xE;
     *cursor++ = 0;

@@ -715,7 +715,7 @@ void Game_ReadSaveImage(void) {
         flags = ((GameDefinitionFlags *)item_name_defs)[i].flags;
         if (((flags >> GAME_DEFINITION_STATE_SHIFT) & GAME_DEFINITION_STATE_VALUE_MASK) < 2) {
             if (flag_bits & 1) {
-                ((GameDefinitionFlags *)item_name_defs)[i].flags = (flags & ~GAME_DEFINITION_STATE_MASK) | 0x40000;
+                ((GameDefinitionFlags *)item_name_defs)[i].flags = (flags & ~GAME_DEFINITION_STATE_MASK) | GAME_DEFINITION_STATE_1;
             } else {
                 ((GameDefinitionFlags *)item_name_defs)[i].flags = flags & ~GAME_DEFINITION_STATE_MASK;
             }

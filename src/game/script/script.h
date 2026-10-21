@@ -535,6 +535,10 @@ typedef struct {
 #define SCRIPT_ENTITY_FLAG_NO_FLOOR_LIFT            0x1000
 #define SCRIPT_ENTITY_FLAG_ANIMATES                 0x2000
 #define SCRIPT_ENTITY_FLAG_LOOK_AT_TARGET           0x4000
+/* the script word bits for the entity's still-unnamed ENTITY_FLAG_40000, _400000 and _20000000 */
+#define SCRIPT_ENTITY_FLAG_ENTITY_40000                    0x20
+#define SCRIPT_ENTITY_FLAG_ENTITY_400000                   0x40
+#define SCRIPT_ENTITY_FLAG_ENTITY_20000000                 0x8000
 
 /* sets the entity's flags picked by `mask` from the bits of `value` (ScriptCmd_SetEntityFlags; the
    sixteen bits are the same ones ScriptCmd_GetEntityFlags reads back) */

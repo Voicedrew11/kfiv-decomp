@@ -4,6 +4,9 @@
 #include "common.h"
 #include "player/player.h"
 
+/* WeaponTrail_Draw's clipped window: bit 2 is the point just written, off the screen (its triangles are not drawn) */
+#define WEAPON_TRAIL_CLIP_NEWEST 4
+
 void HeldWeapon_Init(void);
 void Player_LoadArmModels(void);
 void Player_UpdateArmModels(void);

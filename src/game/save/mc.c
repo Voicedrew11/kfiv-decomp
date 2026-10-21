@@ -476,7 +476,7 @@ static int Mc_StepWriteChecked(void) {
         if (quantity > 0) {
             mc_file_size += (quantity + 0x3FE) / 0x3FF;
         }
-        mc_file_size = (mc_file_size + 0x1F) & 0xFFFFFFE0;
+        mc_file_size = (mc_file_size + 0x1F) & MC_ALIGN_MASK;
         quantity = (u32)(mc_file_size + 0x3FF) >> 10;
         reserved = 2;
         if (mc_dir_entry.FileSizeByte != 0) {
@@ -852,7 +852,7 @@ static int Mc_StepReadChecked(void) {
             mc_file_size_padded += (remaining + 0x3FE) / 0x3FF;
         }
         padded_size = mc_file_size_padded + 0x1F;
-        total_size = padded_size & 0xFFFFFFE0;
+        total_size = padded_size & MC_ALIGN_MASK;
         mc_end_mark_offset = padded_size - total_size;
         mc_request.retries = 0;
         mc_request.step++;

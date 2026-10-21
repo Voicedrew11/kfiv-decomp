@@ -489,6 +489,14 @@ typedef struct {
 
 #define TRIGGER_ITEM_RECORD_COUNT 5
 
+/* ItemCommonDef.timed_flags bits: bit n starts PlayerState.timed_flags[n] (ailment slot n) for 60 frames */
+#define ITEM_TIMED_FLAG_0 0x1
+#define ITEM_TIMED_FLAG_1 0x2
+#define ITEM_TIMED_FLAG_2 0x4
+#define ITEM_TIMED_FLAG_3 0x8
+#define ITEM_TIMED_FLAG_4 0x10
+#define ITEM_TIMED_FLAG_5 0x20
+
 /* item_common_defs[150]: param/item_cmn.prm, a row for each item below ITEM_WEAPON_FIRST; type says what using it
    does (Player_UseItem): 0 heals (the Herb...), 1 and 5 are used on a map object, 2 on the map object the player
    stands on (the wands), 3 are the keys, 6 the maps, 8 "Nothing happened" */

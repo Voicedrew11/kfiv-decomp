@@ -79,6 +79,7 @@ typedef struct {
 /* GameStatus.update_hold_flags bits: 0x40 holds the scripts (Script_UpdateAll), 0x400 updates only the effect owned by effect_owner */
 #define UPDATE_HOLD_SCRIPTS            0x40
 #define UPDATE_HOLD_EFFECT_OWNER_ONLY  0x400
+#define UPDATE_HOLD_FALLING_ITEMS      0x10   /* holds back MapItem_UpdateFalling, the dropped items still falling */
 /* game_status_flags, the flag word of GameStatus (0x24), as bit-fields */
 typedef struct {
     u32 pad0 : 1;
@@ -88,6 +89,7 @@ typedef struct {
 #define GAME_STATUS_FLAG_BITS(flags) ((GameStatusFlagBits *)(flags))
 
 #define UPDATE_HOLD_MAP_OBJECTS 0x8        /* holds back MapObject_UpdateAll, the map objects' update */
+#define UPDATE_HOLD_ENTITIES    0x4        /* holds back Entity_UpdateAll, the entities' update */
 
 /* an 8-byte time passed by value: the wall clock (PlayTime_DayOfYear, PlayTime_ClockSecondsBetween), and the play time
    current_play_time, which PlayTime_ComputeCurrent splits the same way (mday counts hundreds of hours); the record
@@ -256,6 +258,7 @@ typedef struct {
 #define GAME_DEFINITION_STATE_MASK 0xC0000
 #define GAME_DEFINITION_STATE_SHIFT 18
 #define GAME_DEFINITION_STATE_VALUE_MASK 3  /* the state once shifted down to bit 0 */
+#define GAME_DEFINITION_STATE_1 0x40000  /* GameDefinitionFlags state 1 (bit 18 set): what Game_ReadSaveImage restores a saved 1 to */
 
 /* map_entry_counters: each byte holds two 4-bit death counters, the even spawn record in the low nibble */
 #define SPAWN_COUNTER_LOW_MASK  0xF

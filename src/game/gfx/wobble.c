@@ -129,7 +129,7 @@ void Wobble_DrawRippledModel(ModelInstance *model, int unk1, int unk2, int unk3,
                 packet = Packet_Alloc(vertex_count * 2 + 3);
                 *packet = (vertex_count * 2 + 2) | DMA_TAG_ID_CNT;
                 packet += 7;
-                *packet++ = (vertex_count * 2) | 0x51000001;
+                *packet++ = (vertex_count * 2) | VIF_CODE_DIRECTHL | 1;
                 tag_low = (u64)vertex_count | GIF_TAG_EOP | ((u64)2 << 60);
                 tag_high = (prim << 47) | ((u64)1 << 46);
                 *(u64 *)packet = tag_low | tag_high;

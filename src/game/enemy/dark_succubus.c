@@ -181,11 +181,11 @@ static void DarkSuccubus_Think(Entity *entity, s32 run_now) {
         entity->model->draw_flags |= MODEL_DRAW_OWN_TEXTURE;
         ((EntityFlagWord *)&entity->spawn_info->spawn_flags)->bytes[3] = 0x1E;
         entity->model_alpha = 0x80;
-        ENTITY_FLAGS(entity) |= 0x200000;
-        ENTITY_FLAGS(entity) |= 0x40000;
+        ENTITY_FLAGS(entity) |= ENTITY_FLAG_200000;
+        ENTITY_FLAGS(entity) |= ENTITY_FLAG_40000;
         return;
     }
-    ENTITY_FLAGS(entity) &= ~0x40000;
+    ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_40000;
     if (timers->think_timer > 0) {
         timers->think_timer--;
     }
@@ -197,7 +197,7 @@ static void DarkSuccubus_Think(Entity *entity, s32 run_now) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (player_state.position.x >= 6600.0f) {
-            ENTITY_FLAGS(entity) |= 0x40000;
+            ENTITY_FLAGS(entity) |= ENTITY_FLAG_40000;
             ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
             entity->target = entity->spawn_info;
             entity->move_command = EntityAi_MoveCommand(entity, 0, 500.0f) | (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST);
@@ -263,14 +263,14 @@ static void DarkSuccubus_Think(Entity *entity, s32 run_now) {
         entity->model->draw_flags |= MODEL_DRAW_OWN_TEXTURE;
         ((EntityFlagWord *)&entity->spawn_info->spawn_flags)->bytes[3] = 0x1E;
         entity->model_alpha = 0x80;
-        ENTITY_FLAGS(entity) |= 0x200000;
+        ENTITY_FLAGS(entity) |= ENTITY_FLAG_200000;
         if (--timers->vanish_frames <= 0) {
             timers->vanish_cooldown = entity->params->far_distance;
         }
     } else {
         entity->model->draw_flags &= ~MODEL_DRAW_OWN_TEXTURE;
         ((EntityFlagWord *)&entity->spawn_info->spawn_flags)->bytes[3] = 0x1F;
-        ENTITY_FLAGS(entity) &= ~0x200000;
+        ENTITY_FLAGS(entity) &= ~ENTITY_FLAG_200000;
         if (timers->vanish_cooldown != 0) {
             timers->vanish_cooldown--;
         }
@@ -868,7 +868,7 @@ static void DarkSuccubus_Death(Entity *entity) {
         ((EntityFlagWord *)&entity->spawn_info->spawn_flags)->bytes[3] = 0x1F;
         entity->model_alpha = 0x80;
         ENTITY_FLAGS(entity) |= ENTITY_FLAG_ANIMATES;
-        ENTITY_FLAGS(entity) |= 0x100000;
+        ENTITY_FLAGS(entity) |= ENTITY_FLAG_100000;
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_DYING_1;
         ENTITY_FLAGS(entity) |= ENTITY_FLAG_NO_PLAYER_COLLISION;
         ENTITY_FLAGS(entity) |= ENTITY_FLAG_NO_ENTITY_COLLISION;

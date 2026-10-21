@@ -102,7 +102,7 @@ static void GoldenStatue_OnHit(Entity *entity) {
 }
 
 /* The think handler of mode 1 (EntitySpawnInfo.spawn_mode is 1): no states. Once the entity
-   Entity_GetBySpawnIdForMap finds for spawn 0x29 has flag bit 0 set and its flags & 0xE are not 2,
+   Entity_GetBySpawnIdForMap finds for spawn 0x29 has ENTITY_FLAG_ACTIVE_LIST set and its flags & (ENTITY_FLAG_DYING_MASK | ENTITY_FLAG_LIVE) are not ENTITY_FLAG_LIVE,
    it puts GoldenStatue_ThinkNoStates in the think slot and calls it. Until then, while it is not busy,
    it calls GoldenStatue_WalkToPost, GoldenStatue_TurnAtPost or GoldenStatue_StandAtPost, picked by work
    bytes unk78 and unk79. */
