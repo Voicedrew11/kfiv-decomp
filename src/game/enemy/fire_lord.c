@@ -119,7 +119,7 @@ static void FireLord_Animate(Entity *entity) {
 /* The think handler: as EntityAi_Think, with FireLord_ThinkIdle for state 0 and
    FireLord_ThinkCombat for states 1 and 2. Before that it keeps the model's last two frames in
    fire_lord_model, each at half the alpha of the one before, clears work byte unk7E, and counts down
-   work word unk6A, which it sets to EntityParams.action_frames while player_state.unk259 is not 0. Counts
+   work word unk6A, which it sets to EntityParams.action_frames while player_state.cast_launched_shot is not 0. Counts
    down work byte unk7D. */
 static void FireLord_Think(Entity *entity, s32 run_now) {
     EntityAiStateKind131390 *ai_state = (EntityAiStateKind131390 *)&entity->ai_state;

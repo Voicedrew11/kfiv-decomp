@@ -87,7 +87,7 @@ void Npc_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->not_targetable = TRUE;
 }
 
-/* The animate handler of types 15 and 81: as EntityAi_Animate, but the blend runs at ai_state->unk40 only in a
+/* The animate handler of types 15 and 81: as EntityAi_Animate, but the blend runs at ai_state->pose_blend_weight only in a
    busy-bit-2 reaction, and the head turns at the rates EntityParams.action_frames (towards the target) and unk436. */
 static void Npc_Animate(Entity *entity) {
     f32 limits[4];

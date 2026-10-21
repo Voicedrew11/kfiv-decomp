@@ -324,7 +324,7 @@ static void DarkPuppet_Move(Entity *entity) {
 /* Carries out the movement command in Entity.move_command; DarkPuppet_Think, DarkPuppet_MeleeAttack
    and the ranged attacks call it. It turns the entity and speeds up or slows down along its three
    axes by EntityParams.speed_step_per_frame a frame up to unk54 (work floats unk44, unk48 and unk4C), twice as
-   fast for command bit 0x40. No command when the entity is player_state.unk204 and EntityParams.flags
+   fast for command bit 0x40. No command when the entity is player_state.stepped_on_entity and EntityParams.flags
    has 0x800. */
 static void DarkPuppet_ApplyMoveCommand(Entity *entity) {
     EntityAiStateKind16BF98 *ai_state = (EntityAiStateKind16BF98 *)&entity->ai_state;

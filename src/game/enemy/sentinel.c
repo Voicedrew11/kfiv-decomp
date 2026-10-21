@@ -277,7 +277,7 @@ static void Sentinel_PlayAnim12(Entity *entity) {
 }
 
 /* An animate handler the set-up function does not install (it installs EntityAi_Animate): as
-   EntityAi_Animate, but it also steps the frame count EntityModelChannel.unk82 while a blend is on.
+   EntityAi_Animate, but it also steps the frame count EntityModelChannel.frame while a blend is on.
    */
 static void Sentinel_Animate(Entity *entity) {
     f32 limits[4];

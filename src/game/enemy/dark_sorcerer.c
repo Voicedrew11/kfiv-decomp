@@ -865,7 +865,7 @@ static void DarkSorcerer_PlayAnim19StartScripts(Entity *entity) {
 }
 
 /* Helper of DarkSorcerer_PlayAnim19StartScripts: when the entity's map is the current one, starts script
-   unk4E + 10000 of the map record player_state.unk252 picks, and of up to two of the records
+   unk4E + 10000 of the map record player_state.map_index picks, and of up to two of the records
    Map_GetRecordById gives for 0x6B to 0x88, drawn at random. */
 static void DarkSorcerer_StartMapScripts(Entity *entity) {
     MapSlot *slot = &map_slots[current_map_slot];

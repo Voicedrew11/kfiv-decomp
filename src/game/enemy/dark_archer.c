@@ -406,7 +406,7 @@ static void DarkArcher_Think(Entity *entity, s32 run_now) {
 /* The think function of state 2: as EntityAi_ThinkCombat, but the ranged attack is
    DarkArcher_RangedAttack (with flag bit 10 set), and instead of closing in it starts
    DarkArcher_MoveAlongArc when work byte unk7A is set, the player is nearer than
-   EntityParams.near_distance and player_state.unk14 is within 40 degrees of Entity.heading_to_player. */
+   EntityParams.near_distance and player_state.rotation.y is within 40 degrees of Entity.heading_to_player. */
 static void DarkArcher_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];

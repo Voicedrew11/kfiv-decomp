@@ -11,7 +11,7 @@ typedef struct {
     char pad08[0x04];
     int second_clut_offset;         /* 0x0C from this header to a second CLUT */
     u64 tex0;                       /* 0x10 GS TEX0: TBP0 at bit 0, CBP at bit 37 */
-    u64 unk18;                      /* 0x18 copied to PoolSlot.unk60 with tex0 (Menu_UpdateKeyItems) */
+    u64 unk18;                      /* 0x18 copied to PoolSlot.tex1 with tex0 (Menu_UpdateKeyItems) */
 } TextureHeader;
 
 /* the fields of a GS TEX0 value (TextureHeader.tex0), as Texture_BuildPacket reads them */

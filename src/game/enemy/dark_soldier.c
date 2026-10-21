@@ -636,7 +636,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
     }
 }
 
-/* The on_hit handler: as EntityAi_OnHit, but it keeps the target and clears Entity.unk5C and flag
+/* The on_hit handler: as EntityAi_OnHit, but it keeps the target and clears Entity.target and flag
    bit 28. */
 static void DarkSoldier_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit(entity);

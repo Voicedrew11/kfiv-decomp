@@ -1836,7 +1836,7 @@ static const MenuWeekdayNames weekday_names_table = { {
 
 /* Runs the menu from opening to closing: sets up, calls the handler menu_run_step names every frame until it gives 0,
    then shows the last frames. `mode` (menu_mode) is which menu; with mode 1 the result is 1 when
-   card_screen_state.unk16 was set. */
+   card_screen_state.save_loaded was set. */
 int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign-extends a byte here
     ClockTime clock;
     struct tm calendar;

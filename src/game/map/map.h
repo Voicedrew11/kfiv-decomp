@@ -104,8 +104,8 @@ typedef struct {
     MapFogBlock fog_blocks[2][0x20]; /* 0x290 each map slot's blocks */
     MapLightBlock light_blocks[2][0x20]; /* 0xA90 each map slot's blocks */
     f32 screen_tint_amount;         /* 0x2A90 0 to 0.25: rises while PlayerState.light_spell_timer or unk10C is set (Player_UpdateScreenTints) */
-    f32 screen_tint_amount_copy;    /* 0x2A94 copy of unk2A90 */
-    f32 screen_tint_amount_copy2;   /* 0x2A98 copy of unk2A90 */
+    f32 screen_tint_amount_copy;    /* 0x2A94 copy of screen_tint_amount */
+    f32 screen_tint_amount_copy2;   /* 0x2A98 copy of screen_tint_amount */
     char pad2A9C[0x04];
 } MapDrawState;
 
@@ -149,7 +149,7 @@ typedef struct MapDrawRecord {
     u8 fog_block_index;             /* 0x34 which MapFogBlock block it is drawn with */
     u8 light_block_index;           /* 0x35 which MapLightBlock block it is drawn with */
     char pad36[0x02];
-    u8 linked_point_owner;          /* 0x38 low byte of MapRecord.linked_point_owner: compared with LinkedPoint.unk32 (LinkedPoint_FindHitsForMapDraw) */
+    u8 linked_point_owner;          /* 0x38 low byte of MapRecord.linked_point_owner: compared with LinkedPoint.owner_id (LinkedPoint_FindHitsForMapDraw) */
     char pad39[0x03];
     s32 flags;                      /* 0x3C high half of MapRecord.record_flags */
     f32 box_min[4];                 /* 0x40 lowest x, y, z of the box linked points are tested against (LinkedPoint_FindHitsForMapDraw) */
@@ -307,7 +307,7 @@ typedef struct MapSlot {
 #define MAP_TAG_ANCIENT_CITY_L1_AND_2_EAST       0x73
 #define MAP_TAG_TREASURY                         0x74
 
-/* what MapSlot.unk08 points at */
+/* what MapSlot.header points at */
 typedef struct {
     s32 file_size;                  /* 0x00 how long the map file's first part is */
     s32 record_models_offset;       /* 0x04 offset in the file of the record models (ModelFile, back to back) */
@@ -319,7 +319,7 @@ typedef struct {
     char pad1C[0x08];
     s32 packet_table_offset;        /* 0x24 offset in the file of what MapSlot.packet_data points at */
     s32 sound_bank_offset;          /* 0x28 offset in the file of what MapSlot.sound_bank points at */
-    u16 record_model_count;         /* 0x2C how many entries MapSlot.record_model_table and unk28 have */
+    u16 record_model_count;         /* 0x2C how many entries MapSlot.record_model_table and sound_bank_offset have */
     char pad2E[0x02];
     u16 plain_object_model_count;   /* 0x30 how many plain object models there are */
     u16 skinned_object_model_count; /* 0x32 how many jointed object models */

@@ -44,7 +44,7 @@ u32 weapon_sound_pairs[14] = { '%', '[', '&', ']', '\'', '^', '(', '\\', ')', '`
 static void EffectHandover_RunKeys(EffectActor *effect);
 
 /* Kind 33 update: at the arrival frame spawns the end effect at the aim (first level only) and, when the
-   aim has ground under it, starts a sweep: the aim then circles outward and spawns def->unkF0 where the hit
+   aim has ground under it, starts a sweep: the aim then circles outward and spawns def->sub_effect_id where the hit
    check first finds something. The model's z scale grows with the distance to the aim. */
 void EffectSweep_Update(EffectActor *effect) {
     f32 matrix[16];
@@ -99,7 +99,7 @@ void EffectSweep_Update(EffectActor *effect) {
 }
 
 /* Kind 34 start: launches along the heading, takes the frame it reaches what lies ahead and the kind of
-   surface there (Effect_FramesToImpact), and spawns def->unkF0 unless a kind-34 effect younger than def->interval
+   surface there (Effect_FramesToImpact), and spawns def->sub_effect_id unless a kind-34 effect younger than def->interval
    frames already did. */
 void EffectImpactLob_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     FallingMotion *motion;
@@ -152,7 +152,7 @@ void EffectImpactLob_Update(EffectActor *actor) {
     actor->frame++;
 }
 
-/* Kind 35 start: turns the heading by def->unkDC for each kind-35 effect started before it this frame (a
+/* Kind 35 start: turns the heading by def->turn_rate for each kind-35 effect started before it this frame (a
    fan), launches along it and lowers velocity.y by def->radius_half. */
 void EffectGroundFan_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     PhaseMotion *motion;
@@ -227,7 +227,7 @@ void EffectLevelHeight_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     *(int *)&actor->motion = actor->def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level;
 }
 
-/* Kind 36 update: sets the model's y scale to def->unkDC plus the keyed y scale times that share of
+/* Kind 36 update: sets the model's y scale to def->turn_rate plus the keyed y scale times that share of
    def->max_level. */
 void EffectLevelHeight_Update(EffectActor *effect) {
     ProgressMotion *motion;
@@ -288,8 +288,8 @@ void EffectConverge_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     Vector_Scale(motion, &offset, -effect->def->speed);
 }
 
-/* Kind 103 start: EffectConverge_Start with the direction turned from the model's own by up to def->unkDC
-   (pitch) and def->unkE0 (heading). */
+/* Kind 103 start: EffectConverge_Start with the direction turned from the model's own by up to def->turn_rate
+   (pitch) and def->ground_height (heading). */
 void EffectConverge_StartInSpread(EffectActor *effect, EffectSlot *spawn_slot) {
     Mat rotation_matrix;
     Vector4 offset;
@@ -327,8 +327,8 @@ void EffectConverge_Update(EffectActor *effect) {
     effect->frame += 1;
 }
 
-/* Kind 46 start: launches along the heading; the frame it comes within def->unkDC of what lies ahead
-   (none when later than def->unkF0) is when it hands over to def->end_effect there; def->unkE8 is the
+/* Kind 46 start: launches along the heading; the frame it comes within def->turn_rate of what lies ahead
+   (none when later than def->sub_effect_id) is when it hands over to def->end_effect there; def->spin_rate is the
    countdown that holds the frame after a hand-over. */
 void EffectHandover_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     TurningMotion *motion;
@@ -350,7 +350,7 @@ void EffectHandover_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     motion->end_effect_id = effect->def->end_effect;
 }
 
-/* Kind 29 start: EffectHandover_Start that hands over to def->unkF2 on surface kinds 3 and 5. */
+/* Kind 29 start: EffectHandover_Start that hands over to def->child_effect_id on surface kinds 3 and 5. */
 void EffectHandover_StartBySurface(EffectActor *effect, EffectSlot *spawn_slot) {
     TurningMotion *motion;
     int mode;
@@ -363,7 +363,7 @@ void EffectHandover_StartBySurface(EffectActor *effect, EffectSlot *spawn_slot) 
     }
 }
 
-/* Starts effect_id at position from the effect and takes it back to the frame def->unkF0 (later by what is
+/* Starts effect_id at position from the effect and takes it back to the frame def->sub_effect_id (later by what is
    left of the first def->interval frames), which it holds for a while. */
 void EffectHandover_StartNext(EffectActor *effect, Vector4 *position, int effect_id) {
     StartFrameMotion *motion;
@@ -389,8 +389,8 @@ static void EffectHandover_RunKeys(EffectActor *effect) {
     EffectKeys_ApplyColour(effect);
 }
 
-/* Kinds 29 and 46 update: moves; up to frame def->unkF0 a hit or the hand-over frame starts the next effect,
-   and frame def->unkF0 itself spawns def->radius_half. After a hand-over the frame is held while the
+/* Kinds 29 and 46 update: moves; up to frame def->sub_effect_id a hit or the hand-over frame starts the next effect,
+   and frame def->sub_effect_id itself spawns def->radius_half. After a hand-over the frame is held while the
    countdown runs. */
 void EffectHandover_Update(EffectActor *effect) {
     RestartMotion *motion;
@@ -435,8 +435,8 @@ void EffectHandover_Update(EffectActor *effect) {
     effect->frame++;
 }
 
-/* Kind 43 start: keeps the frame window [def->radius_half, def->interval) and spawns def->unkF0 and
-   def->unkF2 from the effect. */
+/* Kind 43 start: keeps the frame window [def->radius_half, def->interval) and spawns def->sub_effect_id and
+   def->child_effect_id from the effect. */
 void EffectHitWindow_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     PulseMotion *motion;
     EffectDef *def;
@@ -510,7 +510,7 @@ void EffectBolt_StartWithTargeters(EffectActor *effect, EffectSlot *spawn_slot) 
 }
 
 /* Kind 39 start: only while weapon 0x26 is in hand (else the spawner is freed): an EffectBolt_Start 220
-   higher, and every def->interval-th one also spawns def->unkF0. */
+   higher, and every def->interval-th one also spawns def->sub_effect_id. */
 void EffectBolt_StartCounted(EffectActor *effect, EffectSlot *spawn_slot) {
     TurningMotion *motion;
     s16 angle;
@@ -618,7 +618,7 @@ void EffectFollowPosition_Update(EffectActor *effect) {
     effect->frame += 1;
 }
 
-/* Kind 50 start: keeps the fade distances def->unkDC and def->unkE0 in velocity.x and y. */
+/* Kind 50 start: keeps the fade distances def->turn_rate and def->ground_height in velocity.x and y. */
 void EffectBoneFade_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     Vector4 *velocity;
 
@@ -660,7 +660,7 @@ void EffectBoneFade_Update(EffectActor *actor) {
     }
 }
 
-/* Kind 69 start: keeps the fade distances def->unkDC and def->unkE0 in velocity.x and y. */
+/* Kind 69 start: keeps the fade distances def->turn_rate and def->ground_height in velocity.x and y. */
 void EffectDistanceFade_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     Vector4 *velocity;
     EffectDef *def;
@@ -827,7 +827,7 @@ void EffectFallToFloor_Update(EffectActor *actor) {
     actor->frame += 1;
 }
 
-/* Kind 52 start: one of a row: the first takes def->unkF2 of the effect that spawned it as the count and
+/* Kind 52 start: one of a row: the first takes def->child_effect_id of the effect that spawned it as the count and
    launches along the heading, the next ones take the velocity and the count less one of the one before (0
    ends it). Settles on the floor, ending where there is none. */
 void EffectFloorChase_Start(EffectActor *actor, EffectSlot *spawn_slot) {
@@ -951,7 +951,7 @@ void EffectTiltFall_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     motion->fall_accel = random_fraction * 0.005f + gravity;
 }
 
-/* Kind 57 update: tilts to and fro between -def->unkE0 and def->unkE0 (speeding up by def->unkDC a
+/* Kind 57 update: tilts to and fro between -def->ground_height and def->ground_height (speeding up by def->turn_rate a
    frame) and, after def->radius_half frames, falls ever faster. */
 void EffectTiltFall_Update(EffectActor *effect) {
     Vector4 forward;
@@ -1009,7 +1009,7 @@ void EffectTiltFall_Update(EffectActor *effect) {
     effect->frame++;
 }
 
-/* Kind 59 start: sits def->unkDC off the floor (ends where there is none) and waits def->radius_half
+/* Kind 59 start: sits def->turn_rate off the floor (ends where there is none) and waits def->radius_half
    plus up to def->interval frames. */
 void EffectFloorDelay_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     CountdownMotion *motion;
@@ -1026,7 +1026,7 @@ void EffectFloorDelay_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     motion->countdown = actor->def->radius_half + rand() % actor->def->interval;
 }
 
-/* Kind 59 update: after the wait spawns def->unkF0 and ends. */
+/* Kind 59 update: after the wait spawns def->sub_effect_id and ends. */
 void EffectFloorDelay_Update(EffectActor *effect) {
     SpawnCountMotion *motion = (SpawnCountMotion *)&effect->motion;
 
@@ -1041,7 +1041,7 @@ void EffectFloorDelay_Update(EffectActor *effect) {
     effect->frame += 1;
 }
 
-/* Kind 61 start: turns the heading by def->unkDC for each kind-61 effect started before it this frame,
+/* Kind 61 start: turns the heading by def->turn_rate for each kind-61 effect started before it this frame,
    launches along it and lowers velocity.y by def->radius_half. */
 void EffectTurnFan_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     SpinBurstMotion *motion;
@@ -1071,7 +1071,7 @@ void EffectTurnFan_Start(EffectActor *effect, EffectSlot *spawn_slot) {
 }
 
 /* Kind 61 update: moves, its x and z growing by def->scale_per_frame, until def->max_frames; checks for hits
-   after frame def->unkF0. Resets the fan count for the next frame. */
+   after frame def->sub_effect_id. Resets the fan count for the next frame. */
 void EffectTurnFan_Update(EffectActor *effect) {
     Vector4 velocity;
     EffectMotion *motion = &effect->motion;
@@ -1135,7 +1135,7 @@ void EffectDelayedShot_Update(EffectActor *effect) {
     effect->frame += 1;
 }
 
-/* Kind 63 start: turned by def->unkDC and moved one step ahead for each level the spawner is below
+/* Kind 63 start: turned by def->turn_rate and moved one step ahead for each level the spawner is below
    def->max_level; launches along the heading. */
 void EffectLevelFan_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     LevelMotion *motion;
@@ -1280,7 +1280,7 @@ void EffectWobble_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     motion->wobble_angle = 0;
 }
 
-/* Kind 66 update: turns the wobble angle by def->unkDC and pushes the model's x and y scale def->unkE0 along
+/* Kind 66 update: turns the wobble angle by def->turn_rate and pushes the model's x and y scale def->ground_height along
    it; sits on the target. */
 void EffectWobble_Update(EffectActor *effect) {
     HeadingAngleMotion *motion;
@@ -1395,8 +1395,8 @@ void EffectProbedFall_Update(EffectActor *effect) {
 }
 
 /* Kind 68 start: placed def->radius_half from the player at the player's heading plus def->rotation_base[1]
-   and def->unkDC per spawner level, def->interval up (with up to 50 at random), facing 110 above the
-   player. It launches at frame 30 plus def->unkF0 per level and stops turning def->unkF2 frames before. */
+   and def->turn_rate per spawner level, def->interval up (with up to 50 at random), facing 110 above the
+   player. It launches at frame 30 plus def->sub_effect_id per level and stops turning def->child_effect_id frames before. */
 void EffectSurroundPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     TurningMotion *motion;
     Mat rotation_matrix;
@@ -1430,7 +1430,7 @@ void EffectSurroundPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot) {
 }
 
 /* Kind 68 update: keeps facing the player until its aim frame; at its launch frame launches along its
-   heading and plays sound def->unkE0; moves and checks for hits; ends 60 frames after the launch. */
+   heading and plays sound def->ground_height; moves and checks for hits; ends 60 frames after the launch. */
 void EffectSurroundPlayer_Update(EffectActor *effect) {
     PlayerChaseMotion *motion;
     Vector4 offset;
@@ -1562,7 +1562,7 @@ void EffectLaunchFromOwner_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     motion->hit_end_state = HIT_END_STATE_IDLE;
 }
 
-/* Kind 78 update: holds its start pose until frame def->unkF2, then flies backward along the owner model's
+/* Kind 78 update: holds its start pose until frame def->child_effect_id, then flies backward along the owner model's
    heading at def->speed until def->max_frames; checks for hits. */
 void EffectLaunchFromOwner_Update(EffectActor *effect) {
     AttachedMotion *motion;
@@ -1687,7 +1687,7 @@ void EffectHomeOnEntity_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     motion->ended = 0;
 }
 
-/* Kind 82 update: until frame def->unkF0 steers toward the middle of the picked entity; falls after
+/* Kind 82 update: until frame def->sub_effect_id steers toward the middle of the picked entity; falls after
    def->radius_half frames; stops where its path meets a wall and ends the next frame; faces its velocity;
    checks for hits. */
 void EffectHomeOnEntity_Update(EffectActor *actor) {
@@ -1813,7 +1813,7 @@ void EffectLight_Update(EffectActor *effect) {
     effect->frame += 1;
 }
 
-/* Kind 85 start: keeps the centre, the start angle (heading plus def->unkE0), the rise per frame
+/* Kind 85 start: keeps the centre, the start angle (heading plus def->ground_height), the rise per frame
    (def->interval over the life), the widening per frame (def->radius_half over half the life) and a
    random blink phase. */
 void EffectSpiral_Start(EffectActor *effect, EffectSlot *spawn_slot) {
@@ -1837,8 +1837,8 @@ void EffectSpiral_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     motion->start_step = (u8)random_step;
 }
 
-/* Kind 85 update: circles the centre (def->unkDC a frame) while it rises and widens; blinks, hidden
-   def->unkF2 frames and shown def->unkF0. */
+/* Kind 85 update: circles the centre (def->turn_rate a frame) while it rises and widens; blinks, hidden
+   def->child_effect_id frames and shown def->sub_effect_id. */
 void EffectSpiral_Update(EffectActor *effect) {
     SwingMotion *motion;
     EffectDef *def;
@@ -1925,7 +1925,7 @@ void EffectScatterAroundPlayer_Update(EffectActor *effect) {
     effect->frame += 1;
 }
 
-/* Kind 87 start: finds the floor below and the frame it lands on it, falling from frame def->unkF0 under
+/* Kind 87 start: finds the floor below and the frame it lands on it, falling from frame def->sub_effect_id under
    def->gravity; 0xFFFF: none. */
 void EffectDrop_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     Vector4 probe;
@@ -1960,7 +1960,7 @@ void EffectDrop_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     }
 }
 
-/* Kind 87 update: from frame def->unkF0 falls under def->gravity; at the landing frame spawns
+/* Kind 87 update: from frame def->sub_effect_id falls under def->gravity; at the landing frame spawns
    def->radius_half (surface kind 5) or def->interval there and ends. */
 void EffectDrop_Update(EffectActor *effect) {
     GravityMotion *motion;
@@ -2048,8 +2048,8 @@ void EffectRepeater_Update(EffectActor *effect) {
     }
 }
 
-/* Kind 100 start: launches along the heading from its centre, at a random angle up to def->unkE4 and
-   radius def->unkE8. */
+/* Kind 100 start: launches along the heading from its centre, at a random angle up to def->spread_angle and
+   radius def->spin_rate. */
 void EffectCorkscrew_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     SpreadMotion *motion = (SpreadMotion *)&effect->motion;
     f32 random_turn;
@@ -2062,8 +2062,8 @@ void EffectCorkscrew_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     motion->spin_rate = effect->def->spin_rate;
 }
 
-/* Kind 100 update: the centre moves by the velocity; the model circles it (def->unkDC a frame) at a radius
-   that grows by def->unkE0. */
+/* Kind 100 update: the centre moves by the velocity; the model circles it (def->turn_rate a frame) at a radius
+   that grows by def->ground_height. */
 void EffectCorkscrew_Update(EffectActor *effect) {
     SpinAngleMotion *motion = (SpinAngleMotion *)&effect->motion;
     EffectDef *def;
@@ -2108,7 +2108,7 @@ void EffectWander_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     actor->flags |= (s64)0x8000 << 0x2B;
 }
 
-/* Kind 101 update: turns its velocity a random amount up to def->unkDC; past y def->unkE0 its y speed
+/* Kind 101 update: turns its velocity a random amount up to def->turn_rate; past y def->ground_height its y speed
    flips back. */
 void EffectWander_Update(EffectActor *effect) {
     EffectMotion *motion = &effect->motion;
@@ -2167,8 +2167,8 @@ void EffectJitterWobble_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     motion->wobble_angle = 0;
 }
 
-/* Kind 104 update: turns the wobble angle by def->unkDC plus up to def->unkE4 at random and pushes the
-   model's x and y scale def->unkE0 along it; sits on the target. */
+/* Kind 104 update: turns the wobble angle by def->turn_rate plus up to def->spread_angle at random and pushes the
+   model's x and y scale def->ground_height along it; sits on the target. */
 void EffectJitterWobble_Update(EffectActor *effect) {
     TiltMotion *motion = (TiltMotion *)&effect->motion;
     float matrix[16];
@@ -2195,7 +2195,7 @@ void EffectJitterWobble_Update(EffectActor *effect) {
     effect->frame += 1;
 }
 
-/* Kind 105 start: keeps its centre; the offset is def->unkE0 along z, the turn steps 0.1. */
+/* Kind 105 start: keeps its centre; the offset is def->ground_height along z, the turn steps 0.1. */
 void EffectJitterOrbit_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     StartMotion *motion = (StartMotion *)&effect->motion;
     EffectStart_TurnModel(effect, spawn_slot);
@@ -2206,7 +2206,7 @@ void EffectJitterOrbit_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     motion->pitch = motion->yaw = 0.1f;
 }
 
-/* Kind 105 update: turns its offset by a pitch and heading turn that drift at random (by up to def->unkDC,
+/* Kind 105 update: turns its offset by a pitch and heading turn that drift at random (by up to def->turn_rate,
    at most 0.15) and sits at the centre plus the offset; the frame does not advance. */
 void EffectJitterOrbit_Update(EffectActor *effect) {
     YawPitchMotion *motion;

@@ -24,7 +24,7 @@
 /* a chance is never under 5 percent */
 #define AT_LEAST_5(chance) ((chance) < 5 ? 5 : (chance))
 #define ENTITY_TYPE_LAST_BOSS 99
-/* EntityParams.unk238 as six signed bytes: tenths the six magic strengths of an entity's hit are scaled by */
+/* EntityParams.shot_params as six signed bytes: tenths the six magic strengths of an entity's hit are scaled by */
 #define ENTITY_HIT_SCALES(entity) ((s8 *)&(entity)->params->shot_params)
 /* store a strength as a whole number, rounded up when more than a thousandth is left over */
 #define STORE_ROUNDED_UP(dest, value) \
@@ -712,7 +712,7 @@ void Attack_HitPlayer(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     if ((u8)(player_state.equipment[EQUIP_BOOT] - 0x6A) <= 1) {
         percent += 20;
     }
-    Attack_GetEffectiveStrengths(&attack, request, extra); // match: attack is filled here and never read; the terms below use request->unk50
+    Attack_GetEffectiveStrengths(&attack, request, extra); // match: attack is filled here and never read; the terms below use request->strengths
     damage = Attack_StrengthDamageToPlayer(request->strengths.element_strengths[0], player_state.defence_stats.values[1], player_state.power); // match: values[1] here and on the next line; values[0] is never used
     damage += Attack_StrengthDamageToPlayer(request->strengths.element_strengths[1], player_state.defence_stats.values[1], player_state.power); // match: values[1] a second time
     damage += Attack_StrengthDamageToPlayer(request->strengths.element_strengths[2], player_state.defence_stats.values[2], player_state.power);
@@ -723,7 +723,7 @@ void Attack_HitPlayer(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     damage += Attack_StrengthDamageToPlayer(request->strengths.element_strengths[7], player_state.defence_stats.values[7], player_state.magic);
     damage += Attack_StrengthDamageToPlayer(request->strengths.element_strengths[8], player_state.defence_stats.values[8], player_state.magic);
     request->landed_on_player = 1;
-    if (damage <= blocked) { // match: blocked is request->unk72, which is known to be 0 here
+    if (damage <= blocked) { // match: blocked is request->player_hit_cooldown, which is known to be 0 here
         damage = 1;
     }
     Player_TakeDamage(damage);
@@ -1161,9 +1161,9 @@ int Attack_HitMap(Unk1B1470Request *request, Unk1B1470Extra *extra) {
 }
 
 /* The nine strengths of a hit as they count against the target (Attack_HitEntity). The player's are
-   raised by the weapon bonus (extra->unk20) or the magic bonus (unk22, plus unk0E[] per kind) in
+   raised by the weapon bonus (extra->player_power) or the magic bonus (unk22, plus unk0E[] per kind) in
    fiftieths. A hit of kind 0 from anything else counts as it is; otherwise the three physical
-   strengths are dropped and the six magic ones scaled, by EntityParams.unk238 for an entity.
+   strengths are dropped and the six magic ones scaled, by EntityParams.shot_params for an entity.
    The rows are spelled out as retail has them. */
 void Attack_GetEffectiveStrengths(EntityParamsUnk240PartUnk00 *out, Unk1B1470Request *request, Unk1B1470Extra *extra) {
     f32 strength;

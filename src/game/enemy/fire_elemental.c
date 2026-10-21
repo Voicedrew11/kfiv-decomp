@@ -77,7 +77,7 @@ void FireElemental_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with FireElemental_ThinkReturn for flag bit 53 and its own
    state 2: FireElemental_StandAndAttack while work byte unk7A is 0 (states 0 and others clear it),
-   then FireElemental_ThinkCombat. Work byte unk7C is put to 30 while player_state.unk259 is set and
+   then FireElemental_ThinkCombat. Work byte unk7C is put to 30 while player_state.cast_launched_shot is set and
    counts down. While work word unk68 is 1 (FireElemental_AlertSameKind of another entity sets it) it
    starts FireElemental_BackAwayFromPlayer instead of all that. */
 static void FireElemental_Think(Entity *entity, s32 run_now) {
@@ -412,7 +412,7 @@ static void FireElemental_Dodge(Entity *entity) {
 }
 
 /* Whether to dodge a magic: only while work byte unk7C runs (FireElemental_Think puts it to 30 when the player
-   casts one, player_state.unk259), with the player at least min_distance away (less the radius and 100),
+   casts one, player_state.cast_launched_shot), with the player at least min_distance away (less the radius and 100),
    Entity.heading_to_player within max_angle of the heading and the entity within 30 degrees of the player's facing; then
    EntityParams.dodge_chance / 10 times in 100. */
 static s32 FireElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 max_angle) {

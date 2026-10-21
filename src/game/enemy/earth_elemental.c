@@ -77,7 +77,7 @@ void EarthElemental_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with EarthElemental_ThinkCombat for state 2; walking back to
    the spawn point (flag bit 53) gets command bits 0x440 added. Work byte unk7B is put to 25 to 34
-   while player_state.unk259 is set and counts down; work word unk6C is EntityParams.far_distance while work
+   while player_state.cast_launched_shot is set and counts down; work word unk6C is EntityParams.far_distance while work
    word unk6E counts down and EntityParams.guard_chance otherwise. While work word unk68 is 1
    (EarthElemental_AlertSameKind of another entity sets it) it only starts EarthElemental_BackAwayOrRunAtPlayer. */
 static void EarthElemental_Think(Entity *entity, s32 run_now) {
@@ -312,7 +312,7 @@ static void EarthElemental_PlayTurnAnim(Entity *entity) {
 }
 
 /* Whether to dodge a magic: only while work byte unk7B is 1 to 15 (EarthElemental_Think puts it to 25 to 34
-   when the player casts one, player_state.unk259), with the player at least min_distance away (less the radius
+   when the player casts one, player_state.cast_launched_shot), with the player at least min_distance away (less the radius
    and 100), Entity.heading_to_player within max_angle of the heading and the entity within 30 degrees of the player's
    facing; then EntityParams.dodge_chance / 10 times in 100. */
 static s32 EarthElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 max_angle) {

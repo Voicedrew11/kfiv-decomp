@@ -1465,7 +1465,7 @@ void Game_ShiftScreenByViewTurn(void) {
     Packet_EndGsRegisters();
 }
 
-/* Game_ShiftScreenByViewTurn measured at the nearest entity within 30 degrees ahead (or view_ray_status.unk48 away, at most
+/* Game_ShiftScreenByViewTurn measured at the nearest entity within 30 degrees ahead (or view_ray_status.nearest_entity_distance away, at most
    1000) instead of 1000 ahead. Nothing calls it. */
 void Game_ShiftScreenByFocusTurn(void) {
     sceVu0FMATRIX view_matrix;

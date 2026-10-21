@@ -102,7 +102,7 @@ static void DarkKnight_OnHit(Entity *entity) {
    while work word unk68 counts down (DarkKnight_RangedAttack0 sets it), for the first
    EntityParams.near_distance frames it starts one of effects 0x21F to 0x221 at point 4 and writes
    EntityParams.far_distance into unk10[n].unk00.unk00[8] of the three melee records, and 0 once the count
-   is over; it counts down work word unk6C, set to EntityParams.type_param_0 while player_state.unk259 is
+   is over; it counts down work word unk6C, set to EntityParams.type_param_0 while player_state.cast_launched_shot is
    not 0; and while work word unk6A counts down it keeps flag bit 35 set, with effect 0x25C every
    third frame. */
 static void DarkKnight_Think(Entity *entity, s32 run_now) {

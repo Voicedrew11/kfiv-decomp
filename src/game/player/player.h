@@ -99,15 +99,15 @@ typedef struct {
     char padA2[0x02];
     s32 weight;                     /* 0xA4 the weight of what is held and worn (item_name_defs unk3E, in pounds) */
     s32 max_weight;                 /* 0xA8 the most the player may carry; weight above it slows him */
-    s32 power;                      /* 0xAC power_base in effect (the Power Seed adds a tenth); how fast unkBC fills (at least 20 is used) */
-    s32 magic;                      /* 0xB0 magic_base in effect (the Widda Needle adds a tenth); how fast unkC0 fills (at least 20 is used) */
+    s32 power;                      /* 0xAC power_base in effect (the Power Seed adds a tenth); how fast power_gauge fills (at least 20 is used) */
+    s32 magic;                      /* 0xB0 magic_base in effect (the Widda Needle adds a tenth); how fast magic_gauge fills (at least 20 is used) */
     s32 hp_now;                     /* 0xB4 the HP the player has (the healing items add to it) */
     s32 mp_now;                     /* 0xB8 the MP the player has; saved */
     s32 power_gauge;                /* 0xBC cleared when weapon changes over a menu (GameLoop_OpenRequestedMenu) */
-    s32 magic_gauge;                /* 0xC0 cleared when unk264 is set */
-    s32 power_gauge_delay;          /* 0xC4 frames unkBC waits before it fills again */
-    s32 magic_gauge_delay;          /* 0xC8 frames unkC0 waits before it fills again */
-    s32 breath_now;                 /* 0xCC how much of a HUD bar is filled (Hud_Draw), out of unkD0 */
+    s32 magic_gauge;                /* 0xC0 cleared when charging_magic is set */
+    s32 power_gauge_delay;          /* 0xC4 frames power_gauge waits before it fills again */
+    s32 magic_gauge_delay;          /* 0xC8 frames magic_gauge waits before it fills again */
+    s32 breath_now;                 /* 0xCC how much of a HUD bar is filled (Hud_Draw), out of breath_max */
     s32 breath_max;                 /* 0xD0 0: the bar is not drawn */
     s32 weapon_use_count;           /* 0xD4 saved; every 100th swing gives "Physical UP" (Player_CountWeaponUse) */
     s32 magic_use_count;            /* 0xD8 saved; every 100th magic gives "Magic Power UP" (Player_CountMagicUse) */
@@ -155,14 +155,14 @@ typedef struct {
     f32 step_per_frame;             /* 0x1D4 16.67 then */
     f32 airborne_start_y;           /* 0x1D8 position.y when the player left the ground: the height a fall is measured from */
     f32 water_surface_y;            /* 0x1DC height of the water surface the player is under */
-    s32 ground_effect_active;       /* 0x1E0 nonzero with unk1E4 4: the fifth row of the movement tables is used */
+    s32 ground_effect_active;       /* 0x1E0 nonzero with ground_effect_kind 4: the fifth row of the movement tables is used */
     s32 ground_effect_kind;         /* 0x1E4 what the ground does: 1-3 poison, 4 damage 10, 5 damage */
     s32 ground_effect_frames;       /* 0x1E8 a frame count: every 60th frame the ground may poison the player (Player_ApplyGroundEffects) */
     s32 ground_kills;               /* 0x1EC nonzero: hp is held at 0 and the player dies (Player_ApplyGroundEffects) */
     f32 landing_dip_offset;         /* 0x1F0 added to the camera's height */
     f32 landing_dip_depth;          /* 0x1F4 how deep the dip after a landing is: half the fall speed, at most 150 */
     s32 landing_dip_frames;         /* 0x1F8 how many frames the dip takes */
-    s32 landing_dip_frame;          /* 0x1FC the frame of the dip; unk1F0 follows half a sine wave */
+    s32 landing_dip_frame;          /* 0x1FC the frame of the dip; landing_dip_offset follows half a sine wave */
     s32 landing_slow_timer;         /* 0x200 frames left of half speed after a hard landing */
     struct Entity *stepped_on_entity; /* 0x204 the entity the player was put on top of */
     MapObject *floor_map_object;    /* 0x208 the map object the player stands on */
@@ -174,7 +174,7 @@ typedef struct {
     char pad218[0x08];
     Vector4 aim;                    /* 0x220 direction the player is knocked back along, flattened to x/z (Player_KnockBackFromHit) */
     f32 aim_speed;                  /* 0x230 knock-back speed, lost by weight every frame; above 0: Game_BlendPreviousFrame(0x40) is drawn */
-    s32 view_tilt_frames;           /* 0x234 frames unk238 and unk23C keep growing */
+    s32 view_tilt_frames;           /* 0x234 frames view_tilt_pitch and view_tilt_roll keep growing */
     f32 view_tilt_pitch;            /* 0x238 pitch a hit threw the view by */
     f32 view_tilt_roll;             /* 0x23C second view tilt of a hit, grown with the pitch */
     Vector4 floor_push;             /* 0x240 a velocity added to the position every frame: the push of the floor (MapRecord.push_acceleration) */
@@ -207,8 +207,8 @@ typedef struct {
     s32 fade_area;                  /* 0x2A4 the area byte (map record 0x4C) under the player, last frame; the fade starts when it drops */
     f32 screen_fade;                /* 0x2A8 fade amount: > 0 toward white, < 0 toward black */
     s32 screen_fade_step;           /* 0x2AC added to screen_fade, halved each frame; -0x30 when the area drops */
-    s32 hp_step_remaining;          /* 0x2B0 moved one toward 0 every unk2B4 frames; hp moves with it */
-    s32 hp_step_period;             /* 0x2B4 frames per step of hp_step_remaining; cleared when unk2B0 reaches 0 */
+    s32 hp_step_remaining;          /* 0x2B0 moved one toward 0 every hp_step_period frames; hp moves with it */
+    s32 hp_step_period;             /* 0x2B4 frames per step of hp_step_remaining; cleared when hp_step_remaining reaches 0 */
     u16 flag_timers[6];             /* 0x2B8 frames left, one per timed_flags entry */
     u32 ailment0_start_frame;       /* 0x2C4 the frame counter frame_counter when timed_flags[0] was started */
     u32 ailment1_start_frame;       /* 0x2C8 the same for timed_flags[1] to [5] */
@@ -218,7 +218,7 @@ typedef struct {
     u32 ailment5_start_frame;       /* 0x2D8 the frame count timed_flags[5] was started at */
     s32 ailment0_slow_timer;        /* 0x2DC above 0: Player_TakeDamageNoRumble(3) runs every 90 frames, not every 30 */
     s32 light_spell_timer;          /* 0x2E0 frames magic 0x3D to 0x3F last */
-    s32 intimidate_timer;           /* 0x2E4 above 0: unk2E8 counts (EntityAi_PickMeleeAttack) */
+    s32 intimidate_timer;           /* 0x2E4 above 0: intimidate_range counts (EntityAi_PickMeleeAttack) */
     f32 intimidate_range;           /* 0x2E8 enemies whose attack_stats is below it attack from half as far */
     s32 rage_timer;                 /* 0x2EC frames magic 0x52 to 0x54 last */
     s32 rage_power_bonus;           /* 0x2F0 10, 20 or 30 for magic 0x52, 0x53, 0x54 */
@@ -245,7 +245,7 @@ typedef struct {
    strength is the alpha Player_DrawScreenTints draws with */
 typedef struct {
     s32 damage_flash_frames;        /* 0x00 set to 10 by Player_FlashDamage */
-    s32 damage_flash_alpha;         /* 0x04 red (dark red while unk14 shows) */
+    s32 damage_flash_alpha;         /* 0x04 red (dark red while purple_tint_alpha shows) */
     s32 green_tint_alpha;           /* 0x08 green, shown when kind is 0 */
     s32 dark_yellow_tint_alpha;     /* 0x0C dark yellow, shown when kind is 1 */
     s32 darkness_tint_alpha;        /* 0x10 black, subtracted */
@@ -335,15 +335,15 @@ typedef struct {
     PlayerShotStats attack_by_level[3]; /* 0x00 one row per LevelRecord.level_index */
     PlayerItemRates ailment_attack_rates; /* 0x36 ailment rates the item gives, copied to PlayerState.ailment_attack_rates */
     u16 first_magic_id;             /* 0x42 0xFFFF: none */
-    u16 first_magic_cast_frame;     /* 0x44 the swing's motion frame on which magic unk42 is cast (Player_SwingWeapon) */
+    u16 first_magic_cast_frame;     /* 0x44 the swing's motion frame on which magic first_magic_id is cast (Player_SwingWeapon) */
     u16 first_magic_motion_id;      /* 0x46 Id gating the first magic's latch, 0xFFFF none */
     u16 first_magic_latch_frame;    /* 0x48 the motion frame from which PlayerState.magic1_motion_reached is set */
-    u16 first_magic_window_start_frame; /* 0x4A first and last motion frame on which magic unk42 may be asked for */
+    u16 first_magic_window_start_frame; /* 0x4A first and last motion frame on which magic first_magic_id may be asked for */
     u16 first_magic_window_end_frame; /* 0x4C last motion frame on which the first magic may be asked for */
-    u16 first_magic_effect_frames;  /* 0x4E frames magic unk42 stays (swing_magic_frames) */
+    u16 first_magic_effect_frames;  /* 0x4E frames magic first_magic_id stays (swing_magic_frames) */
     char pad50[0x02];
     u16 second_magic_id;            /* 0x52 0xFFFF: none */
-    u16 second_magic_cast_frame;    /* 0x54 as unk44 to first_magic_effect_frames, for magic unk52 */
+    u16 second_magic_cast_frame;    /* 0x54 as first_magic_cast_frame to first_magic_effect_frames, for magic second_magic_id */
     u16 second_magic_motion_id;     /* 0x56 Id gating the second magic's latch, 0xFFFF none */
     u16 second_magic_latch_frame;   /* 0x58 motion frame past which the second magic's latch is set */
     u16 second_magic_window_start_frame; /* 0x5A first motion frame on which the second magic may be asked for */
@@ -369,11 +369,11 @@ typedef struct {
     u16 draw_sound_frame;           /* 0x82 the motion frame the drawing sound starts on */
     char pad84[0x02];
     u8 double_hit_chance_percent;   /* 0x86 copied to Unk1B1470Request.double_hit_chance_percent */
-    s8 held_offset_x;               /* 0x87 unk87 to unk89 become held_item_offsets (x, y, z) when the item's model is loaded */
+    s8 held_offset_x;               /* 0x87 held_offset_x to held_offset_z become held_item_offsets (x, y, z) when the item's model is loaded */
     s8 held_offset_y;               /* 0x88 y offset of the model of the item in the hand */
     s8 held_offset_z;               /* 0x89 z offset of the model of the item in the hand */
-    u16 first_magic_min_power;      /* 0x8A the least PlayerState.power for magic unk42 (Player_SwingWeapon) */
-    u16 first_magic_min_magic;      /* 0x8C the least PlayerState.magic for magic unk42 */
+    u16 first_magic_min_power;      /* 0x8A the least PlayerState.power for magic first_magic_id (Player_SwingWeapon) */
+    u16 first_magic_min_magic;      /* 0x8C the least PlayerState.magic for magic first_magic_id */
     char pad8E[0x02];
 } PlayerItemDef;
 
@@ -485,7 +485,7 @@ extern int entity_under_player[];
 extern void *object_under_player[];
 extern u8 player_floor_block[];
 extern u8 player_weapon_step[];
-extern u64 player_status_bits[];  /* player_previous.unk1C8 */
+extern u64 player_status_bits[];  /* player_previous.status_bits */
 extern int player_previous_fade_level[];  /* player_previous + 0x2A4 */
 
 /* player/player_status.c */

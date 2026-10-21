@@ -81,15 +81,15 @@ typedef struct {
 typedef struct {
     s32 strip_count;                /* 0x00 */
     CollisionStrip *strips;         /* 0x04 */
-    char *points;                   /* 0x08 the end of the strips: unk0C 16-byte entries */
+    char *points;                   /* 0x08 the end of the strips: point_count 16-byte entries */
     u32 point_count;                /* 0x0C how many points there are, 4 or more */
     f32 reach_radius;               /* 0x10 how far it reaches from its origin, unscaled (MapObject_InitMap) */
     char *mesh_size;                /* 0x14 the next mesh of a map file starts this many bytes on (a size, typed as Map_BuildModels needs) */
-    CollisionStrip *wall_strips;    /* 0x18 unk38 strips */
+    CollisionStrip *wall_strips;    /* 0x18 wall_strip_count strips */
     CollisionStrip *floor_strips;   /* 0x1C */
-    CollisionStrip *second_wall_strips; /* 0x20 unk3C strips */
-    CollisionStrip *barrier_strips; /* 0x24 unk3E strips */
-    CollisionStrip *hazard_strips;  /* 0x28 unk40 strips */
+    CollisionStrip *second_wall_strips; /* 0x20 second_wall_strip_count strips */
+    CollisionStrip *barrier_strips; /* 0x24 barrier_strip_count strips */
+    CollisionStrip *hazard_strips;  /* 0x28 hazard_strip_count strips */
     CollisionStrip *water_strips;   /* 0x2C the strips EntityCollision_DistanceToGround drops a point onto */
     char pad30[0x08];
     u16 wall_strip_count;           /* 0x38 how many strips unk18 has */
@@ -104,7 +104,7 @@ typedef struct {
    Collision_CastRayAtMapLists goes through seven, one more than CollisionMesh names) */
 typedef struct {
     char pad00[0x18];
-    CollisionStrip *strip_lists[7]; /* 0x18 unk18, floor_strips, unk20, unk24, unk28, unk2C, and one at 0x30 */
+    CollisionStrip *strip_lists[7]; /* 0x18 strip_lists, floor_strips, unk20, unk24, unk28, unk2C, and one at 0x30 */
     char pad34[0x04];
     u16 strip_counts[7];            /* 0x38 */
 } CollisionMeshLists;

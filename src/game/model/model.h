@@ -380,7 +380,7 @@ typedef struct ModelWaveUv {
 typedef struct ModelInstance {
     char pad00[0x40];
     char model_matrix[0x40];        /* 0x40 a matrix, passed by address */
-    char collision_matrix[0x40];    /* 0x80 a copy of unk40 */
+    char collision_matrix[0x40];    /* 0x80 a copy of model_matrix */
     Vector4 position;               /* 0xC0 */
     Vector4 rotation;               /* 0xD0 x, y (heading), z in radians */
     f32 scale_x;                    /* 0xE0 its sign picks the turn direction; the x scale */
@@ -419,10 +419,10 @@ typedef struct ModelInstance {
     s32 draw_header_vector[4];      /* 0x160 four words sent in the draw packet */
     char pad170[0x08];
     void *chunk_skip_mask;          /* 0x178 passed to TextureTable_QueueEnabled with texture_data: bit n set skips chunk n (a mask, but not stored as an int) */
-    int found_record_id;            /* 0x17C the id Effect_FindModelRecord last found; sent after the colour at unk150 by Model_DrawPosed, in its alpha slot */
+    int found_record_id;            /* 0x17C the id Effect_FindModelRecord last found; sent after the colour at colour_red by Model_DrawPosed, in its alpha slot */
     VuIntVector found_record;       /* 0x180 a copy of that record, its id bits replaced; a quadword sent after it
                                        (Effect_FindModelRecord clears it with one sq, so it is 16-byte aligned) */
-    u16 texture_slot;               /* 0x190 slot of unk194 in texture_slots (0..2), 3: always sent */
+    u16 texture_slot;               /* 0x190 slot of texture_data in texture_slots (0..2), 3: always sent */
     s16 shared_texture_slot;        /* 0x192 which entry of the shared last-sent texture record applies */
     int texture_data;               /* 0x194 the model's texture: a chunk table, or a raw packet */
     int shared_texture_packet;      /* 0x198 map texture packet 5, tracked in the shared record */
@@ -549,7 +549,7 @@ typedef struct {
     char pad49[0x01];
     s16 kind_param_3;               /* 0x4A kind parameter 3: sound range, aim angle */
     char pad4C[0x06];
-    u16 touch_status_flag;          /* 0x52 1 to 6: touching it starts PlayerState.timed_flags[unk52 - 1] (Player_CollideWithMapObjects) */
+    u16 touch_status_flag;          /* 0x52 1 to 6: touching it starts PlayerState.timed_flags[touch_status_flag - 1] (Player_CollideWithMapObjects) */
     u16 appear_effect;              /* 0x54 passed to Effect_StartSpawner when the object comes into view, 0: nothing */
     u8 effect_start_point;          /* 0x56 the model point it starts at; the next one gives its direction */
     char pad57[0x01];

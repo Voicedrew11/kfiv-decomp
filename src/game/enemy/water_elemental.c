@@ -77,7 +77,7 @@ void WaterElemental_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with WaterElemental_ThinkCombat for state 2. Work byte unk7B
-   is put to 30 while player_state.unk259 is set and counts down. While work word unk68 is 1
+   is put to 30 while player_state.cast_launched_shot is set and counts down. While work word unk68 is 1
    (WaterElemental_AlertSameKind of another entity sets it; states 0 and 1 clear it) it only starts
    WaterElemental_RunAtPlayer. Once the pause in work word unk6C is over and Entity.hit_points is below
    EntityParams.near_distance percent of EntityParams.hit_points it starts WaterElemental_RecoverHealth with a
@@ -313,7 +313,7 @@ static void WaterElemental_RecoverHealth(Entity *entity) {
 }
 
 /* Whether to dodge a magic: only while work byte unk7B is 1 to 15 (WaterElemental_Think puts it to 30 when the
-   player casts one, player_state.unk259), with the player at least min_distance away (less the radius and 100),
+   player casts one, player_state.cast_launched_shot), with the player at least min_distance away (less the radius and 100),
    Entity.heading_to_player within max_angle of the heading and the entity within 30 degrees of the player's facing; then
    EntityParams.dodge_chance / 10 times in 100. */
 static s32 WaterElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 max_angle) {
