@@ -719,8 +719,8 @@ static s32 Minion_LaunchShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 fr
             shot->player_magic = shot->player_power = 0;
             shot->is_magic_shot = 1;
             shot->shot_params = entity->params->shot_params;
-            from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone);
-            tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone + 1);
+            from = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), record->launches[i].bone);
+            tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), record->launches[i].bone + 1);
             if (from != NULL && tip != NULL) {
                 if (record->launches[i].bone != 0xFF) {
                     delta_x = tip[0] - from[0];

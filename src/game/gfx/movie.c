@@ -2019,15 +2019,15 @@ static s32 MovieFile_Open(MovieFile *file, char *path) {
                 name[i] = toupper(name[i]);
             }
             suffix = index(path, ';') ? (char *)empty_string : (char *)cd_version_suffix;
-            sprintf(full_path, (char *)cd_path_format, name, suffix);
+            sprintf(full_path, cd_path_format, name, suffix);
         } else {
             file->is_cd_stream = FALSE;
-            sprintf(full_path, (char *)device_path_format, device, name);
+            sprintf(full_path, device_path_format, device, name);
         }
     } else {
         memcpy(device, default_device, 6);
         file->is_cd_stream = FALSE;
-        sprintf(full_path, (char *)device_path_format, device, path);
+        sprintf(full_path, device_path_format, device, path);
     }
     if (file->is_cd_stream) {
         sceCdDiskReady(0);

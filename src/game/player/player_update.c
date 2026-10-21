@@ -1085,7 +1085,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
     }
 
     if (player_state.aim_speed > 0.0f) {
-        Vector_Scale((f32 *)&delta, (f32 *)&player_state.aim, player_state.aim_speed);
+        Vector_Scale(&delta, &player_state.aim, player_state.aim_speed);
         Vector_Add(&player_state, &player_state, &delta);
         player_state.aim_speed -= ((f32)player_state.weight + 600.0f) / 600.0f * 20.0f;
         if (player_state.aim_speed < 0.0) {
@@ -1306,8 +1306,8 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
                 steps = (s32)(distance / STEP_LENGTH);
                 delta.y = 0.0f;
                 Vector_Normalize(&delta, &delta);
-                Vector_Scale((f32 *)&step, (f32 *)&delta, STEP_LENGTH);
-                Vector_Scale((f32 *)&delta, (f32 *)&delta, distance - (f32)steps * STEP_LENGTH);
+                Vector_Scale(&step, &delta, STEP_LENGTH);
+                Vector_Scale(&delta, &delta, distance - (f32)steps * STEP_LENGTH);
                 Vector_Copy(&player_state, &player_previous);
                 do {
                     Vector_Add(&player_state, &player_state, &step);
@@ -1391,22 +1391,22 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
                               + player_state.floor_push.z * player_state.floor_push.z);
                 if (speed > (f32)record->push_max_speed) {
                     Vector_Normalize(velocity, velocity);
-                    Vector_Scale((f32 *)velocity, (f32 *)velocity, (f32)record->push_max_speed);
+                    Vector_Scale(velocity, velocity, (f32)record->push_max_speed);
                 }
             } else {
                 Vector_Normalize(&delta, velocity);
-                Vector_Scale((f32 *)&delta, (f32 *)&delta, -speed_loss);
+                Vector_Scale(&delta, &delta, -speed_loss);
                 Vector_Add(velocity, velocity, &delta);
                 speed = sqrtf(player_state.floor_push.x * player_state.floor_push.x + player_state.floor_push.y * player_state.floor_push.y
                               + player_state.floor_push.z * player_state.floor_push.z);
                 if (speed > (f32)record->push_max_speed) {
                     Vector_Normalize(velocity, velocity);
-                    Vector_Scale((f32 *)velocity, (f32 *)velocity, (f32)record->push_max_speed);
+                    Vector_Scale(velocity, velocity, (f32)record->push_max_speed);
                 }
             }
         } else if (speed > speed_loss) {
             Vector_Normalize(&delta, &player_state.floor_push);
-            Vector_Scale((f32 *)&delta, (f32 *)&delta, -speed_loss);
+            Vector_Scale(&delta, &delta, -speed_loss);
             Vector_Add(&player_state.floor_push, &player_state.floor_push, &delta);
         } else {
             player_state.floor_push.x = player_state.floor_push.y = player_state.floor_push.z = 0.0f;
@@ -1914,23 +1914,23 @@ void Player_RecomputeStats(void) {
     player_state.ailment_attack_rates.values[4] += player_state.ailment_attack_bonus[4];
     player_state.ailment_attack_rates.values[5] += player_state.ailment_attack_bonus[5];
     memset(&player_state.worn_item_stats, 0, sizeof(PlayerShotStats));
-    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_SHIELD]);
-    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_HELM]);
-    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_ARMOR]);
-    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_GAUNTLET]);
-    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_BOOT]);
-    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_RING]);
-    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_BRACELET]);
-    Player_AddWornItemValues((u16 *)player_state.worn_item_stats.values, player_state.equipment[EQUIP_AMULET]);
+    Player_AddWornItemValues(player_state.worn_item_stats.values, player_state.equipment[EQUIP_SHIELD]);
+    Player_AddWornItemValues(player_state.worn_item_stats.values, player_state.equipment[EQUIP_HELM]);
+    Player_AddWornItemValues(player_state.worn_item_stats.values, player_state.equipment[EQUIP_ARMOR]);
+    Player_AddWornItemValues(player_state.worn_item_stats.values, player_state.equipment[EQUIP_GAUNTLET]);
+    Player_AddWornItemValues(player_state.worn_item_stats.values, player_state.equipment[EQUIP_BOOT]);
+    Player_AddWornItemValues(player_state.worn_item_stats.values, player_state.equipment[EQUIP_RING]);
+    Player_AddWornItemValues(player_state.worn_item_stats.values, player_state.equipment[EQUIP_BRACELET]);
+    Player_AddWornItemValues(player_state.worn_item_stats.values, player_state.equipment[EQUIP_AMULET]);
     memset(&player_state.defence_stats, 0, sizeof(PlayerShotStats));
-    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_SHIELD]);
-    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_HELM]);
-    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_ARMOR]);
-    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_GAUNTLET]);
-    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_BOOT]);
-    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_RING]);
-    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_BRACELET]);
-    Player_AddWornItemValues((u16 *)player_state.defence_stats.values, player_state.equipment[EQUIP_AMULET]);
+    Player_AddWornItemValues(player_state.defence_stats.values, player_state.equipment[EQUIP_SHIELD]);
+    Player_AddWornItemValues(player_state.defence_stats.values, player_state.equipment[EQUIP_HELM]);
+    Player_AddWornItemValues(player_state.defence_stats.values, player_state.equipment[EQUIP_ARMOR]);
+    Player_AddWornItemValues(player_state.defence_stats.values, player_state.equipment[EQUIP_GAUNTLET]);
+    Player_AddWornItemValues(player_state.defence_stats.values, player_state.equipment[EQUIP_BOOT]);
+    Player_AddWornItemValues(player_state.defence_stats.values, player_state.equipment[EQUIP_RING]);
+    Player_AddWornItemValues(player_state.defence_stats.values, player_state.equipment[EQUIP_BRACELET]);
+    Player_AddWornItemValues(player_state.defence_stats.values, player_state.equipment[EQUIP_AMULET]);
     player_state.defence_stats.values[0] += player_state.physical_defence_bonus[0];
     player_state.defence_stats.values[1] += player_state.physical_defence_bonus[1];
     player_state.defence_stats.values[2] += player_state.physical_defence_bonus[2];

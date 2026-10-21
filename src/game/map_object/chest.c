@@ -29,7 +29,7 @@ void MapObject_UpdateItemHolder(MapObject *object) {
         if (object->source->kind_param_0 != 0 && !(object->state_flags & MAP_OBJECT_EMPTIED)) {
             object->model->update_bone_points(object->model);
             MapItem_StartPickup(MapItem_PutOutForObject(
-                MAP_OBJECT_BYTES(object)->map_slot & 1, object->source->kind_param_0, (void *)object->model->get_point(object->model, 0),
+                MAP_OBJECT_BYTES(object)->map_slot & 1, object->source->kind_param_0, object->model->get_point(object->model, 0),
                 &object->model->rotation, &unk_value, object));
         } else if (work[0] <= 0) {
             Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->definition->definition_flags);
@@ -62,7 +62,7 @@ void MapObject_SpawnHeldItem(MapObject *object) {
         if (!(object->state_flags & MAP_OBJECT_EMPTIED)) {
             map_object_update_hooks[object->definition->kind](object);
             object->model->update_bone_points(object->model);
-            MapItem_PutOutForObject((u8)object->state_flags & 1, object->source->kind_param_0, (void *)object->model->get_point(object->model, 0),
+            MapItem_PutOutForObject((u8)object->state_flags & 1, object->source->kind_param_0, object->model->get_point(object->model, 0),
                           &object->model->rotation, drop_params, object);
         }
     }

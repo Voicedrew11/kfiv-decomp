@@ -549,8 +549,8 @@ static void FireLord_MeleeAttack0(Entity *entity) {
         } else {
             ai_state->turn_rate = 0.0f;
         }
-        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 8);
-        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 9);
+        from = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 8);
+        tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 9);
         if (from != NULL && tip != NULL) {
             if (entity->model->level_tables->frame >= 0x14 && entity->model->level_tables->frame <= 0x1A) {
                 delta_x = tip[0] - from[0];
@@ -645,8 +645,8 @@ static void FireLord_MeleeAttack1(Entity *entity) {
         } else {
             ai_state->turn_rate = 0.0f;
         }
-        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x10);
-        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x11);
+        from = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0x10);
+        tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0x11);
         if (from != NULL && tip != NULL) {
             if (entity->model->level_tables->frame >= 0x17 && entity->model->level_tables->frame <= 0x1B) {
                 delta_x = tip[0] - from[0];

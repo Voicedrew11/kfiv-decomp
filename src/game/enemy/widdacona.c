@@ -38,15 +38,15 @@ static void Widdacona_RangedAttack0(Entity *entity);
 /* Set-up of a type 30 entity: clears its work area and installs the type's handlers. */
 void Widdacona_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
-    // match: the three fills name their target inside the loop; unkBC and unkC0 above are
+    // match: the three fills name their target inside the loop; choice_weights and attack_weights above are
     // otherwise unused but retail computes them up front and copies them before each loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *work_area = (u8 *)&entity->ai_state;
+        u8 *work_area = ENTITY_WORK_BYTES(entity);
 
         work_area[i] = 0;
     }
@@ -117,7 +117,7 @@ static void Widdacona_OnHit(Entity *entity) {
 static void Widdacona_Death(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     Entity *other;
-    char *part;
+    f32 *part;
 
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
@@ -140,15 +140,15 @@ static void Widdacona_Death(Entity *entity) {
         break;
     case ACTION_STEP_PLAY:
         if (ENTITY_FLAG_BITS(entity)->motion_ended) {
-            part = Model_GetSkinnedBonePoint((char *)entity->model, 0x14);
+            part = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0x14);
             if (part != NULL) {
                 Effect_StartSpawner(0x3BC, part, entity->model->rotation, &player_state.position);
             }
-            part = Model_GetSkinnedBonePoint((char *)entity->model, 0x15);
+            part = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0x15);
             if (part != NULL) {
                 Effect_StartSpawner(0x3BC, part, entity->model->rotation, &player_state.position);
             }
-            part = Model_GetSkinnedBonePoint((char *)entity->model, 0x16);
+            part = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 0x16);
             if (part != NULL) {
                 Effect_StartSpawner(0x3BC, part, entity->model->rotation, &player_state.position);
             }

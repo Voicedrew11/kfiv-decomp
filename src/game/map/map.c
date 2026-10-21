@@ -271,7 +271,7 @@ void Map_ParseFile(int map) {
     slot->record_model_spare_bytes = work;
     work += header->record_model_count;
     // match: stored as a u8 *; as a char * the read of header->unk4C below comes one instruction late
-    *(u8 **)&memory->work_cursor = (u8 *)work;
+    *(u8 **)&memory->work_cursor = work;
 
     /* the file: its fixed parts, then the tables whose sizes the header gives */
     cursor = (char *)header;
@@ -299,7 +299,7 @@ void Map_ParseFile(int map) {
     cursor += header->item_count * 0x40;
     map_item_model_kinds[map] = (s16 *)cursor;
     cursor += 0x40;
-    map_item_group_thresholds[map] = (u8 *)cursor;
+    map_item_group_thresholds[map] = cursor;
 
     /* the parts the header gives offsets for */
     cursor = (char *)header;
@@ -318,7 +318,7 @@ void Map_ParseFile(int map) {
     }
     cursor = (char *)header;
     cursor += offset;
-    slot->sound_bank = (s32 *)cursor;
+    slot->sound_bank = cursor;
     /* two offsets in that part become addresses */
     ((char **)cursor)[1] += (s32)memory->file_base;
     ((char **)cursor)[3] += (s32)memory->file_base;
@@ -604,10 +604,10 @@ void Map_PlaceRecordModels(int map) {
             MODEL_MATRIX(model)[0][0] *= model->scale_x;
             MODEL_MATRIX(model)[1][1] *= model->scale_y;
             MODEL_MATRIX(model)[2][2] *= model->scale_z;
-            sceVu0RotMatrixX((f32 *)matrix, (f32 *)matrix, model->rotation.x);
-            sceVu0RotMatrixY((f32 *)matrix, (f32 *)matrix, model->rotation.y);
-            sceVu0RotMatrixZ((f32 *)matrix, (f32 *)matrix, model->rotation.z);
-            sceVu0TransMatrix((f32 *)matrix, (f32 *)matrix, &model->position.x);
+            sceVu0RotMatrixX(matrix, matrix, model->rotation.x);
+            sceVu0RotMatrixY(matrix, matrix, model->rotation.y);
+            sceVu0RotMatrixZ(matrix, matrix, model->rotation.z);
+            sceVu0TransMatrix(matrix, matrix, &model->position.x);
             Matrix_Multiply(model, world_screen_matrix, matrix);
             for (j = 0; j < model->part_count; j++) {
                 // match: the callee returns a value here, which keeps $2 busy

@@ -38,14 +38,14 @@ static void LivingArmor_MeleeAttack0(Entity *entity);
 /* Set-up of a type 36 entity: clears its work area and installs the type's handlers. */
 void LivingArmor_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->ai_state;
+        u8 *dest = ENTITY_WORK_BYTES(entity);
 
         dest[i] = 0;
     }
@@ -359,8 +359,8 @@ static void LivingArmor_MeleeAttack1(Entity *entity) {
         } else {
             ai_state->turn_rate = 0.0f;
         }
-        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 9);
-        base = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 8);
+        tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 9);
+        base = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 8);
         if (tip != NULL && base != NULL) {
             if (entity->model->level_tables->frame >= 10 && entity->model->level_tables->frame <= 22) {
                 delta_x = base[0] - tip[0];
@@ -520,8 +520,8 @@ static void LivingArmor_MeleeAttack0(Entity *entity) {
         } else {
             ai_state->turn_rate = 0.0f;
         }
-        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 9);
-        base = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 8);
+        tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 9);
+        base = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), 8);
         if (tip != NULL && base != NULL) {
             if (entity->model->level_tables->frame >= 10 && entity->model->level_tables->frame <= 22) {
                 delta_x = base[0] - tip[0];

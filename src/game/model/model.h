@@ -149,6 +149,9 @@ typedef struct {
     ModelPartVertex vertices[1];    /* 0x90 */
 } ModelPartData;
 
+/* the data block `qwords` quadwords on from `data` */
+#define MODEL_PART_DATA_SKIP(data, qwords) ((ModelPartData *)((char *)(data) + (qwords) * 16))
+
 #define MODEL_RECORD_ID_MASK 0x3FFF          /* ModelPartRecord.id_word: the record id, low 14 bits */
 #define MODEL_RECORD_PAYLOAD_MASK 0x7FFF     /* ModelPartRecord.payload_size: low 15 bits */
 
@@ -433,7 +436,7 @@ typedef struct ModelInstance {
     void (*draw)(struct ModelInstance *model); /* 0x1AC sets the GS state and draws */
     void (*after_draw)(struct ModelInstance *model); /* 0x1B0 called with the model by DrawList_Draw */
     void (*update_bone_points)(struct ModelInstance *model); /* 0x1B4 recomputes the 32 bone positions from the bone anchors */
-    void *(*get_point)(void *model, int index); /* 0x1B8 the point (a vector) of index */
+    f32 *(*get_point)(struct ModelInstance *model, int index); /* 0x1B8 point `index` as x, y, z, w */
     void (*on_textures_sent)(struct ModelInstance *model); /* 0x1BC called when ModelTexture_SendForModel sent new textures */
 } ModelInstance;
 
@@ -960,7 +963,7 @@ typedef struct {
 void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory);
 void Model_UpdateSkinnedBonePoints(ModelInstance *actor);
 // match: gcse hashes names into Model_SetUpSkinned's registers; these names and their order give retail's
-char *Model_GetSkinnedBonePoint(char *model, u32 index);
+f32 *Model_GetSkinnedBonePoint(ModelInstance *model, int index);
 void Model_DrawSkinned(ModelInstance *model);
 void Model_DrawPosed(ModelInstance *model);
 void Model_MultiplyChildMatrices(ModelPart *part);
@@ -975,7 +978,7 @@ void Model_SetAlphaBlend(ModelInstance *model, s64 value);
 void Model_SetVu1Program(ModelInstance *model, s32 value);
 int Model_FadeVertexColoursNear(int model_arg, void *centre_arg, int *steps, int *targets, float radius);
 void Model_UpdateBonePoints(ModelInstance *model);
-Vector4 *Model_GetBonePoint(ModelInstance *model, s32 index);
+f32 *Model_GetBonePoint(ModelInstance *model, int index);
 
 /* model/model_screen.c */
 void ModelScreen_CutClippedTriangles(ModelInstance *model);

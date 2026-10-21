@@ -432,8 +432,8 @@ void Ladder_Start(ObjectReference *object, int from_far_end) {
     if ((s32)(player_state.status_bits >> 34) & 1) {
         return;
     }
-    Vector_Copy(&ladder_top_point, (void *)object->model->get_point(object->model, 1));
-    Vector_Copy(&ladder_bottom_point, (void *)object->model->get_point(object->model, 0));
+    Vector_Copy(&ladder_top_point, object->model->get_point(object->model, 1));
+    Vector_Copy(&ladder_bottom_point, object->model->get_point(object->model, 0));
     Vector_Subtract(&ladder_span, &ladder_top_point, &ladder_bottom_point);
     PLAYER_STATUS_BITS(&player_state)->on_ladder = TRUE;
     PLAYER_STATUS_BITS(&player_state)->bit34 = FALSE;

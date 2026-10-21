@@ -154,7 +154,7 @@ void EntityAim_PredictPlayerPosition(f32 *point, s32 frames) {
     offset[2] = player_state.walk_speed;
     offset[3] = 0.0f;
     sceVu0RotMatrixY(MODEL_MATRIX_SCRATCH, identity_matrix, player_state.rotation.y);
-    sceVu0ApplyMatrix(offset, (int *)MODEL_MATRIX_SCRATCH, offset);
+    sceVu0ApplyMatrix(offset, MODEL_MATRIX_SCRATCH, offset);
     Vector_Scale(offset, offset, frames);
     Vector_Add(point, &player_state, offset);
 }

@@ -79,7 +79,7 @@ u8 voice_ranges[8][2] = { /* 0x3EF6F0 the voice range of each group Sound_NextVo
 };
 
 void *tracked_sound_players[4] = { /* 0x3EF700 the player Sound_PlayTrackedKind starts a tracked sound with */
-    (void *)Sound_PlayTracked, (void *)Sound_PlayTrackedAt, NULL, NULL,
+    (void *)Sound_PlayTracked, Sound_PlayTrackedAt, NULL, NULL,
 };
 
 SoundChannel sound_channels[128] = { 0 }; /* 0x3EF710 the channels; sound_id is -1 when one is free */

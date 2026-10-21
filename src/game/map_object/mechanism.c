@@ -105,7 +105,7 @@ void MapObject_UpdateLadder(MapObject *object) {
         return;
     }
     for (i = 0; i < 2; i++) {
-        Vector_Subtract(&delta, (void *)object->model->get_point(object->model, i), &player_state);
+        Vector_Subtract(&delta, object->model->get_point(object->model, i), &player_state);
         if (delta.y < -75.0f) {
             continue;
         }
@@ -156,7 +156,7 @@ void MapObject_UpdateShooter(MapObject *object) {
     if (MAP_OBJECT_WORDS(object)->kind_param_5 < distance) {
         return;
     }
-    point = (void *)object->model->get_point(object->model, MAP_OBJECT_WORDS(object)->kind_param_2);
+    point = object->model->get_point(object->model, MAP_OBJECT_WORDS(object)->kind_param_2);
     aim.x = Angle_Wrap(object->model->rotation.x + DEG_TO_RAD(MAP_OBJECT_WORDS(object)->kind_param_3));
     aim.y = Angle_Wrap(object->model->rotation.y + DEG_TO_RAD(MAP_OBJECT_WORDS(object)->kind_param_4) + PI);
     aim.z = object->model->rotation.z;

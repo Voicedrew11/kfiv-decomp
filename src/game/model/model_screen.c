@@ -156,7 +156,7 @@ void ModelScreen_CutClippedTriangles(ModelInstance *model) {
                 clip[1] = clip[0];
                 clip[0] = 0;
             }
-            block = (ModelPartData *)((char *)block + (length + 1) * 16);
+            block = MODEL_PART_DATA_SKIP(block, length + 1);
         }
     }
 }
@@ -627,7 +627,7 @@ void ModelScreen_SetUvsFromScreen(ModelInstance *model) {
                 vertex->uvs_set_from_screen = 1;
                 vertex++;
             }
-            next_data = (ModelPartData *)((char *)data + (length + 1) * 0x10);
+            next_data = MODEL_PART_DATA_SKIP(data, length + 1);
         }
     }
 }

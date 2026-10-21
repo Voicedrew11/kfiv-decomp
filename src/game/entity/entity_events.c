@@ -127,8 +127,8 @@ int EntityShot_LaunchAimed(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame
             shot->player_magic = shot->player_power = 0;
             shot->is_magic_shot = 1;
             shot->shot_params = entity->params->shot_params;
-            from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone);
-            tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone + 1);
+            from = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), record->launches[i].bone);
+            tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), record->launches[i].bone + 1);
             if (from != NULL && tip != NULL) {
                 if (record->launches[i].bone != 0xFF) {
                     delta_x = tip[0] - from[0];
@@ -159,7 +159,7 @@ int EntityShot_LaunchAimed(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame
 int EntityShot_Launch(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame_from, s32 frame_to, f32 *direction) {
     EntityParamsUnk3D8Full *record = (EntityParamsUnk3D8Full *)unk3D8;
     EntityUnk1B1390 *shot;
-    char *origin;
+    f32 *origin;
     s32 i;
 
     if (entity->ailment_4_frames != 0 && record->ignores_ailment_4 == 0) {
@@ -172,7 +172,7 @@ int EntityShot_Launch(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame_from
             shot->player_power = 0;
             shot->player_magic = 0;
             shot->shot_params = entity->params->shot_params;
-            origin = Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone);
+            origin = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), record->launches[i].bone);
             if (origin != NULL) {
                 Attack_LaunchMagicEffect(record->launches[i].magic_effect, shot, origin, direction, entity);
             }
@@ -182,12 +182,12 @@ int EntityShot_Launch(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame_from
 }
 
 /* Starts effect `effect_id` at point `point_id` of the entity's model, turned by `rotation`. */
-void EntityEvent_StartEffectAtPoint(char **entity, int effect_id, u32 point_id, int rotation) {
-    char *point;
+void EntityEvent_StartEffectAtPoint(Entity *entity, int effect_id, u32 point_id, f32 *rotation) {
+    f32 *point;
 
-    point = Model_GetSkinnedBonePoint(*entity, point_id);
+    point = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), point_id);
     if (point != 0) {
-        Effect_StartSpawner(effect_id, point, (void *)rotation, entity);
+        Effect_StartSpawner(effect_id, point, rotation, entity);
     }
 }
 
@@ -221,8 +221,8 @@ void EntityEvent_StartFrameEffects(Entity *entity, s32 animation, s32 frame_from
         return;
     }
     for (i = 0; i < count; i++, record++) {
-        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->bone);
-        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->bone + 1);
+        from = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), record->bone);
+        tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), record->bone + 1);
         if (from != NULL && tip != NULL) {
             delta_x = tip[0] - from[0];
             delta_y = tip[1] - from[1];
@@ -318,15 +318,15 @@ void EntityEvent_StartCueAlways(Entity *entity, s32 sound_index, s32 falloff_kin
 /* Puts the entity back at its spawn point (Entity_ResetToSpawn), sets flag bits 1 and 8 and clears bits 2-3,
    frees its effects and starts the effect EntityParams.respawn_effect_id names at bone unkC5. */
 void EntityEvent_Respawn(Entity *entity) {
-    char *bone;
+    f32 *bone;
 
     Entity_ResetToSpawn(entity);
     entity->flags = ((entity->flags | ENTITY_FLAG_LIVE) & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_RESPAWN_ROLL_DONE;
     Effect_FreeForOwner(entity);
     if (entity->params->respawn_effect_id != 0) {
         if (entity->params->respawn_effect_id != 0xFFFF) {
-            bone = Model_GetSkinnedBonePoint((char *)entity->model, entity->params->respawn_effect_bone);
-            Effect_StartSpawner(entity->params->respawn_effect_id, bone, (char *)entity->model + 0xD0, entity);
+            bone = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), entity->params->respawn_effect_bone);
+            Effect_StartSpawner(entity->params->respawn_effect_id, bone, &ENTITY_MODEL(entity)->rotation, entity);
         }
     }
 }

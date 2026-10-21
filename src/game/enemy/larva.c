@@ -39,16 +39,16 @@ static void Larva_DeathFallAndFade(Entity *entity);
 /* Set-up of a type 67 entity: clears its work area and installs the type's handlers. */
 void Larva_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     MapSlotUnk10 *record;
     s32 i;
 
-    // match: the three fills name their target inside the loop; unkBC and unkC0 above are
+    // match: the three fills name their target inside the loop; choice_weights and attack_weights above are
     // otherwise unused but retail computes them up front and copies them before each loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *work_area = (u8 *)&entity->ai_state;
+        u8 *work_area = ENTITY_WORK_BYTES(entity);
 
         work_area[i] = 0;
     }
@@ -117,7 +117,7 @@ static void Larva_Think(Entity *entity, s32 run_now) {
         }
     }
     if (frame_counter % 20U == 0) {
-        EntityEvent_StartEffectAtPoint((char **)entity, entity->params->type_param_0, 0xFF, (int)entity->model->rotation);
+        EntityEvent_StartEffectAtPoint(entity, entity->params->type_param_0, 0xFF, entity->model->rotation);
     }
     if (ai_state->sub_timer != 0) {
         ai_state->sub_timer--;
@@ -276,7 +276,7 @@ static void Larva_DormantHeldAtModelPoint(Entity *entity) {
         }
         other = Entity_GetBySpawnId(entity->spawn_info->variant);
         if (other != NULL && (other->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) == (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) {
-            point = (f32 *)Model_GetSkinnedBonePoint((char *)other->model, 8);
+            point = Model_GetSkinnedBonePoint(ENTITY_MODEL(other), 8);
             if (point != NULL) {
                 entity->model->position[0] = point[0];
                 entity->model->position[1] = point[1];
@@ -358,7 +358,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
             ai_state->part_angle_x = (f32)entity->params->yaw_limit_deg;
         }
         if (frame_counter % 3U == 0) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->type_param_1, 0xFF, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, entity->params->type_param_1, 0xFF, entity->model->rotation);
         }
         if (ai_state->action_counter == 0) {
             ai_state->action_counter = EntityAi_CheckMeleeHit(entity, entity->params->melee_attacks, 0, 1, 2);
@@ -371,7 +371,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
             entity->model->scale[1] = ai_state->heading_speed;
             entity->model->scale[2] = ai_state->keep_min_distance;
             ai_state->action_flags = 1;
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->type_param_2, 0xFF, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, entity->params->type_param_2, 0xFF, entity->model->rotation);
             EntityAi_SetState(entity, 2);
             entity->flags &= ~ENTITY_FLAG_200000;
             entity->flags &= ~ENTITY_FLAG_100000;

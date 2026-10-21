@@ -220,7 +220,7 @@ void Player_UpdateArmModels(void) {
         Vector_Add(position, position, camera_state.script_shake_offset);
         Vector_Add(position, position, camera_state.entity_shake_offset);
         position[1] += camera_state.height_offset;
-        sceVu0TransMatrix((f32 *)held_item_model.model_matrix, matrix, position);
+        sceVu0TransMatrix(held_item_model.model_matrix, matrix, position);
         count = held_item_model.part_count;
         part = held_item_model.parts;
         for (i = 0; i < count; i++, part++) {
@@ -246,8 +246,8 @@ void Player_UpdateArmModels(void) {
             *(ModelMatrix *)arm_part->matrix = *(ModelMatrix *)part->matrix;
         }
         held_item_model.update_bone_points(&held_item_model);
-        Vector_Copy(&held_item_arm_points.points[0], (void *)held_item_model.get_point(&held_item_model, 30));
-        Vector_Copy(&held_item_arm_points.points[1], (void *)held_item_model.get_point(&held_item_model, 31));
+        Vector_Copy(&held_item_arm_points.points[0], held_item_model.get_point(&held_item_model, 30));
+        Vector_Copy(&held_item_arm_points.points[1], held_item_model.get_point(&held_item_model, 31));
     }
     held_item_light_blocks[0] = current_light_block;
 }
@@ -276,11 +276,11 @@ void WeaponTrail_Update(void) {
         if (item == 0x98) {
             return;
         }
-        blade_base = (void *)weapon->get_point(weapon, 0);
-        blade_tip = (void *)weapon->get_point(weapon, 1);
+        blade_base = weapon->get_point(weapon, 0);
+        blade_tip = weapon->get_point(weapon, 1);
         sceVu0MulMatrix(world_screen, world_screen_matrix, identity_matrix);
         Vu0_LoadMatrix(world_screen);
-        Vu0_ProjectToScreen((int *)&point, blade_base);
+        Vu0_ProjectToScreen(&point, blade_base);
         point.z = (s32)point.z >> 4;
         if (point.z > 0xFFFF0 || ((point.x | point.y) & 0xFFFF0000)) {
             point.flags |= MODEL_SCREEN_POINT_FLAG_OFF_SCREEN;
@@ -288,7 +288,7 @@ void WeaponTrail_Update(void) {
             point.flags = 0;
         }
         WeaponTrail_Push(&point);
-        Vu0_ProjectToScreen((int *)&point, blade_tip);
+        Vu0_ProjectToScreen(&point, blade_tip);
         point.z = (s32)point.z >> 4;
         if (point.z > 0xFFFF0 || ((point.x | point.y) & 0xFFFF0000)) {
             point.flags |= MODEL_SCREEN_POINT_FLAG_OFF_SCREEN;

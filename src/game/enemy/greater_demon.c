@@ -50,15 +50,15 @@ static void GreaterDemon_ReactionHeavy(Entity *);
 /* Set-up of a type 56 entity: clears its work area and installs the type's handlers. */
 void GreaterDemon_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
-    // match: the three fills name their target inside the loop; unkBC and unkC0 above are
+    // match: the three fills name their target inside the loop; choice_weights and attack_weights above are
     // otherwise unused but retail computes them up front and copies them before each loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *work_area = (u8 *)&entity->ai_state;
+        u8 *work_area = ENTITY_WORK_BYTES(entity);
 
         work_area[i] = 0;
     }
@@ -699,7 +699,7 @@ static void GreaterDemon_Guard(Entity *entity) {
             entity->flags &= ~ENTITY_FLAG_HIT_BY_PLAYER;
             entity->action_timer = entity->params->guard_frames;
         }
-        EntityEvent_StartEffectAtPoint((char **)entity, 0x32F, 0, (int)entity->model->rotation);
+        EntityEvent_StartEffectAtPoint(entity, 0x32F, 0, entity->model->rotation);
         if (entity->action_timer == 0) {
             ENTITY_FLAG_BITS(entity)->guarding = 0;
             ENTITY_FLAG_BITS(entity)->animates = TRUE;

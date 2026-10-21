@@ -159,7 +159,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                     if (!(body->flags_or_model_point.flags & ENTITY_BODY_USED)) {
                         continue;
                     }
-                    point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->flags_or_model_point.point);
+                    point = ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->flags_or_model_point.point);
                     if (!(body->flags_or_model_point.flags & ENTITY_BODY_ROUND)) {
                         Collision_SphereCylinder(point, request->position, body->radius * scale, body->height * ENTITY_MODEL(entity)->scale_y,
                                       request->radius);
@@ -320,7 +320,7 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                     if (!(body->flags_or_model_point.flags & ENTITY_BODY_USED)) {
                         continue;
                     }
-                    point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->flags_or_model_point.point);
+                    point = ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->flags_or_model_point.point);
                     if (!(body->flags_or_model_point.flags & ENTITY_BODY_ROUND)) {
                         if (IS_PLAYER(request->owner)) {
                             Collision_CylinderArcPitch(point, request->position, body->radius * width_scale, body->height * ENTITY_MODEL(entity)->scale_y,

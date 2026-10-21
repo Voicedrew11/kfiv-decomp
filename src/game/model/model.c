@@ -155,7 +155,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
         data = (ModelPartData *)(u32)part->data_addr;
         for (j = 0; j < file_part->data_count; j++) {
             length = data->length;
-            data = (ModelPartData *)((char *)data + length * 16);
+            data = MODEL_PART_DATA_SKIP(data, length);
         }
         part->position[0] = part->position[1] = part->position[2] = 0.0f;
         part->position[3] = 1.0f;
@@ -169,7 +169,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
     model->draw_parts = Model_DrawSkinned;
     *file_cursor += file->size;
     model->update_bone_points = Model_UpdateSkinnedBonePoints;
-    model->get_point = (void *(*)(void *, int))Model_GetSkinnedBonePoint;
+    model->get_point = Model_GetSkinnedBonePoint;
     first = TRUE;
     model->draw_header_vector[0] = 0;
     model->draw_header_vector[1] = 0;
@@ -188,7 +188,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
                 first = FALSE;
                 data->texture_word.clut_load_mode = GS_TEX0_CLD_LOAD_TO_CBP0;
             }
-            data = (ModelPartData *)((char *)data + length * 16);
+            data = MODEL_PART_DATA_SKIP(data, length);
         }
     }
 }
@@ -331,7 +331,7 @@ void Model_DrawSkinned(ModelInstance *model) {
             *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
             *packet = (u32)data + 0x10;
             packet += 3;
-            data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+            data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
         }
     }
     packet = Packet_Alloc(1); // match: packet named after packet_start's last use, or the stores go through packet_start
@@ -483,7 +483,7 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
                 *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
-                data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+                data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
             }
             packet = Packet_Alloc(1); // match: packet named after packet_start's last use, or the stores go through packet_start
             Packet_AppendToChain(packet_start, packet);
@@ -520,12 +520,12 @@ void Model_UpdateSkinnedBonePoints(ModelInstance *actor) {
 }
 
 /* Where point `index` of a model is: one of its 32 bone points, or its position for any other index. */
-char *Model_GetSkinnedBonePoint(char *model, u32 index) {
+f32 *Model_GetSkinnedBonePoint(ModelInstance *model, int index) {
     if (model != NULL) {
-        if (index < 0x20U) {
-            return (char *)&((ModelInstance *)model)->bone_positions[index];
+        if ((u32)index < 32) {
+            return &model->bone_positions[index].x;
         }
-        return (char *)&((ModelInstance *)model)->position;
+        return &model->position.x;
     }
     return NULL;
 }
@@ -777,7 +777,7 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
                         first = FALSE;
                         break;
                     }
-                    data = (ModelPartData *)((char *)data + (length + 1) * 16);
+                    data = MODEL_PART_DATA_SKIP(data, length + 1);
                 }
             }
             part->position[0] = file_part->position[0];
@@ -807,7 +807,7 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
     model->draw_parts = Model_DrawPosed;
     *file_cursor += file->size;
     model->update_bone_points = Model_UpdateBonePoints;
-    model->get_point = (void *(*)(void *, int))Model_GetBonePoint;
+    model->get_point = Model_GetBonePoint;
 }
 
 /* Draws a model (ModelInstance.draw_parts of the models Model_SetUpPosed sets up): queues a packet with
@@ -905,7 +905,7 @@ void Model_DrawPosed(ModelInstance *model) {
                 *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
-                data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+                data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
             }
         }
         packet = Packet_Alloc(1);
@@ -1009,7 +1009,7 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
                 *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
-                data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+                data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
             }
         }
         packet = Packet_Alloc(1);
@@ -1122,7 +1122,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
                 *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
-                data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+                data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
             }
             Packet_AppendToChain(packet_start, packet);
         }
@@ -1238,7 +1238,7 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
                 *packet++ = (word & ~DMA_TAG_ID_MASK) | DMA_TAG_ID_REF;
                 *packet = (u32)data + 0x10;
                 packet += 3;
-                data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
+                data = MODEL_PART_DATA_SKIP(data, (word & 0xFFFF) + 1);
             }
             Packet_AppendToChain(packet_start, packet);
         }
@@ -1275,11 +1275,11 @@ void Model_UpdateBonePoints(ModelInstance *model) {
 }
 
 /* Where bone `index` of a model is; the model's own position when it has no bones or there is no such bone. */
-Vector4 *Model_GetBonePoint(ModelInstance *model, s32 index) {
+f32 *Model_GetBonePoint(ModelInstance *model, int index) {
     if (model->bone_anchors != NULL && index >= 0 && index < 32) {
-        return &model->bone_positions[index];
+        return &model->bone_positions[index].x;
     }
-    return &model->position;
+    return &model->position.x;
 }
 
 /* Rewrites the PRIM field (bits 15-25 of the GIF tag's high word at +0x74) of every data block of every part:
@@ -1347,7 +1347,7 @@ void Model_SetTexture(ModelInstance *model, u64 unk40, s64 unk30) {
                 ((ModelPartDataBits30 *)&block->tex0)->clut_load_mode = GS_TEX0_CLD_LOAD_TO_CBP0;
                 first = FALSE;
             }
-            data = (ModelPartData *)((char *)block + (length + 1) * 16);
+            data = MODEL_PART_DATA_SKIP(block, length + 1);
         }
     }
 }

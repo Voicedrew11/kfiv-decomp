@@ -1049,8 +1049,8 @@ static void Trade_UpdateStockList(HandlerContext *context) {
         trade_stock_list_model_angle += PI;
         trade_stock_list_model_angle -= (s32)(trade_stock_list_model_angle / TWO_PI) * TWO_PI;
         trade_stock_list_model_angle -= PI;
-        sceVu0RotMatrixY((f32 *)local_matrix, (f32 *)view_matrix, trade_stock_list_model_angle);
-        sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, trade_stock_list_model_position);
+        sceVu0RotMatrixY(local_matrix, view_matrix, trade_stock_list_model_angle);
+        sceVu0TransMatrix(local_matrix, local_matrix, trade_stock_list_model_position);
         Menu_DrawItemModel((f32 *)local_matrix);
     }
 
@@ -1403,8 +1403,8 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
     angle = trade_take_amount_model_angle + PI;
     trade_take_amount_model_angle = angle - (s32)(angle / TWO_PI) * TWO_PI - PI;
-    sceVu0RotMatrixY((f32 *)local_matrix, (f32 *)view_matrix, trade_take_amount_model_angle);
-    sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, trade_take_amount_model_position);
+    sceVu0RotMatrixY(local_matrix, view_matrix, trade_take_amount_model_angle);
+    sceVu0TransMatrix(local_matrix, local_matrix, trade_take_amount_model_position);
     Menu_DrawItemModel((f32 *)local_matrix);
 
     if (modal_input_locked == 0 && (menu_buttons & PAD_TRIANGLE) && Menu_IsEquipSlotFilled(record, trade_stock_list_cursor[0]->group)) {
@@ -1845,8 +1845,8 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
     trade_owned_list_model_angle += PI;
     trade_owned_list_model_angle -= (s32)(trade_owned_list_model_angle / TWO_PI) * TWO_PI;
     trade_owned_list_model_angle -= PI;
-    sceVu0RotMatrixY((f32 *)local_matrix, (f32 *)&view_matrix, trade_owned_list_model_angle);
-    sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, trade_owned_list_model_position);
+    sceVu0RotMatrixY(local_matrix, &view_matrix, trade_owned_list_model_angle);
+    sceVu0TransMatrix(local_matrix, local_matrix, trade_owned_list_model_position);
     Menu_DrawItemModel((f32 *)local_matrix);
 
     for (; row < 7; node = node->prev, row++) {
@@ -2186,8 +2186,8 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
     angle = trade_give_amount_model_angle + PI;
     trade_give_amount_model_angle = angle - (s32)(angle / TWO_PI) * TWO_PI - PI;
-    sceVu0RotMatrixY((f32 *)local_matrix, (f32 *)view_matrix, trade_give_amount_model_angle);
-    sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, trade_give_amount_model_position);
+    sceVu0RotMatrixY(local_matrix, view_matrix, trade_give_amount_model_angle);
+    sceVu0TransMatrix(local_matrix, local_matrix, trade_give_amount_model_position);
     Menu_DrawItemModel((f32 *)local_matrix);
 
     if (modal_input_locked == 0) {

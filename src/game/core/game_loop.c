@@ -443,7 +443,7 @@ void GameLoop_UpdateCameraShake(void) {
         sceVu0RotMatrixZ(matrix[0], matrix[0], angle);
         sceVu0RotMatrixX(matrix[0], matrix[0], camera_state.pitch);
         sceVu0RotMatrixY(matrix[0], matrix[0], camera_state.yaw);
-        sceVu0ApplyMatrix(camera_state.script_shake_offset, (int *)matrix, camera_state.script_shake_offset);
+        sceVu0ApplyMatrix(camera_state.script_shake_offset, matrix, camera_state.script_shake_offset);
         if (camera_state.script_shake_frames > 0) {
             camera_state.script_shake_frames--;
         }
@@ -461,7 +461,7 @@ void GameLoop_UpdateCameraShake(void) {
         sceVu0RotMatrixZ(matrix[0], matrix[0], angle);
         sceVu0RotMatrixX(matrix[0], matrix[0], camera_state.pitch);
         sceVu0RotMatrixY(matrix[0], matrix[0], camera_state.yaw);
-        sceVu0ApplyMatrix(camera_state.entity_shake_offset, (int *)matrix, camera_state.entity_shake_offset);
+        sceVu0ApplyMatrix(camera_state.entity_shake_offset, matrix, camera_state.entity_shake_offset);
         if (camera_state.entity_shake_frames > 0) {
             camera_state.entity_shake_frames--;
         }

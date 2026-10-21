@@ -250,8 +250,8 @@ void EntityAi_SpawnBoneEffect(Entity *entity, int effect_id, int point) {
     f32 yaw;
     f32 turns;
 
-    from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, point);
-    tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, point + 1);
+    from = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), point);
+    tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), point + 1);
     if (from != NULL && tip != NULL) {
         delta_x = tip[0] - from[0];
         delta_y = tip[1] - from[1];
@@ -362,7 +362,7 @@ static int EntityAi_LookAtAimPartFromPlayerHead(Entity *entity, int angles, int 
 s32 EntityAi_RemoveIfFallen(Entity *entity) {
     u16 ctrl_flags;
 
-    if (*(f32 *)((char *)entity->model + 0xC4) > 10000.0f) {
+    if (ENTITY_MODEL(entity)->position.y > 10000.0f) {
         ctrl_flags = ENTITY_CONTROLLER(entity)->respawn_effect_id;
         if (ctrl_flags != 0 && ctrl_flags != 0xFFFF) {
             Effect_FreeForOwner(entity);

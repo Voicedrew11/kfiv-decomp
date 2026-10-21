@@ -181,7 +181,7 @@ s32 SaveCard_Open(void) {
     card_records[1].icon_data_backup = icon_file;
     memset(dir_entries, 0, 0x2C0);
     memset(icon_sys, 0, 0x3C4);
-    memset((void *)save_infos, 0, 0x480);
+    memset(save_infos, 0, 0x480);
     card = card_records;
     do {
         SaveCard_ResetRecord(card);
@@ -1384,7 +1384,7 @@ static int SaveCard_FindFile(char *name, int size) {
     result = 0;
     found = 0;
     for (i = 0; i < 11; i++) {
-        if (strcmp((char *)entry->EntryName, name) == 0) {
+        if (strcmp(entry->EntryName, name) == 0) {
             found = 1;
             if (size > 0) {
                 result = (entry->FileSizeByte == size) ? 0 : -1;

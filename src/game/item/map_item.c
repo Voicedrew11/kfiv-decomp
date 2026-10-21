@@ -581,10 +581,10 @@ void MapItem_DrawPicked(int hidden) {
         PART_MATRIX(part)[0][0] = part->scale[0];
         PART_MATRIX(part)[1][1] = part->scale[1];
         PART_MATRIX(part)[2][2] = part->scale[2];
-        sceVu0RotMatrixX((f32 *)part, (f32 *)part, wrap_angle(turn[0]));
-        sceVu0RotMatrixZ((f32 *)part, (f32 *)part, wrap_angle(turn[2]));
-        sceVu0RotMatrixY((f32 *)part, (f32 *)part, wrap_angle(turn[1]));
-        sceVu0TransMatrix((f32 *)part, (f32 *)part, offset);
+        sceVu0RotMatrixX(part, part, wrap_angle(turn[0]));
+        sceVu0RotMatrixZ(part, part, wrap_angle(turn[2]));
+        sceVu0RotMatrixY(part, part, wrap_angle(turn[1]));
+        sceVu0TransMatrix(part, part, offset);
     }
     node->model->light_block = (s32)&map_draw_state.light_blocks[node->flags & 1][map_slots[node->flags & 1].header->light_block];
     node->model->fog_block = &map_draw_state.fog_blocks[node->flags & 1][((MapRecordInfo *)node->map_record)->draw_block_index];

@@ -42,15 +42,15 @@ static void DarkPuppet_Death(Entity *entity);
 /* Set-up of a type 52 entity: clears its work area and installs the type's handlers. */
 void DarkPuppet_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
-    // match: the three fills name their target inside the loop; unkBC and unkC0 above are
+    // match: the three fills name their target inside the loop; choice_weights and attack_weights above are
     // otherwise unused but retail computes them up front and copies them before each loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *work_area = (u8 *)&entity->ai_state;
+        u8 *work_area = ENTITY_WORK_BYTES(entity);
 
         work_area[i] = 0;
     }
@@ -501,7 +501,7 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk3D8Array *unk3D8 = entity->params->ranged_attacks;
     f32 target[4]; // match: never used, but retail keeps 16 bytes of stack for it
-    char *point;
+    f32 *point;
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
@@ -528,7 +528,7 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
         }
         if (ENTITY_FLAG_BITS(entity)->attack_index == 0 && entity->model->level_tables->frame == 0x1E &&
             (entity->ailment_4_frames == 0 || unk3D8->ignores_ailment_4 != 0)) {
-            point = Model_GetSkinnedBonePoint((char *)entity->model, unk3D8->bone_index);
+            point = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), unk3D8->bone_index);
             if (point != NULL) {
                 EntityAi_LaunchShot(entity, unk3D8->magic_effect, point, entity->model->rotation);
             }

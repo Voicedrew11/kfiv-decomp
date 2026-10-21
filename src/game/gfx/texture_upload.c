@@ -268,7 +268,7 @@ static void Texture_BuildPacket(char **texture, char **packet) {
 void Texture_SendTexFlush(void) {
     u32 *cursor;
 
-    cursor = (u32 *)texflush_packet;
+    cursor = texflush_packet;
     *cursor++ = DMA_TAG_ID_END | 2;
     *cursor++ = 0;
     *cursor++ = 0;

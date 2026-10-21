@@ -47,14 +47,14 @@ static void LavaBird_Animate(Entity *entity);
 void LavaBird_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityAiStateKind151D30 *work = (EntityAiStateKind151D30 *)&entity->ai_state;
-    u8 *unkBC = entity->choice_weights;
-    u8 *unkC0 = entity->attack_weights;
+    u8 *choice_weights = entity->choice_weights;
+    u8 *attack_weights = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->ai_state;
+        u8 *dest = ENTITY_WORK_BYTES(entity);
 
         dest[i] = 0;
     }
@@ -504,7 +504,7 @@ static void LavaBird_Dormant(Entity *entity) {
     case DORMANT_STEP_SLEEP:
         if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->hit_by_player) {
             ai_state->part_angle_z = entity->params->type_param_0;
-            EntityEvent_StartEffectAtPoint((char **)entity, 0x166, 0xFF, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint(entity, 0x166, 0xFF, entity->model->rotation);
             entity->action_step++;
         }
         break;
@@ -633,8 +633,8 @@ static s32 LavaBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
         shot->player_magic = shot->player_power = 0;
         shot->is_magic_shot = 1;
         shot->shot_params = entity->params->shot_params;
-        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone);
-        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone + 1);
+        from = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), record->launches[i].bone);
+        tip = Model_GetSkinnedBonePoint(ENTITY_MODEL(entity), record->launches[i].bone + 1);
         if (from != NULL && tip != NULL) {
             if (record->launches[i].bone != 0xFF) {
                 delta_x = tip[0] - from[0];
