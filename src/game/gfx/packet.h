@@ -4,6 +4,13 @@
 
 #include "common.h"
 
+/* a pointer into a packet being written, which steps by the size of what each store writes */
+typedef union {
+    u32 *word;
+    f32 *real;
+    u64 *dword;
+} PacketCursor;
+
 /* the GS XYZ2 register: 12.4 fixed-point x and y, 32-bit z */
 typedef struct {
     u64 X : 16;

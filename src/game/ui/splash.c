@@ -283,7 +283,7 @@ static void Splash_BuildImagePacket(int tbp, int cbp) {
     SplashLoadPacket *packet;
     char *source;
     char *output;
-    u32 *cursor;
+    PacketCursor cursor;
     int width;
     int height;
     int bits;
@@ -329,46 +329,46 @@ static void Splash_BuildImagePacket(int tbp, int cbp) {
     }
 
     /* the image: a DMA tag, then the same layout as SplashLoadPacket, written word by word */
-    cursor = splash_image_packet;
-    *cursor++ = (total + 1) | DMA_TAG_ID_CNT;
-    *cursor++ = 0;
-    *cursor++ = 0;
-    *cursor++ = 0;
-    *cursor++ = 0;
-    *cursor++ = 0;
-    *cursor++ = 0;
-    *cursor++ = total | VIF_CODE_DIRECTHL;
-    *((u64 *)cursor)++ = 0x1000000000000005;
-    *cursor++ = 0xE;
-    *cursor++ = 0;
-    *cursor++ = 0xFFFFFFFF;
-    *cursor++ = 0;
-    *cursor++ = 0x3F;
-    *cursor++ = 0;
+    cursor.word = splash_image_packet;
+    *cursor.word++ = (total + 1) | DMA_TAG_ID_CNT;
+    *cursor.word++ = 0;
+    *cursor.word++ = 0;
+    *cursor.word++ = 0;
+    *cursor.word++ = 0;
+    *cursor.word++ = 0;
+    *cursor.word++ = 0;
+    *cursor.word++ = total | VIF_CODE_DIRECTHL;
+    *cursor.dword++ = 0x1000000000000005;
+    *cursor.word++ = 0xE;
+    *cursor.word++ = 0;
+    *cursor.word++ = 0xFFFFFFFF;
+    *cursor.word++ = 0;
+    *cursor.word++ = 0x3F;
+    *cursor.word++ = 0;
     format = image->tex0.psm;
-    *((u64 *)cursor)++ = ((u64)tbp << 32) | ((u64)image->tex0.tbw << 48) | (format << 56);
-    *cursor++ = 0x50;
-    *cursor++ = 0;
-    *((u64 *)cursor)++ = 0;
-    *cursor++ = 0x51;
-    *cursor++ = 0;
-    *((u64 *)cursor)++ = width | ((u64)height << 32);
-    *cursor++ = 0x52;
-    *cursor++ = 0;
-    *((u64 *)cursor)++ = 0;
-    *cursor++ = 0x53;
-    *cursor++ = 0;
+    *cursor.dword++ = ((u64)tbp << 32) | ((u64)image->tex0.tbw << 48) | (format << 56);
+    *cursor.word++ = 0x50;
+    *cursor.word++ = 0;
+    *cursor.dword++ = 0;
+    *cursor.word++ = 0x51;
+    *cursor.word++ = 0;
+    *cursor.dword++ = width | ((u64)height << 32);
+    *cursor.word++ = 0x52;
+    *cursor.word++ = 0;
+    *cursor.dword++ = 0;
+    *cursor.word++ = 0x53;
+    *cursor.word++ = 0;
     if (has_palette) {
-        *((u64 *)cursor)++ = qwords | GIF_TAG_FLG_IMAGE;
+        *cursor.dword++ = qwords | GIF_TAG_FLG_IMAGE;
     } else {
-        *((u64 *)cursor)++ = (qwords | GIF_TAG_EOP) | GIF_TAG_FLG_IMAGE;
+        *cursor.dword++ = (qwords | GIF_TAG_EOP) | GIF_TAG_FLG_IMAGE;
     }
-    *cursor++ = 0;
-    *cursor++ = 0;
+    *cursor.word++ = 0;
+    *cursor.word++ = 0;
     source = file_load_buffer;
     source += sizeof(TextureHeader);
-    memcpy(cursor, source, size);
-    output = (char *)cursor + size;
+    memcpy(cursor.word, source, size);
+    output = (char *)cursor.word + size;
     output = align16(output);
 
     if (has_palette) {
