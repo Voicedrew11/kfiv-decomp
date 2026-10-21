@@ -173,14 +173,14 @@ void ModelMatrix_Build(ModelInstance *model, Vector4 *position, Vector4 *rotatio
             }
             sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, angle);
         }
-        sceVu0TransMatrix((f32 *)model->model_matrix, SCRATCH_MATRIX, &model->position.x);
+        sceVu0TransMatrix(model->model_matrix, SCRATCH_MATRIX, &model->position.x);
     } else if (model->draw_flags & MODEL_DRAW_TURN_Z_ONLY) {
         sceVu0CopyMatrix(SCRATCH_MATRIX, scale_matrices);
         scratch[0] *= scale[0];
         scratch[5] *= scale[1];
         scratch[10] *= scale[2];
         sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->z));
-        sceVu0TransMatrix((f32 *)model->model_matrix, SCRATCH_MATRIX, &position->x);
+        sceVu0TransMatrix(model->model_matrix, SCRATCH_MATRIX, &position->x);
     } else {
         sceVu0CopyMatrix(SCRATCH_MATRIX, scale_matrices);
         scratch[0] *= scale[0];
@@ -189,7 +189,7 @@ void ModelMatrix_Build(ModelInstance *model, Vector4 *position, Vector4 *rotatio
         sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->z));
         sceVu0RotMatrixX(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->x));
         sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->y));
-        sceVu0TransMatrix((f32 *)model->model_matrix, SCRATCH_MATRIX, &position->x);
+        sceVu0TransMatrix(model->model_matrix, SCRATCH_MATRIX, &position->x);
     }
 }
 

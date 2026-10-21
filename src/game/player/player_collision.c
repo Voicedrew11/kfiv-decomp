@@ -132,7 +132,7 @@ int Player_CollideWithMap(void) {
                     strip_point = strip->points;
                     points_left = strip->point_count - 2;
                     do {
-                        Collision_CapsuleTriangle((f32 *)strip_point[0].position, (f32 *)strip_point[1].position,
+                        Collision_CapsuleTriangle(strip_point[0].position, strip_point[1].position,
                                       (f32 *)strip_point[2].position, (f32 *)&COLLISION_SCRATCH->wall_point, 100.0f, 230.0f);
                         if (COLLISION_RESULT->hit != 0) {
                             COLLISION_SCRATCH->push.x = COLLISION_SCRATCH->wall_point.x - COLLISION_RESULT->point[0];
@@ -287,7 +287,7 @@ void Player_PushOutOfWalls(void) {
                     strip_point = strip->points;
                     points_left = strip->point_count - 2;
                     do {
-                        Collision_CapsuleTriangle((f32 *)strip_point[0].position, (f32 *)strip_point[1].position,
+                        Collision_CapsuleTriangle(strip_point[0].position, strip_point[1].position,
                                       (f32 *)strip_point[2].position, (f32 *)&COLLISION_SCRATCH->point, 100.0f, 230.0f);
                         if (COLLISION_RESULT->hit != 0) {
                             COLLISION_SCRATCH->push.x = COLLISION_SCRATCH->point.x - COLLISION_RESULT->point[0];
@@ -488,7 +488,7 @@ void Player_CollideWithEntities(int climb) {
                 if (entity->spawn_info->type_id == 0x9B && i != 3) {
                     continue;
                 }
-                point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->flags_or_model_point.point);
+                point = ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->flags_or_model_point.point);
                 Vector_Copy(position, point);
                 if (!(body->flags_or_model_point.flags & ENTITY_BODY_ROUND)) {
                     radius = body->radius * ENTITY_MODEL(entity)->scale_x;

@@ -201,7 +201,7 @@ void ItemEffect_Start(int kind, int marked) {
     ModelMotion_Step(item_effect_model);
     item_effect_brightness = 0x80;
     Model_SetVertexColour(item_effect_model, 0x80, 0x80, 0x80, item_effect_brightness);
-    Vector_Scale((float *)&item_effect_model->position, view_ray_status.view_direction, 75.0f);
+    Vector_Scale(&item_effect_model->position, view_ray_status.view_direction, 75.0f);
     Vector_Add(&item_effect_model->position, &item_effect_model->position, view_ray_status.view_origin);
     Vector_Copy(&item_effect_model->rotation, &player_state.rotation);
     item_effect_model->scale_x = item_effect_model->scale_y = item_effect_model->scale_z = 1.0f;

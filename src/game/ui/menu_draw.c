@@ -585,7 +585,7 @@ void MenuDraw_Sprite(KindObject *object) {
     u32 *packet;
 
     if (rect != NULL) {
-        packet = (u32 *)MenuDraw_NextPacket();
+        packet = MenuDraw_NextPacket();
         packet[0] = 0x8001;
         packet[1] = 0xC4000000;
         packet[2] = 0x25252106;
@@ -705,7 +705,7 @@ void MenuDraw_Bar(MenuCursorBar *bar) {
     u32 *packet;
 
     if (rect != NULL) {
-        packet = (u32 *)MenuDraw_NextPacket();
+        packet = MenuDraw_NextPacket();
         first.pos_x = rect->first.pos_x;
         first.pos_y = rect->first.pos_y;
         first.depth = rect->first.depth;
@@ -3923,8 +3923,8 @@ static SpritePacket *MenuSprite_ShowIfOptionChosen(SpritePacket *packet) {
 static SpritePacket *MenuSprite_ShowIfFlagSet(SpritePacket *packet) {
     static SpritePacket copy; /* 0x5DD9A0 */
     u16 *flags[6] = {
-        (u16 *)&player_state.timed_flags[2], (u16 *)&player_state.timed_flags[1], (u16 *)&player_state.timed_flags[3],
-        (u16 *)&player_state.timed_flags[0], (u16 *)&player_state.timed_flags[4], (u16 *)&player_state.timed_flags[5],
+        (u16 *)&player_state.timed_flags[2], &player_state.timed_flags[1], &player_state.timed_flags[3],
+        &player_state.timed_flags[0], &player_state.timed_flags[4], &player_state.timed_flags[5],
     };
 
     copy = *packet;

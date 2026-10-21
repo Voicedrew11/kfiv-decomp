@@ -1550,10 +1550,10 @@ void Menu_InitLoadBuffers(void) {
     free_load_buffers = load_buffer_nodes;
     for (i = 0; i < 15; i++) {
         load_buffer_nodes[i].next = &load_buffer_nodes[i + 1];
-        load_buffer_nodes[i].buffer = (void *)MenuArena_Alloc(0x25800, 0x10);
+        load_buffer_nodes[i].buffer = MenuArena_Alloc(0x25800, 0x10);
     }
     load_buffer_nodes[15].next = NULL;
-    load_buffer_nodes[15].buffer = (void *)MenuArena_Alloc(0x25800, 0x10);
+    load_buffer_nodes[15].buffer = MenuArena_Alloc(0x25800, 0x10);
     npc_package_load.pool_node = load_buffer_nodes;
     npc_package_load.callback = Menu_StepPackageLoad;
     npc_package_load.stage = 0;
@@ -2535,24 +2535,24 @@ static s32 Menu_Start(char *context) {
     }
     switch (menu_mode) {
     case MENU_MODE_GAME_MENU:
-        menu_screen_handler = (void *)Menu_OpenMain;
+        menu_screen_handler = Menu_OpenMain;
         break;
     case MENU_MODE_MEMORY_CARD:
-        menu_screen_handler = (void *)Menu_OpenCardSlot;
+        menu_screen_handler = Menu_OpenCardSlot;
         break;
     case MENU_MODE_OPTIONS:
-        menu_screen_handler = (void *)Menu_UpdateOptions;
+        menu_screen_handler = Menu_UpdateOptions;
         break;
     case MENU_MODE_BUTTONS:
         Menu_ReadButtonSettings();
-        menu_screen_handler = (void *)Menu_UpdateButtonConfig;
+        menu_screen_handler = Menu_UpdateButtonConfig;
         break;
     case MENU_MODE_CARD_CHECK:
-        menu_screen_handler = (void *)Menu_OpenCardCheck;
+        menu_screen_handler = Menu_OpenCardCheck;
         break;
     case MENU_MODE_BRIGHTNESS:
         brightness_before = brightness_option[0];
-        menu_screen_handler = (void *)Menu_UpdateBrightness;
+        menu_screen_handler = Menu_UpdateBrightness;
         pulse_value_falling = 0;
         system_screen_state = SYSTEM_SCREEN_STATE_FADE_IN;
         break;
@@ -2630,7 +2630,7 @@ static void Menu_OpenMain(void) {
     menu_input_enabled = 0;
     memset(screen_part_alphas, 0, 0x400);
     memset(panel_part_alphas, 0, 0x400);
-    menu_screen_handler = (void *)Menu_UpdateMain;
+    menu_screen_handler = Menu_UpdateMain;
 }
 
 /* The main menu: moves the cursor over its seven lines, draws the parts, and fades out to the chosen screen. */
@@ -2711,7 +2711,7 @@ static void Menu_UpdateMain(HandlerContext *context) {
                             break;
                         }
                         if (Menu_KnowsCastableSpell() != 0 || main_menu_line != 1) {
-                            menu_screen_handler = (void *)Menu_OpenChosenScreen;
+                            menu_screen_handler = Menu_OpenChosenScreen;
                             context->active_list = main_menu_line;
                             switch (context->active_list) {
                             case MAIN_MENU_LINE_USE_ITEM:
@@ -3344,9 +3344,9 @@ static void Menu_UpdateEquip(void) {
     first_offset = equip_model_offset_low;
     second_offset = equip_model_offset_middle;
     third_offset = equip_model_offset_high;
-    sceVu0TransMatrix((f32 *)&pool_slots[21], unit, &first_offset.x);
-    sceVu0TransMatrix((f32 *)&pool_slots[22], unit, &second_offset.x);
-    sceVu0TransMatrix((f32 *)&pool_slots[23], unit, &third_offset.x);
+    sceVu0TransMatrix(&pool_slots[21], unit, &first_offset.x);
+    sceVu0TransMatrix(&pool_slots[22], unit, &second_offset.x);
+    sceVu0TransMatrix(&pool_slots[23], unit, &third_offset.x);
     DRAW_SLOT(&pool_slots[21]);
     DRAW_SLOT(&pool_slots[22]);
     DRAW_SLOT(&pool_slots[23]);
@@ -3871,10 +3871,10 @@ static void Menu_UpdateStatus(void) {
             if (screen_part_alphas[i] < 0.0f) {
                 memset(screen_part_alphas, 0, 0x400);
                 if (key_items_state == 3) {
-                    menu_screen_handler = (void *)Menu_OpenMain;
+                    menu_screen_handler = Menu_OpenMain;
                     Menu_ResetLoadBuffers(0);
                 } else {
-                    menu_screen_handler = (void *)Menu_UpdateKeyItems;
+                    menu_screen_handler = Menu_UpdateKeyItems;
                 }
                 key_items_state = 0;
                 break;
@@ -4022,7 +4022,7 @@ static void Menu_UpdateKeyItems(void) {
             pool_slots[31].part_record = NULL;
             pool_slots[31].parent = NULL;
             MenuTexture_Upload(texture, NULL);
-            sceVu0TransMatrix((f32 *)&pool_slots[31], view, positions.position[i]);
+            sceVu0TransMatrix(&pool_slots[31], view, positions.position[i]);
             PoolSlot_Draw((RenderSlot *)&pool_slots[31], slot_arg); // match: slot_arg is never set
             number = &numbers.number[key_item_slots[i + key_item_row * 3]];
             if (item_counts.bytes[*number] != 0) {
@@ -4089,7 +4089,7 @@ static void Menu_UpdateKeyItems(void) {
             if (screen_part_alphas[i] < 0.0f) {
                 memset(screen_part_alphas, 0, 0x400);
                 key_item_row = 0;
-                menu_screen_handler = (void *)Menu_UpdateUseItem;
+                menu_screen_handler = Menu_UpdateUseItem;
                 Menu_ResetLoadBuffers(0);
                 Menu_ChainItemListModels(0);
                 if (key_items_state == 5) {
@@ -4314,7 +4314,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
 
     if ((menu_buttons & PAD_CROSS) && recollection_state == 1 && menu_input_enabled != 0) {
         Sound_PlayMenu(0);
-        menu_screen_handler = (void *)Menu_UpdateRecollectionPage;
+        menu_screen_handler = Menu_UpdateRecollectionPage;
         context->active_list = recollection_page * LIST_PAGES + rows[recollection_cursor] + MSG_RECOLLECTION_FIRST;
         menu_input_enabled = 0;
     } else if ((menu_buttons & PAD_CIRCLE) && recollection_state == 1 && menu_input_enabled != 0) {
@@ -4366,7 +4366,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
             if (screen_part_alphas[i] < 0.0f) {
                 memset(screen_part_alphas, 0, 0x400);
                 recollection_top = 0;
-                menu_screen_handler = (void *)Menu_OpenMain;
+                menu_screen_handler = Menu_OpenMain;
                 recollection_cursor = 0;
                 recollection_page = 0;
                 if (npc_package_load.done != 0) {
@@ -4472,7 +4472,7 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
     if (menu_buttons & PAD_CIRCLE) {
         Sound_PlayMenu(2);
         context->active_list = 0;
-        menu_screen_handler = (void *)Menu_UpdateRecollection;
+        menu_screen_handler = Menu_UpdateRecollection;
         menu_input_enabled = 1;
     }
 }
@@ -4843,7 +4843,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             if (screen_part_alphas[i] < 0.0f) {
                 memset(screen_part_alphas, 0, 0x400);
                 Menu_BuildItemRings();
-                menu_screen_handler = (void *)Menu_OpenMain;
+                menu_screen_handler = Menu_OpenMain;
                 Menu_ResetLoadBuffers(0);
                 visible_item_state = VISIBLE_ITEM_STATE_FADE_IN;
                 visible_panel_state = DETAIL_PANEL_STATE_FADE_IN;
@@ -4990,7 +4990,7 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
     if (game_status.bit9) {
         context->selection = 0;
         system_menu_line = 0;
-        menu_screen_handler = (void *)Menu_OpenMain;
+        menu_screen_handler = Menu_OpenMain;
     }
 
     switch (system_screen_state) {
@@ -5050,7 +5050,7 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
                     } else if (system_screen_state == SYSTEM_SCREEN_STATE_FADE_OUT_BACK) {
                         context->selection = 0;
                         system_menu_line = 0;
-                        menu_screen_handler = (void *)Menu_OpenMain;
+                        menu_screen_handler = Menu_OpenMain;
                     } else if (system_screen_state == SYSTEM_SCREEN_STATE_FADE_OUT_TO_QUIT) {
                         menu_step++;
                         context->selection = 0;
@@ -5495,15 +5495,15 @@ static void Menu_UpdateCardSlot(void) {
                     pulse_sprite_falling = 0;
                     if (system_screen_state == SYSTEM_SCREEN_STATE_FADE_OUT_FORWARD) {
                         card_screen_state.list_step = MENU_SAVE_LIST_STEP_WAIT_INPUT;
-                        menu_screen_handler = (void *)Menu_UpdateSaveList;
-                        save_list_opener = (void *)Menu_UpdateCardSlot;
+                        menu_screen_handler = Menu_UpdateSaveList;
+                        save_list_opener = Menu_UpdateCardSlot;
                         card_screen_state.selected_save = 0;
                         card_screen_state.confirm_press_state = CONFIRM_PRESS_IDLE;
                         SaveCard_ClearLoadFailed(0);
                         SaveCard_ClearLoadFailed(1);
                     } else if (system_screen_state == SYSTEM_SCREEN_STATE_FADE_OUT_BACK) {
                         if (menu_mode != MENU_MODE_MEMORY_CARD) {
-                            menu_screen_handler = (void *)Menu_UpdateSystem;
+                            menu_screen_handler = Menu_UpdateSystem;
                         } else {
                             menu_step++;
                         }
@@ -5920,14 +5920,14 @@ static void Menu_UpdateSaveList(void) {
                     if (save_list_leave_steps != 2) {
                         card_screen_state.save_loaded = 1;
                         system_screen_state = SYSTEM_SCREEN_STATE_FADE_IN;
-                        menu_screen_handler = (void *)Menu_UpdateCardSlot;
+                        menu_screen_handler = Menu_UpdateCardSlot;
                         save_list_leave_steps = 0;
                         MenuHeap_FreeToMark();
                         menu_step++;
                     }
                 } else if (system_screen_state == SYSTEM_SCREEN_STATE_FADE_OUT_BACK) {
                     card_screen_state.confirm_choice = CONFIRM_CHOICE_NO;
-                    menu_screen_handler = (void *)Menu_UpdateCardSlot;
+                    menu_screen_handler = Menu_UpdateCardSlot;
                     system_screen_state = SYSTEM_SCREEN_STATE_FADE_IN;
                     save_list_leave_steps = 0;
                     SaveCard_StartCheck(0);
@@ -6106,7 +6106,7 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
                         }
                     }
                     if (menu_mode != MENU_MODE_OPTIONS) {
-                        menu_screen_handler = (void *)Menu_UpdateSystem;
+                        menu_screen_handler = Menu_UpdateSystem;
                     } else {
                         menu_step++;
                     }
@@ -6124,7 +6124,7 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
 static const s8 default_button_choices[12] = { 0, 1, 3, 2, 4, 10, 9, 6, 7, 5, 11, 8 };
 /* the twelve button settings, in the order of the button screen's lines */
 static u16 *const button_settings[12] = {
-    &forward_button, &back_button, &turn_left_button, &turn_right_button, &step_left_button, &step_right_button, &attack_button, &magic_button, &action_button, &look_down_button, &look_up_button, (u16 *)&menu_button,
+    &forward_button, &back_button, &turn_left_button, &turn_right_button, &step_left_button, &step_right_button, &attack_button, &magic_button, &action_button, &look_down_button, &look_up_button, &menu_button,
 };
 
 /* Fills both 12-entry tables with the index that goes with each slot's pad button bit. */
@@ -6426,7 +6426,7 @@ static void Menu_UpdateButtonConfig(void) {
                     buttons_leave_steps = 0;
                     system_screen_state = SYSTEM_SCREEN_STATE_FADE_IN;
                     if (menu_mode != MENU_MODE_BUTTONS) {
-                        menu_screen_handler = (void *)Menu_UpdateSystem;
+                        menu_screen_handler = Menu_UpdateSystem;
                     } else {
                         menu_step++;
                     }
@@ -6449,7 +6449,7 @@ static void Menu_OpenCardCheck(void) {
         SaveCard_StartCheck(1);
         SaveCard_Update();
         memset(screen_part_alphas, 0, 0x400);
-        menu_screen_handler = (void *)Menu_UpdateCardCheck;
+        menu_screen_handler = Menu_UpdateCardCheck;
         card_screen_state.check_step = CARD_CHECK_STEP_START;
         system_screen_state = SYSTEM_SCREEN_STATE_FADE_IN;
         pulse_value_falling = 0;
@@ -6739,7 +6739,7 @@ static void Menu_UpdateBrightness(void) {
                 system_screen_state = SYSTEM_SCREEN_STATE_FADE_IN;
                 pulse_sprite_falling = 0;
                 if (menu_mode != MENU_MODE_BRIGHTNESS) {
-                    menu_screen_handler = (void *)Menu_UpdateSystem;
+                    menu_screen_handler = Menu_UpdateSystem;
                 } else {
                     menu_step++;
                 }
@@ -6755,7 +6755,7 @@ static void Menu_UpdateBrightness(void) {
 static void Menu_WaitForCancel(void) {
     if (Pad_GetReport(0, 0)->pressed & PAD_CIRCLE) {
         if (pad_mode != 0xFF) {
-            menu_screen_handler = (void *)Menu_OpenMain;
+            menu_screen_handler = Menu_OpenMain;
             Sound_PlayMenu(2);
         }
     }
@@ -7063,7 +7063,7 @@ static void Menu_OpenCardSlot(void) {
     SaveCard_ClearLoadFailed(0);
     SaveCard_ClearLoadFailed(1);
     SaveCard_StartCheck(1);
-    menu_screen_handler = (void *)Menu_UpdateCardSlot;
+    menu_screen_handler = Menu_UpdateCardSlot;
 }
 
 /* Tells whether value (an equipment slot's number) differs from the "None" of the slot the given step stands for. */

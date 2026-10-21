@@ -347,7 +347,7 @@ void Message_DebugPrintf(char *format, ...) {
     int length;
 
     VA_START(args, format, 1);
-    length = vsprintf((char *)debug_log[debug_line_count], format, args);
+    length = vsprintf(debug_log[debug_line_count], format, args);
     glyph_count += length;
     debug_line_count++;
 }
@@ -620,7 +620,7 @@ static int Message_GetTextWidth(s16 *text, int font) {
     int width = 0;
 
     while (*text != GLYPH_END) {
-        width += Message_GetGlyphWidth((u16 *)text, font);
+        width += Message_GetGlyphWidth(text, font);
         text++;
     }
     return width;
@@ -636,7 +636,7 @@ static s16 *Message_LayoutPage(s16 *text, s32 font) {
     s16 glyph;
 
     while (TRUE) {
-        width += Message_GetGlyphWidth((u16 *)text, font);
+        width += Message_GetGlyphWidth(text, font);
         glyph = *text;
         if (glyph == GLYPH_NEW_LINE) {
             line++;

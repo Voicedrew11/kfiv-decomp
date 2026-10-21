@@ -454,7 +454,7 @@ static void Spider_DropToFloor(Entity *entity) {
     sceVu0RotMatrixZ(matrix, identity_matrix, entity->model->rotation[2]);
     sceVu0RotMatrixX(matrix, matrix, entity->model->rotation[0]);
     sceVu0RotMatrixY(matrix, matrix, entity->model->rotation[1]);
-    sceVu0ApplyMatrix(direction, (int *)matrix, direction);
+    sceVu0ApplyMatrix(direction, matrix, direction);
     hit = EntityCollision_RayProps(entity->model->position, direction, landing, 200.0f);
     if (hit == 1) {
         Vector_Copy(entity->model->position, landing);
