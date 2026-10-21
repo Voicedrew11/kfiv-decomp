@@ -4,6 +4,14 @@
 
 #include "common.h"
 
+/* a pointer into a packet being written, which steps by the size of what each store writes */
+typedef union {
+    u32 *word;
+    f32 *real;
+    u64 *dword;
+    char *byte;
+} PacketCursor;
+
 #define GS_REG_PRIM         0x00
 #define GS_REG_RGBAQ        0x01
 #define GS_REG_UV           0x03
