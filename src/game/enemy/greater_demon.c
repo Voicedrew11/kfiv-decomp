@@ -31,7 +31,6 @@
 
 static KfVector climb_points[3]; /* 0x4FF390 the points GreaterDemon_Think climbs over (it indexes up to 5) */
 
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 static void GreaterDemon_Think(Entity *entity, s32 run_now);
 static void GreaterDemon_Move(Entity *entity);
 static void GreaterDemon_OnHit(Entity *entity);

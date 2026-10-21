@@ -14,7 +14,6 @@
 #include "model/motion.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void Critter_Dormant(Entity *entity);
 static void Critter_Think(Entity *entity, s32 run_now);

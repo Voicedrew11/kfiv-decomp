@@ -11,7 +11,6 @@
 /* EntitySpawnInfo.spawn_mode: 0 is the normal spawn, else the statue holds animation 1 */
 #define LIVING_STATUE_SPAWN_MODE_NORMAL 0
 
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void LivingStatue_ThinkHoldAnim1(Entity *entity, s32 run_now);
 

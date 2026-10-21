@@ -27,7 +27,6 @@
 #define LARVA_DORMANT_STEP_HELD     1   /* held at a model point of another entity until the script moves it */
 #define LARVA_DORMANT_STEP_ARC      1   /* flies along the arc until it lands on the floor */
 #define LARVA_DEATH_STEP_FADE_OUT   1   /* fades the model out over action_timer, then frees it */
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void Larva_Think(Entity *entity, s32 run_now);
 static void Larva_Dormant(Entity *entity);

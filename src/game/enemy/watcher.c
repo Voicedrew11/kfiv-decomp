@@ -15,7 +15,6 @@
 #include "model/motion.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void Watcher_Think(Entity *entity, s32 run_now);
 static void Watcher_Move(Entity *entity);

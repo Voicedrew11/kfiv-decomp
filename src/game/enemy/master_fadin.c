@@ -23,7 +23,6 @@
 #define MASTER_FADIN_SPAWN_MODE_RESPAWN 1   /* respawns the others with the same params */
 #define MASTER_FADIN_SPAWN_MODE_PARTNER 2   /* takes the state of its partner and alerts it on death */
 
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void MasterFadin_Think(Entity *entity, s32 run_now);
 static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 run_now);

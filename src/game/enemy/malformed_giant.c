@@ -18,7 +18,6 @@
 
 /* MalformedGiant_PlayAnim0ToFrame80: Entity.action_step */
 #define MALFORMED_GIANT_STEP_END 2                  /* ends the action once the animation passes frame 80 */
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void MalformedGiant_Think(Entity *entity, s32 run_now);
 static void MalformedGiant_ThinkCombat(Entity *entity, s32 run_now);

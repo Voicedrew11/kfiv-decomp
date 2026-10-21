@@ -26,7 +26,6 @@
 #define ANCIENT_KING_DEATH_STEP_FADE_OUT        5   /* fades the model out over action_timer, then frees it */
 #define ANCIENT_KING_RESPAWN_STEP_END           3   /* waits for the motion to end, then ends the action */
 
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void AncientKing_Animate(Entity *entity);
 static void AncientKing_Think(Entity *entity, s32 run_now);

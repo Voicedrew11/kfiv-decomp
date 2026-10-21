@@ -23,7 +23,6 @@
 #define ANCIENT_MUMMY_FADE_BACK_STEP_FADE_IN 2      /* scales and fades the model back in, then waits */
 #define ANCIENT_MUMMY_FADE_BACK_STEP_END     3      /* lets the motion end, then goes to state 2 and thinks */
 
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void AncientMummy_Think(Entity *entity, s32 run_now);
 static void AncientMummy_ThinkCombat(Entity *entity, s32 run_now);

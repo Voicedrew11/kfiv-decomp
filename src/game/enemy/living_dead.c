@@ -19,7 +19,6 @@
 /* EntitySpawnInfo.spawn_mode: 0 lets the spawn start a ranged attack */
 #define LIVING_DEAD_SPAWN_MODE_RANGED 0
 
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void LivingDead_OnHit(Entity *entity);
 static void LivingDead_ReactionLight(Entity *entity);

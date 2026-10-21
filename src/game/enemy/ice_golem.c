@@ -20,7 +20,6 @@
 #define ICE_GOLEM_MOVE_CHOICE_RUN_IN 1
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 
 static void IceGolem_Think(Entity *entity, s32 run_now);
 static void IceGolem_ThinkCombat(Entity *entity, s32 run_now);
