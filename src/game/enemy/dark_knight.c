@@ -99,11 +99,11 @@ static void DarkKnight_OnHit(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with DarkKnight_ThinkCombat for state 2. Before that,
    every frame: it starts effect 0x3D7 at model points 30 and 31, pointing to points 28 and 29;
-   while work word unk68 counts down (DarkKnight_RangedAttack0 sets it), for the first
+   while ai_state.pause_timer counts down (DarkKnight_RangedAttack0 sets it), for the first
    EntityParams.near_distance frames it starts one of effects 0x21F to 0x221 at point 4 and writes
    EntityParams.far_distance into unk10[n].unk00.unk00[8] of the three melee records, and 0 once the count
-   is over; it counts down work word unk6C, set to EntityParams.type_param_0 while player_state.cast_launched_shot is
-   not 0; and while work word unk6A counts down it keeps flag bit 35 set, with effect 0x25C every
+   is over; it counts down ai_state.mode_timer, set to EntityParams.type_param_0 while player_state.cast_launched_shot is
+   not 0; and while ai_state.sub_timer counts down it keeps flag bit 35 set, with effect 0x25C every
    third frame. */
 static void DarkKnight_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -217,7 +217,7 @@ static void DarkKnight_Think(Entity *entity, s32 run_now) {
    DarkKnight_RangedAttack0 whenever DarkKnight_ShouldRangedAttack0 says so; ranged index 1 has
    DarkKnight_RangedAttack1 and melee index 3 DarkKnight_MeleeAttack2; closing in from more than
    500 away adds command bits 0x40 and 0x400; and with Entity.heading_to_player more than 90 degrees off the
-   heading it may start DarkKnight_PlayTurnAnim (work byte unk7B: the side). */
+   heading it may start DarkKnight_PlayTurnAnim (ai_state.action_flags: the side). */
 static void DarkKnight_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityAiStateKind162BC8 *work = (EntityAiStateKind162BC8 *)ai_state;
@@ -330,7 +330,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 run_now) {
 }
 
 /* An action (busy bit 0x1000) that DarkKnight_ThinkCombat starts: plays animation 12 or 11, by
-   the sign of work byte unk7B, to its end. */
+   the sign of ai_state.action_flags, to its end. */
 static void DarkKnight_PlayTurnAnim(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -561,7 +561,7 @@ static void DarkKnight_MeleeAttack2(Entity *entity) {
 }
 
 /* The ranged attack with record 0 (busy bit 1): as EntityAi_RangedAttack with animation 23; at its
-   end it also sets work word unk68 to EntityParams.action_frames. */
+   end it also sets ai_state.pause_timer to EntityParams.action_frames. */
 static void DarkKnight_RangedAttack0(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
@@ -669,7 +669,7 @@ static void DarkKnight_RangedAttack1(Entity *entity) {
 }
 
 /* Helper of DarkKnight_ThinkCombat: whether to start DarkKnight_RangedAttack0, which is
-   whenever the count in work word unk68 has run out. */
+   whenever the count in ai_state.pause_timer has run out. */
 static s32 DarkKnight_ShouldRangedAttack0(Entity *entity) {
     return entity->ai_state.pause_timer < 1;
 }

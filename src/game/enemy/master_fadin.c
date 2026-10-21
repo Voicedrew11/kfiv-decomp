@@ -72,7 +72,7 @@ void MasterFadin_Init(Entity *entity) {
    In mode 1 it calls EntityEvent_Respawn for every other entity with the same params whose flag bit 1 is
    clear or whose bits 2-3 are 3. While the entity is not busy it calls MasterFadin_ThinkShootAtPlayer in states 1
    and 2, and in state 0 starts what the move slot holds (the set-up function leaves it NULL). Keeps
-   animation 0; once work word unk68 has run out it puts the state back to 0. */
+   animation 0; once ai_state.pause_timer has run out it puts the state back to 0. */
 static void MasterFadin_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     Entity *leader;
@@ -263,7 +263,7 @@ static void MasterFadin_Death(Entity *entity) {
 }
 
 /* Helper of MasterFadin_Death: when the dying entity's partner (spawn id EntitySpawnInfo.variant)
-   has flag bit 1 set and bits 2-3 at 0, puts it in state 2 and reloads its work word unk68 from
+   has flag bit 1 set and bits 2-3 at 0, puts it in state 2 and reloads its ai_state.pause_timer from
    EntityParams.type_param_0. */
 static void MasterFadin_AlertPartner(Entity *entity) {
     Entity *partner;

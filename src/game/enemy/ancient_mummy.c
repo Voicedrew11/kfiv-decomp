@@ -108,7 +108,7 @@ static void AncientMummy_Think(Entity *entity, s32 run_now) {
 /* The think function of state 2: as EntityAi_ThinkCombat, but with the entity within 40 degrees of
    the player's facing it first starts AncientMummy_ShootAndRelocate when the player is nearer than 300
    and the pause is over, or, with the player nearer than 800 and less than 90 degrees off its
-   heading, goes backwards for 90 to 149 frames (work byte unk78 is 1) with the command
+   heading, goes backwards for 90 to 149 frames (ai_state.move_choice is 1) with the command
    AncientMummy_BackwardsCommand gives. Closing in never runs. */
 static void AncientMummy_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -336,7 +336,7 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
    Waits EntityParams.near_distance frames, turns the entity straight to the player, then over
    EntityParams.type_param_0 frames brings the model's scale and Entity.model_alpha back (to 1.3 and 0x80),
    waits type_param_1 frames more, clears the flag bits the first half set, lets the motion end, goes to
-   state 2 and thinks, with the pause in work word unk68 set to EntityParams.action_frames. */
+   state 2 and thinks, with the pause in ai_state.pause_timer set to EntityParams.action_frames. */
 static void AncientMummy_FadeBackIn(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 step;

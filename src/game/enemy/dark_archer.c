@@ -140,7 +140,7 @@ static void DarkArcher_Animate(Entity *entity) {
 
 /* Helper of DarkArcher_Animate: with mode above 0 tilts model part 2 (EntityModel.parts[2]) by
    the pitch from the entity to the player, at most 60 degrees up or down, easing the part's three
-   angles in work floats unk48 to unk50; with mode 0 eases them back to the part's own angles; else
+   angles in ai_state.part_angle_x to part_angle_z; with mode 0 eases them back to the part's own angles; else
    copies the part's angles into them. */
 static void DarkArcher_PitchPart2ToPlayer(Entity *entity, s32 mode) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -284,7 +284,7 @@ static void DarkArcher_MoveTurnOnly(Entity *entity) {
 
 /* The dormant action of a spawn whose EntitySpawnInfo.spawn_mode is set (busy bit 0x20): animation 0,
    unseen (Entity.model_alpha 0) with flag bits 18, 20 and 21 set until dark_succubus_fight_started[0] is not 0, then fades
-   the model in over 20 frames (counted in work byte unk7B), clears the three bits and thinks. */
+   the model in over 20 frames (counted in ai_state.action_flags), clears the three bits and thinks. */
 static void DarkArcher_DormantFadeIn(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -405,7 +405,7 @@ static void DarkArcher_Think(Entity *entity, s32 run_now) {
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but the ranged attack is
    DarkArcher_RangedAttack (with flag bit 10 set), and instead of closing in it starts
-   DarkArcher_MoveAlongArc when work byte unk7A is set, the player is nearer than
+   DarkArcher_MoveAlongArc when ai_state.step_index is set, the player is nearer than
    EntityParams.near_distance and player_state.rotation.y is within 40 degrees of Entity.heading_to_player. */
 static void DarkArcher_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -559,9 +559,9 @@ static void DarkArcher_RangedAttack(Entity *entity) {
 
 /* An action (busy bit 0x1000) that DarkArcher_ThinkCombat starts and that moves the entity itself
    in an arc: plays animation 8 to frame 17, then animation 4 while it moves the entity forwards
-   along the heading it had (work float unk54 holds that heading plus 180 degrees, and the speed is
+   along the heading it had (ai_state.pitch_speed holds that heading plus 180 degrees, and the speed is
    put on the other end of the axis, which gives the same direction as the forward command), the
-   speeds eased in work floats unk58 (y) and unk5C. The speed in y goes to minus EntityParams.type_param_1
+   speeds eased in ai_state.heading_speed (y) and unk5C. The speed in y goes to minus EntityParams.type_param_1
    (up) until EntityCollision_DistanceToPropFloor, the distance to the floor below, reads EntityParams.type_param_2 or more,
    then to plus type_param_1 until flag bit 44 or 50 is set; then it plays animation 9 to its end. */
 static void DarkArcher_MoveAlongArc(Entity *entity) {

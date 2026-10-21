@@ -64,7 +64,7 @@ void Zombie_Init(Entity *entity) {
 }
 
 /* The on_hit handler: as EntityAi_OnHit, but only a heavy hit starts a reaction
-   (EntityAi_ReactionHeavy), the target is kept, and work word unk68 is cleared. */
+   (EntityAi_ReactionHeavy), the target is kept, and ai_state.pause_timer is cleared. */
 static void Zombie_OnHit(Entity *entity) {
     EntityAiState *sub = &entity->ai_state;
     u64 hit_strength;
@@ -80,7 +80,7 @@ static void Zombie_OnHit(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with Zombie_ThinkCombat for state 2; in states 0 and
-   1 it puts work word unk68 back to EntityParams.action_frames. */
+   1 it puts ai_state.pause_timer back to EntityParams.action_frames. */
 static void Zombie_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -110,7 +110,7 @@ static void Zombie_Think(Entity *entity, s32 run_now) {
     }
 }
 
-/* The think function of state 2: as EntityAi_ThinkCombat, but work word unk68 counts down while it
+/* The think function of state 2: as EntityAi_ThinkCombat, but ai_state.pause_timer counts down while it
    runs (an attack sets it to EntityParams.action_frames plus 0 to 29): while it is above 0 the entity
    closes in at a walk, afterwards at the run with command bit 0x400. */
 static void Zombie_ThinkCombat(Entity *entity, s32 run_now) {

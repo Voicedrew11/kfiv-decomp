@@ -81,8 +81,8 @@ void WindElemental_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with WindElemental_ThinkCombat for state 2; walking back to
-   the spawn point (flag bit 53) gets command bits 0x440 added. Work byte unk7B is put to 30 while
-   player_state.cast_launched_shot is set and counts down. While work word unk68 is 1 (WindElemental_AlertSameKind of
+   the spawn point (flag bit 53) gets command bits 0x440 added. ai_state.action_flags is put to 30 while
+   player_state.cast_launched_shot is set and counts down. While ai_state.pause_timer is 1 (WindElemental_AlertSameKind of
    another entity sets it) it only starts WindElemental_RunAtPlayer. */
 static void WindElemental_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state;
@@ -130,7 +130,7 @@ static void WindElemental_Think(Entity *entity, s32 run_now) {
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but it first starts WindElemental_Dodge
    when WindElemental_ShouldDodgeMagic says so, and the dodge of the player's swing is WindElemental_DodgeNoAttack. Closing
-   in is at the run with command bit 0x400, or one time in five at a walk (work byte unk78 is 1);
+   in is at the run with command bit 0x400, or one time in five at a walk (ai_state.move_choice is 1);
    running, it starts WindElemental_PlayTurnAnim now and then when the player is more than 90 degrees
    off its heading. */
 static void WindElemental_ThinkCombat(Entity *entity, s32 run_now) {
@@ -232,7 +232,7 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
-/* An action (busy bit 0x2000): plays animation 12 or, with work byte unk7A below 1, animation 11 to
+/* An action (busy bit 0x2000): plays animation 12 or, with ai_state.step_index below 1, animation 11 to
    its end. WindElemental_ThinkCombat starts it when the player is more than 90 degrees off the
    heading. */
 static void WindElemental_PlayTurnAnim(Entity *entity) {
@@ -362,7 +362,7 @@ static void WindElemental_DodgeNoAttack(Entity *entity) {
     }
 }
 
-/* Whether to dodge a magic: only while work byte unk7B is 1 to 15 (WindElemental_Think puts it to 30 when the
+/* Whether to dodge a magic: only while ai_state.action_flags is 1 to 15 (WindElemental_Think puts it to 30 when the
    player casts one, player_state.cast_launched_shot), with the player at least min_distance away (less the radius and 100),
    Entity.heading_to_player within max_angle of the heading and the entity within 30 degrees of the player's facing; then
    EntityParams.dodge_chance / 10 times in 100. */
@@ -389,7 +389,7 @@ static s32 WindElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 
     return rand() % 100 < entity->params->dodge_chance / 10;
 }
 
-/* Helper of WindElemental_OnHit: sets work word unk68 to 1 in every other live entity with the same
+/* Helper of WindElemental_OnHit: sets ai_state.pause_timer to 1 in every other live entity with the same
    EntityParams that is within EntityParams.action_frames of this one, has unk68 at 0 and has the player
    within EntitySpawnInfo.wander_radius of its spawn point. */
 static void WindElemental_AlertSameKind(Entity *entity) {
@@ -429,7 +429,7 @@ static void WindElemental_OnHit(Entity *entity) {
     WindElemental_AlertSameKind(entity);
 }
 
-/* An action (busy bit 0x3000) that WindElemental_Think starts while work word unk68 is 1: plays
+/* An action (busy bit 0x3000) that WindElemental_Think starts while ai_state.pause_timer is 1: plays
    animation 3, then each frame guards or dodges the player's swing (WindElemental_Dodge when
    WindElemental_ShouldDodgeMagic says so), starts the attack EntityAi_PickAttack picks once EntityAi_PickCombatChoice chooses
    attacking (unk68 becomes 2), and else gives the command to run at the player and calls the move

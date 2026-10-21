@@ -63,7 +63,7 @@ void Watcher_Init(Entity *entity) {
 
 /* The think handler: no states and no actions. Every tenth frame updates what the entity knows of
    the player; while it is not busy and EntityAi_CanUseRanged finds the player in reach of ranged record 0
-   (and flag bit 63 is clear) it calls Attack_DrainPlayerMp with EntityParams.action_frames, sets work byte unk7A
+   (and flag bit 63 is clear) it calls Attack_DrainPlayerMp with EntityParams.action_frames, sets ai_state.step_index
    and flag bit 9 and plays animation 2, else clears them and plays animation 0. Calls EntityEvent_StartCueAlways
    with 1 when unk7A changes. */
 static void Watcher_Think(Entity *entity, s32 run_now) {
@@ -91,8 +91,8 @@ static void Watcher_Think(Entity *entity, s32 run_now) {
     }
 }
 
-/* The move handler: this type stays where it is. While work byte unk7A is set it keeps animation 2
-   and calls EntityEvent_StartCueAlways with 0 every EntityParams.far_distance frames (counted in work word unk68);
+/* The move handler: this type stays where it is. While ai_state.step_index is set it keeps animation 2
+   and calls EntityEvent_StartCueAlways with 0 every EntityParams.far_distance frames (counted in ai_state.pause_timer);
    else it keeps animation 0. */
 static void Watcher_Move(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;

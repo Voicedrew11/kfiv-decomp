@@ -150,9 +150,9 @@ static int Scorpion_ThinkWander(Entity *entity, s32 run_now) {
 
 /* The think function of state 2: guard, dodge and the choice among attacking, closing in and
    waiting as in EntityAi_ThinkCombat; the head does not follow. Closing in has three ways, kept in
-   work byte unk78: 0 turns on the spot until Entity.heading_to_player is within 10 degrees of the heading (flag
+   ai_state.move_choice: 0 turns on the spot until Entity.heading_to_player is within 10 degrees of the heading (flag
    bits 11 to 13 at 3); 1 goes for the player; 2 moves sideways (command bit 4 or 8, by the side of
-   the player's facing the entity is on, work byte unk7A) until flag bit 45, 47 or 48 is set, which
+   the player's facing the entity is on, ai_state.step_index) until flag bit 45, 47 or 48 is set, which
    puts it on way 1. */
 static int Scorpion_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;

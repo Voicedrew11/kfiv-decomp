@@ -71,7 +71,7 @@ void MalformedGiant_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think with the type's own functions for the three states. Counts
-   the frames with flag bit 41 set in work byte unk7A and at 10 starts MalformedGiant_PlayAnim0ToFrame80. */
+   the frames with flag bit 41 set in ai_state.step_index and at 10 starts MalformedGiant_PlayAnim0ToFrame80. */
 static void MalformedGiant_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -269,7 +269,7 @@ static void MalformedGiant_ThinkPursue(Entity *entity, s32 run_now) {
 }
 
 /* An action (busy bit 0x1000): stands in animation 0 with flag bit 9 clear until the animation is
-   past frame 80, then thinks. The think functions start it, and clear work byte unk7A. */
+   past frame 80, then thinks. The think functions start it, and clear ai_state.step_index. */
 static void MalformedGiant_PlayAnim0ToFrame80(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 

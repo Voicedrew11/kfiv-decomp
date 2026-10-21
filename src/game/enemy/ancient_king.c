@@ -146,7 +146,7 @@ static void AncientKing_Animate(Entity *entity) {
 /* The think handler until AncientKing_SwitchHandlers installs AncientKing_ThinkAfterSwitch. While the entity
    is not busy: once Entity.hit_points is below three quarters of EntityParams.hit_points it starts
    AncientKing_SwitchHandlers; else in state 2 it calls AncientKing_ThinkCombat, and in the other
-   states starts the move action. Counts down work word unk68. */
+   states starts the move action. Counts down ai_state.pause_timer. */
 static void AncientKing_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -739,8 +739,8 @@ static void AncientKing_RespawnOthersAfterSwitch(Entity *entity) {
 
 /* Whether to start AncientKing_RespawnOthers or AncientKing_RespawnOthersAfterSwitch (the two
    think functions of state 2 ask): counts the entities with spawn ids 10 to 15 that have flag bits
-   0 and 1 set and flag bits 2-3 below 3 (the count goes to work byte unk7A, a bit each to work word
-   unk6A); TRUE when there are fewer than 5 and the pause in work word unk68 is over. */
+   0 and 1 set and flag bits 2-3 below 3 (the count goes to ai_state.step_index, a bit each to work word
+   unk6A); TRUE when there are fewer than 5 and the pause in ai_state.pause_timer is over. */
 static s32 AncientKing_ShouldRespawnOthers(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 count = 0;
@@ -766,7 +766,7 @@ static s32 AncientKing_ShouldRespawnOthers(Entity *entity) {
 /* Called by AncientKing_RespawnOthers and AncientKing_RespawnOthersAfterSwitch: draws up to two
    of the entities with spawn ids 10 to 15 that AncientKing_ShouldRespawnOthers did not count,
    respawns each that has flag bit 0 set (EntityEvent_Respawn, which calls Entity_ResetToSpawn), and sets
-   the pause in work word unk68 to EntityParams.action_frames. */
+   the pause in ai_state.pause_timer to EntityParams.action_frames. */
 static void AncientKing_RespawnTwoOthers(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     s32 remaining = 2;

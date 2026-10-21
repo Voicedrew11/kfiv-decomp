@@ -68,7 +68,7 @@ void SkeletonArcher_Init(Entity *entity) {
 }
 
 /* The animate handler: as EntityAi_Animate; during animation 23 of an attack (busy bit 1), once
-   blended in, SkeletonArcher_PitchPartToPlayer pitches model part 11, and otherwise work float unk48 is
+   blended in, SkeletonArcher_PitchPartToPlayer pitches model part 11, and otherwise ai_state.part_angle_x is
    cleared. */
 static void SkeletonArcher_Animate(Entity *entity) {
     f32 limits[4];
@@ -103,7 +103,7 @@ static void SkeletonArcher_Animate(Entity *entity) {
 }
 
 /* Helper of SkeletonArcher_Animate: pitches model part 11 towards the player, at most 50 degrees
-   either way (work float unk48, rate 10). */
+   either way (ai_state.part_angle_x, rate 10). */
 static void SkeletonArcher_PitchPartToPlayer(Entity *entity) {
     EntityModel *model = entity->model;
     EntityModelPart80 *part = &((EntityModelPart80 *)model->parts)[11];

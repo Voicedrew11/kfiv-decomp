@@ -78,10 +78,10 @@ void GiantLeader_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with GiantLeader_ThinkCombat for state 2. Every tenth
-   frame, while work byte unk7A is 0, it also looks whether one of the map objects 0xA0 to 0xA2 lies
+   frame, while ai_state.step_index is 0, it also looks whether one of the map objects 0xA0 to 0xA2 lies
    between the entity and the player (EntityCollision_LineHits), with the entity and the player on two given
    map records and one of them near the object; if so it puts the number of the object in unk7A,
-   marks it in work byte unk7B (each object is used once) and starts GiantLeader_BreakMapObject. */
+   marks it in ai_state.action_flags (each object is used once) and starts GiantLeader_BreakMapObject. */
 static void GiantLeader_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 position[4];
@@ -338,7 +338,7 @@ static void GiantLeader_MeleeAttack0(Entity *entity) {
     }
 }
 
-/* An action (busy bit 0x1000): goes past one of three map objects (0xA0-0xA2); work byte unk7A
+/* An action (busy bit 0x1000): goes past one of three map objects (0xA0-0xA2); ai_state.step_index
    says which. The entity is put at a fixed place next to the object, facing it, and plays
    animation 17, breaks the map object (MapObject_Break) on frame EntityParams.type_param_1, then walks in
    animation 3 to a point on the far side and clears unk7A. GiantLeader_Think starts it. */

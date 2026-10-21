@@ -107,7 +107,7 @@ static void IceGolem_Think(Entity *entity, s32 run_now) {
 
 /* The think function of state 2: as EntityAi_ThinkCombat with IceGolem_RangedAttack0 as the
    ranged attack; when it starts to close in from more than 500 away, or with the target more than
-   90 degrees off its heading, it does so with command bits 0x40 and 0x400 added (work byte unk78 is
+   90 degrees off its heading, it does so with command bits 0x40 and 0x400 added (ai_state.move_choice is
    1). */
 static void IceGolem_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;

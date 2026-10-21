@@ -218,9 +218,9 @@ static void DragonFly_ThinkWander(Entity *entity, s32 run_now) {
 /* The think function of state 2: it has none of EntityAi_ThinkCombat's guard, dodge and draw among
    the actions. Whenever the pause Entity.attack_delay_frames is over and EntityAi_CanAttack finds the player in reach
    (and the way is not 4) it starts DragonFly_RangedAttack or DragonFly_MeleeAttack, as
-   EntityAi_PickAttack draws. Otherwise it gives the command for one of the ways kept in work byte unk78:
-   1 forward at the level of the player's y less 190 plus work byte unk7B; 2 forward to the level
-   work float unk4C (the player's y less 220 to 919) until within 200 of that point; 3 (after an
+   EntityAi_PickAttack draws. Otherwise it gives the command for one of the ways kept in ai_state.move_choice:
+   1 forward at the level of the player's y less 190 plus ai_state.action_flags; 2 forward to the level
+   ai_state.part_angle_y (the player's y less 220 to 919) until within 200 of that point; 3 (after an
    attack) forward for 90 frames; 4 forward with command bits 0x40 and 0x10 until the player's y is
    more than 700 above its own. */
 static void DragonFly_ThinkCombat(Entity *entity, s32 run_now) {
@@ -353,7 +353,7 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 run_now) {
 }
 
 /* The move handler: as EntityAi_Move, but it moves whatever flag bits 11 to 13 say, and the y part
-   of the movement is eased in work float unk48. */
+   of the movement is eased in ai_state.part_angle_x. */
 static void DragonFly_Move(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 *vector;

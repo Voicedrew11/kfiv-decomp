@@ -94,7 +94,7 @@ static void MutantCeiling_Think(Entity *entity, s32 run_now) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat with the type's own two attacks; it calls
-   EntityAi_PickCombatChoice with 1, sets work byte unk79 to 1, and closing in does not use EntityAi_ClearTurnInPlace. The
+   EntityAi_PickCombatChoice with 1, sets ai_state.turn_in_place to 1, and closing in does not use EntityAi_ClearTurnInPlace. The
    same as MutantWall_ThinkCombat. */
 static void MutantCeiling_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;

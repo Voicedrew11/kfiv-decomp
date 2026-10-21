@@ -96,7 +96,7 @@ static void Mummy_Think(Entity *entity, s32 run_now) {
     }
 }
 
-/* The think function of state 2: as EntityAi_ThinkCombat, but closing in runs once work byte unk7A
+/* The think function of state 2: as EntityAi_ThinkCombat, but closing in runs once ai_state.step_index
    is set. When the player is near, the entity is within 40 degrees of the player's facing and the
    player is 40 to 90 degrees off its heading, it goes backwards for 90 to 149 frames instead (work
    byte unk78 is 1), with the command Mummy_BackwardsCommand gives. */

@@ -225,7 +225,7 @@ static void Beetle_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
-/* Helper of Beetle_Animate: eases work float unk48 towards 20 degrees on the side the command
+/* Helper of Beetle_Animate: eases ai_state.part_angle_x towards 20 degrees on the side the command
    turns to (0 with no turn bit) and puts half of it in angle unk50[1] of model parts 7 and 12. */
 static void Beetle_TurnParts7And12(void *entity_arg) {
     Entity *entity = entity_arg;
@@ -259,7 +259,7 @@ static void Beetle_TurnParts7And12(void *entity_arg) {
     }
 }
 
-/* Helper of Beetle_Animate: eases work float unk4C towards 20 degrees on the side the command
+/* Helper of Beetle_Animate: eases ai_state.part_angle_y towards 20 degrees on the side the command
    turns to (0 with no turn bit) and puts minus half of it in angle unk50[1] of model parts 23, 28,
    31 and 32 (the name gives the first and the last of the four). */
 static void Beetle_TurnParts23To32(Entity *entity) {

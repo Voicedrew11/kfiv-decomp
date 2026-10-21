@@ -119,7 +119,7 @@ static void FireLord_Animate(Entity *entity) {
 /* The think handler: as EntityAi_Think, with FireLord_ThinkIdle for state 0 and
    FireLord_ThinkCombat for states 1 and 2. Before that it keeps the model's last two frames in
    fire_lord_model, each at half the alpha of the one before, clears work byte unk7E, and counts down
-   work word unk6A, which it sets to EntityParams.action_frames while player_state.cast_launched_shot is not 0. Counts
+   ai_state.sub_timer, which it sets to EntityParams.action_frames while player_state.cast_launched_shot is not 0. Counts
    down work byte unk7D. */
 static void FireLord_Think(Entity *entity, s32 run_now) {
     EntityAiStateKind131390 *ai_state = (EntityAiStateKind131390 *)&entity->ai_state;
@@ -174,7 +174,7 @@ static void FireLord_ThinkIdle(Entity *entity, s32 run_now) {
 }
 
 /* The think function of states 1 and 2: every 10 frames (work byte unk7D) sorts the distance to the
-   player, less the radius and 100, into a band kept in work byte unk7C (0: above 1200, 1: above
+   player, less the radius and 100, into a band kept in ai_state.action_counter (0: above 1200, 1: above
    800, 2: above 500, 3: above 100, 4: nearer), and calls the function of the band:
    FireLord_ThinkCombatApproach, FireLord_ThinkCombatShootOrApproach,
    FireLord_ThinkCombatSideAnimOrApproach, FireLord_ThinkCombatCloseIn or
@@ -255,7 +255,7 @@ static void FireLord_ThinkCombatShootOrApproach(Entity *entity, s32 run_now) {
 }
 
 /* Band 2 of FireLord_ThinkCombat: when the heading is within 20 degrees of Entity.heading_to_player, flips
-   work byte unk7B and starts FireLord_PlayAnim6Or7Alternately; else goes for the player as band 0 does. */
+   ai_state.action_flags and starts FireLord_PlayAnim6Or7Alternately; else goes for the player as band 0 does. */
 static void FireLord_ThinkCombatSideAnimOrApproach(Entity *entity, s32 run_now) {
     EntityAiStateKind131390 *ai_state = (EntityAiStateKind131390 *)&entity->ai_state;
     f32 angle;
@@ -446,7 +446,7 @@ static void FireLord_ThinkCombatBackAway(Entity *entity, s32 run_now) {
 }
 
 /* An action (busy bit 0x1000) that FireLord_ThinkCombatSideAnimOrApproach starts: plays animation 6 or 7
-   (work byte unk7B picks) to its end, turning to Entity.heading_to_player. Sets work byte unk7E. */
+   (ai_state.action_flags picks) to its end, turning to Entity.heading_to_player. Sets work byte unk7E. */
 static void FireLord_PlayAnim6Or7Alternately(Entity *entity) {
     EntityAiStateKind131390 *ai_state = (EntityAiStateKind131390 *)&entity->ai_state;
 
@@ -797,7 +797,7 @@ static void FireLord_Move(Entity *entity) {
     }
 }
 
-/* Whether to start FireLord_PlayAnim6Or7ThenMelee0: while the player is early in a swing or work word unk6A
+/* Whether to start FireLord_PlayAnim6Or7ThenMelee0: while the player is early in a swing or ai_state.sub_timer
    runs (FireLord_Think sets it when he casts a magic), the entity is not busy, the player is within
    max_distance (less the radius and 100) and Entity.heading_to_player within max_angle of the heading; then
    EntityParams.dodge_chance / 5 times in 100. */

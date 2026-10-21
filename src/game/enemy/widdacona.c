@@ -111,7 +111,7 @@ static void Widdacona_OnHit(Entity *entity) {
 }
 
 /* The death action (busy bit 0x40): animation 16; when it has ended it starts effect 0x3BC at the
-   points Model_GetSkinnedBonePoint gives for 20 to 22, sets work byte unk7A and waits until the entity whose
+   points Model_GetSkinnedBonePoint gives for 20 to 22, sets ai_state.step_index and waits until the entity whose
    spawn id is EntitySpawnInfo.spawn_mode has its unk7A set too; then the fade over 20 frames and the
    removal, as EntityAi_Death. */
 static void Widdacona_Death(Entity *entity) {

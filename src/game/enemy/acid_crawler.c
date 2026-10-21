@@ -192,10 +192,10 @@ static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg) {
 }
 
 /* The think handler: as EntityAi_Think, with AcidCrawler_ThinkCombat for states 1 and 2; after
-   EntityAi_ThinkIdle it sets work byte unk7A to 1. Before that, while Entity.ailment_4_frames is 0, it
+   EntityAi_ThinkIdle it sets ai_state.step_index to 1. Before that, while Entity.ailment_4_frames is 0, it
    launches shot EntityParams.type_param_1 from near the point Model_GetSkinnedBonePoint gives for 0, on two timers:
-   work word unk68 (chance EntityParams.action_frames in 100 a frame, then a pause of unk436 frames) and
-   work word unk6A (chance unk438, pause type_param_0). */
+   ai_state.pause_timer (chance EntityParams.action_frames in 100 a frame, then a pause of unk436 frames) and
+   ai_state.sub_timer (chance unk438, pause type_param_0). */
 static void AcidCrawler_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     char *part = Model_GetSkinnedBonePoint((char *)entity->model, 0);
@@ -264,7 +264,7 @@ static void AcidCrawler_Think(Entity *entity, s32 run_now) {
 /* The think function of states 1 and 2: guards or dodges the player's swing as EntityAi_ThinkCombat
    does; attacks with what EntityAi_PickAttack draws once the pause Entity.attack_delay_frames is over and EntityAi_CanAttack
    finds the player in reach; each time flag bit 32 comes on it starts EntityAi_RangedAttack with
-   record 0, 40 times in 100 (work byte unk7A); else it goes for the player with command 0x841, or
+   record 0, 40 times in 100 (ai_state.step_index); else it goes for the player with command 0x841, or
    0x241 / 0x141 while it is pushed. */
 static void AcidCrawler_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;

@@ -112,9 +112,9 @@ static void DarkSorcerer_OnHit(Entity *entity) {
 /* The think handler: no states. While the entity is not busy it calls EntityAi_ThinkReturn when
    flag bit 53 is set, else DarkSorcerer_ThinkDecide. After that it keeps flag bit 28 set except in
    the death action; while the bit is set it adds command bit 0x20 or 0x10 by the height
-   EntityCollision_DistanceToPropFloor reads (work byte unk7A: set above EntityParams.type_param_1 or when there is no reading,
+   EntityCollision_DistanceToPropFloor reads (ai_state.step_index: set above EntityParams.type_param_1 or when there is no reading,
    cleared below type_param_2); and it calls DarkSorcerer_ApplyMoveCommand while the entity is not busy or is in a hit
-   reaction. Counts down work word unk6A. */
+   reaction. Counts down ai_state.sub_timer. */
 static void DarkSorcerer_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 height;
@@ -167,7 +167,7 @@ static void DarkSorcerer_Think(Entity *entity, s32 run_now) {
    closing in and waiting as EntityAi_ThinkCombat does, with the type's own attacks
    (DarkSorcerer_RangedAttack, DarkSorcerer_MeleeAttack). Then, unless
    DarkSorcerer_PickAction starts one of its three actions, it gives the command for the way
-   of closing in kept in work byte unk78 (0 forward, 1 backwards, 2 and 3 sideways with command bits
+   of closing in kept in ai_state.move_choice (0 forward, 1 backwards, 2 and 3 sideways with command bits
    4 and 8, 4 turning only) and starts the move action. */
 static void DarkSorcerer_ThinkDecide(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -298,7 +298,7 @@ static void DarkSorcerer_Move(Entity *entity) {
 
 /* Carries out the movement command in Entity.move_command; DarkSorcerer_Think, the attacks and the three
    PlayAnim actions call it. It turns the entity and speeds up or slows down along its three axes by
-   EntityParams.speed_step_per_frame a frame up to unk54 (work floats unk44, unk48 and unk4C; in y half the step
+   EntityParams.speed_step_per_frame a frame up to unk54 (ai_state.move_speed, part_angle_x and part_angle_y; in y half the step
    and four fifths of the limit), twice as fast for command bit 0x40. */
 static void DarkSorcerer_ApplyMoveCommand(Entity *entity) {
     EntityAiStateKind16BF98 *ai_state = (EntityAiStateKind16BF98 *)&entity->ai_state;
@@ -399,7 +399,7 @@ static void DarkSorcerer_ApplyMoveCommand(Entity *entity) {
 
 /* The dormant action (busy bit 0x20), which the set-up function always starts: animation 0 with
    flag bits 18, 20 and 21 set and Entity.model_alpha at 0x20 until dark_sorcerer_fight_started[0] is not 0; then it brings
-   unkD6 up to 0x80 over 20 frames (counted in work byte unk7B), clears the three bits and thinks.
+   unkD6 up to 0x80 over 20 frames (counted in ai_state.action_flags), clears the three bits and thinks.
    */
 static void DarkSorcerer_Dormant(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -569,7 +569,7 @@ static void DarkSorcerer_RangedAttack(Entity *entity) {
 
 /* The death action (busy bit 0x40): animation 16; once it is past frame EntityParams.action_frames it
    calls EntityEvent_OnDeath and fades the model out over the rest of the motion (the frames left, kept in
-   work word unk68), then removes the entity when the motion has ended. */
+   ai_state.pause_timer), then removes the entity when the motion has ended. */
 static void DarkSorcerer_Death(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -611,7 +611,7 @@ static void DarkSorcerer_Death(Entity *entity) {
     }
 }
 
-/* Helper of DarkSorcerer_ThinkDecide: once the pause in work word unk6A is over, draws one of three
+/* Helper of DarkSorcerer_ThinkDecide: once the pause in ai_state.sub_timer is over, draws one of three
    actions by the weights in dark_sorcerer_action_weights (the third weight is 90 while the player is outside a fixed
    rectangle) and starts it: DarkSorcerer_PlayAnim19StartScripts, DarkSorcerer_PlayAnim18AndShoot or
    DarkSorcerer_PlayAnim17AndShoot. Returns whether it started one. */
@@ -652,7 +652,7 @@ static s32 DarkSorcerer_PickAction(Entity *entity) {
 }
 
 /* An action (busy bit 0x1000) that DarkSorcerer_PickAction starts: plays animation 17 to its
-   end; at frame 40 it calls DarkSorcerer_LaunchShotsAtFixedPoints and sets the pause, work word unk6A, to
+   end; at frame 40 it calls DarkSorcerer_LaunchShotsAtFixedPoints and sets the pause, ai_state.sub_timer, to
    90. Calls DarkSorcerer_ApplyMoveCommand every frame. */
 static void DarkSorcerer_PlayAnim17AndShoot(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -782,7 +782,7 @@ static void DarkSorcerer_LaunchShotsAtFixedPoints(Entity *entity) {
 
 /* An action (busy bit 0x2000) that DarkSorcerer_PickAction starts: plays animation 18 to its
    end; at frame 16 it launches shot 0xC9 from the entity's position along the model's angles
-   (EntityAi_LaunchShot) and sets the pause, work word unk6A, to 90. Calls DarkSorcerer_ApplyMoveCommand every frame. */
+   (EntityAi_LaunchShot) and sets the pause, ai_state.sub_timer, to 90. Calls DarkSorcerer_ApplyMoveCommand every frame. */
 static void DarkSorcerer_PlayAnim18AndShoot(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -823,7 +823,7 @@ static void DarkSorcerer_PlayAnim18AndShoot(Entity *entity) {
 }
 
 /* An action (busy bit 0x4000) that DarkSorcerer_PickAction starts: plays animation 19 to its
-   end; at frame 24 it calls DarkSorcerer_StartMapScripts and sets the pause, work word unk6A, to
+   end; at frame 24 it calls DarkSorcerer_StartMapScripts and sets the pause, ai_state.sub_timer, to
    90. Calls DarkSorcerer_ApplyMoveCommand every frame. */
 static void DarkSorcerer_PlayAnim19StartScripts(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;

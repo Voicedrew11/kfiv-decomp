@@ -76,10 +76,10 @@ void WaterElemental_Init(Entity *entity) {
     Motion_StepModel(ENTITY_MODEL(entity), 0, 0);
 }
 
-/* The think handler: as EntityAi_Think, with WaterElemental_ThinkCombat for state 2. Work byte unk7B
-   is put to 30 while player_state.cast_launched_shot is set and counts down. While work word unk68 is 1
+/* The think handler: as EntityAi_Think, with WaterElemental_ThinkCombat for state 2. ai_state.action_flags
+   is put to 30 while player_state.cast_launched_shot is set and counts down. While ai_state.pause_timer is 1
    (WaterElemental_AlertSameKind of another entity sets it; states 0 and 1 clear it) it only starts
-   WaterElemental_RunAtPlayer. Once the pause in work word unk6C is over and Entity.hit_points is below
+   WaterElemental_RunAtPlayer. Once the pause in ai_state.mode_timer is over and Entity.hit_points is below
    EntityParams.near_distance percent of EntityParams.hit_points it starts WaterElemental_RecoverHealth with a
    chance of unk438 in 100. */
 static void WaterElemental_Think(Entity *entity, s32 run_now) {
@@ -231,7 +231,7 @@ static void WaterElemental_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
-/* An action (busy bit 0x2000): plays animation 12 or, with work byte unk7A below 1, animation 11 to
+/* An action (busy bit 0x2000): plays animation 12 or, with ai_state.step_index below 1, animation 11 to
    its end. WaterElemental_ThinkCombat starts it when the player is more than 90 degrees off the
    heading. */
 static void WaterElemental_PlayTurnAnim(Entity *entity) {
@@ -271,7 +271,7 @@ static void WaterElemental_PlayTurnAnim(Entity *entity) {
 /* An action (busy bit 0x1000) that WaterElemental_Think starts when Entity.hit_points is below
    EntityParams.near_distance percent of EntityParams.hit_points: plays animation 18 to its end; on frame
    EntityParams.type_param_2 it adds EntityParams.type_param_0 percent of unk0A to Entity.hit_points, once, and sets
-   the pause in work word unk6C to type_param_1. Entity.hit_points is the entity's health: Entity_ResetToSpawn
+   the pause in ai_state.mode_timer to type_param_1. Entity.hit_points is the entity's health: Entity_ResetToSpawn
    loads it from EntityParams.hit_points, Attack_HitEntity takes the damage of a hit off it, and
    EntityAi_Update starts the death action when it is 0. */
 static void WaterElemental_RecoverHealth(Entity *entity) {
@@ -312,7 +312,7 @@ static void WaterElemental_RecoverHealth(Entity *entity) {
     }
 }
 
-/* Whether to dodge a magic: only while work byte unk7B is 1 to 15 (WaterElemental_Think puts it to 30 when the
+/* Whether to dodge a magic: only while ai_state.action_flags is 1 to 15 (WaterElemental_Think puts it to 30 when the
    player casts one, player_state.cast_launched_shot), with the player at least min_distance away (less the radius and 100),
    Entity.heading_to_player within max_angle of the heading and the entity within 30 degrees of the player's facing; then
    EntityParams.dodge_chance / 10 times in 100. */
@@ -339,7 +339,7 @@ static s32 WaterElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32
     return rand() % 100 < entity->params->dodge_chance / 10;
 }
 
-/* Helper of WaterElemental_OnHit: sets work word unk68 to 1 in every other live entity with the same
+/* Helper of WaterElemental_OnHit: sets ai_state.pause_timer to 1 in every other live entity with the same
    EntityParams that is within EntityParams.action_frames of this one, has unk68 at 0 and has the player
    within EntitySpawnInfo.wander_radius of its spawn point. */
 static void WaterElemental_AlertSameKind(Entity *entity) {
@@ -379,7 +379,7 @@ static void WaterElemental_OnHit(Entity *entity) {
     WaterElemental_AlertSameKind(entity);
 }
 
-/* An action (busy bit 0x3000) that WaterElemental_Think starts while work word unk68 is 1: plays
+/* An action (busy bit 0x3000) that WaterElemental_Think starts while ai_state.pause_timer is 1: plays
    animation 3, then each frame guards or dodges the player's swing, starts the attack EntityAi_PickAttack
    picks once EntityAi_PickCombatChoice chooses attacking (unk68 becomes 2), and else gives the command to run
    at the player and calls the move handler itself. Flag bit 53 ends it with unk68 at 2. */

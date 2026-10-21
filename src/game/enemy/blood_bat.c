@@ -211,7 +211,7 @@ static void BloodBat_ThinkWander(Entity *entity, s32 run_now) {
 /* The think function of state 2: guard, dodge and the choice among attacking, closing in and
    waiting as in EntityAi_ThinkCombat, with flag bits 11 to 13 at 0; the head does not follow.
    Closing in, it goes forward turning to Entity.heading_to_player, with command bit 0x20 or 0x10 to bring its y
-   to the player's less work float unk4C (EntityParams.yaw_limit_deg give or take unk434), and it chooses
+   to the player's less ai_state.part_angle_y (EntityParams.yaw_limit_deg give or take unk434), and it chooses
    anew once the player is within the radius plus 130. */
 static int BloodBat_ThinkCombat(void *entity_arg, int run_now) {
     Entity *entity = entity_arg;
@@ -292,7 +292,7 @@ static int BloodBat_ThinkCombat(void *entity_arg, int run_now) {
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
-/* The move handler: as EntityAi_Move, with the y part of the movement eased in work float unk48,
+/* The move handler: as EntityAi_Move, with the y part of the movement eased in ai_state.part_angle_x,
    and with animations 4, 3 (command bit 1) and 0 only. */
 static void BloodBat_Move(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;

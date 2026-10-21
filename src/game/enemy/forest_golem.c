@@ -103,7 +103,7 @@ void ForestGolem_Init(Entity *entity) {
 
 /* The think handler the set-up function installs when the byte of map_script_flags that
    EntityParams.pitch_limit_deg and unk432 index is set, and ForestGolem_StartScriptAndRumble when it ends: copies
-   the position in work floats unk48 to unk50 to the model, relative to the map origin
+   the position in ai_state.part_angle_x to part_angle_z to the model, relative to the map origin
    EntityParams.type_param_0 names when the entity is on another map than current_map_slot, sets the heading to
    0 and starts the move action. */
 static void ForestGolem_ThinkStayInPlace(Entity *entity, int invoke_now) {
@@ -156,7 +156,7 @@ static void ForestGolem_Think(Entity *entity, s32 run_now) {
    frame EntityParams.action_frames, on the map current_map_slot, it starts script EntityParams.near_distance
    (Script_Start); after that, on the four frames of forest_golem_rumble_frames and on frame 440, it asks for a
    controller rumble (Input_StartRumble) with a strength that falls off with the player's distance up to
-   3000. At the end it keeps the model's position in work floats unk48 to unk50, puts
+   3000. At the end it keeps the model's position in ai_state.part_angle_x to part_angle_z, puts
    ForestGolem_ThinkStayInPlace in the think slot and calls it. */
 static void ForestGolem_StartScriptAndRumble(Entity *entity) {
     EntityAiStateKind1740A8 *ai_state = (EntityAiStateKind1740A8 *)&entity->ai_state;
@@ -446,7 +446,7 @@ static void ForestGolem_Death(Entity *entity) {
 }
 
 /* An action (busy bit 0x1000): plays animation 17 to its end; on frame 20 it calls MapObject_Signal
-   with 1 for the map object work byte unk7B names. ForestGolem_WalkToMapObjectPosX and
+   with 1 for the map object ai_state.action_flags names. ForestGolem_WalkToMapObjectPosX and
    ForestGolem_WalkToMapObjectNegX start it. The same as ExpeditionSoldier_SignalMapObject. */
 static void ForestGolem_SignalMapObject(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;

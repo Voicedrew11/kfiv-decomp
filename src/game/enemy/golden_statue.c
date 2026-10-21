@@ -138,7 +138,7 @@ static void GoldenStatue_ThinkWaitAtPost(Entity *entity, s32 run_now) {
     }
 }
 
-/* Helper of GoldenStatue_ThinkWaitAtPost, called while work byte unk78 is 0: walks to the point (-7900,
+/* Helper of GoldenStatue_ThinkWaitAtPost, called while ai_state.move_choice is 0: walks to the point (-7900,
    spawn y, 3050), sets unk78 within 50 of it, and starts the move action. */
 static void GoldenStatue_WalkToPost(Entity *entity, s32 run_now) {
     f32 point[4];
@@ -163,10 +163,10 @@ static void GoldenStatue_WalkToPost(Entity *entity, s32 run_now) {
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
-/* Helper of GoldenStatue_ThinkWaitAtPost, called while work bytes unk78 and unk79 are set: clears unk78
+/* Helper of GoldenStatue_ThinkWaitAtPost, called while ai_state.move_choice and turn_in_place are set: clears unk78
    when the entity is more than 100 from the point (-7900, spawn y, 3050); starts the attack
    EntityAi_PickAttack picks when EntityAi_CanAttack says so and EntitySight_EntityInWay does not; else turns on the spot
-   to the heading in work float unk48, clears unk79 once it is within the turn limit of it, and
+   to the heading in ai_state.part_angle_x, clears unk79 once it is within the turn limit of it, and
    starts the move action. */
 static void GoldenStatue_TurnAtPost(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -203,9 +203,9 @@ static void GoldenStatue_TurnAtPost(Entity *entity, s32 run_now) {
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
-/* Helper of GoldenStatue_ThinkWaitAtPost, called while work byte unk78 is set and unk79 is 0: attacks as
+/* Helper of GoldenStatue_ThinkWaitAtPost, called while ai_state.move_choice is set and unk79 is 0: attacks as
    GoldenStatue_TurnAtPost does; else, when Entity.heading_to_player is more than 30 degrees off its
-   heading, keeps it in work float unk48 and sets unk79; starts the move action. */
+   heading, keeps it in ai_state.part_angle_x and sets unk79; starts the move action. */
 static void GoldenStatue_StandAtPost(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 angle;
@@ -255,7 +255,7 @@ static void GoldenStatue_ThinkNoStates(Entity *entity, s32 run_now) {
    spawn point than EntitySpawnInfo.wander_radius and EntityAi_MeleeAttack (EntityAi_CanMelee, EntityAi_PickMeleeAttack)
    with the player nearer. While the player's x is below -7900 it goes to one of three posts at x
    -8000, picked by the player's z, and from there turns to the player and starts the ranged attack
-   only (work byte unk78 says it is at the post; on arriving it prints golden_statue_arrived_message, "tuitayo",
+   only (ai_state.move_choice says it is at the post; on arriving it prints golden_statue_arrived_message, "tuitayo",
    Japanese for "arrived"); else it closes in on the player as EntityAi_ThinkCombat does. */
 static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -418,7 +418,7 @@ static void GoldenStatue_Move(Entity *entity) {
     }
 }
 
-/* Helper of GoldenStatue_Animate: adds work float unk4C to the x rotation of model part 15. Before
+/* Helper of GoldenStatue_Animate: adds ai_state.part_angle_y to the x rotation of model part 15. Before
    frame 43 unk4C goes towards the pitch to a point 400 above the player (EntityMath_EaseAngleToward, rate 10);
    from frame 54 it is scaled by (67 - frame) / 14. */
 static void GoldenStatue_AimPart15AbovePlayer(Entity *entity) {
@@ -447,7 +447,7 @@ static void GoldenStatue_AimPart15AbovePlayer(Entity *entity) {
 }
 
 /* The animate handler: as EntityAi_Animate; during animation 23 of an attack (busy bit 1) it also
-   calls GoldenStatue_AimPart15AbovePlayer, and otherwise clears work float unk4C. */
+   calls GoldenStatue_AimPart15AbovePlayer, and otherwise clears ai_state.part_angle_y. */
 static void GoldenStatue_Animate(Entity *entity) {
     f32 limits[4];
     s32 look_at_target;

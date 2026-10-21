@@ -67,7 +67,7 @@ void Slasher_Init(Entity *entity) {
 }
 
 /* The on_hit handler: as EntityAi_OnHit, but a light hit starts EntityAi_ReactionHeavy too
-   (EntityAi_ReactionRewind while flag bit 19 is set); it then sets work byte unk7A and flag bits 32
+   (EntityAi_ReactionRewind while flag bit 19 is set); it then sets ai_state.step_index and flag bits 32
    and 33 and calls Slasher_AlertSameKind. */
 static void Slasher_OnHit(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -96,7 +96,7 @@ static void Slasher_OnHit(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, but states 1 and 2 both have EntityAi_ThinkCombat (and
-   clear work byte unk7A) and state 0 starts Slasher_WaitForPlayerNear. Every frame it starts effect
+   clear ai_state.step_index) and state 0 starts Slasher_WaitForPlayerNear. Every frame it starts effect
    EntityParams.type_param_0 at the points Model_GetSkinnedBonePoint gives for 30 and 31. */
 static void Slasher_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -140,7 +140,7 @@ static void Slasher_ThinkStandStill(Entity *entity, s32 run_now) {
 }
 
 /* An action (busy bit 0x1000) that the set-up function and state 0 of Slasher_Think start:
-   keeps animation 0 until the player is within EntityParams.near_distance or work byte unk7A is set; then
+   keeps animation 0 until the player is within EntityParams.near_distance or ai_state.step_index is set; then
    it sets flag bits 32 and 33 and unk7A, calls Slasher_AlertSameKind and thinks. */
 static void Slasher_WaitForPlayerNear(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -165,7 +165,7 @@ static void Slasher_WaitForPlayerNear(Entity *entity) {
     }
 }
 
-/* Sets work byte unk7A of every other live entity with the same params within EntityParams.far_distance (on the
+/* Sets ai_state.step_index of every other live entity with the same params within EntityParams.far_distance (on the
    ground) of this one, which ends its Slasher_WaitForPlayerNear. */
 static void Slasher_AlertSameKind(Entity *entity) {
     Entity *other_entity = active_entities_head;

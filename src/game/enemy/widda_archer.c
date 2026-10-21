@@ -78,7 +78,7 @@ void WiddaArcher_Init(Entity *entity) {
 }
 
 /* The animate handler: as EntityAi_Animate; during animations 23 and 24, once blended in,
-   WiddaArcher_PitchPartToPlayer pitches a model part (else work float unk58 is cleared), and
+   WiddaArcher_PitchPartToPlayer pitches a model part (else ai_state.heading_speed is cleared), and
    WiddaArcher_AimPartsAtTarget turns two more. */
 static void WiddaArcher_Animate(Entity *entity) {
     f32 limits[4];
@@ -112,7 +112,7 @@ static void WiddaArcher_Animate(Entity *entity) {
 }
 
 /* Helper of WiddaArcher_Animate: pitches the model part EntityParams.action_frames names towards the
-   player, at most 50 degrees either way (work float unk58, rate 5). */
+   player, at most 50 degrees either way (ai_state.heading_speed, rate 5). */
 static void WiddaArcher_PitchPartToPlayer(Entity *entity) {
     EntityController *controller;
     EntityModelPart80 *part;
@@ -136,7 +136,7 @@ static void WiddaArcher_PitchPartToPlayer(Entity *entity) {
 
 /* Helper of WiddaArcher_Animate: turns model parts 20 and 21 towards the target, pitch from the
    player's height (at most 30 degrees) and yaw from the bearing (at most 40), each part by half of
-   it; the angles are work floats unk48 to unk54. Without a target or while the entity is busy it
+   it; the angles are ai_state.part_angle_x to pitch_speed. Without a target or while the entity is busy it
    reads the angles of parts 30 and 31 into them instead. */
 static void WiddaArcher_AimPartsAtTarget(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;

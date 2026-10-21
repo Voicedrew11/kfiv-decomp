@@ -76,7 +76,7 @@ void SkeletonSoldier_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think; in state 2 with flag bit 32 set it first plays
-   SkeletonSoldier_PlayAnim17 once (work word unk6C says whether it has; state 0 clears it). */
+   SkeletonSoldier_PlayAnim17 once (ai_state.mode_timer says whether it has; state 0 clears it). */
 static void SkeletonSoldier_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 

@@ -101,7 +101,7 @@ static void ParaStool_Think(Entity *entity, s32 run_now) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but its one attack is
-   ParaStool_MeleeAttack0, started only when the pause in work word unk68 is over (which it then
+   ParaStool_MeleeAttack0, started only when the pause in ai_state.pause_timer is over (which it then
    sets to EntityParams.pitch_limit_deg); closing in never runs. */
 static void ParaStool_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;

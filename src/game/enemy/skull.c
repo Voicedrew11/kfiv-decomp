@@ -77,10 +77,10 @@ void Skull_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with Skull_ThinkCombat for state 2. It keeps flag
    bits 22 and 28 set except in the death action. While bit 28 is set and no attack runs it adds
-   command bit 0x20 or 0x10 (work byte unk7A), chosen anew every 20 to 34 frames (work word unk6A)
+   command bit 0x20 or 0x10 (ai_state.step_index), chosen anew every 20 to 34 frames (ai_state.sub_timer)
    so as to keep its y between 300 and 100 below the player's; then Skull_ApplyMoveCommand moves
-   the entity. When work word unk68 has run below 0 it draws new values for
-   Skull_SwingPart3 (work bytes unk7B and unk7C). */
+   the entity. When ai_state.pause_timer has run below 0 it draws new values for
+   Skull_SwingPart3 (ai_state.action_flags and action_counter). */
 static void Skull_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -150,7 +150,7 @@ static void Skull_Think(Entity *entity, s32 run_now) {
 
 /* The think function of state 2: as EntityAi_ThinkCombat with Skull_RangedAttack0 as the
    ranged attack. It attacks only while its y is between 300 and 50 below the player's; otherwise it
-   sets the choice of command bit 0x20 or 0x10 (work byte unk7A) for 15 to 29 frames. One time in
+   sets the choice of command bit 0x20 or 0x10 (ai_state.step_index) for 15 to 29 frames. One time in
    three it closes in with command bit 0x40. */
 static void Skull_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -434,9 +434,9 @@ static void Skull_ApplyMoveCommand(Entity *entity) {
     entity->move_delta_z += ENTITY_SCRATCH_VECTOR[2];
 }
 
-/* Helper of Skull_Animate: swings angle unk50[0] of model part 3 up to work byte unk7B
-   degrees and back to 0 over twice work byte unk7C frames, counted down in work word unk68; the
-   angle is kept in work float unk50. */
+/* Helper of Skull_Animate: swings angle unk50[0] of model part 3 up to ai_state.action_flags
+   degrees and back to 0 over twice ai_state.action_counter frames, counted down in ai_state.pause_timer; the
+   angle is kept in ai_state.part_angle_z. */
 static void Skull_SwingPart3(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityModelPart80 *part = &((EntityModelPart80 *)entity->model->parts)[3];

@@ -97,7 +97,7 @@ static void MutantWall_Think(Entity *entity, s32 run_now) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat with the type's own two attacks; it calls
-   EntityAi_PickCombatChoice with 1, sets work byte unk79 to 1, and closing in does not use EntityAi_ClearTurnInPlace. */
+   EntityAi_PickCombatChoice with 1, sets ai_state.turn_in_place to 1, and closing in does not use EntityAi_ClearTurnInPlace. */
 static void MutantWall_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
@@ -338,8 +338,8 @@ static void MutantWall_Animate(Entity *entity) {
 }
 
 /* Helper of MutantWall_Animate: turns model part 2 in y towards the player, at most 45 degrees
-   either way (work float unk4C, rate 10); without a target it only reads the part's angles into
-   work floats unk48 and unk4C. */
+   either way (ai_state.part_angle_y, rate 10); without a target it only reads the part's angles into
+   ai_state.part_angle_x and part_angle_y. */
 static void MutantWall_TurnPart2ToPlayer(Entity *entity) {
     EntityAiStateKind1740A8 *ai_state = (EntityAiStateKind1740A8 *)&entity->ai_state;
     EntityModelPart80 *parts = (EntityModelPart80 *)entity->model->parts;

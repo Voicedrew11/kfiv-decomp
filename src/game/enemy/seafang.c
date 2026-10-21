@@ -70,7 +70,7 @@ void Seafang_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think with the type's own functions for the states. Before that it
-   reads EntityCollision_DistanceToGround at the entity's position into work float unk48, moves the entity in y by it,
+   reads EntityCollision_DistanceToGround at the entity's position into ai_state.part_angle_x, moves the entity in y by it,
    and starts Seafang_DeathWithoutDrop when it is above 0. */
 static void Seafang_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -136,7 +136,7 @@ static void Seafang_ThinkIdle(Entity *entity, s32 run_now) {
 }
 
 /* The think function of states 1 and 2: as EntityAi_ThinkCombat, but it closes in, at the run, on a
-   point off the player in y (by work float unk4C), and its melee attack is always record 0. */
+   point off the player in y (by ai_state.part_angle_y), and its melee attack is always record 0. */
 static void Seafang_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
@@ -277,7 +277,7 @@ static void Seafang_ThinkWander(Entity *entity, s32 run_now) {
 /* The think function of states 1 and 2 for Seafang_ThinkLowerGradually: as
    EntityAi_ThinkCombat, closing in at the run (command bit 0x40) on the player's own position,
    where Seafang_ThinkCombat goes for a point off the player in y; the melee attack is record 0
-   while work float unk48 is below -80. */
+   while ai_state.part_angle_x is below -80. */
 static void Seafang_ThinkCombatRunAtPlayer(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];

@@ -246,7 +246,7 @@ static void DarkFlower_Move(Entity *entity) {
 
 /* The ranged attack with record 0 (busy bit 1): animation 23, no turning. From frame
    EntityParams.pitch_limit_deg to unk432 it launches shots (EntityAi_LaunchShots) every unk434 frames, taking
-   records 1 and 0 in turn (work byte unk7A), or record 0 every frame when unk434 is 0.
+   records 1 and 0 in turn (ai_state.step_index), or record 0 every frame when unk434 is 0.
    DarkFlower_ThinkCombat starts it for record 0 only. */
 static void DarkFlower_RangedAttack0(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;

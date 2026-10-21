@@ -145,7 +145,7 @@ static void Salamander_Animate(Entity *entity) {
 }
 
 /* The on_hit handler: as EntityAi_OnHit with the type's own three reactions; it leaves flag bit 10
-   as it is and sets work byte unk7A. */
+   as it is and sets ai_state.step_index. */
 static void Salamander_OnHit(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -444,7 +444,7 @@ static void Salamander_RangedAttack(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with EntityAi_CheckFarFromSpawn3D where that one calls EntityAi_CheckFarFromSpawn,
    Salamander_ThinkReturn while flag bit 53 is set, Salamander_ThinkCombat for states 1 and 2,
-   and Salamander_ThinkWanderAndShoot for state 0 and, as long as work byte unk7A is 0 (Salamander_OnHit sets it),
+   and Salamander_ThinkWanderAndShoot for state 0 and, as long as ai_state.step_index is 0 (Salamander_OnHit sets it),
    for every state. Keeps animation 3 on the second motion slot except in the death action. */
 static void Salamander_Think(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -546,7 +546,7 @@ static void Salamander_ThinkReturn(Entity *entity, s32 run_now) {
     EntityAi_StartAction(entity, ai_state->move, run_now);
 }
 
-/* The think function of state 0, and of every state until Salamander_OnHit sets work byte unk7A: starts
+/* The think function of state 0, and of every state until Salamander_OnHit sets ai_state.step_index: starts
    Salamander_RangedAttack (EntityAi_PickRangedAttack picks the record) when the player is in view
    (EntityAi_IsPointInView with EntityParams.type_param_0 and type_param_1 degrees and type_param_2) and the pause in work word
    unk6A (EntityParams.far_distance) is over; else moves in three dimensions to a random point near the spawn point
@@ -588,12 +588,12 @@ static void Salamander_ThinkWanderAndShoot(Entity *entity, s32 run_now) {
 }
 
 /* The think function of states 1 and 2: it has none of EntityAi_ThinkCombat's guard, dodge and draw
-   among the actions, but a sequence in work byte unk78. 0: goes for a point 220 below the player
+   among the actions, but a sequence in ai_state.move_choice. 0: goes for a point 220 below the player
    until the player is nearer than EntityParams.action_frames. 1: goes for a point 190 below the player,
    and when EntityAi_IsPointInView finds that point within the angles EntityParams.type_param_0 and type_param_1 and the
    distance type_param_2, starts Salamander_RangedAttack or Salamander_MeleeAttack as EntityAi_PickAttack
    draws. 2: goes for a point 800 from the player along the reverse of Entity.heading_to_player, at the spawn
-   point's y, for EntityParams.near_distance frames (work word unk68) or until the player is unk434 away.
+   point's y, for EntityParams.near_distance frames (ai_state.pause_timer) or until the player is unk434 away.
    The commands come from EntityAi_MoveCommand3D, or EntityAi_PushTurnCommand3D while it is pushed. */
 static void Salamander_ThinkCombat(Entity *entity, s32 run_now) {
     EntityAiState *ai_state = &entity->ai_state;
