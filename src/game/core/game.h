@@ -245,7 +245,7 @@ typedef struct {
     char pad34[0x0C];
 } GameDefinitionWords;
 
-/* a GameDefinition as the save code reads it (Game_WriteSaveImage, Game_ReadSaveImage): unk33 is the top byte of flags */
+/* a GameDefinition as the save code reads it (Game_WriteSaveImage, Game_ReadSaveImage): GameDefinition.weight_tenths_of_kilogram is the top byte of flags */
 typedef struct {
     char pad00[0x30];
     u32 flags;                      /* 0x30 bits 18 and 19 are a state; below 2 it is saved as one bit */

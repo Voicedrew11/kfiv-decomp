@@ -179,7 +179,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
     model->colour_green = 128.0f;
     model->colour_blue = 128.0f;
     model->alpha = 128.0f;
-    /* the first block with a nonzero unk37 in the whole model gets unk61 = 2 */
+    /* the first block in the whole model with a nonzero texture_word.clut_base loads its CLUT to CBP0 */
     for (i = 0, part = model->parts; i < file->part_count; i++, part++) {
         data = (ModelPartData *)(u32)part->data_addr;
         for (j = 0; j < part->data_count; j++) {
