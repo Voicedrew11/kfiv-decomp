@@ -48,24 +48,60 @@
  *    pinned ones (&&label) split the block for CSE too. A whole-block static inline helper gives 60 or more, and
  *    ee-gcc 2.96 already differs at the start of the function.
  *
+ * Sixth pass (the compiler source read for every way an insn can come to depend on what precedes it; no source form
+ * found, the C below is unchanged apart from today's names):
+ *  - The second pass issues two instructions a cycle (ISSUE_RATE is 2 for the r5900): one floating-point operation
+ *    and one filler. Counted so, retail's four float loads become ready at cycle 17, the cycle after the "to" blue
+ *    byte is converted, and `addiu $2,$9,0xB0` at cycle 25, the cycle after the second near-distance multiply; all
+ *    else is issued as here. Put another way, retail reads as three runs of 25, 13 and 12 instructions, each scheduled
+ *    like a block of its own (the loads fill the second run's first cycles, the addiu the third's first cycle).
+ *  - haifa-sched.c never clears LOG_LINKS: the first pass inherits the links of flow and combine, the second pass
+ *    every link of the first whose two insns are still in one block (the dumps show them piling up). Register links
+ *    carried over are ones the second pass finds anyway; memory, barrier and stale links are not. It is the one
+ *    mechanism found that gives the second pass a dependence with no register or memory in common.
+ *  - Ruled out from the source: the pending-list flush (above 32 references; the flushing insn is a store and retail
+ *    issues all ten loads before the five stores); loop, EH and setjmp notes (the insn after the note depends on every
+ *    earlier setter at full cost, and the block would split in source order, which retail's split is not); the unused
+ *    GPR scratch of fix_truncsfsi2 (an output dependence, cost 1); no-op moves (reload_cse_regs deletes them before
+ *    the second pass); an unused label or a jump to the next insn inside the block (find_basic_blocks merges such
+ *    blocks before either pass; two identical arms that jump2 would cross-jump away were not tried); interblock
+ *    motion (the switch tables make the CFG "nonregular": both passes schedule single blocks);
+ *    update_equiv_regs in local-alloc (it re-emits only single-use constants defined in another block); the
+ *    LOOP_ALIGN of a do { } while (0) lands on the next label wherever it is, here the unaligned else label.
+ *  - Tried without moving the loads: bit-field views of the colour (64-bit fields add dsll32/dsra32, 32-bit ones
+ *    compile like u8 members), u8 pointer variables and indexed access (cse resolves them; `*p++` changes the code),
+ *    u32 temporaries (the unsigned fix-up branch stays), the int or the two fade variables shared with the other
+ *    blends, the float statements before or after the colour statements, (u8) casts. The plain form with the two
+ *    float statements first and one int temporary differs in 41.
+ *
  * The struct views below are local because the file is not part of the build; when the function matches they belong
- * in map/map.h (MapLightBlock = MapSlotUnk10Words as two 4x4 float matrices, 8-aligned so that copies use ld/sd;
- * MapDrawStateBlend = D_0038A1B0 as this function sees it; MapHeader gains fog_colors[4][4] at 0x50 and the f32 draw
+ * in map/map.h (MapLightBlockFloats = MapLightBlock as two 4x4 float matrices, 8-aligned so that copies use ld/sd;
+ * MapDrawStateBlend = map_draw_state as this function sees it; MapHeader gains fog_colors[4][4] at 0x50 and the f32 draw
  * distance at 0x7C; MapRecordBits gains bit 26, "in view").
  */
+#define MAP_DRAW_STATE_DEFINITION /* map_draw_state is declared below as this function sees it */
 #include "map/map.h"
+#include "map/map_scroll.h"
 #include "entity/entity.h"
+#include "enemy/enemy.h"
 #include "player/player.h"
 #include "core/game.h"
+#include "core/file.h"
+#include "core/memory.h"
 #include "collision/collision.h"
+#include "math/camera.h"
+#include "math/vu0.h"
+#include "model/model_matrix.h"
+#include "libvu0.h"
+#include "math.h"
 
 typedef struct {
     f32 unk00[4][4];
     f32 unk40[4][4];
-} __attribute__((aligned(8))) MapLightBlock;
+} __attribute__((aligned(8))) MapLightBlockFloats;
 
 typedef struct {
-    MapLightBlock blocks[0x20];
+    MapLightBlockFloats blocks[0x20];
 } MapLightRow;
 
 typedef struct {
@@ -93,17 +129,17 @@ typedef struct {
     u8 unk9B;
     u8 unk9C;
     char pad9D[0x03];
-    MapSlotUnk0CValues unkA0;
-    MapLightBlock unkC0;
-    MapSlotUnk0CValues unk140;
-    MapSlotUnk0CValues unk160;
-    MapLightBlock unk180;
-    MapLightBlock unk200;
+    MapFogBlockValues unkA0;
+    MapLightBlockFloats unkC0;
+    MapFogBlockValues unk140;
+    MapFogBlockValues unk160;
+    MapLightBlockFloats unk180;
+    MapLightBlockFloats unk200;
     u8 fog[4];
     u8 fog_from[4];
     u8 fog_to[4];
     char pad28C[0x04];
-    MapSlotUnk0CValues unk290[2][0x20];
+    MapFogBlockValues unk290[2][0x20];
     MapLightRow unkA90[2];
     f32 unk2A90;
     f32 unk2A94;
@@ -111,35 +147,11 @@ typedef struct {
     char pad2A9C[0x04];
 } MapDrawStateBlend;
 
-extern MapSlot D_0038CD20[];
-extern MapDrawStateBlend D_0038A1B0;
-extern PlayerState D_00413F80;
-extern CameraState camera_state;
-extern f32 identity_matrix[16];
-extern f32 world_screen_matrix[16];
-extern MapDrawRecord *record_draw_lists[2];
-extern MapDrawRecord *late_record_draw_lists[2];
-extern int current_map_slot;
-
-void *memset(void *, int, u32);
-float cosf(float);
-float sinf(float);
-void func_00116F90(void);
-void func_001175F0(void);
-void Memory_CopyWords(s32 *, s32 *, u32);
-int func_00116C08(int, int, int, int);
-void func_00112018(ModelInstance *);
-void func_00216778(void *, void *);
-void func_00216B48(void *, void *, void *);
-void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
-void sceVu0CopyMatrix(void *, void *);
-void sceVu0RotMatrixX(float *, float *, float);
-void sceVu0RotMatrixY(float *, float *, float);
-void sceVu0RotMatrixZ(float *, float *, float);
-void sceVu0TransMatrix(float *, float *, float *);
+extern MapDrawStateBlend map_draw_state;
+void Wobble_ApplyWaveUvs(ModelInstance *);
 
 #define BOUNDS(record) ((MapRecordBounds *)(record))
-#define RECORD_FLAGS(record) (((MapRecord *)(record))->unk38)
+#define RECORD_FLAGS(record) (((MapRecord *)(record))->record_flags)
 
 #define CLAMP_UNIT(value) \
     if ((value) < 0.0f) { \
@@ -158,7 +170,9 @@ void sceVu0TransMatrix(float *, float *, float *);
     (ROW_DIFFERS(a, b, 0) || ROW_DIFFERS(a, b, 1) || ROW_DIFFERS(a, b, 2) || ROW_DIFFERS(a, b, 3) || \
      ROW2_DIFFERS(a, b, 0) || ROW2_DIFFERS(a, b, 1) || ROW2_DIFFERS(a, b, 2) || ROW2_DIFFERS(a, b, 3))
 
-#define FOG_DIFFERS(a, b) ((a).unk08 != (b)->unk08 || (a).unk0C != (b)->unk0C || (a).unk10 != (b)->unk10)
+#define FOG_DIFFERS(a, b) \
+    ((a).fog_base_value != (b)->fog_base_value || (a).fog_inverse_depth_scale != (b)->fog_inverse_depth_scale || \
+     (a).fog_colour != (b)->fog_colour)
 
 #define CORNER_DISTANCE(x, z) \
     delta_x = (x) - camera_state.position[0]; \
@@ -171,22 +185,22 @@ void sceVu0TransMatrix(float *, float *, float *);
         distance = delta_z * 0.9604f + delta_x * 0.3978f; \
     }
 
-#define UPDATE_MODEL_MATRIX(record)     sceVu0CopyMatrix((record)->model->unk40, identity_matrix);     MODEL_MATRIX((record)->model)[0][0] *= (record)->model->unkE0;     MODEL_MATRIX((record)->model)[1][1] *= (record)->model->unkE4;     MODEL_MATRIX((record)->model)[2][2] *= (record)->model->unkE8;     sceVu0RotMatrixX((f32 *)(record)->model->unk40, (f32 *)(record)->model->unk40, (record)->model->rotation.x);     sceVu0RotMatrixY((f32 *)(record)->model->unk40, (f32 *)(record)->model->unk40, (record)->model->rotation.y);     sceVu0RotMatrixZ((f32 *)(record)->model->unk40, (f32 *)(record)->model->unk40, (record)->model->rotation.z);     sceVu0TransMatrix((f32 *)(record)->model->unk40, (f32 *)(record)->model->unk40, &(record)->model->position.x);     func_00216B48((record)->model, world_screen_matrix, (record)->model->unk40);     for (k = 0; k < (record)->model->part_count; k++) {         func_0020B8B0((record)->model, &(record)->model->parts[k], &(record)->model->parts[k]);     }     sceVu0CopyMatrix((record)->model->unk80, (record)->model->unk40)
+#define UPDATE_MODEL_MATRIX(record)     sceVu0CopyMatrix((record)->model->model_matrix, identity_matrix);     MODEL_MATRIX((record)->model)[0][0] *= (record)->model->scale_x;     MODEL_MATRIX((record)->model)[1][1] *= (record)->model->scale_y;     MODEL_MATRIX((record)->model)[2][2] *= (record)->model->scale_z;     sceVu0RotMatrixX((f32 *)(record)->model->model_matrix, (f32 *)(record)->model->model_matrix, (record)->model->rotation.x);     sceVu0RotMatrixY((f32 *)(record)->model->model_matrix, (f32 *)(record)->model->model_matrix, (record)->model->rotation.y);     sceVu0RotMatrixZ((f32 *)(record)->model->model_matrix, (f32 *)(record)->model->model_matrix, (record)->model->rotation.z);     sceVu0TransMatrix((f32 *)(record)->model->model_matrix, (f32 *)(record)->model->model_matrix, &(record)->model->position.x);     Matrix_Multiply((record)->model, world_screen_matrix, (record)->model->model_matrix);     for (k = 0; k < (record)->model->part_count; k++) {         ModelMatrix_BuildPartLocal((record)->model, &(record)->model->parts[k], &(record)->model->parts[k]);     }     sceVu0CopyMatrix((record)->model->collision_matrix, (record)->model->model_matrix)
 
 typedef struct {
     u8 red;
     u8 green;
     u8 blue;
 } MapFogRgb;
-#define FOG_COLOR(fog) ((MapFogRgb *)&(fog)->unk10)
+#define FOG_COLOR(fog) ((MapFogRgb *)&(fog)->fog_colour)
 
 void Map_UpdateDrawState(void) {
     f32 unused_vector[4];
     f32 unused_matrix[32];
     MapSlot *slot;
     MapDrawRecord *record;
-    MapLightBlock *lights;
-    MapSlotUnk0CValues *fog_block;
+    MapLightBlockFloats *lights;
+    MapFogBlockValues *fog_block;
     u8 *fog;
     f32 cos_heading;
     f32 sin_heading;
@@ -213,45 +227,45 @@ void Map_UpdateDrawState(void) {
 
     memset(unused_vector, 0, sizeof(unused_vector));
     unused_vector[2] = -1.0f;
-    func_00116F90();
-    func_001175F0();
+    MapScroll_PrepareCopy();
+    MapScroll_PrepareDraw();
 
-    slot = &D_0038CD20[current_map_slot];
-    fog = ((MapHeaderFog *)slot->header)->fog_colors[(u8)(RECORD_FLAGS(slot->records + D_00413F80.map_index * 0x80) >> 24) & 3];
-    if ((D_0038A1B0.unk9C == 0 && (fog[0] != D_0038A1B0.fog[0] || fog[1] != D_0038A1B0.fog[1] || fog[2] != D_0038A1B0.fog[2])) ||
-        (D_0038A1B0.unk9C != 0 && (fog[0] != D_0038A1B0.fog_to[0] || fog[1] != D_0038A1B0.fog_to[1] || fog[2] != D_0038A1B0.fog_to[2]))) {
-        D_0038A1B0.fog_from[0] = D_0038A1B0.fog[0];
-        D_0038A1B0.fog_from[1] = D_0038A1B0.fog[1];
-        D_0038A1B0.fog_from[2] = D_0038A1B0.fog[2];
-        D_0038A1B0.fog_to[0] = fog[0];
-        D_0038A1B0.fog_to[1] = fog[1];
-        D_0038A1B0.fog_to[2] = fog[2];
-        D_0038A1B0.unk9C = 30;
+    slot = &map_slots[current_map_slot];
+    fog = ((MapHeaderFog *)slot->header)->fog_colors[(u8)(RECORD_FLAGS(slot->records + player_state.map_index * 0x80) >> 24) & 3];
+    if ((map_draw_state.unk9C == 0 && (fog[0] != map_draw_state.fog[0] || fog[1] != map_draw_state.fog[1] || fog[2] != map_draw_state.fog[2])) ||
+        (map_draw_state.unk9C != 0 && (fog[0] != map_draw_state.fog_to[0] || fog[1] != map_draw_state.fog_to[1] || fog[2] != map_draw_state.fog_to[2]))) {
+        map_draw_state.fog_from[0] = map_draw_state.fog[0];
+        map_draw_state.fog_from[1] = map_draw_state.fog[1];
+        map_draw_state.fog_from[2] = map_draw_state.fog[2];
+        map_draw_state.fog_to[0] = fog[0];
+        map_draw_state.fog_to[1] = fog[1];
+        map_draw_state.fog_to[2] = fog[2];
+        map_draw_state.unk9C = 30;
     }
-    if (D_0038A1B0.unk9C != 0) {
-        D_0038A1B0.unk9C--;
-        if (D_0038A1B0.unk9C != 0) {
-            color_out = D_0038A1B0.unk9C;
-            color_in = 30 - D_0038A1B0.unk9C;
+    if (map_draw_state.unk9C != 0) {
+        map_draw_state.unk9C--;
+        if (map_draw_state.unk9C != 0) {
+            color_out = map_draw_state.unk9C;
+            color_in = 30 - map_draw_state.unk9C;
             color_out /= 30.0f;
             color_in /= 30.0f;
             for (i = 0; i < 3; i++) {
-                value = (int)(D_0038A1B0.fog_from[i] * color_out + D_0038A1B0.fog_to[i] * color_in);
-                D_0038A1B0.fog[i] = value > 0xFF ? 0xFF : value;
+                value = (int)(map_draw_state.fog_from[i] * color_out + map_draw_state.fog_to[i] * color_in);
+                map_draw_state.fog[i] = value > 0xFF ? 0xFF : value;
             }
         }
     }
 
-    if (D_0038CD20[0].unk00 != 0) {
-        Memory_CopyWords((s32 *)D_0038A1B0.unk290[0], (s32 *)D_0038CD20[0].unk0C, 0x100);
+    if (map_slots[0].loaded != 0) {
+        Memory_CopyWords((s32 *)map_draw_state.unk290[0], (s32 *)map_slots[0].fog_blocks, 0x100);
     }
-    if (D_0038CD20[1].unk00 != 0) {
-        Memory_CopyWords((s32 *)D_0038A1B0.unk290[1], (s32 *)D_0038CD20[1].unk0C, 0x100);
+    if (map_slots[1].loaded != 0) {
+        Memory_CopyWords((s32 *)map_draw_state.unk290[1], (s32 *)map_slots[1].fog_blocks, 0x100);
     }
-    for (i = 0, slot = D_0038CD20; i < 2; i++, slot++) {
-        if (slot->unk00 != 0) {
-            lights = D_0038A1B0.unkA90[i].blocks;
-            *(MapLightRow *)lights = *(MapLightRow *)slot->unk10;
+    for (i = 0, slot = map_slots; i < 2; i++, slot++) {
+        if (slot->loaded != 0) {
+            lights = map_draw_state.unkA90[i].blocks;
+            *(MapLightRow *)lights = *(MapLightRow *)slot->light_blocks;
             for (j = 0; j < 0x20; j++, lights++) {
                 switch (slot->tag) {
                 case 0:
@@ -282,9 +296,9 @@ void Map_UpdateDrawState(void) {
                 case 99:
                     break;
                 default:
-                    lights->unk40[3][0] += D_0038A1B0.unk2A90;
-                    lights->unk40[3][1] += D_0038A1B0.unk2A94;
-                    lights->unk40[3][2] += D_0038A1B0.unk2A98;
+                    lights->unk40[3][0] += map_draw_state.unk2A90;
+                    lights->unk40[3][1] += map_draw_state.unk2A94;
+                    lights->unk40[3][2] += map_draw_state.unk2A98;
                     break;
                 }
                 CLAMP_UNIT(lights->unk40[3][0]);
@@ -294,17 +308,17 @@ void Map_UpdateDrawState(void) {
         }
     }
 
-    slot = &D_0038CD20[current_map_slot];
-    record = (MapDrawRecord *)slot->records + D_00413F80.map_index;
-    fog_block = &D_0038A1B0.unk290[current_map_slot][record->unk34];
-    if ((D_0038A1B0.unk9A == 0 && FOG_DIFFERS(D_0038A1B0.unkA0, fog_block)) || (D_0038A1B0.unk9A != 0 && FOG_DIFFERS(D_0038A1B0.unk160, fog_block))) {
-        D_0038A1B0.unk9A = 30;
-        D_0038A1B0.unk140 = D_0038A1B0.unkA0;
-        D_0038A1B0.unk160 = *fog_block;
+    slot = &map_slots[current_map_slot];
+    record = (MapDrawRecord *)slot->records + player_state.map_index;
+    fog_block = &map_draw_state.unk290[current_map_slot][record->fog_block_index];
+    if ((map_draw_state.unk9A == 0 && FOG_DIFFERS(map_draw_state.unkA0, fog_block)) || (map_draw_state.unk9A != 0 && FOG_DIFFERS(map_draw_state.unk160, fog_block))) {
+        map_draw_state.unk9A = 30;
+        map_draw_state.unk140 = map_draw_state.unkA0;
+        map_draw_state.unk160 = *fog_block;
     }
-    if (D_0038A1B0.unk9A != 0) {
-        D_0038A1B0.unk9A--;
-        if (D_0038A1B0.unk9A != 0) {
+    if (map_draw_state.unk9A != 0) {
+        map_draw_state.unk9A--;
+        if (map_draw_state.unk9A != 0) {
             { /* fog blend: the 31 instructions that differ come from here */
                 f32 blend_sum;
                 f32 green_from;
@@ -313,75 +327,75 @@ void Map_UpdateDrawState(void) {
                 f32 blue_to;
                 f32 far_to;
                 /* match: reuse the red blend temporary for the near-distance blend. */
-                fade_out = D_0038A1B0.unk9A;
-                fade_in = 30 - D_0038A1B0.unk9A;
+                fade_out = map_draw_state.unk9A;
+                fade_in = 30 - map_draw_state.unk9A;
                 fade_out /= 30.0f;
                 fade_in /= 30.0f;
-                blend_sum = FOG_COLOR(&D_0038A1B0.unk140)->red * fade_out + FOG_COLOR(&D_0038A1B0.unk160)->red * fade_in;
+                blend_sum = FOG_COLOR(&map_draw_state.unk140)->red * fade_out + FOG_COLOR(&map_draw_state.unk160)->red * fade_in;
                 blended = (int)(blend_sum);
-                FOG_COLOR(&D_0038A1B0.unkA0)->red = blended;
-                green_from = FOG_COLOR(&D_0038A1B0.unk140)->green;
-                green_to = FOG_COLOR(&D_0038A1B0.unk160)->green;
+                FOG_COLOR(&map_draw_state.unkA0)->red = blended;
+                green_from = FOG_COLOR(&map_draw_state.unk140)->green;
+                green_to = FOG_COLOR(&map_draw_state.unk160)->green;
                 green_from *= fade_out;
                 green_to *= fade_in;
                 green_from += green_to;
                 blended = (int)(green_from);
-                FOG_COLOR(&D_0038A1B0.unkA0)->green = blended;
-                blue_from = FOG_COLOR(&D_0038A1B0.unk140)->blue;
-                blue_to = FOG_COLOR(&D_0038A1B0.unk160)->blue;
+                FOG_COLOR(&map_draw_state.unkA0)->green = blended;
+                blue_from = FOG_COLOR(&map_draw_state.unk140)->blue;
+                blue_to = FOG_COLOR(&map_draw_state.unk160)->blue;
                 blue_from *= fade_out;
                 blue_to *= fade_in;
                 blue_from += blue_to;
                 blended = (int)(blue_from);
-                FOG_COLOR(&D_0038A1B0.unkA0)->blue = blended;
-                far_to = D_0038A1B0.unk160.unk0C;
+                FOG_COLOR(&map_draw_state.unkA0)->blue = blended;
+                far_to = map_draw_state.unk160.fog_inverse_depth_scale;
                 far_to *= fade_in;
-                D_0038A1B0.unkA0.unk0C = D_0038A1B0.unk140.unk0C * fade_out + far_to;
+                map_draw_state.unkA0.fog_inverse_depth_scale = map_draw_state.unk140.fog_inverse_depth_scale * fade_out + far_to;
                 /* match: the dead store into blue_to (decomp-permuter) takes this from 33 to 31. */
-                blend_sum = (blue_to = D_0038A1B0.unk160.unk08 * fade_in + D_0038A1B0.unk140.unk08 * fade_out);
-                D_0038A1B0.unkA0.unk08 = blend_sum;
+                blend_sum = (blue_to = map_draw_state.unk160.fog_base_value * fade_in + map_draw_state.unk140.fog_base_value * fade_out);
+                map_draw_state.unkA0.fog_base_value = blend_sum;
             }
         } else {
-            D_0038A1B0.unkA0 = D_0038A1B0.unk160;
+            map_draw_state.unkA0 = map_draw_state.unk160;
         }
     }
 
-    slot = &D_0038CD20[current_map_slot];
-    record = (MapDrawRecord *)slot->records + D_00413F80.map_index;
-    lights = &D_0038A1B0.unkA90[current_map_slot].blocks[record->unk35];
-    if ((D_0038A1B0.unk9B == 0 && LIGHTS_DIFFER(D_0038A1B0.unkC0, lights)) || (D_0038A1B0.unk9B != 0 && LIGHTS_DIFFER(D_0038A1B0.unk200, lights))) {
-        D_0038A1B0.unk9B = 30;
-        D_0038A1B0.unk180 = D_0038A1B0.unkC0;
-        D_0038A1B0.unk200 = *lights;
+    slot = &map_slots[current_map_slot];
+    record = (MapDrawRecord *)slot->records + player_state.map_index;
+    lights = &map_draw_state.unkA90[current_map_slot].blocks[record->light_block_index];
+    if ((map_draw_state.unk9B == 0 && LIGHTS_DIFFER(map_draw_state.unkC0, lights)) || (map_draw_state.unk9B != 0 && LIGHTS_DIFFER(map_draw_state.unk200, lights))) {
+        map_draw_state.unk9B = 30;
+        map_draw_state.unk180 = map_draw_state.unkC0;
+        map_draw_state.unk200 = *lights;
     }
-    if (D_0038A1B0.unk9B != 0) {
-        D_0038A1B0.unk9B--;
-        if (D_0038A1B0.unk9B != 0) {
-            light_out = D_0038A1B0.unk9B;
-            light_in = 30 - D_0038A1B0.unk9B;
+    if (map_draw_state.unk9B != 0) {
+        map_draw_state.unk9B--;
+        if (map_draw_state.unk9B != 0) {
+            light_out = map_draw_state.unk9B;
+            light_in = 30 - map_draw_state.unk9B;
             light_out /= 30.0f;
             light_in /= 30.0f;
             for (i = 0; i < 4; i++) {
                 for (j = 0; j < 4; j++) {
-                    D_0038A1B0.unkC0.unk00[i][j] = D_0038A1B0.unk180.unk00[i][j] * light_out + D_0038A1B0.unk200.unk00[i][j] * light_in;
-                    D_0038A1B0.unkC0.unk40[i][j] = D_0038A1B0.unk180.unk40[i][j] * light_out + D_0038A1B0.unk200.unk40[i][j] * light_in;
+                    map_draw_state.unkC0.unk00[i][j] = map_draw_state.unk180.unk00[i][j] * light_out + map_draw_state.unk200.unk00[i][j] * light_in;
+                    map_draw_state.unkC0.unk40[i][j] = map_draw_state.unk180.unk40[i][j] * light_out + map_draw_state.unk200.unk40[i][j] * light_in;
                 }
             }
         } else {
-            D_0038A1B0.unkC0 = D_0038A1B0.unk200;
+            map_draw_state.unkC0 = map_draw_state.unk200;
         }
     }
 
-    D_0038A1B0.mode = 0;
+    map_draw_state.mode = 0;
     record_draw_lists[0] = record_draw_lists[1] = NULL;
     late_record_draw_lists[0] = late_record_draw_lists[1] = NULL;
-    cos_heading = cosf(D_00413F80.rotation.y);
-    sin_heading = sinf(D_00413F80.rotation.y);
-    player_x = D_00413F80.position.x;
-    player_z = D_00413F80.position.z;
+    cos_heading = cosf(player_state.rotation.y);
+    sin_heading = sinf(player_state.rotation.y);
+    player_x = player_state.position.x;
+    player_z = player_state.position.z;
     for (i = 0; i < 2; i++) {
-        slot = &D_0038CD20[i];
-        if (slot->unk00 != 0) {
+        slot = &map_slots[i];
+        if (slot->loaded != 0) {
             record = (MapDrawRecord *)slot->records + (slot->header->record_count - 1);
             for (j = slot->header->record_count - 1; j >= 0; j--, record--) {
                 if (record->flags & 0x10000000) {
@@ -391,17 +405,17 @@ void Map_UpdateDrawState(void) {
                 if (record->flags & 0x40000000) {
                     continue;
                 }
-                if (BOUNDS(record)->unk30 == 0xFFFF) {
+                if (BOUNDS(record)->model_index == 0xFFFF) {
                     continue;
                 }
                 if (((MapHeaderFog *)slot->header)->draw_distance > 0.0f) {
-                    CORNER_DISTANCE(BOUNDS(record)->unk40[0], BOUNDS(record)->unk40[2]);
+                    CORNER_DISTANCE(BOUNDS(record)->box_lowest[0], BOUNDS(record)->box_lowest[2]);
                     if (distance > ((MapHeaderFog *)slot->header)->draw_distance) {
-                        CORNER_DISTANCE(BOUNDS(record)->unk40[0], BOUNDS(record)->unk50[2]);
+                        CORNER_DISTANCE(BOUNDS(record)->box_lowest[0], BOUNDS(record)->box_highest[2]);
                         if (distance > ((MapHeaderFog *)slot->header)->draw_distance) {
-                            CORNER_DISTANCE(BOUNDS(record)->unk50[0], BOUNDS(record)->unk40[2]);
+                            CORNER_DISTANCE(BOUNDS(record)->box_highest[0], BOUNDS(record)->box_lowest[2]);
                             if (distance > ((MapHeaderFog *)slot->header)->draw_distance) {
-                                CORNER_DISTANCE(BOUNDS(record)->unk50[0], BOUNDS(record)->unk50[2]);
+                                CORNER_DISTANCE(BOUNDS(record)->box_highest[0], BOUNDS(record)->box_highest[2]);
                                 if (distance > ((MapHeaderFog *)slot->header)->draw_distance) {
                                     continue;
                                 }
@@ -409,12 +423,12 @@ void Map_UpdateDrawState(void) {
                         }
                     }
                 }
-                side_x0 = (BOUNDS(record)->unk40[0] - player_x) * sin_heading;
-                side_z0 = (BOUNDS(record)->unk40[2] - player_z) * cos_heading;
+                side_x0 = (BOUNDS(record)->box_lowest[0] - player_x) * sin_heading;
+                side_z0 = (BOUNDS(record)->box_lowest[2] - player_z) * cos_heading;
                 if (!(side_x0 + side_z0 >= 0.0f)) {
-                    side_x1 = (BOUNDS(record)->unk50[0] - player_x) * sin_heading;
+                    side_x1 = (BOUNDS(record)->box_highest[0] - player_x) * sin_heading;
                     if (!(side_x1 + side_z0 >= 0.0f)) {
-                        side_z1 = (BOUNDS(record)->unk50[2] - player_z) * cos_heading;
+                        side_z1 = (BOUNDS(record)->box_highest[2] - player_z) * cos_heading;
                         if (!(side_x1 + side_z1 >= 0.0f)) {
                             if (!(side_x0 + side_z1 >= 0.0f)) {
                                 continue;
@@ -422,17 +436,17 @@ void Map_UpdateDrawState(void) {
                         }
                     }
                 }
-                if (func_00116C08(current_map_slot, D_00413F80.unk250, i, BOUNDS(record)->unk38) == 0) {
+                if (Map_TestFlagBlockBit(current_map_slot, player_state.record_flag_block, i, BOUNDS(record)->flag_block_bit) == 0) {
                     continue;
                 }
                 BITS2(record)->in_view = TRUE;
-                if (D_0038A1B0.mode == 0) {
+                if (map_draw_state.mode == 0) {
                     if (record->flags & 2) {
-                        D_0038A1B0.mode = 1;
-                        D_0038A1B0.mirror_height = BOUNDS(record)->position[1];
+                        map_draw_state.mode = 1;
+                        map_draw_state.mirror_height = BOUNDS(record)->position[1];
                     } else if (record->flags & 0x200) {
-                        D_0038A1B0.mode = 2;
-                        D_0038A1B0.mirror_height = BOUNDS(record)->position[1];
+                        map_draw_state.mode = 2;
+                        map_draw_state.mirror_height = BOUNDS(record)->position[1];
                     }
                 }
                 if (!(record->flags & 1)) {
@@ -443,13 +457,13 @@ void Map_UpdateDrawState(void) {
                     late_record_draw_lists[i] = record;
                 }
                 if (record->flags < 0) {
-                    func_00216778(&record->model->position, &D_00413F80);
+                    Vector_Copy(&record->model->position, &player_state);
                 }
                 if (!(record->flags & 0x10000000)) {
                     UPDATE_MODEL_MATRIX(record);
                 }
                 if (record->flags & 0x100) {
-                    func_00112018(record->model);
+                    Wobble_ApplyWaveUvs(record->model);
                 }
             }
         }
