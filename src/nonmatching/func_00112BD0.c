@@ -98,6 +98,28 @@
  *    three bytes (other code, 1379 instructions); a local copy of the timer (changes the code before the block). About 11,500
  *    plain forms of the five statements scored with the links injected: none reproduces retail's registers.
  *
+ * Eighth pass (same hooked compiler; nothing below changes the target of the seventh pass):
+ *  - Reproducing it: the hooked compiler is /home/sean/eegcc-kf on the WSL machine it was built on (cc1-kf, kfcc.sh,
+ *    rebuild-kf.sh; KF_FUNC selects the function, KF_DUMP lists every LOG_LINK with kind and origin, KF_INJECT adds
+ *    links, KF_STRIP drops inherited links before the second pass, KF_SPLIT_B/C/PASS really split a block). The
+ *    scripts and the candidate source (ok_candidate.c) are in that session's scratch folder kf4, with NOTES.md.
+ *    `python3 inj.py bc14 'L<-FLBT:a:2,PD<-MNF:a:2,PD<-MNT:a:2,LFT<-LFF:a:2' 12` prints OK (1393
+ *    instructions):
+ *    L = the four float loads, FLBT = the conversion of the to-blue byte, PD = the addiu, MNF/MNT = the two near
+ *    multiplies, LFT<-LFF the tie between the far loads; a = anti, 2 = second pass.
+ *  - Really scheduling the block as three blocks in the second pass (cut before the first float load and before
+ *    the addiu) does not reproduce retail (10 differ: block-local priorities swap the two address addius and move
+ *    the red conversion). Retail scheduled one block; its three contiguous runs are what the links produce.
+ *  - A struct constructor (`x = (T){ a, b, c }`) does emit a (clobber (mem)) that acts as a store in the first pass,
+ *    but reload deletes every such clobber, so it is gone before the second pass; the compound-literal forms tried
+ *    also change the code (stack temporary or a materialised address).
+ *  - The second pass takes its blocks from a fresh find_basic_blocks after reload, so stale block tables are not
+ *    possible; RANGE notes are not scheduling barriers; no pattern this block uses has a trap, an unspec_volatile
+ *    or a scratch other than the two of fix_truncsfsi2; the pending lists are reset for each block.
+ *  - Stores written as an if/else with identical arms inside the colour statements are not merged (code grows).
+ *  - Stripping all inherited links before the second pass leaves this block's links unchanged: with today's C
+ *    nothing is inherited here that the second pass does not find itself.
+ *
  * The struct views below are local because the file is not part of the build; when the function matches they belong
  * in map/map.h (MapLightBlockFloats = MapLightBlock as two 4x4 float matrices, 8-aligned so that copies use ld/sd;
  * MapDrawStateBlend = map_draw_state as this function sees it; MapHeader gains fog_colors[4][4] at 0x50 and the f32 draw
