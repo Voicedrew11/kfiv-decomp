@@ -57,8 +57,8 @@
  *    like a block of its own (the loads fill the second run's first cycles, the addiu the third's first cycle).
  *  - haifa-sched.c never clears LOG_LINKS: the first pass inherits the links of flow and combine, the second pass
  *    every link of the first whose two insns are still in one block (the dumps show them piling up). Register links
- *    carried over are ones the second pass finds anyway; memory, barrier and stale links are not. It is the one
- *    mechanism found that gives the second pass a dependence with no register or memory in common.
+ *    carried over are ones the second pass finds anyway; memory, barrier and stale links are not. (The seventh
+ *    pass shows the missing dependences cannot have been in the first pass in this form.)
  *  - Ruled out from the source: the pending-list flush (above 32 references; the flushing insn is a store and retail
  *    issues all ten loads before the five stores); loop, EH and setjmp notes (the insn after the note depends on every
  *    earlier setter at full cost, and the block would split in source order, which retail's split is not); the unused
@@ -73,6 +73,30 @@
  *    u32 temporaries (the unsigned fix-up branch stays), the int or the two fade variables shared with the other
  *    blends, the float statements before or after the colour statements, (u8) casts. The plain form with the two
  *    float statements first and one int temporary differs in 41.
+ *
+ * Seventh pass (the compiler rebuilt from source with a hook that dumps and injects scheduler dependences; the rebuilt
+ * cc1 gives the stock compiler's bytes and RTL dumps for this file once four templates of the -01 release, the
+ * "nop; nop" before div.s, sqrt.s and rsqrt.s, are put into the 991111 tree):
+ *  - The exact target. Take the C below with the two register pins, write the near blend plainly
+ *    (`unkA0.near = unk140.near * fade_out + unk160.near * fade_in;`) and after it the far blend through two float
+ *    variables with the "to" value loaded first; every register then equals retail. Add, in the SECOND pass only,
+ *    "each of the four float loads depends on the conversion of the to-blue byte" and "the addiu depends on both
+ *    near-distance multiplies" (anti or output, cost 1): 2 instructions differ, the two far loads in the other order,
+ *    a tie; with one more link for that tie the whole function is byte-identical to retail (1393 of 1393).
+ *  - The same links given to the FIRST pass (the second inherits them) break the register allocation (39 differ):
+ *    retail's red conversion uses scratch $f11, so when registers were assigned all four float loads already
+ *    preceded it; the loads were held back in the second pass but not in the first.
+ *  - Nothing in the second pass's own analysis of these 50 insns, nor in the links flow adds after reload, can
+ *    relate a float load to that conversion or the addiu to the multiplies (no register, no memory, and this
+ *    compiler has no rule that treats REG_DEAD notes as uses). The two source insns are simply the last ones issued
+ *    before each held group, so the second pass must have seen the block cut in three at those points of the
+ *    first pass's order, or two insns that are no longer there. Where that comes from is still open.
+ *  - Also tried: an if/else whose two arms are identical is cross-jumped away by jump2 and leaves no trace, and its
+ *    arms are scheduled as blocks of their own (so such a cut is possible), but a cut made in the source falls on a
+ *    statement boundary, which retail's cuts do not; a statement macro per field as do { } while (0) (loop
+ *    alignment, 500 and more differ); inline helpers per field or for the whole blend (73 to 75); a loop over the
+ *    three bytes (other code, 1379 instructions); a local copy of the timer (changes the code before the block). About 11,500
+ *    plain forms of the five statements scored with the links injected: none reproduces retail's registers.
  *
  * The struct views below are local because the file is not part of the build; when the function matches they belong
  * in map/map.h (MapLightBlockFloats = MapLightBlock as two 4x4 float matrices, 8-aligned so that copies use ld/sd;
