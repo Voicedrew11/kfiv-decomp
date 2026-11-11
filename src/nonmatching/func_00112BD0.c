@@ -120,6 +120,44 @@
  *  - Stripping all inherited links before the second pass leaves this block's links unchanged: with today's C
  *    nothing is inherited here that the second pass does not find itself.
  *
+ * Ninth pass (2026-11-12, several workers with the hooked compiler; the C below is unchanged, still 31):
+ *  - The statement shape is the plain one. Floats first (near as one expression; `far_to = to.far; far_to *= fade_in;
+ *    dst.far = from.far * fade_out + far_to;`), then red, green, blue through one shared int temporary, with no
+ *    register pins, gives OK (1393 instructions) on the hooked compiler with five injected dependences: in the first
+ *    scheduling pass only, the from-blue conversion issued before the green multiplies (any extra dependent of it
+ *    does that); in the second pass, the four float loads after the to-blue conversion, the addiu after both near
+ *    multiplies, the far_to load after the far_from load. The stock compiler gives 39 on that source (the 31 of the
+ *    form kept here is an artefact of the count-minimising search). One pin on the from-blue value alone gives all
+ *    registers and 26. The first-pass half is one local-alloc quantity: from-blue is allocated too early (its
+ *    priority must fall between 3077 and 3157, i.e. a life four insns longer in first-pass order).
+ *  - No plain statement order can give retail's registers (the blue life cannot exceed 16 insns under the plain
+ *    dependences), and no scheduler input order makes the stock first pass produce a working order: retail's first
+ *    pass saw a different dependence graph. The second pass only derives dependences that point backward in its
+ *    input and an inherited one was obeyed by the first pass, so in retail's first-pass output the loads already
+ *    stood after the to-blue conversion and the addiu after the near multiplies. With the links in the first pass
+ *    the instruction order is retail's and three FP registers form a cycle (13 differ; best order found 10).
+ *  - Ruled out by test: symbol names, declaration order and layout, include order, -g, the neighbours' translation
+ *    units, host allocation (33,000 compiles: one result per source form); 93 more flag sets; the other period
+ *    compiler builds (990721 does not match the module; 991111 and 991111a lack the `nop; nop` before div.s);
+ *    values defined in an earlier block (update_equiv_regs moves only single-use constants; cross-block loads
+ *    never return) and values left without a register (reload gives a three-register multiply, an `la` pair for
+ *    an address, and $f7 as the red scratch); a pointer assigned twice (stores through it force a re-load of
+ *    current_map_slot that retail lacks); conditionals deleted after scheduling, no-op copies (reload_cse deletes
+ *    them before the second pass), unused and preserved labels, the SCHED_GROUP_P redirect (the bit is never set
+ *    in this function), register-held structs and unions, statement and comma expressions; inline asm (152,000
+ *    compiles: conversions as asm with operands, empty asm with operands; an empty asm tying blue_to to the
+ *    near_to product gives 30 but is not retail's mechanism); every single invisible insn in the second pass
+ *    (set/clobber/use of every hard register, memory use/clobber/store, FPU and move insns, at every position),
+ *    every choice of the three hidden fix_truncsfsi2 GPR scratches, and pairs of the best (370,000 compiles: best
+ *    single 13, best pair 5).
+ *  - Not done: solving the first-pass-links form with local-alloc's real quantity table as the objective (the
+ *    three inequalities are in the notes); finding what gives the float loads a conflict with an FPU insn of
+ *    priority 15-16 and the addiu one of priority 9-10 (the FPU unit issues one insn per cycle in priority order,
+ *    so the anchors need not be the insns named above).
+ *  - Notes, scripts and the per-worker findings: outside the repository (the owner's kfiv-notes folder,
+ *    map_update_draw_state/FINDINGS.md first). Hooks added since the eighth pass: KF_ORDER, KF_PERM, KF_RANK,
+ *    KF_UNALLOC, KF_MOVEOUT, KF_QTY, and in a private copy KF_PH, KF_SCR, KF_PH0, KF_MV2.
+ *
  * The struct views below are local because the file is not part of the build; when the function matches they belong
  * in map/map.h (MapLightBlockFloats = MapLightBlock as two 4x4 float matrices, 8-aligned so that copies use ld/sd;
  * MapDrawStateBlend = map_draw_state as this function sees it; MapHeader gains fog_colors[4][4] at 0x50 and the f32 draw
